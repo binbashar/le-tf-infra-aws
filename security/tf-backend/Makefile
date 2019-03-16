@@ -10,3 +10,7 @@ init:
 
 apply:
 	terraform apply -var-file=../config/backend.config
+
+destroy:
+	terraform destroy -var-file=../config/backend.config
+

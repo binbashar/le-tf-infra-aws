@@ -23,7 +23,7 @@ resource "aws_sns_topic" "AWSConfigdev" {
         "SNS:Publish",
         "SNS:Receive"
       ],
-      "Resource": "arn:aws:sns:us-east-2:${var.dev_account_id}:AWSConfigdev",
+      "Resource": "arn:aws:sns:us-east-1:${var.dev_account_id}:AWSConfigdev",
       "Condition": {
         "StringEquals": {
           "AWS:SourceOwner": "${var.dev_account_id}"

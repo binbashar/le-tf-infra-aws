@@ -20,6 +20,6 @@ module "security_terraform_backend" {
     bucket_description = "S3 Bucket for Security Terraform Remote State Storage"
     table_name = "${var.dynamodb_table}"
     table_description = "DynamoDB for Security Terraform Remote State Locking"
-    replication_region = "us-east-1"
+    replication_region = "us-east-2"
     replication_profile = "${var.profile}"
 }
