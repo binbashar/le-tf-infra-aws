@@ -1,0 +1,62 @@
+#
+# Organization Specs
+#
+organization:
+    feature_set: ALL
+
+#
+# Organizational Units Specs
+#
+organizational_units:
+    - name: "users_security_unit"
+      policy: "FullAWSAccess"
+      accounts:
+        - name: "users_security_admin"
+          email: "binbash-aws-sec@binbash.com.ar"
+          type: "new"
+    
+    - name: "shared_services_unit"
+      policy: "FullAWSAccess"
+      accounts:
+        - name: "shared_services_admin"
+          email: "binbash-aws-sr@binbash.com.ar"
+          type: "new"
+    
+    - name: "dev_binbash_unit"
+      policy: "FullAWSAccess"
+      accounts:
+        - name: "dev_admin"
+          email: "binbash-aws-dev@binbash.com.ar"
+          type: "new"
+    
+    - name: "prod_binbash_legacy_unit"
+      policy: "FullAWSAccess"
+      accounts:
+        - name: "prod_admin"
+          email: "xxxxxxx@binbash.com.ar"
+          type: "invite"
+
+#
+# Policies Specs
+#
+policies:
+    - name: "FullAWSAccess"
+      managed: True
+      description: "Allows access to every operation"
+    - name: "OrgUnitDefaultPolicy"
+      managed: False
+      description: "Default Policy for Organizational Units"
+      policy:
+        Effect: Allow
+        Action:
+          - ec2:*
+          - cloudfront:*
+          - iam:*
+          - s3:*
+          - lambda:*
+          - cloudformation:*
+          - cloudtrail:*
+          - sts:*
+          - sns:*
+          - cloudwatch:*
+        Resource: '*'
