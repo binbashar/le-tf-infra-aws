@@ -14,31 +14,22 @@ variable "profile" {
 variable "project" {
     description = "Project Name"
 }
+variable "project_long" {
+    description = "Project Long Name"
+}
 variable "environment" {
     description = "Environment Name"
 }
+
+#
+# Accounts
+#
 variable "security_account_id" {
-    description = "ID account for dev aws"
+    description = "Account: Security & Users Management"
 }
-
-# AWS Config
-
-variable "bucket_prefix" {
-  default = "config"
+variable "shared_account_id" {
+    description = "Account: Shared Resources"
 }
-
-variable "bucket_key_prefix" {
-  default = "config"
-}
-
-variable "sns_topic_arn" {
-  default = ""
-}
-
-variable "tags" {
-  default = {
-    "owner"   = "bb-security-account"
-    "project" = "bb-config-security"
-    "client"  = "bb-internal"
-  }
+variable "dev_account_id" {
+    description = "Account: Dev Modules & Libs"
 }

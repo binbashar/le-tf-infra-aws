@@ -1,8 +1,8 @@
 module "cloudtrail" {
   source                        = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/aws-cloudtrail-tf?ref=v0.2"
-  namespace                     = "bb"
+  namespace                     = "${var.project}"
   stage                         = "account"
-  name                          = "security"
+  name                          = "${var.environment}-cloudtrail"
   enable_logging                = "true"
   enable_log_file_validation    = "true"
   include_global_service_events = "true"
@@ -12,15 +12,14 @@ module "cloudtrail" {
 
 module "cloudtrail_s3_bucket" {
   source    = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/aws-cloudtrail-s3-bucket-tf?ref=v0.2"
-  namespace = "bb"
+  namespace = "${var.project}"
   stage     = "account"
-  name      = "security"
-  region    = "us-east-1"
+  name      = "${var.environment}"
+  region    = "${var.region}"
   accountIDS = [
-      "arn:aws:s3:::bb-account-security/*",
-      "arn:aws:s3:::bb-account-security/AWSLogs/556823206064/*",
-      "arn:aws:s3:::bb-account-security/AWSLogs/571945541201/*",
-      "arn:aws:s3:::bb-account-security/AWSLogs/187030804674/*"
+      "arn:aws:s3:::${var.project}-account-${var.environment}-cloudtrail/*",
+      "arn:aws:s3:::${var.project}-account-${var.environment}-cloudtrail/AWSLogs/${var.security_account_id}/*",
+      "arn:aws:s3:::${var.project}-account-${var.environment}-cloudtrail/AWSLogs/${var.shared_account_id}/*",
+      "arn:aws:s3:::${var.project}-account-${var.environment}-cloudtrail/AWSLogs/${var.dev_account_id}/*"
       ]
 }
-
