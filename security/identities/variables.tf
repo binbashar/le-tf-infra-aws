@@ -15,6 +15,9 @@ variable "profile" {
 variable "project" {
     description = "Project Name"
 }
+variable "project_long" {
+    description = "Project Long Name"
+}
 variable "environment" {
     description = "Environment Name"
 }

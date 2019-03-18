@@ -1,12 +1,14 @@
 #
 # Account Resources
 #
-resource "aws_iam_account_alias" "alias" {
+module "aws_iam_account_config" {
+    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-tf/modules/iam-account?ref=v0.2"
+
     // If IAM account alias was previously set (either via AWS console or during the creation of an account from AWS
     // Organizations) you will see this error:
     // * aws_iam_account_alias.this: Error creating account alias with name my-account-alias
     // please check https://github.com/binbashar/terraform-aws-iam/tree/master/modules/iam-account to solve it
-    account_alias = "${var.project}-${var.environment}"
+    account_alias = "${var.project_long}-${var.environment}"
 
     # account password policy
     create_account_password_policy  = true
@@ -17,5 +19,5 @@ resource "aws_iam_account_alias" "alias" {
     require_symbols                 = true
     require_uppercase_characters    = true
     password_reuse_prevention       = true
-    allow_users_to_change_password = true
+    allow_users_to_change_password  = true
 }

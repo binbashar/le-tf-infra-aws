@@ -18,7 +18,7 @@
 - Now the user can share her/his public key for creating her/his account
 
 ## Decrypt your encrypted password
-- The user should copy the encrypted password from whatever media it was provided to her/him
-- Run `echo "YOUR ENCRYPTED PASSWORD HERE" | base64 --decode > a_file_with_your_pass`
-- Run `gpg --decrypt a_file_with_your_pass`
-- If all went well, the decrypted password should be there
+1. The user should copy the encrypted password from whatever media it was provided to her/him
+2. Run `echo "YOUR ENCRYPTED STRING PASSWORD HERE" | base64 --decode > a_file_with_your_pass`
+3. Run `gpg --decrypt a_file_with_your_pass` to effectively decrypt your pass using your gpg key and its passphrase
+4. If all went well, the decrypted password should be there
