@@ -1,5 +1,6 @@
+/*
 #
-# VPC Peering Connection with Apps Dev/Stage: Accepter Side
+# VPC Peering Connection with Dev: Accepter Side
 #
 data "aws_vpc_peering_connection" "with_dev" {
     vpc_id      = "${var.dev_vpc_id}"
@@ -26,4 +27,4 @@ resource "aws_route" "pub_route_table_1_to_dev_vpc" {
     route_table_id            = "${element(module.vpc.public_route_table_ids, 0)}"
     destination_cidr_block    = "${var.dev_vpc_cidr_block}"
     vpc_peering_connection_id = "${data.aws_vpc_peering_connection.with_dev.id}"
-}
+}*/

@@ -30,3 +30,13 @@ data "terraform_remote_state" "vpc" {
       key    = "shared/network/terraform.tfstate"
     }
 }
+
+data "terraform_remote_state" "security" {
+    backend     = "s3"
+    config {
+      region = "${var.region}"
+      profile = "${var.profile}"
+      bucket = "bb-shared-terraform-state-storage-s3"
+      key    = "shared/security/terraform.tfstate"
+    }
+}

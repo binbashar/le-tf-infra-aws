@@ -1,4 +1,3 @@
-/*
 #
 # Domains
 #
@@ -6,22 +5,24 @@ resource "aws_route53_zone" "aws" {
   name = "aws.binbash.com.ar"
   tags = "${local.tags}"
 }
-resource "aws_route53_record" "live-ns" {
+
+/*resource "aws_route53_record" "live-ns" {
   zone_id = "${aws_route53_zone.aws.id}"
-  name    = "live.aws.binbash.com.ar"
+  name    = "binbash.com.ar"
   type    = "NS"
   ttl     = "30"
 
   records = [
-    "ns-2018.awsdns-60.co.uk",
-    "ns-1106.awsdns-10.org",
-    "ns-133.awsdns-16.com",
-    "ns-824.awsdns-39.net"
+      "ns-1447.awsdns-52.org."
+      "ns-157.awsdns-19.com."
+      "ns-1978.awsdns-55.co.uk."
+      "ns-959.awsdns-55.net."
   ]
 }
 
+
 #
-# Subdomains: k8s entry points
+# Subdomains: dev tools/envs entry points
 #
 resource "aws_route53_record" "dev_aws_bb" {
   zone_id = "${aws_route53_zone.aws.id}"
@@ -44,4 +45,5 @@ resource "aws_route53_record" "r53_dev_aws_bb" {
   zone_id = "${aws_route53_zone.aws.id}"
   records = ["_XXXXXXXXXXXXXXXXXXXXXXXXXXXX.XXXXXXXXXX.acm-validations.aws."]
   ttl = 60
-}*/
+}
+*/
