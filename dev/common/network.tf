@@ -2,7 +2,7 @@
 # Network Resources
 #
 module "vpc" {
-    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/vpc-tf?ref=v0.2"
+    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/vpc-tf?ref=v0.3"
 
     name = "${local.vpc_name}"
     cidr = "${local.vpc_cidr_block}"

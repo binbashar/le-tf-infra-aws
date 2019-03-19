@@ -35,7 +35,6 @@ resource "aws_iam_policy" "devops_access" {
                 "application-autoscaling:*",
                 "aws-portal:*",
                 "backup:*",
-                "backup-storage:*",
                 "ce:*",
                 "cloudformation:*",
                 "cloudfront:*",
@@ -63,7 +62,6 @@ resource "aws_iam_policy" "devops_access" {
                 "sns:*",
                 "sqs:*",
                 "ssm:*",
-                "vpc:*",
                 "waf:*"
             ],
             "Resource": [
@@ -90,7 +88,7 @@ resource "aws_iam_role" "admin_role" {
       "Action": "sts:AssumeRole",
       "Principal": {
         "AWS": [
-            "arn:aws:iam::${var.shared_account_id}:root"
+            "arn:aws:iam::${var.security_account_id}:root"
         ]
 
       },
@@ -125,8 +123,7 @@ resource "aws_iam_role" "auditor_role" {
       "Action": "sts:AssumeRole",
       "Principal": {
         "AWS": [
-            "arn:aws:iam::${var.security_account_id}:root",
-            "arn:aws:iam::${var.shared_account_id}:root"
+            "arn:aws:iam::${var.security_account_id}:root"
         ]
       },
       "Effect": "Allow",
@@ -177,6 +174,10 @@ resource "aws_iam_policy" "deploy_master_access" {
         {
             "Effect": "Allow",
             "Action": [
+                "ecr:*",
+                "route53:*",
+                "route53domains:*",
+                "ssm:*",
                 "sqs:*"
             ],
             "Resource": [

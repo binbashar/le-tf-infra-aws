@@ -6,7 +6,7 @@
 - We rely on Makefiles as a wrapper to run terraform commands
 
 ### Terraform
-- Install terraform >= v0.21.13
+- Install terraform >= v0.11.13
 - Run `terraform version` to check
 
 ### Remote State
