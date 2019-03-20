@@ -18,20 +18,27 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_instance" "openvpn_instance" {
-  ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "${var.instance_type}"
-  vpc_security_group_ids = ["${list(aws_security_group.allow_ssh.id, aws_security_group.pritunl_temporary_access.id)}"]
-  subnet_id = "${data.terraform_remote_state.vpc.public_subnets[0]}"
-  key_name = "${data.terraform_remote_state.security.aws_key_pair_name}"
+  ami                     = "${data.aws_ami.ubuntu.id}"
+  instance_type           = "${var.instance_type}"
 
-  tags = "${local.tags}"
+  //  WITHOUT pritunl_temporary_access sec group
+  //  vpc_security_group_ids = ["${list(module.sg_private.id, module.sg_public.id)}"]
+
+  //  WITH pritunl_temporary_access sec group
+  vpc_security_group_ids  = ["${list(module.sg_private.id, module.sg_public.id, aws_security_group.sg_public_temporary.id)}"]
+  subnet_id               = "${data.terraform_remote_state.vpc.public_subnets[0]}"
+  key_name                = "${data.terraform_remote_state.security.aws_key_pair_name}"
+
+  root_block_device  {
+    volume_size = "${var.volume_size}"
+    volume_type = "gp2"
+    delete_on_termination = "false"
+  }
+
+  volume_tags             = "${merge(local.tags, map("Backup", "True"))}"
+  tags                    = "${local.tags}"
 
   lifecycle {
     ignore_changes = ["ami"]
   }
-}
-
-resource "aws_eip" "this" {
-  instance = "${aws_instance.openvpn_instance.id}"
-  vpc      = true
 }

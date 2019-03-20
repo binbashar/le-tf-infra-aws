@@ -2,7 +2,7 @@
 # Account Resources
 #
 module "aws_iam_account_config" {
-    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-tf/modules/iam-account?ref=v0.3"
+    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-tf/modules/iam-account?ref=v0.5"
 
     // If IAM account alias was previously set (either via AWS console or during the creation of an account from AWS
     // Organizations) you will see this error:

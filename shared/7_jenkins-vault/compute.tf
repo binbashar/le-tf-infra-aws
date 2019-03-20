@@ -24,7 +24,7 @@ resource "template_file" "userdata" {
 resource "aws_instance" "jenkins-vault_instance" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "${var.instance_type}"
-  vpc_security_group_ids = ["${aws_security_group.jenkins-vault.id}"]
+  vpc_security_group_ids = ["${list(module.sg_private.id)}"]
   subnet_id = "${data.terraform_remote_state.vpc.private_subnets[0]}"
   key_name = "${data.terraform_remote_state.security.aws_key_pair_name}"
   user_data = "${template_file.userdata.rendered}"

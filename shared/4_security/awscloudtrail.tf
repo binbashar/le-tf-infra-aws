@@ -1,5 +1,5 @@
 module "cloudtrail" {
-  source                        = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/aws-cloudtrail-tf?ref=v0.3"
+  source                        = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/aws-cloudtrail-tf?ref=v0.5"
   namespace                     = "${var.project}"
   stage                         = "${var.environment}"
   name                          = "cloudtrail-org"

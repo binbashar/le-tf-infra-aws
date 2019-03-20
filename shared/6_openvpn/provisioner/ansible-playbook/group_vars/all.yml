@@ -1,0 +1,20 @@
+server_hostname: infra-openvpn
+
+user: ubuntu
+home_path: "/home/{{user}}"
+
+# Role users activation + users declaration
+role_users_enabled: True
+username1: marcos.pagnucco
+username2: diego.ojeda
+username3: exequiel.barrirero
+
+# Role prometheus node exporter activation
+role_prometheus_node_exporter_enabled: False
+
+# Global Flag to enable user deletion (roles: users), this works together with a conditional statemet as follows:
+#      when:
+#        - openvpn_delete_users == True
+openvpn_delete_users: False
+
+

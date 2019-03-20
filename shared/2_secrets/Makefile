@@ -8,6 +8,9 @@ help:
 	@echo "  destroy: Destroy all resources managed by terraform"
 	@echo ""
 
+version:
+	terraform version
+
 init:
 	terraform init -backend-config=../config/backend.config
 

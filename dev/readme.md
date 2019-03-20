@@ -36,10 +36,10 @@ Within each of those folders you should find the Terraform files that are used t
     dev/
         ...
     stg/
-        * network.tf                (modules: aws/vpc?ref=v0.3"
-        * native-web-spa.tf         (modules: aws/s3?ref=v0.3"
+        * network.tf                (modules: aws/vpc?ref=v0.5"
+        * native-web-spa.tf         (modules: aws/s3?ref=v0.5"
         * native-web-api.tf
-        * database.tf               (modules: aws/rds/postgresql?ref=v0.3"
+        * database.tf               (modules: aws/rds/postgresql?ref=v0.5"
         * other.tf                  (modules: sqs, sns, ...)
 ```
 

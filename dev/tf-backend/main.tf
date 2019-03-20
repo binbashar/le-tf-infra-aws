@@ -8,18 +8,22 @@ variable "bucket" {}
 variable "dynamodb_table" {}
 
 provider "aws" {
-    version = "~> 2.0"
+    version = "~> 2.2"
     region = "${var.region}"
     profile = "${var.profile}"
 }
 
-module "dev_terraform_backend" {
-    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/terraform-backend?ref=v0.3"
+provider "null" {
+    version = "~> 2.1"
+}
+
+module "terraform_backend" {
+    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/terraform-backend?ref=v0.5"
 
     bucket_name = "${var.bucket}"
-    bucket_description = "S3 Bucket for Applications dev Terraform Remote State Storage"
+    bucket_description = "S3 Bucket for ${var.profile} Terraform Remote State Storage"
     table_name = "${var.dynamodb_table}"
-    table_description = "DynamoDB for Applications dev Terraform Remote State Locking"
+    table_description = "DynamoDB for ${var.profile} Terraform Remote State Locking"
     replication_region = "us-east-2"
     replication_profile = "${var.profile}"
 }

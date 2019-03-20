@@ -5,7 +5,7 @@
 # Note: this resource was imported for tagging purposes only.
 resource "aws_ebs_volume" "root" {
   availability_zone = "us-east-1a"
-  size = 20
+  size = "${var.volume_size_root}"
   type = "gp2"
   tags = "${merge(local.tags, map("Backup", "True"))}"
 
@@ -15,14 +15,14 @@ resource "aws_ebs_volume" "root" {
 }
 resource "aws_ebs_volume" "jenkins-data" {
   availability_zone = "us-east-1a"
-  size = 100
+  size = "${var.volume_size_extra_1}"
   type = "gp2"
   tags = "${merge(local.tags, map("Backup", "True"))}"
 }
 
 resource "aws_ebs_volume" "docker-data" {
   availability_zone = "us-east-1a"
-  size = 100
+  size = "${var.volume_size_extra_2}"
   type = "gp2"
   tags = "${merge(local.tags, map("Backup", "True"))}"
 }

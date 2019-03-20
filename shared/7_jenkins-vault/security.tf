@@ -1,55 +1,32 @@
-//
-// EC2 Security Group w/ ingress/egress rules
-//
-resource "aws_security_group" "jenkins-vault" {
-  name        = "jenkins-vault"
-  description = "Allow access to services on Jenkins/vault server"
-  vpc_id = "${data.terraform_remote_state.vpc.vpc_id}"
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["172.17.0.0/20"]
-  }
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["172.17.0.0/20","172.17.48.0/20"]
-  }
-  ingress {
-    from_port   = 9100
-    to_port     = 9100
-    protocol    = "tcp"
-    cidr_blocks = ["172.17.0.0/20"]
-  }
-  ingress {
-    from_port   = 8200
-    to_port     = 8200
-    protocol    = "tcp"
-    cidr_blocks = ["172.17.0.0/20"]
-  }
-  egress {
-    from_port       = 0
-    to_port         = 0
-    protocol        = "-1"
-    cidr_blocks     = ["0.0.0.0/0"]
-  }
+#
+# Security Resources
+#
 
-  tags = "${local.tags}"
+#
+# Security Groups
+#
+module "sg_private" {
+  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/sg-bb?ref=v0.5"
+
+  // udp_ports        = "22,443,9100"
+  security_group_name     = "${var.sg_private_name}"
+  tcp_ports               = "${var.sg_private_tpc_ports}"
+  cidrs                   = ["${var.sg_private_cidrs}"]
+  vpc_id                  = "${data.terraform_remote_state.vpc.vpc_id}"
+
+  tags                    = "${local.tags}"
 }
-
 
 //
 // AWS EC2 profile w/ IAM Role association
 //
 resource "aws_iam_instance_profile" "jenkins" {
-  name = "jenkins_profile"
+  name = "JenkinsProfile"
   role = "${aws_iam_role.jenkins_assume_role.name}"
 }
 
 resource "aws_iam_role" "jenkins_assume_role" {
-  name = "jenkins_assume_role"
+  name = "JenkinsAssumeRole"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -70,7 +47,7 @@ EOF
 }
 
 resource "aws_iam_policy" "jenkins_access" {
-    name        = "jenkins-access-policy"
+    name        = "JenkinsAccessPolicy"
     description = "Access policy for Jenkins"
     policy = <<EOF
 {

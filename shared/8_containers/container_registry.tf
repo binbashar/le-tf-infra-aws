@@ -2,7 +2,7 @@
 # ECR Life-cycle Policy: only keep the latest 10 tagged images.
 #
 module "ecr_lifecycle_rule_tagged_dev_image_count_7" {
-    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ecr-tf/ecr-lifecycle-policy-rule?ref=v0.3"
+    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ecr-tf/ecr-lifecycle-policy-rule?ref=v0.5"
 
     tag_status   = "tagged"
     count_type   = "imageCountMoreThan"
@@ -11,7 +11,7 @@ module "ecr_lifecycle_rule_tagged_dev_image_count_7" {
 }
 
 module "ecr_lifecycle_rule_tagged_prd_image_count_7" {
-    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ecr-tf/ecr-lifecycle-policy-rule?ref=v0.3"
+    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ecr-tf/ecr-lifecycle-policy-rule?ref=v0.5"
 
     tag_status   = "tagged"
     count_type   = "imageCountMoreThan"
@@ -23,7 +23,7 @@ module "ecr_lifecycle_rule_tagged_prd_image_count_7" {
 # ECR Registry: DevOps Images
 #
 module "nativeweb_leverage_ecr_repo" {
-    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ecr-tf/ecr-cross-account?ref=v0.3"
+    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ecr-tf/ecr-cross-account?ref=v0.5"
 
     namespace = "bb"
     name      = "leverage"

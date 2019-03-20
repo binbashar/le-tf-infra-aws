@@ -9,7 +9,7 @@ terraform {
     required_version = ">= 0.11.13"
 
     backend "s3" {
-        key = "shared/openvpn/terraform.tfstate"
+        key = "shared/vpn/terraform.tfstate"
     }
 }
 
