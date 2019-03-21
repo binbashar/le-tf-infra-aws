@@ -40,6 +40,6 @@ variable "security_account_id" {
 variable "dev_account_id" {
     description = "Dev/Stage Account ID"
 }
-variable "dev_internal_zone_id" {
+variable "shared_aws_internal_zone_id" {
     description = "Internal DNS zone for Applications Dev/Stage kubernetes"
 }

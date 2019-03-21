@@ -13,6 +13,6 @@
 
 resource "null_resource" "dns_private_hosted_zone_reate_vpc_association_auth" {
     provisioner "local-exec" {
-        command = "aws route53 create-vpc-association-authorization --hosted-zone-id ${var.dev_internal_zone_id} --vpc VPCRegion=${var.region},VPCId=${var.dev_vpc_id} --profile ${var.profile}"
+        command = "aws route53 create-vpc-association-authorization --hosted-zone-id ${aws_route53_zone.aws_private_hosted_zone_1.zone_id} --vpc VPCRegion=${var.region},VPCId=${var.dev_vpc_id} --profile ${var.profile}"
     }
 }

@@ -13,6 +13,6 @@
 
 resource "null_resource" "associate_vpc_with_private_remote_hosted_zone" {
     provisioner "local-exec" {
-        command = "aws route53 associate-vpc-with-hosted-zone --hosted-zone-id ${var.dev_internal_zone_id} --vpc VPCRegion=${var.region},VPCId=${module.vpc.vpc_id} --profile ${var.profile}"
+        command = "aws route53 associate-vpc-with-hosted-zone --hosted-zone-id ${var.shared_aws_internal_zone_id} --vpc VPCRegion=${var.region},VPCId=${module.vpc.vpc_id} --profile ${var.profile}"
     }
 }

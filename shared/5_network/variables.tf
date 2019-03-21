@@ -43,9 +43,6 @@ variable "dev_vpc_id" {
 variable "dev_vpc_cidr_block" {
     description = "VPC CIDR Block of Applications Dev/Stage Account"
 }
-variable "dev_internal_zone_id" {
-    description = "Internal DNS zone for Applications Dev/Stage kubernetes"
-}
 
 #===========================================#
 # DNS                                       #
