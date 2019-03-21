@@ -1,5 +1,4 @@
-/*
-#
+/*#
 # VPC Peering Connection with Dev: Accepter Side
 #
 data "aws_vpc_peering_connection" "with_dev" {

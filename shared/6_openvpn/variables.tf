@@ -16,19 +16,6 @@ variable "environment" {
 }
 
 #=============================#
-# External Accounts Data      #
-#=============================#
-variable "dev_account_id" {
-    description = "Dev/Stage Account ID"
-}
-variable "security_account_id" {
-    description = "Account: Security & Users Management"
-}
-variable "shared_account_id" {
-    description = "Account: Shared Resources"
-}
-
-#=============================#
 # Compute                     #
 #=============================#
 variable "aws_ami_os_id" {
@@ -41,7 +28,7 @@ variable "aws_ami_os_owner" {
 }
 variable "instance_type" {
     description = "AWS EC2 Instance Type"
-    default     = "t3.small"
+    default     = "t2.micro"
 }
 
 #=============================#
@@ -141,9 +128,18 @@ variable "provisioner_script_path" {
 #=============================#
 variable "instance_dns_record_name_1" {
     description = "AWS EC2 Instance Type"
-    default     = "vpn.aws.binbash.com.ar"
+    default     = "vpn.binbash.com.ar"
 }
 variable "instance_dns_record_name_2" {
     description = "AWS EC2 Instance Type"
-    default     = "webhooks.aws.binbash.com.ar"
+    default     = "webhooks.binbash.com.ar"
+}
+
+#=============================#
+# TAGS                        #
+#=============================#
+variable "tags" {
+  type = "map"
+  description = "A mapping of tags to assign to all resources"
+  default     = {}
 }

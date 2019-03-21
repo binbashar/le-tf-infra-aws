@@ -1,8 +1,6 @@
 ---
 - name: Provision OpenVPN Pritunl instance
   hosts:
-#    - localhost
-#    - infra_opvenvpn_pritunl
      - "{{ variable_host }}"
   gather_facts: true
   become: yes
@@ -32,7 +30,7 @@
       security_ssh_password_authentication: "no"
       security_ssh_permit_root_login: "no"
       security_ssh_usedns: "no"
-      security_sudoers_passwordless: ["{{username1}}", "{{username2}}", "{{username3}}"]
+      security_sudoers_passwordless: []
       # Whether to install/enable yum-cron (RedHat-based systems) or unattended-upgrades (Debian-based systems).
       # System restarts will not happen automatically in any case, and automatic upgrades are no excuse for sloppy
       # patch and package management, but automatic updates can be helpful as yet another security measure.
