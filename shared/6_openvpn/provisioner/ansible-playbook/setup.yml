@@ -1,0 +1,99 @@
+---
+- name: Provision OpenVPN Pritunl instance
+  hosts:
+     - "{{ variable_host }}"
+  gather_facts: true
+  become: yes
+
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  vars_files:
+    - ./group_vars/all.yml
+
+  roles:
+    - role: common
+      tags: common_tasks
+
+    #=====================================#
+    #      USER MGMT & SECURITY           #
+    #=====================================#
+    - role: users
+      tags: security-users
+      when: role_users_enabled == True
+
+    - role: geerlingguy.security
+      # The port through which you'd like SSH to be accessible. The default is port 22, but if you're operating a server
+      # on the open internet, and have no firewall blocking access to port 22, you'll quickly find that thousands of
+      # login attempts per day are not uncommon. You can change the port to a nonstandard port (e.g. 2849) if you want
+      # to avoid these thousands of automated penetration attempts.
+      security_ssh_port: 22
+      security_ssh_password_authentication: "no"
+      security_ssh_permit_root_login: "no"
+      security_ssh_usedns: "no"
+      security_sudoers_passwordless: []
+      # Whether to install/enable yum-cron (RedHat-based systems) or unattended-upgrades (Debian-based systems).
+      # System restarts will not happen automatically in any case, and automatic upgrades are no excuse for sloppy
+      # patch and package management, but automatic updates can be helpful as yet another security measure.
+      security_autoupdate_enabled: false
+      security_autoupdate_reboot: false
+      security_autoupdate_reboot_time: "03:00"
+      security_fail2ban_enabled: false
+      tags: security-server
+
+    - role: oefenweb.fail2ban
+      # fail2ban_loglevel: "{{ 'INFO' if (ansible_distribution == 'Ubuntu' and ansible_distribution_version is
+      # version('16.04', '>=') or ansible_distribution == 'Debian' and ansible_distribution_version is
+      # version('9.0', '>=')) else 3 }}"
+      fail2ban_loglevel: 'INFO'
+      fail2ban_logtarget: /var/log/fail2ban.log
+      fail2ban_syslog_target: /var/log/fail2ban.log
+      fail2ban_syslog_facility: 1
+      fail2ban_socket: /var/run/fail2ban/fail2ban.sock
+      fail2ban_pidfile: /var/run/fail2ban/fail2ban.pid
+      fail2ban_dbpurgeage: 86400
+
+      fail2ban_sendername: 'Fail2ban'
+      fail2ban_ignoreips:
+      - 127.0.0.1/8
+      fail2ban_bantime: 600
+      fail2ban_maxretry: 3
+      fail2ban_findtime: 600
+      fail2ban_backend: auto
+      fail2ban_destemail: info@binbash.com.ar
+      fail2ban_banaction: iptables-multiport
+      fail2ban_mta: sendmail
+      fail2ban_protocol: tcp
+      fail2ban_chain: INPUT
+      fail2ban_action: '%(action_)s'
+
+      # - name: "{{ 'sshd' if (ansible_distribution == 'Ubuntu' and ansible_distribution_version is
+      # version('16.04', '>=') or ansible_distribution == 'Debian' and ansible_distribution_version is
+      # version('9.0', '>=')) else 'ssh' }}"
+      fail2ban_services:
+      - name: sshd
+        port: 22
+        maxretry: 5
+        bantime: -1
+      tags: security-fail2ban
+
+    #=====================================#
+    #      MON: PROMETHEUS NODE EXPORTER  #
+    #=====================================#
+    #Prometheus exporter for hardware and OS metrics exposed by
+    #*NIX kernels, written in Go with pluggable metric collectors.
+    - role: cloudalchemy.node-exporter
+      node_exporter_version: 0.17.0
+      node_exporter_web_listen_address: "0.0.0.0:9100"
+      node_exporter_textfile_dir: "/var/lib/node_exporter"
+      node_exporter_enabled_collectors: [ conntrack, diskstats, entropy, filefd, filesystem, hwmon, loadavg, mdadm,
+                                          meminfo, netdev, netstat, stat, textfile, time, vmstat, systemd]
+      when: role_prometheus_node_exporter_enabled == True
+      tags: prometheus-node-exporter
+
+    #=====================================#
+    #      OPENVPN PRITUNL                #
+    #=====================================#
+    - role: softasap.sa-vpn-pritunl
+      tags: openvpn-pritunl
+
+
