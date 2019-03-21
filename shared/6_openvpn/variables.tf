@@ -57,6 +57,10 @@ variable "sg_private_tpc_ports" {
   description = "Security group TCP ports"
   default = "22,443,9100"
 }
+variable "sg_private_udp_ports" {
+  description = "Security group UDP ports"
+  default = "15255"
+}
 variable "sg_private_cidrs" {
   description = "Security group CIDR segments"
   default = "172.17.0.0/20"
@@ -75,7 +79,11 @@ variable "sg_public_name" {
 // 15255 pritunl.server.dev
 variable "sg_public_tpc_ports" {
   description = "Security group TCP ports"
-  default = "80,2709,11080,15255"
+  default = "80,2709,11080"
+}
+variable "sg_public_udp_ports" {
+  description = "Security group UDP ports"
+  default = "15255"
 }
 variable "sg_public_cidrs" {
   description = "Security group CIDR segments"
