@@ -74,12 +74,6 @@
 
   - block:
 
-    - name: PRITUNL | Install mongodb key
-      apt_key: keyserver=keyserver.ubuntu.com id="2930ADAE8CAF5059EE73BB4B58712A2291FA4AD5"
-      become: yes
-      tags:
-        - pritunl
-
     - name: PRITUNL | Install key
       apt_key: keyserver=keyserver.ubuntu.com id="CF8E292A"
       become: yes
@@ -89,8 +83,8 @@
     - name: PRITUNL | Install pritunl repo
       apt_repository:
         repo: "deb http://repo.pritunl.com/stable/apt {{ansible_distribution_release}} main"
-        state: present
         filename: pritunl
+        state: present
       become: yes
       tags:
         - pritunl
@@ -116,25 +110,5 @@
       tags:
         - pritunl
 
-    - name: PRITUNL | Install mongodb repo
-      apt_repository:
-        repo: "deb http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.6 multiverse"
-        state: present
-        filename: mongodb-org
-      become: yes
-      tags:
-        - pritunl
-
-    - name: PRITUNL | Install mongodb
-      apt: name=mongodb-org state=present update_cache=yes
-      become: yes
-      tags:
-        - pritunl
-
-    - name: PRITUNL | mongodb
-      service: name=mongod state=started enabled=yes
-      become: yes
-      tags:
-        - pritunl
 
     when: ansible_os_family == "Debian"
