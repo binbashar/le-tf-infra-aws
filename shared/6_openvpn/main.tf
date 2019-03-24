@@ -29,3 +29,15 @@ module "ec2_openvpn" {
   instance_dns_record_name_2                    = "${var.instance_dns_record_name_2}"
   tags                                          = "${local.tags}"
 }
+
+module "ec2_provisioner_ansible" {
+  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/provisioner-ansible-bb?ref=v0.5"
+
+  instance_public_ip = "${module.ec2_openvpn.public_ip}"
+  shell_cmds = "${var.shell_cmds}"
+  provisioner_user = "${var.provisioner_user}"
+  provisioner_private_key_path = "${var.provisioner_private_key_path}"
+  provisioner_private_key_relative_script_path = "${var.provisioner_private_key_relative_script_path}"
+  provisioner_script_path = "${var.provisioner_script_path}"
+  provisioner_vault_pass_path = "${var.provisioner_vault_pass_path}"
+}

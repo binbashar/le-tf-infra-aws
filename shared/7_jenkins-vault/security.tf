@@ -11,6 +11,7 @@ module "sg_private" {
   // udp_ports        = "22,443,9100"
   security_group_name     = "${var.sg_private_name}"
   tcp_ports               = "${var.sg_private_tpc_ports}"
+  udp_ports               = "${var.sg_private_udp_ports}"
   cidrs                   = ["${var.sg_private_cidrs}"]
   vpc_id                  = "${data.terraform_remote_state.vpc.vpc_id}"
 
