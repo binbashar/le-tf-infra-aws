@@ -28,7 +28,7 @@ variable "aws_ami_os_owner" {
 }
 variable "instance_type" {
     description = "AWS EC2 Instance Type"
-    default     = "t2.micro"
+    default     = "t3.micro"
 }
 
 #=============================#
@@ -120,7 +120,7 @@ variable "provisioner_user" {
 }
 variable "shell_cmds" {
   description = "A comma separated string of shell commands - eg: [echo 'hellow world',ls]"
-  default = "sudo apt-get update,sudo apt-get install vim"
+  default = "sudo apt-get update,echo 'ANSIBLE PROVISION WILL START SOON'"
 }
 variable "provisioner_private_key_path" {
   description = "private_key path - The contents of an SSH key to use for the connection. These can be loaded from a file on disk using the file func."

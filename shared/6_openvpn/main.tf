@@ -30,7 +30,11 @@ module "ec2_openvpn" {
   tags                                          = "${local.tags}"
 }
 
-module "ec2_provisioner_ansible" {
+# Increse the suffix =+ 1 in order to get terraform re-executing the provioser module
+# eg: ec2_provisioner_ansible_1 -> ec2_provisioner_ansible_2
+# NOTE: consider "make init" command will be needed before "make plan" and "make apply" commands.
+#
+module "ec2_provisioner_ansible_1" {
   source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/provisioner-ansible-bb?ref=v0.5"
 
   instance_public_ip = "${module.ec2_openvpn.public_ip}"
