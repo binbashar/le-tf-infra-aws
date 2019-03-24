@@ -1,4 +1,4 @@
-/*#
+#
 # VPC Peering Connection with Dev: Accepter Side
 #
 data "aws_vpc_peering_connection" "with_dev" {
@@ -11,7 +11,7 @@ resource "aws_vpc_peering_connection_accepter" "with_dev" {
     vpc_peering_connection_id = "${data.aws_vpc_peering_connection.with_dev.id}"
     auto_accept               = true
 
-    tags = "${merge(map("side", "accepter"), local.tags)}"
+    tags = "${merge(map("Name", "accepter-shared-from-dev"), local.tags)}"
 }
 
 #
@@ -21,9 +21,10 @@ resource "aws_route" "priv_route_table_1_to_dev_vpc" {
     route_table_id            = "${element(module.vpc.private_route_table_ids, 0)}"
     destination_cidr_block    = "${var.dev_vpc_cidr_block}"
     vpc_peering_connection_id = "${data.aws_vpc_peering_connection.with_dev.id}"
+
 }
 resource "aws_route" "pub_route_table_1_to_dev_vpc" {
     route_table_id            = "${element(module.vpc.public_route_table_ids, 0)}"
     destination_cidr_block    = "${var.dev_vpc_cidr_block}"
     vpc_peering_connection_id = "${data.aws_vpc_peering_connection.with_dev.id}"
-}*/
+}
