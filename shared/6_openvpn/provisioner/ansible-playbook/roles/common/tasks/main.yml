@@ -16,8 +16,5 @@
   when: ansible_os_family == "Debian"
   tags: packages
 
-#- name: Python3 pip install
-#  command: sudo python3 -m pip uninstall pip --yes && sudo apt install -y python3-pip --reinstall
-
 - name: Python3 pip upgrade
   command: pip3 install --upgrade pip==19.0.3
