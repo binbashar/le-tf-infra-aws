@@ -43,5 +43,8 @@ module "ec2_provisioner_ansible_1" {
   provisioner_private_key_path = "${var.provisioner_private_key_path}"
   provisioner_private_key_relative_script_path = "${var.provisioner_private_key_relative_script_path}"
   provisioner_script_path = "${var.provisioner_script_path}"
+  provisioner_script_tags_enable = "${var.provisioner_script_tags_enable}"
+  provisioner_script_tags = "${var.provisioner_script_tags}"
+  provisioner_vault_pass_enabled = "${var.provisioner_vault_pass_enabled}"
   provisioner_vault_pass_path = "${var.provisioner_vault_pass_path}"
 }

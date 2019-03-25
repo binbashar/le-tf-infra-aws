@@ -134,6 +134,19 @@ variable "provisioner_script_path" {
   description = "ansible-playbook path."
   default     = "./provisioner/ansible-playbook"
 }
+variable "provisioner_script_tags_enable" {
+  description = "Use tags in ansible provisioner if set to True, otherwise don't use any specific tag"
+  default     = "true"
+}
+variable "provisioner_script_tags" {
+  description = "An space separated ansible-playbook tags list"
+  default     = "openvpn-pritunl"
+
+}
+variable "provisioner_vault_pass_enabled" {
+  description = "Use --vault-password-file in ansible provisioner if set to True, otherwise don't use this flag"
+  default     = "true"
+}
 variable "provisioner_vault_pass_path" {
   description = "ansible-vault secret decyption pass."
   default     = "./group_vars/.vault_pass"
