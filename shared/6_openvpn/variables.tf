@@ -28,7 +28,7 @@ variable "aws_ami_os_owner" {
 }
 variable "instance_type" {
     description = "AWS EC2 Instance Type"
-    default     = "t2.micro"
+    default     = "t3.micro"
 }
 
 #=============================#
@@ -118,17 +118,38 @@ variable "provisioner_user" {
   description = "username - for SSH connection"
   default     = "ubuntu"
 }
+variable "shell_cmds" {
+  description = "A comma separated string of shell commands - eg: [echo 'hellow world',ls]"
+  default = "sudo apt-get update,echo 'ANSIBLE PROVISION WILL START SOON'"
+}
 variable "provisioner_private_key_path" {
   description = "private_key path - The contents of an SSH key to use for the connection. These can be loaded from a file on disk using the file func."
   default     = "./provisioner/keys/id_rsa"
 }
 variable "provisioner_private_key_relative_script_path" {
-  description = "private_key path - The contents of an SSH key to use for the connection. These can be loaded from a file on disk using the file func."
+  description = "private_key relative path - The contents of an SSH key to use for the connection. These can be loaded from a file on disk using the file func."
   default     = "../keys/id_rsa"
 }
 variable "provisioner_script_path" {
-  description = "private_key path - The contents of an SSH key to use for the connection. These can be loaded from a file on disk using the file func."
+  description = "ansible-playbook path."
   default     = "./provisioner/ansible-playbook"
+}
+variable "provisioner_script_tags_enable" {
+  description = "Use tags in ansible provisioner if set to True, otherwise don't use any specific tag"
+  default     = "true"
+}
+variable "provisioner_script_tags" {
+  description = "An space separated ansible-playbook tags list"
+  default     = "openvpn-pritunl"
+
+}
+variable "provisioner_vault_pass_enabled" {
+  description = "Use --vault-password-file in ansible provisioner if set to True, otherwise don't use this flag"
+  default     = "true"
+}
+variable "provisioner_vault_pass_path" {
+  description = "ansible-vault secret decyption pass."
+  default     = "./group_vars/.vault_pass"
 }
 
 #=============================#
