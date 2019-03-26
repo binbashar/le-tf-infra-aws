@@ -1,0 +1,12 @@
+
+FROM fedora:25
+
+# Install Ansible
+RUN dnf -y update
+RUN dnf install -y python2 python2-dnf libselinux-python
+RUN dnf -y install ansible
+RUN mkdir -p /etc/ansible
+
+# Install Ansible inventory file
+RUN echo "[local]" > /etc/ansible/hosts
+RUN echo "localhost ansible_connection=local" >> /etc/ansible/hosts

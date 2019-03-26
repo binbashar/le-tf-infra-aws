@@ -74,16 +74,15 @@ variable "sg_public_name" {
   default = "vpn-public"
 }
 // 80    pritunl.web.letsencrypt
-// 11080 pritunl.server.admin
-// 2709  pritunl.server.dev
-// 15255 pritunl.server.dev
+// 15255 pritunl.server.admin
+// 15255 pritunl.server.devops
 variable "sg_public_tpc_ports" {
   description = "Security group TCP ports"
-  default = "80,2709,11080"
+  default = "80"
 }
 variable "sg_public_udp_ports" {
   description = "Security group UDP ports"
-  default = "15255"
+  default = "15255,15256"
 }
 variable "sg_public_cidrs" {
   description = "Security group CIDR segments"

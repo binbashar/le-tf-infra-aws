@@ -33,15 +33,27 @@ variable "shared_account_id" {
 #=============================#
 variable "aws_ami_os_id" {
     description = "AWS AMI Operating System Identificator"
-    default = "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"
+    default     = "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"
 }
 variable "aws_ami_os_owner" {
     description = "AWS AMI Operating System Owner"
-    default = "099720109477"
+    default     = "099720109477"
 }
 variable "instance_type" {
     description = "AWS EC2 Instance Type"
-    default = "t3.small"
+    default     = "t3.small"
+}
+
+#=============================#
+# Network
+#=============================#
+variable "aws_vpc_id" {
+    description = "AWS VPC id"
+}
+variable "aws_route53_internal_zone_id" {
+  type = "list"
+  description = "List of DNS Route53 internal hosted zones ID"
+  default = []
 }
 
 #=============================#
@@ -75,10 +87,14 @@ variable "sg_private_name" {
 // 80   http jenkins
 // 443  https jenkins
 // 8200 hashicorp vault
+// 8200 hashicorp vault
 // 9100 prometheus node exporter
 variable "sg_private_tpc_ports" {
   description = "Security group TCP ports"
   default = "22,80,443,8200,9100"
+}
+variable "sg_private_udp_ports" {
+  description = "Security group UDP ports"
 }
 variable "sg_private_cidrs" {
   description = "Security group CIDR segments"
@@ -88,21 +104,8 @@ variable "sg_private_cidrs" {
 #
 # Provisioner Connections
 #
-variable "provisioner_user" {
-  description = "username - for SSH connection"
-  default     = "ubuntu"
-}
-variable "provisioner_private_key_path" {
-  description = "private_key path - The contents of an SSH key to use for the connection. These can be loaded from a file on disk using the file func."
-  default     = "./provisioner/keys/id_rsa"
-}
-variable "provisioner_private_key_relative_script_path" {
-  description = "private_key path - The contents of an SSH key to use for the connection. These can be loaded from a file on disk using the file func."
-  default     = "../keys/id_rsa"
-}
-variable "provisioner_script_path" {
-  description = "private_key path - The contents of an SSH key to use for the connection. These can be loaded from a file on disk using the file func."
-  default     = "./provisioner/ansible-playbook"
+variable "aws_key_pair_name" {
+  description = "AWS ssh ec2 key pair name"
 }
 
 #=============================#
@@ -115,4 +118,13 @@ variable "instance_dns_record_name_1" {
 variable "instance_dns_record_name_2" {
     description = "AWS EC2 Instance Type"
     default     = "vault.aws.binbash.com.ar"
+}
+
+#=============================#
+# TAGS                        #
+#=============================#
+variable "tags" {
+  type = "map"
+  description = "A mapping of tags to assign to all resources"
+  default     = {}
 }

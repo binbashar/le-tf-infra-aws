@@ -1,0 +1,260 @@
+---
+- name: Provision OpenVPN Pritunl instance
+  hosts:
+     - "{{ variable_host }}"
+  gather_facts: true
+  become: yes
+
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  vars_files:
+    - ./group_vars/all.yml
+
+  roles:
+    - role: common
+      tags: common_tasks
+
+    #=====================================#
+    #      USER MGMT & SECURITY           #
+    #=====================================#
+    - role: users
+      when: role_users_enabled == True
+      tags: security-users
+
+    - role: geerlingguy.security
+      # The port through which you'd like SSH to be accessible. The default is port 22, but if you're operating a server
+      # on the open internet, and have no firewall blocking access to port 22, you'll quickly find that thousands of
+      # login attempts per day are not uncommon. You can change the port to a nonstandard port (e.g. 2849) if you want
+      # to avoid these thousands of automated penetration attempts.
+      security_ssh_port: 22
+      security_ssh_password_authentication: "no"
+      security_ssh_permit_root_login: "no"
+      security_ssh_usedns: "no"
+      security_sudoers_passwordless: []
+      # Whether to install/enable yum-cron (RedHat-based systems) or unattended-upgrades (Debian-based systems).
+      # System restarts will not happen automatically in any case, and automatic upgrades are no excuse for sloppy
+      # patch and package management, but automatic updates can be helpful as yet another security measure.
+      security_autoupdate_enabled: false
+      security_autoupdate_reboot: false
+      security_autoupdate_reboot_time: "03:00"
+      security_fail2ban_enabled: false
+      tags: security-server
+
+    - role: oefenweb.fail2ban
+      # fail2ban_loglevel: "{{ 'INFO' if (ansible_distribution == 'Ubuntu' and ansible_distribution_version is
+      # version('16.04', '>=') or ansible_distribution == 'Debian' and ansible_distribution_version is
+      # version('9.0', '>=')) else 3 }}"
+      fail2ban_loglevel: 'INFO'
+      fail2ban_logtarget: /var/log/fail2ban.log
+      fail2ban_syslog_target: /var/log/fail2ban.log
+      fail2ban_syslog_facility: 1
+      fail2ban_socket: /var/run/fail2ban/fail2ban.sock
+      fail2ban_pidfile: /var/run/fail2ban/fail2ban.pid
+      fail2ban_dbpurgeage: 86400
+
+      fail2ban_sendername: 'Fail2ban'
+      fail2ban_ignoreips:
+      - 127.0.0.1/8
+      fail2ban_bantime: 600
+      fail2ban_maxretry: 3
+      fail2ban_findtime: 600
+      fail2ban_backend: auto
+      fail2ban_destemail: info@binbash.com.ar
+      fail2ban_banaction: iptables-multiport
+      fail2ban_mta: sendmail
+      fail2ban_protocol: tcp
+      fail2ban_chain: INPUT
+      fail2ban_action: '%(action_)s'
+
+      # - name: "{{ 'sshd' if (ansible_distribution == 'Ubuntu' and ansible_distribution_version is
+      # version('16.04', '>=') or ansible_distribution == 'Debian' and ansible_distribution_version is
+      # version('9.0', '>=')) else 'ssh' }}"
+      fail2ban_services:
+      - name: sshd
+        port: 22
+        maxretry: 5
+        bantime: -1
+      tags: security-fail2ban
+
+    #=====================================#
+    #      MON: PROMETHEUS NODE EXPORTER  #
+    #=====================================#
+    #Prometheus exporter for hardware and OS metrics exposed by
+    #*NIX kernels, written in Go with pluggable metric collectors.
+    - role: cloudalchemy.node-exporter
+      node_exporter_version: 0.17.0
+      node_exporter_web_listen_address: "0.0.0.0:9100"
+      node_exporter_textfile_dir: "/var/lib/node_exporter"
+      node_exporter_enabled_collectors: [ conntrack, diskstats, entropy, filefd, filesystem, hwmon, loadavg, mdadm,
+                                          meminfo, netdev, netstat, stat, textfile, time, vmstat, systemd]
+      when: role_prometheus_node_exporter_enabled == True
+      tags: prometheus-node-exporter
+
+    #=====================================#
+    #      OPENVPN PRITUNL                #
+    #=====================================#
+    - role: softasap.sa-vpn-pritunl
+      tags: openvpn-pritunl
+
+    - role: undergreen.mongodb
+      # You can use this variable to control installation source of MongoDB
+      # 'mongodb' will be installed from Debian/Ubuntu repos
+      # 'mongodb-org' will be installed from MongoDB official repos
+      mongodb_package: mongodb-org
+
+      # You can control installed version via this param.
+      # Should be '3.2', '3.4', '3.6'. This role doesn't support MongoDB < 3.2.
+      # I will recommend you to use latest version of MongoDB.
+      mongodb_version: "3.6"
+
+      mongodb_pymongo_from_pip: true                   # Install latest PyMongo via PIP or package manager
+      mongodb_pymongo_pip_version: 3.7.2               # Choose PyMongo version to install from pip. If not set use latest
+      mongodb_user_update_password: "on_create"        # MongoDB user password update default policy
+      mongodb_manage_service: true
+
+      # Disable transparent hugepages on systemd debian based installations
+      mongodb_disable_transparent_hugepages: false
+
+      mongodb_user: "{{ 'mongod' if ('RedHat' == ansible_os_family) else 'mongodb' }}"
+      mongodb_daemon_name: "{{ 'mongod' if ('mongodb-org' in mongodb_package) else 'mongodb' }}"
+      ## net Options
+      mongodb_net_bindip: 127.0.0.1                    # Comma separated list of ip addresses to listen on
+      mongodb_net_http_enabled: false                  # Enable http interface
+      mongodb_net_ipv6: false                          # Enable IPv6 support (disabled by default)
+      mongodb_net_maxconns: 65536                      # Max number of simultaneous connections
+      mongodb_net_port: 27017                          # Specify port number
+
+      ## processManagement Options
+      mongodb_processmanagement_fork: false            # Fork server process
+
+      ## security Options
+      # Disable or enable security. Possible values: 'disabled', 'enabled'
+      mongodb_security_authorization: "disabled"
+      mongodb_security_keyfile: /etc/mongodb-keyfile   # Specify path to keyfile with password for inter-process authentication
+
+      ## storage Options
+      mongodb_storage_dbpath: /data/db                 # Directory for datafiles
+      mongodb_storage_dirperdb: false                  # Use one directory per DB
+
+      # The storage engine for the mongod database. Available values:
+      # 'mmapv1', 'wiredTiger'
+      mongodb_storage_engine: "{{ 'mmapv1' if mongodb_version[0:3] == '3.0' else 'wiredTiger' }}"
+      # mmapv1 specific options
+      mongodb_storage_quota_enforced: false            # Limits each database to a certain number of files
+      mongodb_storage_quota_maxfiles: 8                # Number of quota files per DB
+      mongodb_storage_smallfiles: false                # Very useful for non-data nodes
+
+      mongodb_storage_journal_enabled: true            # Enable journaling
+      mongodb_storage_prealloc: true                   # Disable data file preallocation
+
+      ## systemLog Options
+      ## The destination to which MongoDB sends all log output. Specify either 'file' or 'syslog'.
+      ## If you specify 'file', you must also specify mongodb_systemlog_path.
+      mongodb_systemlog_destination: "file"
+      mongodb_systemlog_logappend: true                                        # Append to logpath instead of over-writing
+      mongodb_systemlog_path: /var/log/mongodb/{{ mongodb_daemon_name }}.log   # Log file to send write to instead of stdout
+
+      ## replication Options
+      mongodb_replication_replset:                      # Enable replication <setname>[/<optionalseedhostlist>]
+      mongodb_replication_replindexprefetch: "all"      # specify index prefetching behavior (if secondary) [none|_id_only|all]
+      mongodb_replication_oplogsize: 1024               # specifies a maximum size in megabytes for the replication operation log
+
+      ## setParameter options
+      # Configure setParameter option.
+      # Example :
+      mongodb_set_parameters: { "enableLocalhostAuthBypass": "true", "authenticationMechanisms": "SCRAM-SHA-1,MONGODB-CR" }
+
+      # MMS Agent
+      mongodb_mms_agent_pkg: https://mms.mongodb.com/download/agent/automation/mongodb-mms-automation-agent-manager_1.4.2.783-1_amd64.deb
+      mongodb_mms_group_id: ""
+      mongodb_mms_api_key: ""
+      mongodb_mms_base_url: https://mms.mongodb.com
+
+      # Log rotation
+      mongodb_logrotate: true                             # Rotate mongodb logs.
+      mongodb_logrotate_options:
+      - compress
+      - copytruncate
+      - daily
+      - dateext
+      - rotate 7
+      - size 10M
+
+      # password for inter-process authentication
+      # please regenerate this file on production environment with command 'openssl rand -base64 741'
+      mongodb_keyfile_content: |
+        7eRfJbiaAlFkVsovPOdu/nxPCisxtS515CiT6M2RonYLuU04SNbHIvQ4si0ZEGWF
+        FppiGlTP5740UjPvCCD4o6wdC3+Vrim0GZKiCL4/cOyDj3VfVWbOQZGQMna5er1e
+        yqld+STGYoc8RXzEU79DVoacS9jGTy2PfOZQuhNu1zE6bp2xtwb8ByXTjzRrVOUC
+        LX+Tsw6oe7uLBX3T31f3hqMvJIbfa9EA5lgCx1hVrKWYLCl0y/v5euf8GNmic5Xe
+        0Sdz/ipkojMMsxb3Bo4GVtXdpSVA0yHiEdqzVtbSlBK5mzCdKQiStF9EkI4mCZNb
+        0qVx4O+bCe9yQPI4y68dVZIMF2MbGLLPEfqfUNqAtS8BoHNkd0LXeJPmUWhLcSdF
+        O17ZJGAsIc6ekKK3LKOO6NIvYt9PNgwFvW/WLxcLOxT/wL2bDXFeVzUfjBvSiRlE
+        +SUgdhL0hfztlvHtXpAeI34ZrC3TGYZcn++2sMCQbLH2Iw4c3rk8tf8ImR9c4YV6
+        pmIKK/cYLUmuqweKy3Y6C+YtjXF+JBlrSJi9DAiXyEdmNjL3fFqIdLZVvXBmgpF3
+        5Nlu+ZFiVIf/RZCyHE7Rb9fRS/fZ3vGwrgBdpnB5V4/v8A61JMRztTzgm5NdYu/s
+        o4EL0hmJZ0M7pOyJnxin4D5I4Kwt9vpXJ8HukZaxU3Z+aMSj5Lof+vMCCWUASKiY
+        9sgcY5OROlUw4qvOFYLn5WulUBxNdvIjiFJoAk9g4IhwXgxaoS1OcCR4paCYCQUN
+        yU29r9Mc/ZZDJ1w6IZd/V2jDg17Uxf3HizEVfui/Sri1ZqnYKvJ1kJYGNph7USrf
+        /p+ju906GIC4o0JfctmzUZVM5WqM+ICPfsvTp7RxTyw69VoeoolB6T/iRy3ibQmu
+        cOUwPal0CtEYrp3mLX4UCplupLhgy4c2EcWh2v7NbMaVtNDDDMyupWM7yhbrP5S7
+        DNFiLIiZnYortfgqLKohd/yEPcP8
+
+      # names and passwords for administrative users
+      mongodb_user_admin_name: siteUserAdmin
+      mongodb_user_admin_password_var: "{{ mongodb_user_admin_password }}"
+
+      mongodb_root_admin_name: siteRootAdmin
+      mongodb_root_admin_password_var: "{{ mongodb_root_admin_password }}"
+
+      tags: openvpn-pritunl
+
+  #=====================================#
+  #      OPENVPN PRITUNL POST-TASKS     #
+  #=====================================#
+  post_tasks:
+
+  - name: Initial Pritunl setup values
+    block:
+    - name: Print out pritunl database setup key
+      command: "pritunl setup-key"
+      register: cmd_output_1
+
+    - set_fact:
+        pritunl_db_key: "{{ cmd_output_1.stdout }}"
+
+    - debug:
+        msg:
+        - '#================================================#'
+        - '# PRITUNL_DB_KEY {{ pritunl_db_key }}'
+        - '#================================================#'
+
+    - name: Print out pritunl default login user admin information
+      shell: "pritunl default-password | grep 'username: '"
+      register: cmd_output_2
+
+    - set_fact:
+        pritunl_default_user: "{{ cmd_output_2.stdout }}"
+
+    - debug:
+        msg:
+        - '#================================================#'
+        - '# DEFAULT_USER {{ pritunl_default_user }}'
+        - '#================================================#'
+
+    - name: Print out pritunl default login pass admin information
+      shell: "pritunl default-password | grep 'password: '"
+      register: cmd_output_3
+
+    - set_fact:
+        pritunl_default_pass: "{{ cmd_output_3.stdout }}"
+
+    - debug:
+        msg:
+        - '#================================================#'
+        - '# DEFAULT_USER {{ pritunl_default_pass }}'
+        - '#================================================#'
+
+    when: print_out_pritunl_database_setup_key == True
+    tags: openvpn-pritunl
+
