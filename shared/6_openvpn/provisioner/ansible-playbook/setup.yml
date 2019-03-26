@@ -255,6 +255,6 @@
         - '# DEFAULT_USER {{ pritunl_default_pass }}'
         - '#================================================#'
 
-    when: print_out_pritunl_database_setup_key == True
+    when: print_out_pritunl_setup_secrets == True
     tags: openvpn-pritunl
 

@@ -45,18 +45,6 @@ variable "instance_type" {
 }
 
 #=============================#
-# Network
-#=============================#
-variable "aws_vpc_id" {
-    description = "AWS VPC id"
-}
-variable "aws_route53_internal_zone_id" {
-  type = "list"
-  description = "List of DNS Route53 internal hosted zones ID"
-  default = []
-}
-
-#=============================#
 # Storage                     #
 #=============================#
 variable "volume_size_root" {
@@ -99,13 +87,6 @@ variable "sg_private_udp_ports" {
 variable "sg_private_cidrs" {
   description = "Security group CIDR segments"
   default = "172.17.0.0/20"
-}
-
-#
-# Provisioner Connections
-#
-variable "aws_key_pair_name" {
-  description = "AWS ssh ec2 key pair name"
 }
 
 #=============================#
