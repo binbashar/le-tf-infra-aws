@@ -1,4 +1,75 @@
----
+# Add specified repository into sources list.
+- name: specific apt_repository
+  # https://www.postgresql.org/download/linux/ubuntu/
+  apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main
+    state: present
+  when: ansible_os_family == "Debian"
+  tags: packages
+
+#  command: wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+- name: Add an Apt signing key, uses whichever key is at the URL - postgres key
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+
+- name: update repo w/ postgres key
+  command: sudo apt-get update
+
+- name: Install prerequisites 1
+  apt: pkg="{{ item }}" update_cache=yes cache_valid_time=86400 state=present
+  with_items:
+    - git
+    - python2.7
+    - python-dev
+    - python-pip
+    - python-setuptools
+    - python-virtualenv
+    - libssl-dev
+    - build-essential
+    - software-properties-common
+    - unzip
+    - npm
+    - nodejs
+    - jq
+    - txt2html
+    - vim
+    - zip
+  when: ansible_os_family == "Debian"
+  tags: packages
+
+- name: Install prerequisites 2
+  apt: pkg="{{ item }}" update_cache=yes cache_valid_time=86400 state=present
+  with_items:
+    - postgresql-client-9.6
+  when: ansible_os_family == "Debian"
+  tags: packages
+  ignore_errors: yes
+
+- name: Python pip upgrade
+  command: pip install --upgrade pip
+
+- name: Python pip package installation
+  pip:
+    name: "{{item}}"
+  with_items:
+    - awscli
+    - boto
+    - boto3
+    - fabric
+    - pyOpenSSL
+
+- name: Python pip package installation with version
+  pip:
+    name: "{{ item.pkg }}"
+    version: "{{ item.ver }}"
+  with_items:
+    - { pkg: "awsebcli", ver: "3.14.9" }
+    - { pkg: "ansible", ver: "2.4.4.0" }
+
+
+
 - hostname:
     name: "{{ server_hostname }}"
 
@@ -8,13 +79,3 @@
     regexp: '^127\.0\.0\.1[ \t]+localhost'
     line: '127.0.0.1 localhost {{ server_hostname }}'
     state: present
-
-- name: Install prerequisites
-  apt: pkg="{{ item }}" update_cache=yes cache_valid_time=86400 state=present
-  with_items:
-    - python3-pip
-  when: ansible_os_family == "Debian"
-  tags: packages
-
-- name: Python3 pip upgrade
-  command: pip3 install --upgrade pip==19.0.3

@@ -1,0 +1,13 @@
+---
+# Full filename including path and name
+_file_full_name: '{{ _file_path | mandatory }}/{{ _file_name | mandatory }}'
+
+# File owner/group
+_file_owner: root
+_file_group: root
+
+# Operation: append | truncate
+_file_operation: append
+
+# Contents; leave empty if you don't need to write any contents
+_file_contents: ''

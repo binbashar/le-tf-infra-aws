@@ -5,6 +5,9 @@ module "ec2_jenkins_vault" {
   source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ec2-jenkins-bb?ref=v0.5"
 
   environment                                   = "${var.environment}"
+  dev_account_id                                = "${var.dev_account_id}"
+  security_account_id                           = "${var.security_account_id}"
+  shared_account_id                             = "${var.shared_account_id}"
   aws_ami_os_id                                 = "${var.aws_ami_os_id}"
   aws_ami_os_owner                              = "${var.aws_ami_os_owner}"
   instance_type                                 = "${var.instance_type}"

@@ -1,0 +1,36 @@
+---
+- name: Check if directory exists
+  stat: path='{{ _file_path }}'
+  register: file_path_stat
+
+- name: Create directory if need be
+  when: file_path_stat.stat.exists == False
+  file:
+    path: '{{ file_path_stat }}'
+    owner: '{{ _file_owner }}'
+    group: '{{ _file_group }}'
+    state: directory
+
+- name: Check if file exists
+  stat: path='{{ _file_full_name }}'
+  register: file_name_stat
+
+- name: Create file if need be
+  when: file_name_stat.stat.exists == False
+  file:
+    path: '{{ _file_full_name }}'
+    owner: '{{ _file_owner }}'
+    group: '{{ _file_group }}'
+    state: touch
+
+- name: Truncate file if need be
+  when:
+    - file_name_stat.stat.exists == True
+    - _file_operation == 'truncate'
+  shell: '> {{ _file_full_name }}'
+
+- name: Write file contents
+  when: _file_contents != ''
+  lineinfile:
+    path: '{{ _file_full_name }}'
+    line: '{{ _file_contents }}'
