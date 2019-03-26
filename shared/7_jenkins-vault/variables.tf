@@ -83,10 +83,19 @@ variable "sg_private_tpc_ports" {
 }
 variable "sg_private_udp_ports" {
   description = "Security group UDP ports"
+  default = "default_null"
 }
 variable "sg_private_cidrs" {
   description = "Security group CIDR segments"
   default = "172.17.0.0/20"
+}
+
+#=============================#
+# Provisioner: aws userdata   #
+#=============================#
+variable "aws_userdata_path" {
+  description = "AWS EC2 userdata provisioning script path"
+  default     = "./provisioner/aws-userdata/userdata.sh"
 }
 
 #=============================#

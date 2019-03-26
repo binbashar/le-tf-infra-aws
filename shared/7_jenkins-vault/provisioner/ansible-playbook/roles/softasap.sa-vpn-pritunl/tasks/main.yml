@@ -1,4 +1,0 @@
----
-# tasks file for sa-vpn-pritunl
-
-  - include_tasks: tasks_pritunl.yml 

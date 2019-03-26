@@ -1,0 +1,28 @@
+---
+- name: Create temporary policy directory
+  file:
+    path: '{{ _vault_policies_temp_dir }}'
+    state: directory
+
+- name: Copy policy files to host
+  copy:
+    src: '{{ item.file }}'
+    dest: '{{ _vault_policies_temp_dir }}/{{ item.name }}.hcl'
+  loop: '{{ _policies_entry_list }}'
+
+- name: Set Vault Policies
+  environment:
+    VAULT_ADDR: '{{ _vault_address }}'
+    VAULT_TOKEN: '{{ _vault_token }}'
+  command: 'vault policy write {{ item.name }} {{ _vault_policies_temp_dir }}/{{ item.name }}.hcl'
+  become: no
+  register: vault_policy_write_result
+  loop: '{{ _policies_entry_list }}'
+
+- name: Remove temporary policy directory
+  when:
+    - _vault_policies_temp_dir is defined
+    - _vault_policies_temp_dir != ""
+  file:
+    state: absent
+    path: "{{ _vault_policies_temp_dir }}/"

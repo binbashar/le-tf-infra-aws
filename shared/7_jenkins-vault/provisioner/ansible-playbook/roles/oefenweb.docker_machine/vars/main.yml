@@ -1,0 +1,3 @@
+# vars file for docker-machine
+---
+docker_machine_downloads_path: /var/lib/ansible/docker-machine/downloads
