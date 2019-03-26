@@ -1,7 +1,7 @@
 #
-# EC2 Pritunl OpenVPN
+# EC2 Jenkins vault
 #
-module "ec2_openvpn" {
+module "ec2_jenkins_vault" {
   source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ec2-jenkins-bb?ref=v0.5"
 
   environment                                   = "${var.environment}"
