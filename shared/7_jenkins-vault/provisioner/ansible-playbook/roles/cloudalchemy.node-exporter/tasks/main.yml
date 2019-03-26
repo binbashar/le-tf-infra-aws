@@ -1,0 +1,36 @@
+---
+- name: Gather variables for each operating system
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution_file_variety | lower }}.yml"
+    - "{{ ansible_distribution | lower }}.yml"
+    - "{{ ansible_os_family | lower }}.yml"
+  tags:
+    - node_exporter_install
+    - node_exporter_configure
+    - node_exporter_run
+
+- import_tasks: preflight.yml
+  tags:
+    - node_exporter_install
+    - node_exporter_configure
+    - node_exporter_run
+
+- import_tasks: install.yml
+  become: true
+  tags:
+    - node_exporter_install
+
+- import_tasks: configure.yml
+  become: true
+  tags:
+    - node_exporter_configure
+
+- name: Ensure Node Exporter is enabled on boot
+  become: true
+  systemd:
+    daemon_reload: true
+    name: node_exporter
+    enabled: true
+  tags:
+    - node_exporter_run

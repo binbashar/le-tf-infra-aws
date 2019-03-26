@@ -1,0 +1,35 @@
+---
+- name: Naive assertion of proper listen address
+  assert:
+    that:
+      - "':' in node_exporter_web_listen_address"
+
+- name: Fail on unsupported init systems
+  fail:
+    msg: "This module only works with systemd"
+  when: ansible_service_mgr != 'systemd'
+
+- name: Check collectors
+  fail:
+    msg: "Collector cannot be both disabled and enabled"
+  when: item in node_exporter_enabled_collectors
+  with_items: "{{ node_exporter_disabled_collectors }}"
+
+- name: Get systemd version
+  shell: systemctl --version | awk '$1 == "systemd" {print $2}'
+  changed_when: false
+  check_mode: false
+  register: node_exporter_systemd_version
+  tags:
+    - skip_ansible_lint
+
+- name: Get checksum list from github
+  set_fact:
+    _checksums: "{{ lookup('url', 'https://github.com/prometheus/node_exporter/releases/download/v' + node_exporter_version + '/sha256sums.txt', wantlist=True) | list }}"
+  run_once: true
+
+- name: "Get checksum for {{ go_arch }} architecture"
+  set_fact:
+    node_exporter_checksum: "{{ item.split(' ')[0] }}"
+  with_items: "{{ _checksums }}"
+  when: "('linux-' + go_arch + '.tar.gz') in item"

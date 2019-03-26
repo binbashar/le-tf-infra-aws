@@ -2,7 +2,7 @@
 # EC2 Pritunl OpenVPN
 #
 module "ec2_openvpn" {
-  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/openvpn-bb?ref=v0.5"
+  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ec2-openvpn-bb?ref=v0.5"
 
   environment                                   = "${var.environment}"
   aws_ami_os_id                                 = "${var.aws_ami_os_id}"
