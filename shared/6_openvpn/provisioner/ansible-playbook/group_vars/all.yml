@@ -35,5 +35,5 @@ mongodb_root_admin_password_var: !vault |
   36333835333430326665336139646536353562353163346132636334353336373034
 
 # Initialization pritunl DB key: sudo pritunl setup-key
- # Print out pritunl default login pass admin information: pritunl default-password
+# Print out pritunl default login user admin login info: pritunl default-password
 print_out_pritunl_setup_secrets: False
