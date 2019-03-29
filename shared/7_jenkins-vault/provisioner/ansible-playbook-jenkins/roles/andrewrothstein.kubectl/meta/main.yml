@@ -1,0 +1,30 @@
+---
+galaxy_info:
+  author: Andrew Rothstein
+  description: installs kubectl to /usr/local/bin
+  company: BlackRock
+  license:
+    - MIT
+  min_ansible_version: 2.0
+  platforms:
+    - name: EL
+      versions:
+        - all
+    - name: Fedora
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+    - name: MacOSX
+      versions:
+        - all
+    - name: Alpine
+      versions:
+        - all
+  galaxy_tags:
+    - k8s
+    - kubernetes
+    - cloud
+
+dependencies: []

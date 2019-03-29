@@ -1,0 +1,82 @@
+---
+#======================================================================#
+# USERS to ADD w/ home dir (Comment only when removing users           #
+#======================================================================#
+- user:
+    name: "{{item}}"
+    comment: "{{item}}"
+    createhome: yes
+    home: /home/{{item}}
+    groups: sudo
+    generate_ssh_key: yes
+    state: present
+  loop: "{{users_list_creation}}"
+
+#======================================================================#
+# USERS to REMOVE w/ home dir (Uncomment only when removing users)     #
+#======================================================================#
+- name: USERS to REMOVE w/ home dir
+  user:
+    name: "{{item}}"
+    comment: "{{item}}"
+    createhome: yes
+    home: /home/{{item}}
+    groups: sudo
+    state: absent
+    remove: yes
+  loop: "{{users_list_deletion}}"
+  when:
+    - users_delete == True
+  tags: delete_user
+
+#======================================================================#
+# USERS CREATE ssh key pair                                            #
+#======================================================================#
+- name: Generate an OpenSSH rsa keypair with a different size 2048 bits
+  block:
+
+    - name: Create .ssh dir
+      file:
+        path: "{{ item[1] }}/.ssh"
+        owner: "{{ item[0] }}"
+        group: "{{ item[0] }}"
+        state: directory
+        mode: 0700
+      with_list: "{{ users_nested_list_ssh_key_path_with_user }}"
+
+    - name: Check that ssh key exists
+      stat: path= "{{ item[1] }}/.ssh/id_rsa"
+      register: file_path_stat
+      with_list: "{{ users_nested_list_ssh_key_path_with_user }}"
+
+    - debug: msg="{{ file_path_stat }}"
+    - debug: msg="{{ file_path_stat.results[0].stat }}"
+
+    - name: create ssh key pair
+      command : "ssh-keygen -q -b 2048 -t rsa -f {{ item[1] }}/.ssh/id_rsa -C '' -N ''"
+      args:
+        creates: "{{ item[1] }}/.ssh/id_rsa"
+      with_list: "{{ users_nested_list_ssh_key_path_with_user }}"
+      when: file_path_stat.results[0].stat.exists == False
+
+- name: Fetching previously generate SSH public key for jenkins users
+  fetch:
+    src: "{{ item[1] }}/.ssh/id_rsa.pub"
+    dest: "roles/users/files/id_rsa_{{ item[0] }}.pub"
+    flat: yes
+  with_list: "{{ users_nested_list_ssh_key_path_with_user }}"
+
+#======================================================================#
+# USERS ADD ssh authorized key                                         #
+#======================================================================#
+- name: Set authorized key for "{{item}}"
+  authorized_key:
+    user: "{{item}}"
+    state: present
+    key: "{{ lookup('file', 'files/id_rsa_{{ item }}.pub') }}"
+  loop: "{{users_list_creation}}"
+
+#======================================================================#
+# USERS allow sudo without password input                              #
+#======================================================================#
+- lineinfile: "dest=/etc/sudoers state=present regexp='^%sudo' line='%sudo ALL=(ALL) NOPASSWD: ALL'"

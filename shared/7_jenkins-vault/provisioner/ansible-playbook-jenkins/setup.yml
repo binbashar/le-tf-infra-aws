@@ -1,0 +1,363 @@
+---
+- name: Provision Jenkins Vault Instance
+  hosts:
+# PLEASE MAINTAIN THE LINES COMMENTED WHEN COMMITING / PUSHING TO THE REPO
+#    - localhost
+    - ec2_jenkinsvault_bb_infra_deployer
+  gather_facts: true
+  become: yes
+
+  vars:
+#    ansible_python_interpreter: "/usr/bin/python3"
+    ansible_python_interpreter: "/usr/bin/python2.7" # for role: geerlingguy.jenkins jenkins_plugins to work properly
+  vars_files:
+    - ./group_vars/all.yml
+
+  roles:
+    #=====================================#
+    #      PRE-REQUISITES                 #
+    #=====================================#
+    - role: common
+      tags: common_tasks
+
+    #=====================================#
+    #      JENKINS                        #
+    #=====================================#
+    - role: geerlingguy.jenkins
+      # The state of the jenkins package install.
+      # By default this role installs Jenkins but will not upgrade Jenkins (when using package-based installs).
+      # If you want to always update to the latest version, change this to latest.
+      jenkins_package_state: present
+      jenkins_version: "2.169"
+      jenkins_pkg_url: "http://pkg.jenkins-ci.org/debian/binary/"
+      jenkins_java_options: "-Djava.awt.headless=true -Djenkins.install.runSetupWizard=false -Dorg.apache.commons.jelly.tags.fmt.timeZone={{ jenkins_time_zone }}"
+      jenkins_init_changes:
+        - option: "JENKINS_ARGS"
+          value: "--httpListenAddress=0.0.0.0 --prefix={{ jenkins_url_prefix }}"
+        - option: "JENKINS_JAVA_OPTIONS"
+          value: "{{ jenkins_java_options }}"
+      jenkins_connection_delay: 5
+      jenkins_connection_retries: 10
+      jenkins_hostname: localhost
+      jenkins_admin_username: admin
+      jenkins_admin_password: "{{ jenkins_admin_pass }}"
+      jenkins_http_port: 8080
+      jenkins_home: /var/lib/jenkins
+      jenkins_jar_location: /opt/jenkins-cli.jar
+      jenkins_plugins_state: "latest"
+      jenkins_plugins_install_dependencies: "yes"
+      jenkins_plugins:
+        - ace-editor
+        - amazon-ecr
+        - amazon-ecs
+        - analysis-core
+        - ansible
+        - ant
+        - antisamy-markup-formatter
+        - apache-httpcomponents-client-4-api
+        - authentication-tokens
+        - aws-codepipeline
+        - aws-credentials
+        - aws-java-sdk
+        - bouncycastle-api
+        - branch-api
+        - build-blocker-plugin
+        - build-pipeline-plugin
+        - checkstyle
+        - cloudbees-folder
+        - command-launcher
+        - conditional-buildstep
+        - credentials
+        - credentials-binding
+        - dependency-check-jenkins-plugin
+        - dependency-track
+        - discard-old-build
+        - disk-usage
+        - display-url-api
+        - docker-commons
+        - docker-workflow
+        - durable-task
+        - external-monitor-job
+        - generic-webhook-trigger
+        - git
+        - git-client
+        - git-server
+        - gitlab-plugin
+        - handlebars
+        - hashicorp-vault-plugin
+        - htmlpublisher
+        - icon-shim
+        - jackson2-api
+        - javadoc
+        - jdk-tool
+        - jquery
+        - jquery-detached
+        - jquery-ui
+        - jsch
+        - junit
+        - last-changes
+        - ldap
+        - mailer
+        - mapdb-api
+        - matrix-auth
+        - matrix-project
+        - maven-plugin
+        - momentjs
+        - nvm-wrapper
+        - pam-auth
+        - parameterized-scheduler
+        - parameterized-trigger
+        - pipeline-aws
+        - pipeline-build-step
+        - pipeline-graph-analysis
+        - pipeline-input-step
+        - pipeline-milestone-step
+        - pipeline-model-api
+        - pipeline-model-extensions
+        - pipeline-rest-api
+        - pipeline-stage-step
+        - pipeline-stage-tags-metadata
+        - pipeline-stage-view
+        - pipeline-utility-steps
+        - plain-credentials
+        - resource-disposer
+        - role-strategy
+        - run-condition
+        - scm-api
+        - scm-sync-configuration
+        - script-security
+        - simple-theme-plugin
+        - slack
+        - ssh-credentials
+        - structs
+        - subversion
+        - token-macro
+        - windows-slaves
+        - workflow-api
+        - workflow-basic-steps
+        - workflow-cps
+        - workflow-cps-global-lib
+        - workflow-durable-task-step
+        - workflow-job
+        - workflow-multibranch
+        - workflow-scm-step
+        - workflow-step-api
+        - workflow-support
+        - ws-cleanup
+      when: jenkins_update == True
+      tags: jenkins
+
+    #=====================================#
+    #      JENKINS post-tasks             #
+    #=====================================#
+    - role: binbash_inc.jenkins-docker-nginx-post-tasks
+      jenkins_post_tasks_user_groups: ['sudo','docker']
+      jenkins_post_tasks_init_cmd_setup_key: "cat /var/lib/jenkins/secrets/initialAdminPassword"
+      when: print_out_jenkins_init_secrets == True
+      tags: jenkins
+
+    #=====================================#
+    #      USER MGMT & SECURITY           #
+    #=====================================#
+    - role: binbash_inc.users
+      # create users
+      users_list_creation: "{{ users_list_creation_var }}"
+      # create ssh key to users
+      users_nested_list_ssh_key_path_with_user: "{{ users_nested_list_ssh_key_path_with_user_var }}"
+      # delete users
+      users_delete: "{{ users_delete_var }}"
+      users_list_deletion: "{{ users_list_deletion_var }}"
+      when: role_users_enabled == True
+      tags: security-users
+
+    - role: geerlingguy.security
+      # The port through which you'd like SSH to be accessible. The default is port 22, but if you're operating a server
+      # on the open internet, and have no firewall blocking access to port 22, you'll quickly find that thousands of
+      # login attempts per day are not uncommon. You can change the port to a nonstandard port (e.g. 2849) if you want
+      # to avoid these thousands of automated penetration attempts.
+      security_ssh_port: 22
+      security_ssh_password_authentication: "no"
+      security_ssh_permit_root_login: "no"
+      security_ssh_usedns: "no"
+      security_sudoers_passwordless: []
+      # Whether to install/enable yum-cron (RedHat-based systems) or unattended-upgrades (Debian-based systems).
+      # System restarts will not happen automatically in any case, and automatic upgrades are no excuse for sloppy
+      # patch and package management, but automatic updates can be helpful as yet another security measure.
+      security_autoupdate_enabled: false
+      security_autoupdate_reboot: false
+      security_autoupdate_reboot_time: "03:00"
+      security_fail2ban_enabled: false
+      tags: security-server
+
+    - role: oefenweb.fail2ban
+      # fail2ban_loglevel: "{{ 'INFO' if (ansible_distribution == 'Ubuntu' and ansible_distribution_version is
+      # version('16.04', '>=') or ansible_distribution == 'Debian' and ansible_distribution_version is
+      # version('9.0', '>=')) else 3 }}"
+      fail2ban_loglevel: 'INFO'
+      fail2ban_logtarget: /var/log/fail2ban.log
+      fail2ban_syslog_target: /var/log/fail2ban.log
+      fail2ban_syslog_facility: 1
+      fail2ban_socket: /var/run/fail2ban/fail2ban.sock
+      fail2ban_pidfile: /var/run/fail2ban/fail2ban.pid
+      fail2ban_dbpurgeage: 86400
+
+      fail2ban_sendername: 'Fail2ban'
+      fail2ban_ignoreips:
+      - 127.0.0.1/8
+      fail2ban_bantime: 600
+      fail2ban_maxretry: 3
+      fail2ban_findtime: 600
+      fail2ban_backend: auto
+      fail2ban_destemail: "{{ fail2ban_destemail_var }}"
+      fail2ban_banaction: iptables-multiport
+      fail2ban_mta: sendmail
+      fail2ban_protocol: tcp
+      fail2ban_chain: INPUT
+      fail2ban_action: '%(action_)s'
+
+      # - name: "{{ 'sshd' if (ansible_distribution == 'Ubuntu' and ansible_distribution_version is
+      # version('16.04', '>=') or ansible_distribution == 'Debian' and ansible_distribution_version is
+      # version('9.0', '>=')) else 'ssh' }}"
+      fail2ban_services:
+      - name: sshd
+        port: 22
+        maxretry: 5
+        bantime: -1
+      tags: security-fail2ban
+
+    #=====================================#
+    #      MON: PROMETHEUS NODE EXPORTER  #
+    #=====================================#
+    #Prometheus exporter for hardware and OS metrics exposed by
+    #*NIX kernels, written in Go with pluggable metric collectors.
+    - role: cloudalchemy.node-exporter
+      node_exporter_version: 0.17.0
+      node_exporter_web_listen_address: "0.0.0.0:9100"
+      node_exporter_textfile_dir: "/var/lib/node_exporter"
+      node_exporter_enabled_collectors: [ conntrack, diskstats, entropy, filefd, filesystem, hwmon, loadavg, mdadm,
+                                          meminfo, netdev, netstat, stat, textfile, time, vmstat, systemd]
+      when: role_prometheus_node_exporter_enabled == True
+      tags: prometheus-node-exporter
+
+    #=====================================#
+    #      CONTAINERS: DOCKER             #
+    #=====================================#
+    # The docker_edition should be either ce (Community Edition) or ee (Enterprise Edition). You can also specify a
+    # specific version of Docker to install using the distribution-specific format:
+    # Red Hat/CentOS: docker-{{ docker_edition }}-<VERSION>; Debian/Ubuntu: docker-{{ docker_edition }}=<VERSION>
+    # Releases can be find at: https://docs.docker.com/v17.12/release-notes/docker-ce/
+    # Releases (usable): https://download.docker.com/linux/ubuntu/dists/xenial/stable/binary-amd64/Packages
+    # Consider: https://github.com/geerlingguy/ansible-role-docker/issues/45
+    - role: geerlingguy.docker
+      docker_edition: 'ce'
+
+      #docker_package: "docker-{{ docker_edition }}=18.06.0~ce~3-0~ubuntu"
+      #docker_package: "docker-{{ docker_edition }}=18.06.0~{{docker_edition}}~3-0~{{ansible_distribution|lower}}"
+
+      #docker_package: "docker-{{ docker_edition }}=5:18.09.0~3-0~ubuntu-xenial"
+      docker_package: "docker-{{ docker_edition }}=5:18.09.0~3-0~{{ansible_distribution|lower}}-{{ ansible_distribution_release }}"
+      docker_package_state: present
+      docker_install_compose: true
+      docker_compose_version: "{{ docker_compose_version_var }}"
+      docker_compose_path: /usr/local/bin/docker-compose
+      docker_apt_release_channel: stable
+      docker_apt_repository: "deb https://download.docker.com/linux/{{ ansible_distribution|lower }} {{ ansible_distribution_release }} {{ docker_apt_release_channel }}"
+      tags: containers
+
+    - role: oefenweb.docker_machine
+      docker_machine_version: v0.16.1
+      docker_machine_install_prefix: /usr/local/bin
+      docker_machine_download_url: https://github.com
+      tags: containers
+
+    #=====================================#
+    #      CONTAINERS: KUBERNETES         #
+    #=====================================#
+    - role: andrewrothstein.kubectl
+      kubectl_ver: 'v1.13.2'
+      tags: containers
+
+    #=====================================#
+    #      LETSENCRYPT WILCARD CERT GEN   #
+    #=====================================#
+    # consider that the 1st exec must be manually having as reference the following file with doc
+    # roles/binbash_inc.letsencrypt-wildcard-to-s3/files/letsencrypt_helper.sh
+    - role: binbash_inc.letsencrypt-wildcard-to-s3
+      letsencrypt_backup_dir: "/var/lib/letsencrypt"
+      letsencrypt_files_dir: "/etc/letsencrypt"
+      letsencrypt_docker_cont_name: "quay.io/letsencrypt/letsencrypt:latest"
+      letsencrypt_domain_name: "{{ letsencrypt_domain_name_var }}"
+      letsencrypt_wilcard_domain: "{{ letsencrypt_wilcard_domain_var }}"
+      letsencrypt_notif_email: "{{ letsencrypt_notif_email_var }}"
+      letsencrypt_aws_s3_bucket_name: "{{ letsencryp_aws_s3_bucket_name_var }}"
+      letsencrypt_aws_s3_bucket_region: "{{ letsencrypt_aws_s3_bucket_region_var }}"
+      letsencrypt_aws_s3_bucket_root_files: "{{ letsencrypt_aws_s3_bucket_root_files_var }}"
+      letsencrypt_aws_s3_bucket_key_prefix: "{{ letsencrypt_aws_s3_bucket_key_prefix_var }}"
+      letsencrypt_aws_s3_bucket_permission: "{{ letsencrypt_aws_s3_bucket_permission_var }}"
+      letsencrypt_ssl_certs_zip_pass: "{{ letsencrypt_ssl_certs_zip_pass_var }}"
+      letsencrypt_aws_s3_bucket_push: "{{ letsencrypt_aws_s3_bucket_push_var }}"
+      when: letsencrypt_setup == True
+      tags: letsencrypt
+
+    #=====================================#
+    #      NGINX PROXY                    #
+    #=====================================#
+    - role: binbash_inc.nginx-proxy-cert-from-s3
+      nginx_ssl_certs_wildcard_domain: "{{ nginx_ssl_certs_wildcard_domain_var }}"
+      nginx_ssl_certs_aws_s3_bucket_name: "{{ nginx_ssl_certs_aws_s3_bucket_name_var }}"
+      nginx_ssl_certs_aws_s3_bucket_key_prefix: "{{ nginx_ssl_certs_aws_s3_bucket_key_prefix_var }}"
+      nginx_ssl_certs_zip_pass: "{{ nginx_ssl_certs_zip_pass_var }}"
+      tags: nginx
+      when: nginx_proxy_install == True
+
+    - role: jdauphant.nginx
+      nginx_ppa_use: true
+      nginx_snippets:
+        ssl:
+         - ssl_session_cache shared:SSL:50m
+         - ssl_session_tickets off
+         - ssl_session_timeout 1d
+         - ssl_protocols TLSv1.2
+         - ssl_ciphers EECDH+AESGCM:EECDH+AES
+         - ssl_ecdh_curve secp384r1
+         - ssl_prefer_server_ciphers on
+         - ssl_stapling on
+         - ssl_stapling_verify on
+         - add_header Strict-Transport-Security "max-age=15768000; includeSubdomains; preload"
+         - add_header X-Frame-Options DENY
+         - add_header X-Content-Type-Options nosniff
+      nginx_configs:
+        upstream:
+           - upstream {{nginx_server_service_1}} { server localhost:{{ nginx_server_service_1_port }} weight=10; }
+        gzip:
+           - gzip on
+           - gzip_disable msie6
+
+      nginx_sites:
+        service_1:
+          - listen 443 ssl
+          - server_name {{nginx_server_name_1_var}}
+          - ssl_certificate /etc/ssl/private/{{nginx_ssl_certs_wildcard_domain_var}}/fullchain1.pem
+          - ssl_certificate_key /etc/ssl/private/{{nginx_ssl_certs_wildcard_domain_var}}/privkey1.pem
+          - ssl_trusted_certificate /etc/ssl/private/{{nginx_ssl_certs_wildcard_domain_var}}/fullchain1.pem
+          - include /etc/nginx/snippets/ssl.conf
+          - |
+            location / {
+              proxy_set_header        Host $host:$server_port;
+              proxy_set_header        X-Real-IP $remote_addr;
+              proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header        X-Forwarded-Proto $scheme;
+              proxy_redirect http:// https://;
+              proxy_pass              http://{{ nginx_server_service_1 }};
+            }
+        service_1_http:
+          - listen 80
+          - server_name {{nginx_server_name_1_var}}
+          - return 301 https://{{nginx_server_name_1_var}}$request_uri
+      tags: nginx
+      when: nginx_proxy_install == True
+
+    - role: binbash_inc.aws-ecr-token-login
+      aws_ecr_token_login_path : "/opt/ecr/passwords"
+      aws_ecr_token_login_config_path: "/root/ecr-config.yml"
+      tags: aws-ecr-token

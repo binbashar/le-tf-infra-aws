@@ -1,0 +1,78 @@
+---
+
+- name: Create directory for letsencrypt backup.
+  file:
+    path: "{{ letsencrypt_backup_dir }}"
+    owner: root
+    group: root
+    state: directory
+    mode: 0755
+
+- name: Create directory to receibe the letsencrypt files.
+  file:
+    path: "{{ letsencrypt_files_dir }}"
+    owner: root
+    group: root
+    state: directory
+    mode: 0755
+
+##https://www.bennadel.com/blog/3420-obtaining-a-wildcard-ssl-certificate-from-letsencrypt-using-the-dns-challenge.htm
+#
+#docker run -it --rm --name letsencrypt \
+#-v "/etc/letsencrypt:/etc/letsencrypt" \
+#-v "/var/lib/letsencrypt:/var/lib/letsencrypt" \
+#quay.io/letsencrypt/letsencrypt:latest \
+#certonly \
+#-d '*.aws.binbash.com.ar' \
+#--manual \
+#--preferred-challenges dns \
+#--server https://acme-v02.api.letsencrypt.org/directory \
+#--email info@binbash.com.ar \
+#--keep-until-expiring \
+#--agree-tos \
+#--non-interactive
+
+- name: letsencrypt-wilcard-refresh container start
+  docker_container:
+    name: letsencrypt-wilcard-cert-refresh
+    image: "{{ letsencrypt_docker_cont_name }}"
+    state: started
+    restart_policy: always
+    command: |
+      certonly -d '{{ letsencrypt_wilcard_domain }}' \
+      --manual --preferred-challenges dns \
+      --server https://acme-v02.api.letsencrypt.org/directory \
+      --email {{ letsencrypt_notif_email }} \
+      --keep-until-expiring \
+      --agree-tos \
+      --non-interactive
+    volumes:
+    - "{{ letsencrypt_backup_dir }}:{{ letsencrypt_backup_dir }}"
+    - "{{ letsencrypt_files_dir }}:{{ letsencrypt_files_dir }}"
+
+- name: letsencrypt-wilcard-refresh container stop
+  docker_container:
+    name: letsencrypt-wilcard-cert-refresh
+    image: "{{ letsencrypt_docker_cont_name }}"
+    state: stopped
+
+- name: Zip certs encrypted
+  shell: "cd /etc/letsencrypt/archive && zip -r -P {{ letsencrypt_ssl_certs_zip_pass }} {{ letsencrypt_domain_name }}.zip {{ letsencrypt_domain_name }}"
+
+- name: AWS S3 PUT operation for letsencrypt wilcard certs
+  aws_s3:
+    bucket: "{{ letsencrypt_aws_s3_bucket_name }}"
+    object: "{{ letsencrypt_aws_s3_bucket_key_prefix }}/{{ letsencrypt_domain_name }}.zip"
+    src: "{{ letsencrypt_aws_s3_bucket_root_files }}"
+    region: "{{ letsencrypt_aws_s3_bucket_region }}"
+    permission: "{{ letsencrypt_aws_s3_bucket_permission }}"
+    mode: put
+  when: letsencrypt_aws_s3_bucket_push == True
+
+- name: Fetching letsencrypt wilcard certs files
+  fetch:
+    src: "{{ letsencrypt_aws_s3_bucket_root_files }}"
+    dest: "files/{{ letsencrypt_domain_name }}.zip"
+    flat: yes
+  when: letsencrypt_aws_s3_bucket_push == False
+

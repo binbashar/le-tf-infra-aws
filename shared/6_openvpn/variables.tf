@@ -135,11 +135,11 @@ variable "provisioner_script_path" {
 }
 variable "provisioner_script_tags_enable" {
   description = "Use tags in ansible provisioner if set to True, otherwise don't use any specific tag"
-  default     = "true"
+  default     = "false"
 }
 variable "provisioner_script_tags" {
   description = "An space separated ansible-playbook tags list"
-  default     = "openvpn-pritunl"
+  default     = "security-users"
 
 }
 variable "provisioner_vault_pass_enabled" {
@@ -154,9 +154,17 @@ variable "provisioner_vault_pass_path" {
 #=============================#
 # DNS                         #
 #=============================#
+variable "instance_dns_record_name_1_enabled" {
+  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
+  default = "true"
+}
 variable "instance_dns_record_name_1" {
     description = "AWS EC2 Instance Type"
     default     = "vpn.binbash.com.ar"
+}
+variable "instance_dns_record_name_2_enabled" {
+  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
+  default = "true"
 }
 variable "instance_dns_record_name_2" {
     description = "AWS EC2 Instance Type"

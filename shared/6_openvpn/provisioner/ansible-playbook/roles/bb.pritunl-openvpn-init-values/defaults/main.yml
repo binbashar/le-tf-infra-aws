@@ -1,6 +1,0 @@
----
-init_cmd_pritunl_db_setup_key: "pritunl setup-key"
-
-init_cmd_pritunl_default_login_admin_user: "pritunl default-password | grep 'username: '"
-
-init_cmd_pritunl_default_login_admin_pass: "pritunl default-password | grep 'password: '"

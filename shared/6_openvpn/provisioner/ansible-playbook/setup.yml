@@ -11,13 +11,16 @@
     - ./group_vars/all.yml
 
   roles:
+      #=====================================#
+      #      PRE-REQUISITES                 #
+      #=====================================#
     - role: common
       tags: common_tasks
 
     #=====================================#
     #      USER MGMT & SECURITY           #
     #=====================================#
-    - role: users
+    - role: binbash_inc.users
       when: role_users_enabled == True
       tags: security-users
 
@@ -59,7 +62,7 @@
       fail2ban_maxretry: 3
       fail2ban_findtime: 600
       fail2ban_backend: auto
-      fail2ban_destemail: info@binbash.com.ar
+      fail2ban_destemail: "{{ fail2ban_destemail_var }}"
       fail2ban_banaction: iptables-multiport
       fail2ban_mta: sendmail
       fail2ban_protocol: tcp
@@ -212,7 +215,7 @@
     #=====================================#
     #      OPENVPN PRITUNL POST-TASKS     #
     #=====================================#
-    - role: bb.pritunl-openvpn-init-values
+    - role: binbash_inc.pritunl-openvpn-init-values
       when: print_out_pritunl_setup_secrets == True
       tags: openvpn-pritunl
 
