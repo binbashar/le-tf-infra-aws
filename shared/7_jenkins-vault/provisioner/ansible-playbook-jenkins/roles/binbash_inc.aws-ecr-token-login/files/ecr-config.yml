@@ -1,0 +1,5 @@
+interval: 30m # defines refresh interval
+registries: # list of registries to refresh
+   - registryId: "763606934258" # typically AWS account ID
+     region: "us-east-1"
+     passwordFile: "/opt/passwords/my-registry.pass"

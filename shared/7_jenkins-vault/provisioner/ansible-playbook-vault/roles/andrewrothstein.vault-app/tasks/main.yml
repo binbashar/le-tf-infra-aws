@@ -1,0 +1,48 @@
+---
+- name: check for vault app installation
+  become: '{{ vault_app_privilege_escalate }}'
+  stat:
+    path: '{{ vault_app_install_subdir }}'
+  changed_when: false
+  register: vault_app_binary_dir
+
+- when: not vault_app_binary_dir.stat.exists
+  block:
+    - name: downloading vault-centric application
+      become: '{{ vault_app_privilege_escalate }}'
+      become_user: root
+      get_url:
+        url: '{{ vault_app_url }}'
+        dest: /tmp/{{ vault_app_zip }}
+        checksum: '{{ vault_app_checksum }}'
+        mode: 0644
+    - name: making installation directory
+      become: '{{ vault_app_privilege_escalate }}'
+      become_user: root
+      file:
+        path: '{{ vault_app_install_subdir }}'
+        state: directory
+        mode: 0755
+    - name: unarchive vault-centric application
+      become: '{{ vault_app_privilege_escalate }}'
+      become_user: root
+      unarchive:
+        remote_src: yes
+        src: /tmp/{{ vault_app_zip }}
+        dest: '{{ vault_app_install_subdir }}'
+        creates: '{{ vault_app_install_subsubdir }}'
+  always:
+    - name: cleanup...
+      become: '{{ vault_app_privilege_escalate }}'
+      become_user: root
+      file:
+        path: '/tmp/{{ vault_app_zip }}'
+        state: absent
+
+- name: link vault-centric application
+  become: '{{ vault_app_privilege_escalate }}'
+  become_user: root
+  file:
+    src: '{{ vault_app_install_subsubdir }}'
+    dest: '{{ vault_app_install_linkdir }}'
+    state: link

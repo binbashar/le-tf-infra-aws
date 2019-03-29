@@ -1,0 +1,42 @@
+---
+
+- name: Print out pritunl database setup key
+  command: "{{ pritunl_openvpn_init_cmd_db_setup_key }}"
+  register: cmd_output_1
+
+- set_fact:
+    pritunl_db_key: "{{ cmd_output_1.stdout }}"
+
+- debug:
+    msg:
+    - '#================================================#'
+    - '# PRITUNL_DB_KEY {{ pritunl_db_key }}'
+    - '#================================================#'
+
+- name: Print out pritunl default login user admin information
+  shell: "{{ pritunl_openvpn_init_cmd_default_login_admin_user }}"
+  register: cmd_output_2
+  ignore_errors: yes
+
+- set_fact:
+    pritunl_default_user: "{{ cmd_output_2.stdout }}"
+
+- debug:
+    msg:
+    - '#================================================#'
+    - '# DEFAULT_USER {{ pritunl_default_user }}'
+    - '#================================================#'
+
+- name: Print out pritunl default login pass admin information
+  shell: "{{ pritunl_openvpn_init_cmd_default_login_admin_pass }}"
+  register: cmd_output_3
+  ignore_errors: yes
+
+- set_fact:
+    pritunl_default_pass: "{{ cmd_output_3.stdout }}"
+
+- debug:
+    msg:
+    - '#================================================#'
+    - '# DEFAULT_USER {{ pritunl_default_pass }}'
+    - '#================================================#'
