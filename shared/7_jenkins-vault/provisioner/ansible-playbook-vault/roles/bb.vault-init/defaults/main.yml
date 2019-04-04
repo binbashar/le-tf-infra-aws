@@ -1,0 +1,9 @@
+---
+# Vault Address
+_vault_address: http://127.0.0.1:8200
+
+# Name of the fact that will hold the root token
+_vault_root_token_output_variable: vault_init_root_token
+
+# Name of the fact that will hold the unseal keys
+_vault_unseal_keys_output_variable: vault_init_unseal_keys

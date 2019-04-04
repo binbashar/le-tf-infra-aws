@@ -74,16 +74,15 @@ variable "sg_public_name" {
   default = "vpn-public"
 }
 // 80    pritunl.web.letsencrypt
-// 11080 pritunl.server.admin
-// 2709  pritunl.server.dev
-// 15255 pritunl.server.dev
+// 15255 pritunl.server.admin
+// 15255 pritunl.server.devops
 variable "sg_public_tpc_ports" {
   description = "Security group TCP ports"
-  default = "80,2709,11080"
+  default = "80"
 }
 variable "sg_public_udp_ports" {
   description = "Security group UDP ports"
-  default = "15255"
+  default = "15255,15256"
 }
 variable "sg_public_cidrs" {
   description = "Security group CIDR segments"
@@ -136,11 +135,11 @@ variable "provisioner_script_path" {
 }
 variable "provisioner_script_tags_enable" {
   description = "Use tags in ansible provisioner if set to True, otherwise don't use any specific tag"
-  default     = "true"
+  default     = "false"
 }
 variable "provisioner_script_tags" {
   description = "An space separated ansible-playbook tags list"
-  default     = "openvpn-pritunl"
+  default     = "security-users"
 
 }
 variable "provisioner_vault_pass_enabled" {
@@ -155,9 +154,17 @@ variable "provisioner_vault_pass_path" {
 #=============================#
 # DNS                         #
 #=============================#
+variable "instance_dns_record_name_1_enabled" {
+  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
+  default = "true"
+}
 variable "instance_dns_record_name_1" {
     description = "AWS EC2 Instance Type"
     default     = "vpn.binbash.com.ar"
+}
+variable "instance_dns_record_name_2_enabled" {
+  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
+  default = "true"
 }
 variable "instance_dns_record_name_2" {
     description = "AWS EC2 Instance Type"

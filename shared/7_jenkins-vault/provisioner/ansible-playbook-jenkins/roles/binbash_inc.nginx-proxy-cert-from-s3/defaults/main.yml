@@ -1,0 +1,19 @@
+---
+#
+# Prereq vars
+#
+nginx_ssl_certs_apt_repository_ansible_repo: 'ppa:ansible/ansible'
+nginx_ssl_certs_apt_pkg_list: ['unzip']
+nginx_ssl_certs_pip_pkg_list: ['boto','boto3']
+
+#
+# Nginx variables
+#
+nginx_ssl_certs_wildcard_domain: ""
+nginx_ssl_certs_zip_pass: ""
+
+#
+# AWS S3 variables
+#
+nginx_ssl_certs_aws_s3_bucket_name: ""
+nginx_ssl_certs_aws_s3_bucket_key_prefix: ""

@@ -1,0 +1,7 @@
+---
+- aws_ssm_parameter_store:
+    profile: "{{ _param_store_profile | default(omit) }}"
+    name: "{{ item.name }}"
+    string_type: "{{ item.type }}"
+    value: "{{ item.value }}"
+  loop: "{{ _param_store_entry_list }}"

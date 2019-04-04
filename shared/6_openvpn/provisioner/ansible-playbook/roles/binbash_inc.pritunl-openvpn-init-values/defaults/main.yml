@@ -1,0 +1,6 @@
+---
+pritunl_openvpn_init_cmd_db_setup_key: "pritunl setup-key"
+
+pritunl_openvpn_init_cmd_default_login_admin_user: "pritunl default-password | grep 'username: '"
+
+pritunl_openvpn_init_cmd_default_login_admin_pass: "pritunl default-password | grep 'password: '"

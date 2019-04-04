@@ -1,0 +1,18 @@
+---
+# Vault configuration directory
+_vault_conf_dir: /etc/vault
+
+# Vault File Backend directory (only this backend is supported for now)
+_vault_file_backend_dir: /var/vault
+
+# Vault SystemD service directory
+_vault_systemd_service_dir: /usr/lib/systemd/system
+
+# Vault Server Address & Port
+_vault_address_port: 127.0.0.1:8200
+
+# Maximum possible lease duration for tokens and secrets
+_vault_max_lease_ttl: 12h
+
+# Default lease duration for tokens and secrets
+_vault_default_lease_ttl: 12h

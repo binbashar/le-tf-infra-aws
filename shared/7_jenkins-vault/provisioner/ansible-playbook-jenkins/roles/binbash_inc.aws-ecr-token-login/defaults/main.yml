@@ -1,0 +1,3 @@
+---
+aws_ecr_token_login_path : "/opt/ecr/passwords"
+aws_ecr_token_login_config_path: "/root/ecr-config.yml"
