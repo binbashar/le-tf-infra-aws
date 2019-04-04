@@ -83,6 +83,7 @@
         - git-client
         - git-server
         - gitlab-plugin
+        - google-login
         - handlebars
         - hashicorp-vault-plugin
         - htmlpublisher

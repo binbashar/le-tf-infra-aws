@@ -34,7 +34,10 @@
 #======================================================================#
 - name: Generate an OpenSSH rsa keypair with a different size 2048 bits
   block:
-
+    # Ansible nested list reference code.
+    #nested_list: [[a,b],[c,d],[e,f],[g,h]]
+    #- debug: msg="{{ item[0] }} {{ item[1] }}"
+    #  with_list: "{{ nested_list }}"
     - name: Create .ssh dir
       file:
         path: "{{ item[1] }}/.ssh"
