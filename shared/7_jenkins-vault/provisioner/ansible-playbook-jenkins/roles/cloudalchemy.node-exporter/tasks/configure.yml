@@ -1,0 +1,29 @@
+---
+- name: Copy the Node Exporter systemd service file
+  template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart node_exporter
+
+- name: Create texfile collector dir
+  file:
+    path: "{{ node_exporter_textfile_dir }}"
+    state: directory
+    owner: "{{ node_exporter_system_user }}"
+    group: "{{ node_exporter_system_group }}"
+    recurse: true
+    mode: 0775
+  when: node_exporter_textfile_dir | length > 0
+
+- name: Allow Node Exporter port in SELinux on RedHat OS family
+  seport:
+    ports: "{{ node_exporter_web_listen_address.split(':')[1] }}"
+    proto: tcp
+    setype: http_port_t
+    state: present
+  when:
+    - ansible_version.full is version_compare('2.4', '>=')
+    - ansible_selinux.status == "enabled"

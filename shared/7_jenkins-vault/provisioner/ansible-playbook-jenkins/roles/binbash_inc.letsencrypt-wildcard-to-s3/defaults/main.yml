@@ -1,0 +1,44 @@
+---
+#
+# letsencryp certbot binary variables
+#
+letsencrypt_backup_dir: "/var/lib/letsencrypt"
+letsencrypt_files_dir: "/etc/letsencrypt"
+letsencrypt_docker_cont_name: "quay.io/letsencrypt/letsencrypt:latest"
+letsencrypt_domain_name: ""
+letsencrypt_wilcard_domain: ""
+letsencrypt_notif_email: ""
+letsencrypt_ssl_certs_zip_pass: ""
+
+#
+# AWS S3 variables
+#
+#
+# Pre-req AWS policty for your iam user, role or EC2-profie
+#
+#{
+#    "Version": "2012-10-17",
+#    "Statement": [
+#        {
+#            "Action": [
+#                "ecr:*",
+#                "ssm:*",
+#                "route53:*",
+#                "s3:ListBucket",
+#                "s3:PutObject",
+#                "s3:PutObjectAcl",
+#                "s3:GetObject",
+#                "s3:DeleteObject"
+#            ],
+#            "Effect": "Allow",
+#            "Resource": "*"
+#        }
+#    ]
+#}
+#
+letsencrypt_aws_s3_bucket_name: ""
+letsencrypt_aws_s3_bucket_region: "us-east-1"
+letsencrypt_aws_s3_bucket_root_files: ""
+letsencrypt_aws_s3_bucket_key_prefix: ""
+letsencrypt_aws_s3_bucket_permission: "private"
+letsencrypt_aws_s3_bucket_push: False

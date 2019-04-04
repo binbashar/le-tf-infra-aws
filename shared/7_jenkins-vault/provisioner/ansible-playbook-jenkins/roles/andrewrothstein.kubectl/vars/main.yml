@@ -1,0 +1,7 @@
+---
+kubectl_os: '{{ ansible_system|lower }}'
+
+kubectl_bin: kubectl{{ kubectl_suffix|default("") }}
+kubectl_url: '{{ kubectl_mirror }}/{{ kubectl_ver }}/bin/{{ kubectl_os }}/{{ kubectl_platform }}/{{ kubectl_bin }}'
+kubectl_install_path: '{{ kubectl_install_dir }}/kubectl-{{ kubectl_ver }}'
+kubectl_checksum: '{{ kubectl_checksums[kubectl_ver][kubectl_os][kubectl_platform] }}'

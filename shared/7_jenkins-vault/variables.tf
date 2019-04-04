@@ -33,20 +33,23 @@ variable "shared_account_id" {
 #=============================#
 variable "aws_ami_os_id" {
     description = "AWS AMI Operating System Identificator"
-    default = "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"
+    default     = "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"
 }
 variable "aws_ami_os_owner" {
     description = "AWS AMI Operating System Owner"
-    default = "099720109477"
+    default     = "099720109477"
 }
 variable "instance_type" {
     description = "AWS EC2 Instance Type"
-    default = "t3.small"
+    default     = "t3.small"
 }
 
 #=============================#
 # Storage                     #
 #=============================#
+#
+# EBS
+#
 variable "volume_size_root" {
   description = "EBS volume size"
   default = 20
@@ -58,6 +61,25 @@ variable "volume_size_extra_1" {
 variable "volume_size_extra_2" {
   description = "EBS volume size"
   default = 100
+}
+#
+# S3
+#
+variable "aws_s3_bucket_1_enabled" {
+  description = "AWS S3 bucket will be created if set to true, otherwise don't"
+  default = "true"
+}
+variable "aws_s3_bucket_name_1" {
+  description = "AWS S3 bucket name"
+  default     = "bb-shared-vault-storage"
+}
+variable "aws_s3_bucket_2_enabled" {
+  description = "AWS S3 bucket will be created if set to true, otherwise don't"
+  default = "true"
+}
+variable "aws_s3_bucket_name_2" {
+  description = "AWS S3 bucket name"
+  default     = "bb-shared-ssl-certificates"
 }
 
 #=============================#
@@ -74,45 +96,70 @@ variable "sg_private_name" {
 // 22   ssh
 // 80   http jenkins
 // 443  https jenkins
+// 8080 http jenkins default
 // 8200 hashicorp vault
 // 9100 prometheus node exporter
 variable "sg_private_tpc_ports" {
   description = "Security group TCP ports"
-  default = "22,80,443,8200,9100"
+  default = "22,80,443,8080,8200,9100"
+}
+variable "sg_private_udp_ports" {
+  description = "Security group UDP ports"
+  default = "default_null"
 }
 variable "sg_private_cidrs" {
   description = "Security group CIDR segments"
   default = "172.17.0.0/20"
 }
 
-#
-# Provisioner Connections
-#
-variable "provisioner_user" {
-  description = "username - for SSH connection"
-  default     = "ubuntu"
-}
-variable "provisioner_private_key_path" {
-  description = "private_key path - The contents of an SSH key to use for the connection. These can be loaded from a file on disk using the file func."
-  default     = "./provisioner/keys/id_rsa"
-}
-variable "provisioner_private_key_relative_script_path" {
-  description = "private_key path - The contents of an SSH key to use for the connection. These can be loaded from a file on disk using the file func."
-  default     = "../keys/id_rsa"
-}
-variable "provisioner_script_path" {
-  description = "private_key path - The contents of an SSH key to use for the connection. These can be loaded from a file on disk using the file func."
-  default     = "./provisioner/ansible-playbook"
+#=============================#
+# Provisioner: aws userdata   #
+#=============================#
+variable "aws_userdata_path" {
+  description = "AWS EC2 userdata provisioning script path"
+  default     = "./provisioner/aws-userdata/userdata.sh"
 }
 
 #=============================#
 # DNS                         #
 #=============================#
+variable "instance_dns_record_name_1_enabled" {
+  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
+  default = "true"
+}
 variable "instance_dns_record_name_1" {
     description = "AWS EC2 Instance Type"
     default     = "jenkins.aws.binbash.com.ar"
 }
+variable "instance_dns_record_name_2_enabled" {
+  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
+  default = "true"
+}
 variable "instance_dns_record_name_2" {
     description = "AWS EC2 Instance Type"
     default     = "vault.aws.binbash.com.ar"
+}
+// https://www.bennadel.com/blog/3420-obtaining-a-wildcard-ssl-certificate-from-letsencrypt-using-the-dns-challenge.htm
+//Please deploy a DNS TXT record under the name
+//_acme-challenge.aws.binbash.com.ar with the following value
+variable "letsencrypt_dns_record_name_enabled" {
+  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
+  default = "true"
+}
+variable "letsencrypt_dns_record_name" {
+    description = "AWS EC2 Instance Type"
+    default     = "_acme-challenge.aws.binbash.com.ar"
+}
+variable "letsencrypt_dns_record_value" {
+    description = "AWS EC2 Instance Type"
+    default     = "UQ6h7YpwtBLE6GvRgPB7zqwqvLuWxcIibnq9h8Qalmo"
+}
+
+#=============================#
+# TAGS                        #
+#=============================#
+variable "tags" {
+  type = "map"
+  description = "A mapping of tags to assign to all resources"
+  default     = {}
 }

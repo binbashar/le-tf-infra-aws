@@ -1,0 +1,8 @@
+---
+vault_app_name: '{{vault_app}}_{{vault_app_ver}}_{{vault_app_platform}}'
+vault_app_checksum: '{{vault_app_checksums[vault_app_ver][vault_app_platform]}}'
+vault_app_zip: '{{vault_app_name}}.zip'
+vault_app_url: '{{vault_app_mirror}}/{{vault_app}}/{{vault_app_ver}}/{{vault_app_zip}}'
+vault_app_install_subdir: '{{vault_app_install_dir}}/{{vault_app_name}}'
+vault_app_install_subsubdir: '{{vault_app_install_subdir}}/{{vault_app}}'
+vault_app_install_linkdir: '{{vault_app_install_dir}}/{{vault_app}}'

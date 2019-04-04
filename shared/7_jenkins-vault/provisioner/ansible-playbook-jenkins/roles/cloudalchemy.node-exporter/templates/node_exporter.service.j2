@@ -1,0 +1,45 @@
+{{ ansible_managed | comment }}
+
+[Unit]
+Description=Prometheus Node Exporter
+After=network.target
+
+[Service]
+Type=simple
+User={{ node_exporter_system_user }}
+Group={{ node_exporter_system_group }}
+ExecStart=/usr/local/bin/node_exporter \
+{% for collector in node_exporter_enabled_collectors -%}
+{%   if not collector is mapping %}
+    --collector.{{ collector }} \
+{%   else -%}
+{%     set name, options = (collector.items()|list)[0] -%}
+    --collector.{{ name }} \
+{%     for k,v in options|dictsort %}
+    --collector.{{ name }}.{{ k }}={{ v }} \
+{%     endfor -%}
+{%   endif -%}
+{% endfor -%}
+{% for collector in node_exporter_disabled_collectors %}
+    --no-collector.{{ collector }} \
+{% endfor %}
+    --web.listen-address={{ node_exporter_web_listen_address }}
+
+SyslogIdentifier=node_exporter
+Restart=always
+
+PrivateTmp=yes
+ProtectHome=yes
+NoNewPrivileges=yes
+
+{% if node_exporter_systemd_version.stdout | int >= 232 %}
+ProtectSystem=strict
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=yes
+{% else %}
+ProtectSystem=full
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target

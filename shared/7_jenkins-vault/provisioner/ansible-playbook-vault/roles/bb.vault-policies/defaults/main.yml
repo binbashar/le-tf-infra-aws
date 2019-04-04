@@ -1,0 +1,18 @@
+---
+# @param policies_entry_list
+# @description
+#   A list of policy entries such as the following:
+#       policies_entry_list:
+#         - name: policy_name_1     # Name of the policy
+#           file: policy_file_1     # File with the policy definition
+#
+_policies_entry_list: []
+
+# Vault Address
+_vault_address: http://127.0.0.1:8200
+
+# Vault Token
+_vault_token: ''
+
+# Temp directory to copy policy files
+_vault_policies_temp_dir: /tmp/vault

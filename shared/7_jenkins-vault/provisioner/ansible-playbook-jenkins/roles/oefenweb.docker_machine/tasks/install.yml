@@ -1,0 +1,50 @@
+# tasks file for docker-machine
+---
+- name: get download name
+  shell: echo docker-machine-$(uname -s)-$(uname -m)
+  register: _get_download_name
+  changed_when: false
+  tags:
+    - docker-machine-install-download
+    - docker-machine-install-download-name
+
+- name: create (download) directory
+  file:
+    path: "{{ docker_machine_downloads_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  tags:
+    - docker-machine-install-download
+    - docker-machine-install-download-directory
+
+- name: download
+  get_url:
+    url: "{{ docker_machine_download_url }}/docker/machine/releases/download/{{ docker_machine_version }}/{{ _get_download_name.stdout }}"
+    dest: "{{ docker_machine_downloads_path }}/{{ _get_download_name.stdout }}-{{ docker_machine_version }}"
+    owner: root
+    group: root
+    mode: 0755
+  tags:
+    - docker-machine-install-download
+    - docker-machine-install-download-get
+
+- name: install
+  file:
+    src: "{{ docker_machine_downloads_path }}/{{ _get_download_name.stdout }}-{{ docker_machine_version }}"
+    dest: "{{ docker_machine_install_prefix }}/docker-machine"
+    state: link
+    force: true
+  tags:
+    - docker-machine-install-install
+    - docker-machine-install-install-symlink
+
+- name: verify
+  command: >
+    {{ docker_machine_install_prefix }}/docker-machine --version
+  register: _verify_version
+  failed_when: "docker_machine_version | replace('v', '', 1) not in _verify_version.stdout"
+  changed_when: false
+  tags:
+    - docker-machine-install-verify

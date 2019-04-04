@@ -1,0 +1,33 @@
+---
+- name: Adding Jenkins user to sudo group
+  user:
+    name: jenkins
+    groups: "{{ item }}"
+    append: yes
+  loop: "{{ jenkins_post_tasks_user_groups }}"
+
+- name: Print out initial jenkins admin password
+  command: "{{ jenkins_post_tasks_init_cmd_setup_key }}"
+  register: cmd_output_1
+  ignore_errors: yes
+
+- set_fact:
+    init_admin_key: "{{ cmd_output_1.stdout }}"
+
+- debug:
+    msg:
+    - '#================================================#'
+    - '# JENKINS_INIT_ADMIN_KEY {{ init_admin_key }}'
+    - '#================================================#'
+
+#- service:
+#    name: nginx
+#    state: restarted
+
+#- name: Set jenkins authorized key taken from file
+#  authorized_key:
+#    user: jenkins
+#    state: present
+#    key: "{{ lookup('file', 'roles/users/files/id_rsa_jenkins.pub') }}"
+#    path: /var/lib/jenkins/.ssh/authorized_keys
+#  tags: credentials

@@ -1,0 +1,36 @@
+---
+- name: resolve platform specific vars
+  include_vars: '{{ item }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_release }}.yml'
+        - '{{ ansible_distribution }}.yml'
+        - '{{ ansible_os_family }}.yml'
+      skip: true
+      paths:
+        - '{{ role_path }}/vars'
+
+- name: create target directory
+  become: '{{ kubectl_privilege_escalate }}'
+  become_user: root
+  file:
+    path: '{{ kubectl_install_dir }}'
+    state: directory
+    mode: '0755'
+
+- name: install kubectl
+  become: '{{ kubectl_privilege_escalate }}'
+  become_user: root
+  get_url:
+    url: '{{ kubectl_url }}'
+    dest: '{{ kubectl_install_path }}'
+    checksum: '{{ kubectl_checksum }}'
+    mode: '0755'
+
+- name: link kubectl
+  become: '{{ kubectl_privilege_escalate }}'
+  become_user: root
+  file:
+    src: '{{ kubectl_install_path }}'
+    dest: '{{ kubectl_install_dir }}/{{ kubectl_bin }}'
+    state: link

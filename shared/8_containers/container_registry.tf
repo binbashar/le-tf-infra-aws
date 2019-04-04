@@ -22,7 +22,7 @@ module "ecr_lifecycle_rule_tagged_prd_image_count_7" {
 #
 # ECR Registry: DevOps Images
 #
-module "nativeweb_leverage_ecr_repo" {
+module "ecr_repo_leverage" {
     source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ecr-tf/ecr-cross-account?ref=v0.5"
 
     namespace = "bb"
@@ -40,5 +40,5 @@ module "nativeweb_leverage_ecr_repo" {
         "${module.ecr_lifecycle_rule_tagged_dev_image_count_7.policy_rule}",
         "${module.ecr_lifecycle_rule_tagged_prd_image_count_7.policy_rule}"
     ]
-    lifecycle_policy_rules_count = 3
+    lifecycle_policy_rules_count = 2
 }
