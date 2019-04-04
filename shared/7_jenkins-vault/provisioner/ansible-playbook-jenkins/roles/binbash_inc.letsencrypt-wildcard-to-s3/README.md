@@ -1,54 +1,134 @@
-# Ansible Role: binbash_inc.pritunl-openvpn-init-values
+# Ansible Role: binbash_inc.letsencrypt-wildcard-to-s3
 
-**Print in stdout the initial pritunl setup values.**
+**Role purpose: Obtaining A Wildcard SSL Certificate From LetsEncrypt Using The DNS Challenge .**
 
-- PRITUNL_DB_KEY
-- DEFAULT_USER
-- DEFAULT_USER
 
-We encourage the user to implement this role as follows, where `print_out_pritunl_setup_secrets` is a variable that will work till you change the admin default admin user and pass from the UI
+Reference article:
+https://www.bennadel.com/blog/3420-obtaining-a-wildcard-ssl-certificate-from-letsencrypt-using-the-dns-challenge.htm
 
-1st round execution till you update admin user credentials from the UI
+### Pre-requisite:
+
+* 1st manual round exec (it's not necessary for this instance to have any publicly exposed port as the traditional let's encrypt http challenge)
+* We'll make use of a docker let's encrypt container with the cmd below:
 ```
-vars:
-    print_out_pritunl_setup_secrets: True
+DOMAIN='*.aws.binbash.com.ar'
+EMAIL='info@binbash.com.ar'
 
-- role: binbash_inc.pritunl-openvpn-init-values
-      when: print_out_pritunl_setup_secrets == True
-      tags: openvpn-pritunl
-```
-
-2nd round execution the flag must be set to `False`
-```
-vars:
-    print_out_pritunl_setup_secrets: False
-
-- role: binbash_inc.pritunl-openvpn-init-values
-      when: print_out_pritunl_setup_secrets == True
-      tags: openvpn-pritunl
-```
-
-if flag it's not set to `False` you'll get the following error:
-```
-FAILED! => {"changed": true, "cmd": "pritunl default-password | grep 'username: '", "delta": "0:00:01.158679", "end": "2019-03-26 22:58:33.768408", "failed": true, "msg": "non-zero return code", "rc": 1, "start": "2019-03-26 22:58:32.609729", "stderr": "", "stderr_lines": [], "stdout": "", "stdout_lines": []}
+jenkins@bb-jenkins-vault:~$ docker run -it --rm --name letsencrypt \
+-v "/etc/letsencrypt:/etc/letsencrypt" \
+-v "/var/lib/letsencrypt:/var/lib/letsencrypt" \
+quay.io/letsencrypt/letsencrypt:latest \
+certonly \
+-d $DOMAIN \
+--manual \
+--preferred-challenges dns \
+--server https://acme-v02.api.letsencrypt.org/directory \
+--email $EMAIL \
+--keep-until-expiring \
+--agree-tos
 ```
 
-Since the current output for the command will be an empty string as follows:
-```
-ubuntu@infra-openvpn:~$ sudo pritunl default-password | grep 'username: '
-ubuntu@infra-openvpn:~$
-```
 
-**NOTE:** The before error it's actually managed by `ignore_errors: yes` in order to avoid the ansible role to fail if the user forgets to set the flag to `False` after the admin user credentials update.
-
-And the outputs will result as shown below:
+**Eg of execution:**
 
 ```
-module.ec2_provisioner_ansible_2.null_resource.ec2-ansible-playbook-tags-vault-pass (local-exec):         "#================================================#",
-module.ec2_provisioner_ansible_2.null_resource.ec2-ansible-playbook-tags-vault-pass (local-exec):         "# DEFAULT_USER ",
-module.ec2_provisioner_ansible_2.null_resource.ec2-ansible-playbook-tags-vault-pass (local-exec):         "#================================================#"
+jenkins@bb-jenkins-vault:~$ docker run -it --rm --name letsencrypt \
+> -v "/etc/letsencrypt:/etc/letsencrypt" \
+> -v "/var/lib/letsencrypt:/var/lib/letsencrypt" \
+> quay.io/letsencrypt/letsencrypt:latest \
+> certonly \
+> -d '*.aws.binbash.com.ar' \
+> --manual \
+> --preferred-challenges dns \
+> --server https://acme-v02.api.letsencrypt.org/directory \
+> --email info@binbash.com.ar \
+> --keep-until-expiring \
+> --agree-tos
+Warning: This Docker image will soon be switching to Alpine Linux.
+You can switch now using the certbot/certbot repo on Docker Hub.
+/opt/certbot/venv/local/lib/python2.7/site-packages/cryptography/hazmat/primitives/constant_time.py:26: CryptographyDeprecationWarning: Support for your Python version is deprecated. The next version of cryptography will remove support. Please upgrade to a 2.7.x release that supports hmac.compare_digest as soon as possible.
+  utils.PersistentlyDeprecated2018,
+Saving debug log to /var/log/letsencrypt/letsencrypt.log
+Plugins selected: Authenticator manual, Installer None
 
-module.ec2_provisioner_ansible_2.null_resource.ec2-ansible-playbook-tags-vault-pass (local-exec):         "#================================================#",
-module.ec2_provisioner_ansible_2.null_resource.ec2-ansible-playbook-tags-vault-pass (local-exec):         "# DEFAULT_USER ",
-module.ec2_provisioner_ansible_2.null_resource.ec2-ansible-playbook-tags-vault-pass (local-exec):         "#================================================#"
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Would you be willing to share your email address with the Electronic Frontier
+Foundation, a founding partner of the Let's Encrypt project and the non-profit
+organization that develops Certbot? We'd like to send you email about our work
+encrypting the web, EFF news, campaigns, and ways to support digital freedom.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+(Y)es/(N)o: Y
+Obtaining a new certificate
+Performing the following challenges:
+dns-01 challenge for aws.binbash.com.ar
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+NOTE: The IP of this machine will be publicly logged as having requested this
+certificate. If you're running certbot in manual mode on a machine that is not
+your server, please ensure you're okay with that.
+
+Are you OK with your IP being logged?
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+(Y)es/(N)o: Y
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Please deploy a DNS TXT record under the name
+_acme-challenge.aws.binbash.com.ar with the following value:
+
+80qTudlm4iGgkVSAjCzYKw1YScPXYLlQPwxnNI6l0YE
+
+Before continuing, verify the record is deployed.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Press Enter to Continue
+Waiting for verification...
+Cleaning up challenges
+
+IMPORTANT NOTES:
+ - Congratulations! Your certificate and chain have been saved at:
+   /etc/letsencrypt/live/aws.binbash.com.ar/fullchain.pem
+   Your key file has been saved at:
+   /etc/letsencrypt/live/aws.binbash.com.ar/privkey.pem
+   Your cert will expire on 2019-06-26. To obtain a new or tweaked
+   version of this certificate in the future, simply run certbot
+   again. To non-interactively renew *all* of your certificates, run
+   "certbot renew"
+ - Your account credentials have been saved in your Certbot
+   configuration directory at /etc/letsencrypt. You should make a
+   secure backup of this folder now. This configuration directory will
+   also contain certificates and private keys obtained by Certbot so
+   making regular backups of this folder is ideal.
+ - If you like Certbot, please consider supporting our work by:
+
+   Donating to ISRG / Let's Encrypt:   https://letsencrypt.org/donate
+   Donating to EFF:                    https://eff.org/donate-le
 ```
+
+
+
+### Role use case
+
+```
+    #=====================================#
+    #      LETSENCRYPT WILCARD CERT GEN   #
+    #=====================================#
+    # consider that the 1st exec must be manually having as reference the following file with doc
+    # roles/binbash_inc.letsencrypt-wildcard-to-s3/files/letsencrypt_helper.sh
+    - role: binbash_inc.letsencrypt-wildcard-to-s3
+      letsencrypt_backup_dir: "/var/lib/letsencrypt"
+      letsencrypt_files_dir: "/etc/letsencrypt"
+      letsencrypt_docker_cont_name: "quay.io/letsencrypt/letsencrypt:latest"
+      letsencrypt_domain_name: "{{ letsencrypt_domain_name_var }}"
+      letsencrypt_wilcard_domain: "{{ letsencrypt_wilcard_domain_var }}"
+      letsencrypt_notif_email: "{{ letsencrypt_notif_email_var }}"
+      letsencrypt_aws_s3_bucket_name: "{{ letsencryp_aws_s3_bucket_name_var }}"
+      letsencrypt_aws_s3_bucket_region: "{{ letsencrypt_aws_s3_bucket_region_var }}"
+      letsencrypt_aws_s3_bucket_root_files: "{{ letsencrypt_aws_s3_bucket_root_files_var }}"
+      letsencrypt_aws_s3_bucket_key_prefix: "{{ letsencrypt_aws_s3_bucket_key_prefix_var }}"
+      letsencrypt_aws_s3_bucket_permission: "{{ letsencrypt_aws_s3_bucket_permission_var }}"
+      letsencrypt_ssl_certs_zip_pass: "{{ letsencrypt_ssl_certs_zip_pass_var }}"
+      letsencrypt_aws_s3_bucket_push: "{{ letsencrypt_aws_s3_bucket_push_var }}"
+      when: letsencrypt_setup == True
+      tags: letsencrypt
+```
+
+**NOTE:** binbash_inc.letsencrypt-wildcard-to-s3 Role has the --non-intereactive flag configured in it's source code

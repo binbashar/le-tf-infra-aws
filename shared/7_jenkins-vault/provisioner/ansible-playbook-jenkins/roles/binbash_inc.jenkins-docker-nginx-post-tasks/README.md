@@ -1,5 +1,5 @@
-# Ansible Role: binbash_inc.jenkins-nginx-proxy-cert
+# Ansible Role: binbash_inc.jenkins-docker-nginx-post-tasks
 
-Jenkins server pre-tasks relate role.
+Jenkins server post-tasks related role.
 
 
