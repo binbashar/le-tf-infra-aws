@@ -11,7 +11,7 @@ module "vpc" {
     private_subnets = "${local.private_subnets}"
     public_subnets  = "${local.public_subnets}"
 
-    enable_nat_gateway   = true
+    enable_nat_gateway   = false
     single_nat_gateway   = true
     enable_vpn_gateway   = false
     enable_dns_hostnames = true
