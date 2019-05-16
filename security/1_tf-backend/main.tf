@@ -8,7 +8,7 @@ variable "bucket" {}
 variable "dynamodb_table" {}
 
 provider "aws" {
-    version = "~> 2.2"
+    version = "~> 2.10"
     region = "${var.region}"
     profile = "${var.profile}"
 }

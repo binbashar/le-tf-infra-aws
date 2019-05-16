@@ -76,7 +76,7 @@ options:
             - Whether to use an SSL connection when connecting to the database
         default: False
     ssl_cert_reqs:
-        version_added: "2.2"
+        version_added: "2.10"
         description:
             - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided.
         required: false
