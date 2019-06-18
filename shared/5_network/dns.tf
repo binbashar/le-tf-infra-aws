@@ -9,10 +9,11 @@ resource "aws_route53_zone" "aws_public_hosted_zone_1" {
   name = "${var.aws_public_hosted_zone_fqdn_1}"
 
   tags = "${local.tags}"
-
 }
 
+#
 # MX records
+#
 resource "aws_route53_record" "aws_public_hosted_zone_1_mx_records" {
   zone_id = "${aws_route53_zone.aws_public_hosted_zone_1.id}"
   name    = "${var.aws_public_hosted_zone_fqdn_1}"
@@ -20,15 +21,17 @@ resource "aws_route53_record" "aws_public_hosted_zone_1_mx_records" {
   ttl     = 300
 
   records = [
-      "${var.aws_public_hosted_zone_1_mail_servers_1}",
-      "${var.aws_public_hosted_zone_1_mail_servers_2}",
-      "${var.aws_public_hosted_zone_1_mail_servers_3}",
-      "${var.aws_public_hosted_zone_1_mail_servers_4}",
-      "${var.aws_public_hosted_zone_1_mail_servers_5}",
+    "${var.aws_public_hosted_zone_1_mail_servers_1}",
+    "${var.aws_public_hosted_zone_1_mail_servers_2}",
+    "${var.aws_public_hosted_zone_1_mail_servers_3}",
+    "${var.aws_public_hosted_zone_1_mail_servers_4}",
+    "${var.aws_public_hosted_zone_1_mail_servers_5}",
   ]
 }
 
+#
 # A records
+#
 resource "aws_route53_record" "aws_public_hosted_zone_1_A_record_1" {
   zone_id = "${aws_route53_zone.aws_public_hosted_zone_1.id}"
   name    = "${var.aws_public_hosted_zone_fqdn_1}"
@@ -36,6 +39,7 @@ resource "aws_route53_record" "aws_public_hosted_zone_1_A_record_1" {
   records = ["${var.aws_public_hosted_zone_1_address_record_1}"]
   ttl     = 300
 }
+
 resource "aws_route53_record" "aws_public_hosted_zone_1_A_record_2" {
   zone_id = "${aws_route53_zone.aws_public_hosted_zone_1.id}"
   name    = "${var.aws_public_hosted_zone_fqdn_record_name_1}"
@@ -43,6 +47,7 @@ resource "aws_route53_record" "aws_public_hosted_zone_1_A_record_2" {
   records = ["${var.aws_public_hosted_zone_1_address_record_1}"]
   ttl     = 300
 }
+
 resource "aws_route53_record" "aws_public_hosted_zone_1_A_record_3" {
   zone_id = "${aws_route53_zone.aws_public_hosted_zone_1.id}"
   name    = "${var.aws_public_hosted_zone_fqdn_record_name_2}"
@@ -50,6 +55,7 @@ resource "aws_route53_record" "aws_public_hosted_zone_1_A_record_3" {
   records = ["${var.aws_public_hosted_zone_1_address_record_2}"]
   ttl     = 300
 }
+
 resource "aws_route53_record" "aws_public_hosted_zone_1_A_record_4" {
   zone_id = "${aws_route53_zone.aws_public_hosted_zone_1.id}"
   name    = "${var.aws_public_hosted_zone_fqdn_record_name_3}"
@@ -58,7 +64,9 @@ resource "aws_route53_record" "aws_public_hosted_zone_1_A_record_4" {
   ttl     = 300
 }
 
+#
 # text records
+#
 resource "aws_route53_record" "aws_public_hosted_zone_1_TXT_record_1" {
   zone_id = "${aws_route53_zone.aws_public_hosted_zone_1.id}"
   name    = "${var.aws_public_hosted_zone_fqdn_1}"
@@ -66,11 +74,28 @@ resource "aws_route53_record" "aws_public_hosted_zone_1_TXT_record_1" {
   records = ["${var.aws_public_hosted_zone_1_text_record_1}"]
   ttl     = 300
 }
+
 resource "aws_route53_record" "aws_public_hosted_zone_1_TXT_record_2" {
   zone_id = "${aws_route53_zone.aws_public_hosted_zone_1.id}"
   name    = "${var.aws_public_hosted_zone_1_text_record_2_name}"
   type    = "TXT"
   records = ["${var.aws_public_hosted_zone_1_text_record_2}"]
+  ttl     = 300
+}
+
+resource "aws_route53_record" "aws_public_hosted_zone_1_TXT_record_3" {
+  zone_id = "${aws_route53_zone.aws_public_hosted_zone_1.id}"
+  name    = "${var.aws_public_hosted_zone_1_text_record_3_name}"
+  type    = "TXT"
+  records = ["${var.aws_public_hosted_zone_1_text_record_3}"]
+  ttl     = 300
+}
+
+resource "aws_route53_record" "aws_public_hosted_zone_1_TXT_record_4" {
+  zone_id = "${aws_route53_zone.aws_public_hosted_zone_1.id}"
+  name    = "${var.aws_public_hosted_zone_1_text_record_4_name}"
+  type    = "TXT"
+  records = ["${var.aws_public_hosted_zone_1_text_record_4}"]
   ttl     = 300
 }
 
@@ -85,7 +110,6 @@ resource "aws_route53_zone" "aws_private_hosted_zone_1" {
   }
 
   tags = "${local.tags}"
-
 }
 
 /*

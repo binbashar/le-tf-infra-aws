@@ -7,7 +7,7 @@
 - You are encouraged to inspect those Makefiles to understand what's going on.
 
 ### Terraform
-- Install terraform >= v0.11.7
+- Install terraform >= v0.11.14
 - Run `terraform version` to check
 
 ### Remote State
@@ -27,20 +27,37 @@ In the `tf-backend` folder you should find all setup scripts or configuration fi
 
 
 ## Files/Folders Organization
-Configuration files are organized by environments (e.g. dev, stg) to keep any changes made to them separate.
+Configuration files are organized by environments (e.g. dev, stg) and service type (identities, sec, network, etc) to keep any changes made to them separate.
 Within each of those folders you should find the Terraform files that are used to define all the resources that belong to such environment.
 ```
-+ apps-dev-stg/
-    tf-backend/                     (TF backend initialization files)
-    config/                         (shared configuration files)
-    dev/
-        ...
-    stg/
-        * network.tf                (modules: aws/vpc?ref=v0.5"
-        * native-web-spa.tf         (modules: aws/s3?ref=v0.5"
-        * native-web-api.tf
-        * database.tf               (modules: aws/rds/postgresql?ref=v0.5"
-        * other.tf                  (modules: sqs, sns, ...)
+├── dev
+│   ├── 1_tf-backend
+│   ├── 2_secrets
+│   ├── 3_identities
+│   ├── 4_security
+│   ├── 5_network
+│   ├── config
+│   └── readme.md
+├── readme.md
+├── security
+│   ├── 1_tf-backend
+│   ├── 2_secrets
+│   ├── 3_identities
+│   ├── 4_security
+│   ├── 5_organization
+│   ├── config
+│   └── readme.md
+└── shared
+    ├── 1_tf-backend
+    ├── 2_secrets
+    ├── 3_identities
+    ├── 4_security
+    ├── 5_network
+    ├── 6_openvpn
+    ├── 7_jenkins-vault
+    ├── 8_containers
+    ├── config
+    └── readme.md
 ```
 
 ## Terraform Workflow
