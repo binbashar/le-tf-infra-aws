@@ -3,16 +3,17 @@
 # causing a TF interpolation error.
 #
 variable "aws_username" {
-    default = "${aws:username}"
+  default = "${aws:username}"
 }
 
 #
 # Policy: Standard AWS Console User
 #
 resource "aws_iam_policy" "standard_console_user" {
-    name        = "standard_console_user"
-    description = "Base policy for AWS console users"
-    policy = <<EOF
+  name        = "standard_console_user"
+  description = "Base policy for AWS console users"
+
+  policy = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -47,9 +48,10 @@ EOF
 # Policy: Assume Admin Role
 #
 resource "aws_iam_policy" "assume_admin_role" {
-    name        = "assume_admin_role"
-    description = "Allow assume Admin role in member accounts"
-    policy = <<EOF
+  name        = "assume_admin_role"
+  description = "Allow assume Admin role in member accounts"
+
+  policy = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -73,9 +75,10 @@ EOF
 # Policy: Assume DevOps Role
 #
 resource "aws_iam_policy" "assume_devops_role" {
-    name        = "assume_devops_role"
-    description = "Allow assume DevOps role in member accounts"
-    policy = <<EOF
+  name        = "assume_devops_role"
+  description = "Allow assume DevOps role in member accounts"
+
+  policy = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -96,9 +99,10 @@ EOF
 }
 
 resource "aws_iam_policy" "assume_auditor_role" {
-    name        = "assume_auditor_role"
-    description = "Allow assume Auditor role in member accounts"
-    policy = <<EOF
+  name        = "assume_auditor_role"
+  description = "Allow assume Auditor role in member accounts"
+
+  policy = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [

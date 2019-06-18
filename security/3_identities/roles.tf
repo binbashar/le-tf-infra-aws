@@ -6,24 +6,25 @@
 # Assumable Role: DevOps
 #
 module "iam_assumable_roles" {
-    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-bb/assumable-role?ref=v0.5"
+  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-bb/assumable-role?ref=v0.6"
 
-    trusted_role_arns = [
-        "arn:aws:iam::${var.security_account_id}:root"
-    ]
+  trusted_role_arns = [
+    "arn:aws:iam::${var.security_account_id}:root",
+  ]
 
-    role_name = "DevOps"
-    role_requires_mfa = false
-    role_policy_arn = "${aws_iam_policy.devops_access.arn}"
+  role_name         = "DevOps"
+  role_requires_mfa = false
+  role_policy_arn   = "${aws_iam_policy.devops_access.arn}"
 }
 
 #
 # User Managed Policy: DevOps Access
 #
 resource "aws_iam_policy" "devops_access" {
-    name        = "devops_access"
-    description = "Services enabled for DevOps role"
-    policy = <<EOF
+  name        = "devops_access"
+  description = "Services enabled for DevOps role"
+
+  policy = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -77,8 +78,8 @@ EOF
 # Admin Role
 #
 resource "aws_iam_role" "admin_role" {
-    name                 = "Admin"
-    path                 = "/"
+  name = "Admin"
+  path = "/"
 
   assume_role_policy = <<EOF
 {
@@ -104,16 +105,16 @@ EOF
 # AWS Managed Policy: Admin Access
 #
 resource "aws_iam_role_policy_attachment" "admins_have_read_only_access" {
-    role       = "${aws_iam_role.admin_role.name}"
-    policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+  role       = "${aws_iam_role.admin_role.name}"
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
 #
 # Auditor Role
 #
 resource "aws_iam_role" "auditor_role" {
-    name                 = "Auditor"
-    path                 = "/"
+  name = "Auditor"
+  path = "/"
 
   assume_role_policy = <<EOF
 {
@@ -138,36 +139,38 @@ EOF
 # AWS Managed Policies: Auditor Access
 #
 resource "aws_iam_role_policy_attachment" "auditors_have_read_only_access" {
-    role       = "${aws_iam_role.auditor_role.name}"
-    policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
+  role       = "${aws_iam_role.auditor_role.name}"
+  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "auditors_have_security_audit_access" {
-    role       = "${aws_iam_role.auditor_role.name}"
-    policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
+  role       = "${aws_iam_role.auditor_role.name}"
+  policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
 }
 
 #
 # Assumable Role: DeployMaster
 #
 module "iam_assumable_roles_deploy_master" {
-    source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-bb/assumable-role?ref=v0.5"
+  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-bb/assumable-role?ref=v0.6"
 
-    trusted_role_arns = [
-        "arn:aws:iam::${var.shared_account_id}:root"
-    ]
+  trusted_role_arns = [
+    "arn:aws:iam::${var.shared_account_id}:root",
+  ]
 
-    role_name = "DeployMaster"
-    role_requires_mfa = false
-    role_policy_arn = "${aws_iam_policy.deploy_master_access.arn}"
+  role_name         = "DeployMaster"
+  role_requires_mfa = false
+  role_policy_arn   = "${aws_iam_policy.deploy_master_access.arn}"
 }
+
 #
 # Policy: DeployMaster
 #
 resource "aws_iam_policy" "deploy_master_access" {
-    name        = "deploy_master_access"
-    description = "Services enabled for DeployMaster role"
-    policy = <<EOF
+  name        = "deploy_master_access"
+  description = "Services enabled for DeployMaster role"
+
+  policy = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [

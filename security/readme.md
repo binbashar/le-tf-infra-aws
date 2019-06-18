@@ -7,7 +7,7 @@
 - You are encouraged to inspect those Makefiles to understand what's going on.
 
 ### Terraform
-- Install terraform >= v0.11.13
+- Install terraform >= v0.11.14
 - Run `terraform version` to check
 
 ### Remote State

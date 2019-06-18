@@ -1,5 +1,5 @@
 module "cloudtrail" {
-  source                        = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/aws-cloudtrail-tf?ref=v0.5"
+  source                        = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/aws-cloudtrail-tf?ref=v0.6"
   namespace                     = "${var.project}"
   stage                         = "${var.environment}"
   name                          = "cloudtrail-org"
@@ -20,8 +20,8 @@ resource "aws_cloudwatch_log_group" "cloudtrail" {
   retention_in_days = "14"
 
   tags = {
-  project     = "${var.project}"
-  environment = "${var.environment}"
+    project     = "${var.project}"
+    environment = "${var.environment}"
   }
 }
 
@@ -46,9 +46,9 @@ data "aws_iam_policy_document" "assume_policy" {
 }
 
 resource "aws_iam_role_policy" "cloudtrail_cloudwatch_events_policy" {
-  name        = "CloudtrailCloudwatchEvents"
-  role        = "${aws_iam_role.cloudtrail_cloudwatch_events.id}"
-  policy      = "${data.aws_iam_policy_document.cloudtrail_role_policy.json}"
+  name   = "CloudtrailCloudwatchEvents"
+  role   = "${aws_iam_role.cloudtrail_cloudwatch_events.id}"
+  policy = "${data.aws_iam_policy_document.cloudtrail_role_policy.json}"
 }
 
 data "aws_iam_policy_document" "cloudtrail_role_policy" {

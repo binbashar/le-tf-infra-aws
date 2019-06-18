@@ -1,0 +1,40 @@
+#============================#
+# AWS KMS: Key Mgmt Service  #
+#============================#
+resource "aws_kms_key" "root-org-key" {
+  description         = "KMS key for notify-slack test"
+  is_enabled          = true
+  enable_key_rotation = true
+  tags                = "${local.tags}"
+}
+
+resource "aws_kms_alias" "root-org-kms-alias" {
+  name          = "alias/${var.project}-${var.environment}-kms-key"
+  target_key_id = "${aws_kms_key.root-org-key.id}"
+}
+
+# Encrypt the URL, storing encryption here will show it in logs and in tfstate
+# https://www.terraform.io/docs/state/sensitive-data.html
+data "aws_kms_ciphertext" "slack_url" {
+  plaintext = "${var.slack_webhook_url}"
+  key_id    = "${aws_kms_key.root-org-key.arn}"
+}
+
+#============================#
+# AWS SNS -> Lambda -> Slack #
+#============================#
+# Set create_with_kms_key = true
+# when providing value of kms_key_arn to create required IAM policy which allows to decrypt using specified KMS key.
+module "notify_slack" {
+  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/aws-notify-slack-tf?ref=v0.6"
+
+  create               = true
+  create_sns_topic     = true
+  create_with_kms_key  = true
+  kms_key_arn          = "${aws_kms_key.root-org-key.arn}"
+  lambda_function_name = "${var.project}-${var.environment}-notify_slack"
+  sns_topic_name       = "${var.sns_topic_name}"
+  slack_webhook_url    = "${data.aws_kms_ciphertext.slack_url.ciphertext_blob}"
+  slack_channel        = "${var.slack_channel}"
+  slack_username       = "${var.slack_username}"
+}
