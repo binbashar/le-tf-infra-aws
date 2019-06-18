@@ -1,7 +1,7 @@
 # Secrets Provisioning
 
 ## Requirements
-- Install terraform >= v0.11.13
+- Install terraform >= v0.11.14
 - Install ansible-vault >= 2.4.3.0
 
 ## Instructions

@@ -2,18 +2,20 @@
 # AWS Provider Settings
 #
 variable "region" {
-    description = "AWS Region"
+  description = "AWS Region"
 }
+
 variable "profile" {
-    description = "AWS Profile"
+  description = "AWS Profile"
 }
 
 #
 # Project Variables
 #
 variable "project" {
-    description = "Project Name"
+  description = "Project Name"
 }
+
 variable "environment" {
-    description = "Environment Name"
+  description = "Environment Name"
 }
