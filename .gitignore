@@ -10,7 +10,7 @@
 # SSH keys #
 ############
 id_rsa
-*id_rsa*
+id_dsa
 
 # OS generated files #
 ######################
