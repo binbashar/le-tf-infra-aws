@@ -6,7 +6,9 @@ This repository contains all Terraform configuration files used to create Binbas
 ## Files/Folders Organization
 The following block provides a brief explanation of the chosen files/folders layout:
 ```
-+ dev/             (resources for the modules and library dev account)
++ dev/             (resources for dev account)
+    ...
++ root-org/        (resources for the root-org account)
     ...
 + security/        (resources for the security + users account)
     ...

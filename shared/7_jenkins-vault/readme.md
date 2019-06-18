@@ -1,7 +1,11 @@
 # Secrets Provisioning - Ssh private key file for Provisioner Connections
 
 ## Requirements
+<<<<<<< HEAD
 - Install terraform >= v0.11.13
+=======
+- Install terraform >= v0.11.14
+>>>>>>> b9a4065f7091850ba2c801f17de62b1913c3f171
 - Install ansible >= 2.4.3.0
 
 ## Instructions

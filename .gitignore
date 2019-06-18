@@ -7,6 +7,11 @@
 !/.gitignore
 !*.gitkeep
 
+# SSH keys #
+############
+id_rsa
+id_dsa
+
 # OS generated files #
 ######################
 .DS_Store
