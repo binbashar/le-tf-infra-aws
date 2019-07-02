@@ -48,3 +48,20 @@ module "user_exequiel_barrirero" {
 
   pgp_key = "${file("keys/exequiel.barrirero")}"
 }
+
+#==========================#
+# User: Gonzalo Martinez #
+#==========================#
+module "user_gonzalo_martinez" {
+  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-tf/modules/iam-user?ref=v0.6"
+
+  name                    = "gonzalo.martinez"
+  force_destroy           = true
+  password_reset_required = true
+
+  create_iam_user_login_profile = true
+  create_iam_access_key         = false
+  upload_iam_user_ssh_key       = false
+
+  pgp_key = "${file("keys/gonzalo.martinez")}"
+}
