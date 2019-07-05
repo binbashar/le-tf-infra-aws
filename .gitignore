@@ -1,6 +1,9 @@
 # Hidden files #
 ################
 .*
+#
+# Except
+#
 !*.env.example
 !*.dockeringnore
 !*.hosts
@@ -36,6 +39,9 @@ Thumbs.db
 *.zip
 *.tar.gz
 
+#
+# Except
+#
 !lambda_function.*.zip
 !lambda_function.lambda_handler.zip
 !lambda_function.*.zip
@@ -68,4 +74,12 @@ Thumbs.db
 
 # TF Project files #
 ####################
-# here
+#
+# Compiled files
+#
+*.tfstate
+*.tfstate.backup
+#
+# Module directory
+#
+.terraform
