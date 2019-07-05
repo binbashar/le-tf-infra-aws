@@ -89,13 +89,3 @@ data "aws_iam_policy_document" "sns-topic-policy" {
     sid = "__default_statement_ID"
   }
 }
-
-//{
-//  "Sid": "ExampleSid123456789012",
-//  "Effect": "Allow",
-//  "Principal": {
-//    "Service": "budgets.amazonaws.com"
-//  },
-//  "Action": "SNS:Publish",
-//  "Resource": "your topic ARN"
-//},

@@ -1,6 +1,9 @@
 #==============================#
 # AWS Provider Settings        #
 #==============================#
+#
+# AWS Provider Settings
+#
 variable "region" {
   description = "AWS Region"
 }
@@ -12,6 +15,9 @@ variable "profile" {
 #==============================#
 # Project Variables            #
 #==============================#
+#
+# Project Variables
+#
 variable "project" {
   description = "Project Name"
 }
