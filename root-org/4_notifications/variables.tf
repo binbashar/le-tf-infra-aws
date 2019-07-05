@@ -27,6 +27,10 @@ variable "environment" {
 #=============================#
 # Accounts                    #
 #=============================#
+variable "root_org_account_id" {
+  description = "Account: Security & Users Management"
+}
+
 variable "security_account_id" {
   description = "Account: Security & Users Management"
 }
