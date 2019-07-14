@@ -1,7 +1,8 @@
 ---
 - name: Provision OpenVPN Pritunl instance
   hosts:
-     - "{{ variable_host }}"
+    - "{{ variable_host }}"
+#    - infra_ec2_pritunl_vpn
   gather_facts: true
   become: yes
 
@@ -11,9 +12,9 @@
     - ./group_vars/all.yml
 
   roles:
-      #=====================================#
-      #      PRE-REQUISITES                 #
-      #=====================================#
+    #=====================================#
+    #      PRE-REQUISITES                 #
+    #=====================================#
     - role: common
       tags: common_tasks
 
@@ -21,6 +22,11 @@
     #      USER MGMT & SECURITY           #
     #=====================================#
     - role: binbash_inc.users
+      # create users
+      users_list_creation: "{{ users_list_creation_var }}"
+      # delete users
+      users_delete: "{{ users_delete_var }}"
+      users_list_deletion: "{{ users_list_deletion_var }}"
       when: role_users_enabled == True
       tags: security-users
 

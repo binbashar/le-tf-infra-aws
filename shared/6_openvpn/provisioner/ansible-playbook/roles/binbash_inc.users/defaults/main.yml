@@ -1,0 +1,12 @@
+---
+users_list_creation: []
+
+users_list_deletion: []
+
+#nested_list: [[a,b],[c,d],[e,f],[g,h]]
+#- debug: msg="{{ item[0] }} {{ item[1] }}"
+#  with_list: "{{ nested_list }}"
+users_nested_list_ssh_key_path_with_user: [['user1','/home/user1']]
+users_nested_list_ssh_key_flag: "False"
+
+users_delete: "False"

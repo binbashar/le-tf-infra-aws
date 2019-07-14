@@ -122,9 +122,9 @@ variable "sg_public_temporary_cidrs" {
   default     = "0.0.0.0/0"
 }
 
-#
-# Provisioner Connections
-#
+#=============================#
+# Provisioner Connections     #
+#=============================#
 variable "provisioner_user" {
   description = "username - for SSH connection"
   default     = "ubuntu"
@@ -167,25 +167,15 @@ variable "provisioner_vault_pass_enabled" {
 
 variable "provisioner_vault_pass_path" {
   description = "ansible-vault secret decyption pass."
-  default     = "./group_vars/.vault_pass"
+  default     = "./secrets/.vault_pass"
 }
 
 #=============================#
 # DNS                         #
 #=============================#
-variable "instance_dns_record_name_1_enabled" {
-  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
-  default     = "true"
-}
-
 variable "instance_dns_record_name_1" {
   description = "AWS EC2 Instance Type"
   default     = "vpn.binbash.com.ar"
-}
-
-variable "instance_dns_record_name_2_enabled" {
-  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
-  default     = "true"
 }
 
 variable "instance_dns_record_name_2" {

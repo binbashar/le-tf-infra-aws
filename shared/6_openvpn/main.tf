@@ -2,7 +2,7 @@
 # EC2 Pritunl OpenVPN
 #
 module "ec2_openvpn" {
-  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ec2-openvpn-bb?ref=v0.6"
+  source = "git::git@github.com:binbashar/terraform-aws-ec2-pritunl-vpn.git?ref=v0.0.7"
 
   environment                        = "${var.environment}"
   aws_ami_os_id                      = "${var.aws_ami_os_id}"
@@ -25,9 +25,7 @@ module "ec2_openvpn" {
   sg_public_temporary_tpc_ports      = "${var.sg_public_temporary_tpc_ports}"
   sg_public_temporary_cidrs          = "${var.sg_public_temporary_cidrs}"
   aws_key_pair_name                  = "${data.terraform_remote_state.security.aws_key_pair_name}"
-  instance_dns_record_name_1_enabled = "${var.instance_dns_record_name_1_enabled}"
   instance_dns_record_name_1         = "${var.instance_dns_record_name_1}"
-  instance_dns_record_name_2_enabled = "${var.instance_dns_record_name_2_enabled}"
   instance_dns_record_name_2         = "${var.instance_dns_record_name_2}"
   tags                               = "${local.tags}"
 }
@@ -37,9 +35,9 @@ module "ec2_openvpn" {
 # NOTE: consider "make init" command will be needed before "make plan" and "make apply" commands.
 #
 module "ec2_provisioner_ansible_1" {
-  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/provisioner-ansible-bb?ref=v0.6"
+  source = "git::git@github.com:binbashar/terraform-null-ansible.git?ref=v0.0.6"
 
-  instance_public_ip                           = "${module.ec2_openvpn.public_ip}"
+  instance_ip_addr                             = "${module.ec2_openvpn.public_ip}"
   shell_cmds                                   = "${var.shell_cmds}"
   provisioner_user                             = "${var.provisioner_user}"
   provisioner_private_key_path                 = "${var.provisioner_private_key_path}"
