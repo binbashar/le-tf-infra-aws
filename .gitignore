@@ -8,6 +8,8 @@
 !*.dockeringnore
 !*.hosts
 !/.gitignore
+!/.chglog
+!/.gitallowed
 !*.gitkeep
 
 # SSH keys #
@@ -64,7 +66,7 @@ Thumbs.db
 *.ipr
 .vscode
 
-# Custom Project files #
+# Custom Project tools files #
 ########################
 *.pyc
 *.pyo
