@@ -10,6 +10,12 @@ version: ## Show terraform versio
 init: ## Initialize terraform backend, plugins, and modules"
 	terraform init -backend-config=../config/backend.config
 
+state_list: ## The terraform state list command is used to list resources within a Terraform state
+	terraform state list
+
+#state_remove: ## terraform state rm command is used to remove items from the Terraform state. Can remove single resources, single instances of a resource, entire modules, and more.
+#	terraform state rm ""
+
 plan: ## Preview terraform changes"
 	terraform plan -var-file=../config/backend.config -var-file=../config/main.config
 
