@@ -6,7 +6,7 @@
 # Assumable Role: DevOps
 #
 module "iam_assumable_roles" {
-  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-bb/assumable-role?ref=v0.6"
+  source = "git::git@github.com:binbashar/terraform-aws-iam-role-sts.git?ref=v0.0.2"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.security_account_id}:root",
@@ -152,7 +152,7 @@ resource "aws_iam_role_policy_attachment" "auditors_have_security_audit_access" 
 # Assumable Role: DeployMaster
 #
 module "iam_assumable_roles_deploy_master" {
-  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-bb/assumable-role?ref=v0.6"
+  source = "git::git@github.com:binbashar/terraform-aws-iam-role-sts.git?ref=v0.0.2"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.shared_account_id}:root",

@@ -2,7 +2,7 @@
 # User: Diego Ojeda        #
 #==========================#
 module "user_diego_ojeda" {
-  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-tf/modules/iam-user?ref=v0.6"
+  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-user?ref=v0.3.0"
 
   name                    = "diego.ojeda"
   force_destroy           = true
@@ -19,7 +19,7 @@ module "user_diego_ojeda" {
 # User: Marcos Pagnucco    #
 #==========================#
 module "user_marcos_pagnuco" {
-  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-tf/modules/iam-user?ref=v0.6"
+  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-user?ref=v0.3.0"
 
   name                    = "marcos.pagnucco"
   force_destroy           = true
@@ -36,7 +36,7 @@ module "user_marcos_pagnuco" {
 # User: Exequiel Barrirero #
 #==========================#
 module "user_exequiel_barrirero" {
-  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-tf/modules/iam-user?ref=v0.6"
+  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-user?ref=v0.3.0"
 
   name                    = "exequiel.barrirero"
   force_destroy           = true
