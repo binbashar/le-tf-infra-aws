@@ -60,6 +60,11 @@ variable "volume_size_root" {
   default     = 20
 }
 
+variable "volume_az_extra" {
+  description = "EBS volume size"
+  default     = "us-east-1a"
+}
+
 variable "volume_size_extra_1" {
   description = "EBS volume size"
   default     = 100
@@ -73,19 +78,9 @@ variable "volume_size_extra_2" {
 #
 # S3
 #
-variable "aws_s3_bucket_1_enabled" {
-  description = "AWS S3 bucket will be created if set to true, otherwise don't"
-  default     = "true"
-}
-
 variable "aws_s3_bucket_name_1" {
   description = "AWS S3 bucket name"
   default     = "bb-shared-vault-storage"
-}
-
-variable "aws_s3_bucket_2_enabled" {
-  description = "AWS S3 bucket will be created if set to true, otherwise don't"
-  default     = "true"
 }
 
 variable "aws_s3_bucket_name_2" {
@@ -118,12 +113,37 @@ variable "sg_private_tpc_ports" {
 
 variable "sg_private_udp_ports" {
   description = "Security group UDP ports"
-  default     = "default_null"
+  default     = ""
 }
 
 variable "sg_private_cidrs" {
   description = "Security group CIDR segments"
   default     = "172.17.0.0/20"
+}
+
+variable "aws_iam_instance_profile_jenkins_name" {
+  description = "AWS IAM EC2 profile name"
+  default     = "JenkinsProfile"
+}
+
+variable "aws_iam_jenkins_assume_role_name" {
+  description = "AWS IAM EC2 role for instance profile"
+  default     = "JenkinsAssumeRole"
+}
+
+variable "aws_iam_policy_jenkins_access_name" {
+  description = "AWS IAM policy for the instance profile role"
+  default     = "JenkinsAccessPolicy"
+}
+
+variable "aws_iam_role_name_1" {
+  description = "AWS IAM Role to be assumed cross-org, eg: DeployMaster or DevOps"
+  default     = "DeployMaster"
+}
+
+variable "aws_iam_role_name_2" {
+  description = "AWS IAM Role to be assumed cross-org, eg: Auditor"
+  default     = "Auditor"
 }
 
 #=============================#
@@ -137,19 +157,9 @@ variable "aws_userdata_path" {
 #=============================#
 # DNS                         #
 #=============================#
-variable "instance_dns_record_name_1_enabled" {
-  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
-  default     = "true"
-}
-
 variable "instance_dns_record_name_1" {
   description = "AWS EC2 Instance Type"
   default     = "jenkins.aws.binbash.com.ar"
-}
-
-variable "instance_dns_record_name_2_enabled" {
-  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
-  default     = "true"
 }
 
 variable "instance_dns_record_name_2" {
@@ -160,11 +170,6 @@ variable "instance_dns_record_name_2" {
 // https://www.bennadel.com/blog/3420-obtaining-a-wildcard-ssl-certificate-from-letsencrypt-using-the-dns-challenge.htm
 //Please deploy a DNS TXT record under the name
 //_acme-challenge.aws.binbash.com.ar with the following value
-variable "letsencrypt_dns_record_name_enabled" {
-  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
-  default     = "true"
-}
-
 variable "letsencrypt_dns_record_name" {
   description = "AWS EC2 Instance Type"
   default     = "_acme-challenge.aws.binbash.com.ar"
@@ -172,5 +177,5 @@ variable "letsencrypt_dns_record_name" {
 
 variable "letsencrypt_dns_record_value" {
   description = "AWS EC2 Instance Type"
-  default     = "UQ6h7YpwtBLE6GvRgPB7zqwqvLuWxcIibnq9h8Qalmo"
+  default     = "aT6cBMN_O-fVnR0QQYpU1ycPw6gY1Nk4YLfua4AanQA"
 }

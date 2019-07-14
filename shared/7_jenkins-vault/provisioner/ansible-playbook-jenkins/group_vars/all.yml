@@ -33,6 +33,7 @@ users_delete_var: False
 users_list_deletion_var: []
 
 users_nested_list_ssh_key_path_with_user_var: [['jenkins','/var/lib/jenkins']]
+users_nested_list_ssh_key_flag: "True"
 
 #========================================================#
 # VARS ROLE: oefenweb.fail2ban                           #

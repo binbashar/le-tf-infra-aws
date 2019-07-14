@@ -11,7 +11,7 @@
 DOMAIN='*.aws.binbash.com.ar'
 EMAIL='info@binbash.com.ar'
 
-jenkins@bb-jenkins-vault:~$ docker run -it --rm --name letsencrypt \
+docker run -it --rm --name letsencrypt \
 -v "/etc/letsencrypt:/etc/letsencrypt" \
 -v "/var/lib/letsencrypt:/var/lib/letsencrypt" \
 quay.io/letsencrypt/letsencrypt:latest \
