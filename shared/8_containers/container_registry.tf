@@ -2,7 +2,7 @@
 # ECR Life-cycle Policy: only keep the latest 10 tagged images.
 #
 module "ecr_lifecycle_rule_tagged_dev_image_count_7" {
-  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ecr-tf/ecr-lifecycle-policy-rule?ref=v0.6"
+  source = "git::git@github.com:binbashar/terraform-aws-ecr-lifecycle-policy-rule.git?ref=0.0.4"
 
   tag_status   = "tagged"
   count_type   = "imageCountMoreThan"
@@ -11,7 +11,7 @@ module "ecr_lifecycle_rule_tagged_dev_image_count_7" {
 }
 
 module "ecr_lifecycle_rule_tagged_prd_image_count_7" {
-  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ecr-tf/ecr-lifecycle-policy-rule?ref=v0.6"
+  source = "git::git@github.com:binbashar/terraform-aws-ecr-lifecycle-policy-rule.git?ref=0.0.4"
 
   tag_status   = "tagged"
   count_type   = "imageCountMoreThan"
@@ -23,7 +23,7 @@ module "ecr_lifecycle_rule_tagged_prd_image_count_7" {
 # ECR Registry: DevOps Images
 #
 module "ecr_repo_leverage" {
-  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/ecr-tf/ecr-cross-account?ref=v0.6"
+  source = "git::git@github.com:binbashar/terraform-aws-ecr-cross-account.git?ref=0.1.5"
 
   namespace = "bb"
   name      = "leverage"
