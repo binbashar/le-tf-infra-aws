@@ -33,8 +33,6 @@ output "user_exequiel_barrirero_login_profile_encrypted_password" {
   value       = "${module.user_exequiel_barrirero.this_iam_user_login_profile_encrypted_password}"
   sensitive   = true
 }
-<<<<<<< HEAD
-=======
 
 output "user_gonzalo_martinez_name" {
 
@@ -47,4 +45,3 @@ output "user_gonzalo_martinez_login_profile_encrypted_password" {
   value       = "${module.user_gonzalo_martinez.this_iam_user_login_profile_encrypted_password}"
   sensitive   = true
 }
->>>>>>> fe8f8422339b15f2f709d3964e6e17a704531153
