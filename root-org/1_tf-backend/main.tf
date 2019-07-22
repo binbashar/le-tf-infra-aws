@@ -18,7 +18,7 @@ provider "null" {
 }
 
 module "terraform_backend" {
-  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/terraform-backend?ref=v0.6"
+  source = "git::git@github.com:binbashar/terraform-aws-tfstate-backend.git?ref=v0.0.2"
 
   bucket_name         = "${var.bucket}"
   bucket_description  = "S3 Bucket for ${var.profile} Terraform Remote State Storage"

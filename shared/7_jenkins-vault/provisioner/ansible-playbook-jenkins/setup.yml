@@ -28,7 +28,7 @@
       # By default this role installs Jenkins but will not upgrade Jenkins (when using package-based installs).
       # If you want to always update to the latest version, change this to latest.
       jenkins_package_state: present
-      jenkins_version: "2.169"
+      jenkins_version: "2.180"
       jenkins_pkg_url: "http://pkg.jenkins-ci.org/debian/binary/"
       jenkins_java_options: "-Djava.awt.headless=true -Djenkins.install.runSetupWizard=false -Dorg.apache.commons.jelly.tags.fmt.timeZone={{ jenkins_time_zone }}"
       jenkins_init_changes:
@@ -149,6 +149,44 @@
       tags: jenkins
 
     #=====================================#
+    #      CONTAINERS: DOCKER             #
+    #=====================================#
+    # The docker_edition should be either ce (Community Edition) or ee (Enterprise Edition). You can also specify a
+    # specific version of Docker to install using the distribution-specific format:
+    # Red Hat/CentOS: docker-{{ docker_edition }}-<VERSION>; Debian/Ubuntu: docker-{{ docker_edition }}=<VERSION>
+    # Releases can be find at: https://docs.docker.com/v17.12/release-notes/docker-ce/
+    # Releases (usable): https://download.docker.com/linux/ubuntu/dists/xenial/stable/binary-amd64/Packages
+    # Consider: https://github.com/geerlingguy/ansible-role-docker/issues/45
+    - role: geerlingguy.docker
+      docker_edition: 'ce'
+
+      #docker_package: "docker-{{ docker_edition }}=18.06.0~ce~3-0~ubuntu"
+      #docker_package: "docker-{{ docker_edition }}=18.06.0~{{docker_edition}}~3-0~{{ansible_distribution|lower}}"
+
+      #docker_package: "docker-{{ docker_edition }}=5:18.09.0~3-0~ubuntu-xenial"
+      docker_package: "docker-{{ docker_edition }}=5:18.09.0~3-0~{{ansible_distribution|lower}}-{{ ansible_distribution_release }}"
+      docker_package_state: present
+      docker_install_compose: true
+      docker_compose_version: "{{ docker_compose_version_var }}"
+      docker_compose_path: /usr/local/bin/docker-compose
+      docker_apt_release_channel: stable
+      docker_apt_repository: "deb https://download.docker.com/linux/{{ ansible_distribution|lower }} {{ ansible_distribution_release }} {{ docker_apt_release_channel }}"
+      tags: containers
+
+    - role: oefenweb.docker_machine
+      docker_machine_version: v0.16.1
+      docker_machine_install_prefix: /usr/local/bin
+      docker_machine_download_url: https://github.com
+      tags: containers
+
+    #=====================================#
+    #      CONTAINERS: KUBERNETES         #
+    #=====================================#
+    - role: andrewrothstein.kubectl
+      kubectl_ver: 'v1.13.2'
+      tags: containers
+
+    #=====================================#
     #      JENKINS post-tasks             #
     #=====================================#
     - role: binbash_inc.jenkins-docker-nginx-post-tasks
@@ -239,44 +277,6 @@
                                           meminfo, netdev, netstat, stat, textfile, time, vmstat, systemd]
       when: role_prometheus_node_exporter_enabled == True
       tags: prometheus-node-exporter
-
-    #=====================================#
-    #      CONTAINERS: DOCKER             #
-    #=====================================#
-    # The docker_edition should be either ce (Community Edition) or ee (Enterprise Edition). You can also specify a
-    # specific version of Docker to install using the distribution-specific format:
-    # Red Hat/CentOS: docker-{{ docker_edition }}-<VERSION>; Debian/Ubuntu: docker-{{ docker_edition }}=<VERSION>
-    # Releases can be find at: https://docs.docker.com/v17.12/release-notes/docker-ce/
-    # Releases (usable): https://download.docker.com/linux/ubuntu/dists/xenial/stable/binary-amd64/Packages
-    # Consider: https://github.com/geerlingguy/ansible-role-docker/issues/45
-    - role: geerlingguy.docker
-      docker_edition: 'ce'
-
-      #docker_package: "docker-{{ docker_edition }}=18.06.0~ce~3-0~ubuntu"
-      #docker_package: "docker-{{ docker_edition }}=18.06.0~{{docker_edition}}~3-0~{{ansible_distribution|lower}}"
-
-      #docker_package: "docker-{{ docker_edition }}=5:18.09.0~3-0~ubuntu-xenial"
-      docker_package: "docker-{{ docker_edition }}=5:18.09.0~3-0~{{ansible_distribution|lower}}-{{ ansible_distribution_release }}"
-      docker_package_state: present
-      docker_install_compose: true
-      docker_compose_version: "{{ docker_compose_version_var }}"
-      docker_compose_path: /usr/local/bin/docker-compose
-      docker_apt_release_channel: stable
-      docker_apt_repository: "deb https://download.docker.com/linux/{{ ansible_distribution|lower }} {{ ansible_distribution_release }} {{ docker_apt_release_channel }}"
-      tags: containers
-
-    - role: oefenweb.docker_machine
-      docker_machine_version: v0.16.1
-      docker_machine_install_prefix: /usr/local/bin
-      docker_machine_download_url: https://github.com
-      tags: containers
-
-    #=====================================#
-    #      CONTAINERS: KUBERNETES         #
-    #=====================================#
-    - role: andrewrothstein.kubectl
-      kubectl_ver: 'v1.13.2'
-      tags: containers
 
     #=====================================#
     #      LETSENCRYPT WILCARD CERT GEN   #

@@ -13,14 +13,6 @@ terraform {
   }
 }
 
-locals {
-  tags = {
-    Name        = "infra-openvpn"
-    Terraform   = "true"
-    Environment = "${var.environment}"
-  }
-}
-
 data "terraform_remote_state" "vpc" {
   backend = "s3"
 

@@ -26,7 +26,7 @@ data "aws_kms_ciphertext" "slack_url" {
 # Set create_with_kms_key = true
 # when providing value of kms_key_arn to create required IAM policy which allows to decrypt using specified KMS key.
 module "notify_slack" {
-  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/aws-notify-slack-tf?ref=v0.6"
+  source = "git::git@github.com:binbashar/terraform-aws-notify-slack.git?ref=v1.13.0"
 
   create               = true
   create_sns_topic     = true

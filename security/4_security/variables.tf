@@ -38,3 +38,11 @@ variable "shared_account_id" {
 variable "dev_account_id" {
   description = "Account: Dev Modules & Libs"
 }
+
+#
+# cloudtrail_s3_bucket Variables
+#
+variable "lifecycle_rule_enabled" {
+  description = "Enable lifecycle events on this bucket"
+  default     = "false"
+}

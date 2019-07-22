@@ -85,20 +85,12 @@ variable "sg_public_name" {
 // 15255 pritunl.server.devops
 variable "sg_public_tpc_ports" {
   description = "Security group TCP ports"
-<<<<<<< HEAD
-  default = "80"
-=======
   default     = "80"
->>>>>>> b9a4065f7091850ba2c801f17de62b1913c3f171
 }
 
 variable "sg_public_udp_ports" {
   description = "Security group UDP ports"
-<<<<<<< HEAD
-  default = "15255,15256"
-=======
   default     = "15255,15256"
->>>>>>> b9a4065f7091850ba2c801f17de62b1913c3f171
 }
 
 variable "sg_public_cidrs" {
@@ -130,9 +122,9 @@ variable "sg_public_temporary_cidrs" {
   default     = "0.0.0.0/0"
 }
 
-#
-# Provisioner Connections
-#
+#=============================#
+# Provisioner Connections     #
+#=============================#
 variable "provisioner_user" {
   description = "username - for SSH connection"
   default     = "ubuntu"
@@ -166,10 +158,6 @@ variable "provisioner_script_tags_enable" {
 variable "provisioner_script_tags" {
   description = "An space separated ansible-playbook tags list"
   default     = "security-users"
-<<<<<<< HEAD
-
-=======
->>>>>>> b9a4065f7091850ba2c801f17de62b1913c3f171
 }
 
 variable "provisioner_vault_pass_enabled" {
@@ -179,40 +167,23 @@ variable "provisioner_vault_pass_enabled" {
 
 variable "provisioner_vault_pass_path" {
   description = "ansible-vault secret decyption pass."
-  default     = "./group_vars/.vault_pass"
+  default     = "./secrets/.vault_pass"
 }
 
 #=============================#
 # DNS                         #
 #=============================#
-variable "instance_dns_record_name_1_enabled" {
-  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
-<<<<<<< HEAD
-  default = "true"
-}
-=======
-  default     = "true"
-}
-
->>>>>>> b9a4065f7091850ba2c801f17de62b1913c3f171
 variable "instance_dns_record_name_1" {
   description = "AWS EC2 Instance Type"
   default     = "vpn.binbash.com.ar"
 }
-<<<<<<< HEAD
-variable "instance_dns_record_name_2_enabled" {
-  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
-  default = "true"
-}
-variable "instance_dns_record_name_2" {
-    description = "AWS EC2 Instance Type"
-    default     = "webhooks.binbash.com.ar"
-=======
-
 variable "instance_dns_record_name_2_enabled" {
   description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
   default     = "true"
->>>>>>> b9a4065f7091850ba2c801f17de62b1913c3f171
+}
+variable "instance_dns_record_name_2" {
+  description = "AWS EC2 Instance Type"
+  default     = "webhooks.binbash.com.ar"
 }
 
 variable "instance_dns_record_name_2" {

@@ -61,13 +61,15 @@
         creates: "{{ item[1] }}/.ssh/id_rsa"
       with_list: "{{ users_nested_list_ssh_key_path_with_user }}"
       when: file_path_stat.results[0].stat.exists == False
+  when: users_nested_list_ssh_key_flag == True
 
 - name: Fetching previously generate SSH public key for jenkins users
   fetch:
     src: "{{ item[1] }}/.ssh/id_rsa.pub"
-    dest: "roles/users/files/id_rsa_{{ item[0] }}.pub"
+    dest: "roles/binbash_inc.users/files/id_rsa_{{ item[0] }}.pub"
     flat: yes
   with_list: "{{ users_nested_list_ssh_key_path_with_user }}"
+  when: users_nested_list_ssh_key_flag == True
 
 #======================================================================#
 # USERS ADD ssh authorized key                                         #

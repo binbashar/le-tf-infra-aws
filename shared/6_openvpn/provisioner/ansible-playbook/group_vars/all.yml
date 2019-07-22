@@ -3,15 +3,27 @@ server_hostname: infra-openvpn
 user: ubuntu
 home_path: "/home/{{user}}"
 
-# Role users activation + users declaration
+#========================================================#
+# VARS ROLE: binbash_inc.users                           #
+#========================================================#
 role_users_enabled: True
-username1: marcos.pagnucco
-username2: diego.ojeda
-username3: exequiel.barrirero
+users_list_creation_var: ['marcos.pagnucco','diego.ojeda','exequiel.barrirero']
+# Global Flag to enable user deletion (roles: users), this works together with a conditional statemet as follows:
+#      when:
+#        - users_delete == True
+users_delete_var: False
+users_list_deletion_var: []
 
-fail2ban_destemail_var: "info@binbash.com.ar"
+users_nested_list_ssh_key_flag: "False"
 
-# Role prometheus node exporter activation
+#========================================================#
+# VARS ROLE: oefenweb.fail2ban                           #
+#========================================================#
+fail2ban_destemail_var: "info@domain.com"
+
+#========================================================#
+# VARS ROLE: cloudalchemy.node-exporter                  #
+#========================================================#
 role_prometheus_node_exporter_enabled: False
 
 # Global Flag to enable user deletion (roles: users), this works together with a conditional statemet as follows:
@@ -19,7 +31,16 @@ role_prometheus_node_exporter_enabled: False
 #        - delete_users == True
 delete_users: False
 
-# Consider you'll need ./group_vars/.vault_pass file to let the ansible-playbook decrypt the secrets below
+#========================================================#
+# VARS ROLE: undergreen.mongodb                          #
+#========================================================#
+#
+# Pritunl Mongo DB root admin (siteRootAdmin) and user admin (siteUserAdmin) authentication password.
+# Please regenerate this variables on production environment with command:
+# 'ansible-vault --vault-password-file=./group_vars/.vault_pass encrypt_string 'your_pass_to_encrypt_here'
+#
+# NOTE: Consider you'll need ./group_vars/.vault_pass file to let the ansible-playbook decrypt the secrets below
+#
 mongodb_user_admin_password_var: !vault |
   $ANSIBLE_VAULT;1.1;AES256
   34366466346532313261646564336264663165393939373831386237643465653937303835643138

@@ -81,7 +81,7 @@ variable "aws_public_hosted_zone_fqdn_record_name_2" {
 
 variable "aws_public_hosted_zone_1_address_record_2" {
   description = "AWS Route53 public hosted zone A type record"
-  default     = "35.185.81.120"
+  default     = "35.227.116.126"
 }
 
 variable "aws_public_hosted_zone_fqdn_record_name_3" {
