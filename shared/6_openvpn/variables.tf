@@ -177,6 +177,14 @@ variable "instance_dns_record_name_1" {
   description = "AWS EC2 Instance Type"
   default     = "vpn.binbash.com.ar"
 }
+variable "instance_dns_record_name_2_enabled" {
+  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
+  default     = "true"
+}
+variable "instance_dns_record_name_2" {
+  description = "AWS EC2 Instance Type"
+  default     = "webhooks.binbash.com.ar"
+}
 
 variable "instance_dns_record_name_2" {
   description = "AWS EC2 Instance Type"

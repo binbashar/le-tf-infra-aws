@@ -87,6 +87,25 @@ variable "aws_s3_bucket_name_2" {
   description = "AWS S3 bucket name"
   default     = "bb-shared-ssl-certificates"
 }
+#
+# S3
+#
+variable "aws_s3_bucket_1_enabled" {
+  description = "AWS S3 bucket will be created if set to true, otherwise don't"
+  default     = "true"
+}
+variable "aws_s3_bucket_name_1" {
+  description = "AWS S3 bucket name"
+  default     = "bb-shared-vault-storage"
+}
+variable "aws_s3_bucket_2_enabled" {
+  description = "AWS S3 bucket will be created if set to true, otherwise don't"
+  default     = "true"
+}
+variable "aws_s3_bucket_name_2" {
+  description = "AWS S3 bucket name"
+  default     = "bb-shared-ssl-certificates"
+}
 
 #=============================#
 # Security                    #
@@ -110,10 +129,9 @@ variable "sg_private_tpc_ports" {
   description = "Security group TCP ports"
   default     = "22,80,443,8080,8200,9100"
 }
-
 variable "sg_private_udp_ports" {
   description = "Security group UDP ports"
-  default     = ""
+  default     = "default_null"
 }
 
 variable "sg_private_cidrs" {
@@ -161,12 +179,14 @@ variable "instance_dns_record_name_1" {
   description = "AWS EC2 Instance Type"
   default     = "jenkins.aws.binbash.com.ar"
 }
-
+variable "instance_dns_record_name_2_enabled" {
+  description = "Route53 DNS record name if set to true, otherwise don't use any specific tag"
+  default     = "true"
+}
 variable "instance_dns_record_name_2" {
   description = "AWS EC2 Instance Type"
   default     = "vault.aws.binbash.com.ar"
 }
-
 // https://www.bennadel.com/blog/3420-obtaining-a-wildcard-ssl-certificate-from-letsencrypt-using-the-dns-challenge.htm
 //Please deploy a DNS TXT record under the name
 //_acme-challenge.aws.binbash.com.ar with the following value

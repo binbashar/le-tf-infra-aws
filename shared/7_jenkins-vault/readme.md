@@ -3,6 +3,7 @@
 ## Requirements
 - Install terraform >= `v0.11.14`
 - Install ansible >= `2.4.3.0` (Only if following `/provisioner/readme.md`)
+- Install ansible >= 2.4.3.0
 
 ## Instructions when using `/provisioner/readme.md`
 - Then use the commands in the **Makefile** to work with Terraform in order to apply those changes
