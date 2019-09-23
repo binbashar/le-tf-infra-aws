@@ -57,7 +57,7 @@ apply-cmd: ## Make terraform apply any changes"
 	${TF_CMD_PREFIX} apply -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
 output: ## Terraform output command is used to extract the value of an output variable from the state file.
-	terraform output
+	${TF_CMD_PREFIX} output
 
 destroy: ## Destroy all resources managed by terraform"
 	${TF_CMD_PREFIX} destroy -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
