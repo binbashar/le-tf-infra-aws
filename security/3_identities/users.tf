@@ -4,9 +4,9 @@
 module "user_diego_ojeda" {
   source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-user?ref=v0.3.0"
 
-  name                    = "diego.ojeda"
-  force_destroy           = true
-  password_reset_required = true
+  name                          = "diego.ojeda"
+  force_destroy                 = true
+  password_reset_required       = true
 
   create_iam_user_login_profile = true
   create_iam_access_key         = false
@@ -21,9 +21,9 @@ module "user_diego_ojeda" {
 module "user_marcos_pagnuco" {
   source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-user?ref=v0.3.0"
 
-  name                    = "marcos.pagnucco"
-  force_destroy           = true
-  password_reset_required = true
+  name                          = "marcos.pagnucco"
+  force_destroy                 = true
+  password_reset_required       = true
 
   create_iam_user_login_profile = true
   create_iam_access_key         = false
@@ -38,9 +38,9 @@ module "user_marcos_pagnuco" {
 module "user_exequiel_barrirero" {
   source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-user?ref=v0.3.0"
 
-  name                    = "exequiel.barrirero"
-  force_destroy           = true
-  password_reset_required = true
+  name                          = "exequiel.barrirero"
+  force_destroy                 = true
+  password_reset_required       = true
 
   create_iam_user_login_profile = true
   create_iam_access_key         = false
@@ -50,18 +50,35 @@ module "user_exequiel_barrirero" {
 }
 
 #==========================#
-# User: Gonzalo Martinez #
+# User: Gonzalo Martinez   #
 #==========================#
 module "user_gonzalo_martinez" {
   source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-tf/modules/iam-user?ref=v0.6"
 
-  name                    = "gonzalo.martinez"
-  force_destroy           = true
-  password_reset_required = true
+  name                          = "gonzalo.martinez"
+  force_destroy                 = true
+  password_reset_required       = true
 
   create_iam_user_login_profile = true
   create_iam_access_key         = false
   upload_iam_user_ssh_key       = false
 
   pgp_key = "${file("keys/gonzalo.martinez")}"
+}
+
+#==========================#
+# User: CircleCI           #
+#==========================#
+module "user_circle_ci" {
+  source = "git::git@github.com:binbashar/bb-devops-tf-modules.git//aws/iam-tf/modules/iam-user?ref=v0.6"
+
+  name                    = "circle.ci"
+  force_destroy           = true
+  password_reset_required = true
+
+  create_iam_user_login_profile = false
+  create_iam_access_key         = true
+  upload_iam_user_ssh_key       = false
+
+  pgp_key = "${file("keys/circle.ci")}"
 }

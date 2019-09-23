@@ -1,12 +1,4 @@
 #
-# Workaround used to inject this variable's default value into a policy without
-# causing a TF interpolation error.
-#
-variable "aws_username" {
-  default = "${aws:username}"
-}
-
-#
 # Policy: Standard AWS Console User
 #
 resource "aws_iam_policy" "standard_console_user" {
@@ -98,6 +90,35 @@ resource "aws_iam_policy" "assume_devops_role" {
 EOF
 }
 
+#
+# Policy: Assume DeployMaster Role
+#
+resource "aws_iam_policy" "assume_deploymaster_role" {
+  name        = "assume_deploymaster_role"
+  description = "Allow assume DeployMaster role in member accounts"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sts:AssumeRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::${var.shared_account_id}:role/DeployMaster",
+                "arn:aws:iam::${var.dev_account_id}:role/DeployMaster"
+            ]
+        }
+    ]
+}
+EOF
+}
+
+#
+# Policy: Assume Auditor Role
+#
 resource "aws_iam_policy" "assume_auditor_role" {
   name        = "assume_auditor_role"
   description = "Allow assume Auditor role in member accounts"
