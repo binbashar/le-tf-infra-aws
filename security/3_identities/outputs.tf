@@ -45,3 +45,20 @@ output "user_gonzalo_martinez_login_profile_encrypted_password" {
   value       = "${module.user_gonzalo_martinez.this_iam_user_login_profile_encrypted_password}"
   sensitive   = true
 }
+
+output "user_circle_ci_name" {
+  description = "The user's name"
+  value       = "${module.user_circle_ci.this_iam_user_name}"
+}
+
+output "user_circle_ci_iam_access_key_id" {
+  description = "The aws aim access key"
+  value       = "${module.user_circle_ci.this_iam_access_key_id}"
+  sensitive   = true
+}
+
+output "user_circle_ci_iam_access_key_encrypted_secret" {
+  description = "The encrypted secret key, base64 encoded"
+  value       = "${module.user_circle_ci.this_iam_access_key_encrypted_secret}"
+  sensitive   = true
+}

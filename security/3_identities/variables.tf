@@ -38,3 +38,11 @@ variable "shared_account_id" {
 variable "dev_account_id" {
   description = "Account: Dev Modules & Libs"
 }
+
+#
+# Workaround used to inject this variable's default value into a policy without
+# causing a TF interpolation error.
+#
+variable "aws_username" {
+    default = "${aws:username}"
+}
