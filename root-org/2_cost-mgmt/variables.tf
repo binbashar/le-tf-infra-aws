@@ -66,6 +66,12 @@ variable "notification_threshold_50" {
   default     = 50
 }
 
+variable "notification_threshold_75" {
+  description = "% Threshold when the notification should be sent."
+  type        = "string"
+  default     = 75
+}
+
 variable "notification_threshold_100" {
   description = "% Threshold when the notification should be sent."
   type        = "string"
