@@ -16,5 +16,3 @@
 - To keep the secrets file decrypted in your local computer is highly discouraged
 - It is even more dangerous to commit/push the secrets file to the remote repository
 - You can run `make encrypt` to encrypt the secrets file before committing/pushing any changes to it
-
-aws_access_key_id = AKIA5DRVAZKFFA4OSPML
