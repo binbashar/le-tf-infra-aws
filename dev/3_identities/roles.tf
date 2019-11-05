@@ -178,12 +178,23 @@ resource "aws_iam_policy" "deploy_master_access" {
             "Effect": "Allow",
             "Action": [
                 "budgets:*",
+                "cloudfront:*",
+                "config:*",
                 "ecr:*",
+                "iam:*",
+                "dynamodb:*",
+                "ec2:*",
+                "ecr:*",
+                "iam:*",
+                "logs:*",
                 "route53:*",
                 "route53domains:*",
+                "s3:*",
                 "sns:*",
                 "ssm:*",
-                "sqs:*"
+                "sqs:*",
+                "waf:*",
+                "waf-regional:*"
             ],
             "Resource": [
                 "*"
