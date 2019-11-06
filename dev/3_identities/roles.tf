@@ -63,6 +63,7 @@ resource "aws_iam_policy" "devops_access" {
                 "sns:*",
                 "sqs:*",
                 "ssm:*",
+                "vpc:*",
                 "waf:*"
             ],
             "Resource": [
@@ -193,6 +194,7 @@ resource "aws_iam_policy" "deploy_master_access" {
                 "sns:*",
                 "ssm:*",
                 "sqs:*",
+                "vpc:*",
                 "waf:*",
                 "waf-regional:*"
             ],
