@@ -78,18 +78,6 @@ variable "volume_size_extra_2" {
 #
 # S3
 #
-variable "aws_s3_bucket_name_1" {
-  description = "AWS S3 bucket name"
-  default     = "bb-shared-vault-storage"
-}
-
-variable "aws_s3_bucket_name_2" {
-  description = "AWS S3 bucket name"
-  default     = "bb-shared-ssl-certificates"
-}
-#
-# S3
-#
 variable "aws_s3_bucket_1_enabled" {
   description = "AWS S3 bucket will be created if set to true, otherwise don't"
   default     = "true"

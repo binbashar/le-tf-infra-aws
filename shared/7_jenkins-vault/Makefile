@@ -68,5 +68,9 @@ format: ## The terraform fmt is used to rewrite tf conf files to a canonical for
 force-unlock: ## Manually unlock the terraform state, eg: make ARGS="a94b0919-de5b-9b8f-4bdf-f2d7a3d47112" force-unlock
 	${TF_CMD_PREFIX} force-unlock ${ARGS} ${TF_PWD_CONT_DIR}
 
+validate-tf-layout: ## Validate Terraform layout to make sure it's set up properly
+	../../@scripts/validate-terraform-layout.sh
+
 encrypt: ## ansible-vault encrypt secrets
 	ansible-vault encrypt secrets.tf
+

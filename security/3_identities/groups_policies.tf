@@ -1,4 +1,8 @@
 #
+# Policies attached to Groups
+#
+
+#
 # Policy: Standard AWS Console User
 #
 resource "aws_iam_policy" "standard_console_user" {
