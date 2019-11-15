@@ -119,7 +119,7 @@ variable "sg_private_tpc_ports" {
 }
 variable "sg_private_udp_ports" {
   description = "Security group UDP ports"
-  default     = "default_null"
+  default     = ""
 }
 
 variable "sg_private_cidrs" {

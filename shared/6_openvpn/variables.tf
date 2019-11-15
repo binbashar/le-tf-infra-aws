@@ -185,8 +185,3 @@ variable "instance_dns_record_name_2" {
   description = "AWS EC2 Instance Type"
   default     = "webhooks.binbash.com.ar"
 }
-
-variable "instance_dns_record_name_2" {
-  description = "AWS EC2 Instance Type"
-  default     = "webhooks.binbash.com.ar"
-}
