@@ -42,14 +42,6 @@ variable "dev_account_id" {
   description = "Dev/Stage Account ID"
 }
 
-variable "dev_vpc_id" {
-  description = "VPC ID of Applications Dev/Stage Account"
-}
-
-variable "dev_vpc_cidr_block" {
-  description = "VPC CIDR Block of Applications Dev/Stage Account"
-}
-
 #===========================================#
 # DNS                                       #
 #===========================================#
