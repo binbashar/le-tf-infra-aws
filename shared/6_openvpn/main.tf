@@ -2,7 +2,7 @@
 # EC2 Pritunl OpenVPN
 #
 module "ec2_openvpn" {
-  source = "git::git@github.com:binbashar/terraform-aws-ec2-pritunl-vpn.git?ref=v0.0.7"
+  source = "git::git@github.com:binbashar/terraform-aws-ec2-pritunl-vpn.git?ref=v0.0.10"
 
   environment                   = "${var.environment}"
   aws_ami_os_id                 = "${var.aws_ami_os_id}"

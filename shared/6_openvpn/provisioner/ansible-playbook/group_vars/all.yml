@@ -39,6 +39,7 @@ delete_users: False
 # Please regenerate this variables on production environment with command:
 # 'ansible-vault --vault-password-file=./group_vars/.vault_pass encrypt_string 'your_pass_to_encrypt_here'
 #
+#
 # NOTE: Consider you'll need ./group_vars/.vault_pass file to let the ansible-playbook decrypt the secrets below
 #
 mongodb_user_admin_password_var: !vault |
