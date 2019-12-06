@@ -44,3 +44,23 @@ output "nat_gateway_ids" {
   description = "NAT Gateway IDs"
   value       = ["${module.vpc.natgw_ids}"]
 }
+
+output "public_route_table_ids" {
+  description = "List of IDs of public route tables"
+  value       = "${module.vpc.public_route_table_ids}"
+}
+
+output "private_route_table_ids" {
+  description = "List of IDs of private route tables"
+  value       = "${module.vpc.private_route_table_ids}"
+}
+
+output "vpc_peering_id_dev_with_shared" {
+  description = "VPC peering ID with shared"
+  value	      =  "${aws_vpc_peering_connection.dev_vpc_with_shared_vpc.id}"
+}
+
+output "vpc_peering_id_dev_eks_with_shared" {
+  description = "VPC peering ID with shared"
+  value	      =  "${aws_vpc_peering_connection.dev_eks_vpc_with_shared_vpc.id}"
+}

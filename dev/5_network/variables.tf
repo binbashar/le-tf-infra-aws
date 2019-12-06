@@ -32,14 +32,6 @@ variable "shared_account_id" {
   description = "Account: Shared Resources"
 }
 
-variable "shared_vpc_id" {
-  description = "VPC ID of Applications Dev/Stage Account"
-}
-
-variable "shared_vpc_cidr_block" {
-  description = "VPC CIDR Block of Applications Dev/Stage Account"
-}
-
 variable "security_account_id" {
   description = "Security & Users Management Account ID"
 }
