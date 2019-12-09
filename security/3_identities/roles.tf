@@ -77,7 +77,7 @@ module "iam_assumable_roles_deploy_master" {
   source = "git::git@github.com:binbashar/terraform-aws-iam-role-sts.git?ref=v0.0.2"
 
   trusted_role_arns = [
-    "arn:aws:iam::${var.shared_account_id}:root",
+    "arn:aws:iam::${var.security_account_id}:root",
   ]
 
   role_name         = "DeployMaster"

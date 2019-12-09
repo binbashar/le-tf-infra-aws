@@ -10,8 +10,22 @@
 //aws route53 associate-vpc-with-hosted-zone        --hosted-zone-id Z2UPXXXXXXXXX --vpc VPCRegion=us-east-1,VPCId=vpc-6812de10 --profile 'profile-remote-acct'
 //aws route53 delete-vpc-association-authorization  --hosted-zone-id Z2UPXXXXXXXXX --vpc VPCRegion=us-east-1,VPCId=vpc-6812de10 --profile 'profile-host-acct'
 
-resource "null_resource" "associate_vpc_with_private_remote_hosted_zone" {
+#
+# Accept association between Dev VPC and aws.binbash.com.ar private hosted zone
+#
+resource "null_resource" "associate_dev_vpc_with_private_remote_hosted_zone" {
   provisioner "local-exec" {
-    command = "aws route53 associate-vpc-with-hosted-zone --hosted-zone-id ${var.shared_aws_internal_zone_id} --vpc VPCRegion=${var.region},VPCId=${module.vpc.vpc_id} --profile ${var.profile}"
+    interpreter = ["/bin/bash", "-c"]
+    command     = "aws route53 associate-vpc-with-hosted-zone --profile ${var.profile} --hosted-zone-id ${data.terraform_remote_state.vpc-shared.aws_internal_zone_id[0]} --vpc VPCRegion=${var.region},VPCId=${module.vpc.vpc_id}"
+  }
+}
+
+#
+# Accept association between Dev EKS VPC and aws.binbash.com.ar private hosted zone
+#
+resource "null_resource" "associate_dev_eks_vpc_with_private_remote_hosted_zone" {
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command = "aws route53 associate-vpc-with-hosted-zone --profile ${var.profile} --hosted-zone-id ${data.terraform_remote_state.vpc-shared.aws_internal_zone_id[0]} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-eks.vpc_id}"
   }
 }
