@@ -148,6 +148,7 @@ resource "aws_iam_policy" "deploy_master_access" {
         {
             "Effect": "Allow",
             "Action": [
+                "config:*",
                 "ecr:*",
                 "route53:*",
                 "route53domains:*",
