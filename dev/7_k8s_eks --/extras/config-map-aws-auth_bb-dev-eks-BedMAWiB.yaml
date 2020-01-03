@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapRoles: |
+    - rolearn: arn:aws:iam::523857393444:role/bb-dev-eks-BedMAWiB20191120041906166700000006
+      username: system:node:{{EC2PrivateDNSName}}
+      groups:
+        - system:bootstrappers
+        - system:nodes
+
+  
+    - "groups":
+      - "system:masters"
+      "rolearn": "arn:aws:iam::900980591242:role/DevOps"
+      "username": "exequiel.barrirero"
+    
+  
+  
+  
