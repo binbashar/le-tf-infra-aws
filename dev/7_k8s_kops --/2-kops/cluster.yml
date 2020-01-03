@@ -1,0 +1,120 @@
+apiVersion: kops/v1alpha2
+kind: Cluster
+metadata:
+  name: cluster-1.k8s.devstg.binbash.aws
+spec:
+  api:
+    loadBalancer:
+      additionalSecurityGroups: []
+      type: Internal
+  authentication:
+    aws: {}
+  authorization:
+    rbac: {}
+  channel: stable
+  cloudLabels:
+    Backup: "True"
+    Environment: devstg
+    Provisioner: kops
+    Service: kubernetes
+  cloudProvider: aws
+  configBase: s3://ve-apps-devstg-kops-state/cluster-1.k8s.devstg.binbash.aws
+  dnsZone: Z06993763NC5WWC2DQSZK
+  etcdClusters:
+  - etcdMembers:
+    - encryptedVolume: true
+      instanceGroup: master-us-east-1a
+      name: a
+    name: main
+    version: 3.3.10
+  - etcdMembers:
+    - encryptedVolume: true
+      instanceGroup: master-us-east-1a
+      name: a
+    name: events
+    version: 3.3.10
+  iam:
+    allowContainerRegistry: true
+    legacy: true
+  kubelet:
+    anonymousAuth: false
+  kubernetesApiAccess:
+  - 172.17.0.0/20
+  kubernetesVersion: 1.13.11
+  masterInternalName: api.internal.cluster-1.k8s.devstg.binbash.aws
+  masterPublicName: api.cluster-1.k8s.devstg.binbash.aws
+  networkCIDR: 172.17.32.0/20
+  networkID: vpc-08eda1f1927b21279
+  networking:
+    calico:
+      majorVersion: v3
+  nonMasqueradeCIDR: 100.64.0.0/10
+  sshAccess:
+  - 172.17.0.0/20
+  subnets:
+  - id: subnet-08e61443969c2dd85
+    name: utility-us-east-1a
+    type: Utility
+    zone: us-east-1a
+  - id: subnet-008393383d35d5efc
+    name: utility-us-east-1b
+    type: Utility
+    zone: us-east-1b
+  - id: subnet-0c3a67ded37b3d7c8
+    name: utility-us-east-1c
+    type: Utility
+    zone: us-east-1c
+  - egress: nat-06d37cc6f9f6d4f5b
+    id: subnet-09594acc20bf04342
+    name: us-east-1a
+    type: Private
+    zone: us-east-1a
+  - egress: nat-06d37cc6f9f6d4f5b
+    id: subnet-01274f4f12fef96f6
+    name: us-east-1b
+    type: Private
+    zone: us-east-1b
+  - egress: nat-06d37cc6f9f6d4f5b
+    id: subnet-06300911cc017fc83
+    name: us-east-1c
+    type: Private
+    zone: us-east-1c
+  topology:
+    dns:
+      type: Private
+    masters: private
+    nodes: private
+---
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  labels:
+    kops.k8s.io/cluster: cluster-1.k8s.devstg.binbash.aws
+  name: master-us-east-1a
+spec:
+  image: kope.io/k8s-1.12-debian-stretch-amd64-hvm-ebs-2019-06-21
+  kubernetesVersion: 1.13.11
+  machineType: m5.large
+  maxSize: 1
+  minSize: 1
+  role: Master
+  subnets:
+  - us-east-1a
+---
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  labels:
+    kops.k8s.io/cluster: cluster-1.k8s.devstg.binbash.aws
+  name: nodes
+spec:
+  image: kope.io/k8s-1.12-debian-stretch-amd64-hvm-ebs-2019-06-21
+  kubernetesVersion: 1.13.11
+  machineType: t2.medium
+  maxSize: 3
+  minSize: 3
+  role: Node
+  subnets:
+  - us-east-1a
+  - us-east-1b
+  - us-east-1c
