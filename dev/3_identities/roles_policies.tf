@@ -57,7 +57,9 @@ resource "aws_iam_policy" "devops_access" {
                 "ssm:*",
                 "tag:*",
                 "vpc:*",
-                "waf:*"
+                "waf:*",
+                "wafv2:*",
+                "waf-regional:*"
             ],
             "Resource": [
                 "*"
@@ -156,6 +158,7 @@ resource "aws_iam_policy" "deploy_master_access" {
                 "cloudfront:*",
                 "config:*",
                 "ecr:*",
+                "elasticloadbalancing:*",
                 "iam:*",
                 "dynamodb:*",
                 "ec2:*",
@@ -170,6 +173,7 @@ resource "aws_iam_policy" "deploy_master_access" {
                 "sqs:*",
                 "vpc:*",
                 "waf:*",
+                "wafv2:*",
                 "waf-regional:*"
             ],
             "Resource": [
