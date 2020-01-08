@@ -38,14 +38,14 @@ version: ## Show terraform version
 	--entrypoint=${TF_DOCKER_ENTRYPOINT} \
 	-t ${TF_DOCKER_IMAGE}:${TF_VER} version
 
-init: init-cmd tf-dir-chmod
-init-cmd: ## Initialize terraform backend, plugins, and modules"
+init: init-cmd tf-dir-chmod ## Initialize terraform backend, plugins, and modules
+init-cmd:
 	${TF_CMD_PREFIX} init -backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
-plan: ## Preview terraform changes"
+plan: ## Preview terraform changes
 	${TF_CMD_PREFIX} plan -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
-plan-detailed: ## Preview terraform changes with a more detailed output"
+plan-detailed: ## Preview terraform changes with a more detailed output
 	${TF_CMD_PREFIX} plan -detailed-exitcode -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
 diff: ## Terraform plan with landscape
@@ -55,7 +55,7 @@ apply: apply-cmd tf-dir-chmod
 apply-cmd: ## Make terraform apply any changes"
 	${TF_CMD_PREFIX} apply -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
-destroy: ## Destroy all resources managed by terraform"
+destroy: ## Destroy all resources managed by terraform
 	${TF_CMD_PREFIX} destroy -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
 format: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
