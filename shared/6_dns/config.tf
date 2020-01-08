@@ -14,7 +14,7 @@ terraform {
   required_version = ">= 0.12.18"
 
   backend "s3" {
-    key = "shared/network/terraform.tfstate"
+    key = "shared/dns/terraform.tfstate"
   }
 }
 
@@ -25,6 +25,17 @@ terraform {
 #
 # data type from output for vpc
 #
+data "terraform_remote_state" "vpc-shared" {
+   backend     = "s3"
+
+   config = {
+      region  = var.region
+      profile = var.profile
+      bucket  = "bb-shared-terraform-state-storage-s3"
+      key     = "shared/network/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "vpc-dev" {
    backend     = "s3"
 

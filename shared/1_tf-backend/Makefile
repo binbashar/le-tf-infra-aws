@@ -38,14 +38,14 @@ version: ## Show terraform version
 	--entrypoint=${TF_DOCKER_ENTRYPOINT} \
 	-t ${TF_DOCKER_IMAGE}:${TF_VER} version
 
-init: init-cmd tf-dir-chmod
-init-cmd: ## Initialize terraform backend, plugins, and modules"
+init: init-cmd tf-dir-chmod ## Initialize terraform backend, plugins, and modules
+init-cmd:
 	${TF_CMD_PREFIX} init -backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
-apply: apply-cmd tf-dir-chmod
-apply-cmd: ## Make terraform apply any changes"
+apply: apply-cmd tf-dir-chmod ## Make terraform apply any changes
+apply-cmd:
 	${TF_CMD_PREFIX} apply -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
-destroy: ## Destroy all resources managed by terraform"
+destroy: ## Destroy all resources managed by terraform
 	${TF_CMD_PREFIX} destroy -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 

@@ -21,9 +21,3 @@ apply: ## Make terraform apply any changes"
 
 destroy: ## Destroy all resources managed by terraform
 	terraform destroy -var-file=../config/backend.config -var-file=../config/main.config
-
-decrypt: ## ansible-vault decrypt secrets
-	ansible-vault decrypt secrets.tf
-
-encrypt: ## ansible-vault encrypt secrets
-	ansible-vault encrypt secrets.tf
