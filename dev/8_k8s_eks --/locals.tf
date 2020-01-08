@@ -8,7 +8,7 @@ locals {
   # not overlap this range. Otherwise, you will receive the following error:
   # Error: : error upgrading connection: error dialing backend: dial tcp 172.17.nn.nn:10250: getsockopt: no route to host
   vpc_name       = "${var.project}-${var.environment}-vpc-eks"
-  vpc_cidr_block = "172.18.0.0/20"
+  vpc_cidr_block = "172.19.0.0/20"
   azs = [
     "${var.region}a",
     "${var.region}b",
@@ -16,20 +16,21 @@ locals {
   ]
 
   private_subnets = [
-    "172.18.0.0/23",
-    "172.18.2.0/23",
-    "172.18.4.0/23",
+    "172.19.0.0/23",
+    "172.19.2.0/23",
+    "172.19.4.0/23",
   ]
 
   public_subnets = [
-    "172.18.6.0/23",
-    "172.18.8.0/23",
-    "172.18.10.0/23",
+    "172.19.6.0/23",
+    "172.19.8.0/23",
+    "172.19.10.0/23",
   ]
 
   mgmt_worker_subnets = [
-    "172.17.0.0/16",
-    "172.18.0.0/16",
+    "172.18.0.0/20",
+    "172.18.32.0/20",
+    "172.19.0.0/20",
   ]
 
   tags = {

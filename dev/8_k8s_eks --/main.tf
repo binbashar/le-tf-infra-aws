@@ -1,5 +1,5 @@
 module "eks" {
-  source          = "git::git@github.com:binbashar/terraform-aws-eks.git?ref=v7.0.0"
+  source          = "git::git@github.com:binbashar/terraform-aws-eks.git?ref=v7.0.1"
   cluster_name    = local.cluster_name
   cluster_version = var.cluster_version
 
