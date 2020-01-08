@@ -9,7 +9,7 @@ LOCAL_OS_AWS_CONF_DIR := ~/.aws
 TF_PWD_DIR := $(shell pwd)
 TF_PWD_CONT_DIR := "/go/src/project/"
 TF_PWD_CONFIG_DIR := $(shell cd .. && cd config && pwd)
-TF_VER := 0.11.14
+TF_VER := 0.12.18
 TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
 TF_DOCKER_MAIN_CONF_VARS_FILE := /config/main.config
 TF_DOCKER_ENTRYPOINT := /usr/local/go/bin/terraform
@@ -39,24 +39,24 @@ version: ## Show terraform version
 	--entrypoint=${TF_DOCKER_ENTRYPOINT} \
 	-t ${TF_DOCKER_IMAGE}:${TF_VER} version
 
-init: init-cmd tf-dir-chmod
-init-cmd: ## Initialize terraform backend, plugins, and modules
+init: init-cmd tf-dir-chmod ## Initialize terraform backend, plugins, and modules
+init-cmd:
 	${TF_CMD_PREFIX} init -backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
 plan: ## Preview terraform changes
 	${TF_CMD_PREFIX} plan -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
-plan-detailed: ## Preview terraform changes with a more detailed output"
+plan-detailed: ## Preview terraform changes with a more detailed output
 	${TF_CMD_PREFIX} plan -detailed-exitcode -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
 diff: ## Terraform plan with landscape
 	${TF_CMD_PREFIX} plan -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} | docker run -i --rm binbash/terraform-landscape
 
 apply: ## Make terraform apply any changes with local binary
-	terraform apply -var-file=../config/backend.config -var-file=../config/main.config
+	terraform apply -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE}
 
-apply-docker: apply-cmd tf-dir-chmod
-apply-cmd: ## Make terraform apply any changes with dockerized binary
+apply-docker: apply-cmd tf-dir-chmod ## Make terraform apply any changes with dockerized binary
+apply-cmd:
 	${TF_CMD_PREFIX} apply -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
 output: ## Terraform output command is used to extract the value of an output variable from the state file.
@@ -73,4 +73,3 @@ force-unlock: ## Manually unlock the terraform state, eg: make ARGS="a94b0919-de
 
 validate-tf-layout: ## Validate Terraform layout to make sure it's set up properly
 	../../@scripts/validate-terraform-layout.sh
-
