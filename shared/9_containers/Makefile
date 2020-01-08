@@ -10,14 +10,14 @@ version: ## Show terraform versio
 init: ## Initialize terraform backend, plugins, and modules"
 	terraform init -backend-config=../config/backend.config
 
-plan: ## Preview terraform changes"
+plan: ## Preview terraform changes
 	terraform plan -var-file=../config/backend.config -var-file=../config/main.config
 
 diff: ## Terraform plan with landscape
 	terraform plan -var-file=../config/backend.config -var-file=../config/main.config | docker run -i --rm binbash/terraform-landscape
 
 apply: ## Make terraform apply any changes"
-	terraform apply -var-file=../config/backend.config -var-file=../config/main.config
+	terraform apply -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE}
 
-destroy: ## Destroy all resources managed by terraform"
+destroy: ## Destroy all resources managed by terraform
 	terraform destroy -var-file=../config/backend.config -var-file=../config/main.config
