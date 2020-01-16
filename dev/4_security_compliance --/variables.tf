@@ -17,19 +17,21 @@ variable "project" {
 }
 
 variable "project_long" {
-  description = "Project Name Complete"
+  description = "Project Long Name"
 }
 
 variable "environment" {
   description = "Environment Name"
 }
 
+#===========================================#
+# Accounts                                  #
+#===========================================#
 variable "security_account_id" {}
 variable "shared_account_id" {}
 variable "dev_account_id" {}
 
 variable "bucket" {}
-variable "dynamodb_table" {}
 variable "encrypt" {}
 
 variable "cloudtrail_org_bucket" {}

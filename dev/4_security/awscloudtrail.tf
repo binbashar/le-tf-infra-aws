@@ -19,6 +19,7 @@ module "cloudtrail_api_alarms" {
   log_group_name   = aws_cloudwatch_log_group.cloudtrail.name
   metric_namespace = var.metric_namespace
   create_dashboard = var.create_dashboard
+  sns_topic_arn = data.terraform_remote_state.notifications.outputs.sns_topic_arn
 }
 
 #==================================================================#

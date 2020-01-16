@@ -70,3 +70,9 @@ variable "create_dashboard" {
   default     = true
   type        = bool
 }
+
+variable "kms_key_name" {
+  description = "KMS key solution name, e.g. 'app' or 'jenkins'"
+  default     = "kms"
+  type        = string
+}
