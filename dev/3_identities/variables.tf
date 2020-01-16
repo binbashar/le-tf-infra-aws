@@ -1,6 +1,6 @@
-#
-# AWS Provider Settings
-#
+#===========================================#
+# AWS Provider Settings                     #
+#===========================================#
 variable "region" {
   description = "AWS Region"
 }
@@ -9,9 +9,9 @@ variable "profile" {
   description = "AWS Profile"
 }
 
-#
-# Project Variables
-#
+#===========================================#
+# Project Variables                         #
+#===========================================#
 variable "project" {
   description = "Project Name"
 }
@@ -24,9 +24,14 @@ variable "environment" {
   description = "Environment Name"
 }
 
-#
-# Accounts
-#
+# Not in use only declared to avoid -> Warning: Value for undeclared variable
+variable "bucket" {}
+variable "encrypt" {}
+variable "cloudtrail_org_bucket" {}
+
+#===========================================#
+# Accounts                                  #
+#===========================================#
 variable "security_account_id" {
   description = "Account: Security & Users Management"
 }
