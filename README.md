@@ -1,8 +1,8 @@
 <div align="center">
-    <img src="https://raw.githubusercontent.com/binbashar/bb-devops-tf-infra-aws/master/figures/binbash.png" alt="drawing" width="350"/>
+    <img src="https://raw.githubusercontent.com/binbashar/bb-devops-tf-infra-aws/master/@figures/binbash.png" alt="drawing" width="350"/>
 </div>
 <div align="right">
-  <img src="https://raw.githubusercontent.com/binbashar/bb-devops-tf-infra-aws/master/figures/binbash-leverage-terraform.png"
+  <img src="https://raw.githubusercontent.com/binbashar/bb-devops-tf-infra-aws/master/@figures/binbash-leverage-terraform.png"
   alt="leverage" width="230"/>
 </div>
 
@@ -66,7 +66,7 @@ Root directory `Makefile` has the automated steps (to be integrated with **Circl
 ### CircleCi PR auto-release job
 
 <div align="left">
-  <img src="https://raw.githubusercontent.com/binbashar/bb-devops-tf-infra-aws/master/figures/circleci.png" alt="leverage-circleci" width="230"/>
+  <img src="https://raw.githubusercontent.com/binbashar/bb-devops-tf-infra-aws/master/@figures/circleci.png" alt="leverage-circleci" width="230"/>
 </div>
 
 - <https://circleci.com/gh/binbashar/bb-devops-tf-infra-aws>
