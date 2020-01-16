@@ -5,6 +5,7 @@
 # Except
 #
 !*.env.example
+!*.circleci
 !*.dockeringnore
 !*.hosts
 !/.gitignore
@@ -65,6 +66,8 @@ Thumbs.db
 *.iml
 *.ipr
 .vscode
+/src
+/venv
 
 # Custom Project tools files #
 ########################
@@ -85,3 +88,8 @@ Thumbs.db
 # Module directory
 #
 .terraform
+#
+# Terratest
+#
+tests/vendor/
+tests/Gopkg.*
