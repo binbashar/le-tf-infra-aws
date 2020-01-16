@@ -13,13 +13,16 @@ module "cloudtrail" {
 }
 
 module "cloudtrail_api_alarms" {
-  source                        = "git::git@github.com:binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=0.4.1"
+  source            = "git::git@github.com:binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=0.4.1"
 
-  region           = var.region
-  log_group_name   = aws_cloudwatch_log_group.cloudtrail.name
-  metric_namespace = var.metric_namespace
-  create_dashboard = var.create_dashboard
-  sns_topic_arn = data.terraform_remote_state.notifications.outputs.sns_topic_arn
+  region            = var.region
+  log_group_name    = aws_cloudwatch_log_group.cloudtrail.name
+  metric_namespace  = var.metric_namespace
+  create_dashboard  = var.create_dashboard
+  # Uncomment if /dev/notifications SNS is configured and you want to send notifications via slack
+  # sns_topic_arn     = data.terraform_remote_state.notifications.outputs.sns_topic_arn
+  sns_topic_arn     = null
+
 }
 
 #==================================================================#
