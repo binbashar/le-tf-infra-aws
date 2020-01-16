@@ -1,6 +1,6 @@
-#===========================================#
-# AWS Provider Settings                     #
-#===========================================#
+#=============================#
+# AWS Provider Settings       #
+#=============================#
 variable "region" {
   description = "AWS Region"
 }
@@ -9,9 +9,9 @@ variable "profile" {
   description = "AWS Profile"
 }
 
-#===========================================#
-# Project Variables                         #
-#===========================================#
+#=============================#
+# Project Variables           #
+#=============================#
 variable "project" {
   description = "Project Name"
 }
@@ -29,9 +29,9 @@ variable "bucket" {}
 variable "encrypt" {}
 variable "cloudtrail_org_bucket" {}
 
-#===========================================#
-# Accounts                                  #
-#===========================================#
+#=============================#
+# Accounts                    #
+#=============================#
 variable "security_account_id" {
   description = "Account: Security & Users Management"
 }
