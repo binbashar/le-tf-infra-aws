@@ -25,7 +25,7 @@ The following block provides a brief explanation of the chosen files/folders lay
     ...
 ```
 
-<div align="right">
+<div align="center">
   <img src="./%40figures/binbash-aws-organizations.png"
   alt="leverage" width="630"/>
 </div>
