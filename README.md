@@ -27,7 +27,7 @@ The following block provides a brief explanation of the chosen files/folders lay
 
 <div align="center">
   <img src="./%40figures/binbash-aws-organizations.png"
-  alt="leverage" width="630"/>
+  alt="leverage" width="1000"/>
 </div>
 
 Under every account folder you will see a service layer structure similar to the following:
