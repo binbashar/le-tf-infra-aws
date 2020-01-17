@@ -43,3 +43,26 @@ variable "shared_account_id" {
 variable "dev_account_id" {
   description = "Account: Dev Modules & Libs"
 }
+
+#=============================#
+# Notifications               #
+#=============================#
+variable "sns_topic_name" {
+  description = ""
+  default     = "sns-topic-slack-notify"
+}
+
+variable "slack_webhook_url" {
+  description = ""
+  default     = "https://hooks.slack.com/services/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"
+}
+
+variable "slack_channel" {
+  description = ""
+  default     = "bb-tools-monitoring"
+}
+
+variable "slack_username" {
+  description = ""
+  default     = "aws-binbash-org"
+}

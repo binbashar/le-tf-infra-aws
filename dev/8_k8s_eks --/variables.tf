@@ -24,7 +24,6 @@ variable "security_account_id" {}
 variable "shared_account_id" {}
 variable "dev_account_id" {}
 variable "bucket" {}
-variable "dynamodb_table" {}
 
 #===========================================#
 # K8s EKS                                   #

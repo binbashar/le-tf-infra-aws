@@ -14,6 +14,6 @@ terraform {
   required_version = ">= 0.12.18"
 
   backend "s3" {
-    key = "dev/identities/terraform.tfstate"
+    key = "dev/secrets/terraform.tfstate"
   }
 }

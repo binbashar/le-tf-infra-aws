@@ -52,8 +52,8 @@ plan-detailed: ## Preview terraform changes with a more detailed output
 diff: ## Terraform plan with landscape
 	${TF_CMD_PREFIX} plan -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} | docker run -i --rm binbash/terraform-landscape
 
-apply: apply-cmd tf-dir-chmod
-apply-cmd: ## Make terraform apply any changes"
+apply: apply-cmd tf-dir-chmod ## Make terraform apply any changes"
+apply-cmd:
 	${TF_CMD_PREFIX} apply -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
 output: ## Terraform output command is used to extract the value of an output variable from the state file.

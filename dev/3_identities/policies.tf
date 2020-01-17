@@ -3,7 +3,7 @@
 #
 
 #
-# User Managed Policy: DevOps Access
+# Customer Managed Policy: DevOps Access
 #
 resource "aws_iam_policy" "devops_access" {
   name        = "devops_access"
@@ -120,28 +120,7 @@ EOF
 }
 
 #
-# AWS Managed Policy: Admin Access
-#
-resource "aws_iam_role_policy_attachment" "admins_have_read_only_access" {
-  role       = "${aws_iam_role.admin_role.name}"
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-}
-
-#
-# AWS Managed Policies: Auditor Access
-#
-resource "aws_iam_role_policy_attachment" "auditors_have_read_only_access" {
-  role       = "${aws_iam_role.auditor_role.name}"
-  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "auditors_have_security_audit_access" {
-  role       = "${aws_iam_role.auditor_role.name}"
-  policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
-}
-
-#
-# Policy: DeployMaster
+# Customer Managed Policy: DeployMaster
 #
 resource "aws_iam_policy" "deploy_master_access" {
   name        = "deploy_master_access"
@@ -156,6 +135,8 @@ resource "aws_iam_policy" "deploy_master_access" {
             "Action": [
                 "budgets:*",
                 "cloudfront:*",
+                "cloudtrail:*",
+                "cloudwatch:*",
                 "config:*",
                 "ecr:*",
                 "elasticloadbalancing:*",

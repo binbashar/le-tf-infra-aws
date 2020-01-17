@@ -53,7 +53,7 @@ diff: ## Terraform plan with landscape
 	${TF_CMD_PREFIX} plan -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} | docker run -i --rm binbash/terraform-landscape
 
 apply: ## Make terraform apply any changes with local binary
-	terraform apply -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE}
+	terraform apply -var-file="..${TF_DOCKER_BACKEND_CONF_VARS_FILE}" -var-file="..${TF_DOCKER_MAIN_CONF_VARS_FILE}"
 
 apply-docker: apply-cmd tf-dir-chmod ## Make terraform apply any changes with dockerized binary
 apply-cmd:

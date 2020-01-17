@@ -26,7 +26,6 @@ variable "environment" {
 }
 
 variable "bucket" {}
-variable "dynamodb_table" {}
 variable "encrypt" {}
 variable "cloudtrail_org_bucket" {}
 
