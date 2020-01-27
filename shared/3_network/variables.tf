@@ -51,13 +51,13 @@ variable "dev_account_id" {
 # Networking                                #
 #===========================================#
 variable "vpc_dev_created" {
-  description = "true if Dev account VPC is created"
+  description = "true if Dev account VPC is created for Peering purposes"
   type        = bool
   default     = true
 }
 
 variable "vpc_dev_eks_created" {
-  description = "true if Dev account EKS VPC is created"
+  description = "true if Dev account EKS VPC is created for Peering purposes"
   type        = bool
-  default     = false
+  default     = true
 }
