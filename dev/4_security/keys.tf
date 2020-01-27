@@ -4,7 +4,7 @@ resource "aws_key_pair" "compute-ssh-key" {
 }
 
 module "kms_key" {
-  source                  = "git::git@github.com:binbashar/terraform-aws-kms-key.git?ref=0.4.0"
+  source = "git::git@github.com:binbashar/terraform-aws-kms-key.git?ref=0.4.0"
 
   enabled                 = true
   namespace               = var.project
