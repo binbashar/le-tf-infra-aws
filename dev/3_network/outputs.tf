@@ -57,10 +57,5 @@ output "private_route_table_ids" {
 
 output "vpc_peering_id_dev_with_shared" {
   description = "VPC peering ID with shared"
-  value	      =  var.vpc_shared_created == true ? join("",aws_vpc_peering_connection.dev_vpc_with_shared_vpc[*].id) : null
-}
-
-output "vpc_peering_id_dev_eks_with_shared" {
-  description = "VPC peering ID with shared"
-  value       =  var.vpc_shared_created == true ? join("",aws_vpc_peering_connection.dev_eks_vpc_with_shared_vpc[*].id) : null
+  value       = var.vpc_shared_created == true ? join("", aws_vpc_peering_connection.dev_vpc_with_shared_vpc[*].id) : null
 }

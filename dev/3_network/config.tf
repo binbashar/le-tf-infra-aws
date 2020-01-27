@@ -32,7 +32,7 @@ data "terraform_remote_state" "vpc-eks" {
     region  = var.region
     profile = var.profile
     bucket  = "bb-dev-terraform-state-storage-s3"
-    key     = "dev/k8s-eks/terraform.tfstate"
+    key     = "dev/k8s-eks/prerequisites/terraform.tfstate"
   }
 }
 
