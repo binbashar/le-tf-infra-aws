@@ -10,7 +10,7 @@ provider "aws" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.12.13"
+  required_version = ">= 0.12.19"
 
   backend "s3" {
     key = "dev/cloud-nuke/terraform.tfstate"
