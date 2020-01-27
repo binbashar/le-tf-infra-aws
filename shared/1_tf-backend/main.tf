@@ -1,16 +1,18 @@
 terraform {
-  required_version = ">= 0.11.14"
+  required_version = ">= 0.12.18"
 }
 
 variable "region" {}
 variable "profile" {}
-variable "bucket" {}
+variable "project" {}
+variable "environment" {}
+variable "encrypt" {}
 variable "dynamodb_table" {}
 
 provider "aws" {
-  version = "~> 2.15"
-  region  = "${var.region}"
-  profile = "${var.profile}"
+  version = "~> 2.43"
+  region  = var.region
+  profile = var.profile
 }
 
 provider "null" {
@@ -18,12 +20,32 @@ provider "null" {
 }
 
 module "terraform_backend" {
-  source = "git::git@github.com:binbashar/terraform-aws-tfstate-backend.git?ref=v0.0.2"
+  source = "git::git@github.com:binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.3"
 
-  bucket_name         = "${var.bucket}"
-  bucket_description  = "S3 Bucket for ${var.profile} Terraform Remote State Storage"
-  table_name          = "${var.dynamodb_table}"
-  table_description   = "DynamoDB for ${var.profile} Terraform Remote State Locking"
-  replication_region  = "us-east-2"
-  replication_profile = "${var.profile}"
+  #
+  # Bucket Name and Region
+  #
+  region    = var.region
+  delimiter = "-"
+  namespace = var.project
+  stage     = var.environment
+  name      = "terraform-state-storage-s3"
+
+  #
+  # Security
+  #
+  acl                           = "private"
+  block_public_acls             = true
+  block_public_policy           = true
+  restrict_public_buckets       = true
+  enable_server_side_encryption = var.encrypt
+
+  #
+  # Replication
+  #
+  bucket_replication_enabled = true
+  bucket_replication_region  = "us-east-2"
+  bucket_replication_profile = var.profile
+
+  tags = local.tags
 }

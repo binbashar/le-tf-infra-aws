@@ -17,7 +17,7 @@ diff: ## Terraform plan with landscape
 	terraform plan -var-file=../config/backend.config -var-file=../config/main.config | docker run -i --rm binbash/terraform-landscape
 
 apply: ## Make terraform apply any changes"
-	terraform apply -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE}
+	terraform apply -var-file="..${TF_DOCKER_BACKEND_CONF_VARS_FILE}" -var-file="..${TF_DOCKER_MAIN_CONF_VARS_FILE}"
 
 destroy: ## Destroy all resources managed by terraform
 	terraform destroy -var-file=../config/backend.config -var-file=../config/main.config
