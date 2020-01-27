@@ -9,9 +9,9 @@ resource "aws_iam_policy" "devops_access" {
   name        = "devops_access"
   description = "Services enabled for DevOps role"
 
-#
-# IMPORTANT: Multiple condition keys in the same statement are not supported for some ec2 and rds actions.
-#
+  #
+  # IMPORTANT: Multiple condition keys in the same statement are not supported for some ec2 and rds actions.
+  #
   policy = <<EOF
 {
     "Version": "2012-10-17",
