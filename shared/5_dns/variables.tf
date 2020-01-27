@@ -48,21 +48,6 @@ variable "dev_account_id" {
 }
 
 #===========================================#
-# Networking                                #
-#===========================================#
-variable "vpc_dev_created" {
-  description = "true if Dev account VPC is created"
-  type        = bool
-  default     = true
-}
-
-variable "vpc_dev_eks_created" {
-  description = "true if Dev account EKS VPC is created"
-  type        = bool
-  default     = false
-}
-
-#===========================================#
 # DNS                                       #
 #===========================================#
 #
@@ -94,16 +79,6 @@ variable "aws_public_hosted_zone_fqdn_record_name_2" {
 variable "aws_public_hosted_zone_1_address_record_2" {
   description = "AWS Route53 public hosted zone A type record"
   default     = "35.227.116.126"
-}
-
-variable "aws_public_hosted_zone_fqdn_record_name_3" {
-  description = "AWS Route53 public hosted zone fully qualified domain name (fqdn)"
-  default     = "passbolt.binbash.com.ar"
-}
-
-variable "aws_public_hosted_zone_1_address_record_3" {
-  description = "AWS Route53 public hosted zone A type record"
-  default     = "35.190.149.186"
 }
 
 #
@@ -185,4 +160,25 @@ variable "aws_public_hosted_zone_1_mail_servers_5" {
 variable "aws_private_hosted_zone_fqdn_1" {
   description = "AWS Route53 private hosted zone fully qualified domain name (fqdn)"
   default     = "aws.binbash.com.ar"
+}
+
+#===========================================#
+# DNS VPC Associations                      #
+#===========================================#
+variable "vpc_dev_dns_assoc" {
+  description = "true if Dev account VPC exists and needs DNS association"
+  type        = bool
+  default     = true
+}
+
+variable "vpc_dev_eks_dns_assoc" {
+  description = "true if Dev account EKS VPC exists and needs DNS association"
+  type        = bool
+  default     = true
+}
+
+variable "vpc_dev_kops_dns_assoc" {
+  description = "true if Dev account Kops Private Hosted Zone exists and needs DNS association"
+  type        = bool
+  default     = true
 }

@@ -26,34 +26,45 @@ terraform {
 # data type from output for vpc
 #
 data "terraform_remote_state" "vpc-shared" {
-   backend     = "s3"
+  backend = "s3"
 
-   config = {
-      region  = var.region
-      profile = var.profile
-      bucket  = "bb-shared-terraform-state-storage-s3"
-      key     = "shared/network/terraform.tfstate"
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = "bb-shared-terraform-state-storage-s3"
+    key     = "shared/network/terraform.tfstate"
   }
 }
 
 data "terraform_remote_state" "vpc-dev" {
-   backend     = "s3"
-
-   config = {
-      region  = var.region
-      profile = "bb-dev-devops"
-      bucket  = "bb-dev-terraform-state-storage-s3"
-      key     = "dev/network/terraform.tfstate"
-  }
-}
-
-data "terraform_remote_state" "vpc-eks" {
   backend = "s3"
 
   config = {
     region  = var.region
     profile = "bb-dev-devops"
     bucket  = "bb-dev-terraform-state-storage-s3"
-    key     = "dev/k8s-eks/terraform.tfstate"
+    key     = "dev/network/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "dns-dev-kops" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "bb-dev-devops"
+    bucket  = "bb-dev-terraform-state-storage-s3"
+    key     = "dev/k8s-kops/prerequisites/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "vpc-dev-eks" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "bb-dev-devops"
+    bucket  = "bb-dev-terraform-state-storage-s3"
+    key     = "dev/k8s-eks/prerequisites/terraform.tfstate"
   }
 }

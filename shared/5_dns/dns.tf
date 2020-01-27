@@ -56,14 +56,6 @@ resource "aws_route53_record" "aws_public_hosted_zone_1_A_record_3" {
   ttl     = 300
 }
 
-resource "aws_route53_record" "aws_public_hosted_zone_1_A_record_4" {
-  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
-  name    = var.aws_public_hosted_zone_fqdn_record_name_3
-  type    = "A"
-  records = [var.aws_public_hosted_zone_1_address_record_3]
-  ttl     = 300
-}
-
 #
 # text records
 #
@@ -106,7 +98,30 @@ resource "aws_route53_zone" "aws_private_hosted_zone_1" {
   name = var.aws_private_hosted_zone_fqdn_1
 
   vpc {
-    vpc_id = data.terraform_remote_state.vpc-shared.outputs.vpc_id
+    vpc_id     = data.terraform_remote_state.vpc-shared.outputs.vpc_id
+    vpc_region = var.region
+  }
+
+  #
+  # This Remote Account VPCs are added as a post step after the local-exec assoc occurs.
+  # If you won't like to add them please consider the below workaround
+  # Had to add this ignore override because of the cross-vpc resolution
+  # between shared and vpc-dev
+  # between shared and vpc-dev-eks
+  #
+  #lifecycle {
+  #      ignore_changes = [
+  #          vpc,
+  #      ]
+  #  }
+
+  vpc {
+    vpc_id     = data.terraform_remote_state.vpc-dev-eks.outputs.vpc_id
+    vpc_region = var.region
+  }
+  vpc {
+    vpc_id     = data.terraform_remote_state.vpc-dev.outputs.vpc_id
+    vpc_region = var.region
   }
 
   tags = local.tags

@@ -1,4 +1,4 @@
-#Reference Link: https://aws.amazon.com/premiumsupport/knowledge-center/private-hosted-zone-different-account/
+# Reference Link: https://aws.amazon.com/premiumsupport/knowledge-center/private-hosted-zone-different-account/
 
 #============================================================#
 # HOSTED ZONE: aws.binbash.com.ar from Shared to Dev Account
@@ -14,11 +14,11 @@
 # Request Association between Dev VPC and aws.binbash.com.ar private hosted zone
 #
 resource "null_resource" "dns_private_hosted_zone_create_dev_vpc_association_auth" {
-  count = var.vpc_dev_created == true ? 1 : 0
+  count = var.vpc_dev_dns_assoc == true ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command = "aws route53 create-vpc-association-authorization --hosted-zone-id ${aws_route53_zone.aws_private_hosted_zone_1.zone_id} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-dev.outputs.vpc_id} --profile ${var.profile}"
+    command     = "aws route53 create-vpc-association-authorization --hosted-zone-id ${aws_route53_zone.aws_private_hosted_zone_1.zone_id} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-dev.outputs.vpc_id} --profile ${var.profile}"
   }
 }
 
@@ -26,10 +26,10 @@ resource "null_resource" "dns_private_hosted_zone_create_dev_vpc_association_aut
 # Request Association between Dev EKS VPC and aws.binbash.com.ar private hosted zone
 #
 resource "null_resource" "dns_private_hosted_zone_create_dev_eks_vpc_association_auth" {
-  count = var.vpc_dev_eks_created == true ? 1 : 0
+  count = var.vpc_dev_eks_dns_assoc == true ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command = "aws route53 create-vpc-association-authorization --hosted-zone-id ${aws_route53_zone.aws_private_hosted_zone_1.zone_id} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-eks.outputs.vpc_id} --profile ${var.profile}"
+    command     = "aws route53 create-vpc-association-authorization --hosted-zone-id ${aws_route53_zone.aws_private_hosted_zone_1.zone_id} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-dev-eks.outputs.vpc_id} --profile ${var.profile}"
   }
 }

@@ -9,7 +9,7 @@ LOCAL_OS_AWS_CONF_DIR := ~/.aws
 TF_PWD_DIR := $(shell pwd)
 TF_PWD_CONT_DIR := "/go/src/project/"
 TF_PWD_CONFIG_DIR := $(shell cd .. && cd config && pwd)
-TF_VER := 0.12.18
+TF_VER := 0.12.19
 TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
 TF_DOCKER_MAIN_CONF_VARS_FILE := /config/main.config
 TF_DOCKER_ENTRYPOINT := /usr/local/go/bin/terraform
@@ -53,7 +53,7 @@ diff: ## Terraform plan with landscape
 	${TF_CMD_PREFIX} plan -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} | docker run -i --rm binbash/terraform-landscape
 
 apply: ## Make terraform apply any changes with local binary
-	terraform apply -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE}
+	terraform apply -var-file="..${TF_DOCKER_BACKEND_CONF_VARS_FILE}" -var-file="..${TF_DOCKER_MAIN_CONF_VARS_FILE}"
 
 output: ## Terraform output command is used to extract the value of an output variable from the state file.
 	${TF_CMD_PREFIX} output
