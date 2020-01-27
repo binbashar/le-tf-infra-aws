@@ -14,22 +14,10 @@
 # Accept association between Dev VPC and aws.binbash.com.ar private hosted zone
 #
 resource "null_resource" "associate_dev_vpc_with_private_remote_hosted_zone" {
-  count = var.vpc_shared_created == true ? 1 : 0
+  count = var.vpc_shared_dns_assoc == true ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "aws route53 associate-vpc-with-hosted-zone --profile ${var.profile} --hosted-zone-id ${data.terraform_remote_state.dns-shared.outputs.aws_internal_zone_id[0]} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-dev.outputs.vpc_id}"
-  }
-}
-
-#
-# Accept association between Dev EKS VPC and aws.binbash.com.ar private hosted zone
-#
-resource "null_resource" "associate_dev_eks_vpc_with_private_remote_hosted_zone" {
-  count = var.vpc_dev_eks_created == true ? 1 : 0
-
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command = "aws route53 associate-vpc-with-hosted-zone --profile ${var.profile} --hosted-zone-id ${data.terraform_remote_state.dns-shared.outputs.aws_internal_zone_id[0]} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-eks.outputs.vpc_id}"
   }
 }
