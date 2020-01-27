@@ -4,11 +4,11 @@ module "terraform_backend" {
   #
   # Bucket Name and Region
   #
-  region                        = var.region
-  delimiter                     = "-"
-  namespace                     = var.project
-  stage                         = var.environment
-  name                          = "terraform-state-storage-s3"
+  region    = var.region
+  delimiter = "-"
+  namespace = var.project
+  stage     = var.environment
+  name      = "terraform-state-storage-s3"
 
   #
   # Security
@@ -22,9 +22,9 @@ module "terraform_backend" {
   #
   # Replication
   #
-  bucket_replication_enabled    = true
-  bucket_replication_region     = "us-east-2"
-  bucket_replication_profile    = var.profile
+  bucket_replication_enabled = true
+  bucket_replication_region  = var.region_secondary
+  bucket_replication_profile = var.profile
 
   tags = local.tags
 }
