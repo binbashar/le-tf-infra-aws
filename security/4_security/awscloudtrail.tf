@@ -13,13 +13,13 @@ module "cloudtrail" {
 }
 
 module "cloudtrail_s3_bucket" {
-  source                  = "git::git@github.com:binbashar/terraform-aws-cloudtrail-s3-bucket.git?ref=v0.3.5"
-  namespace               = "${var.project}"
-  stage                   = "${var.environment}"
-  name                    = "cloudtrail-org"
-  region                  = "${var.region}"
-  lifecycle_rule_enabled  = "${var.lifecycle_rule_enabled}"
-  lifecycle_tags          = "${local.tags}"
+  source                 = "git::git@github.com:binbashar/terraform-aws-cloudtrail-s3-bucket.git?ref=v0.3.5"
+  namespace              = "${var.project}"
+  stage                  = "${var.environment}"
+  name                   = "cloudtrail-org"
+  region                 = "${var.region}"
+  lifecycle_rule_enabled = "${var.lifecycle_rule_enabled}"
+  lifecycle_tags         = "${local.tags}"
 
   accountIDS = [
     "arn:aws:s3:::${var.project}-${var.environment}-cloudtrail-org/*",
