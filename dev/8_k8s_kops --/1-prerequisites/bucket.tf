@@ -2,53 +2,18 @@
 # Bucket used to store Kops state
 #
 resource "aws_s3_bucket" "kops_state" {
-    bucket = "${var.project}-${var.environment}-kops-state"
-    acl    = "private"
-    # force_destroy = true
-
-    versioning {
-        enabled = true
-    }
-
-    lifecycle {
-        prevent_destroy = false
-    }
-
-    server_side_encryption_configuration {
-        rule {
-            apply_server_side_encryption_by_default {
-                sse_algorithm = "AES256"
-            }
-        }
-    }
-    replication_configuration {
-        role = "${aws_iam_role.replication.arn}"
-
-        rules {
-            id     = "standard_bucket_replication"
-            prefix = ""
-            status = "Enabled"
-
-            destination {
-                bucket        = "${aws_s3_bucket.kops_state_replica.arn}"
-                storage_class = "STANDARD"
-            }
-        }
-    }
-    tags = local.tags
-}
-
-# replica over us-west-2
-# replica resource destination
-resource "aws_s3_bucket" "kops_state_replica" {
-  bucket = "${var.project}-${var.environment}-kops-state-replica"
-  provider = "aws.secondary_region" 
+  bucket = "${var.project}-${var.environment}-kops-state-${local.k8s_cluster_name}"
+  acl    = "private"
+  # force_destroy = true
 
   versioning {
     enabled = true
   }
 
-  tags = local.tags
+  lifecycle {
+    prevent_destroy = false
+  }
+
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
@@ -56,7 +21,45 @@ resource "aws_s3_bucket" "kops_state_replica" {
       }
     }
   }
-}  
+
+  replication_configuration {
+    role = aws_iam_role.replication.arn
+
+    rules {
+      id     = "standard_bucket_replication"
+      prefix = ""
+      status = "Enabled"
+
+      destination {
+        bucket        = aws_s3_bucket.kops_state_replica.arn
+        storage_class = "STANDARD"
+      }
+    }
+  }
+
+  tags = local.tags
+}
+
+# replica over us-west-2
+# replica resource destination
+resource "aws_s3_bucket" "kops_state_replica" {
+  bucket   = "${var.project}-${var.environment}-kops-state-replica-${local.k8s_cluster_name}"
+  provider = aws.region_secondary
+
+  versioning {
+    enabled = true
+  }
+
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
+
+  tags = local.tags
+}
 
 # replica policy
 #
@@ -122,12 +125,8 @@ POLICY
 
 # replica attachment.
 #
-
 resource "aws_iam_policy_attachment" "replication" {
   name       = "role-policy-replication"
   roles      = [aws_iam_role.replication.name]
   policy_arn = aws_iam_policy.replication.arn
 }
-
-
-

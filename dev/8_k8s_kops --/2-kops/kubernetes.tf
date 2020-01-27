@@ -1,88 +1,88 @@
 locals = {
-  cluster_name                 = "cluster-1.k8s.devstg.binbash.aws"
-  master_autoscaling_group_ids = ["${aws_autoscaling_group.master-us-east-1a-masters-cluster-1-k8s-devstg-binbash-aws.id}"]
+  cluster_name                 = "cluster-kops-1.k8s.dev.binbash.aws"
+  master_autoscaling_group_ids = ["${aws_autoscaling_group.master-us-east-1a-masters-cluster-kops-1-k8s-dev-binbash-aws.id}", "${aws_autoscaling_group.master-us-east-1b-masters-cluster-kops-1-k8s-dev-binbash-aws.id}", "${aws_autoscaling_group.master-us-east-1c-masters-cluster-kops-1-k8s-dev-binbash-aws.id}"]
 
-  master_security_group_ids    = ["${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"]
+  master_security_group_ids    = ["${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"]
 
-  masters_role_arn             = "${aws_iam_role.masters-cluster-1-k8s-devstg-binbash-aws.arn}"
+  masters_role_arn             = "${aws_iam_role.masters-cluster-kops-1-k8s-dev-binbash-aws.arn}"
 
-  masters_role_name            = "${aws_iam_role.masters-cluster-1-k8s-devstg-binbash-aws.name}"
+  masters_role_name            = "${aws_iam_role.masters-cluster-kops-1-k8s-dev-binbash-aws.name}"
 
-  node_autoscaling_group_ids   = ["${aws_autoscaling_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"]
+  node_autoscaling_group_ids   = ["${aws_autoscaling_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"]
 
-  node_security_group_ids      = ["${aws_security_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"]
+  node_security_group_ids      = ["${aws_security_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"]
 
-  node_subnet_ids              = ["subnet-01274f4f12fef96f6", "subnet-06300911cc017fc83", "subnet-09594acc20bf04342"]
-  nodes_role_arn               = "${aws_iam_role.nodes-cluster-1-k8s-devstg-binbash-aws.arn}"
+  node_subnet_ids              = ["subnet-05d75d908f61d35e5", "subnet-094c287defbc07180", "subnet-0cec521de70ee76a3"]
+  nodes_role_arn               = "${aws_iam_role.nodes-cluster-kops-1-k8s-dev-binbash-aws.arn}"
 
-  nodes_role_name              = "${aws_iam_role.nodes-cluster-1-k8s-devstg-binbash-aws.name}"
+  nodes_role_name              = "${aws_iam_role.nodes-cluster-kops-1-k8s-dev-binbash-aws.name}"
 
   region                       = "us-east-1"
-  subnet_ids                   = ["subnet-008393383d35d5efc", "subnet-01274f4f12fef96f6", "subnet-06300911cc017fc83", "subnet-08e61443969c2dd85", "subnet-09594acc20bf04342", "subnet-0c3a67ded37b3d7c8"]
-  subnet_us-east-1a_id         = "subnet-09594acc20bf04342"
-  subnet_us-east-1b_id         = "subnet-01274f4f12fef96f6"
-  subnet_us-east-1c_id         = "subnet-06300911cc017fc83"
-  subnet_utility-us-east-1a_id = "subnet-08e61443969c2dd85"
-  subnet_utility-us-east-1b_id = "subnet-008393383d35d5efc"
-  subnet_utility-us-east-1c_id = "subnet-0c3a67ded37b3d7c8"
-  vpc_id                       = "vpc-08eda1f1927b21279"
+  subnet_ids                   = ["subnet-00a445cc509021b3f", "subnet-026fdb745614bf70d", "subnet-05d75d908f61d35e5", "subnet-094c287defbc07180", "subnet-0cec521de70ee76a3", "subnet-0f3d2fa193f469407"]
+  subnet_us-east-1a_id         = "subnet-05d75d908f61d35e5"
+  subnet_us-east-1b_id         = "subnet-094c287defbc07180"
+  subnet_us-east-1c_id         = "subnet-0cec521de70ee76a3"
+  subnet_utility-us-east-1a_id = "subnet-0f3d2fa193f469407"
+  subnet_utility-us-east-1b_id = "subnet-026fdb745614bf70d"
+  subnet_utility-us-east-1c_id = "subnet-00a445cc509021b3f"
+  vpc_id                       = "vpc-072f329fed6757e95"
 }
 
 
 output "cluster_name" {
-  value = "cluster-1.k8s.devstg.binbash.aws"
+  value = "cluster-kops-1.k8s.dev.binbash.aws"
 }
 
 
 output "master_autoscaling_group_ids" {
-  value = ["${aws_autoscaling_group.master-us-east-1a-masters-cluster-1-k8s-devstg-binbash-aws.id}"]
+  value = ["${aws_autoscaling_group.master-us-east-1a-masters-cluster-kops-1-k8s-dev-binbash-aws.id}", "${aws_autoscaling_group.master-us-east-1b-masters-cluster-kops-1-k8s-dev-binbash-aws.id}", "${aws_autoscaling_group.master-us-east-1c-masters-cluster-kops-1-k8s-dev-binbash-aws.id}"]
 
 }
 
 
 output "master_security_group_ids" {
-  value = ["${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"]
+  value = ["${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"]
 
 }
 
 
 output "masters_role_arn" {
-  value = "${aws_iam_role.masters-cluster-1-k8s-devstg-binbash-aws.arn}"
+  value = "${aws_iam_role.masters-cluster-kops-1-k8s-dev-binbash-aws.arn}"
 
 }
 
 
 output "masters_role_name" {
-  value = "${aws_iam_role.masters-cluster-1-k8s-devstg-binbash-aws.name}"
+  value = "${aws_iam_role.masters-cluster-kops-1-k8s-dev-binbash-aws.name}"
 
 }
 
 
 output "node_autoscaling_group_ids" {
-  value = ["${aws_autoscaling_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"]
+  value = ["${aws_autoscaling_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"]
 
 }
 
 
 output "node_security_group_ids" {
-  value = ["${aws_security_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"]
+  value = ["${aws_security_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"]
 
 }
 
 
 output "node_subnet_ids" {
-  value = ["subnet-01274f4f12fef96f6", "subnet-06300911cc017fc83", "subnet-09594acc20bf04342"]
+  value = ["subnet-05d75d908f61d35e5", "subnet-094c287defbc07180", "subnet-0cec521de70ee76a3"]
 }
 
 
 output "nodes_role_arn" {
-  value = "${aws_iam_role.nodes-cluster-1-k8s-devstg-binbash-aws.arn}"
+  value = "${aws_iam_role.nodes-cluster-kops-1-k8s-dev-binbash-aws.arn}"
 
 }
 
 
 output "nodes_role_name" {
-  value = "${aws_iam_role.nodes-cluster-1-k8s-devstg-binbash-aws.name}"
+  value = "${aws_iam_role.nodes-cluster-kops-1-k8s-dev-binbash-aws.name}"
 
 }
 
@@ -93,62 +93,78 @@ output "region" {
 
 
 output "subnet_ids" {
-  value = ["subnet-008393383d35d5efc", "subnet-01274f4f12fef96f6", "subnet-06300911cc017fc83", "subnet-08e61443969c2dd85", "subnet-09594acc20bf04342", "subnet-0c3a67ded37b3d7c8"]
+  value = ["subnet-00a445cc509021b3f", "subnet-026fdb745614bf70d", "subnet-05d75d908f61d35e5", "subnet-094c287defbc07180", "subnet-0cec521de70ee76a3", "subnet-0f3d2fa193f469407"]
 }
 
 
 output "subnet_us-east-1a_id" {
-  value = "subnet-09594acc20bf04342"
+  value = "subnet-05d75d908f61d35e5"
 }
 
 
 output "subnet_us-east-1b_id" {
-  value = "subnet-01274f4f12fef96f6"
+  value = "subnet-094c287defbc07180"
 }
 
 
 output "subnet_us-east-1c_id" {
-  value = "subnet-06300911cc017fc83"
+  value = "subnet-0cec521de70ee76a3"
 }
 
 
 output "subnet_utility-us-east-1a_id" {
-  value = "subnet-08e61443969c2dd85"
+  value = "subnet-0f3d2fa193f469407"
 }
 
 
 output "subnet_utility-us-east-1b_id" {
-  value = "subnet-008393383d35d5efc"
+  value = "subnet-026fdb745614bf70d"
 }
 
 
 output "subnet_utility-us-east-1c_id" {
-  value = "subnet-0c3a67ded37b3d7c8"
+  value = "subnet-00a445cc509021b3f"
 }
 
 
 output "vpc_id" {
-  value = "vpc-08eda1f1927b21279"
+  value = "vpc-072f329fed6757e95"
 }
 
 
 
 
-resource "aws_autoscaling_attachment" "master-us-east-1a-masters-cluster-1-k8s-devstg-binbash-aws" {
-  elb                    = "${aws_elb.api-cluster-1-k8s-devstg-binbash-aws.id}"
+resource "aws_autoscaling_attachment" "master-us-east-1a-masters-cluster-kops-1-k8s-dev-binbash-aws" {
+  elb                    = "${aws_elb.api-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
-  autoscaling_group_name = "${aws_autoscaling_group.master-us-east-1a-masters-cluster-1-k8s-devstg-binbash-aws.id}"
+  autoscaling_group_name = "${aws_autoscaling_group.master-us-east-1a-masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
 }
 
 
-resource "aws_autoscaling_group" "master-us-east-1a-masters-cluster-1-k8s-devstg-binbash-aws" {
-  name                 = "master-us-east-1a.masters.cluster-1.k8s.devstg.binbash.aws"
-  launch_configuration = "${aws_launch_configuration.master-us-east-1a-masters-cluster-1-k8s-devstg-binbash-aws.id}"
+resource "aws_autoscaling_attachment" "master-us-east-1b-masters-cluster-kops-1-k8s-dev-binbash-aws" {
+  elb                    = "${aws_elb.api-cluster-kops-1-k8s-dev-binbash-aws.id}"
+
+  autoscaling_group_name = "${aws_autoscaling_group.master-us-east-1b-masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
+
+}
+
+
+resource "aws_autoscaling_attachment" "master-us-east-1c-masters-cluster-kops-1-k8s-dev-binbash-aws" {
+  elb                    = "${aws_elb.api-cluster-kops-1-k8s-dev-binbash-aws.id}"
+
+  autoscaling_group_name = "${aws_autoscaling_group.master-us-east-1c-masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
+
+}
+
+
+resource "aws_autoscaling_group" "master-us-east-1a-masters-cluster-kops-1-k8s-dev-binbash-aws" {
+  name                 = "master-us-east-1a.masters.cluster-kops-1.k8s.dev.binbash.aws"
+  launch_configuration = "${aws_launch_configuration.master-us-east-1a-masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   max_size             = 1
   min_size             = 1
-  vpc_zone_identifier  = ["subnet-09594acc20bf04342"]
+  vpc_zone_identifier  = ["subnet-05d75d908f61d35e5"]
 
   tag = {
     key                 = "Backup"
@@ -159,21 +175,21 @@ resource "aws_autoscaling_group" "master-us-east-1a-masters-cluster-1-k8s-devstg
 
   tag = {
     key                 = "Environment"
-    value               = "devstg"
+    value               = "dev"
     propagate_at_launch = true
   }
 
 
   tag = {
     key                 = "KubernetesCluster"
-    value               = "cluster-1.k8s.devstg.binbash.aws"
+    value               = "cluster-kops-1.k8s.dev.binbash.aws"
     propagate_at_launch = true
   }
 
 
   tag = {
     key                 = "Name"
-    value               = "master-us-east-1a.masters.cluster-1.k8s.devstg.binbash.aws"
+    value               = "master-us-east-1a.masters.cluster-kops-1.k8s.dev.binbash.aws"
     propagate_at_launch = true
   }
 
@@ -199,18 +215,25 @@ resource "aws_autoscaling_group" "master-us-east-1a-masters-cluster-1-k8s-devstg
   }
 
 
+  tag = {
+    key                 = "kops.k8s.io/instancegroup"
+    value               = "master-us-east-1a"
+    propagate_at_launch = true
+  }
+
+
   metrics_granularity = "1Minute"
   enabled_metrics     = ["GroupDesiredCapacity", "GroupInServiceInstances", "GroupMaxSize", "GroupMinSize", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"]
 }
 
 
-resource "aws_autoscaling_group" "nodes-cluster-1-k8s-devstg-binbash-aws" {
-  name                 = "nodes.cluster-1.k8s.devstg.binbash.aws"
-  launch_configuration = "${aws_launch_configuration.nodes-cluster-1-k8s-devstg-binbash-aws.id}"
+resource "aws_autoscaling_group" "master-us-east-1b-masters-cluster-kops-1-k8s-dev-binbash-aws" {
+  name                 = "master-us-east-1b.masters.cluster-kops-1.k8s.dev.binbash.aws"
+  launch_configuration = "${aws_launch_configuration.master-us-east-1b-masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
-  max_size             = 3
-  min_size             = 3
-  vpc_zone_identifier  = ["subnet-09594acc20bf04342", "subnet-01274f4f12fef96f6", "subnet-06300911cc017fc83"]
+  max_size             = 1
+  min_size             = 1
+  vpc_zone_identifier  = ["subnet-094c287defbc07180"]
 
   tag = {
     key                 = "Backup"
@@ -221,21 +244,159 @@ resource "aws_autoscaling_group" "nodes-cluster-1-k8s-devstg-binbash-aws" {
 
   tag = {
     key                 = "Environment"
-    value               = "devstg"
+    value               = "dev"
     propagate_at_launch = true
   }
 
 
   tag = {
     key                 = "KubernetesCluster"
-    value               = "cluster-1.k8s.devstg.binbash.aws"
+    value               = "cluster-kops-1.k8s.dev.binbash.aws"
     propagate_at_launch = true
   }
 
 
   tag = {
     key                 = "Name"
-    value               = "nodes.cluster-1.k8s.devstg.binbash.aws"
+    value               = "master-us-east-1b.masters.cluster-kops-1.k8s.dev.binbash.aws"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "Provisioner"
+    value               = "kops"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "Service"
+    value               = "kubernetes"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "k8s.io/role/master"
+    value               = "1"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "kops.k8s.io/instancegroup"
+    value               = "master-us-east-1b"
+    propagate_at_launch = true
+  }
+
+
+  metrics_granularity = "1Minute"
+  enabled_metrics     = ["GroupDesiredCapacity", "GroupInServiceInstances", "GroupMaxSize", "GroupMinSize", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"]
+}
+
+
+resource "aws_autoscaling_group" "master-us-east-1c-masters-cluster-kops-1-k8s-dev-binbash-aws" {
+  name                 = "master-us-east-1c.masters.cluster-kops-1.k8s.dev.binbash.aws"
+  launch_configuration = "${aws_launch_configuration.master-us-east-1c-masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
+
+  max_size             = 1
+  min_size             = 1
+  vpc_zone_identifier  = ["subnet-0cec521de70ee76a3"]
+
+  tag = {
+    key                 = "Backup"
+    value               = "True"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "Environment"
+    value               = "dev"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "KubernetesCluster"
+    value               = "cluster-kops-1.k8s.dev.binbash.aws"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "Name"
+    value               = "master-us-east-1c.masters.cluster-kops-1.k8s.dev.binbash.aws"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "Provisioner"
+    value               = "kops"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "Service"
+    value               = "kubernetes"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "k8s.io/role/master"
+    value               = "1"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "kops.k8s.io/instancegroup"
+    value               = "master-us-east-1c"
+    propagate_at_launch = true
+  }
+
+
+  metrics_granularity = "1Minute"
+  enabled_metrics     = ["GroupDesiredCapacity", "GroupInServiceInstances", "GroupMaxSize", "GroupMinSize", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"]
+}
+
+
+resource "aws_autoscaling_group" "nodes-cluster-kops-1-k8s-dev-binbash-aws" {
+  name                 = "nodes.cluster-kops-1.k8s.dev.binbash.aws"
+  launch_configuration = "${aws_launch_configuration.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"
+
+  max_size             = 5
+  min_size             = 2
+  vpc_zone_identifier  = ["subnet-05d75d908f61d35e5", "subnet-094c287defbc07180", "subnet-0cec521de70ee76a3"]
+
+  tag = {
+    key                 = "Backup"
+    value               = "True"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "Environment"
+    value               = "dev"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "KubernetesCluster"
+    value               = "cluster-kops-1.k8s.dev.binbash.aws"
+    propagate_at_launch = true
+  }
+
+
+  tag = {
+    key                 = "Name"
+    value               = "nodes.cluster-kops-1.k8s.dev.binbash.aws"
     propagate_at_launch = true
   }
 
@@ -261,55 +422,146 @@ resource "aws_autoscaling_group" "nodes-cluster-1-k8s-devstg-binbash-aws" {
   }
 
 
+  tag = {
+    key                 = "kops.k8s.io/instancegroup"
+    value               = "nodes"
+    propagate_at_launch = true
+  }
+
+
   metrics_granularity = "1Minute"
   enabled_metrics     = ["GroupDesiredCapacity", "GroupInServiceInstances", "GroupMaxSize", "GroupMinSize", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"]
 }
 
 
-resource "aws_ebs_volume" "a-etcd-events-cluster-1-k8s-devstg-binbash-aws" {
+resource "aws_ebs_volume" "a-etcd-events-cluster-kops-1-k8s-dev-binbash-aws" {
   availability_zone = "us-east-1a"
   size              = 20
   type              = "gp2"
   encrypted         = true
 
   tags = {
-    Backup                                                          = "True"
-    Environment                                                     = "devstg"
-    KubernetesCluster                                               = "cluster-1.k8s.devstg.binbash.aws"
-    Name                                                            = "a.etcd-events.cluster-1.k8s.devstg.binbash.aws"
-    Provisioner                                                     = "kops"
-    Service                                                         = "kubernetes"
-    "k8s.io/etcd/events"                                            = "a/a"
-    "k8s.io/role/master"                                            = "1"
-    "kubernetes.io/cluster/cluster-1.k8s.devstg.binbash.aws" = "owned"
+    Backup                                                     = "True"
+    Environment                                                = "dev"
+    KubernetesCluster                                          = "cluster-kops-1.k8s.dev.binbash.aws"
+    Name                                                       = "a.etcd-events.cluster-kops-1.k8s.dev.binbash.aws"
+    Provisioner                                                = "kops"
+    Service                                                    = "kubernetes"
+    "k8s.io/etcd/events"                                       = "a/a,b,c"
+    "k8s.io/role/master"                                       = "1"
+    "kubernetes.io/cluster/cluster-kops-1.k8s.dev.binbash.aws" = "owned"
   }
 
 }
 
 
-resource "aws_ebs_volume" "a-etcd-main-cluster-1-k8s-devstg-binbash-aws" {
+resource "aws_ebs_volume" "a-etcd-main-cluster-kops-1-k8s-dev-binbash-aws" {
   availability_zone = "us-east-1a"
   size              = 20
   type              = "gp2"
   encrypted         = true
 
   tags = {
-    Backup                                                          = "True"
-    Environment                                                     = "devstg"
-    KubernetesCluster                                               = "cluster-1.k8s.devstg.binbash.aws"
-    Name                                                            = "a.etcd-main.cluster-1.k8s.devstg.binbash.aws"
-    Provisioner                                                     = "kops"
-    Service                                                         = "kubernetes"
-    "k8s.io/etcd/main"                                              = "a/a"
-    "k8s.io/role/master"                                            = "1"
-    "kubernetes.io/cluster/cluster-1.k8s.devstg.binbash.aws" = "owned"
+    Backup                                                     = "True"
+    Environment                                                = "dev"
+    KubernetesCluster                                          = "cluster-kops-1.k8s.dev.binbash.aws"
+    Name                                                       = "a.etcd-main.cluster-kops-1.k8s.dev.binbash.aws"
+    Provisioner                                                = "kops"
+    Service                                                    = "kubernetes"
+    "k8s.io/etcd/main"                                         = "a/a,b,c"
+    "k8s.io/role/master"                                       = "1"
+    "kubernetes.io/cluster/cluster-kops-1.k8s.dev.binbash.aws" = "owned"
   }
 
 }
 
 
-resource "aws_elb" "api-cluster-1-k8s-devstg-binbash-aws" {
-  name = "api-cluster-1-k8s-devstg--t1dao9"
+resource "aws_ebs_volume" "b-etcd-events-cluster-kops-1-k8s-dev-binbash-aws" {
+  availability_zone = "us-east-1b"
+  size              = 20
+  type              = "gp2"
+  encrypted         = true
+
+  tags = {
+    Backup                                                     = "True"
+    Environment                                                = "dev"
+    KubernetesCluster                                          = "cluster-kops-1.k8s.dev.binbash.aws"
+    Name                                                       = "b.etcd-events.cluster-kops-1.k8s.dev.binbash.aws"
+    Provisioner                                                = "kops"
+    Service                                                    = "kubernetes"
+    "k8s.io/etcd/events"                                       = "b/a,b,c"
+    "k8s.io/role/master"                                       = "1"
+    "kubernetes.io/cluster/cluster-kops-1.k8s.dev.binbash.aws" = "owned"
+  }
+
+}
+
+
+resource "aws_ebs_volume" "b-etcd-main-cluster-kops-1-k8s-dev-binbash-aws" {
+  availability_zone = "us-east-1b"
+  size              = 20
+  type              = "gp2"
+  encrypted         = true
+
+  tags = {
+    Backup                                                     = "True"
+    Environment                                                = "dev"
+    KubernetesCluster                                          = "cluster-kops-1.k8s.dev.binbash.aws"
+    Name                                                       = "b.etcd-main.cluster-kops-1.k8s.dev.binbash.aws"
+    Provisioner                                                = "kops"
+    Service                                                    = "kubernetes"
+    "k8s.io/etcd/main"                                         = "b/a,b,c"
+    "k8s.io/role/master"                                       = "1"
+    "kubernetes.io/cluster/cluster-kops-1.k8s.dev.binbash.aws" = "owned"
+  }
+
+}
+
+
+resource "aws_ebs_volume" "c-etcd-events-cluster-kops-1-k8s-dev-binbash-aws" {
+  availability_zone = "us-east-1c"
+  size              = 20
+  type              = "gp2"
+  encrypted         = true
+
+  tags = {
+    Backup                                                     = "True"
+    Environment                                                = "dev"
+    KubernetesCluster                                          = "cluster-kops-1.k8s.dev.binbash.aws"
+    Name                                                       = "c.etcd-events.cluster-kops-1.k8s.dev.binbash.aws"
+    Provisioner                                                = "kops"
+    Service                                                    = "kubernetes"
+    "k8s.io/etcd/events"                                       = "c/a,b,c"
+    "k8s.io/role/master"                                       = "1"
+    "kubernetes.io/cluster/cluster-kops-1.k8s.dev.binbash.aws" = "owned"
+  }
+
+}
+
+
+resource "aws_ebs_volume" "c-etcd-main-cluster-kops-1-k8s-dev-binbash-aws" {
+  availability_zone = "us-east-1c"
+  size              = 20
+  type              = "gp2"
+  encrypted         = true
+
+  tags = {
+    Backup                                                     = "True"
+    Environment                                                = "dev"
+    KubernetesCluster                                          = "cluster-kops-1.k8s.dev.binbash.aws"
+    Name                                                       = "c.etcd-main.cluster-kops-1.k8s.dev.binbash.aws"
+    Provisioner                                                = "kops"
+    Service                                                    = "kubernetes"
+    "k8s.io/etcd/main"                                         = "c/a,b,c"
+    "k8s.io/role/master"                                       = "1"
+    "kubernetes.io/cluster/cluster-kops-1.k8s.dev.binbash.aws" = "owned"
+  }
+
+}
+
+
+resource "aws_elb" "api-cluster-kops-1-k8s-dev-binbash-aws" {
+  name = "api-cluster-kops-1-k8s-de-8q8mi4"
 
   listener = {
     instance_port     = 443
@@ -319,9 +571,9 @@ resource "aws_elb" "api-cluster-1-k8s-devstg-binbash-aws" {
   }
 
 
-  security_groups = ["${aws_security_group.api-elb-cluster-1-k8s-devstg-binbash-aws.id}"]
+  security_groups = ["${aws_security_group.api-elb-cluster-kops-1-k8s-dev-binbash-aws.id}"]
 
-  subnets         = ["subnet-01274f4f12fef96f6", "subnet-06300911cc017fc83", "subnet-09594acc20bf04342"]
+  subnets         = ["subnet-05d75d908f61d35e5", "subnet-094c287defbc07180", "subnet-0cec521de70ee76a3"]
   internal        = true
 
   health_check = {
@@ -333,86 +585,87 @@ resource "aws_elb" "api-cluster-1-k8s-devstg-binbash-aws" {
   }
 
 
-  idle_timeout = 300
+  cross_zone_load_balancing = false
+  idle_timeout              = 300
 
   tags = {
-    Backup                                                          = "True"
-    Environment                                                     = "devstg"
-    KubernetesCluster                                               = "cluster-1.k8s.devstg.binbash.aws"
-    Name                                                            = "api.cluster-1.k8s.devstg.binbash.aws"
-    Provisioner                                                     = "kops"
-    Service                                                         = "kubernetes"
-    "kubernetes.io/cluster/cluster-1.k8s.devstg.binbash.aws" = "owned"
+    Backup                                                     = "True"
+    Environment                                                = "dev"
+    KubernetesCluster                                          = "cluster-kops-1.k8s.dev.binbash.aws"
+    Name                                                       = "api.cluster-kops-1.k8s.dev.binbash.aws"
+    Provisioner                                                = "kops"
+    Service                                                    = "kubernetes"
+    "kubernetes.io/cluster/cluster-kops-1.k8s.dev.binbash.aws" = "owned"
   }
 
 }
 
 
-resource "aws_iam_instance_profile" "masters-cluster-1-k8s-devstg-binbash-aws" {
-  name = "masters.cluster-1.k8s.devstg.binbash.aws"
-  role = "${aws_iam_role.masters-cluster-1-k8s-devstg-binbash-aws.name}"
+resource "aws_iam_instance_profile" "masters-cluster-kops-1-k8s-dev-binbash-aws" {
+  name = "masters.cluster-kops-1.k8s.dev.binbash.aws"
+  role = "${aws_iam_role.masters-cluster-kops-1-k8s-dev-binbash-aws.name}"
 
 }
 
 
-resource "aws_iam_instance_profile" "nodes-cluster-1-k8s-devstg-binbash-aws" {
-  name = "nodes.cluster-1.k8s.devstg.binbash.aws"
-  role = "${aws_iam_role.nodes-cluster-1-k8s-devstg-binbash-aws.name}"
+resource "aws_iam_instance_profile" "nodes-cluster-kops-1-k8s-dev-binbash-aws" {
+  name = "nodes.cluster-kops-1.k8s.dev.binbash.aws"
+  role = "${aws_iam_role.nodes-cluster-kops-1-k8s-dev-binbash-aws.name}"
 
 }
 
 
-resource "aws_iam_role" "masters-cluster-1-k8s-devstg-binbash-aws" {
-  name               = "masters.cluster-1.k8s.devstg.binbash.aws"
-  assume_role_policy = "${file("${path.module}/data/aws_iam_role_masters.cluster-1.k8s.devstg.binbash.aws_policy")}"
+resource "aws_iam_role" "masters-cluster-kops-1-k8s-dev-binbash-aws" {
+  name               = "masters.cluster-kops-1.k8s.dev.binbash.aws"
+  assume_role_policy = "${file("${path.module}/data/aws_iam_role_masters.cluster-kops-1.k8s.dev.binbash.aws_policy")}"
 
 }
 
 
-resource "aws_iam_role" "nodes-cluster-1-k8s-devstg-binbash-aws" {
-  name               = "nodes.cluster-1.k8s.devstg.binbash.aws"
-  assume_role_policy = "${file("${path.module}/data/aws_iam_role_nodes.cluster-1.k8s.devstg.binbash.aws_policy")}"
+resource "aws_iam_role" "nodes-cluster-kops-1-k8s-dev-binbash-aws" {
+  name               = "nodes.cluster-kops-1.k8s.dev.binbash.aws"
+  assume_role_policy = "${file("${path.module}/data/aws_iam_role_nodes.cluster-kops-1.k8s.dev.binbash.aws_policy")}"
 
 }
 
 
-resource "aws_iam_role_policy" "masters-cluster-1-k8s-devstg-binbash-aws" {
-  name   = "masters.cluster-1.k8s.devstg.binbash.aws"
-  role   = "${aws_iam_role.masters-cluster-1-k8s-devstg-binbash-aws.name}"
+resource "aws_iam_role_policy" "masters-cluster-kops-1-k8s-dev-binbash-aws" {
+  name   = "masters.cluster-kops-1.k8s.dev.binbash.aws"
+  role   = "${aws_iam_role.masters-cluster-kops-1-k8s-dev-binbash-aws.name}"
 
-  policy = "${file("${path.module}/data/aws_iam_role_policy_masters.cluster-1.k8s.devstg.binbash.aws_policy")}"
-
-}
-
-
-resource "aws_iam_role_policy" "nodes-cluster-1-k8s-devstg-binbash-aws" {
-  name   = "nodes.cluster-1.k8s.devstg.binbash.aws"
-  role   = "${aws_iam_role.nodes-cluster-1-k8s-devstg-binbash-aws.name}"
-
-  policy = "${file("${path.module}/data/aws_iam_role_policy_nodes.cluster-1.k8s.devstg.binbash.aws_policy")}"
+  policy = "${file("${path.module}/data/aws_iam_role_policy_masters.cluster-kops-1.k8s.dev.binbash.aws_policy")}"
 
 }
 
 
-resource "aws_key_pair" "kubernetes-cluster-1-k8s-devstg-binbash-aws-e134d4c7c3b4c867e185681824b3dbbb" {
-  key_name   = "kubernetes.cluster-1.k8s.devstg.binbash.aws-e1:34:d4:c7:c3:b4:c8:67:e1:85:68:18:24:b3:db:bb"
-  public_key = "${file("${path.module}/data/aws_key_pair_kubernetes.cluster-1.k8s.devstg.binbash.aws-e134d4c7c3b4c867e185681824b3dbbb_public_key")}"
+resource "aws_iam_role_policy" "nodes-cluster-kops-1-k8s-dev-binbash-aws" {
+  name   = "nodes.cluster-kops-1.k8s.dev.binbash.aws"
+  role   = "${aws_iam_role.nodes-cluster-kops-1-k8s-dev-binbash-aws.name}"
+
+  policy = "${file("${path.module}/data/aws_iam_role_policy_nodes.cluster-kops-1.k8s.dev.binbash.aws_policy")}"
 
 }
 
 
-resource "aws_launch_configuration" "master-us-east-1a-masters-cluster-1-k8s-devstg-binbash-aws" {
-  name_prefix                 = "master-us-east-1a.masters.cluster-1.k8s.devstg.binbash.aws-"
-  image_id                    = "ami-06cb76654b9acdcec"
-  instance_type               = "m5.large"
-  key_name                    = "${aws_key_pair.kubernetes-cluster-1-k8s-devstg-binbash-aws-e134d4c7c3b4c867e185681824b3dbbb.id}"
+resource "aws_key_pair" "kubernetes-cluster-kops-1-k8s-dev-binbash-aws-2ccdff0c48dd81bbd2ca91692b8b1c44" {
+  key_name   = "kubernetes.cluster-kops-1.k8s.dev.binbash.aws-2c:cd:ff:0c:48:dd:81:bb:d2:ca:91:69:2b:8b:1c:44"
+  public_key = "${file("${path.module}/data/aws_key_pair_kubernetes.cluster-kops-1.k8s.dev.binbash.aws-2ccdff0c48dd81bbd2ca91692b8b1c44_public_key")}"
 
-  iam_instance_profile        = "${aws_iam_instance_profile.masters-cluster-1-k8s-devstg-binbash-aws.id}"
+}
 
-  security_groups             = ["${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"]
+
+resource "aws_launch_configuration" "master-us-east-1a-masters-cluster-kops-1-k8s-dev-binbash-aws" {
+  name_prefix                 = "master-us-east-1a.masters.cluster-kops-1.k8s.dev.binbash.aws-"
+  image_id                    = "ami-069525f6cc64fdff0"
+  instance_type               = "t2.large"
+  key_name                    = "${aws_key_pair.kubernetes-cluster-kops-1-k8s-dev-binbash-aws-2ccdff0c48dd81bbd2ca91692b8b1c44.id}"
+
+  iam_instance_profile        = "${aws_iam_instance_profile.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
+
+  security_groups             = ["${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"]
 
   associate_public_ip_address = false
-  user_data                   = "${file("${path.module}/data/aws_launch_configuration_master-us-east-1a.masters.cluster-1.k8s.devstg.binbash.aws_user_data")}"
+  user_data                   = "${file("${path.module}/data/aws_launch_configuration_master-us-east-1a.masters.cluster-kops-1.k8s.dev.binbash.aws_user_data")}"
 
 
   root_block_device = {
@@ -431,18 +684,78 @@ resource "aws_launch_configuration" "master-us-east-1a-masters-cluster-1-k8s-dev
 }
 
 
-resource "aws_launch_configuration" "nodes-cluster-1-k8s-devstg-binbash-aws" {
-  name_prefix                 = "nodes.cluster-1.k8s.devstg.binbash.aws-"
-  image_id                    = "ami-06cb76654b9acdcec"
-  instance_type               = "t2.medium"
-  key_name                    = "${aws_key_pair.kubernetes-cluster-1-k8s-devstg-binbash-aws-e134d4c7c3b4c867e185681824b3dbbb.id}"
+resource "aws_launch_configuration" "master-us-east-1b-masters-cluster-kops-1-k8s-dev-binbash-aws" {
+  name_prefix                 = "master-us-east-1b.masters.cluster-kops-1.k8s.dev.binbash.aws-"
+  image_id                    = "ami-069525f6cc64fdff0"
+  instance_type               = "t2.large"
+  key_name                    = "${aws_key_pair.kubernetes-cluster-kops-1-k8s-dev-binbash-aws-2ccdff0c48dd81bbd2ca91692b8b1c44.id}"
 
-  iam_instance_profile        = "${aws_iam_instance_profile.nodes-cluster-1-k8s-devstg-binbash-aws.id}"
+  iam_instance_profile        = "${aws_iam_instance_profile.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
-  security_groups             = ["${aws_security_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"]
+  security_groups             = ["${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"]
 
   associate_public_ip_address = false
-  user_data                   = "${file("${path.module}/data/aws_launch_configuration_nodes.cluster-1.k8s.devstg.binbash.aws_user_data")}"
+  user_data                   = "${file("${path.module}/data/aws_launch_configuration_master-us-east-1b.masters.cluster-kops-1.k8s.dev.binbash.aws_user_data")}"
+
+
+  root_block_device = {
+    volume_type           = "gp2"
+    volume_size           = 64
+    delete_on_termination = true
+  }
+
+
+  lifecycle = {
+    create_before_destroy = true
+  }
+
+
+  enable_monitoring = false
+}
+
+
+resource "aws_launch_configuration" "master-us-east-1c-masters-cluster-kops-1-k8s-dev-binbash-aws" {
+  name_prefix                 = "master-us-east-1c.masters.cluster-kops-1.k8s.dev.binbash.aws-"
+  image_id                    = "ami-069525f6cc64fdff0"
+  instance_type               = "t2.large"
+  key_name                    = "${aws_key_pair.kubernetes-cluster-kops-1-k8s-dev-binbash-aws-2ccdff0c48dd81bbd2ca91692b8b1c44.id}"
+
+  iam_instance_profile        = "${aws_iam_instance_profile.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
+
+  security_groups             = ["${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"]
+
+  associate_public_ip_address = false
+  user_data                   = "${file("${path.module}/data/aws_launch_configuration_master-us-east-1c.masters.cluster-kops-1.k8s.dev.binbash.aws_user_data")}"
+
+
+  root_block_device = {
+    volume_type           = "gp2"
+    volume_size           = 64
+    delete_on_termination = true
+  }
+
+
+  lifecycle = {
+    create_before_destroy = true
+  }
+
+
+  enable_monitoring = false
+}
+
+
+resource "aws_launch_configuration" "nodes-cluster-kops-1-k8s-dev-binbash-aws" {
+  name_prefix                 = "nodes.cluster-kops-1.k8s.dev.binbash.aws-"
+  image_id                    = "ami-069525f6cc64fdff0"
+  instance_type               = "t2.medium"
+  key_name                    = "${aws_key_pair.kubernetes-cluster-kops-1-k8s-dev-binbash-aws-2ccdff0c48dd81bbd2ca91692b8b1c44.id}"
+
+  iam_instance_profile        = "${aws_iam_instance_profile.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"
+
+  security_groups             = ["${aws_security_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"]
+
+  associate_public_ip_address = false
+  user_data                   = "${file("${path.module}/data/aws_launch_configuration_nodes.cluster-kops-1.k8s.dev.binbash.aws_user_data")}"
 
 
   root_block_device = {
@@ -461,60 +774,60 @@ resource "aws_launch_configuration" "nodes-cluster-1-k8s-devstg-binbash-aws" {
 }
 
 
-resource "aws_route53_record" "api-cluster-1-k8s-devstg-binbash-aws" {
-  name = "api.cluster-1.k8s.devstg.binbash.aws"
+resource "aws_route53_record" "api-cluster-kops-1-k8s-dev-binbash-aws" {
+  name = "api.cluster-kops-1.k8s.dev.binbash.aws"
   type = "A"
 
   alias = {
-    name                   = "${aws_elb.api-cluster-1-k8s-devstg-binbash-aws.dns_name}"
+    name                   = "${aws_elb.api-cluster-kops-1-k8s-dev-binbash-aws.dns_name}"
 
-    zone_id                = "${aws_elb.api-cluster-1-k8s-devstg-binbash-aws.zone_id}"
+    zone_id                = "${aws_elb.api-cluster-kops-1-k8s-dev-binbash-aws.zone_id}"
 
     evaluate_target_health = false
   }
 
 
-  zone_id = "/hostedzone/Z06993763NC5WWC2DQSZK"
+  zone_id = "/hostedzone/Z02860073TM97JGVRH4T4"
 }
 
 
-resource "aws_security_group" "api-elb-cluster-1-k8s-devstg-binbash-aws" {
-  name        = "api-elb.cluster-1.k8s.devstg.binbash.aws"
-  vpc_id      = "vpc-08eda1f1927b21279"
+resource "aws_security_group" "api-elb-cluster-kops-1-k8s-dev-binbash-aws" {
+  name        = "api-elb.cluster-kops-1.k8s.dev.binbash.aws"
+  vpc_id      = "vpc-072f329fed6757e95"
   description = "Security group for api ELB"
 
   tags = {
-    KubernetesCluster                                               = "cluster-1.k8s.devstg.binbash.aws"
-    Name                                                            = "api-elb.cluster-1.k8s.devstg.binbash.aws"
-    "kubernetes.io/cluster/cluster-1.k8s.devstg.binbash.aws" = "owned"
+    KubernetesCluster                                          = "cluster-kops-1.k8s.dev.binbash.aws"
+    Name                                                       = "api-elb.cluster-kops-1.k8s.dev.binbash.aws"
+    "kubernetes.io/cluster/cluster-kops-1.k8s.dev.binbash.aws" = "owned"
   }
 
 }
 
 
-resource "aws_security_group" "masters-cluster-1-k8s-devstg-binbash-aws" {
-  name        = "masters.cluster-1.k8s.devstg.binbash.aws"
-  vpc_id      = "vpc-08eda1f1927b21279"
+resource "aws_security_group" "masters-cluster-kops-1-k8s-dev-binbash-aws" {
+  name        = "masters.cluster-kops-1.k8s.dev.binbash.aws"
+  vpc_id      = "vpc-072f329fed6757e95"
   description = "Security group for masters"
 
   tags = {
-    KubernetesCluster                                               = "cluster-1.k8s.devstg.binbash.aws"
-    Name                                                            = "masters.cluster-1.k8s.devstg.binbash.aws"
-    "kubernetes.io/cluster/cluster-1.k8s.devstg.binbash.aws" = "owned"
+    KubernetesCluster                                          = "cluster-kops-1.k8s.dev.binbash.aws"
+    Name                                                       = "masters.cluster-kops-1.k8s.dev.binbash.aws"
+    "kubernetes.io/cluster/cluster-kops-1.k8s.dev.binbash.aws" = "owned"
   }
 
 }
 
 
-resource "aws_security_group" "nodes-cluster-1-k8s-devstg-binbash-aws" {
-  name        = "nodes.cluster-1.k8s.devstg.binbash.aws"
-  vpc_id      = "vpc-08eda1f1927b21279"
+resource "aws_security_group" "nodes-cluster-kops-1-k8s-dev-binbash-aws" {
+  name        = "nodes.cluster-kops-1.k8s.dev.binbash.aws"
+  vpc_id      = "vpc-072f329fed6757e95"
   description = "Security group for nodes"
 
   tags = {
-    KubernetesCluster                                               = "cluster-1.k8s.devstg.binbash.aws"
-    Name                                                            = "nodes.cluster-1.k8s.devstg.binbash.aws"
-    "kubernetes.io/cluster/cluster-1.k8s.devstg.binbash.aws" = "owned"
+    KubernetesCluster                                          = "cluster-kops-1.k8s.dev.binbash.aws"
+    Name                                                       = "nodes.cluster-kops-1.k8s.dev.binbash.aws"
+    "kubernetes.io/cluster/cluster-kops-1.k8s.dev.binbash.aws" = "owned"
   }
 
 }
@@ -522,9 +835,9 @@ resource "aws_security_group" "nodes-cluster-1-k8s-devstg-binbash-aws" {
 
 resource "aws_security_group_rule" "all-master-to-master" {
   type                     = "ingress"
-  security_group_id        = "${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id        = "${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
-  source_security_group_id = "${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"
+  source_security_group_id = "${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port                = 0
   to_port                  = 0
@@ -534,9 +847,9 @@ resource "aws_security_group_rule" "all-master-to-master" {
 
 resource "aws_security_group_rule" "all-master-to-node" {
   type                     = "ingress"
-  security_group_id        = "${aws_security_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id        = "${aws_security_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
-  source_security_group_id = "${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"
+  source_security_group_id = "${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port                = 0
   to_port                  = 0
@@ -546,9 +859,9 @@ resource "aws_security_group_rule" "all-master-to-node" {
 
 resource "aws_security_group_rule" "all-node-to-node" {
   type                     = "ingress"
-  security_group_id        = "${aws_security_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id        = "${aws_security_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
-  source_security_group_id = "${aws_security_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"
+  source_security_group_id = "${aws_security_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port                = 0
   to_port                  = 0
@@ -558,7 +871,7 @@ resource "aws_security_group_rule" "all-node-to-node" {
 
 resource "aws_security_group_rule" "api-elb-egress" {
   type              = "egress"
-  security_group_id = "${aws_security_group.api-elb-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id = "${aws_security_group.api-elb-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port         = 0
   to_port           = 0
@@ -567,22 +880,22 @@ resource "aws_security_group_rule" "api-elb-egress" {
 }
 
 
-resource "aws_security_group_rule" "https-api-elb-172-17-0-0--20" {
+resource "aws_security_group_rule" "https-api-elb-172-18-0-0--20" {
   type              = "ingress"
-  security_group_id = "${aws_security_group.api-elb-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id = "${aws_security_group.api-elb-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port         = 443
   to_port           = 443
   protocol          = "tcp"
-  cidr_blocks       = ["172.17.0.0/20"]
+  cidr_blocks       = ["172.18.0.0/20"]
 }
 
 
 resource "aws_security_group_rule" "https-elb-to-master" {
   type                     = "ingress"
-  security_group_id        = "${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id        = "${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
-  source_security_group_id = "${aws_security_group.api-elb-cluster-1-k8s-devstg-binbash-aws.id}"
+  source_security_group_id = "${aws_security_group.api-elb-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port                = 443
   to_port                  = 443
@@ -590,20 +903,20 @@ resource "aws_security_group_rule" "https-elb-to-master" {
 }
 
 
-resource "aws_security_group_rule" "icmp-pmtu-api-elb-172-17-0-0--20" {
+resource "aws_security_group_rule" "icmp-pmtu-api-elb-172-18-0-0--20" {
   type              = "ingress"
-  security_group_id = "${aws_security_group.api-elb-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id = "${aws_security_group.api-elb-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port         = 3
   to_port           = 4
   protocol          = "icmp"
-  cidr_blocks       = ["172.17.0.0/20"]
+  cidr_blocks       = ["172.18.0.0/20"]
 }
 
 
 resource "aws_security_group_rule" "master-egress" {
   type              = "egress"
-  security_group_id = "${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id = "${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port         = 0
   to_port           = 0
@@ -614,7 +927,7 @@ resource "aws_security_group_rule" "master-egress" {
 
 resource "aws_security_group_rule" "node-egress" {
   type              = "egress"
-  security_group_id = "${aws_security_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id = "${aws_security_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port         = 0
   to_port           = 0
@@ -625,9 +938,9 @@ resource "aws_security_group_rule" "node-egress" {
 
 resource "aws_security_group_rule" "node-to-master-protocol-ipip" {
   type                     = "ingress"
-  security_group_id        = "${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id        = "${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
-  source_security_group_id = "${aws_security_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"
+  source_security_group_id = "${aws_security_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port                = 0
   to_port                  = 65535
@@ -637,9 +950,9 @@ resource "aws_security_group_rule" "node-to-master-protocol-ipip" {
 
 resource "aws_security_group_rule" "node-to-master-tcp-1-2379" {
   type                     = "ingress"
-  security_group_id        = "${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id        = "${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
-  source_security_group_id = "${aws_security_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"
+  source_security_group_id = "${aws_security_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port                = 1
   to_port                  = 2379
@@ -649,9 +962,9 @@ resource "aws_security_group_rule" "node-to-master-tcp-1-2379" {
 
 resource "aws_security_group_rule" "node-to-master-tcp-2382-4001" {
   type                     = "ingress"
-  security_group_id        = "${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id        = "${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
-  source_security_group_id = "${aws_security_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"
+  source_security_group_id = "${aws_security_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port                = 2382
   to_port                  = 4001
@@ -661,9 +974,9 @@ resource "aws_security_group_rule" "node-to-master-tcp-2382-4001" {
 
 resource "aws_security_group_rule" "node-to-master-tcp-4003-65535" {
   type                     = "ingress"
-  security_group_id        = "${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id        = "${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
-  source_security_group_id = "${aws_security_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"
+  source_security_group_id = "${aws_security_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port                = 4003
   to_port                  = 65535
@@ -673,9 +986,9 @@ resource "aws_security_group_rule" "node-to-master-tcp-4003-65535" {
 
 resource "aws_security_group_rule" "node-to-master-udp-1-65535" {
   type                     = "ingress"
-  security_group_id        = "${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id        = "${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
-  source_security_group_id = "${aws_security_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"
+  source_security_group_id = "${aws_security_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port                = 1
   to_port                  = 65535
@@ -683,25 +996,25 @@ resource "aws_security_group_rule" "node-to-master-udp-1-65535" {
 }
 
 
-resource "aws_security_group_rule" "ssh-external-to-master-172-17-0-0--20" {
+resource "aws_security_group_rule" "ssh-external-to-master-172-18-0-0--20" {
   type              = "ingress"
-  security_group_id = "${aws_security_group.masters-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id = "${aws_security_group.masters-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port         = 22
   to_port           = 22
   protocol          = "tcp"
-  cidr_blocks       = ["172.17.0.0/20"]
+  cidr_blocks       = ["172.18.0.0/20"]
 }
 
 
-resource "aws_security_group_rule" "ssh-external-to-node-172-17-0-0--20" {
+resource "aws_security_group_rule" "ssh-external-to-node-172-18-0-0--20" {
   type              = "ingress"
-  security_group_id = "${aws_security_group.nodes-cluster-1-k8s-devstg-binbash-aws.id}"
+  security_group_id = "${aws_security_group.nodes-cluster-kops-1-k8s-dev-binbash-aws.id}"
 
   from_port         = 22
   to_port           = 22
   protocol          = "tcp"
-  cidr_blocks       = ["172.17.0.0/20"]
+  cidr_blocks       = ["172.18.0.0/20"]
 }
 
 

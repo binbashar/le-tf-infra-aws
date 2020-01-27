@@ -19,7 +19,7 @@
         "s3:ListBucket"
       ],
       "Resource": [
-        "arn:aws:s3:::ve-apps-devstg-kops-state"
+        "arn:aws:s3:::bb-dev-kops-state"
       ]
     },
     {
@@ -27,7 +27,7 @@
       "Action": [
         "s3:*"
       ],
-      "Resource": "arn:aws:s3:::ve-apps-devstg-kops-state/cluster-1.k8s.devstg.binbash.aws/*"
+      "Resource": "arn:aws:s3:::bb-dev-kops-state/cluster-kops-1.k8s.dev.binbash.aws/*"
     },
     {
       "Effect": "Allow",
@@ -37,7 +37,7 @@
         "route53:GetHostedZone"
       ],
       "Resource": [
-        "arn:aws:route53:::hostedzone/Z06993763NC5WWC2DQSZK"
+        "arn:aws:route53:::hostedzone/Z02860073TM97JGVRH4T4"
       ]
     },
     {

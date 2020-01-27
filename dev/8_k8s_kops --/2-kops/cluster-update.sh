@@ -42,6 +42,7 @@ kops update cluster \
     --target terraform \
     --state ${ClUSTER_STATE} \
     --name ${CLUSTER_NAME} \
+    --create-kube-config=true \
     --out .
 
 #
