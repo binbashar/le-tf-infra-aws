@@ -106,7 +106,6 @@ This organization also provides a layout that is easier to navigate and discover
 You simply start with the accounts at the top level and then you get to explore the resource categories within 
 each account.
 
-
 ## Pre-requisites
 
 ### Makefile
@@ -154,6 +153,176 @@ understand and review what changes would be made to your AWS Cloud Arctecture co
 approach, basically as we should treat any other code & infrastructure change, and integrate it with the 
 rest of our tools and practices like CI/CD, integration testing, replicate environments and so on.
 
+---
+
+## Identity and Access Management (IAM) Layer
+
+### Summary
+
+Having this official AWS resource as reference https://d0.awsstatic.com/aws-answers/AWS_Multi_Account_Security_Strategy.pdf
+we've define a security account structure for managing multiple accounts.
+
+* No IAM accounts will be created, except in the Security/Users account. 
+* All access to resources within Client organization will be assigned via IAM policy documents attached 
+to IAM roles or IAM groups.
+* All IAM roles and IAM groups will have the least privileges required to function.
+* IAM AWS managed and customer managed policies will be defined, inline policies will be avoided 
+whenever possible.
+* All user management will be maintained as code and will reside in this repository.
+* All users will have MFA enabled whenever possible.
+* Root user credentials will be rotated and secured. MFA for root will be enabled. 
+* IAM Access Keys for root will be disabled.
+
+Creating a security relationship between  accounts makes it even easier for companies to assess the security 
+of AWS-based deployments, centralize security monitoring and management, manage identity and access, and provide 
+audit and compliance monitoring services:
+
+<div align="center">
+  <img src="./%40figures/binbash-aws-iam.png"
+  alt="leverage" width="1000"/>
+</div>
+
+**figure 2:** AWS Organization Security account structure for managing multiple accounts (just as reference).
+
+## Network Layer
+
+In this section we detail all the network design related specifications:
+* VPCs CIDR blocks
+* VPC Gateways:  Internet, NAT, VPN.
+* VPC Peerings
+* VPC DNS Private Hosted Zones Associations.
+* Network ACLS (NACLs)
+
+### VPCs IP Addressing Plan (CIDR blocks sizing)
+#### Introduction
+VPCs can vary in size from 16 addresses (/28 netmask) to 65,536 addresses (/16 netmask). 
+In order to size a VPC correctly, it is important to understand the number, types, and sizes of workloads 
+expected to run in it, as well as workload elasticity and load balancing requirements. 
+
+Keep in mind that there is no charge for using Amazon VPC (aside from EC2 charges), therefore cost 
+should not be a factor when determining the appropriate size for your VPC, so make sure you size your 
+VPC for growth.
+
+Moving workloads or AWS resources between networks is not a trivial task, so be generous in your 
+IP address estimates to give yourself plenty of room to grow, deploy new workloads, or change your 
+VPC design configuration from one to another. The majority of AWS customers use VPCs with a /16 
+netmask and subnets with /24 netmasks. The primary reason AWS customers select smaller VPC and 
+subnet sizes is to avoid overlapping network addresses with existing networks. 
+
+So having https://aws.amazon.com/answers/networking/aws-single-vpc-design/ we've choosen
+a Medium/Small VPC/Subnet addressing plan which would probably fit a broad range variety of
+use cases:
+
+* AWS Org IP Addressing calculation is presented below based on segment `172.16.0.0.0/12`.
+* We started from `172.16.0.0.0/12` and subnetted to `/20` 
+  * resulting in Total Subnets: 256 ⇒ 1 x AWS Account with Hosts/SubNet: 4094.
+* Then each of these are /20 to /23 
+  * resulting in Total Subnets: 12 ⇒ 1 x AWS VPC with Hosts/Net: 256.
+  * eg: us-east-1 w/ 6 AZs -> 6 x Private Subnets /az + 6 x Publuc Subnets /az
+
+#### VPC Shared Account
+The CIDR block of the VPC
+
+**vpc_cidr_block = "172.18.0.0/20"**
+```
+Network:   172.18.0.0/20        10101100.00010010.0000 0000.00000000
+HostMin:   172.18.0.1           10101100.00010010.0000 0000.00000001
+HostMax:   172.18.15.254        10101100.00010010.0000 1111.11111110
+Broadcast: 172.18.15.255        10101100.00010010.0000 1111.11111111
+Hosts/Net: 4094                  Class B, Private Internet
+```
+
+List of secondary CIDR blocks of the VPC (**reserved for future use**)
+**vpc_secondary_cidr_blocks** = ["172.18.16.0/20"]
+```
+Network:   172.18.16.0/20       10101100.00010010.0001 0000.00000000
+HostMin:   172.18.16.1          10101100.00010010.0001 0000.00000001
+HostMax:   172.18.31.254        10101100.00010010.0001 1111.11111110
+Broadcast: 172.18.31.255        10101100.00010010.0001 1111.11111111
+Hosts/Net: 4094                  Class B, Private Internet
+```
+
+### VPC Apps DevStg Account
+The CIDR block of the VPC
+
+**vpc_cidr_block = "172.18.32.0/20"**
+```
+Network:   172.18.32.0/20       10101100.00010010.0010 0000.00000000
+HostMin:   172.18.32.1          10101100.00010010.0010 0000.00000001
+HostMax:   172.18.47.254        10101100.00010010.0010 1111.11111110
+Broadcast: 172.18.47.255        10101100.00010010.0010 1111.11111111
+Hosts/Net: 4094                  Class B, Private Internet
+```
+
+List of secondary CIDR blocks of the VPC (**reserved for future use**)
+**vpc_secondary_cidr_blocks** = ["172.18.48.0/20"]
+```
+Network:   172.18.48.0/20       10101100.00010010.0011 0000.00000000
+HostMin:   172.18.48.1          10101100.00010010.0011 0000.00000001
+HostMax:   172.18.63.254        10101100.00010010.0011 1111.11111110
+Broadcast: 172.18.63.255        10101100.00010010.0011 1111.11111111
+Hosts/Net: 4094                  Class B, Private Internet
+```
+
+### VPC Apps Prd Account
+The CIDR block of the VPC
+
+**vpc_cidr_block = "172.18.64.0/20"**
+```
+Network:   172.18.64.0/20       10101100.00010010.0100 0000.00000000
+HostMin:   172.18.64.1          10101100.00010010.0100 0000.00000001
+HostMax:   172.18.79.254        10101100.00010010.0100 1111.11111110
+Broadcast: 172.18.79.255        10101100.00010010.0100 1111.11111111
+Hosts/Net: 4094                  Class B, Private Internet
+```
+
+List of secondary CIDR blocks of the VPC (**reserved for future use**)
+**vpc_secondary_cidr_blocks** = ["172.18.80.0/20"]
+```
+Network:   172.18.80.0/20       10101100.00010010.0101 0000.00000000
+HostMin:   172.18.80.1          10101100.00010010.0101 0000.00000001
+HostMax:   172.18.95.254        10101100.00010010.0101 1111.11111110
+Broadcast: 172.18.95.255        10101100.00010010.0101 1111.11111111
+Hosts/Net: 4094                  Class B, Private Internet
+```
+
+### VPC N° (reserverd for future use)
+```
+Network:   172.18.96.0/20       10101100.00010010.0110 0000.00000000
+HostMin:   172.18.96.1          10101100.00010010.0110 0000.00000001
+HostMax:   172.18.111.254       10101100.00010010.0110 1111.11111110
+Broadcast: 172.18.111.255       10101100.00010010.0110 1111.11111111
+Hosts/Net: 4094                  Class B, Private Internet
+
+...
+
+Network:   172.18.176.0/20      10101100.00010010.1011 0000.00000000
+HostMin:   172.18.176.1         10101100.00010010.1011 0000.00000001
+HostMax:   172.18.191.254       10101100.00010010.1011 1111.11111110
+Broadcast: 172.18.191.255       10101100.00010010.1011 1111.11111111
+Hosts/Net: 4094                  Class B, Private Internet
+
+...
+
+ 
+Network:   172.31.240.0/20      10101100.00011111.1111 0000.00000000
+HostMin:   172.31.240.1         10101100.00011111.1111 0000.00000001
+HostMax:   172.31.255.254       10101100.00011111.1111 1111.11111110
+Broadcast: 172.31.255.255       10101100.00011111.1111 1111.11111111
+Hosts/Net: 4094                  Class B, Private Internet
+```
+
+#### CONSIDERATIONS
+* Docker runs in the 172.17.0.0/16 CIDR range in Amazon EKS clusters. 
+  We recommend that your cluster's VPC subnets do not overlap this range. Otherwise, you will 
+  receive the following error:
+  ```
+  Error: : error upgrading connection: error dialing backend: dial tcp 172.17.nn.nn:10250: 
+  getsockopt: no route to host
+  ```
+  (https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html)
+   
+  
 ## Read more
 Make sure you check out the [documentation](@docs/index.html) in the docs directory.
 
