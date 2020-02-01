@@ -179,7 +179,7 @@ audit and compliance monitoring services:
 
 <div align="center">
   <img src="./%40figures/binbash-aws-iam.png"
-  alt="leverage" width="1000"/>
+  alt="leverage" width="700"/>
 </div>
 
 **figure 2:** AWS Organization Security account structure for managing multiple accounts (just as reference).
