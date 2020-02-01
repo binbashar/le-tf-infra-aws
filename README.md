@@ -221,7 +221,7 @@ use cases:
   * resulting in Total Subnets: 12 ⇒ 1 x AWS VPC with Hosts/Net: 256.
   * eg: us-east-1 w/ 6 AZs -> 6 x Private Subnets /az + 6 x Publuc Subnets /az
 
-#### VPC Shared Account
+### VPC Shared Account
 The CIDR block of the VPC
 
 **vpc_cidr_block = "172.18.0.0/20"**
@@ -243,7 +243,7 @@ Broadcast: 172.18.31.255        10101100.00010010.0001 1111.11111111
 Hosts/Net: 4094                  Class B, Private Internet
 ```
 
-#### VPC Apps DevStg Account
+### VPC Apps DevStg Account
 The CIDR block of the VPC
 
 **vpc_cidr_block = "172.18.32.0/20"**
@@ -265,7 +265,7 @@ Broadcast: 172.18.63.255        10101100.00010010.0011 1111.11111111
 Hosts/Net: 4094                  Class B, Private Internet
 ```
 
-#### VPC Apps Prd Account
+### VPC Apps Prd Account
 The CIDR block of the VPC
 
 **vpc_cidr_block = "172.18.64.0/20"**
@@ -287,7 +287,7 @@ Broadcast: 172.18.95.255        10101100.00010010.0101 1111.11111111
 Hosts/Net: 4094                  Class B, Private Internet
 ```
 
-#### VPC N° (reserverd for future use)
+### VPC N° (reserverd for future use)
 ```
 Network:   172.18.96.0/20       10101100.00010010.0110 0000.00000000
 HostMin:   172.18.96.1          10101100.00010010.0110 0000.00000001
