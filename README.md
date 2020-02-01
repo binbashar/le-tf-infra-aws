@@ -155,9 +155,10 @@ rest of our tools and practices like CI/CD, integration testing, replicate envir
 
 ---
 
-## Identity and Access Management (IAM) Layer
+## Reference Architecture Design
 
-### Summary
+### Identity and Access Management (IAM) Layer
+#### Summary
 
 Having this official AWS resource as reference https://d0.awsstatic.com/aws-answers/AWS_Multi_Account_Security_Strategy.pdf
 we've define a security account structure for managing multiple accounts.
@@ -184,7 +185,7 @@ audit and compliance monitoring services:
 
 **figure 2:** AWS Organization Security account structure for managing multiple accounts (just as reference).
 
-## Network Layer
+### Network Layer
 
 In this section we detail all the network design related specifications:
 * VPCs CIDR blocks
@@ -193,8 +194,8 @@ In this section we detail all the network design related specifications:
 * VPC DNS Private Hosted Zones Associations.
 * Network ACLS (NACLs)
 
-### VPCs IP Addressing Plan (CIDR blocks sizing)
-#### Introduction
+#### VPCs IP Addressing Plan (CIDR blocks sizing)
+##### Introduction
 VPCs can vary in size from 16 addresses (/28 netmask) to 65,536 addresses (/16 netmask). 
 In order to size a VPC correctly, it is important to understand the number, types, and sizes of workloads 
 expected to run in it, as well as workload elasticity and load balancing requirements. 
@@ -242,7 +243,7 @@ Broadcast: 172.18.31.255        10101100.00010010.0001 1111.11111111
 Hosts/Net: 4094                  Class B, Private Internet
 ```
 
-### VPC Apps DevStg Account
+#### VPC Apps DevStg Account
 The CIDR block of the VPC
 
 **vpc_cidr_block = "172.18.32.0/20"**
@@ -264,7 +265,7 @@ Broadcast: 172.18.63.255        10101100.00010010.0011 1111.11111111
 Hosts/Net: 4094                  Class B, Private Internet
 ```
 
-### VPC Apps Prd Account
+#### VPC Apps Prd Account
 The CIDR block of the VPC
 
 **vpc_cidr_block = "172.18.64.0/20"**
@@ -286,7 +287,7 @@ Broadcast: 172.18.95.255        10101100.00010010.0101 1111.11111111
 Hosts/Net: 4094                  Class B, Private Internet
 ```
 
-### VPC N° (reserverd for future use)
+#### VPC N° (reserverd for future use)
 ```
 Network:   172.18.96.0/20       10101100.00010010.0110 0000.00000000
 HostMin:   172.18.96.1          10101100.00010010.0110 0000.00000001
