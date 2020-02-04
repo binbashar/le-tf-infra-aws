@@ -1,6 +1,0 @@
----
-# Vault Address
-_vault_address: http://127.0.0.1:8200
-
-# Name of the fact that will hold the initialization status
-_vault_status_output_variable: vault_status

@@ -1,5 +1,0 @@
-# defaults file for docker-machine
----
-docker_machine_version: v0.16.1
-docker_machine_install_prefix: /usr/local/bin
-docker_machine_download_url: https://github.com

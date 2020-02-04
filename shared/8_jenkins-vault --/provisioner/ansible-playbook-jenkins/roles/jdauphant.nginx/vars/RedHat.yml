@@ -1,4 +1,0 @@
----
-nginx_python_selinux_pkgs:
-  - libselinux-python
-  - libsemanage-python
