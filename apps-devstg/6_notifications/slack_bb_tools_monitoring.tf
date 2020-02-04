@@ -16,15 +16,15 @@ module "notify_slack_bb_monitoring" {
   #
   # Creation Flags
   #
-  create               = false
-  create_sns_topic     = false
+  create           = false
+  create_sns_topic = false
 
   #
   # Slack Webhook URL + Channel
   #
-  slack_channel        = "bb-tools-monitoring"
-  slack_username       = "aws-binbash-org"
-  slack_webhook_url    = data.aws_kms_ciphertext.slack_url_bb_monitoring.ciphertext_blob
+  slack_channel     = "bb-tools-monitoring"
+  slack_username    = "aws-binbash-org"
+  slack_webhook_url = data.aws_kms_ciphertext.slack_url_bb_monitoring.ciphertext_blob
 
   kms_key_arn          = data.terraform_remote_state.security.outputs.aws_kms_key_arn
   lambda_function_name = "${var.project}-${var.environment}-notify-slack-bb-monitoring"

@@ -11,7 +11,7 @@ output "sns_topic_arn_bb_monitoring" {
 
 output "sns_topic_name_bb_monitoring" {
   description = "Name of the created SNS topic for Slack"
-  value = var.sns_topic_name_bb_monitoring
+  value       = var.sns_topic_name_bb_monitoring
 }
 
 output "lambda_iam_role_arn_bb_monitoring" {
@@ -59,7 +59,7 @@ output "sns_topic_arn_bb_monitoring_sec" {
 
 output "sns_topic_name_bb_monitoring_sec" {
   description = "Name of the created SNS topic for Slack"
-  value = var.sns_topic_name_bb_monitoring_sec
+  value       = var.sns_topic_name_bb_monitoring_sec
 }
 
 output "lambda_iam_role_arn_bb_monitoring_sec" {

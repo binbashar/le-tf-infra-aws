@@ -12,9 +12,9 @@ module "iam_assumable_role_devops" {
     "arn:aws:iam::${var.security_account_id}:root"
   ]
 
-  create_role          = true
-  role_name            = "DevOps"
-  role_path            = "/"
+  create_role = true
+  role_name   = "DevOps"
+  role_path   = "/"
 
   #
   # MFA setup
@@ -48,9 +48,9 @@ module "iam_assumable_role_admin" {
   #
   # MFA setup
   #
-  role_requires_mfa     = false
-  mfa_age               = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
-  max_session_duration  = 3600  # Max age of valid MFA (in seconds) for roles which require MFA
+  role_requires_mfa    = false
+  mfa_age              = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
+  max_session_duration = 3600  # Max age of valid MFA (in seconds) for roles which require MFA
 
   tags = local.tags
 }
@@ -73,9 +73,9 @@ module "iam_assumable_role_auditor" {
   #
   # MFA setup
   #
-  role_requires_mfa      = false
-  mfa_age                = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
-  max_session_duration   = 3600  # Max age of valid MFA (in seconds) for roles which require MFA
+  role_requires_mfa    = false
+  mfa_age              = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
+  max_session_duration = 3600  # Max age of valid MFA (in seconds) for roles which require MFA
   custom_role_policy_arns = [
     "arn:aws:iam::aws:policy/SecurityAudit"
   ]
@@ -93,9 +93,9 @@ module "iam_assumable_role_deploy_master" {
     "arn:aws:iam::${var.security_account_id}:root"
   ]
 
-  create_role          = true
-  role_name            = "DeployMaster"
-  role_path            = "/"
+  create_role = true
+  role_name   = "DeployMaster"
+  role_path   = "/"
 
   #
   # MFA setup
