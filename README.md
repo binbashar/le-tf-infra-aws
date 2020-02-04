@@ -287,7 +287,9 @@ Broadcast: 172.18.95.255        10101100.00010010.0101 1111.11111111
 Hosts/Net: 4094                  Class B, Private Internet
 ```
 
-### VPC N° (reserverd for future use)
+### VPC N° and DR - reserverd for Disaster Recovery (DR) Segments and future use
+If you need a DR strategy please consider planning and assigning the proper 
+segments from this reserved pool.
 ```
 Network:   172.18.96.0/20       10101100.00010010.0110 0000.00000000
 HostMin:   172.18.96.1          10101100.00010010.0110 0000.00000001

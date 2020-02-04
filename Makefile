@@ -5,7 +5,7 @@ LOCAL_OS_AWS_PROFILE := bb-dev-deploymaster
 LOCAL_OS_AWS_REGION := us-east-1
 
 TF_PWD_DIR := $(shell pwd)
-TF_VER := 0.12.19
+TF_VER := 0.12.20
 TF_PWD_CONT_DIR := "/go/src/project/"
 TF_DOCKER_ENTRYPOINT := /usr/local/go/bin/terraform
 TF_DOCKER_IMAGE := binbash/terraform-resources
