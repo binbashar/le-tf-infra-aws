@@ -1,33 +1,80 @@
-#===========================================#
-# AWS Provider Settings                     #
-#===========================================#
+#
+# config/backend.config
+#
+#================================#
+# Terraform AWS Backend Settings #
+#================================#
 variable "region" {
+  type        = string
   description = "AWS Region"
 }
 
 variable "profile" {
-  description = "AWS Profile"
+  type        = string
+  description = "AWS Profile (required by the backend but also used for other resources)"
 }
 
-#===========================================#
-# Project Variables                         #
-#===========================================#
+variable "bucket" {
+  type        = string
+  description = "AWS S3 TF State Backend Bucket"
+}
+variable "dynamodb_table" {
+  type        = string
+  description = "AWS DynamoDB TF Lock state table name"
+}
+variable "encrypt" {
+  type        = bool
+  description = "Enable AWS DynamoDB with server side encryption"
+}
+
+#
+# config/base.config
+#
+#=============================#
+# Project Variables           #
+#=============================#
 variable "project" {
+  type        = string
   description = "Project Name"
 }
 
 variable "project_long" {
-  description = "Project Name Complete"
+  type        = string
+  description = "Project Long Name"
 }
 
 variable "environment" {
+  type        = string
   description = "Environment Name"
 }
 
-variable "security_account_id" {}
-variable "shared_account_id" {}
-variable "dev_account_id" {}
+#
+# config/extra.config
+#
+#=============================#
+# Accounts & Extra Vars       #
+#=============================#
+variable "region_secondary" {
+  type        = string
+  description = "AWS Scondary Region for HA"
+}
 
-variable "bucket" {}
-variable "dynamodb_table" {}
-variable "encrypt" {}
+variable "security_account_id" {
+  type        = string
+  description = "Account: Security & Users Management"
+}
+
+variable "shared_account_id" {
+  type        = string
+  description = "Account: Shared Resources"
+}
+
+variable "appsdevstg_account_id" {
+  type        = string
+  description = "Account: Dev Modules & Libs"
+}
+
+variable "appsprd_account_id" {
+  type        = string
+  description = "Account: Prod Modules & Libs"
+}

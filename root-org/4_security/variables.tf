@@ -79,15 +79,20 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
+variable "root_account_id" {
+  description = "Account: Root Organization"
+}
+
+#
+# Security
+#
+variable "cloudtrail_org_bucket" {
+  description = "Cloudtrail centralized organization bucket"
+}
+
 #===========================================#
 # Security                                  #
 #===========================================#
-variable "lifecycle_rule_enabled" {
-  type        = bool
-  description = "Enable lifecycle events on this bucket"
-  default     = true
-}
-
 variable "metric_namespace" {
   type        = string
   description = "A namespace for grouping all of the metrics together"
