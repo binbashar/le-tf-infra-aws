@@ -3,7 +3,7 @@
 #
 
 #
-# User Managed Policy: DevOps Access
+# Customer Managed Policy: DevOps Access
 #
 resource "aws_iam_policy" "devops_access" {
   name        = "devops_access"
@@ -25,6 +25,7 @@ resource "aws_iam_policy" "devops_access" {
                 "application-autoscaling:*",
                 "aws-portal:*",
                 "backup:*",
+                "backup-storage:*",
                 "ce:*",
                 "cloudformation:*",
                 "cloudfront:*",
@@ -36,6 +37,7 @@ resource "aws_iam_policy" "devops_access" {
                 "ec2:*",
                 "ecr:*",
                 "ecs:*",
+                "eks:*",
                 "elasticloadbalancing:*",
                 "events:*",
                 "health:*",
@@ -47,13 +49,17 @@ resource "aws_iam_policy" "devops_access" {
                 "redshift:*",
                 "route53:*",
                 "route53domains:*",
+                "route53resolver:*",
                 "s3:*",
                 "shield:*",
                 "sns:*",
                 "sqs:*",
                 "ssm:*",
+                "tag:*",
                 "vpc:*",
-                "waf:*"
+                "waf:*",
+                "wafv2:*",
+                "waf-regional:*"
             ],
             "Resource": [
                 "*"
@@ -114,28 +120,7 @@ EOF
 }
 
 #
-# AWS Managed Policy: Admin Access
-#
-resource "aws_iam_role_policy_attachment" "admins_have_read_only_access" {
-  role       = "${aws_iam_role.admin_role.name}"
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-}
-
-#
-# AWS Managed Policies: Auditor Access
-#
-resource "aws_iam_role_policy_attachment" "auditors_have_read_only_access" {
-  role       = "${aws_iam_role.auditor_role.name}"
-  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "auditors_have_security_audit_access" {
-  role       = "${aws_iam_role.auditor_role.name}"
-  policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
-}
-
-#
-# Policy: DeployMaster
+# Customer Managed Policy: DeployMaster
 #
 resource "aws_iam_policy" "deploy_master_access" {
   name        = "deploy_master_access"
@@ -148,14 +133,29 @@ resource "aws_iam_policy" "deploy_master_access" {
         {
             "Effect": "Allow",
             "Action": [
+                "budgets:*",
+                "cloudfront:*",
+                "cloudtrail:*",
+                "cloudwatch:*",
+                "config:*",
+                "ecr:*",
+                "elasticloadbalancing:*",
+                "iam:*",
+                "dynamodb:*",
                 "ec2:*",
                 "ecr:*",
                 "iam:*",
+                "logs:*",
                 "route53:*",
                 "route53domains:*",
                 "s3:*",
+                "sns:*",
                 "ssm:*",
-                "sqs:*"
+                "sqs:*",
+                "vpc:*",
+                "waf:*",
+                "wafv2:*",
+                "waf-regional:*"
             ],
             "Resource": [
                 "*"
