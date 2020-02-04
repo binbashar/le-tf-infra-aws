@@ -1,5 +1,6 @@
 #
-# Associate Shared VPC with Private Hosted Zone on DevStg
+# Accept Associate Shared VPC with Private Hosted Zone on DevStg
+# currently for the Private HostedZone Domain: cluster-kops-1.k8s.devstg.binbash.aws
 #
 resource "null_resource" "associate_with_remote_zone" {
   count = var.vpc_dev_kops_dns_assoc == true ? 1 : 0
