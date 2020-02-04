@@ -9,9 +9,10 @@ LOCAL_OS_AWS_CONF_DIR := ~/.aws
 TF_PWD_DIR := $(shell pwd)
 TF_PWD_CONT_DIR := "/go/src/project/"
 TF_PWD_CONFIG_DIR := $(shell cd .. && cd config && pwd)
-TF_VER := 0.11.14
+TF_VER := 0.12.20
 TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
-TF_DOCKER_MAIN_CONF_VARS_FILE := /config/main.config
+TF_DOCKER_BASE_CONF_VARS_FILE := /config/base.config
+TF_DOCKER_EXTRA_CONF_VARS_FILE := /config/extra.config
 TF_DOCKER_ENTRYPOINT := /usr/local/go/bin/terraform
 TF_DOCKER_IMAGE := binbash/terraform-resources
 
@@ -44,23 +45,32 @@ init-cmd:
 	${TF_CMD_PREFIX} init -backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
 plan: ## Preview terraform changes
-	${TF_CMD_PREFIX} plan -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
+	${TF_CMD_PREFIX} plan \
+	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
 plan-detailed: ## Preview terraform changes with a more detailed output
-	${TF_CMD_PREFIX} plan -detailed-exitcode -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
+	${TF_CMD_PREFIX} plan -detailed-exitcode \
+	 -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+	 -var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
+	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
-diff: ## Terraform plan with landscape
-	${TF_CMD_PREFIX} plan -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} | docker run -i --rm binbash/terraform-landscape
-
-apply: apply-cmd tf-dir-chmod
-apply-cmd: ## Make terraform apply any changes"
-	${TF_CMD_PREFIX} apply -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
+apply: apply-cmd tf-dir-chmod ## Make terraform apply any changes with dockerized binary
+apply-cmd:
+	${TF_CMD_PREFIX} apply \
+	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
 output: ## Terraform output command is used to extract the value of an output variable from the state file.
 	${TF_CMD_PREFIX} output
 
 destroy: ## Destroy all resources managed by terraform
-	${TF_CMD_PREFIX} destroy -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} -var-file=${TF_DOCKER_MAIN_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
+	${TF_CMD_PREFIX} destroy \
+	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
 format: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
 	${TF_CMD_PREFIX} fmt ${TF_PWD_CONT_DIR}
@@ -70,6 +80,3 @@ force-unlock: ## Manually unlock the terraform state, eg: make ARGS="a94b0919-de
 
 validate-tf-layout: ## Validate Terraform layout to make sure it's set up properly
 	../../@scripts/validate-terraform-layout.sh
-
-encrypt: ## ansible-vault encrypt secrets
-	ansible-vault encrypt secrets.tf

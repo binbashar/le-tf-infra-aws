@@ -3,7 +3,7 @@
 #
 
 #
-# Policy: Standard AWS Console User
+# Policy: Standard AWS Console User Security Account
 #
 resource "aws_iam_policy" "standard_console_user" {
   name        = "standard_console_user"
@@ -16,11 +16,11 @@ resource "aws_iam_policy" "standard_console_user" {
         {
             "Effect": "Allow",
             "Action": [
-                "iam:GetAccountSummary",
-                "iam:GetLoginProfile",
+                "iam:GetAccountPasswordPolicy",
                 "iam:ListAccountAliases",
                 "iam:ListUsers",
-                "iam:GetAccountPasswordPolicy"
+                "iam:GetLoginProfile",
+                "iam:GetAccountSummary"
             ],
             "Resource": "*"
         },
@@ -28,38 +28,14 @@ resource "aws_iam_policy" "standard_console_user" {
             "Effect": "Allow",
             "Action": [
                 "iam:*AccessKey*",
-                "iam:ChangePassword",
+                "iam:*SigningCertificate*",
                 "iam:GetUser",
+                "iam:ChangePassword",
                 "iam:*ServiceSpecificCredential*",
-                "iam:*SigningCertificate*"
-            ],
-            "Resource": ["arn:aws:iam::*:user/${var.aws_username}"]
-        }
-    ]
-}
-EOF
-}
-
-#
-# Policy: Assume Admin Role
-#
-resource "aws_iam_policy" "assume_admin_role" {
-  name        = "assume_admin_role"
-  description = "Allow assume Admin role in member accounts"
-
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "sts:AssumeRole"
+                "iam:UpdateLoginProfile"
             ],
             "Resource": [
-                "arn:aws:iam::${var.shared_account_id}:role/Admin",
-                "arn:aws:iam::${var.security_account_id}:role/Admin",
-                "arn:aws:iam::${var.dev_account_id}:role/Admin"
+                "arn:aws:iam::*:user/$${aws:username}"
             ]
         }
     ]
@@ -68,7 +44,7 @@ EOF
 }
 
 #
-# Policy: Assume DevOps Role
+# Policy: Assume DevOps Role (Cross-Org Accounts)
 #
 resource "aws_iam_policy" "assume_devops_role" {
   name        = "assume_devops_role"
@@ -86,7 +62,7 @@ resource "aws_iam_policy" "assume_devops_role" {
             "Resource": [
                 "arn:aws:iam::${var.shared_account_id}:role/DevOps",
                 "arn:aws:iam::${var.security_account_id}:role/DevOps",
-                "arn:aws:iam::${var.dev_account_id}:role/DevOps"
+                "arn:aws:iam::${var.appsdevstg_account_id}:role/DevOps"
             ]
         }
     ]
@@ -95,7 +71,34 @@ EOF
 }
 
 #
-# Policy: Assume DeployMaster Role
+# Policy: Assume Admin Role (Cross-Org Accounts)
+#
+resource "aws_iam_policy" "assume_admin_role" {
+  name        = "assume_admin_role"
+  description = "Allow assume Admin role in member accounts"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sts:AssumeRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::${var.shared_account_id}:role/Admin",
+                "arn:aws:iam::${var.security_account_id}:role/Admin",
+                "arn:aws:iam::${var.appsdevstg_account_id}:role/Admin"
+            ]
+        }
+    ]
+}
+EOF
+}
+
+#
+# Policy: Assume DeployMaster Role (Cross-Org Accounts)
 #
 resource "aws_iam_policy" "assume_deploymaster_role" {
   name        = "assume_deploymaster_role"
@@ -112,7 +115,7 @@ resource "aws_iam_policy" "assume_deploymaster_role" {
             ],
             "Resource": [
                 "arn:aws:iam::${var.shared_account_id}:role/DeployMaster",
-                "arn:aws:iam::${var.dev_account_id}:role/DeployMaster"
+                "arn:aws:iam::${var.appsdevstg_account_id}:role/DeployMaster"
             ]
         }
     ]
@@ -121,7 +124,7 @@ EOF
 }
 
 #
-# Policy: Assume Auditor Role
+# Policy: Assume Auditor Role (Cross-Org Accounts)
 #
 resource "aws_iam_policy" "assume_auditor_role" {
   name        = "assume_auditor_role"
@@ -139,7 +142,7 @@ resource "aws_iam_policy" "assume_auditor_role" {
             "Resource": [
                 "arn:aws:iam::${var.shared_account_id}:role/Auditor",
                 "arn:aws:iam::${var.security_account_id}:role/Auditor",
-                "arn:aws:iam::${var.dev_account_id}:role/Auditor"
+                "arn:aws:iam::${var.appsdevstg_account_id}:role/Auditor"
             ]
         }
     ]
