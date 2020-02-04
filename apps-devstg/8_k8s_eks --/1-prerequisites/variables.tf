@@ -1,9 +1,9 @@
 #
 # config/backend.config
 #
-#=============================#
-# AWS Provider Settings       #
-#=============================#
+#================================#
+# Terraform AWS Backend Settings #
+#================================#
 variable "region" {
   description = "AWS Region"
 }
@@ -42,7 +42,7 @@ variable "environment" {
 # config/extra.config
 #
 #=============================#
-# Accounts                    #
+# Accounts & Extra Vars       #
 #=============================#
 variable "security_account_id" {
   description = "Account: Security & Users Management"
@@ -52,7 +52,7 @@ variable "shared_account_id" {
   description = "Account: Shared Resources"
 }
 
-variable "dev_account_id" {
+variable "appsdevstg_account_id" {
   description = "Account: Dev Modules & Libs"
 }
 

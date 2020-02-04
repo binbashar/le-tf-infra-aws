@@ -1,17 +1,12 @@
 #
 # config/backend.config
 #
-#=============================#
-# AWS Provider Settings       #
-#=============================#
+#================================#
+# Terraform AWS Backend Settings #
+#================================#
 variable "region" {
   type        = string
   description = "AWS Region"
-}
-
-variable "region_secondary" {
-  type        = string
-  description = "AWS Scondary Region for HA"
 }
 
 variable "profile" {
@@ -57,8 +52,13 @@ variable "environment" {
 # config/extra.config
 #
 #=============================#
-# Accounts                    #
+# Accounts & Extra Vars       #
 #=============================#
+variable "region_secondary" {
+  type        = string
+  description = "AWS Scondary Region for HA"
+}
+
 variable "security_account_id" {
   type        = string
   description = "Account: Security & Users Management"
@@ -69,9 +69,14 @@ variable "shared_account_id" {
   description = "Account: Shared Resources"
 }
 
-variable "dev_account_id" {
+variable "appsdevstg_account_id" {
   type        = string
   description = "Account: Dev Modules & Libs"
+}
+
+variable "appsprd_account_id" {
+  type        = string
+  description = "Account: Prod Modules & Libs"
 }
 
 variable "cloudtrail_org_bucket" {
@@ -94,13 +99,13 @@ variable "cluster_version" {
 variable "cluster_endpoint_private_access" {
   description = "Indicates whether or not the Amazon EKS private API server endpoint is enabled."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "cluster_endpoint_public_access" {
   description = "Indicates whether or not the Amazon EKS public API server endpoint is enabled."
   type        = bool
-  default     = false
+  default     = true
 }
 
 #
@@ -147,13 +152,6 @@ variable "kubeconfig_name" {
   type        = string
   default     = ""
 }
-
-variable "local_exec_interpreter" {
-  description = "Command to run for local-exec resources. Must be a shell-style interpreter. If you are on Windows Git Bash is a good choice."
-  type        = list(string)
-  default     = ["/bin/zsh", "-c"]
-}
-
 
 #
 # aws-iam-authenticator variables
