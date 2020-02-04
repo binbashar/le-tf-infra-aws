@@ -1,4 +1,4 @@
-#Reference Link: https://aws.amazon.com/premiumsupport/knowledge-center/private-hosted-zone-different-account/
+# Reference Link: https://aws.amazon.com/premiumsupport/knowledge-center/private-hosted-zone-different-account/
 
 #============================================================#
 # HOSTED ZONE: aws.binbash.com.ar from Shared to Dev Account
