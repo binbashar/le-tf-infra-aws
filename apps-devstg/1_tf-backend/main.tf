@@ -8,7 +8,7 @@ module "terraform_backend" {
   delimiter = "-"
   namespace = var.project
   stage     = var.environment
-  name      = "terraform-state-storage-s3"
+  name      = "terraform-backend"
 
   #
   # Security

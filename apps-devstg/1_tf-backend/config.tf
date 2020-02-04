@@ -1,11 +1,15 @@
-terraform {
-  required_version = ">= 0.12.19"
+#=============================#
+# AWS Provider Settings       #
+#=============================#
+provider "aws" {
+  version                 = "~> 2.46"
+  region                  = var.region
+  profile                 = var.profile
+  shared_credentials_file = "~/.aws/config"
 }
 
-provider "aws" {
-  version = "~> 2.43"
-  region  = var.region
-  profile = var.profile
+terraform {
+  required_version = ">= 0.12.20"
 }
 
 provider "null" {
