@@ -56,13 +56,6 @@ plan-detailed: ## Preview terraform changes with a more detailed output
 	 -var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
 	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
 
-diff: ## Terraform plan with landscape
-	${TF_CMD_PREFIX} plan \
-	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_PWD_CONT_DIR} \
-	| docker run -i --rm binbash/terraform-landscape
-
 apply: ## Make terraform apply any changes with local binary
 	terraform apply \
 	 -var-file=../..${TF_DOCKER_BACKEND_CONF_VARS_FILE} \

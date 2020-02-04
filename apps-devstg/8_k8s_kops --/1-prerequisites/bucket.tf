@@ -2,7 +2,7 @@
 # Bucket used to store Kops state
 #
 resource "aws_s3_bucket" "kops_state" {
-  bucket = "${var.project}-${var.environment}-kops-state-${local.k8s_cluster_name}"
+  bucket = "${var.project}-state-${local.k8s_cluster_name}"
   acl    = "private"
   # force_destroy = true
 
@@ -43,7 +43,7 @@ resource "aws_s3_bucket" "kops_state" {
 # replica over us-west-2
 # replica resource destination
 resource "aws_s3_bucket" "kops_state_replica" {
-  bucket   = "${var.project}-${var.environment}-kops-state-replica-${local.k8s_cluster_name}"
+  bucket   = "${var.project}-state-replica-${local.k8s_cluster_name}"
   provider = aws.region_secondary
 
   versioning {

@@ -18,6 +18,6 @@ terraform {
   required_version = "= 0.11.14"
 
   backend "s3" {
-    key = "dev/k8s/kops/terraform.tfstate"
+    key = "apps-devstg/k8s-kops/terraform.tfstate"
   }
 }
