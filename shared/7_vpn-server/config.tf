@@ -2,25 +2,18 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  region  = var.region
-  profile = var.profile
-}
-
-variable "region" {
-  description = "AWS Region"
-  default     = "us-east-1"
-}
-
-variable "profile" {
-  description = "AWS Profile"
-  default     = "bb-shared-devops"
+  version                 = "~> 2.46"
+  region                  = var.region
+  profile                 = var.profile
+  shared_credentials_file = "~/.aws/config"
 }
 
 #=============================#
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.12.18"
+  required_version = ">= 0.12.20"
+
 
   backend "s3" {
     key = "shared/vpn/terraform.tfstate"
@@ -41,8 +34,8 @@ data "terraform_remote_state" "vpc" {
   config = {
     region  = var.region_backend_data
     profile = var.profile
-    bucket  = "bb-shared-terraform-state-storage-s3"
-    key     = "shared/network/terraform.tfstate"
+    bucket  = var.bucket
+    key     = "${var.environment}/network/terraform.tfstate"
   }
 }
 
@@ -52,8 +45,8 @@ data "terraform_remote_state" "dns" {
   config = {
     region  = var.region_backend_data
     profile = var.profile
-    bucket  = "bb-shared-terraform-state-storage-s3"
-    key     = "shared/dns/terraform.tfstate"
+    bucket  = var.bucket
+    key     = "${var.environment}/dns/terraform.tfstate"
   }
 }
 
@@ -63,7 +56,7 @@ data "terraform_remote_state" "security" {
   config = {
     region  = var.region_backend_data
     profile = var.profile
-    bucket  = "bb-shared-terraform-state-storage-s3"
-    key     = "shared/security/terraform.tfstate"
+    bucket  = var.bucket
+    key     = "${var.environment}/security/terraform.tfstate"
   }
 }

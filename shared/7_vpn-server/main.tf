@@ -2,16 +2,19 @@
 # EC2 Pritunl OpenVPN
 #
 module "terraform-aws-basic-layout" {
-  source = "git::git@github.com:binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.2"
-
+  source = "git::git@github.com:binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.5"
   prefix = var.prefix
   name   = var.name
 
-  aws_ami_os_id               = var.aws_ami_os_id
-  aws_ami_os_owner            = var.aws_ami_os_owner
-  instance_type               = var.instance_type
-  vpc_id                      = data.terraform_remote_state.vpc.outputs.vpc_id
-  subnet_id                   = tostring(data.terraform_remote_state.vpc.outputs.public_subnets[0][0])
+  aws_ami_os_id    = var.aws_ami_os_id
+  aws_ami_os_owner = var.aws_ami_os_owner
+
+  instance_type = var.instance_type
+  vpc_id        = data.terraform_remote_state.vpc.outputs.vpc_id
+  #
+  # TEST THIS!
+  #
+  subnet_id                   = data.terraform_remote_state.vpc.outputs.public_subnets[0]
   associate_public_ip_address = var.associate_public_ip_address
   key_pair_name               = data.terraform_remote_state.security.outputs.aws_key_pair_name
   ebs_optimized               = var.ebs_optimized
@@ -31,7 +34,7 @@ module "terraform-aws-basic-layout" {
       from_port = 22, # SSH
       to_port   = 22,
       protocol  = "tcp",
-      //      cidr_blocks = ["0.0.0.0/0"],
+      #cidr_blocks = ["0.0.0.0/0"],
       cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
       description = "Allow SSH"
     },
@@ -47,6 +50,7 @@ module "terraform-aws-basic-layout" {
       to_port     = 80,
       protocol    = "tcp",
       cidr_blocks = ["0.0.0.0/0"],
+      #cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
       description = "Allow nginx proxy"
     },
     {
@@ -54,7 +58,7 @@ module "terraform-aws-basic-layout" {
       to_port     = 443,
       protocol    = "tcp",
       cidr_blocks = ["0.0.0.0/0"],
-      //      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
+      #cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
       description = "Allow nginx proxy"
     },
     {
