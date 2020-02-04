@@ -6,7 +6,7 @@
 # Assumable Role Cross-Account: DevOps
 #
 module "iam_assumable_role_devops" {
-  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.4.0"
+  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.6.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.security_account_id}:root"
@@ -15,6 +15,10 @@ module "iam_assumable_role_devops" {
   create_role          = true
   role_name            = "DevOps"
   role_path            = "/"
+
+  #
+  # MFA setup
+  #
   role_requires_mfa    = false
   mfa_age              = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
   max_session_duration = 3600  # Max age of valid MFA (in seconds) for roles which require MFA
@@ -29,7 +33,7 @@ module "iam_assumable_role_devops" {
 # Assumable Role Cross-Account: Admin
 #
 module "iam_assumable_role_admin" {
-  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.4.0"
+  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.6.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.security_account_id}:root"
@@ -40,6 +44,10 @@ module "iam_assumable_role_admin" {
   admin_role_policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
   attach_admin_policy   = true
   role_path             = "/"
+
+  #
+  # MFA setup
+  #
   role_requires_mfa     = false
   mfa_age               = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
   max_session_duration  = 3600  # Max age of valid MFA (in seconds) for roles which require MFA
@@ -51,7 +59,7 @@ module "iam_assumable_role_admin" {
 # Assumable Role Cross-Account: Auditor Role
 #
 module "iam_assumable_role_auditor" {
-  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.4.0"
+  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.6.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.security_account_id}:root"
@@ -61,6 +69,10 @@ module "iam_assumable_role_auditor" {
   role_name              = "Auditor"
   attach_readonly_policy = true
   role_path              = "/"
+
+  #
+  # MFA setup
+  #
   role_requires_mfa      = false
   mfa_age                = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
   max_session_duration   = 3600  # Max age of valid MFA (in seconds) for roles which require MFA
@@ -75,7 +87,7 @@ module "iam_assumable_role_auditor" {
 # Assumable Role Cross-Account: DeployMaster
 #
 module "iam_assumable_role_deploy_master" {
-  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.4.0"
+  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.6.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.security_account_id}:root"
@@ -84,6 +96,10 @@ module "iam_assumable_role_deploy_master" {
   create_role          = true
   role_name            = "DeployMaster"
   role_path            = "/"
+
+  #
+  # MFA setup
+  #
   role_requires_mfa    = false
   mfa_age              = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
   max_session_duration = 3600  # Max age of valid MFA (in seconds) for roles which require MFA
