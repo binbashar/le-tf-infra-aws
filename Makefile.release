@@ -167,5 +167,3 @@ changelog-major: ## git-chglog generation for major release
 	sudo chown -R ${LOCAL_OS_USER}:${LOCAL_OS_USER} ./.chglog
 	sudo chown -R ${LOCAL_OS_USER}:${LOCAL_OS_USER} ./.git
 	sudo chown -R ${LOCAL_OS_USER}:${LOCAL_OS_USER} ./CHANGELOG.md
-
-
