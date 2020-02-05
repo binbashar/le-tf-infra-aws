@@ -46,13 +46,13 @@ jobs:
   #
   # Release
   #
-  release-patch-with-changelog:
+  release-version-with-changelog:
     machine:
       image: ubuntu-1604:201903-01
       docker_layer_caching: false
 
     environment:
-      VERSION_NUMBER: minor # opts: patch, minor or major.
+      VERSION_NUMBER: patch # opts: patch, minor or major.
 
     steps:
       - checkout
