@@ -12,7 +12,10 @@ locals {
   # Error: : error upgrading connection: error dialing backend: dial tcp 172.17.nn.nn:10250: getsockopt: no route to host
   vpc_name       = "${var.project}-${var.environment}-vpc"
   vpc_cidr_block = "172.18.0.0/20"
-  azs            = ["us-east-1a", "us-east-1b"]
+  azs = [
+    "${var.region}a",
+    "${var.region}b"
+  ]
 
   private_subnets = [
     "172.18.0.0/23",

@@ -22,10 +22,13 @@ resource "aws_route53_zone" "cluster_domain" {
   #      ]
   #  }
 
-  vpc {
-    vpc_id     = data.terraform_remote_state.vpc_shared.outputs.vpc_id
-    vpc_region = var.region
-  }
+  ## IMPORTANT!!! ##
+  # Needs to be uncommented after the -> resource "null_resource" "create_remote_zone_auth"
+  # is established
+  #vpc {
+  #  vpc_id     = data.terraform_remote_state.vpc_shared.outputs.vpc_id
+  #  vpc_region = var.region
+  #}
 }
 
 
@@ -45,6 +48,8 @@ resource "aws_route53_zone" "cluster_domain" {
 # Request Association between Private Hosted Zone on DevStg (cluster-kops-1.k8s.dev.binbash.aws) with Shared VPC
 #
 resource "null_resource" "create_remote_zone_auth" {
+  count = var.vpc_shared_dns_assoc == true ? 1 : 0
+
   provisioner "local-exec" {
     command = "aws route53 create-vpc-association-authorization --profile ${var.profile} --hosted-zone-id ${aws_route53_zone.cluster_domain.zone_id} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc_shared.outputs.vpc_id}"
   }

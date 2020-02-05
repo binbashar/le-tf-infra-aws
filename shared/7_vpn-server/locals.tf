@@ -1,6 +1,6 @@
 locals {
   tags = {
-    Name        = "infra-vpn-pritunl"
+    Name        = "${var.prefix}-${var.name}"
     Terraform   = "true"
     Environment = var.environment
   }
@@ -12,5 +12,4 @@ apt-get update
 apt-get install -y vim
 echo "DONE"
 EOF
-
 }

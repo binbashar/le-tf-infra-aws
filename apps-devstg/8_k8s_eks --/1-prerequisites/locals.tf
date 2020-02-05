@@ -36,9 +36,9 @@ locals {
   tags = {
     Terraform                                     = "true"
     Environment                                   = var.environment
-    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
     GithubRepo                                    = "terraform-aws-vpc"
     GithubOrg                                     = "binbashar"
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
   }
 
   # We need these so that k8s aws cloud provider recognizes our private subnets

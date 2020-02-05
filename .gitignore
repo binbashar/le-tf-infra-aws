@@ -93,3 +93,7 @@ Thumbs.db
 #
 tests/vendor/
 tests/Gopkg.*
+#
+# Secret Files
+#
+*secrets.dec.tf

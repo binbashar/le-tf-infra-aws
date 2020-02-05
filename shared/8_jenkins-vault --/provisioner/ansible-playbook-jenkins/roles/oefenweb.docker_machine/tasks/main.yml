@@ -1,7 +1,0 @@
-# tasks file for docker-machine
----
-- include: install.yml
-  tags:
-    - configuration
-    - docker-machine
-    - docker-machine-install

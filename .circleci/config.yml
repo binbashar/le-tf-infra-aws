@@ -51,6 +51,9 @@ jobs:
       image: ubuntu-1604:201903-01
       docker_layer_caching: false
 
+    environment:
+      VERSION_NUMBER: minor # opts: patch, minor or major.
+
     steps:
       - checkout
 
@@ -59,15 +62,15 @@ jobs:
       - run: git branch
 
       - run:
-          name: release-patch-with-changelog-circleci
+          name: release-$VERSION_NUMBER-with-changelog-circleci
           command: |
             if git status | grep 'nothing to commit, working tree clean'; then
               echo "==============================================================================================="
-              echo "release-patch-with-changelog-circleci"
+              echo "release-$VERSION_NUMBER-with-changelog-circleci"
               echo "==============================================================================================="
               git config --global user.email "$GIT_USER_EMAIL"
               git config --global user.name "$GIT_USER_NAME"
-              make -f Makefile.release release-patch-with-changelog-circleci
+              make -f Makefile.release release-$VERSION_NUMBER-with-changelog-circleci
             else
               echo "==============================================================================================="
               echo "Changes in working directory pending to be pushed - please check 'git status' cmd output below "

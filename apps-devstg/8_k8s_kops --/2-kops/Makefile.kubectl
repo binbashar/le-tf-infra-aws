@@ -11,9 +11,9 @@ LOCAL_OS_USER := $(shell whoami)
 LOCAL_OS_HOME_DIR_ESCAPED := \\/home\\/${LOCAL_OS_USER}
 DOCKER_IMG_NAME = k8s-kubectx
 DOCKER_IMG_USER = root
-K8S_CONTEXT := cluster-kops-1.k8s.dev.binbash.aws
+K8S_CONTEXT := cluster-kops-1.k8s.devstg.binbash.aws
 K8S_KUBECTL_CONFIG_FILE_NAME := config
-K8S_KUBECTL_CONFIG_FILE_PATH := /${DOCKER_IMG_USER}/.kube/cluster-kops-1.k8s.dev.binbash.aws
+K8S_KUBECTL_CONFIG_FILE_PATH := /${DOCKER_IMG_USER}/.kube/${K8S_CONTEXT}
 
 define K8S_KUBE_CMD_PREFIX
 docker run -it --rm \

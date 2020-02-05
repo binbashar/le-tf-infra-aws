@@ -1,4 +1,0 @@
----
-jenkins_post_tasks_user_groups: ['sudo','docker']
-
-jenkins_post_tasks_init_cmd_setup_key: "cat /var/lib/jenkins/secrets/initialAdminPassword"

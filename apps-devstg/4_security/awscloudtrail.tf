@@ -19,7 +19,7 @@ module "cloudtrail_api_alarms" {
   log_group_name   = aws_cloudwatch_log_group.cloudtrail.name
   metric_namespace = var.metric_namespace
   create_dashboard = var.create_dashboard
-  # Uncomment if /dev/notifications SNS is configured and you want to send notifications via slack
+  # Uncomment if /notifications SNS is configured and you want to send notifications via slack
   # sns_topic_arn     = data.terraform_remote_state.notifications.outputs.sns_topic_arn
   sns_topic_arn = null
 
@@ -67,7 +67,7 @@ data "aws_iam_policy_document" "cloudtrail_role_policy" {
     actions = ["logs:CreateLogStream"]
 
     resources = [
-      "arn:aws:logs:${var.region}:${var.dev_account_id}:log-group:${aws_cloudwatch_log_group.cloudtrail.name}:log-stream:*",
+      "arn:aws:logs:${var.region}:${var.appsdevstg_account_id}:log-group:${aws_cloudwatch_log_group.cloudtrail.name}:log-stream:*",
     ]
   }
 
@@ -76,7 +76,7 @@ data "aws_iam_policy_document" "cloudtrail_role_policy" {
     actions = ["logs:PutLogEvents"]
 
     resources = [
-      "arn:aws:logs:${var.region}:${var.dev_account_id}:log-group:${aws_cloudwatch_log_group.cloudtrail.name}:log-stream:*",
+      "arn:aws:logs:${var.region}:${var.appsdevstg_account_id}:log-group:${aws_cloudwatch_log_group.cloudtrail.name}:log-stream:*",
     ]
   }
 }

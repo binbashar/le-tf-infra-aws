@@ -4,9 +4,10 @@
 # AWS
 #
 provider "aws" {
-  region  = var.region
-  profile = var.profile
-  version = ">= 2.40"
+  version                 = "~> 2.46"
+  region                  = var.region
+  profile                 = var.profile
+  shared_credentials_file = "~/.aws/config"
 }
 
 #
@@ -32,10 +33,10 @@ provider "kubernetes" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.12.19"
+  required_version = ">= 0.12.20"
 
   backend "s3" {
-    key = "dev/k8s-eks/terraform.tfstate"
+    key = "apps-devstg/k8s-eks/terraform.tfstate"
   }
 }
 
@@ -68,7 +69,7 @@ data "terraform_remote_state" "vpc-eks" {
   config = {
     region  = var.region
     profile = var.profile
-    bucket  = "bb-dev-terraform-state-storage-s3"
-    key     = "dev/k8s-eks/prerequisites/terraform.tfstate"
+    bucket  = var.bucket
+    key     = "apps-devstg/k8s-eks/prerequisites/terraform.tfstate"
   }
 }

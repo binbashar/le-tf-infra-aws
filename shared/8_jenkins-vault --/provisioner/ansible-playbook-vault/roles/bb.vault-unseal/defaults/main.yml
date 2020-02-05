@@ -1,6 +1,0 @@
----
-# Vault Unseal Keys
-_vault_unseal_keys: []
-
-# Vault Address
-_vault_address: http://127.0.0.1:8200

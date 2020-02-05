@@ -2,17 +2,19 @@
 # Providers
 #
 provider "aws" {
-  region  = var.region
-  profile = var.profile
+  version                 = "~> 2.46"
+  region                  = var.region
+  profile                 = var.profile
+  shared_credentials_file = "~/.aws/config"
 }
 
 #
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.12.19"
+  required_version = ">= 0.12.20"
 
   backend "s3" {
-    key = "dev/cloud-nuke/terraform.tfstate"
+    key = "apps-devstg/cloud-nuke/terraform.tfstate"
   }
 }

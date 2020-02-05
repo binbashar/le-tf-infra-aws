@@ -1,7 +1,0 @@
----
-- name: Unseal Vault
-  environment:
-    VAULT_ADDR: '{{ _vault_address }}'
-  become: no
-  shell: "vault operator unseal {{ item }}"
-  loop: '{{ _vault_unseal_keys }}'

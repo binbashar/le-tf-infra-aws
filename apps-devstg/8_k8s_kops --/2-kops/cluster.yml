@@ -1,7 +1,7 @@
 apiVersion: kops/v1alpha2
 kind: Cluster
 metadata:
-  name: cluster-kops-1.k8s.dev.binbash.aws
+  name: cluster-kops-1.k8s.devstg.binbash.aws
 spec:
   api:
     loadBalancer:
@@ -14,12 +14,12 @@ spec:
   channel: stable
   cloudLabels:
     Backup: "True"
-    Environment: dev
+    Environment: apps-devstg
     Provisioner: kops
     Service: kubernetes
   cloudProvider: aws
-  configBase: s3://bb-dev-kops-state/cluster-kops-1.k8s.dev.binbash.aws
-  dnsZone: Z02860073TM97JGVRH4T4
+  configBase: s3://bb-state-cluster-kops-1.k8s.devstg.binbash.aws/cluster-kops-1.k8s.devstg.binbash.aws
+  dnsZone: Z0202365C62F5PXDN2KO
   etcdClusters:
   - etcdMembers:
     - encryptedVolume: true
@@ -55,8 +55,8 @@ spec:
   kubernetesApiAccess:
   - 172.18.0.0/20
   kubernetesVersion: 1.14.10
-  masterInternalName: api.internal.cluster-kops-1.k8s.dev.binbash.aws
-  masterPublicName: api.cluster-kops-1.k8s.dev.binbash.aws
+  masterInternalName: api.internal.cluster-kops-1.k8s.devstg.binbash.aws
+  masterPublicName: api.cluster-kops-1.k8s.devstg.binbash.aws
   networkCIDR: 172.18.32.0/20
   networkID: vpc-072f329fed6757e95
   networking:
@@ -78,17 +78,17 @@ spec:
     name: utility-us-east-1c
     type: Utility
     zone: us-east-1c
-  - egress: nat-009cd15b09cb28489
+  - egress: nat-0b860ddb4e6d60c98
     id: subnet-05d75d908f61d35e5
     name: us-east-1a
     type: Private
     zone: us-east-1a
-  - egress: nat-009cd15b09cb28489
+  - egress: nat-0b860ddb4e6d60c98
     id: subnet-094c287defbc07180
     name: us-east-1b
     type: Private
     zone: us-east-1b
-  - egress: nat-009cd15b09cb28489
+  - egress: nat-0b860ddb4e6d60c98
     id: subnet-0cec521de70ee76a3
     name: us-east-1c
     type: Private
@@ -103,7 +103,7 @@ apiVersion: kops/v1alpha2
 kind: InstanceGroup
 metadata:
   labels:
-    kops.k8s.io/cluster: cluster-kops-1.k8s.dev.binbash.aws
+    kops.k8s.io/cluster: cluster-kops-1.k8s.devstg.binbash.aws
   name: master-us-east-1a
 spec:
   image: kope.io/k8s-1.14-debian-stretch-amd64-hvm-ebs-2019-09-26
@@ -119,7 +119,7 @@ apiVersion: kops/v1alpha2
 kind: InstanceGroup
 metadata:
   labels:
-    kops.k8s.io/cluster: cluster-kops-1.k8s.dev.binbash.aws
+    kops.k8s.io/cluster: cluster-kops-1.k8s.devstg.binbash.aws
   name: master-us-east-1b
 spec:
   image: kope.io/k8s-1.14-debian-stretch-amd64-hvm-ebs-2019-09-26
@@ -135,7 +135,7 @@ apiVersion: kops/v1alpha2
 kind: InstanceGroup
 metadata:
   labels:
-    kops.k8s.io/cluster: cluster-kops-1.k8s.dev.binbash.aws
+    kops.k8s.io/cluster: cluster-kops-1.k8s.devstg.binbash.aws
   name: master-us-east-1c
 spec:
   image: kope.io/k8s-1.14-debian-stretch-amd64-hvm-ebs-2019-09-26
@@ -151,7 +151,7 @@ apiVersion: kops/v1alpha2
 kind: InstanceGroup
 metadata:
   labels:
-    kops.k8s.io/cluster: cluster-kops-1.k8s.dev.binbash.aws
+    kops.k8s.io/cluster: cluster-kops-1.k8s.devstg.binbash.aws
   name: nodes
 spec:
   image: kope.io/k8s-1.14-debian-stretch-amd64-hvm-ebs-2019-09-26

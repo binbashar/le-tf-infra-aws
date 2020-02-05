@@ -1,5 +1,5 @@
 module "eks" {
-  source = "git::git@github.com:binbashar/terraform-aws-eks.git?ref=v8.1.0"
+  source = "git::git@github.com:binbashar/terraform-aws-eks.git?ref=v8.2.0"
 
   create_eks      = true
   cluster_name    = data.terraform_remote_state.vpc-eks.outputs.cluster_name
@@ -9,9 +9,8 @@ module "eks" {
   # Network configurations
   #
   vpc_id  = data.terraform_remote_state.vpc-eks.outputs.vpc_id
-  subnets = data.terraform_remote_state.vpc-eks.outputs.private_subnets[0]
+  subnets = data.terraform_remote_state.vpc-eks.outputs.private_subnets
 
-  #
   # Security
   #
   cluster_endpoint_private_access = var.cluster_endpoint_private_access
@@ -34,7 +33,7 @@ module "eks" {
       instance_type = "t2.small"
       k8s_labels    = local.tags
       additional_tags = {
-        ExtraTag = "example"
+        ExtraTag = "${var.environment}-managed-worker-nodes-example"
       }
     }
   }
@@ -42,10 +41,9 @@ module "eks" {
   #
   # Auth: Kubeconfig
   #
-  kubeconfig_name        = var.kubeconfig_name
-  write_kubeconfig       = var.write_kubeconfig
-  config_output_path     = var.config_output_path
-  local_exec_interpreter = var.local_exec_interpreter
+  kubeconfig_name    = var.kubeconfig_name
+  write_kubeconfig   = var.write_kubeconfig
+  config_output_path = var.config_output_path
 
   #
   # Auth: aws-iam-authenticator
