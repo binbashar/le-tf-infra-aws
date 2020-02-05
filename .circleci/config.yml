@@ -92,7 +92,7 @@ workflows:
             branches:
              ignore: # only branches matching the below regex filters will run
                - master
-      - release-patch-with-changelog:
+      - release-version-with-changelog:
           context: binbashar-org-global-context
           filters:
             branches:
