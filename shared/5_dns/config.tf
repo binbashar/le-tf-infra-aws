@@ -37,35 +37,47 @@ data "terraform_remote_state" "vpc-shared" {
   }
 }
 
-data "terraform_remote_state" "vpc-dev" {
+data "terraform_remote_state" "vpc-apps-devstg" {
   backend = "s3"
 
   config = {
     region  = var.region
-    profile = "bb-dev-devops"
+    profile = "bb-apps-devstg-devops"
     bucket  = "bb-apps-devstg-terraform-backend"
     key     = "apps-devstg/network/terraform.tfstate"
   }
 }
 
-data "terraform_remote_state" "dns-dev-kops" {
+data "terraform_remote_state" "dns-apps-devstg-kops" {
   backend = "s3"
 
   config = {
     region  = var.region
-    profile = "bb-dev-devops"
+    profile = "bb-apps-devstg-devops"
     bucket  = "bb-apps-devstg-terraform-backend"
     key     = "apps-devstg/k8s-kops/prerequisites/terraform.tfstate"
   }
 }
 
-data "terraform_remote_state" "vpc-dev-eks" {
+data "terraform_remote_state" "vpc-apps-devstg-eks" {
   backend = "s3"
 
   config = {
     region  = var.region
-    profile = "bb-dev-devops"
+    profile = "bb-apps-devstg-devops"
     bucket  = "bb-apps-devstg-terraform-backend"
     key     = "apps-devstg/k8s-eks/prerequisites/terraform.tfstate"
   }
 }
+
+data "terraform_remote_state" "vpc-apps-prd" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "bb-apps-prd-devops"
+    bucket  = "bb-apps-prd-terraform-backend"
+    key     = "apps-prd/network/terraform.tfstate"
+  }
+}
+

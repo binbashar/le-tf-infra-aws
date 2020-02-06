@@ -11,25 +11,37 @@
 //aws route53 delete-vpc-association-authorization  --hosted-zone-id Z2UPXXXXXXXXX --vpc VPCRegion=us-east-1,VPCId=vpc-6812de10 --profile 'profile-host-acct'
 
 #
-# Request Association between Dev VPC and aws.binbash.com.ar private hosted zone
+# Request Association between Apss DevStg VPC and aws.binbash.com.ar private hosted zone
 #
-resource "null_resource" "dns_private_hosted_zone_create_dev_vpc_association_auth" {
-  count = var.vpc_dev_dns_assoc == true ? 1 : 0
+resource "null_resource" "dns_private_hosted_zone_create_apps_devstg_vpc_association_auth" {
+  count = var.vpc_apps_devstg_dns_assoc == true ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "aws route53 create-vpc-association-authorization --hosted-zone-id ${aws_route53_zone.aws_private_hosted_zone_1.zone_id} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-dev.outputs.vpc_id} --profile ${var.profile}"
+    command     = "aws route53 create-vpc-association-authorization --hosted-zone-id ${aws_route53_zone.aws_private_hosted_zone_1.zone_id} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-apps-devstg.outputs.vpc_id} --profile ${var.profile}"
   }
 }
 
 #
-# Request Association between Dev EKS VPC and aws.binbash.com.ar private hosted zone
+# Request Association between Apps DevStg EKS VPC and aws.binbash.com.ar private hosted zone
 #
-resource "null_resource" "dns_private_hosted_zone_create_dev_eks_vpc_association_auth" {
-  count = var.vpc_dev_eks_dns_assoc == true ? 1 : 0
+resource "null_resource" "dns_private_hosted_zone_create_apps_devstg_eks_vpc_association_auth" {
+  count = var.vpc_apps_devstg_eks_dns_assoc == true ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "aws route53 create-vpc-association-authorization --hosted-zone-id ${aws_route53_zone.aws_private_hosted_zone_1.zone_id} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-dev-eks.outputs.vpc_id} --profile ${var.profile}"
+    command     = "aws route53 create-vpc-association-authorization --hosted-zone-id ${aws_route53_zone.aws_private_hosted_zone_1.zone_id} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-apps-devstg-eks.outputs.vpc_id} --profile ${var.profile}"
+  }
+}
+
+#
+# Request Association between Apss Prd VPC and aws.binbash.com.ar private hosted zone
+#
+resource "null_resource" "dns_private_hosted_zone_create_apps_prd_vpc_association_auth" {
+  count = var.vpc_apps_prd_dns_assoc == true ? 1 : 0
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = "aws route53 create-vpc-association-authorization --hosted-zone-id ${aws_route53_zone.aws_private_hosted_zone_1.zone_id} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-apps-prd.outputs.vpc_id} --profile ${var.profile}"
   }
 }
