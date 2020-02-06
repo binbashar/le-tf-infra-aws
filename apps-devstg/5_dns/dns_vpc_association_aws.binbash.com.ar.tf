@@ -1,8 +1,8 @@
 # Reference Link: https://aws.amazon.com/premiumsupport/knowledge-center/private-hosted-zone-different-account/
 
-#============================================================#
-# HOSTED ZONE: aws.binbash.com.ar from Shared to Dev Account
-#============================================================#
+#====================================================================#
+# HOSTED ZONE: aws.binbash.com.ar from Shared to Apps DevStg Account #
+#====================================================================#
 // eg:
 //aws route53 list-hosted-zones --profile ${var.profile}
 //aws route53 create-vpc-association-authorization  --hosted-zone-id Z2UPXXXXXXXXX --vpc VPCRegion=us-east-1,VPCId=vpc-6812de10 --profile 'profile-host-acct'
@@ -11,9 +11,9 @@
 //aws route53 delete-vpc-association-authorization  --hosted-zone-id Z2UPXXXXXXXXX --vpc VPCRegion=us-east-1,VPCId=vpc-6812de10 --profile 'profile-host-acct'
 
 #
-# Accept association between Dev VPC and aws.binbash.com.ar private hosted zone
+# Accept association between Apps DevStg VPC and aws.binbash.com.ar private hosted zone
 #
-resource "null_resource" "associate_dev_vpc_with_private_remote_hosted_zone" {
+resource "null_resource" "associate_apps_devstg_vpc_with_private_remote_hosted_zone" {
   count = var.vpc_shared_dns_assoc == true ? 1 : 0
 
   provisioner "local-exec" {

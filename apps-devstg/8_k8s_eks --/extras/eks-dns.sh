@@ -7,7 +7,7 @@
 #
 
 #
-# eg: bash ~/.aws/eks-dns.sh bb-dev-eks-BedMAWiB bb-dev-devops
+# eg: bash ~/.aws/eks-dns.sh bb-dev-eks-BedMAWiB bb-apps-devstg-devops
 #
 clusterName=$1
 awsProfile=$2
