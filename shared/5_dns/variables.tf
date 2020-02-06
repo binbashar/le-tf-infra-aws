@@ -79,11 +79,6 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
-variable "cloudtrail_org_bucket" {
-  type        = string
-  description = "Cloudtrail centralized organization bucket"
-}
-
 #===========================================#
 # DNS                                       #
 #===========================================#
@@ -202,20 +197,26 @@ variable "aws_private_hosted_zone_fqdn_1" {
 #===========================================#
 # DNS VPC Associations                      #
 #===========================================#
-variable "vpc_dev_dns_assoc" {
-  description = "true if Dev account VPC exists and needs DNS association"
+variable "vpc_apps_devstg_dns_assoc" {
+  description = "true if Apps DevStg account VPC exists and needs DNS association"
   type        = bool
   default     = true
 }
 
-variable "vpc_dev_eks_dns_assoc" {
-  description = "true if Dev account EKS VPC exists and needs DNS association"
+variable "vpc_apps_devstg_eks_dns_assoc" {
+  description = "true if Apps DevStg account EKS VPC exists and needs DNS association"
   type        = bool
   default     = true
 }
 
-variable "vpc_dev_kops_dns_assoc" {
-  description = "true if Dev account Kops Private Hosted Zone exists and needs DNS association"
+variable "vpc_apps_devstg_kops_dns_assoc" {
+  description = "true if Apps DevStg account Kops Private Hosted Zone exists and needs DNS association"
+  type        = bool
+  default     = false
+}
+
+variable "vpc_apps_prd_dns_assoc" {
+  description = "true if Apps Prd account VPC exists and needs DNS association"
   type        = bool
   default     = true
 }

@@ -79,22 +79,23 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
-variable "cloudtrail_org_bucket" {
-  type        = string
-  description = "Cloudtrail centralized organization bucket"
-}
-
 #===========================================#
 # Networking                                #
 #===========================================#
-variable "vpc_dev_created" {
-  description = "true if Dev account VPC is created for Peering purposes"
+variable "vpc_apps_devstg_created" {
+  description = "true if Apps Dev account VPC is created for Peering purposes"
   type        = bool
   default     = true
 }
 
-variable "vpc_dev_eks_created" {
-  description = "true if Dev account EKS VPC is created for Peering purposes"
+variable "vpc_apps_devstg_eks_created" {
+  description = "true if Apps Dev account EKS VPC is created for Peering purposes"
+  type        = bool
+  default     = true
+}
+
+variable "vpc_apps_prd_created" {
+  description = "true if Apps Prd account VPC is created for Peering purposes"
   type        = bool
   default     = true
 }

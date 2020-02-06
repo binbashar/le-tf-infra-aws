@@ -11,14 +11,14 @@
 ## Kops Pre-requisites
 
 ### Overview
-K8s clusters provisioned by Kops have a number of resources that need to be available before the 
-cluster is created. These are Kops pre-requisites and they are defined in the `1-prerequisites` 
+K8s clusters provisioned by Kops have a number of resources that need to be available before the
+cluster is created. These are Kops pre-requisites and they are defined in the `1-prerequisites`
 directory which includes all Terraform files used to create/modify these resources.
 
-**IMPORTANT:** The current code has been fully tested with the AWS VPC Network Module 
+**IMPORTANT:** The current code has been fully tested with the AWS VPC Network Module
 https://github.com/binbashar/terraform-aws-vpc
 
-#### OS pre-req packages 
+#### OS pre-req packages
 **Ref Link:** https://github.com/kubernetes/kops/blob/master/docs/install.md)
 
 * **kops** >= *1.14.0*
@@ -33,7 +33,7 @@ Version 1.15.0 (git-9992b4055)
 + kubectl version --client
 Client Version: version.Info{Major:"1", Minor:"14", GitVersion:"v1.14.0", GitCommit:"641856db18352033a0d96dbc99153fa3b27298e5", GitTreeState:"clean", BuildDate:"2019-03-25T15:53:57Z", GoVersion:"go1.12.1", Compiler:"gc", Platform:"linux/amd64"}
 ```
-* **terraform** >= *0.12.0* 
+* **terraform** >= *0.12.0*
 ```shell
 ╰─○ terraform version
 Terraform v0.12.20
@@ -57,18 +57,18 @@ alt="leverage" width="1200"/>
 
 
 ### Why this workflow
-The workflow follows the same approach that is used to manage other terraform resources in your AWS accounts. 
+The workflow follows the same approach that is used to manage other terraform resources in your AWS accounts.
 E.g. network, identities, and so on.
 
-So we'll use existing AWS resources to create a `cluster-template.yaml` containing all the resource 
-IDs that Kops needs to create a Kubernetes cluster. 
+So we'll use existing AWS resources to create a `cluster-template.yaml` containing all the resource
+IDs that Kops needs to create a Kubernetes cluster.
 
-Why not directly use Kops CLI to create the K8s cluster as well as the VPC and its other dependencies? 
+Why not directly use Kops CLI to create the K8s cluster as well as the VPC and its other dependencies?
 
-1. While this is a valid approach, we want to manage all these building blocks independently and be able to 
-fully customize any AWS component without having to alter our Kubernetes cluster definitions and vice-versa. 
+1. While this is a valid approach, we want to manage all these building blocks independently and be able to
+fully customize any AWS component without having to alter our Kubernetes cluster definitions and vice-versa.
 
-2. This is a fully declarative coding style approach to manage your infrastructure so being able to declare 
+2. This is a fully declarative coding style approach to manage your infrastructure so being able to declare
 the state of our cluster in YAML files fits **100% as code & GitOps** based approach.
 
 <div align="center">
@@ -79,7 +79,7 @@ alt="leverage" width="1200"/>
 **figure-2:** Workflow diagram (https://medium.com/bench-engineering/deploying-kubernetes-clusters-with-kops-and-terraform-832b89250e8e)
 
 ## Kops Cluster Management
-The `2-kops` directory includes helper scripts and Terraform files in order to template our Kubernetes 
+The `2-kops` directory includes helper scripts and Terraform files in order to template our Kubernetes
 cluster definition. The idea is to use our **Terraform outputs** from `1-prerequisites` to construct a cluster definition.
 
 ### Overview
@@ -102,10 +102,10 @@ This workflow is a little different to the typical Terraform workflows we use. T
    4. Generate Kops Terraform file (`kubernetes.tf`) -- this file represents the changes that Kops needs to apply on the cloud provider.
 4. Run `make plan`
    * To preview any infrastructure changes that Terraform will make.
-   * If desired we could submit a PR, allowing you and the rest of the team to understand and review what changes would 
-   be made to the Kubernetes cluster before excecuting `make apply` (`terraform apply`). This brings the huge benefit 
-   of treating changes to our Kubernetes clusters with a GitOps oriented approach, basically like we treat any other 
-   code & infrastructure change, and integrate it with the rest of our tools and practices like CI/CD, integration 
+   * If desired we could submit a PR, allowing you and the rest of the team to understand and review what changes would
+   be made to the Kubernetes cluster before excecuting `make apply` (`terraform apply`). This brings the huge benefit
+   of treating changes to our Kubernetes clusters with a GitOps oriented approach, basically like we treat any other
+   code & infrastructure change, and integrate it with the rest of our tools and practices like CI/CD, integration
    testing, replicate environments and so on.
 5. Run `make apply`
    * To apply those infrastructure changes on AWS.
@@ -121,12 +121,12 @@ To clean-up any resources created for your K8s cluster, you should run:
 
 1. At `2-kops` folder context run `make destroy`
    * This will excecute a `terraform destroy` of all the `kubernets.tf` declared AWS resources.
-2. At `2-kops` folder context run `cluster-destroy` 
+2. At `2-kops` folder context run `cluster-destroy`
    * Will run Kops `destroy cluster` -- only dry run, no changes will be applied
-3. Exec `cluster-destroy-yes` 
-    * Kops will effectively destroy all the remaining cluster resources. 
+3. Exec `cluster-destroy-yes`
+    * Kops will effectively destroy all the remaining cluster resources.
 4. Finally if at `1-prerequisites` exec `make destroy`
-    * This will remove Kops state S3 bucket + any other extra resources you've provsioned for your 
+    * This will remove Kops state S3 bucket + any other extra resources you've provsioned for your
     cluster.
 
 ### Tipical Workflow
@@ -137,22 +137,22 @@ The workflow may look complicated at first but generally it boils down to these 
 4. Run `make cluster-rolling-update-yes`
 
 ### What about persistent and stateful K8s resources?
-This approach will work better the more stateless your Kubernetes workloads are. 
+This approach will work better the more stateless your Kubernetes workloads are.
 Treating Kubernetes clusters as ephemeral and replaceable infrastructure requires to consider
-not to use persistent volumes or the drawback of difficulties when running workloads such as 
-databases on K8s. We feel pretty confident that we can recreate our workloads by applying each 
+not to use persistent volumes or the drawback of difficulties when running workloads such as
+databases on K8s. We feel pretty confident that we can recreate our workloads by applying each
 of our service definitions, charts and manifests to a given Kubernetes cluster as long as we keep
-the persistent storage separately on AWS RDS, DynamoDB, EFS and so on. In terms of the **etcd** 
-state persistency, Kops already provisions the etcd volumes (AWS EBS) independently to the master 
-instances they get attached to. This helps to persist the etcd state after rolling update your master 
-nodes without any user intervention. Moreover simplifying volume backups via EBS Snapshots 
+the persistent storage separately on AWS RDS, DynamoDB, EFS and so on. In terms of the **etcd**
+state persistency, Kops already provisions the etcd volumes (AWS EBS) independently to the master
+instances they get attached to. This helps to persist the etcd state after rolling update your master
+nodes without any user intervention. Moreover simplifying volume backups via EBS Snapshots
 (consider https://github.com/binbashar/terraform-aws-backup-by-tags). We also use a very valuable
-backup tool named Velero (formerly Heptio Ark - https://github.com/vmware-tanzu/velero) to o back 
+backup tool named Velero (formerly Heptio Ark - https://github.com/vmware-tanzu/velero) to o back
 up and restore our Kubernetes cluster resources and persistent volumes.
 
 ## TODO
 
-1. **IMPORTANT:** Kops terraform output (`kops update cluster --target terraform`) is still generated for Terraform `0.11.x` 
+1. **IMPORTANT:** Kops terraform output (`kops update cluster --target terraform`) is still generated for Terraform `0.11.x`
       (https://github.com/kubernetes/kops/issues/7052) we'll take care of the migration when `tf-0.12` gets fully supported.
 
 2. Create a Binbash Leverage public Confluence Wiki entry detailing some more info about etcd, calico and k8s versions

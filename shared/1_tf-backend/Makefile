@@ -24,6 +24,7 @@ docker run --rm \
 -v ${LOCAL_OS_GIT_CONF_DIR}:/etc/gitconfig \
 -v ${LOCAL_OS_AWS_CONF_DIR}:/root/.aws \
 --entrypoint=${TF_DOCKER_ENTRYPOINT} \
+-w ${TF_PWD_CONT_DIR} \
 -it ${TF_DOCKER_IMAGE}:${TF_VER}
 endef
 
@@ -42,23 +43,24 @@ version: ## Show terraform version
 
 init: init-cmd tf-dir-chmod ## Initialize terraform backend, plugins, and modules
 init-cmd:
-	${TF_CMD_PREFIX} init -backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
+	${TF_CMD_PREFIX} init \
+	-backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE}
 
 apply: apply-cmd tf-dir-chmod ## Make terraform apply any changes with dockerized binary
 apply-cmd:
 	${TF_CMD_PREFIX} apply \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
 
 destroy: ## Destroy all resources managed by terraform
 	${TF_CMD_PREFIX} destroy \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
 
 format: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
-	${TF_CMD_PREFIX} fmt ${TF_PWD_CONT_DIR}
+	${TF_CMD_PREFIX} fmt
 
 force-unlock: ## Manually unlock the terraform state, eg: make ARGS="a94b0919-de5b-9b8f-4bdf-f2d7a3d47112" force-unlock
-	${TF_CMD_PREFIX} force-unlock ${ARGS} ${TF_PWD_CONT_DIR}
+	${TF_CMD_PREFIX} force-unlock ${ARGS}

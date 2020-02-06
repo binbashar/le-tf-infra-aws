@@ -13,8 +13,8 @@
 #
 # Accept association between Dev EKS VPC and aws.binbash.com.ar private hosted zone
 #
-resource "null_resource" "associate_dev_eks_vpc_with_private_remote_hosted_zone" {
-  count = var.vpc_dev_eks_dns_assoc == true ? 1 : 0
+resource "null_resource" "associate_apps_devstg_eks_vpc_with_private_remote_hosted_zone" {
+  count = var.vpc_apps_devstg_eks_dns_assoc == true ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]

@@ -61,14 +61,14 @@ variable "cloudtrail_org_bucket" {}
 #===========================================#
 # Networking                                #
 #===========================================#
-variable "vpc_dev_eks_created" {
+variable "vpc_apps_devstg_eks_created" {
   description = "true if Dev account EKS VPC is created for Peering purposes"
   type        = bool
   default     = true
 }
 
-variable "vpc_dev_eks_dns_assoc" {
+variable "vpc_apps_devstg_eks_dns_assoc" {
   description = "true if Dev account EKS VPC exists and needs DNS association"
   type        = bool
-  default     = false
+  default     = true
 }

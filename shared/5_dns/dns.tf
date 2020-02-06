@@ -114,13 +114,16 @@ resource "aws_route53_zone" "aws_private_hosted_zone_1" {
   #          vpc,
   #      ]
   #  }
-
   vpc {
-    vpc_id     = data.terraform_remote_state.vpc-dev-eks.outputs.vpc_id
+    vpc_id     = data.terraform_remote_state.vpc-apps-devstg-eks.outputs.vpc_id
     vpc_region = var.region
   }
   vpc {
-    vpc_id     = data.terraform_remote_state.vpc-dev.outputs.vpc_id
+    vpc_id     = data.terraform_remote_state.vpc-apps-devstg.outputs.vpc_id
+    vpc_region = var.region
+  }
+  vpc {
+    vpc_id     = data.terraform_remote_state.vpc-apps-prd.outputs.vpc_id
     vpc_region = var.region
   }
 

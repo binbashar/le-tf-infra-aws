@@ -83,13 +83,6 @@ variable "root_account_id" {
   description = "Account: Root Organization"
 }
 
-#
-# Security
-#
-variable "cloudtrail_org_bucket" {
-  description = "Cloudtrail centralized organization bucket"
-}
-
 #===========================================#
 # Security                                  #
 #===========================================#
