@@ -26,7 +26,7 @@ terraform {
 #
 # data type from output for vpc
 #
-data "terraform_remote_state" "vpc-dev" {
+data "terraform_remote_state" "vpc-prd" {
   backend = "s3"
 
   config = {
