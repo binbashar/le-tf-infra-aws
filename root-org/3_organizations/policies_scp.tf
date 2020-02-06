@@ -1,12 +1,14 @@
 #
-# Policies: keep in mind we are using allow lists (aka whitelisting).
+# Service Control Policies (SCP): keep in mind we are using allow lists (aka whitelisting).
 #
 
 #
-# Default Policy: this is a minimal policy.
+# Default Service Control Policy (SCP):
+# This is a default minimal policy.
 #
 resource "aws_organizations_policy" "default" {
-  name = "default"
+  name        = "default"
+  description = "Default SCP: this is a default minimal policy. Eg: security acct."
 
   content = <<JSON
 {
@@ -15,9 +17,22 @@ resource "aws_organizations_policy" "default" {
     "Effect": "Allow",
     "Action": [
         "aws-portal:*",
+        "cloudtrail:*",
+        "cloudwatch:*",
+        "config:*",
+        "dynamodb:*",
+        "events:*",
+        "guardduty:*",
         "health:*",
         "iam:*",
-        "support:*"
+        "inspector:*",
+        "kms:*",
+        "lambda:*",
+        "logs:*",
+        "s3:*",
+        "ssm:*",
+        "support:*",
+        "tag:*"
     ],
     "Resource": "*"
   }
@@ -26,10 +41,12 @@ JSON
 }
 
 #
-# Standard Policy: this policy is the one that is typically used by most accounts.
+# Standard Service Control Policy (SCP):
+# This policy is the one that is typically used by most accounts.
 #
 resource "aws_organizations_policy" "standard" {
-  name = "standard"
+  name        = "standard"
+  description = "Standard SCP: this policy is the one that is typically used by most accounts. Eg: shared, apps_devstg and apps_prd accts."
 
   content = <<JSON
 {

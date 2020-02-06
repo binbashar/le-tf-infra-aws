@@ -19,7 +19,7 @@ resource "aws_organizations_policy_attachment" "shared" {
 #
 resource "aws_organizations_policy_attachment" "apps_devstg" {
   policy_id = aws_organizations_policy.standard.id
-  target_id = aws_organizations_organizational_unit.apps_devstg.id
+  target_id = aws_organizations_organizational_unit.bbl_apps_devstg.id
 }
 
 #
@@ -27,5 +27,5 @@ resource "aws_organizations_policy_attachment" "apps_devstg" {
 #
 resource "aws_organizations_policy_attachment" "apps_prd" {
   policy_id = aws_organizations_policy.standard.id
-  target_id = aws_organizations_organizational_unit.apps_prd.id
+  target_id = aws_organizations_organizational_unit.bbl_apps_prd.id
 }

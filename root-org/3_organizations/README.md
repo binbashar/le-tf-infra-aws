@@ -127,4 +127,4 @@ $ make
 Available Commands:
  - release-major-with-changelog make changelog-major && git add && git commit && make release-major
  - release-minor-with-changelog make changelog-minor && git add && git commit && make release-minor
- - release-patch-with-changelog make changelog-patch && git add && git commit && make release-patch
+  - release-patch-with-changelog make changelog-patch && git add && git commit && make release-patch

@@ -58,3 +58,23 @@ variable "region_secondary" {
   type        = string
   description = "AWS Scondary Region for HA"
 }
+
+variable "security_account_id" {
+  type        = string
+  description = "Account: Security & Users Management"
+}
+
+variable "shared_account_id" {
+  type        = string
+  description = "Account: Shared Resources"
+}
+
+variable "appsdevstg_account_id" {
+  type        = string
+  description = "Account: Dev Modules & Libs"
+}
+
+variable "appsprd_account_id" {
+  type        = string
+  description = "Account: Prod Modules & Libs"
+}

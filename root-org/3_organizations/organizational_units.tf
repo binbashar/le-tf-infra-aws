@@ -18,15 +18,15 @@ resource "aws_organizations_organizational_unit" "shared" {
 #
 # Apps DevStg: this is for applications and services under your Project.
 #
-resource "aws_organizations_organizational_unit" "apps_devstg" {
-  name      = "apps_devstg"
+resource "aws_organizations_organizational_unit" "bbl_apps_devstg" {
+  name      = "bbl_apps_devstg"
   parent_id = aws_organizations_organization.main.roots.0.id
 }
 
 #
 # Apps Prd: this is for applications and services under your Project.
 #
-resource "aws_organizations_organizational_unit" "apps_prd" {
-  name      = "apps_prd"
+resource "aws_organizations_organizational_unit" "bbl_apps_prd" {
+  name      = "bbl_apps_prd"
   parent_id = aws_organizations_organization.main.roots.0.id
 }

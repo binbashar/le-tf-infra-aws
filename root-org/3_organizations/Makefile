@@ -24,6 +24,7 @@ docker run --rm \
 -v ${LOCAL_OS_GIT_CONF_DIR}:/etc/gitconfig \
 -v ${LOCAL_OS_AWS_CONF_DIR}:/root/.aws \
 --entrypoint=${TF_DOCKER_ENTRYPOINT} \
+-w ${TF_PWD_CONT_DIR} \
 -it ${TF_DOCKER_IMAGE}:${TF_VER}
 endef
 
@@ -42,26 +43,27 @@ version: ## Show terraform version
 
 init: init-cmd tf-dir-chmod ## Initialize terraform backend, plugins, and modules
 init-cmd:
-	${TF_CMD_PREFIX} init -backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
+	${TF_CMD_PREFIX} init \
+	-backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE}
 
 plan: ## Preview terraform changes
 	${TF_CMD_PREFIX} plan \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
 
 plan-detailed: ## Preview terraform changes with a more detailed output
 	${TF_CMD_PREFIX} plan -detailed-exitcode \
 	 -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	 -var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
+	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
 
 apply: apply-cmd tf-dir-chmod ## Make terraform apply any changes with dockerized binary
 apply-cmd:
 	${TF_CMD_PREFIX} apply \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
 
 output: ## Terraform output command is used to extract the value of an output variable from the state file.
 	${TF_CMD_PREFIX} output
@@ -70,13 +72,25 @@ destroy: ## Destroy all resources managed by terraform
 	${TF_CMD_PREFIX} destroy \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_PWD_CONT_DIR}
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
 
 format: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
-	${TF_CMD_PREFIX} fmt ${TF_PWD_CONT_DIR}
+	${TF_CMD_PREFIX} fmt
 
 force-unlock: ## Manually unlock the terraform state, eg: make ARGS="a94b0919-de5b-9b8f-4bdf-f2d7a3d47112" force-unlock
-	${TF_CMD_PREFIX} force-unlock ${ARGS} ${TF_PWD_CONT_DIR}
+	${TF_CMD_PREFIX} force-unlock ${ARGS}
 
 validate-tf-layout: ## Validate Terraform layout to make sure it's set up properly
 	../../@scripts/validate-terraform-layout.sh
+
+#
+# Terraform Import & rm aux commands
+#
+import: ## terraform import resources
+	${TF_CMD_PREFIX} import \
+	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} aws_organizations_organizational_unit.bbl_apps_devstg ou-oz9d-yl3npduj
+
+state-rm: ## terraform rm resource from state
+	${TF_CMD_PREFIX} state rm aws_organizations_organizational_unit.bbl_apps_devstg
