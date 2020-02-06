@@ -79,11 +79,6 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
-variable "cloudtrail_org_bucket" {
-  type        = string
-  description = "Cloudtrail centralized organization bucket"
-}
-
 #===========================================#
 # Networking                                #
 #===========================================#
