@@ -36,3 +36,14 @@ data "terraform_remote_state" "notifications" {
     key     = "${var.environment}/notifications/terraform.tfstate"
   }
 }
+
+data "terraform_remote_state" "security" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "bb-security-devops"
+    bucket  = "bb-security-terraform-backend"
+    key     = "security/security/terraform.tfstate"
+  }
+}
