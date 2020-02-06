@@ -7,7 +7,7 @@ module "cloudtrail" {
   enable_log_file_validation    = "true"
   include_global_service_events = "true"
   is_multi_region_trail         = "true"
-  s3_bucket_name                = var.cloudtrail_org_bucket
+  s3_bucket_name                = data.terraform_remote_state.security.outputs.bucket_id
   cloud_watch_logs_group_arn    = aws_cloudwatch_log_group.cloudtrail.arn
   cloud_watch_logs_role_arn     = aws_iam_role.cloudtrail_cloudwatch_events.arn
 }
@@ -19,7 +19,7 @@ module "cloudtrail_api_alarms" {
   log_group_name   = aws_cloudwatch_log_group.cloudtrail.name
   metric_namespace = var.metric_namespace
   create_dashboard = var.create_dashboard
-  # Uncomment if /dev/notifications SNS is configured and you want to send notifications via slack
+  # Uncomment if /notifications SNS is configured and you want to send notifications via slack
   # sns_topic_arn     = data.terraform_remote_state.notifications.outputs.sns_topic_arn
   sns_topic_arn = null
 
