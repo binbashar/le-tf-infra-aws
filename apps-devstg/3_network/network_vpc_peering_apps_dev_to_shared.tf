@@ -6,9 +6,9 @@
 #
 
 #
-# VPC Dev w/ Shared
+# VPC Apps Dev w/ Shared
 #
-resource "aws_vpc_peering_connection" "dev_vpc_with_shared_vpc" {
+resource "aws_vpc_peering_connection" "apps_devstg_vpc_with_shared_vpc" {
   count = var.vpc_shared_created == true ? 1 : 0
 
   peer_owner_id = var.shared_account_id
@@ -17,24 +17,24 @@ resource "aws_vpc_peering_connection" "dev_vpc_with_shared_vpc" {
   auto_accept   = false
 
   //    tags = merge(map("side", "accepter"), ${local.tags
-  tags = merge(map("Name", "requester-dev-to-shared"), local.tags)
+  tags = merge(map("Name", "requester-apps-dev-to-shared"), local.tags)
 }
 
 #
 # Update Route Tables to go through the VPC Peering Connection
 #
-resource "aws_route" "priv_route_table_1_dev_vpc_to_shared_vpc" {
+resource "aws_route" "priv_route_table_1_apps_devstg_vpc_to_shared_vpc" {
   count = var.vpc_shared_created == true ? 1 : 0
 
   route_table_id            = element(module.vpc.private_route_table_ids, 0)
   destination_cidr_block    = data.terraform_remote_state.vpc-shared.outputs.vpc_cidr_block
-  vpc_peering_connection_id = aws_vpc_peering_connection.dev_vpc_with_shared_vpc[0].id
+  vpc_peering_connection_id = aws_vpc_peering_connection.apps_devstg_vpc_with_shared_vpc[0].id
 }
 
-resource "aws_route" "pub_route_table_1_dev_vpc_to_shared_vpc" {
+resource "aws_route" "pub_route_table_1_apps_devstg_vpc_to_shared_vpc" {
   count = var.vpc_shared_created == true ? 1 : 0
 
   route_table_id            = element(module.vpc.public_route_table_ids, 0)
   destination_cidr_block    = data.terraform_remote_state.vpc-shared.outputs.vpc_cidr_block
-  vpc_peering_connection_id = aws_vpc_peering_connection.dev_vpc_with_shared_vpc[0].id
+  vpc_peering_connection_id = aws_vpc_peering_connection.apps_devstg_vpc_with_shared_vpc[0].id
 }
