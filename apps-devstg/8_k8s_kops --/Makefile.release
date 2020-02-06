@@ -27,8 +27,42 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 #==============================================================#
-# GIT RELEASE 												   #
+# GIT RELEASE 												                         #
 #==============================================================#
+
+#===================================#
+# GIT RELEASE: CircleCI Jobs cmds   #
+#===================================#
+release-patch-with-changelog-circleci: ## make -f Makefile.release changelog-patch && git add && git commit && make -f Makefile.release release-patch
+	make -f Makefile.release changelog-patch
+	git status
+	git add CHANGELOG.md
+	git commit -m "Updating CHANGELOG.md via make -f Makefile.release changelog-patch for ${GIT_SEMTAG_VER_PATCH} [ci skip]"
+	git push origin master
+	make -f Makefile.release release-patch
+
+release-minor-with-changelog-circleci: ## make -f Makefile.release changelog-minor && git add && git commit && make -f Makefile.release release-minor
+	make -f Makefile.release changelog-minor
+	git status
+	git add CHANGELOG.md
+	git commit -m "Updating CHANGELOG.md via make -f Makefile.release changelog-minor for ${GIT_SEMTAG_VER_MINOR} [ci skip]"
+	git push origin master
+	make -f Makefile.release release-minor
+
+release-major-with-changelog-circleci: ## make -f Makefile.release changelog-major && git add && git commit && make -f Makefile.release release-major
+	make -f Makefile.release changelog-major
+	git status
+	git add CHANGELOG.md
+	git commit -m "Updating CHANGELOG.md via make -f Makefile.release changelog-major for ${GIT_SEMTAG_VER_MAJOR} [ci skip]"
+	git push origin master
+	make -f Makefile.release release-major
+
+#===================================#
+# GIT RELEASE: Localhost cmds       #
+#===================================#
+#
+# VERSION NUMBER: PATCH
+#
 release-patch: ## releasing patch (eg: 0.0.1 -> 0.0.2) based on semantic tagging script for Git
 	# pre-req -> https://github.com/pnikosis/semtag
 	${GIT_SEMTAG_CMD_PREFIX} get
@@ -51,14 +85,9 @@ release-patch-with-changelog: ## make -f Makefile.release changelog-patch && git
 		echo "===============================================================================================";\
 	fi
 
-release-patch-with-changelog-circleci: ## make -f Makefile.release changelog-patch && git add && git commit && make -f Makefile.release release-patch
-	make -f Makefile.release changelog-patch
-	git status
-	git add CHANGELOG.md
-	git commit -m "Updating CHANGELOG.md via make -f Makefile.release changelog-patch for ${GIT_SEMTAG_VER_PATCH} [ci skip]"
-	git push origin master
-	make -f Makefile.release release-patch
-
+#
+# VERSION NUMBER: MINOR
+#
 release-minor: ## releasing minor (eg: 0.0.2 -> 0.1.0) based on semantic tagging script for Git
 	# pre-req -> https://github.com/pnikosis/semtag
 	${GIT_SEMTAG_CMD_PREFIX} get
@@ -70,7 +99,7 @@ release-minor-with-changelog: ## make -f Makefile.release changelog-minor && git
 		make -f Makefile.release changelog-minor;\
 		git status;\
 		git add CHANGELOG.md;\
-		git commit -m "Updating CHANGELOG.md via make -f Makefile.release changelog-minorfor ${GIT_SEMTAG_VER_PATCH} [ci skip]";\
+		git commit -m "Updating CHANGELOG.md via make -f Makefile.release changelog-minor for ${GIT_SEMTAG_VER_MINOR} [ci skip]";\
 		git push origin master;\
 		make -f Makefile.release release-minor;\
 	else\
@@ -81,6 +110,9 @@ release-minor-with-changelog: ## make -f Makefile.release changelog-minor && git
 		echo "===============================================================================================";\
 	fi
 
+#
+# VERSION NUMBER: MAJOR
+#
 release-major: ## releasing major (eg: 0.1.0 -> 1.0.0) based on semantic tagging script for Git
 	# pre-req -> https://github.com/pnikosis/semtag
 	${GIT_SEMTAG_CMD_PREFIX} get
@@ -92,7 +124,7 @@ release-major-with-changelog: ## make -f Makefile.release changelog-major && git
 		make -f Makefile.release changelog-major;\
 		git status;\
 		git add CHANGELOG.md;\
-		git commit -m "Updating CHANGELOG.md via make -f Makefile.release changelog-major for ${GIT_SEMTAG_VER_PATCH} [ci skip]";\
+		git commit -m "Updating CHANGELOG.md via make -f Makefile.release changelog-major for ${GIT_SEMTAG_VER_MAJOR} [ci skip]";\
 		git push origin master;\
 		make -f Makefile.release release-major;\
 	else\
@@ -103,6 +135,9 @@ release-major-with-changelog: ## make -f Makefile.release changelog-major && git
 		echo "===============================================================================================";\
 	fi
 
+#==============================================================#
+# CHANGELOG   												                         #
+#==============================================================#
 changelog-init: ## git-chglog (https://github.com/git-chglog/git-chglog) config initialization -> ./.chglog
 	@if [ ! -d ./.chglog ]; then\
 		docker run --rm -v ${LOCAL_PWD_DIR}:/data -it binbash/git-release --init;\
