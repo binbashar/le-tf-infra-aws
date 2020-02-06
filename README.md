@@ -52,7 +52,7 @@ Under every account folder you will see a service layer structure similar to the
 │   ├── 4_security
 │   ├── 4_security_compliance --
 │   ├── 5_dns
-│   ├── 6_notifications --
+│   ├── 6_notifications
 │   ├── 7_cloud-nuke
 │   ├── 8_k8s_eks --
 │   ├── 8_k8s_kops --
@@ -60,26 +60,30 @@ Under every account folder you will see a service layer structure similar to the
 │   ├── 9_storage --
 │   └── config
 ├── apps-prd
-│   ├── 1_tf-backend
-│   ├── 2_identities
-│   ├── 3_network
-│   ├── 4_security
+│   ├── 1_tf-backend --
+│   ├── 2_identities --
+│   ├── 3_network --
+│   ├── 4_security --
 │   ├── 4_security_compliance --
-│   ├── 5_dns
+│   ├── 5_dns --
+│   ├── 6_notifications --
+│   ├── 9_backups --
 │   └── config
 ├── root-org
 │   ├── 1_tf-backend
-│   ├── 2_cost-mgmt
-│   ├── 3_security
-│   ├── 3_security_compliance --
-│   ├── 4_notifications
+│   ├── 2_identities
+│   ├── 3_organizations
+│   ├── 4_security
+│   ├── 4_security_compliance --
+│   ├── 5_cost-mgmt
+│   ├── 6_notifications
 │   └── config
 ├── security
 │   ├── 1_tf-backend
-│   ├── 2_secrets
-│   ├── 3_identities
+│   ├── 2_identities
 │   ├── 4_security
 │   ├── 4_security_compliance --
+│   ├── 6_notifications
 │   └── config
 └── shared
     ├── 1_tf-backend
@@ -88,10 +92,9 @@ Under every account folder you will see a service layer structure similar to the
     ├── 4_security
     ├── 4_security_compliance --
     ├── 5_dns
-    ├── 6_notifications --
+    ├── 6_notifications
     ├── 7_vpn-server
-    ├── 8_jenkins-vault --
-    ├── 9_container_registry
+    ├── 8_container_registry
     └── config
 ```
 
@@ -134,6 +137,8 @@ cannot be stored in `backend.config` due to TF restrictions.
 ### AWS Profile
 - File `backend.config` will inject the profile name that TF will use to make changes on AWS.
 - Such profile is usually one that relies on another profile to assume a role to get access to each corresponding account.
+- File `@doc/binbash-aws-org-config` will be considered to be appended to your `.aws/config` file 
+note that `.aws/config` will depend on the IAM profiles declared at your `.aws/credentials` 
 - Read the following page to understand how to set up a profile to assume 
 a role => https://docs.aws.amazon.com/cli/latest/userguide/cli-roles.html
 
@@ -376,4 +381,4 @@ $ make
 Available Commands:
  - release-major-with-changelog make changelog-major && git add && git commit && make release-major
  - release-minor-with-changelog make changelog-minor && git add && git commit && make release-minor
- - release-patch-with-changelog make changelog-patch && git add && git commit && make release-patch
+  - release-patch-with-changelog make changelog-patch && git add && git commit && make release-patch

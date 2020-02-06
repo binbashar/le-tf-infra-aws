@@ -1,0 +1,78 @@
+#================================================================#
+# BINBASH                                                        #
+#================================================================#
+
+#------------------------------------#
+# AWS OrganizationAccountAccessRole  #
+#------------------------------------#
+[profile bb-security-oaar]
+output = json
+region = us-east-1
+role_arn = arn:aws:iam::900980591242:role/OrganizationAccountAccessRole
+source_profile = bb-root-admin
+
+[profile bb-shared-oaar]
+output = json
+region = us-east-1
+role_arn = arn:aws:iam::763606934258:role/OrganizationAccountAccessRole
+source_profile = bb-root-admin
+
+[profile bb-apps-devstg-oaar]
+output = json
+region = us-east-1
+role_arn = arn:aws:iam::523857393444:role/OrganizationAccountAccessRole
+source_profile = bb-root-admin
+
+[profile bb-apps-prd-oaar]
+output = json
+region = us-east-1
+role_arn = arn:aws:iam::802787198489:role/OrganizationAccountAccessRole
+source_profile = bb-root-admin
+
+#------------------------------------#
+# AWS DevOps Role                    #
+#------------------------------------#
+[profile bb-security-devops]
+output = json
+region = us-east-1
+role_arn = arn:aws:iam::900980591242:role/DevOps
+source_profile = bb-security
+
+[profile bb-shared-devops]
+output = json
+region = us-east-1
+role_arn = arn:aws:iam::763606934258:role/DevOps
+source_profile = bb-security
+
+[profile bb-apps-devstg-devops]
+output = json
+region = us-east-1
+role_arn = arn:aws:iam::523857393444:role/DevOps
+source_profile = bb-security
+
+[profile bb-apps-prd-devops]
+output = json
+region = us-east-1
+role_arn = arn:aws:iam::802787198489:role/DevOps
+source_profile = bb-security
+
+#------------------------------------#
+# AWS DeployMaster Role              #
+#------------------------------------#
+[profile bb-shared-deploymaster]
+output = json
+region = us-east-1
+role_arn = arn:aws:iam::763606934258:role/DeployMaster
+source_profile = bb-deploy
+
+[profile bb-apps-devstg-deploymaster]
+output = json
+region = us-east-1
+role_arn = arn:aws:iam::523857393444:role/DeployMaster
+source_profile = bb-deploy
+
+[profile bb-apps-prd-deploymaster]
+output = json
+region = us-east-1
+role_arn = arn:aws:iam::802787198489:role/DeployMaster
+source_profile = bb-deploy
