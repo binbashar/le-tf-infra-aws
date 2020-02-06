@@ -20,3 +20,21 @@ output "aws_kms_key_alias_name" {
   description = "KMS Alias name"
   value       = module.kms_key.alias_name
 }
+
+#
+#
+#
+output "bucket_arn" {
+  description = "Bucket ARN"
+  value       = module.cloudtrail_s3_bucket.bucket_arn
+}
+
+output "bucket_domain_name" {
+  description = "FQDN of bucket"
+  value       = module.cloudtrail_s3_bucket.bucket_domain_name
+}
+
+output "bucket_id" {
+  description = "Bucket ID"
+  value       = module.cloudtrail_s3_bucket.bucket_id
+}
