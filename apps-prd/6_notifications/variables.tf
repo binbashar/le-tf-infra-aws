@@ -79,30 +79,21 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
-variable "cloudtrail_org_bucket" {
-  type        = string
-  description = "Cloudtrail centralized organization bucket"
-}
-
 #=============================#
 # Notifications               #
 #=============================#
-variable "sns_topic_name" {
+#
+# AWS SNS -> Lambda -> Slack: bb-tools-monitoring
+#
+variable "sns_topic_name_bb_monitoring" {
   description = ""
-  default     = "sns-topic-slack-notify"
+  default     = "sns-topic-slack-notify-monitoring-bb-monitoring"
 }
 
-variable "slack_webhook_url" {
+#
+# AWS SNS -> Lambda -> Slack: bb-tools-monitoring-sec
+#
+variable "sns_topic_name_bb_monitoring_sec" {
   description = ""
-  default     = "https://hooks.slack.com/services/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"
-}
-
-variable "slack_channel" {
-  description = ""
-  default     = "bb-tools-monitoring"
-}
-
-variable "slack_username" {
-  description = ""
-  default     = "aws-binbash-org"
+  default     = "sns-topic-slack-notify-monitoring-bb-monitoring-sec"
 }
