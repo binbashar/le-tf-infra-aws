@@ -9,17 +9,17 @@ terraform {
   required_version = ">= 0.11.14"
 
   backend "s3" {
-    key = "root-org/cost-mgmt/terraform.tfstate"
+    key = "root/cost-mgmt/terraform.tfstate"
   }
 }
 
-data "terraform_remote_state" "sns" {
+data "terraform_remote_state" "notifications" {
   backend = "s3"
 
   config {
     region  = "${var.region}"
     profile = "${var.profile}"
-    bucket  = "bb-root-org-terraform-state-storage-s3"
-    key     = "root-org/notifications/terraform.tfstate"
+    bucket  = "${var.bucket}"
+    key     = "${var.environment}/notifications/terraform.tfstate"
   }
 }

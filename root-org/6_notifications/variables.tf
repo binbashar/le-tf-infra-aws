@@ -18,10 +18,12 @@ variable "bucket" {
   type        = string
   description = "AWS S3 TF State Backend Bucket"
 }
+
 variable "dynamodb_table" {
   type        = string
   description = "AWS DynamoDB TF Lock state table name"
 }
+
 variable "encrypt" {
   type        = bool
   description = "Enable AWS DynamoDB with server side encryption"
@@ -77,6 +79,10 @@ variable "appsdevstg_account_id" {
 variable "appsprd_account_id" {
   type        = string
   description = "Account: Prod Modules & Libs"
+}
+
+variable "root_account_id" {
+  description = "Account: Root Organization"
 }
 
 #=============================#
