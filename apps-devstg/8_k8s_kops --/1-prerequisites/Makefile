@@ -1,83 +1,45 @@
 .PHONY: help
 SHELL := /bin/bash
+MAKEFILE_IMPORT_TF := terraform12/Makefile.terraform12-subfolder
 
-LOCAL_OS_USER := $(shell whoami)
-LOCAL_OS_SSH_DIR := ~/.ssh
-LOCAL_OS_GIT_CONF_DIR := ~/.gitconfig
-LOCAL_OS_AWS_CONF_DIR := ~/.aws
-
-TF_PWD_DIR := $(shell pwd)
-TF_PWD_CONT_DIR := "/go/src/project/"
-TF_PWD_CONFIG_DIR := $(shell cd ../../ && cd config && pwd)
-TF_VER := 0.12.20
-TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
-TF_DOCKER_BASE_CONF_VARS_FILE := /config/base.config
-TF_DOCKER_EXTRA_CONF_VARS_FILE := /config/extra.config
-TF_DOCKER_ENTRYPOINT := /usr/local/go/bin/terraform
-TF_DOCKER_IMAGE := binbash/terraform-resources
-
-define TF_CMD_PREFIX
-docker run --rm \
--v ${TF_PWD_DIR}:${TF_PWD_CONT_DIR}:rw \
--v ${TF_PWD_CONFIG_DIR}:/config \
--v ${LOCAL_OS_SSH_DIR}:/root/.ssh \
--v ${LOCAL_OS_GIT_CONF_DIR}:/etc/gitconfig \
--v ${LOCAL_OS_AWS_CONF_DIR}:/root/.aws \
---entrypoint=${TF_DOCKER_ENTRYPOINT} \
--w ${TF_PWD_CONT_DIR} \
--it ${TF_DOCKER_IMAGE}:${TF_VER}
+define MAKE_TF
+make \
+-f ../../../@makefiles/${MAKEFILE_IMPORT_TF}
 endef
 
 help:
 	@echo 'Available Commands:'
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
-tf-dir-chmod: ## run chown in ./.terraform to gran that the docker mounted dir has the right permissions
-	@echo LOCAL_OS_USER: ${LOCAL_OS_USER}
-	sudo chown -R ${LOCAL_OS_USER}:${LOCAL_OS_USER} ./.terraform
-
+#==============================================================#
+# TERRAFORM 												                           #
+#==============================================================#
 version: ## Show terraform version
-	docker run --rm \
-	--entrypoint=${TF_DOCKER_ENTRYPOINT} \
-	-t ${TF_DOCKER_IMAGE}:${TF_VER} version
+	${MAKE_TF} version
 
-init: init-cmd tf-dir-chmod ## Initialize terraform backend, plugins, and modules
-init-cmd:
-	${TF_CMD_PREFIX} init \
-	-backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE}
+init: ## Initialize terraform backend, plugins, and modules
+	${MAKE_TF} init
 
 plan: ## Preview terraform changes
-	${TF_CMD_PREFIX} plan \
-	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+	${MAKE_TF} plan
 
 plan-detailed: ## Preview terraform changes with a more detailed output
-	${TF_CMD_PREFIX} plan -detailed-exitcode \
-	 -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+	${MAKE_TF} plan -detailed-exitcode
 
-apply: ## Make terraform apply any changes with local binary
-	terraform apply \
-	 -var-file=../..${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	 -var-file=../..${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	 -var-file=../..${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+apply: ## Make terraform apply any changes with dockerized binary
+	${MAKE_TF} apply
 
 output: ## Terraform output command is used to extract the value of an output variable from the state file.
-	${TF_CMD_PREFIX} output
+	${MAKE_TF} output
 
 destroy: ## Destroy all resources managed by terraform
-	${TF_CMD_PREFIX} destroy \
-	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+	${MAKE_TF} destroy
 
 format: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
-	${TF_CMD_PREFIX} fmt
+	${MAKE_TF} fmt
 
 force-unlock: ## Manually unlock the terraform state, eg: make ARGS="a94b0919-de5b-9b8f-4bdf-f2d7a3d47112" force-unlock
-	${TF_CMD_PREFIX} force-unlock ${ARGS}
+	${MAKE_TF} force-unlock
 
 validate-tf-layout: ## Validate Terraform layout to make sure it's set up properly
-	../../../@scripts/validate-terraform-layout.sh
+	${MAKE_TF} validate-tf-layout

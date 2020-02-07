@@ -1,31 +1,23 @@
 .PHONY: help
 SHELL := /bin/bash
+MAKEFILE_IMPORT_TF 			:= terraform11/Makefile.terraform11-cont-subfolder
+MAKEFILE_IMPORT_KOPS 		:= kops/Makefile.kops
+MAKEFILE_IMPORT_KUBECTL := kubectl/Makefile.kubectl14
 
-LOCAL_OS_USER := $(shell whoami)
-LOCAL_OS_SSH_DIR := ~/.ssh
-LOCAL_OS_GIT_CONF_DIR := ~/.gitconfig
-LOCAL_OS_AWS_CONF_DIR := ~/.aws
 
-TF_PWD_DIR := $(shell pwd)
-TF_PWD_CONT_DIR := "/go/src/project/"
-TF_PWD_CONFIG_DIR := $(shell cd ../../ && cd config && pwd)
-TF_VER := 0.11.14
-TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
-TF_DOCKER_BASE_CONF_VARS_FILE := /config/base.config
-TF_DOCKER_EXTRA_CONF_VARS_FILE := /config/extra.config
-TF_DOCKER_ENTRYPOINT := /usr/local/go/bin/terraform
-TF_DOCKER_IMAGE := binbash/terraform-resources
+define MAKE_TF
+make \
+-f ../../../@makefiles/${MAKEFILE_IMPORT_TF}
+endef
 
-define TF_CMD_PREFIX
-docker run --rm \
--v ${TF_PWD_DIR}:${TF_PWD_CONT_DIR}:rw \
--v ${TF_PWD_CONFIG_DIR}:/config \
--v ${LOCAL_OS_SSH_DIR}:/root/.ssh \
--v ${LOCAL_OS_GIT_CONF_DIR}:/etc/gitconfig \
--v ${LOCAL_OS_AWS_CONF_DIR}:/root/.aws \
---entrypoint=${TF_DOCKER_ENTRYPOINT} \
--w ${TF_PWD_CONT_DIR} \
--it ${TF_DOCKER_IMAGE}:${TF_VER}
+define MAKE_KOPS
+make \
+-f ../../../@makefiles/${MAKEFILE_IMPORT_KOPS}
+endef
+
+define MAKE_KUBECLT
+make \
+-f ../../../@makefiles/${MAKEFILE_IMPORT_KUBECTL}
 endef
 
 help:
@@ -35,107 +27,77 @@ help:
 #==============================================================#
 # TERRAFORM 												                           #
 #==============================================================#
-tf-dir-chmod: ## run chown in ./.terraform to gran that the docker mounted dir has the right permissions
-	@echo LOCAL_OS_USER: ${LOCAL_OS_USER}
-	sudo chown -R ${LOCAL_OS_USER}:${LOCAL_OS_USER} ./.terraform
-
 version: ## Show terraform version
-	docker run --rm \
-	--entrypoint=${TF_DOCKER_ENTRYPOINT} \
-	-t ${TF_DOCKER_IMAGE}:${TF_VER} version
+	${MAKE_TF} version
 
-init: init-cmd tf-dir-chmod ## Initialize terraform backend, plugins, and modules
-init-cmd:
-	${TF_CMD_PREFIX} init \
-	-backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE}
+init: ## Initialize terraform backend, plugins, and modules
+	${MAKE_TF} init
 
 plan: ## Preview terraform changes
-	${TF_CMD_PREFIX} plan \
-	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+	${MAKE_TF} plan
 
 plan-detailed: ## Preview terraform changes with a more detailed output
-	${TF_CMD_PREFIX} plan -detailed-exitcode \
-	 -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+	${MAKE_TF} plan -detailed-exitcode
 
-diff: ## Terraform plan with landscape
-	${TF_CMD_PREFIX} plan \
-	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} \
-	| docker run -i --rm binbash/terraform-landscape
-
-apply: apply-cmd tf-dir-chmod ## Make terraform apply any changes with dockerized binary
-apply-cmd:
-	${TF_CMD_PREFIX} apply \
-	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+apply: ## Make terraform apply any changes with dockerized binary
+	${MAKE_TF} apply
 
 output: ## Terraform output command is used to extract the value of an output variable from the state file.
-	${TF_CMD_PREFIX} output
+	${MAKE_TF} output
 
 destroy: ## Destroy all resources managed by terraform
-	${TF_CMD_PREFIX} destroy \
-	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+	${MAKE_TF} destroy
 
 format: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
-	${TF_CMD_PREFIX} fmt
+	${MAKE_TF} fmt
 
 force-unlock: ## Manually unlock the terraform state, eg: make ARGS="a94b0919-de5b-9b8f-4bdf-f2d7a3d47112" force-unlock
-	${TF_CMD_PREFIX} force-unlock ${ARGS}
+	${MAKE_TF} force-unlock
 
+validate-tf-layout: ## Validate Terraform layout to make sure it's set up properly
+	${MAKE_TF} validate-tf-layout
+	
 #==============================================================#
 # KOPS                                                         #
 #==============================================================#
 cluster-get: ## Kops: get cluster info
-	source cluster-config.sh && kops get $$CLUSTER_NAME \
-		--state $$ClUSTER_STATE
+	${MAKE_KOPS} cluster-get
 
 cluster-update: ## Kops: update cluster state from cluster manifest
-	./cluster-update.sh
+	${MAKE_KOPS} cluster-update
 
 cluster-template: ## Kops: update the cluster template only
-	./cluster-template.sh
+	${MAKE_KOPS} cluster-template
 
 cluster-validate: ## Kops: validate cluster against the current state
-	source cluster-config.sh && kops validate cluster \
-		--state $$ClUSTER_STATE \
-		--name $$CLUSTER_NAME
+	${MAKE_KOPS} cluster-validate
 
 cluster-rolling-update: ## Kops: perform a rolling update on the cluster -- only dry run, no changes will be applied
-	source cluster-config.sh && kops rolling-update cluster \
-		--state $$ClUSTER_STATE \
-		--name $$CLUSTER_NAME
+	${MAKE_KOPS} cluster-rolling-update
 
 cluster-rolling-update-yes: ## Kops: perform a rolling update on the cluster
-	source cluster-config.sh && kops rolling-update cluster \
-		--state $$ClUSTER_STATE \
-		--name $$CLUSTER_NAME \
-		--yes
+	${MAKE_KOPS} cluster-rolling-update-yes
 
 cluster-rolling-update-yes-force-masters: ## Kops: perform a rolling update on the cluster masters
-	source cluster-config.sh && kops rolling-update cluster \
-		--state $$ClUSTER_STATE \
-		--name $$CLUSTER_NAME \
-		--instance-group-roles=Master \
-		--yes \
-		--force
+	${MAKE_KOPS} cluster-rolling-update-yes-force-masters
 
 cluster-destroy: ## Kops: destroy cluster -- only dry run, no changes will be applied
-	source cluster-config.sh && kops delete cluster \
-		--state $$ClUSTER_STATE \
-		--name $$CLUSTER_NAME \
-		--unregister
+	${MAKE_KOPS} cluster-destroy
 
 cluster-destroy-yes: ## Kops: destroy cluster
-	source cluster-config.sh && kops delete cluster \
-		--state $$ClUSTER_STATE \
-		--name $$CLUSTER_NAME \
-		--unregister \
-		--yes
+	${MAKE_KOPS} cluster-destroy-yes
+
+#==============================================================#
+# KUBECTL                                                      #
+#==============================================================#
+test-run-kubectx-bash: ## docker run bash
+	${MAKE_KUBECTL} test-run-kubectx-bash
+
+test-run-kubectx-kubens-cmds: ## docker run kubectx and kubens --help to test
+	${MAKE_KUBECTL} test-run-kubectx-kubens-cmds
+
+test-run-kubectx-kubens: ## test-run: docker run with kubectx and kubens overrided entrypoints.
+	${MAKE_KUBECTL} test-run-kubectx-kubens
+
+test-run-kubectl: ## docker run kubectl commands
+	${MAKE_KUBECTL} test-run-kubectl

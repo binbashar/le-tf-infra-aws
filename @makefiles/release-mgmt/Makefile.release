@@ -1,9 +1,9 @@
 .PHONY: help
-SHELL := /bin/bash
-LOCAL_OS_USER := $(shell whoami)
-LOCAL_OS_SSH_DIR := ~/.ssh
+SHELL                 := /bin/bash
+LOCAL_OS_USER         := $(shell whoami)
+LOCAL_OS_SSH_DIR      := ~/.ssh
 LOCAL_OS_GIT_CONF_DIR := ~/.gitconfig
-LOCAL_PWD_DIR := $(shell pwd)
+LOCAL_PWD_DIR         := $(shell pwd)
 
 #
 # GIT-RELEASE
@@ -167,5 +167,3 @@ changelog-major: ## git-chglog generation for major release
 	sudo chown -R ${LOCAL_OS_USER}:${LOCAL_OS_USER} ./.chglog
 	sudo chown -R ${LOCAL_OS_USER}:${LOCAL_OS_USER} ./.git
 	sudo chown -R ${LOCAL_OS_USER}:${LOCAL_OS_USER} ./CHANGELOG.md
-
-
