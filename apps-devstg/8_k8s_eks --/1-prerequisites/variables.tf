@@ -56,8 +56,6 @@ variable "appsdevstg_account_id" {
   description = "Account: Dev Modules & Libs"
 }
 
-variable "cloudtrail_org_bucket" {}
-
 #===========================================#
 # Networking                                #
 #===========================================#
