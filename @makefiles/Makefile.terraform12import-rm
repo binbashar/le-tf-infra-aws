@@ -1,0 +1,52 @@
+.PHONY: help
+SHELL := /bin/bash
+
+LOCAL_OS_USER := $(shell whoami)
+LOCAL_OS_SSH_DIR := ~/.ssh
+LOCAL_OS_GIT_CONF_DIR := ~/.gitconfig
+LOCAL_OS_AWS_CONF_DIR := ~/.aws
+
+TF_PWD_DIR := $(shell pwd)
+TF_PWD_CONT_DIR := "/go/src/project/"
+TF_PWD_CONFIG_DIR := $(shell cd .. && cd config && pwd)
+TF_VER := 0.12.20
+TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
+TF_DOCKER_BASE_CONF_VARS_FILE := /config/base.config
+TF_DOCKER_EXTRA_CONF_VARS_FILE := /config/extra.config
+TF_DOCKER_ENTRYPOINT := /usr/local/go/bin/terraform
+TF_DOCKER_IMAGE := binbash/terraform-resources
+
+TF_IMPORT_RESOURCE := "aws_organizations_organizational_unit.bbl_apps_devstg"
+TF_IMPORT_RESOURCE_ID := "ou-oz9d-yl3npduj"
+TF_RM_RESOURCE := "aws_organizations_organizational_unit.bbl_apps_devstg"
+
+define TF_CMD_PREFIX
+docker run --rm \
+-v ${TF_PWD_DIR}:${TF_PWD_CONT_DIR}:rw \
+-v ${TF_PWD_CONFIG_DIR}:/config \
+-v ${LOCAL_OS_SSH_DIR}:/root/.ssh \
+-v ${LOCAL_OS_GIT_CONF_DIR}:/etc/gitconfig \
+-v ${LOCAL_OS_AWS_CONF_DIR}:/root/.aws \
+--entrypoint=${TF_DOCKER_ENTRYPOINT} \
+-w ${TF_PWD_CONT_DIR} \
+-it ${TF_DOCKER_IMAGE}:${TF_VER}
+endef
+
+help:
+	@echo 'Available Commands:'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2}'
+
+#==============================================================#
+# TERRAFORM 												                           #
+#==============================================================#
+#
+# Terraform Import & rm aux commands
+#
+import: ## terraform import resources
+	${TF_CMD_PREFIX} import \
+	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_IMPORT_RESOURCE} ${TF_IMPORT_RESOURCE_ID}
+
+state-rm: ## terraform rm resource from state
+	${TF_CMD_PREFIX} state rm ${TF_IMPORT_RESOURCE}
