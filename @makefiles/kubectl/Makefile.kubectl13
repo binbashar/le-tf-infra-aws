@@ -1,19 +1,19 @@
 .PHONY: build
 #DOCKER_TAG := v1.11.10
 #DOCKER_TAG := v1.12.10
-#DOCKER_TAG := v1.13.8
-DOCKER_TAG := v1.14.4
+DOCKER_TAG := v1.13.8
+#DOCKER_TAG := v1.14.4
 #DOCKER_TAG := v1.15.1
 
-LOCAL_OS_KUBE_DIR := ~/.kube
-LOCAL_OS_RESOLV_CONF := /etc/resolv.conf
-LOCAL_OS_USER := $(shell whoami)
-LOCAL_OS_HOME_DIR_ESCAPED := \\/home\\/${LOCAL_OS_USER}
-DOCKER_IMG_NAME = k8s-kubectx
-DOCKER_IMG_USER = root
-K8S_CONTEXT := cluster-kops-1.k8s.devstg.binbash.aws
-K8S_KUBECTL_CONFIG_FILE_NAME := config
-K8S_KUBECTL_CONFIG_FILE_PATH := /${DOCKER_IMG_USER}/.kube/${K8S_CONTEXT}
+LOCAL_OS_KUBE_DIR             := ~/.kube
+LOCAL_OS_RESOLV_CONF          := /etc/resolv.conf
+LOCAL_OS_USER                 := $(shell whoami)
+LOCAL_OS_HOME_DIR_ESCAPED     := \\/home\\/${LOCAL_OS_USER}
+DOCKER_IMG_NAME               := k8s-kubectx
+DOCKER_IMG_USER               := root
+K8S_CONTEXT                   := cluster-kops-1.k8s.devstg.binbash.aws
+K8S_KUBECTL_CONFIG_FILE_NAME  := config
+K8S_KUBECTL_CONFIG_FILE_PATH  := /${DOCKER_IMG_USER}/.kube/${K8S_CONTEXT}
 
 define K8S_KUBE_CMD_PREFIX
 docker run -it --rm \

@@ -1,24 +1,24 @@
 .PHONY: help
 SHELL := /bin/bash
 
-LOCAL_OS_USER := $(shell whoami)
-LOCAL_OS_SSH_DIR := ~/.ssh
-LOCAL_OS_GIT_CONF_DIR := ~/.gitconfig
-LOCAL_OS_AWS_CONF_DIR := ~/.aws
+LOCAL_OS_USER                     := $(shell whoami)
+LOCAL_OS_SSH_DIR                  := ~/.ssh
+LOCAL_OS_GIT_CONF_DIR             := ~/.gitconfig
+LOCAL_OS_AWS_CONF_DIR             := ~/.aws
 
-TF_PWD_DIR := $(shell pwd)
-TF_PWD_CONT_DIR := "/go/src/project/"
-TF_PWD_CONFIG_DIR := $(shell cd .. && cd config && pwd)
-TF_VER := 0.12.20
-TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
-TF_DOCKER_BASE_CONF_VARS_FILE := /config/base.config
-TF_DOCKER_EXTRA_CONF_VARS_FILE := /config/extra.config
-TF_DOCKER_ENTRYPOINT := /usr/local/go/bin/terraform
-TF_DOCKER_IMAGE := binbash/terraform-resources
+TF_PWD_DIR                        := $(shell pwd)
+TF_PWD_CONT_DIR                   := "/go/src/project/"
+TF_PWD_CONFIG_DIR                 := $(shell cd .. && cd config && pwd)
+TF_VER                            := 0.12.20
+TF_DOCKER_BACKEND_CONF_VARS_FILE  := /config/backend.config
+TF_DOCKER_BASE_CONF_VARS_FILE     := /config/base.config
+TF_DOCKER_EXTRA_CONF_VARS_FILE    := /config/extra.config
+TF_DOCKER_ENTRYPOINT              := /usr/local/go/bin/terraform
+TF_DOCKER_IMAGE                   := binbash/terraform-resources
 
-TF_IMPORT_RESOURCE := "aws_organizations_organizational_unit.bbl_apps_devstg"
-TF_IMPORT_RESOURCE_ID := "ou-oz9d-yl3npduj"
-TF_RM_RESOURCE := "aws_organizations_organizational_unit.bbl_apps_devstg"
+TF_IMPORT_RESOURCE                := "aws_organizations_organizational_unit.bbl_apps_devstg"
+TF_IMPORT_RESOURCE_ID             := "ou-oz9d-yl3npduj"
+TF_RM_RESOURCE                    := "aws_organizations_organizational_unit.bbl_apps_devstg"
 
 define TF_CMD_PREFIX
 docker run --rm \
