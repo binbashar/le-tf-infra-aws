@@ -6,11 +6,11 @@ MAKEFILE_IMPORT_CIRCLECI 	:= circleci/Makefile.circleci
 
 define MAKE_TF
 make \
--f ../../@makefiles/${MAKEFILE_IMPORT_TF}
+-f ./@makefiles/${MAKEFILE_IMPORT_TF}
 endef
 define MAKE_CIRCLECI
 make \
--f ../../@makefiles/${MAKEFILE_IMPORT_CIRCLECI}
+-f ./@makefiles/${MAKEFILE_IMPORT_CIRCLECI}
 endef
 
 help:
