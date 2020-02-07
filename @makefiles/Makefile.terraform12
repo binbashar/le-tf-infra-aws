@@ -77,7 +77,14 @@ destroy: ## Destroy all resources managed by terraform
 	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
 
 format: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
-	${TF_CMD_PREFIX} fmt
+	${TF_CMD_PREFIX} fmt -recursive
+
+format-check: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
+	${TF_CMD_PREFIX} fmt -check
+  # Consider adding -recursive after everything has been migrated to tf-0.12
+	# (should exclude dev/8_k8s_kops/2-kops folder since it's not possible to migrate to
+	# tf-0.12 yet
+	# ${TF_CMD_PREFIX} fmt -recursive -check ${TF_PWD_CONT_DIR}
 
 force-unlock: ## Manually unlock the terraform state, eg: make ARGS="a94b0919-de5b-9b8f-4bdf-f2d7a3d47112" force-unlock
 	${TF_CMD_PREFIX} force-unlock ${ARGS}
