@@ -1,8 +1,8 @@
 <div align="center">
-    <img src="./%40figures/binbash.png" alt="drawing" width="350"/>
+    <img src=".%40doc/figures/binbash.png" alt="drawing" width="350"/>
 </div>
 <div align="right">
-  <img src="./%40figures/binbash-leverage-terraform.png"
+  <img src=".%40doc/figures/binbash-leverage-terraform.png"
   alt="leverage" width="230"/>
 </div>
 
@@ -34,7 +34,7 @@ Within each of those folders you should find the Terraform files that are used t
 resources that belong to such environment.
 
 <div align="center">
-  <img src="./%40figures/binbash-aws-organizations.png"
+  <img src=".%40doc/figures/binbash-aws-organizations.png"
   alt="leverage" width="1000"/>
 </div>
 
@@ -184,7 +184,7 @@ of AWS-based deployments, centralize security monitoring and management, manage 
 audit and compliance monitoring services:
 
 <div align="center">
-  <img src="./%40figures/binbash-aws-iam.png"
+  <img src=".%40doc/figures/binbash-aws-iam.png"
   alt="leverage" width="700"/>
 </div>
 
@@ -368,7 +368,7 @@ Root directory `Makefile` has the automated steps (to be integrated with **Circl
 ### CircleCi PR auto-release job
 
 <div align="left">
-  <img src="./%40figures/circleci.png" alt="leverage-circleci" width="230"/>
+  <img src=".%40doc/figures/circleci.png" alt="leverage-circleci" width="230"/>
 </div>
 
 - <https://circleci.com/gh/binbashar/bb-devops-tf-infra-aws>
