@@ -32,10 +32,12 @@ resource "aws_iam_policy" "standard_console_user" {
                 "iam:GetUser",
                 "iam:ChangePassword",
                 "iam:*ServiceSpecificCredential*",
-                "iam:UpdateLoginProfile"
+                "iam:UpdateLoginProfile",
+                "iam:*MFA*"
             ],
             "Resource": [
-                "arn:aws:iam::*:user/$${aws:username}"
+                "arn:aws:iam::*:user/$${aws:username}",
+                "arn:aws:iam::*:mfa/$${aws:username}"
             ]
         }
     ]
