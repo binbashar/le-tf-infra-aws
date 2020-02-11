@@ -7,17 +7,17 @@ MAKEFILE_IMPORT_KUBECTL := kubectl/Makefile.kubectl14
 
 define MAKE_TF
 make \
--f ../../../@makefiles/${MAKEFILE_IMPORT_TF}
+-f ../../../@bin/makefiles/${MAKEFILE_IMPORT_TF}
 endef
 
 define MAKE_KOPS
 make \
--f ../../../@makefiles/${MAKEFILE_IMPORT_KOPS}
+-f ../../../@bin/makefiles/${MAKEFILE_IMPORT_KOPS}
 endef
 
 define MAKE_KUBECLT
 make \
--f ../../../@makefiles/${MAKEFILE_IMPORT_KUBECTL}
+-f ../../../@bin/makefiles/${MAKEFILE_IMPORT_KUBECTL}
 endef
 
 help:
