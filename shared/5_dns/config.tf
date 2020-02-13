@@ -70,6 +70,17 @@ data "terraform_remote_state" "vpc-apps-devstg-eks" {
   }
 }
 
+data "terraform_remote_state" "ec2-fleet-ansible" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "bb-apps-devstg-devops"
+    bucket  = "bb-apps-devstg-terraform-backend"
+    key     = "apps-devstg/ec2-fleet-ansible/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "vpc-apps-prd" {
   backend = "s3"
 
