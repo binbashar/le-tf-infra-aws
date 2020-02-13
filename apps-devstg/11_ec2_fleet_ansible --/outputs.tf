@@ -1,3 +1,8 @@
+output "instance_count" {
+  description = "Number of instances to launch specified as argument to this module"
+  value       = module.ec2_ansible_fleet.instance_count
+}
+
 output "public_dns" {
   description = "List of public DNS names assigned to the instances. For EC2-VPC, this is only available if you've enabled DNS hostnames for your VPC"
   value       = module.ec2_ansible_fleet.public_dns
