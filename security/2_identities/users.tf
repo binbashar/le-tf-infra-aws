@@ -1,3 +1,24 @@
+#
+# AWS IAM Users (alphabetically ordered)
+#
+
+#==========================#
+# User: Alfredo Pardo      #
+#==========================#
+module "user_alfredo_pardo" {
+  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.6.0"
+
+  name                    = "alfredo.pardo"
+  force_destroy           = true
+  password_reset_required = true
+
+  create_iam_user_login_profile = true
+  create_iam_access_key         = false
+  upload_iam_user_ssh_key       = false
+
+  pgp_key = "${file("keys/alfredo.pardo")}"
+}
+
 #==========================#
 # User: Diego Ojeda        #
 #==========================#
@@ -13,23 +34,6 @@ module "user_diego_ojeda" {
   upload_iam_user_ssh_key       = false
 
   pgp_key = "${file("keys/diego.ojeda")}"
-}
-
-#==========================#
-# User: Marcos Pagnucco    #
-#==========================#
-module "user_marcos_pagnuco" {
-  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.6.0"
-
-  name                    = "marcos.pagnucco"
-  force_destroy           = true
-  password_reset_required = true
-
-  create_iam_user_login_profile = true
-  create_iam_access_key         = false
-  upload_iam_user_ssh_key       = false
-
-  pgp_key = "${file("keys/marcos.pagnucco")}"
 }
 
 #==========================#
@@ -66,6 +70,26 @@ module "user_gonzalo_martinez" {
   pgp_key = "${file("keys/gonzalo.martinez")}"
 }
 
+#==========================#
+# User: Marcos Pagnucco    #
+#==========================#
+module "user_marcos_pagnuco" {
+  source = "git::git@github.com:binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.6.0"
+
+  name                    = "marcos.pagnucco"
+  force_destroy           = true
+  password_reset_required = true
+
+  create_iam_user_login_profile = true
+  create_iam_access_key         = false
+  upload_iam_user_ssh_key       = false
+
+  pgp_key = "${file("keys/marcos.pagnucco")}"
+}
+
+#
+# Machine / Automation Users
+#
 #==========================#
 # User: CircleCI           #
 #==========================#
