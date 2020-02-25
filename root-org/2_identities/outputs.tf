@@ -33,3 +33,14 @@ output "user_exequiel_barrirero_login_profile_encrypted_password" {
   value       = module.user_exequiel_barrirero.this_iam_user_login_profile_encrypted_password
   sensitive   = true
 }
+
+output "user_marcelo_beresvil_name" {
+  description = "The user's name"
+  value       = module.user_marcelo_beresvil.this_iam_user_name
+}
+
+output "user_marcelo_beresvil_login_profile_encrypted_password" {
+  description = "The encrypted password, base64 encoded"
+  value       = module.user_marcelo_beresvil.this_iam_user_login_profile_encrypted_password
+  sensitive   = true
+}
