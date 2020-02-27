@@ -43,30 +43,30 @@ module "terraform-aws-basic-layout" {
       to_port     = 9100,
       protocol    = "tcp",
       cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
-      description = "Allow SSH"
+      description = "Allow Prometheus NodeExporter"
     },
     {
       from_port   = 80, # Pritunl VPN Server Letsencrypt http challenge
       to_port     = 80,
       protocol    = "tcp",
-      cidr_blocks = ["0.0.0.0/0"],
-      #cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
-      description = "Allow nginx proxy"
+      #cidr_blocks = ["0.0.0.0/0"], # Renew LetsEncrypt private url cert (every 90 days)
+      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
+      description = "Allow Pritunl HTTP UI"
     },
     {
       from_port   = 443, # Pritunl VPN Server UI
       to_port     = 443,
       protocol    = "tcp",
-      cidr_blocks = ["0.0.0.0/0"],
-      #cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
-      description = "Allow nginx proxy"
+      #cidr_blocks = ["0.0.0.0/0"], # Public temporally accesible for new users setup (when needed)
+      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
+      description = "Allow Pritunl HTTPS UI"
     },
     {
       from_port   = 15255, # Pritunl VPN Server public UDP service ports -> pritunl.server.admin org
       to_port     = 15256, # Pritunl VPN Server public UDP service ports -> pritunl.server.devops org
       protocol    = "udp",
       cidr_blocks = ["0.0.0.0/0"],
-      description = "Allow nginx proxy"
+      description = "Allow Pritunl Service"
     }
   ]
 
@@ -77,12 +77,29 @@ module "terraform-aws-basic-layout" {
     ttl     = 300
   }]
 
+  #
+  # Github Enhancement Request Issue: Automate the process described below (Will be created after PR)
+  #
+  # UNCOMMENT in order to temporally expose VPN endpoint to:
+  # 1.Renew LetsEncrypt private url cert (every 90 days)
+  #    a. must open port 80 (line 52)
+  #    b. force SSL cert update (manually via UI or via API call)
+  #    c. rollback a. step
+  #    d. re-comment this block
+  # 2.New users setup (to view profile links -> PIN reset + OTP / uri link for Pritunl Client import).
+  #    a. must open port 443 (line 60)
+  #    b. share new user setup links security (eg: LastPass / Bitwarden)
+  #    c. rollback a. step
+  #    d. re-comment this block
+  #
+  /*
   dns_records_public_hosted_zone = [{
     zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id[0],
-    name    = "vpn.binbash.com.ar",
+    name    = "vpn.aws.binbash.com.ar",
     type    = "A",
     ttl     = 300
   }]
+  */
 
   tags = local.tags
 }
