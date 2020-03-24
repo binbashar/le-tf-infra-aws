@@ -2,6 +2,9 @@
 ## [Unreleased]
 
 
+<a name="v0.1.10"></a>
+## [v0.1.10] - 2020-03-24
+
 <a name="v0.1.9"></a>
 ## [v0.1.9] - 2020-02-27
 ### Pull Requests
@@ -104,7 +107,8 @@
 - Merge pull request [#1](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/1) from binbashar/BBL-16-aws-org-acct-baseline
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.9...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.10...HEAD
+[v0.1.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.9...v0.1.10
 [v0.1.9]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.8...v0.1.9
 [v0.1.8]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.7...v0.1.8
 [v0.1.7]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.6...v0.1.7
