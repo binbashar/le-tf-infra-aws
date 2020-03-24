@@ -75,5 +75,5 @@ module "bb_postgres_db" {
   apply_immediately = false
 
   # Database Deletion Protection
-  deletion_protection = true
+  deletion_protection = false
 }
