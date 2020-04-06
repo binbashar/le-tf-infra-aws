@@ -29,5 +29,4 @@ module "notify_slack_bb_monitoring_sec" {
   kms_key_arn          = data.terraform_remote_state.security.outputs.aws_kms_key_arn
   lambda_function_name = "${var.project}-${var.environment}-notify-slack-bb-monitoring-sec"
   sns_topic_name       = var.sns_topic_name_bb_monitoring_sec
-
 }
