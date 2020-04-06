@@ -1,16 +1,15 @@
 .PHONY: help
-SHELL := /bin/bash
-MAKEFILE_IMPORT_TF := terraform12/Makefile.terraform12-cont
-MAKEFILE_IMPORT_TF_IMPORT_RM := Makefile.terraform12-import-rm
-
+SHELL 												:= /bin/bash
+MAKEFILE_IMPORT_TF 						:= terraform12/Makefile.terraform12-cont
+MAKEFILE_IMPORT_TF_IMPORT_RM 	:= terraform12/Makefile.terraform12-import-rm
 
 define MAKE_TF
 make \
--f ../../@makefiles/${MAKEFILE_IMPORT_TF}
+-f ../../@bin/makefiles/${MAKEFILE_IMPORT_TF}
 endef
 define MAKE_TF_IMPORT_RM
 make \
--f ../../@makefiles/${MAKEFILE_IMPORT_TF_IMPORT_RM}
+-f ../../@bin/makefiles/${MAKEFILE_IMPORT_TF_IMPORT_RM}
 endef
 
 help:
