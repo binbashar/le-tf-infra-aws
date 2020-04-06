@@ -24,11 +24,9 @@ resource "aws_iam_group_membership" "devops_members" {
   name = "devops_members"
 
   users = [
-    module.user_alfredo_pardo.this_iam_user_name,
     module.user_diego_ojeda.this_iam_user_name,
     module.user_marcos_pagnuco.this_iam_user_name,
     module.user_exequiel_barrirero.this_iam_user_name,
-    module.user_gonzalo_martinez.this_iam_user_name,
   ]
 
   group = aws_iam_group.devops.name
