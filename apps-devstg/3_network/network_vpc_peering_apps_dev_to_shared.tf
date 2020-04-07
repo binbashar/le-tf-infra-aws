@@ -16,7 +16,7 @@ resource "aws_vpc_peering_connection" "apps_devstg_vpc_with_shared_vpc" {
   vpc_id        = module.vpc.vpc_id
   auto_accept   = false
 
-  tags = merge(map("Name", "requester-apps-dev-to-shared"), local.tags)
+  tags          = merge(map("Name", "requester-apps-dev-to-shared"), local.tags)
 }
 
 #

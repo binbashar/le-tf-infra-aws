@@ -18,6 +18,6 @@ resource "null_resource" "associate_apps_devstg_vpc_with_private_remote_hosted_z
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
-    command     = "aws route53 associate-vpc-with-hosted-zone --profile ${var.profile} --hosted-zone-id ${data.terraform_remote_state.dns-shared.outputs.aws_internal_zone_id[0]} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-dev.outputs.vpc_id}"
+    command     = "aws route53 associate-vpc-with-hosted-zone --profile ${var.profile} --hosted-zone-id ${data.terraform_remote_state.dns-shared.outputs.aws_internal_zone_id[0]} --vpc VPCRegion=${var.region},VPCId=${data.terraform_remote_state.vpc-apps-devstg.outputs.vpc_id}"
   }
 }

@@ -27,7 +27,7 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 #==============================================================#
-# GIT RELEASE 												                         #
+# GIT RELEASE                                                  #
 #==============================================================#
 
 #===================================#
@@ -136,7 +136,7 @@ release-major-with-changelog: ## make -f Makefile.release changelog-major && git
 	fi
 
 #==============================================================#
-# CHANGELOG   												                         #
+# CHANGELOG                                                    #
 #==============================================================#
 changelog-init: ## git-chglog (https://github.com/git-chglog/git-chglog) config initialization -> ./.chglog
 	@if [ ! -d ./.chglog ]; then\
