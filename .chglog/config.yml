@@ -7,8 +7,6 @@ options:
   header:
     pattern: "^(.*)$"
     pattern_maps:
-      - Type
-      - Scope
       - Subject
   notes:
     keywords:

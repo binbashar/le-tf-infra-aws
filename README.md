@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="./%40doc/figures/binbash.png" alt="drawing" width="350"/>
+    <img src="./%40doc/figures/binbash.png" alt="binbash" width="350"/>
 </div>
 <div align="right">
   <img src="./%40doc/figures/binbash-leverage-terraform.png"
