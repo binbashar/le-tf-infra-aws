@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.14"></a>
+## [v0.1.14] - 2020-04-20
+
+- Create AWS resources for deploying a Jenkins server ([#64](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/64))
+
+
 <a name="v0.1.13"></a>
 ## [v0.1.13] - 2020-04-07
 
@@ -387,7 +393,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.13...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.14...HEAD
+[v0.1.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.13...v0.1.14
 [v0.1.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.12...v0.1.13
 [v0.1.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.11...v0.1.12
 [v0.1.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.10...v0.1.11
