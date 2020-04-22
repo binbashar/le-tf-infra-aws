@@ -1,5 +1,5 @@
 //module "eks" {
-//  source          = "git::git@github.com:binbashar/terraform-aws-eks.git?ref=v8.1.0"
+//  source          = "github.com/binbashar/terraform-aws-eks.git?ref=v8.1.0"
 //
 //  create_eks      = false
 //  cluster_name    = data.terraform_remote_state.vpc-eks.outputs.cluster_name

@@ -1,5 +1,5 @@
 module "cloudtrail" {
-  source                        = "git::git@github.com:binbashar/terraform-aws-cloudtrail.git?ref=0.10.0"
+  source                        = "github.com/binbashar/terraform-aws-cloudtrail.git?ref=0.10.0"
   namespace                     = var.project
   stage                         = var.environment
   name                          = "cloudtrail-org"
@@ -26,7 +26,7 @@ module "cloudtrail_s3_bucket" {
 }
 
 module "cloudtrail_api_alarms" {
-  source = "git::git@github.com:binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=0.5.1"
+  source = "github.com/binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=0.5.1"
 
   region           = var.region
   log_group_name   = aws_cloudwatch_log_group.cloudtrail.name
