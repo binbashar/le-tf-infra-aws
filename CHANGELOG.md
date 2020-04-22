@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.15"></a>
+## [v0.1.15] - 2020-04-22
+
+- BBL-245 Fix every module import url from `git` to `https` [#66](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/66)
+
+
 <a name="v0.1.14"></a>
 ## [v0.1.14] - 2020-04-20
 
@@ -393,7 +399,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.14...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.15...HEAD
+[v0.1.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.14...v0.1.15
 [v0.1.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.13...v0.1.14
 [v0.1.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.12...v0.1.13
 [v0.1.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.11...v0.1.12
