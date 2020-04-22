@@ -4,7 +4,7 @@
 # ECR Registry: DevOps Images
 #
 module "ecr_repo_leverage" {
-  source = "git::git@github.com:binbashar/terraform-aws-ecr-cross-account.git?ref=1.0.1"
+  source = "github.com/binbashar/terraform-aws-ecr-cross-account.git?ref=1.0.1"
 
   namespace = "bb"
   name      = "leverage"

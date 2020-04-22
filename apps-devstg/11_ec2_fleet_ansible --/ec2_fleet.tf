@@ -2,7 +2,7 @@
 # EC2 Fleet Security Group
 #
 module "security_group_ec2_fleet" {
-  source = "git::git@github.com:binbashar/terraform-aws-security-group.git?ref=v3.4.0"
+  source = "github.com/binbashar/terraform-aws-security-group.git?ref=v3.4.0"
 
   name        = "ec2-ansible-fleet"
   description = "Security group for example usage with EC2 instance"
@@ -21,7 +21,7 @@ module "security_group_ec2_fleet" {
 # EC2 Fleet for ansible playbooks testing
 #
 module "ec2_ansible_fleet" {
-  source = "git::git@github.com:binbashar/terraform-aws-ec2-instance.git?ref=v2.12.0"
+  source = "github.com/binbashar/terraform-aws-ec2-instance.git?ref=v2.12.0"
 
   name           = "ec2-fleet-ansible"
   instance_count = 5
