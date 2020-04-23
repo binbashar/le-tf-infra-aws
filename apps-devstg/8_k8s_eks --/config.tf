@@ -33,7 +33,7 @@ provider "kubernetes" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.12.20"
+  required_version = ">= 0.12.24"
 
   backend "s3" {
     key = "apps-devstg/k8s-eks/terraform.tfstate"

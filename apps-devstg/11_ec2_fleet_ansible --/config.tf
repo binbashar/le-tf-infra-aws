@@ -12,7 +12,7 @@ provider "aws" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.12.20"
+  required_version = ">= 0.12.24"
 
   backend "s3" {
     key = "apps-devstg/ec2-fleet-ansible/terraform.tfstate"

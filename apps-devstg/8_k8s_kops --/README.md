@@ -36,7 +36,7 @@ Client Version: version.Info{Major:"1", Minor:"14", GitVersion:"v1.14.0", GitCom
 * **terraform** >= *0.12.0*
 ```shell
 ╰─○ terraform version
-Terraform v0.12.20
+Terraform v0.12.24
 ```
 - **NOTE1:** Regarding Terraform versions please also consider https://github.com/binbashar/bb-devops-tf-aws-kops#todo
 - **NOTE2:** These dependencies will me mostly covered via `Makefile` w/ terraform dockerized cmds (https://hub.docker.com/repository/docker/binbash/terraform-resources)
