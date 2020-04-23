@@ -96,7 +96,7 @@ variable "prefix" {
 variable "name" {
   type        = string
   description = "Name"
-  default     = "jenkins"
+  default     = "jenkins-master"
 }
 
 #
