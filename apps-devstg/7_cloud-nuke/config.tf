@@ -2,10 +2,10 @@
 # Providers
 #
 provider "aws" {
-  version                 = "~> 2.46"
+  version                 = "~> 2.59"
   region                  = var.region
   profile                 = var.profile
-  shared_credentials_file = "~/.aws/config"
+  shared_credentials_file = "~/.aws/bb-le/config"
 }
 
 #
