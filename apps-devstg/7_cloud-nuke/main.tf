@@ -1,8 +1,23 @@
-module "nuke_everything_older_than_7d" {
-  source = "github.com/binbashar/terraform-aws-lambda-nuke.git?ref=2.3.0"
+module "nuke_everything_daily_midnight" {
+  source = "github.com/binbashar/terraform-aws-lambda-nuke.git?ref=2.8.0"
 
-  name                           = "${var.project}-${var.environment}-${var.name}"
-  cloudwatch_schedule_expression = var.cloudwatch_schedule_expression
-  exclude_resources              = var.exclude_resources
-  older_than                     = var.older_than
+  # Define name to use for lambda function, cloudwatch event and iam role"
+  name                           = "${var.project}-${var.environment}-cloud-nuke-everything"
+
+  # Define the aws cloudwatch event rule schedule expression,
+  # eg1: monday to friday at 22hs cron(0 22 ? * MON-FRI *)
+  # eg2: once a week every friday at 00hs cron(0 00 ? * FRI *)
+  # eg3: everyday at 00hs cron(0 00 * * ? *)
+  cloudwatch_schedule_expression = "cron(0 00 * * ? *)"
+
+  # Define the resources that will not be destroyed, eg: key_pair,eip,
+  # network_security,autoscaling,ebs,ec2,ecr,eks,elasticbeanstalk,elb,spot,
+  # dynamodb,elasticache,rds,redshift,cloudwatch,endpoint,efs,glacier,s3"
+  exclude_resources              = "cloudwatch,key_pair,s3,dynamodb,vpc"
+
+  # Only destroy resources that were created before a certain period,
+  # eg: 0d, 1d, ... ,7d etc
+  older_than                     = "0d"
 }
+
+
