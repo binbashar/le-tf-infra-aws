@@ -7,6 +7,29 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.16"></a>
+## [v0.1.16] - 2020-04-24
+
+- BBL-250 segregating cp cmd for circleci aws cred config
+- BBL-250 adding -R to avoid cp ommiting dir error in circleci aws cred setup
+- BBL-250 using cp instead of mv for circleci job aws creds config
+- BBL-250 adding circile cmd to move AWS credential inside the proper project folder
+- BBL-250 pointing to updated Makefile for format-check CI validation
+- BBL-250 updating root Makefile + make format
+- BBL-250 adding schedule start daily morning for pritunl server
+- BBL-250 README.md release mgmt added + figures resizeing
+- BBL-250 shared/10_cloud-scheduler-stop-start layer added to daily stop tagged EC2s at midnight eg: jenkins-master
+- BBL-250 apps-devstg/7_cloud_nuke layer updated with latest module and sixtaxt var improvement
+- BBL-250 adding / updating terraform related .gitignores
+- BBL-250 Makefiles cross layer update
+- BBL-250 terraform aws provider version update + shared credentials to use .aws/project credentials folder
+- BBL-250 makefiles/terraform12 updated to use .aws/project credentials fodler + removed makefiles not necessary any more
+- BBL-250 makefiles/terraform11 updated to use .aws/project credentials fodler + removed makefiles not necessary any more
+- BBL-250 .gitignore updated
+- BBL-250 shared/9_jenkins iam layer updated to to be fully independent via ec2_profile
+- OPS-250 upgrading from terraform version 0.12.20 to 0.12.24
+
+
 <a name="v0.1.15"></a>
 ## [v0.1.15] - 2020-04-22
 
@@ -399,7 +422,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.15...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.16...HEAD
+[v0.1.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.15...v0.1.16
 [v0.1.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.14...v0.1.15
 [v0.1.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.13...v0.1.14
 [v0.1.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.12...v0.1.13
