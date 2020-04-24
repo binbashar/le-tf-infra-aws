@@ -5,17 +5,17 @@ LOCAL_OS_USER_ID                  := $(shell id -u)
 LOCAL_OS_GROUP_ID                 := $(shell id -g)
 LOCAL_OS_SSH_DIR                  := ~/.ssh
 LOCAL_OS_GIT_CONF_DIR             := ~/.gitconfig
-LOCAL_OS_AWS_CONF_DIR             := ~/.aws
+LOCAL_OS_AWS_CONF_DIR             := ~/.aws/bb-le
 
 TF_PWD_DIR                        := $(shell pwd)
 TF_PWD_CONT_DIR                   := "/go/src/project/"
 TF_PWD_CONFIG_DIR                 := $(shell cd ../../ && cd config && pwd)
-TF_VER                            := 0.12.20
+TF_VER                            := 0.12.24
 TF_DOCKER_BACKEND_CONF_VARS_FILE  := /config/backend.config
 TF_DOCKER_BASE_CONF_VARS_FILE     := /config/base.config
 TF_DOCKER_EXTRA_CONF_VARS_FILE    := /config/extra.config
 TF_DOCKER_ENTRYPOINT              := /usr/local/go/bin/terraform
-TF_DOCKER_IMAGE                   := binbash/terraform-resources
+TF_DOCKER_IMAGE                   := binbash/terraform-awscli
 
 define TF_CMD_PREFIX
 docker run --rm \
@@ -34,7 +34,7 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 #==============================================================#
-# TERRAFORM 												                           #
+# TERRAFORM                                                    #
 #==============================================================#
 tf-dir-chmod: ## run chown in ./.terraform to gran that the docker mounted dir has the right permissions
 	@echo LOCAL_OS_USER_ID: ${LOCAL_OS_USER_ID}

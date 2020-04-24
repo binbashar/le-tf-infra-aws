@@ -9,8 +9,9 @@ module "jenkins_master" {
   aws_ami_os_id    = var.aws_ami_os_id
   aws_ami_os_owner = var.aws_ami_os_owner
 
-  instance_type = var.instance_type
-  vpc_id        = data.terraform_remote_state.vpc.outputs.vpc_id
+  instance_type    = var.instance_type
+  vpc_id           = data.terraform_remote_state.vpc.outputs.vpc_id
+  instance_profile = aws_iam_instance_profile.basic_instance.name
 
   subnet_id                   = data.terraform_remote_state.vpc.outputs.private_subnets[0]
   associate_public_ip_address = var.associate_public_ip_address
@@ -36,22 +37,20 @@ module "jenkins_master" {
       description = "Allow SSH"
     },
     {
-      from_port = 80,
-      to_port   = 80,
-      protocol  = "tcp",
+      from_port   = 80,
+      to_port     = 80,
+      protocol    = "tcp",
       cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
       description = "Allow Nginx via HTTP"
     },
     {
-      from_port = 443,
-      to_port   = 443,
-      protocol  = "tcp",
+      from_port   = 443,
+      to_port     = 443,
+      protocol    = "tcp",
       cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
       description = "Allow Nginx via HTTPS"
     }
   ]
-
-  policy_arn = [ aws_iam_policy.jenkins_master.arn ]
 
   tags = local.tags
 }

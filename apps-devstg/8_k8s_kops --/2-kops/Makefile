@@ -25,7 +25,7 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 #==============================================================#
-# TERRAFORM 												                           #
+# TERRAFORM                                                                                                              #
 #==============================================================#
 version: ## Show terraform version
 	${MAKE_TF} version
@@ -56,7 +56,7 @@ force-unlock: ## Manually unlock the terraform state, eg: make ARGS="a94b0919-de
 
 validate-tf-layout: ## Validate Terraform layout to make sure it's set up properly
 	${MAKE_TF} validate-tf-layout
-	
+
 #==============================================================#
 # KOPS                                                         #
 #==============================================================#

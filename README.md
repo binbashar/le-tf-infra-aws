@@ -1,9 +1,10 @@
 <div align="center">
-    <img src="./%40doc/figures/binbash.png" alt="binbash" width="350"/>
+    <img src="./%40doc/figures/binbash.png" 
+    alt="binbash" width="250"/>
 </div>
 <div align="right">
   <img src="./%40doc/figures/binbash-leverage-terraform.png"
-  alt="leverage" width="230"/>
+  alt="leverage" width="130"/>
 </div>
 
 # Reference Architecture: Terraform AWS Infrastructure
@@ -14,3 +15,14 @@ Solutions Architecture.
 
 ## Documentation
 Check out the [Wiki](https://github.com/binbashar/bb-devops-tf-infra-aws/wiki) to read the [full documentation](https://github.com/binbashar/bb-devops-tf-infra-aws/wiki).
+
+# Release Management
+### CircleCi PR auto-release job
+
+<div align="left">
+  <img src="./%40doc/figures/circleci-logo.png" alt="circleci" width="130"/>
+</div>
+
+- [**pipeline-job**](https://app.circleci.com/pipelines/github/binbashar/le-tf-infra-aws) (**NOTE:** Will only run after merged PR)
+- [**releases**](https://github.com/binbashar/le-tf-infra-aws/releases) 
+- [**changelog**](https://github.com/binbashar/le-tf-infra-aws/blob/master/CHANGELOG.md) 

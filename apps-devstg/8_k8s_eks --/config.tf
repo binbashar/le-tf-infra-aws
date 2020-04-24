@@ -4,10 +4,10 @@
 # AWS
 #
 provider "aws" {
-  version                 = "~> 2.46"
+  version                 = "~> 2.59"
   region                  = var.region
   profile                 = var.profile
-  shared_credentials_file = "~/.aws/config"
+  shared_credentials_file = "~/.aws/bb-le/config"
 }
 
 #
@@ -33,7 +33,7 @@ provider "kubernetes" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.12.20"
+  required_version = ">= 0.12.24"
 
   backend "s3" {
     key = "apps-devstg/k8s-eks/terraform.tfstate"
