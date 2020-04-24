@@ -89,7 +89,7 @@ Thumbs.db
 #
 # Module directory
 #
-.terraform
+*.terraform
 #
 # Terratest
 #
