@@ -1,6 +1,6 @@
 .PHONY: help
 SHELL						:= /bin/bash
-MAKEFILE_IMPORT_TF			:= terraform12/Makefile.terraform12
+MAKEFILE_IMPORT_TF			:= terraform12/Makefile.terraform12-cont
 MAKEFILE_IMPORT_CIRCLECI 	:= circleci/Makefile.circleci
 
 
