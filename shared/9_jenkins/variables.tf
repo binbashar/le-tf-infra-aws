@@ -139,5 +139,5 @@ variable "root_device_backup_tag" {
 variable "monitoring" {
   type        = bool
   description = "If true, the launched EC2 instance will have detailed monitoring enabled"
-  default     = true
+  default     = false
 }
