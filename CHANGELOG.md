@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.17"></a>
+## [v0.1.17] - 2020-05-07
+
+- BBL-297 Adding validation in Makefile changelog cmd to fix CircleCi error
+- BBL-297 disabling shared account ec2s enhanced monitoring
+
+
 <a name="v0.1.16"></a>
 ## [v0.1.16] - 2020-04-24
 
@@ -422,7 +429,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.16...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.17...HEAD
+[v0.1.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.16...v0.1.17
 [v0.1.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.15...v0.1.16
 [v0.1.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.14...v0.1.15
 [v0.1.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.13...v0.1.14
