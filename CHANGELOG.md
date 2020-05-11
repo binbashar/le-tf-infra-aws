@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.18"></a>
+## [v0.1.18] - 2020-05-11
+
+- Create infrastructure for ElasticSearch and Kibana ([#79](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/79))
+
+
 <a name="v0.1.17"></a>
 ## [v0.1.17] - 2020-05-07
 
@@ -429,7 +435,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.17...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.18...HEAD
+[v0.1.18]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.17...v0.1.18
 [v0.1.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.16...v0.1.17
 [v0.1.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.15...v0.1.16
 [v0.1.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.14...v0.1.15
