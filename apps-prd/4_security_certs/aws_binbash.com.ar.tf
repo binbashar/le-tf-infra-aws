@@ -5,7 +5,7 @@ resource "aws_acm_certificate" "aws_binbash_com_ar" {
   domain_name       = "*.${local.private_domain_name}"
   validation_method = "DNS"
 
-  tags              = local.tags
+  tags = local.tags
 
   lifecycle {
     create_before_destroy = true
@@ -13,7 +13,7 @@ resource "aws_acm_certificate" "aws_binbash_com_ar" {
 }
 
 resource "aws_acm_certificate_validation" "aws_binbash_com_ar" {
-  certificate_arn         = aws_acm_certificate.aws_binbash_com_ar.arn
+  certificate_arn = aws_acm_certificate.aws_binbash_com_ar.arn
   validation_record_fqdns = [
     aws_route53_record.cert_validation_aws_binbash_com_ar.fqdn
   ]
@@ -24,13 +24,13 @@ resource "aws_acm_certificate_validation" "aws_binbash_com_ar" {
 #
 # binbash-shared route53 cross-account ACM dns validation update
 resource "aws_route53_record" "cert_validation_aws_binbash_com_ar" {
-  provider  = aws.shared-route53
-  name      = aws_acm_certificate.aws_binbash_com_ar.domain_validation_options.0.resource_record_name
-  type      = aws_acm_certificate.aws_binbash_com_ar.domain_validation_options.0.resource_record_type
-  zone_id   = data.terraform_remote_state.dns-shared.outputs.aws_public_zone_id[0]
+  provider = aws.shared-route53
+  name     = aws_acm_certificate.aws_binbash_com_ar.domain_validation_options.0.resource_record_name
+  type     = aws_acm_certificate.aws_binbash_com_ar.domain_validation_options.0.resource_record_type
+  zone_id  = data.terraform_remote_state.dns-shared.outputs.aws_public_zone_id[0]
 
-  records   = [
+  records = [
     aws_acm_certificate.aws_binbash_com_ar.domain_validation_options.0.resource_record_value
   ]
-  ttl       = 60
+  ttl = 60
 }

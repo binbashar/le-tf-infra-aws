@@ -7,7 +7,7 @@ locals {
   tags = {
     Terraform   = "true"
     Environment = var.environment
-    Name = local.domain_name
+    Name        = local.domain_name
 
   }
 }
