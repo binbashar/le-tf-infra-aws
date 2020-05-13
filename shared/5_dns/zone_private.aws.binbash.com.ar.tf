@@ -56,16 +56,5 @@ resource "aws_route53_record" "dev_aws_bb" {
     evaluate_target_health = true
   }
 }
-
-#
-# Certificate DNS validation entries
-#
-resource "aws_route53_record" "r53_dev_aws_bb" {
-  name = "_XXXXXXXXXXXXXXXXXXXXXXXXXXXX.dev.aws.binbash.com.ar."
-  type = "CNAME"
-  zone_id = aws_route53_zone.aws.id
-  records = ["_XXXXXXXXXXXXXXXXXXXXXXXXXXXX.XXXXXXXXXX.acm-validations.aws."]
-  ttl = 60
-}
 */
 
