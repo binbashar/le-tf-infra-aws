@@ -1,7 +1,7 @@
 .PHONY: help
-SHELL := /bin/bash
-MAKEFILE_IMPORT_TF 			:= terraform11/Makefile.terraform11-cont-subfolder
-MAKEFILE_IMPORT_KOPS 		:= kops/Makefile.kops
+SHELL                   := /bin/bash
+MAKEFILE_IMPORT_TF      := terraform11/Makefile.terraform11-cont-subfolder
+MAKEFILE_IMPORT_KOPS    := kops/Makefile.kops
 MAKEFILE_IMPORT_KUBECTL := kubectl/Makefile.kubectl14
 
 
@@ -15,7 +15,7 @@ make \
 -f ../../../@bin/makefiles/${MAKEFILE_IMPORT_KOPS}
 endef
 
-define MAKE_KUBECLT
+define MAKE_KUBECTL
 make \
 -f ../../../@bin/makefiles/${MAKEFILE_IMPORT_KUBECTL}
 endef
@@ -25,7 +25,7 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 #==============================================================#
-# TERRAFORM                                                                                                              #
+# TERRAFORM                                                    #
 #==============================================================#
 version: ## Show terraform version
 	${MAKE_TF} version
@@ -72,15 +72,47 @@ cluster-template: ## Kops: update the cluster template only
 cluster-validate: ## Kops: validate cluster against the current state
 	${MAKE_KOPS} cluster-validate
 
+# Rolling Update: Cluster
+#
 cluster-rolling-update: ## Kops: perform a rolling update on the cluster -- only dry run, no changes will be applied
 	${MAKE_KOPS} cluster-rolling-update
 
 cluster-rolling-update-yes: ## Kops: perform a rolling update on the cluster
 	${MAKE_KOPS} cluster-rolling-update-yes
 
-cluster-rolling-update-yes-force-masters: ## Kops: perform a rolling update on the cluster masters
+cluster-rolling-update-yes-with-invervals: ## Kops: perform a rolling update on the cluster w/ intervals
+	${MAKE_KOPS} cluster-rolling-update-yes-with-invervals
+
+cluster-rolling-update-yes-force: ## Kops: perform a rolling update on the cluster (--force)
+	${MAKE_KOPS} cluster-rolling-update-yes-force
+
+cluster-rolling-update-yes-force-cloudonly: ## Kops: perform a rolling update on the cluster w/ --cloudonly -> without confirming progress with the k8s API
+	${MAKE_KOPS} cluster-rolling-update-yes-force-cloudonly
+
+# Rolling Update: Cluster Master Instance Group
+#
+cluster-rolling-update-yes-masters: ## Kops: perform a rolling update on the cluster masters
+	${MAKE_KOPS} cluster-rolling-update-yes-masters
+
+cluster-rolling-update-yes-force-masters: ## Kops: perform a rolling update on the cluster masters (--force)
 	${MAKE_KOPS} cluster-rolling-update-yes-force-masters
 
+# Rolling Update: Cluster Nodes Instance Groups
+#
+cluster-rolling-update-yes-nodes: ## Kops: perform a rolling update on the cluster nodes
+	${MAKE_KOPS} cluster-rolling-update-yes-nodes
+
+cluster-rolling-update-yes-force-nodes: ## Kops: perform a rolling update on the cluster nodes (--force)
+	${MAKE_KOPS} cluster-rolling-update-yes-force-nodes
+
+cluster-rolling-update-yes-nodes-memory-intensive: ## Kops: perform a rolling update on the cluster mem-intensive-nodes
+	${MAKE_KOPS} cluster-rolling-update-yes-nodes-memory-intensive
+
+cluster-rolling-update-yes-force-nodes-memory-intensive: ## Kops: perform a rolling update on the cluster mem-intensive-nodes (--force)
+	${MAKE_KOPS} cluster-rolling-update-yes-force-nodes-memory-intensive
+
+# Cluster Destroy
+#
 cluster-destroy: ## Kops: destroy cluster -- only dry run, no changes will be applied
 	${MAKE_KOPS} cluster-destroy
 

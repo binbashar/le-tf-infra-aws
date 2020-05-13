@@ -18,7 +18,7 @@ kops toolbox template \
 set -x
 
 #
-# Import the cluster manifest into kops state
+# Import the cluster manifest into kops S3 remote state
 #
 kops replace \
     -f ${CLUSTER_FILE} \
