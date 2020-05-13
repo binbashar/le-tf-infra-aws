@@ -81,7 +81,6 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
-
 #=============================#
 # EC2 BASIC LAYOUT MODULE     #
 #=============================#
@@ -97,7 +96,7 @@ variable "prefix" {
 variable "name" {
   type        = string
   description = "Name"
-  default     = "vpn-pritunl"
+  default     = "eskibana"
 }
 
 #
@@ -116,7 +115,7 @@ variable "aws_ami_os_owner" {
 variable "instance_type" {
   type        = string
   description = "EC2 Instance Type"
-  default     = "t3.micro"
+  default     = "r5.large"
 }
 
 variable "ebs_optimized" {
@@ -128,7 +127,7 @@ variable "ebs_optimized" {
 variable "associate_public_ip_address" {
   type        = bool
   description = "Associate a public IP address with the instance"
-  default     = true
+  default     = false
 }
 
 variable "root_device_backup_tag" {
