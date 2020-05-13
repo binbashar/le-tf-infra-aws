@@ -84,8 +84,8 @@ variable "appsprd_account_id" {
 #=============================#
 # CDN DNS variables           #
 #=============================#
-variable "aws_profile_shared" {
+variable "profile_shared" {
   type        = string
-  description = "Shared account aws iam profile in order to update Route53 ACM validation"
+  description = "Shared account aws iam profile in order to update Route53 DNS service"
   default     = "bb-shared-devops"
 }

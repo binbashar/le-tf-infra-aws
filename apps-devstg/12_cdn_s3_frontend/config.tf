@@ -16,7 +16,7 @@ provider "aws" {
 provider "aws" {
   version                 = "~> 2.59"
   region                  = var.region
-  profile                 = "bb-shared-devops"
+  profile                 = var.profile_shared
   shared_credentials_file = "~/.aws/bb-le/config"
   alias                   = "shared-route53"
 }
