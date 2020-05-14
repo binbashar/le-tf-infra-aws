@@ -51,11 +51,19 @@ spec:
   {{ end }}
     name: events
     version: {{ .etcd_clusters_version.value }}
+  #
+  # Access Mgmt
+  #
   iam:
     allowContainerRegistry: true
     legacy: true
   kubelet:
     anonymousAuth: false
+  #
+  # This array configures the CIDRs that are able to access the kubernetes API.
+  # On AWS this is manifested as inbound security group rules on the ELB or
+  # master security groups.
+  #
   kubernetesApiAccess:
   - {{ .shared_vpc_cidr_block.value }}
   kubernetesVersion: {{ .cluster_version.value }}
@@ -76,13 +84,6 @@ spec:
   # security groups.
   #
   sshAccess:
-  - {{ .shared_vpc_cidr_block.value }}
-  #
-  # This array configures the CIDRs that are able to access the kubernetes API.
-  # On AWS this is manifested as inbound security group rules on the ELB or
-  # master security groups.
-  #
-  kubernetesApiAccess:
   - {{ .shared_vpc_cidr_block.value }}
   subnets:
   #
