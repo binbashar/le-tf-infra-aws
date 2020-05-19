@@ -2,7 +2,7 @@
 # EC2 Pritunl OpenVPN
 #
 module "terraform-aws-basic-layout" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.5"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.9"
   prefix = var.prefix
   name   = var.name
 
@@ -61,7 +61,7 @@ module "terraform-aws-basic-layout" {
     },
     {
       from_port   = 15255, # Pritunl VPN Server public UDP service ports -> pritunl.server.admin org
-      to_port     = 15256, # Pritunl VPN Server public UDP service ports -> pritunl.server.devops org
+      to_port     = 15257, # Pritunl VPN Server public UDP service ports -> pritunl.server.devops org
       protocol    = "udp",
       cidr_blocks = ["0.0.0.0/0"],
       description = "Allow Pritunl Service"
@@ -90,14 +90,12 @@ module "terraform-aws-basic-layout" {
   #    c. rollback a. step
   #    d. re-comment this block
   #
-  /*
-  dns_records_public_hosted_zone = [{
+/*  dns_records_public_hosted_zone = [{
     zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id[0],
     name    = "vpn.aws.binbash.com.ar",
     type    = "A",
     ttl     = 300
-  }]
-  */
+  }]*/
 
   tags = local.tags
 }
