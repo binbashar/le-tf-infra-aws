@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.21"></a>
+## [v0.1.21] - 2020-05-21
+
+- BBL-298 Makefile cmd to support antonbabenko/terraform-cost-estimation
+
+
 <a name="v0.1.20"></a>
 ## [v0.1.20] - 2020-05-19
 
@@ -463,7 +469,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.20...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.21...HEAD
+[v0.1.21]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.20...v0.1.21
 [v0.1.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.19...v0.1.20
 [v0.1.19]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.18...v0.1.19
 [v0.1.18]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.17...v0.1.18
