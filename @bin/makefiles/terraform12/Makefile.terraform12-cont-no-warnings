@@ -119,3 +119,29 @@ encrypt: ## Encrypt secrets.dec.tf via ansible-vault
 
 validate-tf-layout: ## Validate Terraform layout to make sure it's set up properly
 	../../@bin/scripts/validate-terraform-layout.sh
+
+cost-estimate-plan: ## Terraform plan output compatible with https://terraform-cost-estimation.com/
+	curl -sLO https://raw.githubusercontent.com/antonbabenko/terraform-cost-estimation/master/terraform.jq
+	${TF_CMD_PREFIX} plan -out=plan.tfplan \
+	 -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+	 -var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
+	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} && \
+	terraform show -json plan.tfplan > plan.json
+	@echo ----------------------------------------------------------------------
+	cat plan.json \
+	| curl -s -X POST -H "Content-Type: application/json" -d @- https://cost.modules.tf/
+	@ #| jq -cf terraform.jq | curl -s -X POST -H "Content-Type: application/json" -d @- https://cost.modules.tf/ # TODO: Fix jq errorrs
+	@echo ''
+	@echo ----------------------------------------------------------------------
+	@rm -rf terraform.jq plan.tfplan plan.json
+
+cost-estimate-state: ## Terraform state output compatible with https://terraform-cost-estimation.com/
+	curl -sLO https://raw.githubusercontent.com/antonbabenko/terraform-cost-estimation/master/terraform.jq
+	${TF_CMD_PREFIX} state pull > state.json
+	@echo ----------------------------------------------------------------------
+	cat state.json \
+	| curl -s -X POST -H "Content-Type: application/json" -d @- https://cost.modules.tf/
+	@ #| jq -cf terraform.jq | curl -s -X POST -H "Content-Type: application/json" -d @- https://cost.modules.tf/ # TODO: Fix jq errorrs
+	@echo ''
+	@echo ----------------------------------------------------------------------
+	@rm -rf terraform.jq state.json

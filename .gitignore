@@ -90,6 +90,8 @@ Thumbs.db
 # Module directory
 #
 *.terraform
+*plan.json
+*state.json
 #
 # Terratest
 #
