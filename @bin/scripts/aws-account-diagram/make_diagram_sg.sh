@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
 #
+# Local ENV vars
+#
+LOCAL_OS_USER_ID=$(id -u)
+LOCAL_OS_GROUP_ID=$(id -g)
+
+#
 # AWS auth files
 #
 AWS_SHARED_CREDENTIALS_FILE_VAR="~/.aws/bb-le/credentials"
@@ -29,3 +35,6 @@ docker run -it --rm \
     -e AWS_ACCESS_KEY_ID=$aws_access_key_id \
     -e AWS_SECRET_ACCESS_KEY=$aws_secret_access_key \
     binbash/aws-security-viz:0.0.1
+
+sudo chown -R ${LOCAL_OS_USER_ID}:${LOCAL_OS_GROUP_ID} ./data
+mv $(pwd)/data/aws-security-viz.png $(pwd)/data/${AWS_ACCOUNT_NAME}-aws-security-viz.png

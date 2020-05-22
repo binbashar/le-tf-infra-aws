@@ -39,6 +39,6 @@ python cloudmapper.py configure add-cidr --config-file config.json --cidr ${AWS_
 cat config.json; \
 python cloudmapper.py collect --account ${AWS_ACCOUNT_NAME} --regions $region; \
 python cloudmapper.py prepare --account ${AWS_ACCOUNT_NAME} --regions $region; \
-cp /opt/cloudmapper/config.json /data/config-${AWS_ACCOUNT_NAME}.json; \
-cp /opt/cloudmapper/web/data.json /data/data-${AWS_ACCOUNT_NAME}.json; \
+cp /opt/cloudmapper/config.json /data/${AWS_ACCOUNT_NAME}-diagram-config.json; \
+cp /opt/cloudmapper/web/data.json /data/${AWS_ACCOUNT_NAME}-diagram-data.json; \
 python cloudmapper.py webserver --public"
