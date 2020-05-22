@@ -10,5 +10,8 @@ help:
 build: ## Build CloudMapper and AwsSecurtyViz docker images
 	bash ./build/make_build.sh
 
-apply: ## Create HTML accessible diagram dashbord
-	bash ./make_diagram.sh
+apply-net: ## Create HTML accessible diagram dashbord
+	bash ./make_diagram_net.sh
+
+apply-sg: ## Create HTML accessible sg diagram dashbord
+	bash ./make_diagram_sg.sh

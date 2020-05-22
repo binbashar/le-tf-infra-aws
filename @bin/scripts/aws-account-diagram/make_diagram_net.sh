@@ -42,13 +42,3 @@ python cloudmapper.py prepare --account ${AWS_ACCOUNT_NAME} --regions $region; \
 cp /opt/cloudmapper/config.json /data/config-${AWS_ACCOUNT_NAME}.json; \
 cp /opt/cloudmapper/web/data.json /data/data-${AWS_ACCOUNT_NAME}.json; \
 python cloudmapper.py webserver --public"
-
-#
-# AWS SecurityViz - TODO: To be tested
-#
-#docker run -it --rm \
-#    -p 0.0.0.0:8081:3000 \
-#    -v $(pwd)/data:/aws-security-viz \
-#    -e AWS_ACCESS_KEY_ID=$aws_access_key_id \
-#    -e AWS_SECRET_ACCESS_KEY=$aws_secret_access_key \
-#    binbash/aws-security-viz:0.0.1
