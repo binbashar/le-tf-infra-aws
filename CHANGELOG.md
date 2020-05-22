@@ -7,6 +7,19 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.22"></a>
+## [v0.1.22] - 2020-05-22
+
+- BBL-299 adding data dir
+- BBL-229 small naming file generation and naming convention improvement
+- BBL-299 updating Makefile to set permissions after execution
+- BBL-299 segregating components diagram from sg diagram
+- BBL-229 Minor readme update
+- BBL-229 Adding auditor group + auditor-ci user for CloudMapper and other future tools / adding module to populate dummy nano ec2s in order to improve CloudMapper diagrams
+- BBL-299 updating terraform-aws-provider req cross layer
+- BBL-229 Adding aws-account diagram via CloudMapper
+
+
 <a name="v0.1.21"></a>
 ## [v0.1.21] - 2020-05-21
 
@@ -469,7 +482,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.21...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.22...HEAD
+[v0.1.22]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.21...v0.1.22
 [v0.1.21]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.20...v0.1.21
 [v0.1.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.19...v0.1.20
 [v0.1.19]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.18...v0.1.19
