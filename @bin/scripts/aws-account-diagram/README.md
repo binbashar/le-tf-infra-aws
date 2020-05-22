@@ -19,6 +19,7 @@ Account Visualization will be saved in data folder and you can use
 1. Create necessary docker images: 
 `make build`
 
-2. `Preview` -> `Preview Running Application` to review the Network visualizations of **CloudMapper**.
+2. Generate web accesible diagrams 
+`make apply`
 
-3. Right click `navigator.html` -> `Preview` to open **aws-security-viz** and you need to load `aws.json` by copy and paste.
+3. To viewe the Network visualizations of **CloudMapper** in your browser `http://localhost:8080`
