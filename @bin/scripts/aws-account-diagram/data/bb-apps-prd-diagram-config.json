@@ -1,0 +1,17 @@
+{
+    "accounts": [
+        {
+            "default": false,
+            "id": "802787198489",
+            "name": "bb-apps-prd"
+        }
+    ],
+    "cidrs": {
+        "172.18.0.0/20": {
+            "name": "aws-shared"
+        },
+        "172.18.32.0/20": {
+            "name": "aws-apps-devstg"
+        }
+    }
+}
