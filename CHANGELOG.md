@@ -7,6 +7,18 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.23"></a>
+## [v0.1.23] - 2020-05-22
+
+- BBL-299 adding ec2_fleet layer for testing purposes, -- sufix reflects this it's not currently orchestrated
+- BBL-299 upgrading and testing latest terraform-aws-vpc module version cross org
+- BBL-299 adding auditor group and user as pre-req for some sec related tools
+- BBL-299 improving make_diagram scripts
+- BBL-229 Adding CloudMater and SecurityViz diagrams per account
+- BBL-299 reviewing Makefile dockerized TF_CMD_PREFIX to grant terraform-aws-provider aws cred configs (shared_credentials_file = "~/.aws/bb-le/config") are properly managed
+- BBL-229 updating .gitignore
+
+
 <a name="v0.1.22"></a>
 ## [v0.1.22] - 2020-05-22
 
@@ -482,7 +494,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.22...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.23...HEAD
+[v0.1.23]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.22...v0.1.23
 [v0.1.22]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.21...v0.1.22
 [v0.1.21]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.20...v0.1.21
 [v0.1.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.19...v0.1.20
