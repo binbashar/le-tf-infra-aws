@@ -90,6 +90,7 @@ Thumbs.db
 # Module directory
 #
 *.terraform
+*terraform.jq
 *plan.json
 *state.json
 #
