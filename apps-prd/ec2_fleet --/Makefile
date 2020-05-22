@@ -1,23 +1,21 @@
 .PHONY: help
 SHELL := /bin/bash
 
-PROJECT_SHORT                    := bb-le
+LOCAL_OS_USER_ID                  := $(shell id -u)
+LOCAL_OS_GROUP_ID                 := $(shell id -g)
+LOCAL_OS_SSH_DIR                  := ~/.ssh
+LOCAL_OS_GIT_CONF_DIR             := ~/.gitconfig
+LOCAL_OS_AWS_CONF_DIR             := ~/.aws/bb-le
 
-LOCAL_OS_USER_ID                 := $(shell id -u)
-LOCAL_OS_GROUP_ID                := $(shell id -g)
-LOCAL_OS_SSH_DIR                 := ~/.ssh
-LOCAL_OS_GIT_CONF_DIR            := ~/.gitconfig
-LOCAL_OS_AWS_CONF_DIR            := ~/.aws/${PROJECT_SHORT}
-
-TF_PWD_DIR                       := $(shell pwd)
-TF_PWD_CONT_DIR                  := "/go/src/project/"
-TF_PWD_CONFIG_DIR                := $(shell cd ../../ && cd config && pwd)
-TF_VER                           := 0.12.24
-TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
-TF_DOCKER_BASE_CONF_VARS_FILE    := /config/base.config
-TF_DOCKER_EXTRA_CONF_VARS_FILE   := /config/extra.config
-TF_DOCKER_ENTRYPOINT             := /usr/local/go/bin/terraform
-TF_DOCKER_IMAGE                  := binbash/terraform-awscli
+TF_PWD_DIR                        := $(shell pwd)
+TF_PWD_CONT_DIR                   := "/go/src/project/"
+TF_PWD_CONFIG_DIR                 := $(shell cd .. && cd config && pwd)
+TF_VER                            := 0.12.24
+TF_DOCKER_BACKEND_CONF_VARS_FILE  := /config/backend.config
+TF_DOCKER_BASE_CONF_VARS_FILE     := /config/base.config
+TF_DOCKER_EXTRA_CONF_VARS_FILE    := /config/extra.config
+TF_DOCKER_ENTRYPOINT              := /usr/local/go/bin/terraform
+TF_DOCKER_IMAGE                   := binbash/terraform-awscli
 
 define TF_CMD_PREFIX
 docker run --rm \
@@ -25,9 +23,7 @@ docker run --rm \
 -v ${TF_PWD_CONFIG_DIR}:/config \
 -v ${LOCAL_OS_SSH_DIR}:/root/.ssh \
 -v ${LOCAL_OS_GIT_CONF_DIR}:/etc/gitconfig \
--v ${LOCAL_OS_AWS_CONF_DIR}:/root/.aws/${PROJECT_SHORT} \
--e AWS_SHARED_CREDENTIALS_FILE=/root/.aws/${PROJECT_SHORT}/credentials \
--e AWS_CONFIG_FILE=/root/.aws/${PROJECT_SHORT}/config \
+-v ${LOCAL_OS_AWS_CONF_DIR}:/root/.aws \
 --entrypoint=${TF_DOCKER_ENTRYPOINT} \
 -w ${TF_PWD_CONT_DIR} \
 -it ${TF_DOCKER_IMAGE}:${TF_VER}
@@ -119,7 +115,7 @@ encrypt: ## Encrypt secrets.dec.tf via ansible-vault
   && rm -rf ./group_vars/secrets.dec.tf
 
 validate-tf-layout: ## Validate Terraform layout to make sure it's set up properly
-	../../../@bin/scripts/validate-terraform-layout.sh
+	../../@bin/scripts/validate-terraform-layout.sh
 
 cost-estimate-plan: ## Terraform plan output compatible with https://terraform-cost-estimation.com/
 	curl -sLO https://raw.githubusercontent.com/antonbabenko/terraform-cost-estimation/master/terraform.jq
@@ -127,7 +123,7 @@ cost-estimate-plan: ## Terraform plan output compatible with https://terraform-c
 	 -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	 -var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
 	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} && \
-	${TF_CMD_PREFIX} show -json plan.tfplan > plan.json
+	terraform show -json plan.tfplan > plan.json
 	@echo ----------------------------------------------------------------------
 	cat plan.json \
 	| curl -s -X POST -H "Content-Type: application/json" -d @- https://cost.modules.tf/

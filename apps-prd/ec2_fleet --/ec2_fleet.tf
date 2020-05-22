@@ -4,26 +4,25 @@
 module "security_group_ec2_fleet" {
   source = "github.com/binbashar/terraform-aws-security-group.git?ref=v3.9.0"
 
-  name        = "ec2-ansible-fleet"
+  name        = "ec2-fleet"
   description = "Security group for example usage with EC2 instance"
   vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   ingress_cidr_blocks = [
     data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
-    data.terraform_remote_state.vpc-shared.outputs.vpc_cidr_block
   ]
 
-  ingress_rules = ["ssh-tcp", "all-icmp"]
+  ingress_rules = ["all-icmp"]
   egress_rules  = ["all-all"]
 }
 
 #
-# EC2 Fleet for ansible playbooks testing
+# EC2 Fleet for testing purposes
 #
-module "ec2_ansible_fleet" {
-  source = "github.com/binbashar/terraform-aws-ec2-instance.git?ref=v2.12.0"
+module "ec2_fleet" {
+  source = "github.com/binbashar/terraform-aws-ec2-instance.git?ref=v2.13.0"
 
-  name           = "ec2-fleet-ansible"
+  name           = "ec2-fleet"
   instance_count = 6
 
   ami                    = data.aws_ami.ubuntu_linux.id
