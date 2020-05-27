@@ -1,53 +1,31 @@
 #
 # Groups
 #
-resource "aws_iam_group" "admins" {
+module "iam_group_admins" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.9.0"
   name = "admins_root_org"
-}
 
-resource "aws_iam_group" "finops" {
-  name = "finops_root_org"
-}
-
-#
-# Group / User Membership
-#
-resource "aws_iam_group_membership" "admins_members" {
-  name = "admins_members"
-
-  users = [
+  group_users = [
     module.user_diego_ojeda.this_iam_user_name,
     module.user_marcos_pagnuco.this_iam_user_name,
     module.user_exequiel_barrirero.this_iam_user_name,
   ]
 
-  group = aws_iam_group.admins.name
+  custom_group_policy_arns = [
+    "arn:aws:iam::aws:policy/AdministratorAccess",
+  ]
 }
 
-resource "aws_iam_group_membership" "finops_members" {
-  name = "finops_members"
+module "iam_group_finops" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.9.0"
+  name = "finops_root_org"
 
-  users = [
+  group_users = [
     module.user_marcelo_beresvil.this_iam_user_name,
   ]
 
-  group = aws_iam_group.finops.name
-}
-
-#
-# Group Policy Attachments
-#
-resource "aws_iam_group_policy_attachment" "admins_have_administrator_access" {
-  group      = aws_iam_group.admins.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-}
-
-resource "aws_iam_group_policy_attachment" "finops_have_billing_access" {
-  group      = aws_iam_group.finops.name
-  policy_arn = "arn:aws:iam::aws:policy/job-function/Billing"
-}
-
-resource "aws_iam_group_policy_attachment" "finops_have_standard_console_user" {
-  group      = aws_iam_group.finops.name
-  policy_arn = aws_iam_policy.standard_console_user.arn
+  custom_group_policy_arns = [
+    "arn:aws:iam::aws:policy/job-function/Billing",
+    "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess",
+  ]
 }
