@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.26"></a>
+## [v0.1.26] - 2020-05-29
+
+- BBL-XXX allowing trusted avisor for DevOps role
+
+
 <a name="v0.1.25"></a>
 ## [v0.1.25] - 2020-05-28
 
@@ -507,7 +513,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.25...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.26...HEAD
+[v0.1.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.25...v0.1.26
 [v0.1.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.24...v0.1.25
 [v0.1.24]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.23...v0.1.24
 [v0.1.23]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.22...v0.1.23
