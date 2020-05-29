@@ -56,6 +56,7 @@ resource "aws_iam_policy" "devops_access" {
                 "sqs:*",
                 "ssm:*",
                 "tag:*",
+                "trustedadvisor:*",
                 "vpc:*",
                 "waf:*",
                 "wafv2:*",
