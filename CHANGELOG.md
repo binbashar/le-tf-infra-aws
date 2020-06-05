@@ -7,6 +7,17 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.27"></a>
+## [v0.1.27] - 2020-06-05
+
+- BBL-167 root-org to root acct renamed following cross-project naming convention
+- BBL-167 shared acct cross-layer naming convetion updated
+- BBL-167 security acct cross-layer naming convetion updated
+- BBL-167 root-org cross-layer naming convetion updated
+- BBL-167 apps-prd cross-layer naming convetion updated
+- BBL-167 apps-devstg cross-layer naming convetion updated
+
+
 <a name="v0.1.26"></a>
 ## [v0.1.26] - 2020-05-29
 
@@ -513,7 +524,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.26...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.27...HEAD
+[v0.1.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.26...v0.1.27
 [v0.1.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.25...v0.1.26
 [v0.1.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.24...v0.1.25
 [v0.1.24]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.23...v0.1.24
