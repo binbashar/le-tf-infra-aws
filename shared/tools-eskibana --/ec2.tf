@@ -72,7 +72,10 @@ module "elasticsearch_kibana" {
       from_port   = 9200,
       to_port     = 9200,
       protocol    = "tcp",
-      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
+      cidr_blocks = [
+        data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
+        data.terraform_remote_state.vpc-devstg.outputs.vpc_cidr_block,
+      ],
       description = "Allow ElasticSearch"
     }
   ]

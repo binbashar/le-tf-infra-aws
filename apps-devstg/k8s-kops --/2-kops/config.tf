@@ -11,7 +11,6 @@ variable "region" {
 provider "aws" {
   region  = "${var.region}"
   profile = "${var.profile}"
-  shared_credentials_file = "~/.aws/bb-le/config"
 }
 
 # Backend Config (partial)
