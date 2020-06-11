@@ -7,6 +7,15 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.28"></a>
+## [v0.1.28] - 2020-06-11
+
+- BIZUP-36 rclone script for automated backup - pending to cron it via CircleCI job
+- BIZUP-36 adding aws s3 Bucket with lifecycle policies for gdrive backup
+- BIZUP-36 adding user and group backup.s3 for monthly bb gdrive so s3 backup
+- BIZUP-36 minor makefile encrypt cmd fix
+
+
 <a name="v0.1.27"></a>
 ## [v0.1.27] - 2020-06-05
 
@@ -524,7 +533,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.27...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.28...HEAD
+[v0.1.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.27...v0.1.28
 [v0.1.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.26...v0.1.27
 [v0.1.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.25...v0.1.26
 [v0.1.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.24...v0.1.25
