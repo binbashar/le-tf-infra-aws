@@ -101,8 +101,7 @@ decrypt: ## Decrypt secrets.tf via ansible-vault
 
 encrypt: ## Encrypt secrets.dec.tf via ansible-vault
 	ansible-vault encrypt --output secrets.enc secrets.dec.tf \
-  && rm -rf ./group_vars/secrets.dec.tf \
-  && rm -rf ./group_vars/secrets.dec.tf
+  && rm -rf secrets.dec.tf
 
 validate-tf-layout: ## Validate Terraform layout to make sure it's set up properly
 	../../@bin/scripts/validate-terraform-layout.sh
