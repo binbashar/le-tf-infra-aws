@@ -19,6 +19,8 @@
 id_rsa
 id_dsa
 keys/
+!/security/base-identities/keys/
+!/root/base-identities/keys/
 
 # OS generated files #
 ######################
