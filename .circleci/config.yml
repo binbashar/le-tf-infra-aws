@@ -38,9 +38,9 @@ jobs:
             aws configure set role_arn arn:aws:iam::$AWS_ACCOUNT_ID_SHARED:role/DeployMaster --profile $AWS_PROFILE_NAME
             aws configure set source_profile default --profile $AWS_PROFILE_NAME
             # moving credentials to specific project folder
-            mkdir --parents ~/.aws/bb-le
-            cp ~/.aws/credentials ~/.aws/bb-le/credentials
-            cp ~/.aws/config ~/.aws/bb-le/config
+            mkdir --parents /home/circleci/.aws/bb-le
+            cp /home/circleci/.aws/credentials /home/circleci/.aws/bb-le/credentials
+            cp /home/circleci/.aws/config /home/circleci/.aws/bb-le/config
 
       - run:
           name: test2-terraform-linting
