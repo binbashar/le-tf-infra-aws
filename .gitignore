@@ -80,6 +80,7 @@ Thumbs.db
 *.vault_pass
 *.pgpass
 *.vagrant
+*rclone.conf
 
 # TF Project files #
 ####################
