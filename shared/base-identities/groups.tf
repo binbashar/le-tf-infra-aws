@@ -23,42 +23,7 @@ module "iam_group_backup_s3" {
     module.user_backup_s3.this_iam_user_name,
   ]
 
-  custom_group_policies = [
-    {
-      name   = "AllowS3PutBackup"
-      policy = data.aws_iam_policy_document.backup_s3_binbash_gdrive.json
-    },
+  custom_group_policy_arns = [
+    aws_iam_policy.s3_put_gdrive_to_s3_backup.arn
   ]
-}
-
-data "aws_iam_policy_document" "backup_s3_binbash_gdrive" {
-  statement {
-    sid = "ListAllMyBuckets"
-    effect = "Allow"
-    actions = [
-    "s3:ListAllMyBuckets",
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    sid = "ListBucket"
-    effect = "Allow"
-    actions = [
-      "s3:ListBucket",
-    ]
-    resources = ["arn:aws:s3:::bb-shared-gdrive-backup"]
-  }
-
-  statement {
-    sid = "PutDeleteBucketObjetc"
-    effect = "Allow"
-    actions = [
-      "s3:PutObject",
-      "s3:PutObjectAcl",
-      "s3:GetObject",
-      "s3:DeleteObject"
-    ]
-    resources = ["arn:aws:s3:::bb-shared-gdrive-backup/*"]
-  }
 }
