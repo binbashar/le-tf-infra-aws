@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.29"></a>
+## [v0.1.29] - 2020-06-12
+
+- Merge branch 'master' into BIZSUP-36-s3-bb-gdrive-bucket
+- BIZSUP-36 Adding CircleCI automated drive to s3 backup job
+
+
 <a name="v0.1.28"></a>
 ## [v0.1.28] - 2020-06-11
 
@@ -533,7 +540,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.28...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.29...HEAD
+[v0.1.29]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.28...v0.1.29
 [v0.1.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.27...v0.1.28
 [v0.1.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.26...v0.1.27
 [v0.1.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.25...v0.1.26
