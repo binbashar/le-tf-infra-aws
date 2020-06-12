@@ -175,3 +175,44 @@ resource "aws_iam_policy" "deploy_master_access" {
 }
 EOF
 }
+
+#
+# Customer Managed Policy: FinOps Role Access + Group (backup-s3 Group)
+#
+resource "aws_iam_policy" "s3_put_gdrive_to_s3_backup" {
+  name   = "AllowS3PutBackup"
+  path   = "/"
+  policy = data.aws_iam_policy_document.backup_s3_binbash_gdrive.json
+}
+
+data "aws_iam_policy_document" "backup_s3_binbash_gdrive" {
+  statement {
+    sid = "ListAllMyBuckets"
+    effect = "Allow"
+    actions = [
+    "s3:ListAllMyBuckets",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid = "ListBucket"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = ["arn:aws:s3:::bb-shared-gdrive-backup"]
+  }
+
+  statement {
+    sid = "PutDeleteBucketObjetc"
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:PutObjectAcl",
+      "s3:GetObject",
+      "s3:DeleteObject"
+    ]
+    resources = ["arn:aws:s3:::bb-shared-gdrive-backup/*"]
+  }
+}
