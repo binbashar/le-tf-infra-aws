@@ -16,9 +16,9 @@ jobs:
     steps:
       - checkout
 
-      - run: pwd
-      - run: ls -ltra
-      - run: git branch
+      - run:
+          name: Context Info Cmds
+          command: pwd && ls -ltra && git branch
 
       - run:
           name: test1-terraform-format
@@ -27,11 +27,8 @@ jobs:
       - run:
           name: Configure awscli
           command: |
-            echo "AWS_ACCESS_KEY_ID - $AWS_ACCESS_KEY_ID"
-            echo "AWS_PROFILE_NAME - $AWS_PROFILE_NAME"
-
             # AWS defautl awscli profile
-            sudo chown -R $USER:$USER /home/circleci/.aws
+            sudo chown -R $USER:$USER ~/.aws
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
             aws configure set region us-east-1
@@ -40,10 +37,49 @@ jobs:
             # AWS dev awscli profile
             aws configure set role_arn arn:aws:iam::$AWS_ACCOUNT_ID_SHARED:role/DeployMaster --profile $AWS_PROFILE_NAME
             aws configure set source_profile default --profile $AWS_PROFILE_NAME
+            # moving credentials to specific project folder
+            mkdir --parents ~/.aws/bb-le
+            cp ~/.aws/credentials ~/.aws/bb-le/credentials
+            cp ~/.aws/config ~/.aws/bb-le/config
 
       - run:
           name: test2-terraform-linting
           command: make tflint-deep
+
+  #
+  # Monthly BB Gdrive to S3 backup
+  #
+  backup-bb-gdrive-to-s3:
+    machine:
+      image: ubuntu-1604:201903-01 # Ubuntu 16.04, docker 18.09.3, docker-compose 1.23.1
+
+      docker_layer_caching: false
+
+    steps:
+      - checkout
+
+      - run:
+          name: Context Info Cmds
+          command: pwd && ls -ltra && git branch
+
+      - run:
+          name: backup-gdrive-to-s3
+          working_directory: ~/project/shared/storage/@scripts
+          environment:
+            ANSIBLE_VAULT_PASSWORD_FILE: .vault_pass
+          command: |
+            # pre-reqs: install ansible and add ansible-vault binary to the path
+            pwd && ls -ltra
+            make init-ansible-py
+            PATH=$PATH:~/.local/bin
+            # secrets: setting ansible-vault pass file + rconf file decrypting
+            echo "${ANSIBLE_VAULT_PASS_TF}" > .vault_pass
+            make decrypt
+            # sync: calling rconf with the proper AWS ENV cred vars
+            AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_SHARED_BACKUP_S3 \
+            AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_SHARED_BACKUP_S3 \
+            AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
+            make apply
 
   #
   # Release
@@ -95,6 +131,21 @@ workflows:
              ignore: # only branches matching the below regex filters will run
                - master
       - release-version-with-changelog:
+          context: binbashar-org-global-context
+          filters:
+            branches:
+             only: # only branches matching the below regex filters will run
+               - master
+  monthly_backup_bb_gdrive_to_s3:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *" # At 00:00 on day-of-month 1 (monthly)
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - backup-bb-gdrive-to-s3:
           context: binbashar-org-global-context
           filters:
             branches:

@@ -7,6 +7,164 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.28"></a>
+## [v0.1.28] - 2020-06-11
+
+- BIZUP-36 rclone script for automated backup - pending to cron it via CircleCI job
+- BIZUP-36 adding aws s3 Bucket with lifecycle policies for gdrive backup
+- BIZUP-36 adding user and group backup.s3 for monthly bb gdrive so s3 backup
+- BIZUP-36 minor makefile encrypt cmd fix
+
+
+<a name="v0.1.27"></a>
+## [v0.1.27] - 2020-06-05
+
+- BBL-167 root-org to root acct renamed following cross-project naming convention
+- BBL-167 shared acct cross-layer naming convetion updated
+- BBL-167 security acct cross-layer naming convetion updated
+- BBL-167 root-org cross-layer naming convetion updated
+- BBL-167 apps-prd cross-layer naming convetion updated
+- BBL-167 apps-devstg cross-layer naming convetion updated
+
+
+<a name="v0.1.26"></a>
+## [v0.1.26] - 2020-05-29
+
+- BBL-XXX allowing trusted avisor for DevOps role
+
+
+<a name="v0.1.25"></a>
+## [v0.1.25] - 2020-05-28
+
+- BBL-XXX allowing trusted avisor for DevOps role
+
+
+<a name="v0.1.24"></a>
+## [v0.1.24] - 2020-05-27
+
+- BBWW-131 removing policy since terraform-aws-iam group module takes care of this via  -> resource "aws_iam_policy" "iam_self_management" {...}
+- BBWW-131 Updating Groups with terraform-aws-iam module + adding FinOps group ViewOnly Permissions
+
+
+<a name="v0.1.23"></a>
+## [v0.1.23] - 2020-05-22
+
+- BBL-299 adding ec2_fleet layer for testing purposes, -- sufix reflects this it's not currently orchestrated
+- BBL-299 upgrading and testing latest terraform-aws-vpc module version cross org
+- BBL-299 adding auditor group and user as pre-req for some sec related tools
+- BBL-299 improving make_diagram scripts
+- BBL-229 Adding CloudMater and SecurityViz diagrams per account
+- BBL-299 reviewing Makefile dockerized TF_CMD_PREFIX to grant terraform-aws-provider aws cred configs (shared_credentials_file = "~/.aws/bb-le/config") are properly managed
+- BBL-229 updating .gitignore
+
+
+<a name="v0.1.22"></a>
+## [v0.1.22] - 2020-05-22
+
+- BBL-299 adding data dir
+- BBL-229 small naming file generation and naming convention improvement
+- BBL-299 updating Makefile to set permissions after execution
+- BBL-299 segregating components diagram from sg diagram
+- BBL-229 Minor readme update
+- BBL-229 Adding auditor group + auditor-ci user for CloudMapper and other future tools / adding module to populate dummy nano ec2s in order to improve CloudMapper diagrams
+- BBL-299 updating terraform-aws-provider req cross layer
+- BBL-229 Adding aws-account diagram via CloudMapper
+
+
+<a name="v0.1.21"></a>
+## [v0.1.21] - 2020-05-21
+
+- BBL-298 Makefile cmd to support antonbabenko/terraform-cost-estimation
+
+
+<a name="v0.1.20"></a>
+## [v0.1.20] - 2020-05-19
+
+- BBWW-45 shared/infra_vpn-server renaming layer + updating to latest module version v0.3.9
+- BBWW-45 shared renaming layers under the new naming convetion
+- BBWW-45 security renaming layers under the new naming convetion
+- BBWW-45 root-org renaming layers under the new naming convetion
+- BBWW-45 apps-prd renaming layers under the new naming convetion
+- BBWW-45 apps-devstg renaming layers under the new naming convetion
+
+
+<a name="v0.1.19"></a>
+## [v0.1.19] - 2020-05-14
+
+- BBWW-34 shared/9_jenkins renaming layer with '--¿ suffix to reflect it's not orchestrated
+- BBWW-34 shared/11_eskibana renaming layer with '--¿ suffix to reflect it's not orchestrated
+- Merge branch 'master' into BBWW-34-cf-s3
+- BBWW-34 make format applied
+- BBWW-34 replacing Makefile w/ proper symbolic-link
+- BBWW-34 Minor 2ry provider tf code sintaxt improvement
+- BBWW-34 apps-prd/12_cdn_s3_frontend adding cloudfront + s3 layer for prd.aws.binbash.com.ar
+- BBWW-34 apps-prd/4_security_certs adding AWS AMC related layer
+- BBWW-34 sync with customer latest ver
+- BBWW-34 apps-devstg/12_cdn_s3_frontend adding cloudfront + s3 layer for dev.aws.binbash.com.ar
+- BBWW-34 apps-devstg/4_security_certs adding AWS ACM layer
+- BBWW-34 shared/5_dns removing unused comment
+
+
+<a name="v0.1.18"></a>
+## [v0.1.18] - 2020-05-11
+
+- Create infrastructure for ElasticSearch and Kibana ([#79](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/79))
+
+
+<a name="v0.1.17"></a>
+## [v0.1.17] - 2020-05-07
+
+- BBL-297 Adding validation in Makefile changelog cmd to fix CircleCi error
+- BBL-297 disabling shared account ec2s enhanced monitoring
+
+
+<a name="v0.1.16"></a>
+## [v0.1.16] - 2020-04-24
+
+- BBL-250 segregating cp cmd for circleci aws cred config
+- BBL-250 adding -R to avoid cp ommiting dir error in circleci aws cred setup
+- BBL-250 using cp instead of mv for circleci job aws creds config
+- BBL-250 adding circile cmd to move AWS credential inside the proper project folder
+- BBL-250 pointing to updated Makefile for format-check CI validation
+- BBL-250 updating root Makefile + make format
+- BBL-250 adding schedule start daily morning for pritunl server
+- BBL-250 README.md release mgmt added + figures resizeing
+- BBL-250 shared/10_cloud-scheduler-stop-start layer added to daily stop tagged EC2s at midnight eg: jenkins-master
+- BBL-250 apps-devstg/7_cloud_nuke layer updated with latest module and sixtaxt var improvement
+- BBL-250 adding / updating terraform related .gitignores
+- BBL-250 Makefiles cross layer update
+- BBL-250 terraform aws provider version update + shared credentials to use .aws/project credentials folder
+- BBL-250 makefiles/terraform12 updated to use .aws/project credentials fodler + removed makefiles not necessary any more
+- BBL-250 makefiles/terraform11 updated to use .aws/project credentials fodler + removed makefiles not necessary any more
+- BBL-250 .gitignore updated
+- BBL-250 shared/9_jenkins iam layer updated to to be fully independent via ec2_profile
+- OPS-250 upgrading from terraform version 0.12.20 to 0.12.24
+
+
+<a name="v0.1.15"></a>
+## [v0.1.15] - 2020-04-22
+
+- BBL-245 Fix every module import url from `git` to `https` [#66](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/66)
+
+
+<a name="v0.1.14"></a>
+## [v0.1.14] - 2020-04-20
+
+- Create AWS resources for deploying a Jenkins server ([#64](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/64))
+
+
+<a name="v0.1.13"></a>
+## [v0.1.13] - 2020-04-07
+
+- BBL-226 updating ISSUES templates and config to get integration still not working
+
+
+<a name="v0.1.12"></a>
+## [v0.1.12] - 2020-04-07
+
+- BBL-226 updating ISSUES template config to fix integration
+
+
 <a name="v0.1.11"></a>
 ## [v0.1.11] - 2020-04-07
 
@@ -375,7 +533,24 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.11...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.28...HEAD
+[v0.1.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.27...v0.1.28
+[v0.1.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.26...v0.1.27
+[v0.1.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.25...v0.1.26
+[v0.1.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.24...v0.1.25
+[v0.1.24]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.23...v0.1.24
+[v0.1.23]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.22...v0.1.23
+[v0.1.22]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.21...v0.1.22
+[v0.1.21]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.20...v0.1.21
+[v0.1.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.19...v0.1.20
+[v0.1.19]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.18...v0.1.19
+[v0.1.18]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.17...v0.1.18
+[v0.1.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.16...v0.1.17
+[v0.1.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.15...v0.1.16
+[v0.1.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.14...v0.1.15
+[v0.1.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.13...v0.1.14
+[v0.1.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.12...v0.1.13
+[v0.1.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.11...v0.1.12
 [v0.1.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.10...v0.1.11
 [v0.1.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.9...v0.1.10
 [v0.1.9]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.8...v0.1.9

@@ -1,6 +1,6 @@
 .PHONY: help
-SHELL 										:= /bin/bash
-MAKEFILE_IMPORT_TF 				:= terraform12/Makefile.terraform12
+SHELL						:= /bin/bash
+MAKEFILE_IMPORT_TF			:= terraform12/Makefile.terraform12-cont
 MAKEFILE_IMPORT_CIRCLECI 	:= circleci/Makefile.circleci
 
 
@@ -18,7 +18,7 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 #==============================================================#
-# TERRAFORM 												                           #
+# TERRAFORM                                                    #
 #==============================================================#
 version: ## Show terraform version
 	${MAKE_TF} version
@@ -36,7 +36,7 @@ tflint-deep: ## TFLint is a Terraform linter for detecting errors that can not b
 	${MAKE_TF} tflint-deep
 
 #==============================================================#
-# CIRCLECI 													                           #
+# CIRCLECI                                                     #
 #==============================================================#
 circleci-validate-config: ## Validate A CircleCI Config (https://circleci.com/docs/2.0/local-cli/)
 	${MAKE_CIRCLECI} circleci-validate-config
