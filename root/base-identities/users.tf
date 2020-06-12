@@ -1,3 +1,7 @@
+#
+# AWS IAM Users (alphabetically ordered)
+#
+
 #==========================#
 # User: Diego Ojeda        #
 #==========================#
@@ -13,23 +17,6 @@ module "user_diego_ojeda" {
   upload_iam_user_ssh_key       = false
 
   pgp_key = "${file("keys/diego.ojeda")}"
-}
-
-#==========================#
-# User: Marcos Pagnucco    #
-#==========================#
-module "user_marcos_pagnuco" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.6.0"
-
-  name                    = "marcos.pagnucco"
-  force_destroy           = true
-  password_reset_required = true
-
-  create_iam_user_login_profile = true
-  create_iam_access_key         = false
-  upload_iam_user_ssh_key       = false
-
-  pgp_key = "${file("keys/marcos.pagnucco")}"
 }
 
 #==========================#
@@ -64,4 +51,21 @@ module "user_marcelo_beresvil" {
   upload_iam_user_ssh_key       = false
 
   pgp_key = "${file("keys/marcelo.beresvil")}"
+}
+
+#==========================#
+# User: Marcos Pagnucco    #
+#==========================#
+module "user_marcos_pagnuco" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.6.0"
+
+  name                    = "marcos.pagnucco"
+  force_destroy           = true
+  password_reset_required = true
+
+  create_iam_user_login_profile = true
+  create_iam_access_key         = false
+  upload_iam_user_ssh_key       = false
+
+  pgp_key = "${file("keys/marcos.pagnucco")}"
 }
