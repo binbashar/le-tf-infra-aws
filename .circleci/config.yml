@@ -140,7 +140,7 @@ workflows:
   monthly_backup_bb_gdrive_to_s3:
     triggers:
       - schedule:
-          cron: "0 0 * * *" # At 00:00 on day-of-month 1 (monthly)
+          cron: "0 0 1 * *" # At 00:00 on day-of-month 1 (monthly)
           filters:
             branches:
               only:
