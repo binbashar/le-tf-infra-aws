@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.32"></a>
+## [v0.1.32] - 2020-06-15
+
+- BIZSUP-36 increasing no_output_timeout to avoid "Too long with no output (exceeded 10m0s): context deadline exceeded"
+
+
 <a name="v0.1.31"></a>
 ## [v0.1.31] - 2020-06-14
 
@@ -556,7 +562,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.31...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.32...HEAD
+[v0.1.32]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.31...v0.1.32
 [v0.1.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.30...v0.1.31
 [v0.1.30]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.29...v0.1.30
 [v0.1.29]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.28...v0.1.29
