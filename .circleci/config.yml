@@ -67,7 +67,7 @@ jobs:
           working_directory: ~/project/shared/storage/@scripts
           environment:
             ANSIBLE_VAULT_PASSWORD_FILE: .vault_pass
-          no_output_timeout: 60m
+          no_output_timeout: 120m
           command: |
             # pre-reqs: install ansible and add ansible-vault binary to the path
             pwd && ls -ltra
