@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.33"></a>
+## [v0.1.33] - 2020-06-15
+
+- BIZUP-36 circleci cron expression setup to be monthly as expected
+
+
 <a name="v0.1.32"></a>
 ## [v0.1.32] - 2020-06-15
 
@@ -562,7 +568,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.32...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.33...HEAD
+[v0.1.33]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.32...v0.1.33
 [v0.1.32]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.31...v0.1.32
 [v0.1.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.30...v0.1.31
 [v0.1.30]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.29...v0.1.30
