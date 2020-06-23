@@ -20,7 +20,7 @@ Check out the [Wiki](https://github.com/binbashar/bb-devops-tf-infra-aws/wiki) t
 ### CircleCi PR auto-release job
 
 <div align="left">
-  <img src="./docs/images/logos/circleci-logo.png" alt="circleci" width="130"/>
+  <img src="./docs/images/logos/circleci-logo.png" alt="circleci.png" width="130"/>
 </div>
 
 - [**pipeline-job**](https://app.circleci.com/pipelines/github/binbashar/le-tf-infra-aws) (**NOTE:** Will only run after merged PR)
