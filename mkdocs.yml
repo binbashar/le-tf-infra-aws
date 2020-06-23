@@ -5,7 +5,7 @@
 site_name: Binbash Leverage Reference Architecture
 repo_name: "binbashar/le-tf-infra-aws"
 repo_url: https://github.com/binbashar/le-tf-infra-aws
-site_url: https://leverage-ref-architecture.github.io/le-tf-infra-aws
+site_url: https://binbashar.github.io/le-tf-infra-aws
 site_description: Binbash Leverage Reference Architecture Documentation
 site_author: Binbash
 copyright: Copyright &copy; 2020 <a href="https://www.binbash.com.ar">Binbash</a>
