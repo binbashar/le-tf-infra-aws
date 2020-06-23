@@ -44,6 +44,15 @@ circleci-validate-config: ## Validate A CircleCI Config (https://circleci.com/do
 #==============================================================#
 # DOCUMENTATION                                                #
 #==============================================================#
+docs-local-prereqs: ## Install local mkdocs pre-requisites
+	pip install mkdocs
+	pip install pymdown-extensions
+	pip install mkdocs-material-extensions
+	pip install mkdocs-awesome-pages-plugin
+
+docs-deploy-gh: ## deploy to Github pages
+	mkdocs gh-deploy --config-file mkdocs.yml --theme material --clean
+
 docs-live: ## Build and launch a local copy of the documentation website in http://localhost:3000
 	@docker run --rm -it \
 		-p 8000:8000 \
