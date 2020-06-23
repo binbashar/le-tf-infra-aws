@@ -4,16 +4,16 @@
 # pull: https://rclone.org/drive/
 # push: https://rclone.org/s3/#amazon-s3
 #
-resource "aws_s3_bucket" "gdrive" {
+resource "aws_s3_bucket" "gdrive_bakcup" {
   bucket = "${var.project}-${var.environment}-gdrive-backup"
   acl    = "private"
 
   versioning {
-    enabled = true
+    enabled = false
   }
 
   lifecycle {
-    prevent_destroy = false
+    prevent_destroy = true
   }
 
   server_side_encryption_configuration {
