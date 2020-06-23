@@ -1,4 +1,4 @@
-output "velero_bucket_arn" {
-  description = "Velero Bucket ARN"
-  value       = aws_s3_bucket.gdrive.arn
+output "gdrive_backup_bucket_arn" {
+  description = "GDrive Backup Bucket ARN"
+  value       = aws_s3_bucket.gdrive_bakcup.arn
 }
