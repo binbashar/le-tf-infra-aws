@@ -40,27 +40,3 @@ tflint-deep: ## TFLint is a Terraform linter for detecting errors that can not b
 #==============================================================#
 circleci-validate-config: ## Validate A CircleCI Config (https://circleci.com/docs/2.0/local-cli/)
 	${MAKE_CIRCLECI} circleci-validate-config
-
-#==============================================================#
-# DOCUMENTATION                                                #
-#==============================================================#
-docs-local-prereqs: ## Install local mkdocs pre-requisites
-	pip install mkdocs
-	pip install pymdown-extensions
-	pip install mkdocs-material-extensions
-	pip install mkdocs-awesome-pages-plugin
-
-docs-deploy-gh: ## deploy to Github pages
-	mkdocs gh-deploy --config-file mkdocs.yml --theme material --clean
-
-docs-live: ## Build and launch a local copy of the documentation website in http://localhost:3000
-	@docker run --rm -it \
-		-p 8000:8000 \
-		-v ${PWD}:/docs \
-		squidfunk/mkdocs-material:5.2.3
-
-docs-check-dead-links: ## Check if the documentation contains dead links.
-	@docker run -t \
-	  -v $$PWD:/tmp aledbf/awesome_bot:0.1 \
-	  --allow-dupe \
-	  --allow-redirect $(shell find $$PWD -mindepth 1 -name "*.md" -printf '%P\n' | grep -v vendor | grep -v Changelog.md)
