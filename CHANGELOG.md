@@ -7,6 +7,23 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.34"></a>
+## [v0.1.34] - 2020-06-23
+
+- BBL-19 minor figure name update in README.md
+- BBL-19 minor figure name update in README.md
+- BBL-19 updating README.md figures
+- BBL-19 docs/examples section
+- BBL-19 docs/user-guide section
+- BBL-19 docs/how-it-works section
+- BBL-19 docs/images adding pending figures
+- BBL-19 Main Mkdocs files mkdocs.yml + index.md among others
+- BBL-19 docs/images all the current icons and figures for the doc
+- BBL-19 Adding Mkdos related Makefile cmds
+- BBL-19 Updating shared/storage gdrive backup backup to avoid object versioning resulting in a bucket oversize.
+- BBL-19 Removing [@doc](https://github.com/doc) folder to use Mkdocs default docs one.
+
+
 <a name="v0.1.33"></a>
 ## [v0.1.33] - 2020-06-15
 
@@ -568,7 +585,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.33...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.34...HEAD
+[v0.1.34]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.33...v0.1.34
 [v0.1.33]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.32...v0.1.33
 [v0.1.32]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.31...v0.1.32
 [v0.1.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.30...v0.1.31
