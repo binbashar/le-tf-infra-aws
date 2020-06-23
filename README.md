@@ -14,7 +14,7 @@ This repository contains all Terraform configuration files used to create Binbas
 Solutions Architecture.
 
 ## Documentation
-Check out the [Wiki](https://github.com/binbashar/bb-devops-tf-infra-aws/wiki) to read the [full documentation](https://github.com/binbashar/bb-devops-tf-infra-aws/wiki).
+Check out the [Binbash Leverage Reference Architecture Official Documentation](https://binbashar.github.io/le-ref-architectre-doc/).
 
 # Release Management
 ### CircleCi PR auto-release job
