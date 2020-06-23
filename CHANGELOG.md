@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.36"></a>
+## [v0.1.36] - 2020-06-23
+
+- BBL-119 mkdocs-gb site/ test
+
+
 <a name="v0.1.35"></a>
 ## [v0.1.35] - 2020-06-23
 
@@ -591,7 +597,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.35...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.36...HEAD
+[v0.1.36]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.35...v0.1.36
 [v0.1.35]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.34...v0.1.35
 [v0.1.34]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.33...v0.1.34
 [v0.1.33]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.32...v0.1.33
