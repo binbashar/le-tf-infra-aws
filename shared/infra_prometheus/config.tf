@@ -5,17 +5,17 @@ provider "aws" {
   version                 = "~> 2.56"
   region                  = var.region
   profile                 = var.profile
-  shared_credentials_file = "~/.aws/bb-le/config"
+  shared_credentials_file = "~/.aws/config"
 }
 
 #=============================#
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.12.24"
+  required_version = ">= 0.12.20"
 
   backend "s3" {
-    key = "shared/eskibana/terraform.tfstate"
+    key = "shared/prometheus/terraform.tfstate"
   }
 }
 
@@ -49,15 +49,5 @@ data "terraform_remote_state" "security" {
     profile = var.profile
     bucket  = var.bucket
     key     = "${var.environment}/security/terraform.tfstate"
-  }
-}
-
-data "terraform_remote_state" "vpc-devstg" {
-  backend = "s3"
-  config = {
-    region  = var.region
-    profile = "bb-apps-devstg-devops"
-    bucket  = "bb-apps-devstg-terraform-backend"
-    key     = "apps-devstg/network/terraform.tfstate"
   }
 }

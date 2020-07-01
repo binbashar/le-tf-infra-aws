@@ -4,7 +4,7 @@ set -e -o pipefail
 #
 # Pre-requisites validation
 #
-KOPS_VER="1.14.10"
+KOPS_VER="1.14.1"
 
 if [[ $(kops version | grep ${KOPS_VER}) == *${KOPS_VER}* ]] ; then
     echo "Kops Version ${KOPS_VER}"
@@ -21,7 +21,7 @@ fi
 #
 # Get terraform output and parse terraform output values
 ENV="apps-devstg"
-TF_BIN="terraform"
+TF_BIN="terraform12"
 TF_OUTPUT=$(cd ../1-prerequisites/ && ${TF_BIN} output -json)
 CLUSTER_TEMPLATE="cluster-template.yml"
 CLUSTER_FILE="cluster.yml"

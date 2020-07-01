@@ -240,7 +240,7 @@ variable "vpc_apps_devstg_eks_dns_assoc" {
 variable "vpc_apps_devstg_kops_dns_assoc" {
   type        = bool
   description = "true if Apps DevStg account Kops Private Hosted Zone exists and needs DNS association"
-  default     = false
+  default     = true
 }
 
 variable "vpc_apps_prd_dns_assoc" {

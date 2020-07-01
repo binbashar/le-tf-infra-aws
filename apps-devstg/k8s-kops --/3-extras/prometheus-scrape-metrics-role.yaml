@@ -49,5 +49,5 @@ roleRef:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
- namespace: monitoring
- name: prometheus-service-account
+  namespace: monitoring
+  name: prometheus-service-account
