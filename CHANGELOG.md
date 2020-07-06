@@ -221,7 +221,7 @@ All notable changes to this project will be documented in this file.
 - BBL-250 makefiles/terraform11 updated to use .aws/project credentials fodler + removed makefiles not necessary any more
 - BBL-250 .gitignore updated
 - BBL-250 shared/9_jenkins iam layer updated to to be fully independent via ec2_profile
-- OPS-250 upgrading from terraform version 0.12.20 to 0.12.24
+- OPS-250 upgrading from terraform version 0.12.20 to 0.12.28
 
 
 <a name="v0.1.15"></a>

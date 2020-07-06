@@ -9,7 +9,7 @@ provider "aws" {
 }
 
 terraform {
-  required_version = ">= 0.12.24"
+  required_version = ">= 0.12.28"
 }
 
 provider "null" {

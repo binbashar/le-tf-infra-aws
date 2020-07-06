@@ -12,7 +12,7 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.12.24"
+  required_version = ">= 0.12.28"
 
   backend "s3" {
     key = "apps-prd/security/terraform.tfstate"
