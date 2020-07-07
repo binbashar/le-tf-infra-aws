@@ -9,8 +9,7 @@ jobs:
       image: ubuntu-1604:201903-01 # Ubuntu 16.04, docker 18.09.3, docker-compose 1.23.1
 
       # This job has been blocked because Docker Layer Caching is not available on your plan.
-      # Please upgrade to continue building.
-      # Note: you will need to push a new commit or call the API to rerun the pipeline.
+      # Should upgrade if necessary.
       docker_layer_caching: false
 
     steps:
@@ -23,6 +22,10 @@ jobs:
       - run:
           name: test1-terraform-format
           command: make format-check
+
+      - run:
+          name: Install awscli
+          command: sudo pip install awscli
 
       - run:
           name: Configure awscli
@@ -109,7 +112,7 @@ jobs:
               echo "==============================================================================================="
               git config --global user.email "$GIT_USER_EMAIL"
               git config --global user.name "$GIT_USER_NAME"
-              make -f Makefile.release release-$VERSION_NUMBER-with-changelog-circleci
+              make release-$VERSION_NUMBER-with-changelog-circleci
             else
               echo "==============================================================================================="
               echo "Changes in working directory pending to be pushed - please check 'git status' cmd output below "

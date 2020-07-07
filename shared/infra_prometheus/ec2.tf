@@ -9,8 +9,8 @@ module "prometheus_grafana" {
   aws_ami_os_id    = var.aws_ami_os_id
   aws_ami_os_owner = var.aws_ami_os_owner
 
-  instance_type    = var.instance_type
-  vpc_id           = data.terraform_remote_state.vpc.outputs.vpc_id
+  instance_type = var.instance_type
+  vpc_id        = data.terraform_remote_state.vpc.outputs.vpc_id
 
   subnet_id                   = data.terraform_remote_state.vpc.outputs.private_subnets[0]
   associate_public_ip_address = var.associate_public_ip_address

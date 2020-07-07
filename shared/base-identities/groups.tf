@@ -3,7 +3,7 @@
 #
 module "iam_group_auditors" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.9.0"
-  name = "auditors"
+  name   = "auditors"
 
   group_users = [
     module.user_auditor_ci.this_iam_user_name,
@@ -17,7 +17,7 @@ module "iam_group_auditors" {
 
 module "iam_group_backup_s3" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.9.0"
-  name = "backup-s3"
+  name   = "backup-s3"
 
   group_users = [
     module.user_backup_s3.this_iam_user_name,
