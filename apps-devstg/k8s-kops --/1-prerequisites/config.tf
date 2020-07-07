@@ -1,6 +1,6 @@
 # Providers
 provider "aws" {
-  version                 = "~> 2.63"
+  version                 = "~> 2.69"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/bb-le/config"
@@ -8,7 +8,7 @@ provider "aws" {
 
 #replica provider
 provider "aws" {
-  version                 = "~> 2.63"
+  version                 = "~> 2.69"
   alias                   = "region_secondary"
   region                  = var.region_secondary
   profile                 = var.profile

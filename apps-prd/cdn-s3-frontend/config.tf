@@ -2,7 +2,7 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  version                 = "~> 2.63"
+  version                 = "~> 2.69"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/bb-le/config"
@@ -14,7 +14,7 @@ provider "aws" {
 # binbash-shared route53 cross-account ACM dns validation update
 #
 provider "aws" {
-  version                 = "~> 2.63"
+  version                 = "~> 2.69"
   region                  = var.region
   profile                 = var.profile_shared
   shared_credentials_file = "~/.aws/bb-le/config"
