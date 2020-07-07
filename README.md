@@ -7,7 +7,7 @@
   alt="leverage" width="130"/>
 </div>
 
-# Reference Architecture: Terraform AWS Infrastructure
+# Leverage Reference Architecture: Terraform AWS Infrastructure
 
 ## Overview
 This repository contains all Terraform configuration files used to create Binbash Leverage Reference AWS Cloud
