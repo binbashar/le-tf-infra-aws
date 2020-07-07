@@ -9,8 +9,7 @@ jobs:
       image: ubuntu-1604:201903-01 # Ubuntu 16.04, docker 18.09.3, docker-compose 1.23.1
 
       # This job has been blocked because Docker Layer Caching is not available on your plan.
-      # Please upgrade to continue building.
-      # Note: you will need to push a new commit or call the API to rerun the pipeline.
+      # Should upgrade if necessary.
       docker_layer_caching: false
 
     steps:
@@ -25,10 +24,13 @@ jobs:
           command: make format-check
 
       - run:
+          name: Install awscli
+          command: sudo pip install awscli
+
+      - run:
           name: Configure awscli
           command: |
             # AWS defautl awscli profile
-            sudo chown -R $USER:$USER ~/.aws
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
             aws configure set region us-east-1
