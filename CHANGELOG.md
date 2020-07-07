@@ -7,6 +7,19 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v0.1.40"></a>
+## [v0.1.40] - 2020-07-07
+
+- BBWW-44 re-ading chown to .aws creds dir
+- BBWW-44 updating req aws provider to 2.69
+- BBWW-44 updating circlejob to its latests cross-project state
+- BBWW-44 updating README.md to reflect updated leverage doc
+- BBWW-44 updating leverage doc link in README.md
+- BBWW-44 1st updato for .mk approach migration
+- BBWW-44 make format applied
+- BBWW-44 updating req to latest stable terraform ver 0.12.28
+
+
 <a name="v0.1.39"></a>
 ## [v0.1.39] - 2020-07-01
 
@@ -221,7 +234,7 @@ All notable changes to this project will be documented in this file.
 - BBL-250 makefiles/terraform11 updated to use .aws/project credentials fodler + removed makefiles not necessary any more
 - BBL-250 .gitignore updated
 - BBL-250 shared/9_jenkins iam layer updated to to be fully independent via ec2_profile
-- OPS-250 upgrading from terraform version 0.12.20 to 0.12.28
+- OPS-250 upgrading from terraform version 0.12.20 to 0.12.24
 
 
 <a name="v0.1.15"></a>
@@ -616,7 +629,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.39...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.40...HEAD
+[v0.1.40]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.39...v0.1.40
 [v0.1.39]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.38...v0.1.39
 [v0.1.38]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.37...v0.1.38
 [v0.1.37]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.36...v0.1.37
