@@ -9,8 +9,8 @@ module "elasticsearch_kibana" {
   aws_ami_os_id    = var.aws_ami_os_id
   aws_ami_os_owner = var.aws_ami_os_owner
 
-  instance_type    = var.instance_type
-  vpc_id           = data.terraform_remote_state.vpc.outputs.vpc_id
+  instance_type = var.instance_type
+  vpc_id        = data.terraform_remote_state.vpc.outputs.vpc_id
 
 
   subnet_id                   = data.terraform_remote_state.vpc.outputs.private_subnets[0]
@@ -69,9 +69,9 @@ module "elasticsearch_kibana" {
       description = "Allow Kibana"
     },
     {
-      from_port   = 9200,
-      to_port     = 9200,
-      protocol    = "tcp",
+      from_port = 9200,
+      to_port   = 9200,
+      protocol  = "tcp",
       cidr_blocks = [
         data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
         data.terraform_remote_state.vpc-devstg.outputs.vpc_cidr_block,

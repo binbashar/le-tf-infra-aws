@@ -3,7 +3,7 @@
 #
 module "iam_group_admins" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.9.0"
-  name = "admins"
+  name   = "admins"
 
   group_users = [
     module.user_diego_ojeda.this_iam_user_name,
@@ -18,7 +18,7 @@ module "iam_group_admins" {
 
 module "iam_group_auditors" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.9.0"
-  name = "auditors"
+  name   = "auditors"
 
   group_users = [
     module.user_diego_ojeda.this_iam_user_name,
@@ -33,7 +33,7 @@ module "iam_group_auditors" {
 
 module "iam_group_devops" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.9.0"
-  name = "devops"
+  name   = "devops"
 
   group_users = [
     module.user_diego_ojeda.this_iam_user_name,
@@ -48,7 +48,7 @@ module "iam_group_devops" {
 
 module "iam_group_deploymaster" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.9.0"
-  name = "deploymaster"
+  name   = "deploymaster"
 
   group_users = [
     module.user_circle_ci.this_iam_user_name,
@@ -61,7 +61,7 @@ module "iam_group_deploymaster" {
 
 module "iam_group_finops" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.9.0"
-  name = "finops"
+  name   = "finops"
 
   group_users = [
     module.user_marcelo_beresvil.this_iam_user_name,

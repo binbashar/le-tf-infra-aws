@@ -187,16 +187,16 @@ resource "aws_iam_policy" "s3_put_gdrive_to_s3_backup" {
 
 data "aws_iam_policy_document" "backup_s3_binbash_gdrive" {
   statement {
-    sid = "ListAllMyBuckets"
+    sid    = "ListAllMyBuckets"
     effect = "Allow"
     actions = [
-    "s3:ListAllMyBuckets",
+      "s3:ListAllMyBuckets",
     ]
     resources = ["*"]
   }
 
   statement {
-    sid = "ListBucket"
+    sid    = "ListBucket"
     effect = "Allow"
     actions = [
       "s3:ListBucket",
@@ -205,7 +205,7 @@ data "aws_iam_policy_document" "backup_s3_binbash_gdrive" {
   }
 
   statement {
-    sid = "PutDeleteBucketObjetc"
+    sid    = "PutDeleteBucketObjetc"
     effect = "Allow"
     actions = [
       "s3:PutObject",
