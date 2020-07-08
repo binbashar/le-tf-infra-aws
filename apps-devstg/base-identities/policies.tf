@@ -26,6 +26,7 @@ resource "aws_iam_policy" "devops_access" {
                 "aws-portal:*",
                 "backup:*",
                 "backup-storage:*",
+                "budgets:*",
                 "ce:*",
                 "cloudformation:*",
                 "cloudfront:*",
