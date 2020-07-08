@@ -11,7 +11,7 @@ LOCAL_OS_AWS_CONF_DIR            := ~/.aws/${PROJECT_SHORT}
 
 TF_PWD_DIR                       := $(shell pwd)
 TF_PWD_CONT_DIR                  := "/go/src/project/"
-TF_PWD_CONFIG_DIR                := $(shell cd .. && cd config && pwd)
+TF_PWD_CONFIG_DIR                := $(shell cd ../../ && cd config && pwd)
 TF_VER                           := 0.12.28
 TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
 TF_DOCKER_BASE_CONF_VARS_FILE    := /config/base.config
@@ -35,7 +35,7 @@ endef
 
 help:
 	@echo 'Available Commands:'
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2}'
+	@egrep '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":"}; { if ($$3 == "") { printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2 } else { printf " - \033[36m%-18s\033[0m %s\n", $$2, $$3 }}'
 
 #==============================================================#
 # TERRAFORM                                                    #
@@ -59,26 +59,26 @@ plan: ## Preview terraform changes
 	${TF_CMD_PREFIX} plan \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} \
-	-compact-warnings
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
 
 plan-detailed: ## Preview terraform changes with a more detailed output
 	${TF_CMD_PREFIX} plan -detailed-exitcode \
 	 -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	 -var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} \
-	 -compact-warnings
+	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
 
 apply: apply-cmd tf-dir-chmod ## Make terraform apply any changes with dockerized binary
 apply-cmd:
 	${TF_CMD_PREFIX} apply \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} \
-  -compact-warnings
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
 
 output: ## Terraform output command is used to extract the value of an output variable from the state file.
 	${TF_CMD_PREFIX} output
+
+output-json: ## Terraform output json fmt command is used to extract the value of an output variable from the state file.
+	${TF_CMD_PREFIX} output -json
 
 destroy: ## Destroy all resources managed by terraform
 	${TF_CMD_PREFIX} destroy \
@@ -122,7 +122,7 @@ encrypt: ## Encrypt secrets.dec.tf via ansible-vault
   && rm -rf secrets.dec.tf
 
 validate-tf-layout: ## Validate Terraform layout to make sure it's set up properly
-	../../@bin/scripts/validate-terraform-layout.sh
+	../../../@bin/scripts/validate-terraform-layout.sh
 
 cost-estimate-plan: ## Terraform plan output compatible with https://terraform-cost-estimation.com/
 	curl -sLO https://raw.githubusercontent.com/antonbabenko/terraform-cost-estimation/master/terraform.jq

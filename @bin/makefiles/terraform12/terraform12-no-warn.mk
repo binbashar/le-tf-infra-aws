@@ -35,7 +35,7 @@ endef
 
 help:
 	@echo 'Available Commands:'
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2}'
+	@egrep '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":"}; { if ($$3 == "") { printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2 } else { printf " - \033[36m%-18s\033[0m %s\n", $$2, $$3 }}'
 
 #==============================================================#
 # TERRAFORM                                                    #
@@ -59,20 +59,23 @@ plan: ## Preview terraform changes
 	${TF_CMD_PREFIX} plan \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} \
+	-compact-warnings
 
 plan-detailed: ## Preview terraform changes with a more detailed output
 	${TF_CMD_PREFIX} plan -detailed-exitcode \
 	 -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	 -var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} \
+	 -compact-warnings
 
 apply: apply-cmd tf-dir-chmod ## Make terraform apply any changes with dockerized binary
 apply-cmd:
 	${TF_CMD_PREFIX} apply \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} \
+  -compact-warnings
 
 output: ## Terraform output command is used to extract the value of an output variable from the state file.
 	${TF_CMD_PREFIX} output
@@ -88,7 +91,7 @@ format: ## The terraform fmt is used to rewrite tf conf files to a canonical for
 
 format-check: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
 	${TF_CMD_PREFIX} fmt -check
-    # Consider adding -recursive after everything has been migrated to tf-0.12
+  # Consider adding -recursive after everything has been migrated to tf-0.12
 	# (should exclude dev/8_k8s_kops/2-kops folder since it's not possible to migrate to
 	# tf-0.12 yet
 	# ${TF_CMD_PREFIX} fmt -recursive -check ${TF_PWD_CONT_DIR}
