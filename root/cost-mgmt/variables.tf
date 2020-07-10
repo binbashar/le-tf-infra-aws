@@ -93,12 +93,12 @@ variable "root_account_id" {
 #
 variable "monthly_billing_threshold_50" {
   description = "Monthly billing threshold in dollars"
-  default     = 50
+  default     = "50.0"
 }
 
 variable "monthly_billing_threshold_100" {
   description = "Monthly billing threshold in dollars"
-  default     = 100
+  default     = "100.0"
 }
 
 variable "currency" {
@@ -118,7 +118,7 @@ variable "time_unit" {
 variable "time_period_start" {
   description = "Time to start."
   type        = string
-  default     = "2019-01-01_00:00"
+  default     = "2020-01-01_00:00"
 }
 
 variable "notification_threshold_50" {
