@@ -1,1 +1,1 @@
-../../@bin/makefiles/terraform11/Makefile.terraform11-cont
+include ../../@bin/makefiles/terraform12/terraform12.mk

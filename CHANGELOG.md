@@ -150,7 +150,7 @@ All notable changes to this project will be documented in this file.
 - BBL-299 adding auditor group and user as pre-req for some sec related tools
 - BBL-299 improving make_diagram scripts
 - BBL-229 Adding CloudMater and SecurityViz diagrams per account
-- BBL-299 reviewing Makefile dockerized TF_CMD_PREFIX to grant terraform-aws-provider aws cred configs (shared_credentials_file = "~/.aws/bb-le/config") are properly managed
+- BBL-299 reviewing Makefile dockerized TF_CMD_PREFIX to grant terraform-aws-provider aws cred configs (shared_credentials_file = "~/.aws/${var.project}/config") are properly managed
 - BBL-229 updating .gitignore
 
 

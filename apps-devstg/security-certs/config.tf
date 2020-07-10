@@ -5,7 +5,7 @@ provider "aws" {
   version                 = "~> 2.69"
   region                  = var.region
   profile                 = var.profile
-  shared_credentials_file = "~/.aws/bb-le/config"
+  shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
 # Here we need a different AWS provider because ACM certificates
@@ -17,7 +17,7 @@ provider "aws" {
   version                 = "~> 2.69"
   region                  = var.region
   profile                 = var.profile_shared
-  shared_credentials_file = "~/.aws/bb-le/config"
+  shared_credentials_file = "~/.aws/${var.project}/config"
   alias                   = "shared-route53"
 }
 

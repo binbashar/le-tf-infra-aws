@@ -1,7 +1,7 @@
 .PHONY: help
 SHELL := /bin/bash
 
-PROJECT_SHORT                    := bb-le
+PROJECT_SHORT                    := bb
 
 LOCAL_OS_USER_ID                 := $(shell id -u)
 LOCAL_OS_GROUP_ID                := $(shell id -g)
@@ -39,7 +39,7 @@ endef
 
 help:
 	@echo 'Available Commands:'
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2}'
+	@egrep '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":"}; { if ($$3 == "") { printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2 } else { printf " - \033[36m%-18s\033[0m %s\n", $$2, $$3 }}'
 
 #==============================================================#
 # TERRAFORM                                                    #

@@ -41,9 +41,9 @@ jobs:
             aws configure set role_arn arn:aws:iam::$AWS_ACCOUNT_ID_SHARED:role/DeployMaster --profile $AWS_PROFILE_NAME
             aws configure set source_profile default --profile $AWS_PROFILE_NAME
             # moving credentials to specific project folder
-            mkdir --parents /home/circleci/.aws/bb-le
-            cp /home/circleci/.aws/credentials /home/circleci/.aws/bb-le/credentials
-            cp /home/circleci/.aws/config /home/circleci/.aws/bb-le/config
+            mkdir --parents /home/circleci/.aws/bb
+            cp /home/circleci/.aws/credentials /home/circleci/.aws/bb/credentials
+            cp /home/circleci/.aws/config /home/circleci/.aws/bb/config
 
       - run:
           name: test2-terraform-linting
@@ -94,7 +94,7 @@ jobs:
       docker_layer_caching: false
 
     environment:
-      VERSION_NUMBER: patch # opts: patch, minor or major.
+      VERSION_NUMBER: major # opts: patch, minor or major.
 
     steps:
       - checkout
