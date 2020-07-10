@@ -22,7 +22,7 @@ fi
 # Get terraform output and parse terraform output values
 PROJECT_SHORT="bb-le"
 ENV="apps-devstg"
-TF_OUTPUT=$(cd ../1-prerequisites/ && make output-json | grep -v docker)
+TF_OUTPUT=$(cd ../1-prerequisites/ && make --no-print-directory output-json | grep -v docker)
 CLUSTER_TEMPLATE="cluster-template.yml"
 CLUSTER_FILE="cluster.yml"
 SSH_PUBLIC_KEY="$HOME/.ssh/${PROJECT_SHORT}/${ENV}-k8s-kops-instances.pub"
