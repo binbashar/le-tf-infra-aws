@@ -6,7 +6,7 @@
 # User: Diego Ojeda        #
 #==========================#
 module "user_diego_ojeda" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.6.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.12.0"
 
   name                    = "diego.ojeda"
   force_destroy           = true
@@ -23,7 +23,7 @@ module "user_diego_ojeda" {
 # User: Exequiel Barrirero #
 #==========================#
 module "user_exequiel_barrirero" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.6.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.12.0"
 
   name                    = "exequiel.barrirero"
   force_destroy           = true
@@ -40,7 +40,7 @@ module "user_exequiel_barrirero" {
 # User: Marcelo Beresvil   #
 #==========================#
 module "user_marcelo_beresvil" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.6.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.12.0"
 
   name                    = "marcelo.beresvil"
   force_destroy           = true
@@ -57,7 +57,7 @@ module "user_marcelo_beresvil" {
 # User: Marcos Pagnucco    #
 #==========================#
 module "user_marcos_pagnuco" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.6.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.12.0"
 
   name                    = "marcos.pagnucco"
   force_destroy           = true
@@ -77,7 +77,7 @@ module "user_marcos_pagnuco" {
 # User: CircleCI           #
 #==========================#
 module "user_circle_ci" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.6.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.12.0"
 
   name                    = "circle.ci"
   force_destroy           = true

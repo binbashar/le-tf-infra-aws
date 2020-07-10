@@ -8,7 +8,7 @@
 # User: AuditorCI          #
 #==========================#
 module "user_auditor_ci" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.6.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.12.0"
 
   name                    = "auditor.ci"
   force_destroy           = true
