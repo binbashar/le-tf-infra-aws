@@ -5,7 +5,7 @@ provider "aws" {
   version                 = "~> 2.69"
   region                  = var.region
   profile                 = var.profile
-  shared_credentials_file = "~/.aws/bb-le/config"
+  shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
 #
