@@ -13,4 +13,4 @@ bucket.object_versions.delete()
 #bucket.delete()
 
 # Help: to cmd exec
-# $AWS_SHARED_CREDENTIALS_FILE="/home/delivery/.aws/bb-le/credentials" AWS_CONFIG_FILE="/home/delivery/.aws/bb-le/config" python s3_bucket_versions_rm.py
+# $AWS_SHARED_CREDENTIALS_FILE="/home/delivery/.aws/bb/credentials" AWS_CONFIG_FILE="/home/delivery/.aws/bb/config" python s3_bucket_versions_rm.py

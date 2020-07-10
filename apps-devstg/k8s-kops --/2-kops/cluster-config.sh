@@ -20,7 +20,7 @@ fi
 
 #
 # Get terraform output and parse terraform output values
-PROJECT_SHORT="bb-le"
+PROJECT_SHORT="bb"
 ENV="apps-devstg"
 TF_OUTPUT=$(cd ../1-prerequisites/ && make --no-print-directory output-json | grep -v docker)
 CLUSTER_TEMPLATE="cluster-template.yml"
