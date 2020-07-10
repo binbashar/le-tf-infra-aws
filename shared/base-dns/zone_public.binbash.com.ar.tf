@@ -33,7 +33,7 @@ resource "aws_route53_record" "aws_public_hosted_zone_1_mx_records" {
 # CNAME records
 #
 resource "aws_route53_record" "pub_CNAME_leverage_binbash_com_ar" {
-  zone_id = "Z1F75NUGYJVN3L"
+  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
   name    = "leverage.binbash.com.ar"
   records = ["binbashar.github.io"]
   type    = "CNAME"
