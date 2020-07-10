@@ -7,9 +7,10 @@
 #
 # binbash-shared
 #
+PROJECT="bb"
 AWS_ACCOUNT_ENV="shared"
-AWS_IAM_PROFILE="bb-${AWS_ACCOUNT_ENV}-auditor-ci"
-AWS_ACCOUNT_NAME="bb-${AWS_ACCOUNT_ENV}"
+AWS_IAM_PROFILE="${PROJECT}-${AWS_ACCOUNT_ENV}-auditor-ci"
+AWS_ACCOUNT_NAME="${PROJECT}-${AWS_ACCOUNT_ENV}"
 AWS_ACCOUNT_PEER_NAME_1="aws-apps-devstg"
 AWS_ACCOUNT_PEER_CIDR_1="172.18.32.0/20"
 AWS_ACCOUNT_PEER_NAME_2="aws-apps-prd"
@@ -18,8 +19,8 @@ AWS_ACCOUNT_PEER_CIDR_2="172.18.64.0/20"
 # binbash-apps-devstg
 #
 #AWS_ACCOUNT_ENV="apps-devstg"
-#AWS_IAM_PROFILE="bb-${AWS_ACCOUNT_ENV}-auditor-ci"
-#AWS_ACCOUNT_NAME="bb-${AWS_ACCOUNT_ENV}"
+#AWS_IAM_PROFILE="${PROJECT}-${AWS_ACCOUNT_ENV}-auditor-ci"
+#AWS_ACCOUNT_NAME="${PROJECT}-${AWS_ACCOUNT_ENV}"
 #AWS_ACCOUNT_PEER_NAME_1="aws-shared"
 #AWS_ACCOUNT_PEER_CIDR_1="172.18.0.0/20"
 #AWS_ACCOUNT_PEER_NAME_2="aws-apps-prd"
@@ -28,8 +29,8 @@ AWS_ACCOUNT_PEER_CIDR_2="172.18.64.0/20"
 # binbash-apps-prd
 #
 #AWS_ACCOUNT_ENV="apps-prd"
-#AWS_IAM_PROFILE="bb-${AWS_ACCOUNT_ENV}-auditor-ci"
-#AWS_ACCOUNT_NAME="bb-${AWS_ACCOUNT_ENV}"
+#AWS_IAM_PROFILE="${PROJECT}-${AWS_ACCOUNT_ENV}-auditor-ci"
+#AWS_ACCOUNT_NAME="${PROJECT}-${AWS_ACCOUNT_ENV}"
 #AWS_ACCOUNT_PEER_NAME_1="aws-shared"
 #AWS_ACCOUNT_PEER_CIDR_1="172.18.0.0/20"
 #AWS_ACCOUNT_PEER_NAME_2="aws-apps-devstg"
@@ -38,9 +39,9 @@ AWS_ACCOUNT_PEER_CIDR_2="172.18.64.0/20"
 #==============================================================================#
 # AWS configure IAM credentials
 #==============================================================================#
-AWS_SHARED_CREDENTIALS_FILE_VAR="~/.aws/bb-le/credentials"
+AWS_SHARED_CREDENTIALS_FILE_VAR="~/.aws/${PROJECT}/credentials"
 export AWS_SHARED_CREDENTIALS_FILE=${AWS_SHARED_CREDENTIALS_FILE_VAR}
-AWS_CONFIG_FILE_VAR="~/.aws/bb-le/config"
+AWS_CONFIG_FILE_VAR="~/.aws/${PROJECT}/config"
 export AWS_CONFIG_FILE=${AWS_CONFIG_FILE_VAR}
 
 aws_access_key_id=$(aws configure get aws_access_key_id --profile ${AWS_IAM_PROFILE})
