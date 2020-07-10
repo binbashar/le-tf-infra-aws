@@ -1,5 +1,5 @@
 .PHONY: help
-SHELL := /bin/bash
+SHELL    := /bin/bash
 
 help:
 	@echo 'Available Commands:'
@@ -54,3 +54,10 @@ cluster-destroy-yes: ## Kops destroy cluster
 		--name $$CLUSTER_NAME \
 		--unregister \
 		--yes
+
+kops-cmd: ## Kops custom cmd , eg: make KOPS_CMD="get secrets" kops-cmd
+    # eg2: make KOPS_CMD="delete secret SSHPublicKey admin 2c:cd:ff:0c:48:dd:81:bb:d2:ca:91:69:2b:8b:1c:44" kops-cmd
+	source cluster-config.sh && kops ${KOPS_CMD} \
+		--state $$ClUSTER_STATE \
+		--name $$CLUSTER_NAME
+

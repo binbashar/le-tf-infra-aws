@@ -33,6 +33,20 @@ docker run --rm \
 -it ${TF_DOCKER_IMAGE}:${TF_VER}
 endef
 
+define TF_CMD_BASH_PREFIX
+docker run --rm \
+-v ${TF_PWD_DIR}:${TF_PWD_CONT_DIR}:rw \
+-v ${TF_PWD_CONFIG_DIR}:/config \
+-v ${LOCAL_OS_SSH_DIR}:/root/.ssh \
+-v ${LOCAL_OS_GIT_CONF_DIR}:/etc/gitconfig \
+-v ${LOCAL_OS_AWS_CONF_DIR}:/root/.aws/${PROJECT_SHORT} \
+-e AWS_SHARED_CREDENTIALS_FILE=/root/.aws/${PROJECT_SHORT}/credentials \
+-e AWS_CONFIG_FILE=/root/.aws/${PROJECT_SHORT}/config \
+--entrypoint=bash \
+-w ${TF_PWD_CONT_DIR} \
+-it ${TF_DOCKER_IMAGE}:${TF_VER}
+endef
+
 help:
 	@echo 'Available Commands:'
 	@egrep '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":"}; { if ($$3 == "") { printf " - \033[36m%-18s\033[0m %s\n", $$1, $$2 } else { printf " - \033[36m%-18s\033[0m %s\n", $$2, $$3 }}'
@@ -44,6 +58,9 @@ tf-dir-chmod: ## run chown in ./.terraform to gran that the docker mounted dir h
 	@echo LOCAL_OS_USER_ID: ${LOCAL_OS_USER_ID}
 	@echo LOCAL_OS_GROUP_ID: ${LOCAL_OS_GROUP_ID}
 	sudo chown -R ${LOCAL_OS_USER_ID}:${LOCAL_OS_GROUP_ID} ./.terraform
+
+tf-bash: ## Initialize terraform backend, plugins, and modules
+	${TF_CMD_BASH_PREFIX}
 
 version: ## Show terraform version
 	docker run --rm \
