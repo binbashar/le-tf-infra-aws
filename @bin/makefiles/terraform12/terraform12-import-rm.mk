@@ -19,10 +19,6 @@ TF_DOCKER_EXTRA_CONF_VARS_FILE   := /config/extra.config
 TF_DOCKER_ENTRYPOINT             := /usr/local/go/bin/terraform
 TF_DOCKER_IMAGE                  := binbash/terraform-awscli
 
-TF_IMPORT_RESOURCE                := "aws_organizations_organizational_unit.bbl_apps_devstg"
-TF_IMPORT_RESOURCE_ID             := "ou-oz9d-yl3npduj"
-TF_RM_RESOURCE                    := "aws_organizations_organizational_unit.bbl_apps_devstg"
-
 define TF_CMD_PREFIX
 docker run --rm \
 -v ${TF_PWD_DIR}:${TF_PWD_CONT_DIR}:rw \
@@ -47,11 +43,34 @@ help:
 #
 # Terraform Import & rm aux commands
 #
-import: ## terraform import resources
-	${TF_CMD_PREFIX} import \
-	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} ${TF_IMPORT_RESOURCE} ${TF_IMPORT_RESOURCE_ID}
+import: ## terraform import resources - eg: make import TF_IMPORT_RESOURCE_LIST='${TF_IMPORT_RESOURCE_LIST_ARG}'
+	REPOS=(${TF_IMPORT_RESOURCE_LIST});\
+    OLDIFS=$$IFS;\
+    IFS=',';\
+    for i in "$${REPOS[@]}"; do\
+        set -- $$i;\
+		if [ "$$2" != "" ]; then\
+			echo -----------------------;\
+			echo $$1;\
+			echo $$2;\
+			echo -----------------------;\
+			${TF_CMD_PREFIX} import \
+				-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+				-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
+				-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} $$1 $$2;\
+			echo -----------------------;\
+			echo "TF SUCCESSFULLY IMPORTED $$1";\
+			cd ..;\
+			echo "";\
+		fi;\
+	done;\
+	IFS=$$OLDIFS
 
-state-rm: ## terraform rm resource from state
-	${TF_CMD_PREFIX} state rm ${TF_IMPORT_RESOURCE}
+state-rm: ## terraform rm resource from state - eg: make state-rm TF_RM_RESOURCE='${TF_RM_RESOURCE_ARG}'
+	${TF_CMD_PREFIX} state rm ${TF_RM_RESOURCE}
+
+
+
+
+
+
