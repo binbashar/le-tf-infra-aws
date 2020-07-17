@@ -7,6 +7,14 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.2"></a>
+## [v1.0.2] - 2020-07-17
+
+- BBL-173 base-tf-backend layer improved to store tf state at s3
+- BBL-173 updating Slack notification channels with its updated names
+- BBL-173 Makefile terraform12 import-rm improvement
+
+
 <a name="v1.0.1"></a>
 ## [v1.0.1] - 2020-07-10
 
@@ -660,7 +668,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.2...HEAD
+[v1.0.2]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.1...v1.0.2
 [v1.0.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.0...v1.0.1
 [v1.0.0]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.40...v1.0.0
 [v0.1.40]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.39...v0.1.40
