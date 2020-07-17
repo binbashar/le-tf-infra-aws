@@ -85,7 +85,7 @@ variable "appsprd_account_id" {
 # Notifications               #
 #=============================#
 #
-# AWS SNS -> Lambda -> Slack: bb-tools-monitoring
+# AWS SNS -> Lambda -> Slack: tools-monitoring
 #
 variable "sns_topic_name_bb_monitoring" {
   description = ""
@@ -93,7 +93,7 @@ variable "sns_topic_name_bb_monitoring" {
 }
 
 #
-# AWS SNS -> Lambda -> Slack: bb-tools-monitoring-sec
+# AWS SNS -> Lambda -> Slack: tools-monitoring-sec
 #
 variable "sns_topic_name_bb_monitoring_sec" {
   description = ""

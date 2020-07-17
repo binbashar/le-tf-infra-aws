@@ -2,7 +2,7 @@
 # Notifications Outputs       #
 #=============================#
 #
-# AWS SNS -> Lambda -> Slack: bb-tools-monitoring
+# AWS SNS -> Lambda -> Slack: tools-monitoring
 #
 output "sns_topic_arn_bb_monitoring" {
   description = "ARN of the created SNS topic for Slack"
@@ -50,7 +50,7 @@ output "notify_slack_bb_monitoring_lambda_function_version_bb_monitoring" {
 }
 
 #
-# AWS SNS -> Lambda -> Slack: bb-tools-monitoring-sec
+# AWS SNS -> Lambda -> Slack: tools-monitoring-sec
 #
 output "sns_topic_arn_bb_monitoring_sec" {
   description = "ARN of the created SNS topic for Slack"
