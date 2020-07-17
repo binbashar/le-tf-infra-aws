@@ -57,7 +57,7 @@ EOF
 //                "Service": "cloudtrail.amazonaws.com"
 //            },
 //            "Action": "s3:GetBucketAcl",
-//            "Resource": "arn:aws:s3:::bb-sec-cloudtrail-org"
+//            "Resource": "arn:aws:s3:::bb-security-cloudtrail-org"
 //        },
 //        {
 //            "Sid": "AWSCloudTrailWrite",
@@ -70,10 +70,10 @@ EOF
 //            },
 //            "Action": "s3:PutObject",
 //            "Resource": [
-//                "arn:aws:s3:::bb-sec-cloudtrail-org/AWSLogs/900980591242/*",
-//                "arn:aws:s3:::bb-sec-cloudtrail-org/AWSLogs/763606934258/*",
-//                "arn:aws:s3:::bb-sec-cloudtrail-org/AWSLogs/523857393444/*",
-//                "arn:aws:s3:::bb-sec-cloudtrail-org/*"
+//                "arn:aws:s3:::bb-security-cloudtrail-org/AWSLogs/900980591242/*",
+//                "arn:aws:s3:::bb-security-cloudtrail-org/AWSLogs/763606934258/*",
+//                "arn:aws:s3:::bb-security-cloudtrail-org/AWSLogs/523857393444/*",
+//                "arn:aws:s3:::bb-security-cloudtrail-org/*"
 //            ],
 //            "Condition": {
 //                "StringEquals": {
