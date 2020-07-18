@@ -86,10 +86,6 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
-variable "root_account_id" {
-  description = "Account: Root Organization"
-}
-
 #=============================#
 # Notifications               #
 #=============================#
