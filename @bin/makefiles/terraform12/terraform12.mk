@@ -12,10 +12,10 @@ LOCAL_OS_AWS_CONF_DIR            := ~/.aws/${PROJECT_SHORT}
 TF_PWD_DIR                       := $(shell pwd)
 TF_PWD_CONT_DIR                  := "/go/src/project/"
 TF_PWD_CONFIG_DIR                := $(shell cd .. && cd config && pwd)
+TF_PWD_COMMON_CONFIG_DIR         := $(shell cd ../.. && cd config && pwd)
 TF_VER                           := 0.12.28
 TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
-TF_DOCKER_BASE_CONF_VARS_FILE    := /config/base.config
-TF_DOCKER_EXTRA_CONF_VARS_FILE   := /config/extra.config
+TF_DOCKER_COMMON_CONF_VARS_FILE  := /common-config/common.config
 TF_DOCKER_ENTRYPOINT             := /usr/local/go/bin/terraform
 TF_DOCKER_IMAGE                  := binbash/terraform-awscli
 
@@ -23,6 +23,7 @@ define TF_CMD_PREFIX
 docker run --rm \
 -v ${TF_PWD_DIR}:${TF_PWD_CONT_DIR}:rw \
 -v ${TF_PWD_CONFIG_DIR}:/config \
+-v ${TF_PWD_COMMON_CONFIG_DIR}/common.config:${TF_DOCKER_COMMON_CONF_VARS_FILE} \
 -v ${LOCAL_OS_SSH_DIR}:/root/.ssh \
 -v ${LOCAL_OS_GIT_CONF_DIR}:/etc/gitconfig \
 -v ${LOCAL_OS_AWS_CONF_DIR}:/root/.aws/${PROJECT_SHORT} \
@@ -37,6 +38,7 @@ define TF_CMD_BASH_PREFIX
 docker run --rm \
 -v ${TF_PWD_DIR}:${TF_PWD_CONT_DIR}:rw \
 -v ${TF_PWD_CONFIG_DIR}:/config \
+-v ${TF_PWD_COMMON_CONFIG_DIR}/common.config:${TF_DOCKER_COMMON_CONF_VARS_FILE} \
 -v ${LOCAL_OS_SSH_DIR}:/root/.ssh \
 -v ${LOCAL_OS_GIT_CONF_DIR}:/etc/gitconfig \
 -v ${LOCAL_OS_AWS_CONF_DIR}:/root/.aws/${PROJECT_SHORT} \
@@ -75,21 +77,18 @@ init-cmd:
 plan: ## Preview terraform changes
 	${TF_CMD_PREFIX} plan \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
 
 plan-detailed: ## Preview terraform changes with a more detailed output
 	${TF_CMD_PREFIX} plan -detailed-exitcode \
 	 -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+	 -var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
 
 apply: apply-cmd tf-dir-chmod ## Make terraform apply any changes with dockerized binary
 apply-cmd:
 	${TF_CMD_PREFIX} apply \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
 
 output: ## Terraform output command is used to extract the value of an output variable from the state file.
 	${TF_CMD_PREFIX} output
@@ -97,8 +96,7 @@ output: ## Terraform output command is used to extract the value of an output va
 destroy: ## Destroy all resources managed by terraform
 	${TF_CMD_PREFIX} destroy \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE}
+	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
 
 format: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
 	${TF_CMD_PREFIX} fmt -recursive
@@ -142,8 +140,7 @@ cost-estimate-plan: ## Terraform plan output compatible with https://terraform-c
 	curl -sLO https://raw.githubusercontent.com/antonbabenko/terraform-cost-estimation/master/terraform.jq
 	${TF_CMD_PREFIX} plan -out=plan.tfplan \
 	 -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} && \
+	 -var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
 	${TF_CMD_PREFIX} show -json plan.tfplan > plan.json
 	@echo ----------------------------------------------------------------------
 	cat plan.json \

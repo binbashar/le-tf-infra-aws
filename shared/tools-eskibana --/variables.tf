@@ -61,6 +61,11 @@ variable "region_secondary" {
   description = "AWS Scondary Region for HA"
 }
 
+variable "root_account_id" {
+  type        = string
+  description = "Account: Root"
+}
+
 variable "security_account_id" {
   type        = string
   description = "Account: Security & Users Management"
