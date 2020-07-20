@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.3"></a>
+## [v1.0.3] - 2020-07-20
+
+- Global config ([#106](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/106))
+
+
 <a name="v1.0.2"></a>
 ## [v1.0.2] - 2020-07-17
 
@@ -668,7 +674,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.3...HEAD
+[v1.0.3]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.2...v1.0.3
 [v1.0.2]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.1...v1.0.2
 [v1.0.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.0...v1.0.1
 [v1.0.0]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v0.1.40...v1.0.0
