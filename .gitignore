@@ -19,7 +19,10 @@
 id_rsa
 id_dsa
 keys/
+!/apps-devstg/base-identities/keys/
+!/apps-prd/base-identities/keys/
 !/security/base-identities/keys/
+!/shared/base-identities/keys/
 !/root/base-identities/keys/
 
 # OS generated files #
