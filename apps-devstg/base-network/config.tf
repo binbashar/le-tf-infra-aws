@@ -37,13 +37,30 @@ data "terraform_remote_state" "vpc-eks" {
   }
 }
 
+#
+# data type from output for notifications
+#
+data "terraform_remote_state" "notifications" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/notifications/terraform.tfstate"
+  }
+}
+
+#
+# data type from output for vpc
+#
 data "terraform_remote_state" "vpc-shared" {
   backend = "s3"
 
   config = {
     region  = var.region
-    profile = "bb-shared-devops"
-    bucket  = "bb-shared-terraform-backend"
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
     key     = "shared/network/terraform.tfstate"
   }
 }

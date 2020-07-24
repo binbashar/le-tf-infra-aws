@@ -56,8 +56,8 @@ data "terraform_remote_state" "vpc-devstg" {
   backend = "s3"
   config = {
     region  = var.region
-    profile = "bb-apps-devstg-devops"
-    bucket  = "bb-apps-devstg-terraform-backend"
+    profile = "${var.project}-apps-devstg-devops"
+    bucket  = "${var.project}-apps-devstg-terraform-backend"
     key     = "apps-devstg/network/terraform.tfstate"
   }
 }
