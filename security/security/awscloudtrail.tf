@@ -26,10 +26,11 @@ module "cloudtrail_s3_bucket" {
 }
 
 module "cloudtrail_api_alarms" {
-  source = "github.com/binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=0.5.1"
+  source = "github.com/binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=v0.5.2"
 
   region           = var.region
   log_group_name   = aws_cloudwatch_log_group.cloudtrail.name
+  alarm_suffix     = "${var.environment}-account"
   metric_namespace = var.metric_namespace
   create_dashboard = var.create_dashboard
   sns_topic_arn    = data.terraform_remote_state.notifications.outputs.sns_topic_arn_bb_monitoring_sec # null (to deactivate)
