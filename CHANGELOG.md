@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.7"></a>
+## [v1.0.7] - 2020-07-24
+
+- Rename notifications resources in all accounts to remove 'bb' ([#110](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/110))
+
+
 <a name="v1.0.6"></a>
 ## [v1.0.6] - 2020-07-24
 
@@ -698,7 +704,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.6...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.7...HEAD
+[v1.0.7]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.6...v1.0.7
 [v1.0.6]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.5...v1.0.6
 [v1.0.5]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.4...v1.0.5
 [v1.0.4]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.3...v1.0.4
