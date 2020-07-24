@@ -16,8 +16,8 @@ module "notify_slack_bb_monitoring" {
   #
   # Creation Flags
   #
-  create           = false
-  create_sns_topic = false
+  create           = true
+  create_sns_topic = true
 
   #
   # Slack Webhook URL + Channel

@@ -49,8 +49,8 @@ data "terraform_remote_state" "vpc-shared" {
 
   config = {
     region  = var.region
-    profile = "bb-shared-devops"
-    bucket  = "bb-shared-terraform-backend"
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
     key     = "shared/network/terraform.tfstate"
   }
 }
@@ -60,8 +60,8 @@ data "terraform_remote_state" "dns-shared" {
 
   config = {
     region  = var.region
-    profile = "bb-shared-devops"
-    bucket  = "bb-shared-terraform-backend"
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
     key     = "shared/dns/terraform.tfstate"
   }
 }

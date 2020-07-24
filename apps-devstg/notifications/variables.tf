@@ -9,6 +9,10 @@ variable "region" {
   description = "AWS Region"
 }
 
+variable "region_secondary" {
+  description = "AWS Scondary Region for HA"
+}
+
 variable "profile" {
   type        = string
   description = "AWS Profile (required by the backend but also used for other resources)"
@@ -56,11 +60,6 @@ variable "environment" {
 #=============================#
 # Accounts & Extra Vars       #
 #=============================#
-variable "region_secondary" {
-  type        = string
-  description = "AWS Scondary Region for HA"
-}
-
 variable "root_account_id" {
   type        = string
   description = "Account: Root"

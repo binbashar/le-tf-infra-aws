@@ -42,8 +42,8 @@ data "terraform_remote_state" "security" {
 
   config = {
     region  = var.region
-    profile = "bb-security-devops"
-    bucket  = "bb-security-terraform-backend"
+    profile = "${var.project}-security-devops"
+    bucket  = "${var.project}-security-terraform-backend"
     key     = "security/security/terraform.tfstate"
   }
 }

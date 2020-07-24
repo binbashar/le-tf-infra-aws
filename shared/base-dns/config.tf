@@ -42,8 +42,8 @@ data "terraform_remote_state" "vpc-apps-devstg" {
 
   config = {
     region  = var.region
-    profile = "bb-apps-devstg-devops"
-    bucket  = "bb-apps-devstg-terraform-backend"
+    profile = "${var.project}-apps-devstg-devops"
+    bucket  = "${var.project}-apps-devstg-terraform-backend"
     key     = "apps-devstg/network/terraform.tfstate"
   }
 }
@@ -53,8 +53,8 @@ data "terraform_remote_state" "dns-apps-devstg-kops" {
 
   config = {
     region  = var.region
-    profile = "bb-apps-devstg-devops"
-    bucket  = "bb-apps-devstg-terraform-backend"
+    profile = "${var.project}-apps-devstg-devops"
+    bucket  = "${var.project}-apps-devstg-terraform-backend"
     key     = "apps-devstg/k8s-kops/prerequisites/terraform.tfstate"
   }
 }
@@ -64,8 +64,8 @@ data "terraform_remote_state" "vpc-apps-devstg-eks" {
 
   config = {
     region  = var.region
-    profile = "bb-apps-devstg-devops"
-    bucket  = "bb-apps-devstg-terraform-backend"
+    profile = "${var.project}-apps-devstg-devops"
+    bucket  = "${var.project}-apps-devstg-terraform-backend"
     key     = "apps-devstg/k8s-eks/prerequisites/terraform.tfstate"
   }
 }
@@ -75,8 +75,8 @@ data "terraform_remote_state" "ec2-fleet-ansible" {
 
   config = {
     region  = var.region
-    profile = "bb-apps-devstg-devops"
-    bucket  = "bb-apps-devstg-terraform-backend"
+    profile = "${var.project}-apps-devstg-devops"
+    bucket  = "${var.project}-apps-devstg-terraform-backend"
     key     = "apps-devstg/ec2-fleet-ansible/terraform.tfstate"
   }
 }
@@ -86,8 +86,8 @@ data "terraform_remote_state" "vpc-apps-prd" {
 
   config = {
     region  = var.region
-    profile = "bb-apps-prd-devops"
-    bucket  = "bb-apps-prd-terraform-backend"
+    profile = "${var.project}-apps-prd-devops"
+    bucket  = "${var.project}-apps-prd-terraform-backend"
     key     = "apps-prd/network/terraform.tfstate"
   }
 }

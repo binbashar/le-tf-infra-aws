@@ -31,8 +31,8 @@ data "terraform_remote_state" "vpc-apps-dev" {
 
   config = {
     region  = var.region
-    profile = "bb-apps-devstg-devops"
-    bucket  = "bb-apps-devstg-terraform-backend"
+    profile = "${var.project}-apps-devstg-devops"
+    bucket  = "${var.project}-apps-devstg-terraform-backend"
     key     = "apps-devstg/network/terraform.tfstate"
   }
 }
@@ -42,8 +42,8 @@ data "terraform_remote_state" "vpc-apps-dev-eks" {
 
   config = {
     region  = var.region
-    profile = "bb-apps-devstg-devops"
-    bucket  = "bb-apps-devstg-terraform-backend"
+    profile = "${var.project}-apps-devstg-devops"
+    bucket  = "${var.project}-apps-devstg-terraform-backend"
     key     = "apps-devstg/k8s-eks/prerequisites/terraform.tfstate"
   }
 }
@@ -53,8 +53,8 @@ data "terraform_remote_state" "vpc-apps-prd" {
 
   config = {
     region  = var.region
-    profile = "bb-apps-prd-devops"
-    bucket  = "bb-apps-prd-terraform-backend"
+    profile = "${var.project}-apps-prd-devops"
+    bucket  = "${var.project}-apps-prd-terraform-backend"
     key     = "apps-prd/network/terraform.tfstate"
   }
 }
