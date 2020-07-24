@@ -9,6 +9,10 @@ variable "region" {
   description = "AWS Region"
 }
 
+variable "region_secondary" {
+  description = "AWS Scondary Region for HA"
+}
+
 variable "profile" {
   type        = string
   description = "AWS Profile (required by the backend but also used for other resources)"
@@ -56,9 +60,9 @@ variable "environment" {
 #=============================#
 # Accounts & Extra Vars       #
 #=============================#
-variable "region_secondary" {
+variable "root_account_id" {
   type        = string
-  description = "AWS Scondary Region for HA"
+  description = "Account: Root"
 }
 
 variable "security_account_id" {
@@ -165,7 +169,7 @@ variable "map_accounts" {
   default = [
     "900980591242", # security
     "763606934258", # shared
-    "523857393444", # dev
+    "523857393444", # apps-devstg
   ]
 }
 
