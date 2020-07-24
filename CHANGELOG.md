@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.6"></a>
+## [v1.0.6] - 2020-07-24
+
+- BBL-191 suffix added to CloudTrial Alarms to ease its Slack channel identification
+- BBL-191 make format applied
+
+
 <a name="v1.0.5"></a>
 ## [v1.0.5] - 2020-07-24
 
@@ -691,7 +698,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.5...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.6...HEAD
+[v1.0.6]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.5...v1.0.6
 [v1.0.5]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.4...v1.0.5
 [v1.0.4]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.3...v1.0.4
 [v1.0.3]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.2...v1.0.3
