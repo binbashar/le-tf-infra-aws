@@ -1,5 +1,5 @@
 resource "aws_sns_topic_policy" "default" {
-  arn = module.notify_slack_bb_monitoring.this_slack_topic_arn
+  arn = module.notify_slack_monitoring.this_slack_topic_arn
 
   policy = data.aws_iam_policy_document.sns-topic-policy.json
 }
@@ -20,7 +20,7 @@ data "aws_iam_policy_document" "sns-topic-policy" {
     }
 
     resources = [
-      module.notify_slack_bb_monitoring.this_slack_topic_arn,
+      module.notify_slack_monitoring.this_slack_topic_arn,
     ]
 
     sid = "_budgets_service_access_ID"
@@ -56,7 +56,7 @@ data "aws_iam_policy_document" "sns-topic-policy" {
     }
 
     resources = [
-      module.notify_slack_bb_monitoring.this_slack_topic_arn,
+      module.notify_slack_monitoring.this_slack_topic_arn,
     ]
 
     sid = "__default_statement_ID"

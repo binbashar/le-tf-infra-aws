@@ -91,15 +91,15 @@ variable "root_account_id" {
 #
 # AWS SNS -> Lambda -> Slack: tools-monitoring
 #
-variable "sns_topic_name_bb_monitoring" {
+variable "sns_topic_name_monitoring" {
   description = ""
-  default     = "sns-topic-slack-notify-monitoring-bb-monitoring"
+  default     = "sns-topic-slack-notify-monitoring-monitoring"
 }
 
 #
 # AWS SNS -> Lambda -> Slack: tools-monitoring-sec
 #
-variable "sns_topic_name_bb_monitoring_sec" {
+variable "sns_topic_name_monitoring_sec" {
   description = ""
-  default     = "sns-topic-slack-notify-monitoring-bb-monitoring-sec"
+  default     = "sns-topic-slack-notify-monitoring-monitoring-sec"
 }
