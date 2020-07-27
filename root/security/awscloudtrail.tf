@@ -21,7 +21,7 @@ module "cloudtrail_api_alarms" {
   metric_namespace = var.metric_namespace
   create_dashboard = var.create_dashboard
   # Uncomment if /notifications SNS is configured and you want to send notifications via slack
-  sns_topic_arn = data.terraform_remote_state.notifications.outputs.sns_topic_arn_bb_monitoring_sec # null (to deactivate)
+  sns_topic_arn = data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring_sec # null (to deactivate)
 }
 
 #==================================================================#

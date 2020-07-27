@@ -33,7 +33,7 @@ module "cloudtrail_api_alarms" {
   alarm_suffix     = "${var.environment}-account"
   metric_namespace = var.metric_namespace
   create_dashboard = var.create_dashboard
-  sns_topic_arn    = data.terraform_remote_state.notifications.outputs.sns_topic_arn_bb_monitoring_sec # null (to deactivate)
+  sns_topic_arn    = data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring_sec # null (to deactivate)
 }
 
 #==================================================================#
