@@ -18,5 +18,5 @@ module "root-login-notifications" {
 
   alarm_suffix   = "${var.environment}-account"
   send_sns       = true
-  sns_topic_name = data.terraform_remote_state.notifications.outputs.sns_topic_name_bb_monitoring_sec
+  sns_topic_name = data.terraform_remote_state.notifications.outputs.sns_topic_name_monitoring_sec
 }
