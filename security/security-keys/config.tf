@@ -15,24 +15,6 @@ terraform {
   required_version = ">= 0.12.28"
 
   backend "s3" {
-    key = "security/notifications/terraform.tfstate"
-  }
-}
-
-#=============================#
-# Data sources                #
-#=============================#
-
-#
-# data type from output for security
-#
-data "terraform_remote_state" "keys" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = var.profile
-    bucket  = var.bucket
-    key     = "${var.environment}/security-keys/terraform.tfstate"
+    key = "security/security-keys/terraform.tfstate"
   }
 }

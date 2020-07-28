@@ -63,7 +63,7 @@ variable "region_secondary" {
 
 variable "root_account_id" {
   type        = string
-  description = "Account: Root Organization"
+  description = "Account: Root"
 }
 
 variable "security_account_id" {
@@ -89,8 +89,20 @@ variable "appsprd_account_id" {
 #===========================================#
 # Security                                  #
 #===========================================#
-variable "kms_key_name" {
+variable "lifecycle_rule_enabled" {
+  type        = bool
+  description = "Enable lifecycle events on this bucket"
+  default     = true
+}
+
+variable "metric_namespace" {
   type        = string
-  description = "KMS key solution name, e.g. 'app' or 'jenkins'"
-  default     = "kms"
+  description = "A namespace for grouping all of the metrics together"
+  default     = "CISBenchmark"
+}
+
+variable "create_dashboard" {
+  type        = bool
+  description = "When true a dashboard that displays the statistics as a line graph will be created in CloudWatch"
+  default     = true
 }
