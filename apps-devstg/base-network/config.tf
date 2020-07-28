@@ -66,7 +66,7 @@ data "terraform_remote_state" "vpc-shared" {
 }
 
 #
-# data type from output for vpc
+# data type from output for tools-ec2
 #
 data "terraform_remote_state" "tools-vpn-server" {
   backend = "s3"
