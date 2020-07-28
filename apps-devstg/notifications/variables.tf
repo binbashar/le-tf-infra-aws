@@ -93,7 +93,7 @@ variable "appsprd_account_id" {
 #
 variable "sns_topic_name_monitoring" {
   description = ""
-  default     = "sns-topic-slack-notify-monitoring-monitoring"
+  default     = "sns-topic-slack-notify-monitoring"
 }
 
 #
@@ -101,5 +101,5 @@ variable "sns_topic_name_monitoring" {
 #
 variable "sns_topic_name_monitoring_sec" {
   description = ""
-  default     = "sns-topic-slack-notify-monitoring-monitoring-sec"
+  default     = "sns-topic-slack-notify-monitoring-sec"
 }
