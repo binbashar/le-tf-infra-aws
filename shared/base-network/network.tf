@@ -16,5 +16,13 @@ module "vpc" {
   enable_dns_hostnames = true
   enable_vpn_gateway   = false
 
+  manage_default_network_acl    = false
+  public_dedicated_network_acl  = true // use dedicated network ACL for the public subnets.
+  private_dedicated_network_acl = true // use dedicated network ACL for the private subnets.
+  private_inbound_acl_rules     = concat(
+  local.network_acls["default_inbound"],
+  local.network_acls["private_inbound"],
+  )
+
   tags = local.tags
 }
