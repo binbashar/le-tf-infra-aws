@@ -7,6 +7,19 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.11"></a>
+## [v1.0.11] - 2020-07-28
+
+- BBL-209 apps-devstg/base-network -> nat-gw notif updated
+- BBL-209 shared/base-networks NACLs implemented
+- BBL-209 pointing kms module to its latest version
+- BBL-209 apps-prd base-networks NACLs implemented
+- BBL-209 apps-devstg/base-networks sintaxt improvement
+- BBL-209 apps-devstg base-networks NACLs implemented
+- Merge branch 'master' into BBL-209-nacls-routing-hardening
+- BBL-209 apps-devstg/base-network -> adding NACLs
+
+
 <a name="v1.0.10"></a>
 ## [v1.0.10] - 2020-07-28
 
@@ -726,7 +739,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.10...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.11...HEAD
+[v1.0.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.10...v1.0.11
 [v1.0.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.9...v1.0.10
 [v1.0.9]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.8...v1.0.9
 [v1.0.8]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.7...v1.0.8
