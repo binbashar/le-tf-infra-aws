@@ -65,3 +65,17 @@ data "terraform_remote_state" "dns-shared" {
     key     = "shared/dns/terraform.tfstate"
   }
 }
+
+#
+# data type from output for tools-ec2
+#
+data "terraform_remote_state" "tools-vpn-server" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
+    key     = "shared/vpn/terraform.tfstate"
+  }
+}

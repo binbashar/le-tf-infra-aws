@@ -2,7 +2,7 @@
 # EKS VPC
 #
 module "vpc-eks" {
-  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v2.21.0"
+  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v2.44.0"
 
   name = local.vpc_name
   cidr = local.vpc_cidr_block
@@ -15,6 +15,14 @@ module "vpc-eks" {
   single_nat_gateway   = true
   enable_dns_hostnames = true
   enable_vpn_gateway   = false
+
+  manage_default_network_acl    = false
+  public_dedicated_network_acl  = true // use dedicated network ACL for the public subnets.
+  private_dedicated_network_acl = true // use dedicated network ACL for the private subnets.
+  private_inbound_acl_rules     = concat(
+  local.network_acls["default_inbound"],
+  local.network_acls["private_inbound"],
+  )
 
   public_subnet_tags  = local.public_subnet_tags
   private_subnet_tags = local.private_subnet_tags
