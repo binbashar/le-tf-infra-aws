@@ -11,10 +11,13 @@ module "vpc" {
   private_subnets = local.private_subnets
   public_subnets  = local.public_subnets
 
-  manage_default_network_acl = true
-  #private_dedicated_network_acl = true // use dedicated network ACL for the private subnets.
-  #private_inbound_acl_rules     = "${concat(local.network_acls["default_inbound"], local.network_acls["private_inbound"])}"
-  #private_outbound_acl_rules    = "${concat(local.network_acls["default_outbound"], local.network_acls["private_outbound"])}"
+  manage_default_network_acl    = false
+  public_dedicated_network_acl  = true // use dedicated network ACL for the public subnets.
+  private_dedicated_network_acl = true // use dedicated network ACL for the private subnets.
+  private_inbound_acl_rules     = concat(
+  local.network_acls["default_inbound"],
+  local.network_acls["private_inbound"],
+  )
 
   enable_nat_gateway   = true
   single_nat_gateway   = true
