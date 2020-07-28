@@ -15,17 +15,13 @@ terraform {
   required_version = ">= 0.12.28"
 
   backend "s3" {
-    key = "root/security/terraform.tfstate"
+    key = "root/security-audit/terraform.tfstate"
   }
 }
 
 #=============================#
 # Data sources                #
 #=============================#
-
-#
-# data type from output for notifications
-#
 data "terraform_remote_state" "notifications" {
   backend = "s3"
 
@@ -37,7 +33,7 @@ data "terraform_remote_state" "notifications" {
   }
 }
 
-data "terraform_remote_state" "security" {
+data "terraform_remote_state" "security_keys" {
   backend = "s3"
 
   config = {

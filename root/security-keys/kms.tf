@@ -1,5 +1,5 @@
 module "kms_key" {
-  source = "github.com/binbashar/terraform-aws-kms-key.git?ref=0.5.0"
+  source = "github.com/binbashar/terraform-aws-kms-key.git?ref=0.4.0"
 
   enabled                 = true
   namespace               = var.project
@@ -10,5 +10,5 @@ module "kms_key" {
   deletion_window_in_days = 7
   enable_key_rotation     = true
   alias                   = "alias/${var.project}_${var.environment}_${var.kms_key_name}_key"
-
+  tags                    = local.tags
 }

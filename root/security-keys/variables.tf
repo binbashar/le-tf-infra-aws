@@ -88,18 +88,6 @@ variable "root_account_id" {
 #===========================================#
 # Security                                  #
 #===========================================#
-variable "metric_namespace" {
-  type        = string
-  description = "A namespace for grouping all of the metrics together"
-  default     = "CISBenchmark"
-}
-
-variable "create_dashboard" {
-  type        = bool
-  description = "When true a dashboard that displays the statistics as a line graph will be created in CloudWatch"
-  default     = true
-}
-
 variable "kms_key_name" {
   type        = string
   description = "KMS key solution name, e.g. 'app' or 'jenkins'"
