@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.12"></a>
+## [v1.0.12] - 2020-07-29
+
+- Refactor security folder in all accounts ([#115](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/115))
+
+
 <a name="v1.0.11"></a>
 ## [v1.0.11] - 2020-07-28
 
@@ -739,7 +745,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.11...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.12...HEAD
+[v1.0.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.11...v1.0.12
 [v1.0.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.10...v1.0.11
 [v1.0.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.9...v1.0.10
 [v1.0.9]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.8...v1.0.9
