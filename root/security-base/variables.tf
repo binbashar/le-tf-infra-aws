@@ -84,3 +84,14 @@ variable "appsprd_account_id" {
 variable "root_account_id" {
   description = "Account: Root Organization"
 }
+
+#=============================#
+# Notifications               #
+#=============================#
+#
+# AWS SNS -> Lambda -> Slack: tools-monitoring-sec
+#
+variable "sns_topic_name_monitoring_sec" {
+  description = ""
+  default     = "sns-topic-slack-notify-monitoring-sec"
+}

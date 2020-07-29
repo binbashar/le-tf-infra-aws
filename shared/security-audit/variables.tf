@@ -86,13 +86,17 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
-#=============================#
-# Notifications               #
-#=============================#
-#
-# AWS SNS -> Lambda -> Slack: tools-monitoring-sec
-#
-variable "sns_topic_name_monitoring_sec" {
-  description = ""
-  default     = "sns-topic-slack-notify-monitoring-sec"
+#===========================================#
+# Security                                  #
+#===========================================#
+variable "metric_namespace" {
+  type        = string
+  description = "A namespace for grouping all of the metrics together"
+  default     = "CISBenchmark"
+}
+
+variable "create_dashboard" {
+  type        = bool
+  description = "When true a dashboard that displays the statistics as a line graph will be created in CloudWatch"
+  default     = true
 }

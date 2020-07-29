@@ -15,7 +15,7 @@ terraform {
   required_version = ">= 0.12.28"
 
   backend "s3" {
-    key = "shared/security/terraform.tfstate"
+    key = "shared/security-audit/terraform.tfstate"
   }
 }
 
@@ -37,13 +37,13 @@ data "terraform_remote_state" "notifications" {
   }
 }
 
-data "terraform_remote_state" "security" {
+data "terraform_remote_state" "security_audit" {
   backend = "s3"
 
   config = {
     region  = var.region
     profile = "${var.project}-security-devops"
     bucket  = "${var.project}-security-terraform-backend"
-    key     = "security/security/terraform.tfstate"
+    key     = "security/security-audit/terraform.tfstate"
   }
 }
