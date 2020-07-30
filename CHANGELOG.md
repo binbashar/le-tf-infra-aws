@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.13"></a>
+## [v1.0.13] - 2020-07-30
+
+- BBL-192 base-identities password length set to >= 30
+
+
 <a name="v1.0.12"></a>
 ## [v1.0.12] - 2020-07-29
 
@@ -745,7 +751,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.12...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.13...HEAD
+[v1.0.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.12...v1.0.13
 [v1.0.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.11...v1.0.12
 [v1.0.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.10...v1.0.11
 [v1.0.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.9...v1.0.10
