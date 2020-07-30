@@ -11,6 +11,7 @@ module "user_diego_ojeda" {
   name                    = "diego.ojeda"
   force_destroy           = true
   password_reset_required = true
+  password_length         = 30
 
   create_iam_user_login_profile = true
   create_iam_access_key         = false
@@ -28,6 +29,7 @@ module "user_exequiel_barrirero" {
   name                    = "exequiel.barrirero"
   force_destroy           = true
   password_reset_required = true
+  password_length         = 30
 
   create_iam_user_login_profile = true
   create_iam_access_key         = false
@@ -45,6 +47,7 @@ module "user_marcelo_beresvil" {
   name                    = "marcelo.beresvil"
   force_destroy           = true
   password_reset_required = true
+  password_length         = 30
 
   create_iam_user_login_profile = true
   create_iam_access_key         = false
@@ -62,6 +65,7 @@ module "user_marcos_pagnuco" {
   name                    = "marcos.pagnucco"
   force_destroy           = true
   password_reset_required = true
+  password_length         = 30
 
   create_iam_user_login_profile = true
   create_iam_access_key         = false
