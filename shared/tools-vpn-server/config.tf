@@ -45,13 +45,13 @@ data "terraform_remote_state" "dns" {
   }
 }
 
-data "terraform_remote_state" "security" {
+data "terraform_remote_state" "keys" {
   backend = "s3"
 
   config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/security/terraform.tfstate"
+    key     = "${var.environment}/security-keys/terraform.tfstate"
   }
 }
