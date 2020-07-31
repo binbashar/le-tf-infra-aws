@@ -2,7 +2,7 @@
 # EC2 Pritunl OpenVPN
 #
 module "terraform-aws-basic-layout" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.9"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.10"
   prefix = var.prefix
   name   = var.name
 
@@ -14,7 +14,7 @@ module "terraform-aws-basic-layout" {
 
   subnet_id                   = data.terraform_remote_state.vpc.outputs.public_subnets[0]
   associate_public_ip_address = var.associate_public_ip_address
-  key_pair_name               = data.terraform_remote_state.security.outputs.aws_key_pair_name
+  key_pair_name               = data.terraform_remote_state.keys.outputs.aws_key_pair_name
   ebs_optimized               = var.ebs_optimized
   monitoring                  = var.monitoring
   user_data_base64            = base64encode(local.user_data)
@@ -90,12 +90,12 @@ module "terraform-aws-basic-layout" {
   #    c. rollback a. step
   #    d. re-comment this block
   #
-  /*  dns_records_public_hosted_zone = [{
+/*  dns_records_public_hosted_zone = [{
     zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id[0],
     name    = "vpn.aws.binbash.com.ar",
     type    = "A",
     ttl     = 300
-  }]*/
+}]*/
 
   tags = local.tags
 }
