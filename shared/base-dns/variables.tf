@@ -99,33 +99,6 @@ variable "aws_public_hosted_zone_fqdn_1" {
 }
 
 #
-# A records
-#
-variable "aws_public_hosted_zone_fqdn_record_name_1" {
-  type        = string
-  description = "AWS Route53 public hosted zone fully qualified domain name (fqdn)"
-  default     = "www.binbash.com.ar"
-}
-
-variable "aws_public_hosted_zone_1_address_record_1" {
-  type        = string
-  description = "AWS Route53 public hosted zone A type record"
-  default     = "35.227.27.193"
-}
-
-variable "aws_public_hosted_zone_fqdn_record_name_2" {
-  type        = string
-  description = "AWS Route53 public hosted zone fully qualified domain name (fqdn)"
-  default     = "jenkins.binbash.com.ar"
-}
-
-variable "aws_public_hosted_zone_1_address_record_2" {
-  type        = string
-  description = "AWS Route53 public hosted zone A type record"
-  default     = "35.227.116.126"
-}
-
-#
 # TXT records
 #
 # Google
