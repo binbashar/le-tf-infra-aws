@@ -7,7 +7,7 @@ module "dev_aws_binbash_com_ar" {
   # Common: bucket naming convention is "bb-apps-devstg-frontend-[DOMAIN_NAME]-origin"
   namespace = "${var.project}-${var.environment}-frontend"
   name      = local.domain_name
-  stage     = "dev"
+  stage     = "dev" # needed to distinguish between dev, qa, stg, etc.
   aliases   = ["dev.${local.domain_name}"]
 
   # Certificate settings
