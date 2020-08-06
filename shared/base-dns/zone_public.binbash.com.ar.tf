@@ -41,33 +41,6 @@ resource "aws_route53_record" "pub_CNAME_leverage_binbash_com_ar" {
 }
 
 #
-# A records
-#
-resource "aws_route53_record" "aws_public_hosted_zone_1_A_record_1" {
-  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
-  name    = var.aws_public_hosted_zone_fqdn_1
-  type    = "A"
-  records = [var.aws_public_hosted_zone_1_address_record_1]
-  ttl     = 300
-}
-
-resource "aws_route53_record" "aws_public_hosted_zone_1_A_record_2" {
-  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
-  name    = var.aws_public_hosted_zone_fqdn_record_name_1
-  type    = "A"
-  records = [var.aws_public_hosted_zone_1_address_record_1]
-  ttl     = 300
-}
-
-resource "aws_route53_record" "aws_public_hosted_zone_1_A_record_3" {
-  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
-  name    = var.aws_public_hosted_zone_fqdn_record_name_2
-  type    = "A"
-  records = [var.aws_public_hosted_zone_1_address_record_2]
-  ttl     = 300
-}
-
-#
 # text records
 #
 resource "aws_route53_record" "aws_public_hosted_zone_1_TXT_record_1" {

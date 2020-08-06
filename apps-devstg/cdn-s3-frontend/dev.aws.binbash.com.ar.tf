@@ -2,12 +2,12 @@
 # Statics S3 Bucket + CloudFront CDN for moderncare.com
 #
 module "dev_aws_binbash_com_ar" {
-  source = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=0.23.1"
+  source = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=0.30.0"
 
   # Common: bucket naming convention is "bb-apps-devstg-frontend-[DOMAIN_NAME]-origin"
   namespace = "${var.project}-${var.environment}-frontend"
   name      = local.domain_name
-  stage     = "dev"
+  stage     = "dev" # needed to distinguish between dev, qa, stg, etc.
   aliases   = ["dev.${local.domain_name}"]
 
   # Certificate settings
