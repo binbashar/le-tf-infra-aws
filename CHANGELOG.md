@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.16"></a>
+## [v1.0.16] - 2020-08-13
+
+- Create helper script to setup AWS credentials ([#119](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/119))
+
+
 <a name="v1.0.15"></a>
 ## [v1.0.15] - 2020-08-06
 
@@ -765,7 +771,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.15...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.16...HEAD
+[v1.0.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.15...v1.0.16
 [v1.0.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.14...v1.0.15
 [v1.0.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.13...v1.0.14
 [v1.0.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.12...v1.0.13
