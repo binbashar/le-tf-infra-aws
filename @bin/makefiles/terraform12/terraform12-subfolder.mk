@@ -12,7 +12,7 @@ LOCAL_OS_AWS_CONF_DIR            := ~/.aws/${PROJECT_SHORT}
 TF_PWD_DIR                       := $(shell pwd)
 TF_PWD_CONT_DIR                  := "/go/src/project/"
 TF_PWD_CONFIG_DIR                := $(shell cd ../../ && cd config && pwd)
-TF_PWD_COMMON_CONFIG_DIR         := $(shell cd ../../.. && cd config && pwd)
+TF_PWD_COMMON_CONFIG_DIR         := $(shell cd ../../../ && cd config && pwd)
 TF_VER                           := 0.12.28
 TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
 TF_DOCKER_COMMON_CONF_VARS_FILE  := /common-config/common.config
@@ -61,7 +61,7 @@ tf-dir-chmod: ## run chown in ./.terraform to gran that the docker mounted dir h
 	@echo LOCAL_OS_GROUP_ID: ${LOCAL_OS_GROUP_ID}
 	sudo chown -R ${LOCAL_OS_USER_ID}:${LOCAL_OS_GROUP_ID} ./.terraform
 
-tf-bash: ## Initialize terraform backend, plugins, and modules
+shell: ## Initialize terraform backend, plugins, and modules
 	${TF_CMD_BASH_PREFIX}
 
 version: ## Show terraform version

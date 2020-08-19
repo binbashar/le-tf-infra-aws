@@ -11,13 +11,17 @@ LOCAL_OS_AWS_CONF_DIR            := ~/.aws/${PROJECT_SHORT}
 
 TF_PWD_DIR                       := $(shell pwd)
 TF_PWD_CONT_DIR                  := "/go/src/project/"
-TF_PWD_CONFIG_DIR                := $(shell cd .. && cd config && pwd)
-TF_PWD_COMMON_CONFIG_DIR         := $(shell cd ../.. && cd config && pwd)
+TF_PWD_CONFIG_DIR                := $(shell cd ../ && cd config && pwd)
+TF_PWD_COMMON_CONFIG_DIR         := $(shell cd ../../ && cd config && pwd)
 TF_VER                           := 0.12.28
 TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
 TF_DOCKER_COMMON_CONF_VARS_FILE  := /common-config/common.config
 TF_DOCKER_ENTRYPOINT             := /usr/local/go/bin/terraform
 TF_DOCKER_IMAGE                  := binbash/terraform-awscli
+
+TF_IMPORT_RESOURCE                := "aws_organizations_organizational_unit.bbl_apps_devstg"
+TF_IMPORT_RESOURCE_ID             := "ou-oz9d-yl3npduj"
+TF_RM_RESOURCE                    := "aws_organizations_organizational_unit.bbl_apps_devstg"
 
 define TF_CMD_PREFIX
 docker run --rm \
