@@ -15,7 +15,7 @@ terraform {
   required_version = ">= 0.12.28"
 
   backend "s3" {
-    key = "shared/dns/terraform.tfstate"
+    key = "shared/dns/binbash.com.ar/terraform.tfstate"
   }
 }
 
