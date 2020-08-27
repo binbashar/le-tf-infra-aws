@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 from PyInquirer import style_from_dict, Token, prompt, Separator
-import subprocess, os, git
+import subprocess, os, git, sys
 from pathlib import Path
 
 
@@ -46,7 +46,7 @@ def find_account(config_entries, search_account):
 def exit_if_empty(value, message):
     if len(value) == 0:
         print(message)
-        exit(0)
+        sys.exit(0)
 
 def build_accounts_choices():
     accounts_choices = []
