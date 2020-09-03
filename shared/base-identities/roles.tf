@@ -48,7 +48,7 @@ module "iam_assumable_role_admin" {
   #
   # MFA setup
   #
-  role_requires_mfa    = false
+  role_requires_mfa    = true
   mfa_age              = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
   max_session_duration = 10800 # Max age of the session (in seconds) when assuming roles
 

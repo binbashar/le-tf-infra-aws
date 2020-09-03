@@ -26,7 +26,7 @@ docker run --rm \
 -v ${TF_PWD_COMMON_CONFIG_DIR}/common.config:${TF_DOCKER_COMMON_CONF_VARS_FILE} \
 -v ${LOCAL_OS_SSH_DIR}:/root/.ssh \
 -v ${LOCAL_OS_GIT_CONF_DIR}:/etc/gitconfig \
--v ${LOCAL_OS_AWS_CONF_DIR}:/root/.aws/${PROJECT_SHORT} \
+-v ${LOCAL_OS_AWS_CONF_DIR}:/root/tmp/${PROJECT_SHORT} \
 -e AWS_SHARED_CREDENTIALS_FILE=/root/.aws/${PROJECT_SHORT}/credentials \
 -e AWS_CONFIG_FILE=/root/.aws/${PROJECT_SHORT}/config \
 --entrypoint=${TF_DOCKER_ENTRYPOINT} \
@@ -36,17 +36,41 @@ endef
 
 define TF_CMD_BASH_PREFIX
 docker run --rm \
+-v ${TF_PWD_COMMON_CONFIG_DIR}/../\@bin/scripts:/root/scripts \
 -v ${TF_PWD_DIR}:${TF_PWD_CONT_DIR}:rw \
 -v ${TF_PWD_CONFIG_DIR}:/config \
 -v ${TF_PWD_COMMON_CONFIG_DIR}/common.config:${TF_DOCKER_COMMON_CONF_VARS_FILE} \
 -v ${LOCAL_OS_SSH_DIR}:/root/.ssh \
 -v ${LOCAL_OS_GIT_CONF_DIR}:/etc/gitconfig \
--v ${LOCAL_OS_AWS_CONF_DIR}:/root/.aws/${PROJECT_SHORT} \
--e AWS_SHARED_CREDENTIALS_FILE=/root/.aws/${PROJECT_SHORT}/credentials \
+-v ${LOCAL_OS_AWS_CONF_DIR}:/root/tmp/${PROJECT_SHORT} \
+-e BACKEND_CONFIG_FILE=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+-e SRC_AWS_CONFIG_FILE=/root/tmp/${PROJECT_SHORT}/config \
+-e SRC_AWS_SHARED_CREDENTIALS_FILE=/root/tmp/${PROJECT_SHORT}/credentials \
 -e AWS_CONFIG_FILE=/root/.aws/${PROJECT_SHORT}/config \
+-e AWS_SHARED_CREDENTIALS_FILE=/root/.aws/${PROJECT_SHORT}/credentials \
 --entrypoint=bash \
 -w ${TF_PWD_CONT_DIR} \
 -it ${TF_DOCKER_IMAGE}:${TF_VER}
+endef
+
+define TF_CMD_MFA_PREFIX
+docker run --rm \
+-v ${TF_PWD_COMMON_CONFIG_DIR}/../\@bin/scripts:/root/scripts \
+-v ${TF_PWD_DIR}:${TF_PWD_CONT_DIR}:rw \
+-v ${TF_PWD_CONFIG_DIR}:/config \
+-v ${TF_PWD_COMMON_CONFIG_DIR}/common.config:${TF_DOCKER_COMMON_CONF_VARS_FILE} \
+-v ${LOCAL_OS_SSH_DIR}:/root/.ssh \
+-v ${LOCAL_OS_GIT_CONF_DIR}:/etc/gitconfig \
+-v ${LOCAL_OS_AWS_CONF_DIR}:/root/tmp/${PROJECT_SHORT} \
+-e BACKEND_CONFIG_FILE=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+-e SRC_AWS_CONFIG_FILE=/root/tmp/${PROJECT_SHORT}/config \
+-e SRC_AWS_SHARED_CREDENTIALS_FILE=/root/tmp/${PROJECT_SHORT}/credentials \
+-e AWS_CONFIG_FILE=/root/.aws/${PROJECT_SHORT}/config \
+-e AWS_SHARED_CREDENTIALS_FILE=/root/.aws/${PROJECT_SHORT}/credentials \
+--entrypoint=/root/scripts/aws-mfa/aws-mfa-entrypoint.sh \
+-w ${TF_PWD_CONT_DIR} \
+-it ${TF_DOCKER_IMAGE}:${TF_VER} \
+terraform
 endef
 
 help:
@@ -61,48 +85,46 @@ tf-dir-chmod: ## run chown in ./.terraform to gran that the docker mounted dir h
 	@echo LOCAL_OS_GROUP_ID: ${LOCAL_OS_GROUP_ID}
 	sudo chown -R ${LOCAL_OS_USER_ID}:${LOCAL_OS_GROUP_ID} ./.terraform
 
-tf-bash: ## Initialize terraform backend, plugins, and modules
+shell: ## Initialize terraform backend, plugins, and modules
 	${TF_CMD_BASH_PREFIX}
 
 version: ## Show terraform version
-	docker run --rm \
-	--entrypoint=${TF_DOCKER_ENTRYPOINT} \
-	-t ${TF_DOCKER_IMAGE}:${TF_VER} version
+	${TF_CMD_MFA_PREFIX} version
 
 init: init-cmd tf-dir-chmod ## Initialize terraform backend, plugins, and modules
 init-cmd:
-	${TF_CMD_PREFIX} init \
-	-backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE}
+	${TF_CMD_MFA_PREFIX} init \
+		-backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE}
 
 plan: ## Preview terraform changes
-	${TF_CMD_PREFIX} plan \
-	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
+	${TF_CMD_MFA_PREFIX} plan \
+		-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+		-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
 
 plan-detailed: ## Preview terraform changes with a more detailed output
-	${TF_CMD_PREFIX} plan -detailed-exitcode \
-	 -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
+	${TF_CMD_MFA_PREFIX} plan -detailed-exitcode \
+		-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+		-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
 
 apply: apply-cmd tf-dir-chmod ## Make terraform apply any changes with dockerized binary
 apply-cmd:
-	${TF_CMD_PREFIX} apply \
-	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
+	${TF_CMD_MFA_PREFIX} apply \
+		-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+		-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
 
 output: ## Terraform output command is used to extract the value of an output variable from the state file.
-	${TF_CMD_PREFIX} output
+	${TF_CMD_MFA_PREFIX} output
 
 destroy: ## Destroy all resources managed by terraform
-	${TF_CMD_PREFIX} destroy \
-	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
+	${TF_CMD_MFA_PREFIX} destroy \
+		-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+		-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
 
 format: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
-	${TF_CMD_PREFIX} fmt -recursive
+	${TF_CMD_MFA_PREFIX} fmt -recursive
 
 format-check: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
-	${TF_CMD_PREFIX} fmt -check
+	${TF_CMD_MFA_PREFIX} fmt -check
     # Consider adding -recursive after everything has been migrated to tf-0.12
 	# (should exclude dev/8_k8s_kops/2-kops folder since it's not possible to migrate to
 	# tf-0.12 yet
