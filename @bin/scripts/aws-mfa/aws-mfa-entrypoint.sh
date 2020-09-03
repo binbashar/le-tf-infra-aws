@@ -76,21 +76,24 @@ MFA_SERIAL_NUMBER="$(get_profile $SRC_AWS_CONFIG_FILE $SRC_AWS_SHARED_CREDENTIAL
 log "MFA_SERIAL_NUMBER: $MFA_SERIAL_NUMBER"
 MFA_PROFILE_NAME="$(get_profile $SRC_AWS_CONFIG_FILE $SRC_AWS_SHARED_CREDENTIALS_FILE $TF_PROFILE_NAME source_profile)"
 log "MFA_PROFILE_NAME: $MFA_PROFILE_NAME"
+MFA_TOTP_KEY="$(get_profile $SRC_AWS_CONFIG_FILE $SRC_AWS_SHARED_CREDENTIALS_FILE $TF_PROFILE_NAME totp_key)"
+log "MFA_TOTP_KEY: $MFA_TOTP_KEY"
+
 
 #
-# TODO Try and get and MFA key from the profile
+# Try and get and MFA key from the profile
 #
-
-# -----------------------------------------------------------------------------
-# Now, we need to prompt the user for the MFA Token
-# -----------------------------------------------------------------------------
-#
-# TODO If the MFA key exists, run oathtool to obtain the token code
-#
-MFA_TOKEN_CODE=```
+if [[ $MFA_TOTP_KEY != "" ]]; then
+    echo "MFA_TOTP_KEY: $MFA_TOTP_KEY"
+    MFA_TOKEN_CODE=`oathtool --totp -b $MFA_TOTP_KEY`
+else
+    # If the MFA TOTP Key was not found, prompt the user for the MFA Token
+    MFA_TOKEN_CODE=```
 read -p 'Type in your token code: ' TOKEN_CODE
 echo $TOKEN_CODE
 ```
+fi
+log "MFA_TOKEN_CODE: $MFA_TOKEN_CODE"
 
 
 # -----------------------------------------------------------------------------

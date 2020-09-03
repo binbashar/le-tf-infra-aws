@@ -17,6 +17,11 @@ Since we wanted to make as few changes as possible the Leverage workflow we came
 * @bin/scripts/aws-mfa/aws-mfa-entrypoint.sh    => This is the script that builds the AWS credentials
 * @bin/makefiles/terraform12/terraform12-mfa.mk => This is the Makefile that supports the MFA workflow
 
+## Requisites --- TODO
+TODO Enable MFA on roles
+TODO Enable MFA device
+TODO Configure AWS credentials
+
 ## Shortcomings
 The solution does not support all the use cases that Leverage has implemented.
 
