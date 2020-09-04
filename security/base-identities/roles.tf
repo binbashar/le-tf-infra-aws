@@ -39,7 +39,7 @@ module "iam_assumable_role_admin" {
     "arn:aws:iam::${var.security_account_id}:root"
   ]
 
-  create_role           = false
+  create_role           = true
   role_name             = "Admin"
   admin_role_policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
   attach_admin_policy   = true
