@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.21"></a>
+## [v1.0.21] - 2020-09-04
+
+- Terraform & AWS Authentication with MFA support ([#126](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/126))
+
+
 <a name="v1.0.20"></a>
 ## [v1.0.20] - 2020-08-27
 
@@ -795,7 +801,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.20...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.21...HEAD
+[v1.0.21]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.20...v1.0.21
 [v1.0.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.19...v1.0.20
 [v1.0.19]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.18...v1.0.19
 [v1.0.18]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.17...v1.0.18
