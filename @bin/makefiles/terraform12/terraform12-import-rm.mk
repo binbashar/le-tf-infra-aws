@@ -15,6 +15,7 @@ TF_PWD_CONFIG_DIR                := $(shell cd ../ && cd config && pwd)
 TF_PWD_COMMON_CONFIG_DIR         := $(shell cd ../../ && cd config && pwd)
 TF_VER                           := 0.12.28
 TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
+TF_DOCKER_ACCOUNT_CONF_VARS_FILE := /config/account.config
 TF_DOCKER_COMMON_CONF_VARS_FILE  := /common-config/common.config
 TF_DOCKER_ENTRYPOINT             := /usr/local/go/bin/terraform
 TF_DOCKER_IMAGE                  := binbash/terraform-awscli
@@ -62,7 +63,7 @@ import: ## terraform import resources - eg: make import TF_IMPORT_RESOURCE_LIST=
 			${TF_CMD_PREFIX} import \
 				-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 				-var-file=${TF_DOCKER_BASE_CONF_VARS_FILE} \
-				-var-file=${TF_DOCKER_EXTRA_CONF_VARS_FILE} $$1 $$2;\
+				-var-file=${TF_DOCKER_ACCOUNT_CONF_VARS_FILE} $$1 $$2;\
 			echo -----------------------;\
 			echo "TF SUCCESSFULLY IMPORTED $$1";\
 			cd ..;\
@@ -73,9 +74,3 @@ import: ## terraform import resources - eg: make import TF_IMPORT_RESOURCE_LIST=
 
 state-rm: ## terraform rm resource from state - eg: make state-rm TF_RM_RESOURCE='${TF_RM_RESOURCE_ARG}'
 	${TF_CMD_PREFIX} state rm ${TF_RM_RESOURCE}
-
-
-
-
-
-
