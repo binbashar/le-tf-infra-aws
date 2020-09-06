@@ -15,6 +15,7 @@ TF_PWD_CONFIG_DIR                := $(shell cd ../../ && cd config && pwd)
 TF_PWD_COMMON_CONFIG_DIR         := $(shell cd ../../.. && cd config && pwd)
 TF_VER                           := 0.11.14
 TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
+TF_DOCKER_ACCOUNT_CONF_VARS_FILE := /config/account.config
 TF_DOCKER_COMMON_CONF_VARS_FILE  := /common-config/common.config
 TF_DOCKER_ENTRYPOINT             := /usr/local/go/bin/terraform
 TF_DOCKER_IMAGE                  := binbash/terraform-awscli
@@ -59,24 +60,28 @@ init-cmd:
 plan: ## Preview terraform changes
 	${TF_CMD_PREFIX} plan \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
+	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_ACCOUNT_CONF_VARS_FILE}
 
 plan-detailed: ## Preview terraform changes with a more detailed output
 	${TF_CMD_PREFIX} plan -detailed-exitcode \
 	 -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
+	 -var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE} \
+	 -var-file=${TF_DOCKER_ACCOUNT_CONF_VARS_FILE}
 
 diff: ## Terraform plan with landscape
 	${TF_CMD_PREFIX} plan \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
 	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_ACCOUNT_CONF_VARS_FILE} \
 	| docker run -i --rm binbash/terraform-landscape
 
 apply: apply-cmd tf-dir-chmod ## Make terraform apply any changes with dockerized binary
 apply-cmd:
 	${TF_CMD_PREFIX} apply \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
+	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_ACCOUNT_CONF_VARS_FILE}
 
 output: ## Terraform output command is used to extract the value of an output variable from the state file.
 	${TF_CMD_PREFIX} output
@@ -84,7 +89,8 @@ output: ## Terraform output command is used to extract the value of an output va
 destroy: ## Destroy all resources managed by terraform
 	${TF_CMD_PREFIX} destroy \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE}
+	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_ACCOUNT_CONF_VARS_FILE}
 
 format: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
 	${TF_CMD_PREFIX} fmt

@@ -12,8 +12,8 @@ LOCAL_OS_AWS_CONF_DIR            := ~/.aws/${PROJECT_SHORT}
 TF_PWD_DIR                       := $(shell pwd)
 TF_PWD_CONT_DIR                  := "/go/src/project/"
 TF_VER                           := 0.12.28
-TF_DOCKER_ENTRYPOINT             := /usr/local/go/bin/terraform
-TF_DOCKER_IMAGE                  := binbash/terraform-awscli
+TF_DOCKER_ENTRYPOINT             := /bin/terraform
+TF_DOCKER_IMAGE                  := binbash/terraform-awscli-slim
 
 define TF_CMD_PREFIX
 docker run --rm \
