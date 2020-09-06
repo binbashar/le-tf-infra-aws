@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.22"></a>
+## [v1.0.22] - 2020-09-06
+
+- Refactor all Terraform Makefiles to support again the approach that uses a separate config file for non-backend configuration entries in order to prepare for Terraform 0.13.1 and above ([#127](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/127))
+
+
 <a name="v1.0.21"></a>
 ## [v1.0.21] - 2020-09-04
 
@@ -801,7 +807,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.21...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.22...HEAD
+[v1.0.22]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.21...v1.0.22
 [v1.0.21]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.20...v1.0.21
 [v1.0.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.19...v1.0.20
 [v1.0.19]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.18...v1.0.19
