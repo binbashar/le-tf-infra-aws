@@ -2,9 +2,25 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  version                 = "~> 2.69"
+  version                 = "~> 3.2"
   region                  = var.region
   profile                 = var.profile
+  shared_credentials_file = "~/.aws/${var.project}/config"
+}
+
+provider "aws" {
+  alias                   = "apps-devstg"
+  version                 = "~> 3.2"
+  region                  = var.region
+  profile                 = "bb-apps-devstg-devops"
+  shared_credentials_file = "~/.aws/${var.project}/config"
+}
+
+provider "aws" {
+  alias                   = "apps-prd"
+  version                 = "~> 3.2"
+  region                  = var.region
+  profile                 = "bb-apps-prd-devops"
   shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
