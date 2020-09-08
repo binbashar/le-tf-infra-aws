@@ -79,3 +79,6 @@ Such data blocks refer to a different profile and need a different set of creden
 
 ### Temporary credentials reuse is not supported
 The MFA workflow will generate new credentials every time you run a Makefile target that calls the AWS MFA script. Credentials are not checked for validity in order to favor reuse and speed up the temporary credentials generation procedure.
+
+One not-to-so-hard option for implementing credentials caching is to save the temporary credentials in the path where the actual AWS credentials are mounted but using a different name for each file. Such name should contain the profile that was used to generate the credentials. The MFA script should be modified to do that.
+Then the script should also implement a small validation code that takes into account the creation date of those files in order to determine if such cached files are still valid or not, depending on the session duration time and the difference between the files creation date and the current date.

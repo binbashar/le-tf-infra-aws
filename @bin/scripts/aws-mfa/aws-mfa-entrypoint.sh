@@ -123,7 +123,7 @@ echo "$MFA_ASSUME_ROLE_OUTPUT" > $TEMP_FILE
 AWS_ACCESS_KEY_ID=`cat $TEMP_FILE | jq .Credentials.AccessKeyId | sed -e 's/"//g'`
 AWS_SECRET_ACCESS_KEY=`cat $TEMP_FILE | jq .Credentials.SecretAccessKey | sed -e 's/"//g'`
 AWS_SESSION_TOKEN=`cat $TEMP_FILE | jq .Credentials.SessionToken | sed -e 's/"//g'`
-log "AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID"
+log "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:0:5}*************"
 log "AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:0:5}*************"
 log "AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:0:5}*************"
 rm $TEMP_FILE
