@@ -2,7 +2,7 @@
 # Groups
 #
 module "iam_group_admins" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.9.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.20.0"
   name   = "admins_root_org"
 
   group_users = [
@@ -17,7 +17,7 @@ module "iam_group_admins" {
 }
 
 module "iam_group_finops" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.9.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.20.0"
   name   = "finops_root_org"
 
   group_users = [

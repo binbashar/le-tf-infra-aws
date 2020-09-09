@@ -20,7 +20,7 @@ module "config_logs" {
 # Module instantiation
 #
 module "terraform-aws-config" {
-  source                         = "github.com/binbashar/terraform-aws-config.git?ref=v2.0.5"
+  source                         = "github.com/binbashar/terraform-aws-config.git?ref=v4.0.0"
   config_logs_bucket             = module.config_logs.aws_logs_bucket
   config_name                    = "${var.project}-${var.environment}-awsconfig"
   config_logs_prefix             = "${var.project}-${var.environment}-awsconfig"

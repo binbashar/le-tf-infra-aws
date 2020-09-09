@@ -75,6 +75,12 @@ init-cmd:
 	${TF_CMD_PREFIX} init \
 	-backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE}
 
+init-reconfigure: init-reconfigure-cmd tf-dir-chmod ## Initialize and reconfigure terraform backend, plugins, and modules
+init-reconfigure-cmd:
+	${TF_CMD_PREFIX} init \
+	-reconfigure \
+	-backend-config=${TF_DOCKER_BACKEND_CONF_VARS_FILE}
+
 plan: ## Preview terraform changes
 	${TF_CMD_PREFIX} plan \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
