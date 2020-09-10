@@ -1,5 +1,5 @@
 module "cloudtrail" {
-  source                        = "github.com/binbashar/terraform-aws-cloudtrail.git?ref=0.10.0"
+  source                        = "github.com/binbashar/terraform-aws-cloudtrail.git?ref=0.14.0"
   namespace                     = var.project
   stage                         = var.environment
   name                          = "cloudtrail-org"
@@ -13,13 +13,16 @@ module "cloudtrail" {
 }
 
 module "cloudtrail_s3_bucket" {
-  source                 = "git@github.com:binbashar/terraform-aws-cloudtrail-s3-bucket.git?ref=0.6.0"
+  source                 = "github.com/binbashar/terraform-aws-cloudtrail-s3-bucket.git?ref=0.12.0"
   namespace              = var.project
   stage                  = var.environment
   name                   = "cloudtrail-org"
-  region                 = var.region
   lifecycle_rule_enabled = var.lifecycle_rule_enabled
-  lifecycle_tags         = local.tags
+  #
+  # NOTE: Had to pass null here because there seems to be an issue with the
+  #       module which is trying to set tags to lifecycle policies
+  #
+  lifecycle_tags         = null
   policy                 = aws_s3_bucket.cloudtrail_s3_bucket.policy
   acl                    = "private"
   expiration_days        = 120
