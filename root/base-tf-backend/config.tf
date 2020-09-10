@@ -14,7 +14,7 @@ provider "aws" {
   version                 = "~> 2.69"
   region                  = var.region_secondary
   profile                 = var.profile
-  shared_credentials_file = "~/.aws/bb/config"
+  shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
 terraform {
