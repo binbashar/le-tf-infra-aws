@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.25"></a>
+## [v1.0.25] - 2020-09-10
+
+- Update and test Root account to support Terraform 13 ([#131](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/131))
+
+
 <a name="v1.0.24"></a>
 ## [v1.0.24] - 2020-09-08
 
@@ -819,7 +825,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.24...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.25...HEAD
+[v1.0.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.24...v1.0.25
 [v1.0.24]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.23...v1.0.24
 [v1.0.23]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.22...v1.0.23
 [v1.0.22]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.21...v1.0.22
