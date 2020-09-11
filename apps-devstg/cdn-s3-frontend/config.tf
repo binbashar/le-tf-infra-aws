@@ -60,6 +60,6 @@ data "terraform_remote_state" "dns-shared" {
     region  = var.region
     profile = "${var.project}-shared-devops"
     bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/dns/terraform.tfstate"
+    key     = "shared/dns/binbash.com.ar/terraform.tfstate"
   }
 }
