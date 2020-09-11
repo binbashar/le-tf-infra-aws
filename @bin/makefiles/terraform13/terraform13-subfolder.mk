@@ -11,8 +11,8 @@ LOCAL_OS_AWS_CONF_DIR            := ~/.aws/${PROJECT_SHORT}
 
 TF_PWD_DIR                       := $(shell pwd)
 TF_PWD_CONT_DIR                  := "/go/src/project/"
-TF_PWD_CONFIG_DIR                := $(shell cd .. && cd config && pwd)
-TF_PWD_COMMON_CONFIG_DIR         := $(shell cd ../.. && cd config && pwd)
+TF_PWD_CONFIG_DIR                := $(shell cd ../../ && cd config && pwd)
+TF_PWD_COMMON_CONFIG_DIR         := $(shell cd ../../../ && cd config && pwd)
 TF_VER                           := 0.13.2
 TF_DOCKER_BACKEND_CONF_VARS_FILE := /config/backend.config
 TF_DOCKER_ACCOUNT_CONF_VARS_FILE := /config/account.config
@@ -103,6 +103,9 @@ apply-cmd:
 output: ## Terraform output command is used to extract the value of an output variable from the state file.
 	${TF_CMD_PREFIX} output
 
+output-json: ## Terraform output json fmt command is used to extract the value of an output variable from the state file.
+	${TF_CMD_PREFIX} output -json
+
 destroy: ## Destroy all resources managed by terraform
 	${TF_CMD_PREFIX} destroy \
 	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
@@ -114,7 +117,7 @@ format: ## The terraform fmt is used to rewrite tf conf files to a canonical for
 
 format-check: ## The terraform fmt is used to rewrite tf conf files to a canonical format and style.
 	${TF_CMD_PREFIX} fmt -check
-    # Consider adding -recursive after everything has been migrated to tf-0.12
+  # Consider adding -recursive after everything has been migrated to tf-0.12
 	# (should exclude dev/8_k8s_kops/2-kops folder since it's not possible to migrate to
 	# tf-0.12 yet
 	# ${TF_CMD_PREFIX} fmt -recursive -check ${TF_PWD_CONT_DIR}
@@ -145,14 +148,14 @@ encrypt: ## Encrypt secrets.dec.tf via ansible-vault
   && rm -rf secrets.dec.tf
 
 validate-tf-layout: ## Validate Terraform layout to make sure it's set up properly
-	../../@bin/scripts/validate-terraform-layout.sh
+	../../../@bin/scripts/validate-terraform-layout.sh
 
 cost-estimate-plan: ## Terraform plan output compatible with https://terraform-cost-estimation.com/
 	curl -sLO https://raw.githubusercontent.com/antonbabenko/terraform-cost-estimation/master/terraform.jq
 	${TF_CMD_PREFIX} plan -out=plan.tfplan \
-	 -var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE} \
-	 -var-file=${TF_DOCKER_ACCOUNT_CONF_VARS_FILE}
+	-var-file=${TF_DOCKER_BACKEND_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_COMMON_CONF_VARS_FILE} \
+	-var-file=${TF_DOCKER_ACCOUNT_CONF_VARS_FILE} && \
 	${TF_CMD_PREFIX} show -json plan.tfplan > plan.json
 	@echo ----------------------------------------------------------------------
 	cat plan.json \
