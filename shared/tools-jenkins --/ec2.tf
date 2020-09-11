@@ -2,7 +2,7 @@
 # Jenkins Master: EC2 resources (instance, volumes, security groups, etc)
 #
 module "jenkins_master" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout?ref=v0.3.8"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout?ref=v0.3.12"
   prefix = var.prefix
   name   = var.name
 

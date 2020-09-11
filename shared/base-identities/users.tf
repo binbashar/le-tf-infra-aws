@@ -8,7 +8,7 @@
 # User: AuditorCI          #
 #==========================#
 module "user_auditor_ci" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.12.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.20.0"
 
   name                    = "auditor.ci"
   force_destroy           = true
@@ -25,7 +25,7 @@ module "user_auditor_ci" {
 # User: BackupS3           #
 #==========================#
 module "user_backup_s3" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.12.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.20.0"
 
   name                    = "backup.s3"
   force_destroy           = true

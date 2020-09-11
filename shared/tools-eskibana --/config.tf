@@ -38,7 +38,7 @@ data "terraform_remote_state" "dns" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/dns/terraform.tfstate"
+    key     = "${var.environment}/dns/binbash.com.ar/terraform.tfstate"
   }
 }
 
@@ -48,7 +48,7 @@ data "terraform_remote_state" "security" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/security/terraform.tfstate"
+    key     = "${var.environment}/security-keys/terraform.tfstate"
   }
 }
 
