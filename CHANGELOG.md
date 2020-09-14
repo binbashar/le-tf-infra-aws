@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.28"></a>
+## [v1.0.28] - 2020-09-14
+
+- Update and test DevStg and Prd accounts to support Terraform 13 ([#135](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/135))
+
+
 <a name="v1.0.27"></a>
 ## [v1.0.27] - 2020-09-11
 
@@ -837,7 +843,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.27...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.28...HEAD
+[v1.0.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.27...v1.0.28
 [v1.0.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.26...v1.0.27
 [v1.0.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.25...v1.0.26
 [v1.0.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.24...v1.0.25
