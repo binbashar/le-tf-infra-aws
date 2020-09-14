@@ -1,5 +1,5 @@
 module "terraform_backend" {
-  source = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.4"
+  source = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.7"
 
   #
   # Bucket Name and Region
@@ -23,8 +23,11 @@ module "terraform_backend" {
   # Replication
   #
   bucket_replication_enabled = true
-  bucket_replication_region  = var.region_secondary
-  bucket_replication_profile = var.profile
 
   tags = local.tags
+
+  providers = {
+    aws.main_region      = aws.main_region
+    aws.secondary_region = aws.secondary_region
+  }
 }
