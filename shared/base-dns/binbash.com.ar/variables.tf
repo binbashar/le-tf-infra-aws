@@ -107,11 +107,6 @@ variable "aws_public_hosted_zone_1_text_record_2_name" {
   description = "AWS Route53 public hosted zone TXT type record"
   default     = "google._domainkey.binbash.com.ar."
 }
-variable "aws_public_hosted_zone_1_text_record_1" {
-  type        = string
-  description = "AWS Route53 public hosted zone TXT type record"
-  default     = "v=spf1 include:_spf.google.com ~all"
-}
 variable "aws_public_hosted_zone_1_text_record_2" {
   type        = string
   description = "AWS Route53 public hosted zone TXT type record"
@@ -140,16 +135,6 @@ variable "aws_public_hosted_zone_1_text_record_4" {
   type        = string
   description = "AWS Route53 public hosted zone TXT type record"
   default     = "dkim.mcsv.net"
-}
-variable "aws_public_hosted_zone_1_text_record_5_name" {
-  type        = string
-  description = "AWS Route53 public hosted zone TXT type record"
-  default     = "binbash.com.ar"
-}
-variable "aws_public_hosted_zone_1_text_record_5" {
-  type        = string
-  description = "AWS Route53 public hosted zone TXT type record"
-  default     = "v=spf1 include:servers.mcsv.net ?all"
 }
 
 #
