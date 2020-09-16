@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.29"></a>
+## [v1.0.29] - 2020-09-16
+
+- BBWW-57 | small binbash.com.ar update related to google search verification
+
+
 <a name="v1.0.28"></a>
 ## [v1.0.28] - 2020-09-14
 
@@ -843,7 +849,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.28...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.29...HEAD
+[v1.0.29]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.28...v1.0.29
 [v1.0.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.27...v1.0.28
 [v1.0.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.26...v1.0.27
 [v1.0.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.25...v1.0.26
