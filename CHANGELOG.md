@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.30"></a>
+## [v1.0.30] - 2020-09-17
+
+- Import OrganizationAccountAccessRole in all accounts and enable MFA on it; also disable MFA on Security until the MFA script can support multi-profiles per layer ([#137](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/137))
+
+
 <a name="v1.0.29"></a>
 ## [v1.0.29] - 2020-09-16
 
@@ -849,7 +855,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.29...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.30...HEAD
+[v1.0.30]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.29...v1.0.30
 [v1.0.29]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.28...v1.0.29
 [v1.0.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.27...v1.0.28
 [v1.0.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.26...v1.0.27
