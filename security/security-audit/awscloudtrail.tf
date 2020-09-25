@@ -23,7 +23,7 @@ module "cloudtrail_s3_bucket" {
   #       module which is trying to set tags to lifecycle policies
   #
   lifecycle_tags         = null
-  policy                 = aws_s3_bucket.cloudtrail_s3_bucket.policy
+  policy                 = aws_s3_bucket_policy.cloudtrail_s3_bucket.policy
   acl                    = "private"
   expiration_days        = 120
 }

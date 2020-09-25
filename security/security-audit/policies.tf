@@ -3,7 +3,7 @@
 # Services: cloudtrail & config
 # Accounts: shared, security and apps-devstg
 #
-resource "aws_s3_bucket" "cloudtrail_s3_bucket" {
+resource "aws_s3_bucket_policy" "cloudtrail_s3_bucket" {
   bucket = module.cloudtrail_s3_bucket.bucket_id
 
   policy = <<EOF
