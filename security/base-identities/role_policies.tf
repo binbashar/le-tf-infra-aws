@@ -20,6 +20,7 @@ resource "aws_iam_policy" "devops_access" {
             "Sid": "MultiServiceFullAccessCustom",
             "Effect": "Allow",
             "Action": [
+                "access-analyzer:*",
                 "acm:*",
                 "aws-portal:*",
                 "backup:*",
@@ -38,6 +39,8 @@ resource "aws_iam_policy" "devops_access" {
                 "kms:*",
                 "lambda:*",
                 "logs:*",
+                "organizations:Describe*",
+                "organizations:List*",
                 "route53:*",
                 "route53domains:*",
                 "route53resolver:*",

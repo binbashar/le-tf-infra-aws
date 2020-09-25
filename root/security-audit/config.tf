@@ -33,13 +33,13 @@ data "terraform_remote_state" "notifications" {
   }
 }
 
-data "terraform_remote_state" "security_keys" {
+data "terraform_remote_state" "security_audit" {
   backend = "s3"
 
   config = {
     region  = var.region
     profile = "${var.project}-security-devops"
     bucket  = "${var.project}-security-terraform-backend"
-    key     = "security/security/terraform.tfstate"
+    key     = "security/security-audit/terraform.tfstate"
   }
 }
