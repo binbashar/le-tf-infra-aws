@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.33"></a>
+## [v1.0.33] - 2020-09-27
+
+- Fix CloudTrail bucket policy which was mistakenly declared as a bucket instead of a bucket policy ([#139](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/139))
+
+
 <a name="v1.0.32"></a>
 ## [v1.0.32] - 2020-09-25
 
@@ -867,7 +873,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.32...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.33...HEAD
+[v1.0.33]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.32...v1.0.33
 [v1.0.32]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.31...v1.0.32
 [v1.0.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.30...v1.0.31
 [v1.0.30]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.29...v1.0.30
