@@ -170,4 +170,4 @@ workflows:
       - sumologic/workflow-collector:
           context: binbashar-org-cron-context
           requires:
-            - release-version-with-changelog
+            - backup-bb-gdrive-to-s3
