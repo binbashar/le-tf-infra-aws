@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.0.34"></a>
+## [v1.0.34] - 2020-10-02
+
+- BBL-381 | fixing requires statement at circleci config
+- BBL-381 | adding requires for sumologic collector workflow
+
+
 <a name="v1.0.33"></a>
 ## [v1.0.33] - 2020-09-27
 
@@ -873,7 +880,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.33...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.34...HEAD
+[v1.0.34]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.33...v1.0.34
 [v1.0.33]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.32...v1.0.33
 [v1.0.32]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.31...v1.0.32
 [v1.0.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.30...v1.0.31
