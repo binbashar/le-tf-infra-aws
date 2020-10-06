@@ -1,10 +1,9 @@
 module "terraform_backend" {
-  source = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.7"
+  source = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.12"
 
   #
-  # Bucket Name and Region
+  # Bucket Name
   #
-  region    = var.region
   delimiter = "-"
   namespace = var.project
   stage     = var.environment
@@ -18,6 +17,7 @@ module "terraform_backend" {
   block_public_policy           = true
   restrict_public_buckets       = true
   enable_server_side_encryption = var.encrypt
+  enforce_ssl_requests          = true
 
   #
   # Replication

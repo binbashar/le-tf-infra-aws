@@ -1,14 +1,14 @@
 module "terraform_backend" {
-  source = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.7"
+  source = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.12"
 
   #
-  # Bucket Name and Region
+  # Bucket Name
   #
-  region    = var.region
-  delimiter = "-"
-  namespace = var.project
-  stage     = var.environment
-  name      = "terraform-backend"
+  delimiter             = "-"
+  namespace             = var.project
+  stage                 = var.environment
+  name                  = "terraform-backend"
+  enforce_ssl_requests  = true
 
   #
   # Security
