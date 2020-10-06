@@ -4,11 +4,10 @@ module "terraform_backend" {
   #
   # Bucket Name
   #
-  delimiter             = "-"
-  namespace             = var.project
-  stage                 = var.environment
-  name                  = "terraform-backend"
-  enforce_ssl_requests  = true
+  delimiter = "-"
+  namespace = var.project
+  stage     = var.environment
+  name      = "terraform-backend"
 
   #
   # Security
@@ -18,6 +17,7 @@ module "terraform_backend" {
   block_public_policy           = true
   restrict_public_buckets       = true
   enable_server_side_encryption = var.encrypt
+  enforce_ssl_requests          = true
 
   #
   # Replication
