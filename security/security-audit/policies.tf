@@ -29,15 +29,27 @@ resource "aws_s3_bucket_policy" "cloudtrail_s3_bucket" {
                 ]
             },
             "Action": "s3:PutObject",
-            "Resource": [
-                "arn:aws:s3:::${var.project}-${var.environment}-cloudtrail-org/AWSLogs/${var.shared_account_id}/*",
-                "arn:aws:s3:::${var.project}-${var.environment}-cloudtrail-org/AWSLogs/${var.security_account_id}/*",
-                "arn:aws:s3:::${var.project}-${var.environment}-cloudtrail-org/AWSLogs/${var.appsdevstg_account_id}/*",
-                "arn:aws:s3:::${var.project}-${var.environment}-cloudtrail-org/*"
-            ],
+            "Resource": "arn:aws:s3:::${var.project}-${var.environment}-cloudtrail-org/*",
             "Condition": {
                 "StringEquals": {
                     "s3:x-amz-acl": "bucket-owner-full-control"
+                }
+            }
+        },
+        {
+            "Sid": "EnforceSslRequestsOnly",
+            "Effect": "Deny",
+            "Principal": {
+                "AWS": "*"
+            },
+            "Action": "s3:*",
+            "Resource": [
+                "arn:aws:s3:::${var.project}-${var.environment}-cloudtrail-org",
+                "arn:aws:s3:::${var.project}-${var.environment}-cloudtrail-org/*"
+            ],
+            "Condition": {
+                "Bool": {
+                    "aws:SecureTransport": "false"
                 }
             }
         }
