@@ -97,8 +97,7 @@ Thumbs.db
 #
 # Scripts and Makefiles
 #
-/@bin
-!/@bin/scripts
+/@bin/makefiles
 #
 # Compiled files
 #
