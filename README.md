@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="./%40doc/figures/binbash.png" 
+    <img src="./%40doc/figures/binbash.png"
     alt="binbash" width="250"/>
 </div>
 <div align="right">
@@ -24,5 +24,5 @@ Check out the [Binbash Leverage Reference Architecture Official Documentation](h
 </div>
 
 - [**pipeline-job**](https://app.circleci.com/pipelines/github/binbashar/le-tf-infra-aws) (**NOTE:** Will only run after merged PR)
-- [**releases**](https://github.com/binbashar/le-tf-infra-aws/releases) 
+- [**releases**](https://github.com/binbashar/le-tf-infra-aws/releases)
 - [**changelog**](https://github.com/binbashar/le-tf-infra-aws/blob/master/CHANGELOG.md)

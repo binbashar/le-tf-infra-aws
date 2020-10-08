@@ -20,7 +20,7 @@ data "aws_iam_policy_document" "kms" {
     effect    = "Allow"
     actions   = ["kms:*"]
     resources = ["*"]
-    
+
     principals {
       type        = "AWS"
       identifiers = ["arn:aws:iam::${var.security_account_id}:root"]
@@ -28,9 +28,9 @@ data "aws_iam_policy_document" "kms" {
   }
 
   statement {
-    sid       = "Enable CloudTrail Service"
-    effect    = "Allow"
-    actions   = [
+    sid    = "Enable CloudTrail Service"
+    effect = "Allow"
+    actions = [
       "kms:GenerateDataKey*",
       "kms:DescribeKey"
     ]
@@ -41,9 +41,9 @@ data "aws_iam_policy_document" "kms" {
       identifiers = ["cloudtrail.amazonaws.com"]
     }
     condition {
-      test      = "StringLike"
-      variable  = "kms:EncryptionContext:aws:cloudtrail:arn"
-      values    = [
+      test     = "StringLike"
+      variable = "kms:EncryptionContext:aws:cloudtrail:arn"
+      values = [
         "arn:aws:cloudtrail:*:${var.security_account_id}:trail/*",
         "arn:aws:cloudtrail:*:${var.shared_account_id}:trail/*",
         "arn:aws:cloudtrail:*:${var.root_account_id}:trail/*",
@@ -54,9 +54,9 @@ data "aws_iam_policy_document" "kms" {
   }
 
   statement {
-    sid       = "Enable CloudWatch Logs Service"
-    effect    = "Allow"
-    actions   = [
+    sid    = "Enable CloudWatch Logs Service"
+    effect = "Allow"
+    actions = [
       "kms:Encrypt*",
       "kms:Decrypt*",
       "kms:ReEncrypt*",
@@ -70,9 +70,9 @@ data "aws_iam_policy_document" "kms" {
       identifiers = ["logs.${var.region}.amazonaws.com"]
     }
     condition {
-      test      = "ArnLike"
-      variable  = "kms:EncryptionContext:aws:logs:arn"
-      values    = ["arn:aws:logs:${var.region}:${var.security_account_id}:*"]
+      test     = "ArnLike"
+      variable = "kms:EncryptionContext:aws:logs:arn"
+      values   = ["arn:aws:logs:${var.region}:${var.security_account_id}:*"]
     }
   }
 }

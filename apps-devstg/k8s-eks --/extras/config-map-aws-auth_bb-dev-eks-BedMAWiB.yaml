@@ -11,12 +11,12 @@ data:
         - system:bootstrappers
         - system:nodes
 
-  
+
     - "groups":
       - "system:masters"
       "rolearn": "arn:aws:iam::900980591242:role/DevOps"
       "username": "exequiel.barrirero"
-    
-  
-  
-  
+
+
+
+

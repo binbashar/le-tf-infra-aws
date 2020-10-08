@@ -2,12 +2,12 @@
 # Statics S3 Bucket + CloudFront CDN for moderncare.com
 #
 module "www_binbash_com_ar_statics" {
-  source                = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=0.34.0"
+  source = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=0.34.0"
 
   # Common: bucket naming convention is "[PROJECT]-[ENV]-statics-[DOMAIN_NAME]"
-  namespace             = "${var.project}-${var.environment}-statics"
-  name                  = local.public_domain_name
-  aliases               = ["statics.${local.public_domain}"]
+  namespace = "${var.project}-${var.environment}-statics"
+  name      = local.public_domain_name
+  aliases   = ["statics.${local.public_domain}"]
 
   # Certificate settings
   acm_certificate_arn = data.terraform_remote_state.certificates.outputs.binbash_com_ar_arn
@@ -24,12 +24,12 @@ module "www_binbash_com_ar_statics" {
   max_ttl              = 604800 # Max time (in secs) an obj is in CF cache -> 7 days
 
   # S3 settings
-  origin_force_destroy  = true
-  cors_allowed_origins  = ["www.${local.public_domain}",local.public_domain]
-  cors_allowed_headers  = ["*"]
-  cors_allowed_methods  = ["GET", "HEAD"]
+  origin_force_destroy = true
+  cors_allowed_origins = ["www.${local.public_domain}", local.public_domain]
+  cors_allowed_headers = ["*"]
+  cors_allowed_methods = ["GET", "HEAD"]
 
-  tags                  = local.tags
+  tags = local.tags
 }
 
 # Here we need a different AWS provider because CloudFront certificates

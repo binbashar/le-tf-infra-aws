@@ -20,7 +20,7 @@ data "aws_iam_policy_document" "kms" {
     effect    = "Allow"
     actions   = ["kms:*"]
     resources = ["*"]
-    
+
     principals {
       type        = "AWS"
       identifiers = ["arn:aws:iam::${var.appsdevstg_account_id}:root"]
@@ -28,9 +28,9 @@ data "aws_iam_policy_document" "kms" {
   }
 
   statement {
-    sid       = "Enable CloudWatch Logs Service"
-    effect    = "Allow"
-    actions   = [
+    sid    = "Enable CloudWatch Logs Service"
+    effect = "Allow"
+    actions = [
       "kms:Encrypt*",
       "kms:Decrypt*",
       "kms:ReEncrypt*",
@@ -44,9 +44,9 @@ data "aws_iam_policy_document" "kms" {
       identifiers = ["logs.${var.region}.amazonaws.com"]
     }
     condition {
-      test      = "ArnLike"
-      variable  = "kms:EncryptionContext:aws:logs:arn"
-      values    = ["arn:aws:logs:${var.region}:${var.appsdevstg_account_id}:*"]
+      test     = "ArnLike"
+      variable = "kms:EncryptionContext:aws:logs:arn"
+      values   = ["arn:aws:logs:${var.region}:${var.appsdevstg_account_id}:*"]
     }
   }
 }

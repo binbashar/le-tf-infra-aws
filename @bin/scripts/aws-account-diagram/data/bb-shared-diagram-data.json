@@ -1,78 +1,78 @@
 [
-    {
-        "data": {
-            "id": "arn:aws:::763606934258:",
-            "name": "bb-shared",
-            "type": "account",
-            "local_id": "763606934258",
-            "node_data": {}
-        }
-    },
-    {
-        "data": {
-            "id": "arn:aws::us-east-1:763606934258:",
-            "name": "us-east-1",
-            "type": "region",
-            "local_id": "us-east-1",
-            "node_data": {},
-            "parent": "arn:aws:::763606934258:"
-        }
-    },
-    {
-        "data": {
-            "id": "arn:aws::us-east-1:763606934258:vpc/vpc-02ed8f213c7b6d869",
-            "name": "bb-shared-vpc (172.18.0.0/20)",
-            "type": "vpc",
-            "local_id": "vpc-02ed8f213c7b6d869",
-            "node_data": {},
-            "parent": "arn:aws::us-east-1:763606934258:"
-        }
-    },
-    {
-        "data": {
-            "id": "arn:aws::us-east-1:763606934258:vpc/vpc-02ed8f213c7b6d869/az/us-east-1a",
-            "name": "us-east-1a",
-            "type": "az",
-            "local_id": "us-east-1a",
-            "node_data": {},
-            "parent": "arn:aws::us-east-1:763606934258:vpc/vpc-02ed8f213c7b6d869"
-        }
-    },
-    {
-        "data": {
-            "id": "arn:aws::us-east-1:763606934258:subnet/subnet-006ff1a406cf31cad",
-            "name": "bb-shared-vpc-public-us-east-1a (172.18.6.0/23)",
-            "type": "subnet",
-            "local_id": "subnet-006ff1a406cf31cad",
-            "node_data": {},
-            "parent": "arn:aws::us-east-1:763606934258:vpc/vpc-02ed8f213c7b6d869/az/us-east-1a"
-        }
-    },
-    {
-        "data": {
-            "id": "arn:aws:ec2:us-east-1:763606934258:instance/i-086fa2599b72e83a2",
-            "name": "infra-vpn-pritunl",
-            "type": "ec2",
-            "local_id": "i-086fa2599b72e83a2",
-            "node_data": {},
-            "parent": "arn:aws::us-east-1:763606934258:subnet/subnet-006ff1a406cf31cad"
-        }
-    },
-    {
-        "data": {
-            "id": "0.0.0.0/0",
-            "name": "Public",
-            "type": "cloud",
-            "local_id": "0.0.0.0/0",
-            "node_data": {}
-        }
-    },
-    {
-        "data": {
-            "source": "0.0.0.0/0",
-            "target": "arn:aws:ec2:us-east-1:763606934258:instance/i-086fa2599b72e83a2",
-            "type": "edge",
-            "node_data": {}
-        }
+  {
+    "data": {
+      "id": "arn:aws:::763606934258:",
+      "local_id": "763606934258",
+      "name": "bb-shared",
+      "node_data": {},
+      "type": "account"
     }
+  },
+  {
+    "data": {
+      "id": "arn:aws::us-east-1:763606934258:",
+      "local_id": "us-east-1",
+      "name": "us-east-1",
+      "node_data": {},
+      "parent": "arn:aws:::763606934258:",
+      "type": "region"
+    }
+  },
+  {
+    "data": {
+      "id": "arn:aws::us-east-1:763606934258:vpc/vpc-02ed8f213c7b6d869",
+      "local_id": "vpc-02ed8f213c7b6d869",
+      "name": "bb-shared-vpc (172.18.0.0/20)",
+      "node_data": {},
+      "parent": "arn:aws::us-east-1:763606934258:",
+      "type": "vpc"
+    }
+  },
+  {
+    "data": {
+      "id": "arn:aws::us-east-1:763606934258:vpc/vpc-02ed8f213c7b6d869/az/us-east-1a",
+      "local_id": "us-east-1a",
+      "name": "us-east-1a",
+      "node_data": {},
+      "parent": "arn:aws::us-east-1:763606934258:vpc/vpc-02ed8f213c7b6d869",
+      "type": "az"
+    }
+  },
+  {
+    "data": {
+      "id": "arn:aws::us-east-1:763606934258:subnet/subnet-006ff1a406cf31cad",
+      "local_id": "subnet-006ff1a406cf31cad",
+      "name": "bb-shared-vpc-public-us-east-1a (172.18.6.0/23)",
+      "node_data": {},
+      "parent": "arn:aws::us-east-1:763606934258:vpc/vpc-02ed8f213c7b6d869/az/us-east-1a",
+      "type": "subnet"
+    }
+  },
+  {
+    "data": {
+      "id": "arn:aws:ec2:us-east-1:763606934258:instance/i-086fa2599b72e83a2",
+      "local_id": "i-086fa2599b72e83a2",
+      "name": "infra-vpn-pritunl",
+      "node_data": {},
+      "parent": "arn:aws::us-east-1:763606934258:subnet/subnet-006ff1a406cf31cad",
+      "type": "ec2"
+    }
+  },
+  {
+    "data": {
+      "id": "0.0.0.0/0",
+      "local_id": "0.0.0.0/0",
+      "name": "Public",
+      "node_data": {},
+      "type": "cloud"
+    }
+  },
+  {
+    "data": {
+      "node_data": {},
+      "source": "0.0.0.0/0",
+      "target": "arn:aws:ec2:us-east-1:763606934258:instance/i-086fa2599b72e83a2",
+      "type": "edge"
+    }
+  }
 ]

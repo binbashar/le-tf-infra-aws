@@ -120,7 +120,7 @@ locals {
         protocol    = "-1"
         cidr_block  = data.terraform_remote_state.vpc-apps-dev-eks.outputs.private_subnets_cidr[2]
       },
-            {
+      {
         rule_number = 170 # apps-prd private subnet A
         rule_action = "allow"
         from_port   = 0

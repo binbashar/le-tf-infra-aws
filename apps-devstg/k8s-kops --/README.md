@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="./%40doc/figures/binbash.png" 
+    <img src="./%40doc/figures/binbash.png"
     alt="binbash" width="250"/>
 </div>
 <div align="right">

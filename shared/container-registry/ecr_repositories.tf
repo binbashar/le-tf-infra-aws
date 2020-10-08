@@ -9,23 +9,23 @@ module "ecr_repositories" {
   #
   # Repository name
   #
-  create          = each.value.create
-  namespace       = ""
-  name            = each.value.name
-  use_namespaces  = false
+  create         = each.value.create
+  namespace      = ""
+  name           = each.value.name
+  use_namespaces = false
 
   #
   # Permissions: define read or write access
   #
-  allowed_read_principals = each.value.read_permissions
+  allowed_read_principals  = each.value.read_permissions
   allowed_write_principals = each.value.write_permissions
 
   #
   # Images Retention: set lifecycle policies
   #
-  lifecycle_policy_rules = local.default_lifecycle_policy_rules
+  lifecycle_policy_rules       = local.default_lifecycle_policy_rules
   lifecycle_policy_rules_count = length(local.default_lifecycle_policy_rules)
 
   # Security: whether to scan images upon pushing to repository
-  scan_on_pushing              = true
+  scan_on_pushing = true
 }
