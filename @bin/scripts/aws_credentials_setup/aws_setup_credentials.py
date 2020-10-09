@@ -32,7 +32,7 @@ def get_config():
         key = key_value[0].strip().replace('"', '').replace('"', '')
         value = key_value[1].strip().replace('"', '').replace('"', '')
         key_value_pairs[key] = value
-    
+
     return key_value_pairs
 
 def find_account(config_entries, search_account):
@@ -60,7 +60,7 @@ def build_roles_choices():
     roles_choices = []
     for role in roles_dict:
         roles_choices.append({ 'name': role['name'] })
-    
+
     return roles_choices
 
 def find_role(target_role):
@@ -235,7 +235,7 @@ print('-- Generating named profiles...')
 print('------------------------------------------------------------')
 for role in roles_selected['roles']:
     role_props = find_role(role)
-    
+
     for account in accounts_selected['accounts']:
         profile_name = "{}-{}-{}".format(selected_project['project'], account, role_props['short_name'])
         role_arn = "arn:aws:iam::{}:role/{}".format(account_ids_map.get(account), role)
@@ -260,7 +260,7 @@ print('------------------------------------------------------------')
 for role in roles_selected['roles']:
     role_props = find_role(role)
     source_profile = role_props['source_profile'].format(selected_project['project'])
-    
+
     access_key_id_options = [{
         'type': 'password',
         'name': 'access_key_id',

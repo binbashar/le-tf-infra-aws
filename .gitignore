@@ -8,12 +8,14 @@
 !*.circleci
 !*.dockeringnore
 !*.hosts
+!.hosts.example
 !*.gitignore
 !/.chglog
 !/.gitallowed
 !/.github
 !*.gitkeep
 !*.editorconfig
+!*.pre-commit-config.yaml
 
 # SSH keys #
 ############
@@ -86,8 +88,16 @@ Thumbs.db
 *.vagrant
 *rclone.conf
 
-# TF Project files #
+# Project files #
 ####################
+#
+# Secret Files
+#
+*secrets.dec.*
+#
+# Scripts and Makefiles
+#
+/@bin/makefiles
 #
 # Compiled files
 #
@@ -105,7 +115,3 @@ Thumbs.db
 #
 tests/vendor/
 tests/Gopkg.*
-#
-# Secret Files
-#
-*secrets.dec.*

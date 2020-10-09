@@ -20,18 +20,27 @@ jobs:
           command: pwd && ls -ltra && git branch
 
       - run:
+          name: Initialize Repo Makefiles
+          command: |
+            make init-makefiles
+            git update-index --assume-unchanged "Makefile"
+
+      - run:
           name: test1-terraform-format
           command: make format-check
 
       - run:
           name: Install awscli
-          command: sudo pip install awscli
+          command: sudo -H pip install awscli
 
       - run:
           name: Configure awscli
           command: |
+            # AWS credentials dir
+            mkdir --parents /home/circleci/.aws/bb
+            sudo chown -R $USER:$USER /home/circleci/.aws
+
             # AWS defautl awscli profile
-            sudo chown -R $USER:$USER ~/.aws
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
             aws configure set region us-east-1
@@ -40,8 +49,8 @@ jobs:
             # AWS dev awscli profile
             aws configure set role_arn arn:aws:iam::$AWS_ACCOUNT_ID_SHARED:role/DeployMaster --profile $AWS_PROFILE_NAME
             aws configure set source_profile default --profile $AWS_PROFILE_NAME
+
             # moving credentials to specific project folder
-            mkdir --parents /home/circleci/.aws/bb
             cp /home/circleci/.aws/credentials /home/circleci/.aws/bb/credentials
             cp /home/circleci/.aws/config /home/circleci/.aws/bb/config
 
@@ -94,7 +103,7 @@ jobs:
       docker_layer_caching: false
 
     environment:
-      VERSION_NUMBER: patch # opts: patch, minor or major.
+      VERSION_NUMBER: minor # opts: patch, minor or major.
 
     steps:
       - checkout
@@ -102,6 +111,12 @@ jobs:
       - run:
           name: Context Info Cmds
           command: pwd && ls -ltra && git branch
+
+      - run:
+          name: Initialize Repo Makefiles
+          command: |
+            make init-makefiles
+            git update-index --assume-unchanged "Makefile"
 
       - run:
           name: Release New Version

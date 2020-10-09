@@ -9,7 +9,7 @@ locals {
   repository_list = {
     bb_leverage = {
       create = true
-      name = "bb/leverage"
+      name   = "bb/leverage"
       read_permissions = [
         "arn:aws:iam::${var.appsdevstg_account_id}:root",
         "arn:aws:iam::${var.appsprd_account_id}:root",

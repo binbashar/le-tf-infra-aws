@@ -1,7 +1,7 @@
 # Reference Architecture: Terraform AWS Organizations Account Baseline
 
 ## Overview
-This repository contains all Terraform configuration files used to create Binbash Leverage Reference 
+This repository contains all Terraform configuration files used to create Binbash Leverage Reference
 AWS Organizations Multi-Account baseline layout.
 
 ## Leverage Documentation

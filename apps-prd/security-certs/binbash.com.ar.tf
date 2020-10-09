@@ -2,9 +2,9 @@
 # ACM Cert generation with DNS validation
 #
 resource "aws_acm_certificate" "binbash_com_ar" {
-  domain_name       = "*.${local.public_domain_name}"
+  domain_name               = "*.${local.public_domain_name}"
   subject_alternative_names = [local.public_domain_name]
-  validation_method = "DNS"
+  validation_method         = "DNS"
 
   tags = local.tags
 

@@ -46,7 +46,7 @@ kops update cluster \
     --out .
 
 #
-# Remove AWS provider block from the generated kubernetes.tf as it is already declared in config.tf
+# Remove AWS provider block from the generated kubernetes.tf.example as it is already declared in config.tf
 #
 awk -v x=""  '/provider[[:space:]]"aws"[[:space:]]+\{/{f=1} !f{print} /}/{print x; f=0}' kubernetes.tf > kubernetes.tf.bak
 mv kubernetes.tf.bak kubernetes.tf
