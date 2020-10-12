@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.1"></a>
+## [v1.1.1] - 2020-10-12
+
+- urgent-fix | patch release flag setup
+- urgen-fix | makefiles typo corrected
+
+
 <a name="v1.1.0"></a>
 ## [v1.1.0] - 2020-10-09
 
@@ -897,7 +904,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.1...HEAD
+[v1.1.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.0...v1.1.1
 [v1.1.0]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.35...v1.1.0
 [v1.0.35]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.34...v1.0.35
 [v1.0.34]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.0.33...v1.0.34
