@@ -1,1 +1,1 @@
--include../../../@bin/makefiles/terraform12/terraform12-subfolder.mk
+-include ../../../@bin/makefiles/terraform12/terraform12-subfolder.mk
