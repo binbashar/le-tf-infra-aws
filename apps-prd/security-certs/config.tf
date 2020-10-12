@@ -28,7 +28,7 @@ terraform {
   required_version = ">= 0.12.28"
 
   backend "s3" {
-    key = "apps-prd/securitycerts/terraform.tfstate"
+    key = "apps-prd/security-certs/terraform.tfstate"
   }
 }
 
