@@ -2,7 +2,7 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  version                 = "~> 2.69"
+  version                 = "~> 3.2"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -17,9 +17,4 @@ terraform {
   backend "s3" {
     key = "shared/securitycompliance/terraform.tfstate"
   }
-}
-
-variable "bucket_region" {
-  description = "AWS Region"
-  default     = "us-east-1"
 }
