@@ -37,7 +37,7 @@ jobs:
           name: Configure awscli
           command: |
             # AWS credentials dir
-            ls -ltra /home/circleci/.aws/
+            whoami && pwd && ls -ltra /home/circleci/.aws/
             mkdir --parents /home/circleci/.aws/bb
             sudo chown -R $USER:$USER /home/circleci/.aws
 
