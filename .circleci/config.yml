@@ -38,7 +38,6 @@ jobs:
           command: |
             # AWS credentials dir
             whoami && pwd && ls -ltra /home/circleci/.aws/
-            mkdir /home/circleci/.aws
             sudo chown -R $USER:$USER /home/circleci/.aws
             mkdir --parents /home/circleci/.aws/bb
 
