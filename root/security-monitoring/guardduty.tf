@@ -3,8 +3,8 @@
 # later from GuardDuty's delegated admin.
 #
 resource "aws_guardduty_detector" "main" {
-  enable                        = true
-  finding_publishing_frequency  = "SIX_HOURS"
+  enable                       = true
+  finding_publishing_frequency = "SIX_HOURS"
 }
 
 #
