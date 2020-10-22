@@ -18,17 +18,3 @@ terraform {
     key = "security/security-monitoring/terraform.tfstate"
   }
 }
-
-#=============================#
-# Data sources                #
-#=============================#
-# data "terraform_remote_state" "notifications" {
-#   backend = "s3"
-
-#   config = {
-#     region  = var.region
-#     profile = var.profile
-#     bucket  = var.bucket
-#     key     = "${var.environment}/notifications/terraform.tfstate"
-#   }
-# }
