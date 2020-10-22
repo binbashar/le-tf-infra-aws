@@ -2,7 +2,7 @@
 # Have any GuardDuty findings reported to a Slack channel
 #
 module "guardduty_monitor" {
-  source = "github.com/binbashar/terraform-aws-guardduty-monitor?ref=tf12and13"
+  source = "github.com/binbashar/terraform-aws-guardduty-monitor?ref=v1.0.0"
 
   monitor_name                   = "default_guardduty_monitor"
   monitor_role_name              = "default_guardduty_monitor_role"
