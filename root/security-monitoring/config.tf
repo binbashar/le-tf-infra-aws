@@ -15,6 +15,6 @@ terraform {
   required_version = ">= 0.12.28"
 
   backend "s3" {
-    key = "security/security-monitoring/terraform.tfstate"
+    key = "root/security-monitoring/terraform.tfstate"
   }
 }
