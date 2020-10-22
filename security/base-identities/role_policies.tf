@@ -34,6 +34,7 @@ resource "aws_iam_policy" "devops_access" {
                 "dynamodb:*",
                 "ec2:*",
                 "events:*",
+                "guardduty:*",
                 "health:*",
                 "iam:*",
                 "kms:*",
