@@ -2,12 +2,13 @@
 # EC2 Pritunl OpenVPN
 #
 module "terraform-aws-basic-layout" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.12"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.20"
   prefix = var.prefix
   name   = var.name
 
-  aws_ami_os_id    = var.aws_ami_os_id
-  aws_ami_os_owner = var.aws_ami_os_owner
+  aws_ami_os_id          = var.aws_ami_os_id
+  aws_ami_os_owner       = var.aws_ami_os_owner
+  tag_approved_ami_value = var.tag_approved_ami_value
 
   instance_type = var.instance_type
   vpc_id        = data.terraform_remote_state.vpc.outputs.vpc_id
@@ -82,7 +83,7 @@ module "terraform-aws-basic-layout" {
   # 1.Renew LetsEncrypt private url cert (every 90 days)
   #    a. must open port 80 (line 52)
   #    b. force SSL cert update (manually via UI or via API call)
-  #    c. rollback a. step
+  #    c. rollback step a.
   #    d. re-comment this block
   # 2.New users setup (to view profile links -> PIN reset + OTP / uri link for Pritunl Client import).
   #    a. must open port 443 (line 60)
@@ -95,7 +96,8 @@ module "terraform-aws-basic-layout" {
     name    = "vpn.aws.binbash.com.ar",
     type    = "A",
     ttl     = 300
-}]*/
+  }]
+  */
 
   tags = local.tags
 }

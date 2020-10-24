@@ -2,7 +2,7 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  version                 = "~> 2.56"
+  version                 = "~> 3.0"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -24,6 +24,7 @@ terraform {
 #=============================#
 data "terraform_remote_state" "vpc" {
   backend = "s3"
+
   config = {
     region  = var.region
     profile = var.profile
@@ -34,6 +35,7 @@ data "terraform_remote_state" "vpc" {
 
 data "terraform_remote_state" "dns" {
   backend = "s3"
+
   config = {
     region  = var.region
     profile = var.profile
@@ -42,8 +44,9 @@ data "terraform_remote_state" "dns" {
   }
 }
 
-data "terraform_remote_state" "security" {
+data "terraform_remote_state" "keys" {
   backend = "s3"
+
   config = {
     region  = var.region
     profile = var.profile

@@ -86,7 +86,6 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
-
 #=============================#
 # EC2 BASIC LAYOUT MODULE     #
 #=============================#
@@ -146,4 +145,10 @@ variable "monitoring" {
   type        = bool
   description = "If true, the launched EC2 instance will have detailed monitoring enabled"
   default     = false
+}
+
+variable "tag_approved_ami_value" {
+  type        = string
+  description = "Set the specific tag ApprovedAMI ('true' | 'false') that identifies aws-config compliant AMIs"
+  default     = "true"
 }
