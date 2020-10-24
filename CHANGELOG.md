@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.4"></a>
+## [v1.1.4] - 2020-10-24
+
+- Adjust CloudWatch Authorization Alarm to reduce its noisiness ([#147](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/147))
+
+
 <a name="v1.1.3"></a>
 ## [v1.1.3] - 2020-10-22
 
@@ -917,7 +923,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.3...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.4...HEAD
+[v1.1.4]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.3...v1.1.4
 [v1.1.3]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.2...v1.1.3
 [v1.1.2]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.1...v1.1.2
 [v1.1.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.0...v1.1.1
