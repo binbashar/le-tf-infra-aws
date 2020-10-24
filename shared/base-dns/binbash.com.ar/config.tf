@@ -12,7 +12,7 @@ provider "aws" {
   alias                   = "apps-devstg"
   version                 = "~> 3.2"
   region                  = var.region
-  profile                 = "bb-apps-devstg-devops"
+  profile                 = "${var.project}-apps-devstg-devops"
   shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
@@ -20,7 +20,7 @@ provider "aws" {
   alias                   = "apps-prd"
   version                 = "~> 3.2"
   region                  = var.region
-  profile                 = "bb-apps-prd-devops"
+  profile                 = "${var.project}-apps-prd-devops"
   shared_credentials_file = "~/.aws/${var.project}/config"
 }
 

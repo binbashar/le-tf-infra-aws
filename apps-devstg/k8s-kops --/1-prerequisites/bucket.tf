@@ -4,6 +4,7 @@
 resource "aws_s3_bucket" "kops_state" {
   bucket = "${var.project}-state-${local.k8s_cluster_name}"
   acl    = "private"
+  policy = data.aws_iam_policy_document.kops_bucket_policy.json
   # force_destroy = true
 
   versioning {
@@ -45,6 +46,7 @@ resource "aws_s3_bucket" "kops_state" {
 resource "aws_s3_bucket" "kops_state_replica" {
   bucket   = "${var.project}-state-replica-${local.k8s_cluster_name}"
   provider = aws.region_secondary
+  policy   = data.aws_iam_policy_document.kops_bucket_policy_replica.json
 
   versioning {
     enabled = true
@@ -123,7 +125,7 @@ resource "aws_iam_policy" "replication" {
 POLICY
 }
 
-# replica attachment.
+# replica s3 iam role policy attachment.
 #
 resource "aws_iam_policy_attachment" "replication" {
   name       = "role-policy-replication"

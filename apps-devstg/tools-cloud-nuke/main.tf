@@ -1,8 +1,9 @@
 module "nuke_everything_daily_midnight" {
-  source = "github.com/binbashar/terraform-aws-lambda-nuke.git?ref=2.8.0"
+  source = "github.com/binbashar/terraform-aws-lambda-nuke.git?ref=2.9.0"
 
   # Define name to use for lambda function, cloudwatch event and iam role"
-  name = "${var.project}-${var.environment}-cloud-nuke-everything"
+  name        = "${var.project}-${var.environment}-cloud-nuke-everything"
+  kms_key_arn = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
 
   # Define the aws cloudwatch event rule schedule expression,
   # eg1: monday to friday at 22hs cron(0 22 ? * MON-FRI *)

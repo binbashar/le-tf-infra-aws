@@ -127,5 +127,5 @@ output "nat_gateway_ids" {
   )
 }
 output "shared_vpc_cidr_block" {
-  value = data.terraform_remote_state.vpc_shared.outputs.vpc_cidr_block
+  value = data.terraform_remote_state.vpc-shared.outputs.vpc_cidr_block
 }

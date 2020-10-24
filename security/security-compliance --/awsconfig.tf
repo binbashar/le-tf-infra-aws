@@ -79,5 +79,5 @@ module "terraform-aws-config" {
     tag3Value = var.environment
   }
   check_approved_amis_by_tag = true
-  ami_required_tag_key_value = "Terraform:true,Environment:${var.environment}"
+  ami_required_tag_key_value = "ApprovedAMI:true"
 }

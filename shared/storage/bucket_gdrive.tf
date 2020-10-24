@@ -4,9 +4,10 @@
 # pull: https://rclone.org/drive/
 # push: https://rclone.org/s3/#amazon-s3
 #
-resource "aws_s3_bucket" "gdrive_bakcup" {
+resource "aws_s3_bucket" "gdrive_backup" {
   bucket = "${var.project}-${var.environment}-gdrive-backup"
   acl    = "private"
+  policy = data.aws_iam_policy_document.bucket_policy_gdrive_backup.json
 
   versioning {
     enabled = false
@@ -42,4 +43,36 @@ resource "aws_s3_bucket" "gdrive_bakcup" {
   }
 
   tags = local.tags
+}
+
+#
+# S3 Enforce SSL Requests Bucket Policy
+#
+data "aws_iam_policy_document" "bucket_policy_gdrive_backup" {
+  statement {
+    sid = "EnforceSSlRequestsOnly"
+
+    effect = "Deny"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    actions = [
+      "s3:*",
+    ]
+
+    resources = [
+      "arn:aws:s3:::${var.project}-${var.environment}-gdrive-backup/*"
+    ]
+
+    #
+    # Check for a condition that always requires ssl communications
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
 }

@@ -1,13 +1,14 @@
 #
 # ElasticSearch & Kibana: EC2 resources (instance, volumes, security groups, etc)
 #
-module "elasticsearch_kibana" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout?ref=v0.3.12"
+module "ec2_elasticsearch_kibana" {
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout?ref=v0.3.20"
   prefix = var.prefix
   name   = var.name
 
-  aws_ami_os_id    = var.aws_ami_os_id
-  aws_ami_os_owner = var.aws_ami_os_owner
+  aws_ami_os_id          = var.aws_ami_os_id
+  aws_ami_os_owner       = var.aws_ami_os_owner
+  tag_approved_ami_value = var.tag_approved_ami_value
 
   instance_type = var.instance_type
   vpc_id        = data.terraform_remote_state.vpc.outputs.vpc_id
@@ -15,25 +16,10 @@ module "elasticsearch_kibana" {
 
   subnet_id                   = data.terraform_remote_state.vpc.outputs.private_subnets[0]
   associate_public_ip_address = var.associate_public_ip_address
-  key_pair_name               = data.terraform_remote_state.security.outputs.aws_key_pair_name
+  key_pair_name               = data.terraform_remote_state.keys.outputs.aws_key_pair_name
   ebs_optimized               = var.ebs_optimized
   monitoring                  = var.monitoring
   user_data_base64            = base64encode(local.user_data)
-
-  dns_records_internal_hosted_zone = [
-    {
-      zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
-      name    = "kibana.aws.binbash.com.ar",
-      type    = "A",
-      ttl     = 3600
-    },
-    {
-      zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
-      name    = "elasticsearch.aws.binbash.com.ar",
-      type    = "A",
-      ttl     = 3600
-    }
-  ]
 
   root_block_device = [
     {
@@ -77,6 +63,21 @@ module "elasticsearch_kibana" {
         data.terraform_remote_state.vpc-devstg.outputs.vpc_cidr_block,
       ],
       description = "Allow ElasticSearch"
+    }
+  ]
+
+  dns_records_internal_hosted_zone = [
+    {
+      zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
+      name    = "kibana.aws.binbash.com.ar",
+      type    = "A",
+      ttl     = 3600
+    },
+    {
+      zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
+      name    = "elasticsearch.aws.binbash.com.ar",
+      type    = "A",
+      ttl     = 3600
     }
   ]
 
