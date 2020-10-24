@@ -7,6 +7,20 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.5"></a>
+## [v1.1.5] - 2020-10-24
+
+- BBL-438 | cross-layer minor improvements
+- BBL-438 | kops s3 bucket with ssl request enforced + tf13 use + dns assoc with shared improved
+- BBL-438 | notifications layer updated cross-org to enforce kms user managed key + minor sintaxt enhancements.
+- BBL-438 | cdn-s3-frontend buckets layer updated with efornced ssl request policy
+- BBL-438 | security-compliance layer cross-org updated with ApprovedAMI tag value
+- BBL-438 | shared/storage enforcing ssl request via Bucket policy + minor sintaxt improvements
+- BBL-438 | shared/tools-* ApprovedAMI var added + minor sintaxt improvements
+- BBL-438 | upgrading makefile lib fixed version
+- BBL-438 | makefile lib improvements applied
+
+
 <a name="v1.1.4"></a>
 ## [v1.1.4] - 2020-10-24
 
@@ -923,7 +937,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.4...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.5...HEAD
+[v1.1.5]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.4...v1.1.5
 [v1.1.4]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.3...v1.1.4
 [v1.1.3]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.2...v1.1.3
 [v1.1.2]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.1...v1.1.2
