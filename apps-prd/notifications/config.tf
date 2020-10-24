@@ -26,7 +26,7 @@ terraform {
 #
 # data type from output for security
 #
-data "terraform_remote_state" "security_keys" {
+data "terraform_remote_state" "keys" {
   backend = "s3"
 
   config = {
