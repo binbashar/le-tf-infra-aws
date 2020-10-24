@@ -23,14 +23,19 @@ module "cloudtrail_s3_bucket" {
   # NOTE: Had to pass null here because there seems to be an issue with the
   #       module which is trying to set tags to lifecycle policies
   #
-  lifecycle_tags  = null
-  policy          = aws_s3_bucket_policy.cloudtrail_s3_bucket.policy
+  lifecycle_tags = null
+
+  #
+  # NOTE: this actually isn't supported by the module. The issue is reported
+  # here: https://github.com/cloudposse/terraform-aws-cloudtrail-s3-bucket/issues/19
+  #
+  # policy          = data.aws_iam_policy_document.cloudtrail_s3_bucket.json
   acl             = "private"
   expiration_days = 120
 }
 
 module "cloudtrail_api_alarms" {
-  source = "github.com/binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=v0.5.2"
+  source = "github.com/binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=v0.5.3"
 
   region           = var.region
   log_group_name   = aws_cloudwatch_log_group.cloudtrail.name
@@ -38,6 +43,15 @@ module "cloudtrail_api_alarms" {
   metric_namespace = var.metric_namespace
   create_dashboard = var.create_dashboard
   sns_topic_arn    = data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring_sec # null (to deactivate)
+
+  # Set custom threshold to the following alarms
+  alarm_threshold = {
+    "AuthorizationFailureCount" = "10"
+  }
+  # Set custom period to the following alarms
+  alarm_period = {
+    "AuthorizationFailureCount" = "600"
+  }
 }
 
 #==================================================================#

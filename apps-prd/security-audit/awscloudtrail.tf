@@ -14,7 +14,7 @@ module "cloudtrail" {
 }
 
 module "cloudtrail_api_alarms" {
-  source = "github.com/binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=v0.5.2"
+  source = "github.com/binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=v0.5.3"
 
   region           = var.region
   log_group_name   = aws_cloudwatch_log_group.cloudtrail.name
@@ -25,6 +25,14 @@ module "cloudtrail_api_alarms" {
   # sns_topic_arn     = data.terraform_remote_state.notifications.outputs.sns_topic_arn
   sns_topic_arn = null
 
+  # Set custom threshold to the following alarms
+  alarm_threshold = {
+    "AuthorizationFailureCount" = "10"
+  }
+  # Set custom period to the following alarms
+  alarm_period = {
+    "AuthorizationFailureCount" = "600"
+  }
 }
 
 #==================================================================#
