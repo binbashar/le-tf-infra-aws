@@ -23,7 +23,7 @@ module "cloudtrail_s3_bucket" {
   # NOTE: Had to pass null here because there seems to be an issue with the
   #       module which is trying to set tags to lifecycle policies
   #
-  lifecycle_tags  = null
+  lifecycle_tags = null
 
   #
   # NOTE: this actually isn't supported by the module. The issue is reported
