@@ -2,7 +2,7 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  version                 = "~> 2.69"
+  version                 = "~> 3.0"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -14,7 +14,7 @@ provider "aws" {
 # binbash-shared route53 cross-account ACM dns validation update
 #
 provider "aws" {
-  version                 = "~> 2.69"
+  version                 = "~> 3.0"
   region                  = var.region
   profile                 = var.profile_shared
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -25,7 +25,7 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.12.28"
+  required_version = ">= 0.13.2"
 
   backend "s3" {
     key = "apps-prd/cdn-s3/terraform.tfstate"
@@ -46,7 +46,7 @@ data "terraform_remote_state" "certificates" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/securitycerts/terraform.tfstate"
+    key     = "${var.environment}/security-certs/terraform.tfstate"
   }
 }
 
