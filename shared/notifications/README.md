@@ -26,16 +26,16 @@ kms_key_arn = "${aws_kms_key.this.arn}"
 create_with_kms_key = true
 ```
 
-### Consideration 
+### Consideration
 
 In order to get the necessary `secrets.dec.tf` file referenced at `plaintext = local.secrets.slack_webhook_monitoring`
 please execute `make decrypt` in this same path
 
 ```
 ╭─delivery at delivery-ops in ~/Binbash/repos/Flex/devops-tf-infra/shared/notifications on master✔ 20-10-21 - 9:27:51
-╰─⠠⠵ make decrypt 
+╰─⠠⠵ make decrypt
 ansible-vault decrypt --output secrets.dec.tf secrets.enc
-Vault password: 
+Vault password:
 Decryption successful
 ```
 
