@@ -41,7 +41,7 @@ example shown below
 
 ```shell
 ╭─delivery at delivery-ops in ~/le-tf-infra-aws/apps-devstg/base-network on master✔ 2020-10-29
-╰─⠠⠵ make 
+╰─⠠⠵ make
 Available Commands:
  - apply               apply-cmd tf-dir-chmod ## Make terraform apply any changes with dockerized binary
  - cost-estimate-plan  ## Terraform plan output compatible with https
