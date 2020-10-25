@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.6"></a>
+## [v1.1.6] - 2020-10-25
+
+- BBL-438 | make pre-commit applied and mds files formated
+
+
 <a name="v1.1.5"></a>
 ## [v1.1.5] - 2020-10-24
 
@@ -937,7 +943,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.5...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.6...HEAD
+[v1.1.6]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.5...v1.1.6
 [v1.1.5]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.4...v1.1.5
 [v1.1.4]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.3...v1.1.4
 [v1.1.3]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.2...v1.1.3
