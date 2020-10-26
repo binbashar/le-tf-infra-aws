@@ -197,27 +197,27 @@ resource "aws_iam_policy" "restricted_iam_self_management" {
 }
 data "aws_iam_policy_document" "restricted_iam_self_management" {
   statement {
-    sid = "AllowSelfManagement"
+    sid    = "AllowSelfManagement"
     effect = "Allow"
     actions = [
       "iam:UploadSigningCertificate",
-        "iam:UploadSSHPublicKey",
-        "iam:UpdateUser",
-        "iam:UpdateLoginProfile",
-        "iam:UpdateAccessKey",
-        "iam:ResyncMFADevice",
-        "iam:List*",
-        "iam:Get*",
-        "iam:GenerateServiceLastAccessedDetails",
-        "iam:GenerateCredentialReport",
-        "iam:EnableMFADevice",
-        "iam:DeleteVirtualMFADevice",
-        "iam:DeleteLoginProfile",
-        "iam:DeleteAccessKey",
-        "iam:CreateVirtualMFADevice",
-        "iam:CreateLoginProfile",
-        "iam:CreateAccessKey",
-        "iam:ChangePassword"
+      "iam:UploadSSHPublicKey",
+      "iam:UpdateUser",
+      "iam:UpdateLoginProfile",
+      "iam:UpdateAccessKey",
+      "iam:ResyncMFADevice",
+      "iam:List*",
+      "iam:Get*",
+      "iam:GenerateServiceLastAccessedDetails",
+      "iam:GenerateCredentialReport",
+      "iam:EnableMFADevice",
+      "iam:DeleteVirtualMFADevice",
+      "iam:DeleteLoginProfile",
+      "iam:DeleteAccessKey",
+      "iam:CreateVirtualMFADevice",
+      "iam:CreateLoginProfile",
+      "iam:CreateAccessKey",
+      "iam:ChangePassword"
     ]
     resources = [
       "arn:aws:iam::${var.security_account_id}:user/*/$${aws:username}",
@@ -227,7 +227,7 @@ data "aws_iam_policy_document" "restricted_iam_self_management" {
   }
 
   statement {
-    sid = "AllowDeactivateMFADevice"
+    sid    = "AllowDeactivateMFADevice"
     effect = "Allow"
     actions = [
       "iam:DeactivateMFADevice"
@@ -238,14 +238,14 @@ data "aws_iam_policy_document" "restricted_iam_self_management" {
       "arn:aws:iam::${var.security_account_id}:mfa/$${aws:username}"
     ]
     condition {
-      test = "Bool"
+      test     = "Bool"
       variable = "aws:MultiFactorAuthPresent"
-      values = ["true"]
+      values   = ["true"]
     }
     condition {
-      test = "NumericLessThan"
+      test     = "NumericLessThan"
       variable = "aws:MultiFactorAuthAge"
-      values = ["3600"]
+      values   = ["3600"]
     }
   }
 }

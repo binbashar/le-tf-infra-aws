@@ -118,7 +118,7 @@ module "s3_bucket_demo_files" {
     }
   }
 
-/* #
+  /* #
    # Error: Error putting S3 replication configuration: InvalidRequest:
    # Replication configuration cannot be applied to an Object Lock enabled bucket
    #
