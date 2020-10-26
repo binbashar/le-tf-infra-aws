@@ -36,7 +36,7 @@ aws s3api put-object \
 ```
 
 ### :white_check_mark: aws example usage expected output
-```shell 
+```shell
 {
     "ETag": "\"fb148d1c87abbfd727fb0da4770fe45d\"",
     "ServerSideEncryption": "aws:kms",
@@ -102,5 +102,5 @@ aws s3api head-object \
 
 #### AWS Java SDK
 - :blue_book: https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-using-java-sdk.html
-- :orange_book: https://stackoverflow.com/questions/60778481/aws-java-sdk-requiring-bucket-owner-full-control 
+- :orange_book: https://stackoverflow.com/questions/60778481/aws-java-sdk-requiring-bucket-owner-full-control
     - `PutObjectRequest request = new PutObjectRequest(bucketName, filename, data, metadata).withCannedAcl(CannedAccessControlList.BucketOwnerFullControl);`
