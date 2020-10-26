@@ -106,3 +106,18 @@ aws s3api head-object \
 
 #### Terraform Doc Consideration
 - :ledger: https://stackoverflow.com/questions/49425791/configuring-source-kms-keys-for-replicating-encrypted-objects
+-  *Error:* Error putting S3 replication configuration: InvalidRequest: 
+    Replication configuration cannot be applied to an Object Lock enabled bucket
+    
+   ```terraform
+      object_lock_configuration = {
+        object_lock_enabled = "Enabled"
+        rule = {
+          default_retention = {
+            mode  = "GOVERNANCE"
+            years = 1
+          }
+        }
+      }
+    ```
+
