@@ -1,10 +1,10 @@
 # apps-devstg storage layer
 
 
-### Cross-Layer dependencies
--
--
--
+### Cross-Layer dependencies (IAM + KMS)
+- [security/base-identities](https://github.com/binbashar/le-tf-infra-aws/blob/master/security/base-identities/groups.tf#L94)
+- [apps-devstg/security-keys](https://github.com/binbashar/le-tf-infra-aws/blob/master/apps-devstg/security-keys/kms.tf#L28)
+- [apps-devstg/security-keys-dr](https://github.com/binbashar/le-tf-infra-aws/blob/master/apps-devstg/security-keys-dr/kms.tf)
 
 ## PutObject
 ### :white_check_mark: awscli example usage w/ IAM Security Account User
