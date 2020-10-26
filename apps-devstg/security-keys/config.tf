@@ -18,3 +18,17 @@ terraform {
     key = "apps-devstg/security-keys/terraform.tfstate"
   }
 }
+
+#=============================#
+# Data sources                #
+#=============================#
+data "terraform_remote_state" "security-identities" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-security-devops"
+    bucket  = "${var.project}-security-terraform-backend"
+    key     = "security/identities/terraform.tfstate"
+  }
+}

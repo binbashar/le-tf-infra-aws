@@ -91,5 +91,22 @@ module "user_circle_ci" {
   create_iam_access_key         = true
   upload_iam_user_ssh_key       = false
 
-  pgp_key = "${file("keys/circle.ci")}"
+  pgp_key = "${file("keys/machine.circle.ci")}"
+}
+
+#==========================#
+# User: S3 Demo            #
+#==========================#
+module "user_s3_demo" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.20.0"
+
+  name                    = "s3.demo"
+  force_destroy           = true
+  password_reset_required = true
+
+  create_iam_user_login_profile = false
+  create_iam_access_key         = true
+  upload_iam_user_ssh_key       = false
+
+  pgp_key = "${file("keys/machine.s3.demo")}"
 }

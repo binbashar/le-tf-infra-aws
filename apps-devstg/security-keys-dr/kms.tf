@@ -1,4 +1,4 @@
-module "kms_key" {
+module "kms_key_dr" {
   source = "github.com/binbashar/terraform-aws-kms-key.git?ref=0.7.0"
 
   enabled                 = true
@@ -6,7 +6,7 @@ module "kms_key" {
   stage                   = var.environment
   name                    = var.kms_key_name
   delimiter               = "-"
-  description             = "KMS key for Dev Account"
+  description             = "DR KMS key for Dev Account (us-east-2)"
   deletion_window_in_days = 7
   enable_key_rotation     = true
   alias                   = "alias/${var.project}_${var.environment}_${var.kms_key_name}_key"
@@ -24,8 +24,7 @@ data "aws_iam_policy_document" "kms" {
     principals {
       type = "AWS"
       identifiers = [
-        "arn:aws:iam::${var.appsdevstg_account_id}:root",
-        "arn:aws:iam::${var.security_account_id}:user/${data.terraform_remote_state.security-identities.outputs.user_s3_demo_name}"
+        "arn:aws:iam::${var.appsdevstg_account_id}:root"
       ]
     }
   }
@@ -44,7 +43,7 @@ data "aws_iam_policy_document" "kms" {
 
     principals {
       type        = "Service"
-      identifiers = ["s3.${var.region}.amazonaws.com"]
+      identifiers = ["s3.${var.region_secondary}.amazonaws.com"]
     }
   }
 
@@ -67,7 +66,7 @@ data "aws_iam_policy_document" "kms" {
     condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
-      values   = ["arn:aws:logs:${var.region}:${var.appsdevstg_account_id}:*"]
+      values   = ["arn:aws:logs:${var.region_secondary}:${var.appsdevstg_account_id}:*"]
     }
   }
 }

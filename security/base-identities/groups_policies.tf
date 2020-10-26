@@ -139,3 +139,113 @@ resource "aws_iam_policy" "assume_finops_role" {
 }
 EOF
 }
+
+#
+# Policy: Allow s3_tx_reporter Group (S3 Cross-Org Permissions)
+#
+data "aws_iam_policy_document" "s3_demo_put_object" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:PutObjectAcl",
+    ]
+    resources = [
+      "${data.terraform_remote_state.apps-devstg-storage-bucket-demo-files.outputs.s3_bucket_demo_files_arn}/",
+      "${data.terraform_remote_state.apps-devstg-storage-bucket-demo-files.outputs.s3_bucket_demo_files_arn}/*"
+    ]
+  }
+
+  /*
+  #
+  # The actions in your policy do not support resource-level permissions and require you to choose All resources
+  # so the users will be able to list your AWS Org Buckets which is STRONGLY DISCOURAGED!
+  #
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:ListAllMyBuckets",
+    ]
+    resources = [
+      "*",
+    ]
+  }
+  */
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey",
+      "kms:Encrypt",
+      "kms:GenerateDataKey",
+      "kms:ReEncrypt*"
+    ]
+    resources = [
+      "${data.terraform_remote_state.apps-devstg-keys.outputs.aws_kms_key_arn}"
+    ]
+  }
+}
+
+#
+# Policy: Restricted access to IAM to allow self-management without exposing other users
+#
+resource "aws_iam_policy" "restricted_iam_self_management" {
+  name        = "restricted_iam_self_management"
+  description = "Allow IAM users to manage their own credentials"
+  policy      = data.aws_iam_policy_document.restricted_iam_self_management.json
+}
+data "aws_iam_policy_document" "restricted_iam_self_management" {
+  statement {
+    sid    = "AllowSelfManagement"
+    effect = "Allow"
+    actions = [
+      "iam:UploadSigningCertificate",
+      "iam:UploadSSHPublicKey",
+      "iam:UpdateUser",
+      "iam:UpdateLoginProfile",
+      "iam:UpdateAccessKey",
+      "iam:ResyncMFADevice",
+      "iam:List*",
+      "iam:Get*",
+      "iam:GenerateServiceLastAccessedDetails",
+      "iam:GenerateCredentialReport",
+      "iam:EnableMFADevice",
+      "iam:DeleteVirtualMFADevice",
+      "iam:DeleteLoginProfile",
+      "iam:DeleteAccessKey",
+      "iam:CreateVirtualMFADevice",
+      "iam:CreateLoginProfile",
+      "iam:CreateAccessKey",
+      "iam:ChangePassword"
+    ]
+    resources = [
+      "arn:aws:iam::${var.security_account_id}:user/*/$${aws:username}",
+      "arn:aws:iam::${var.security_account_id}:user/$${aws:username}",
+      "arn:aws:iam::${var.security_account_id}:mfa/$${aws:username}"
+    ]
+  }
+
+  statement {
+    sid    = "AllowDeactivateMFADevice"
+    effect = "Allow"
+    actions = [
+      "iam:DeactivateMFADevice"
+    ]
+    resources = [
+      "arn:aws:iam::${var.security_account_id}:user/*/$${aws:username}",
+      "arn:aws:iam::${var.security_account_id}:user/$${aws:username}",
+      "arn:aws:iam::${var.security_account_id}:mfa/$${aws:username}"
+    ]
+    condition {
+      test     = "Bool"
+      variable = "aws:MultiFactorAuthPresent"
+      values   = ["true"]
+    }
+    condition {
+      test     = "NumericLessThan"
+      variable = "aws:MultiFactorAuthAge"
+      values   = ["3600"]
+    }
+  }
+}
