@@ -18,7 +18,7 @@ module "user_auditor_ci" {
   create_iam_access_key         = true
   upload_iam_user_ssh_key       = false
 
-  pgp_key = "${file("keys/auditor.ci")}"
+  pgp_key = "${file("keys/machine.auditor.ci")}"
 }
 
 #==========================#
@@ -35,5 +35,5 @@ module "user_backup_s3" {
   create_iam_access_key         = true
   upload_iam_user_ssh_key       = false
 
-  pgp_key = "${file("keys/backup.s3")}"
+  pgp_key = "${file("keys/machine.backup.s3")}"
 }
