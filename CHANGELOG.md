@@ -7,6 +7,17 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.7"></a>
+## [v1.1.7] - 2020-10-26
+
+- BBL-442 | make pre-commit applied and .md files formated
+- BBL-442 | make format applied
+- BBL-442 | kms layer updated to allow s3 service + kms_key_dr layer added (us-east-2)
+- BBL-442 | security/base-identities s3 demo user + group added + finops creds-self-management policy limited
+- BBL-442 | apps-devstg/storage terraform-aws-s3-bucket full encrypted example with replication
+- BBL-442 | renaming gpg keys with machine.prefix bot a clearer naming convention
+
+
 <a name="v1.1.6"></a>
 ## [v1.1.6] - 2020-10-25
 
@@ -943,7 +954,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.6...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.7...HEAD
+[v1.1.7]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.6...v1.1.7
 [v1.1.6]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.5...v1.1.6
 [v1.1.5]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.4...v1.1.5
 [v1.1.4]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.3...v1.1.4
