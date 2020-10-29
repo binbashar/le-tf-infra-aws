@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.10"></a>
+## [v1.1.10] - 2020-10-29
+
+- Refactor GuardDuty to favor the use of new modules ([#152](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/152))
+
+
 <a name="v1.1.9"></a>
 ## [v1.1.9] - 2020-10-26
 
@@ -967,7 +973,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.9...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.10...HEAD
+[v1.1.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.9...v1.1.10
 [v1.1.9]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.8...v1.1.9
 [v1.1.8]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.7...v1.1.8
 [v1.1.7]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.6...v1.1.7
