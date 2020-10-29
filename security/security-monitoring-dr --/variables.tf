@@ -85,8 +85,3 @@ variable "appsprd_account_id" {
   type        = string
   description = "Account: Prod Modules & Libs"
 }
-
-variable "legacy_account_id" {
-  type        = string
-  description = "Account: Legacy"
-}
