@@ -7,6 +7,6 @@
 module "guardduty" {
   source = "github.com/binbashar/terraform-aws-guardduty-multiaccount.git//guardduty-delegated-admin"
 
-  guarduty_enabled                      = true
-  guardduty_delegated_admin_account_id  = var.security_account_id
+  guarduty_enabled                     = true
+  guardduty_delegated_admin_account_id = var.security_account_id
 }
