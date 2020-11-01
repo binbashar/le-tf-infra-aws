@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.12"></a>
+## [v1.1.12] - 2020-11-01
+
+- Merge branch 'master' of github.com:binbashar/le-tf-infra-aws
+- BBL-XXX | hot fix for backup-bb-gdrive-to-s3 ci job
+
+
 <a name="v1.1.11"></a>
 ## [v1.1.11] - 2020-11-01
 
@@ -979,7 +986,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.11...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.12...HEAD
+[v1.1.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.11...v1.1.12
 [v1.1.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.10...v1.1.11
 [v1.1.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.9...v1.1.10
 [v1.1.9]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.8...v1.1.9
