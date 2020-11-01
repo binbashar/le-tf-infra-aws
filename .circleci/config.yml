@@ -75,6 +75,12 @@ jobs:
           command: pwd && ls -ltra && git branch
 
       - run:
+          name: Initialize Repo Makefiles
+          command: |
+            make init-makefiles
+            git update-index --assume-unchanged "Makefile"
+
+      - run:
           name: backup-gdrive-to-s3
           working_directory: ~/project/shared/storage/@scripts
           environment:
