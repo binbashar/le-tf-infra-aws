@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.13"></a>
+## [v1.1.13] - 2020-11-01
+
+- Merge branch 'master' of github.com:binbashar/le-tf-infra-aws
+- BBL-XXX | minor sintaxt makefile improvement
+
+
 <a name="v1.1.12"></a>
 ## [v1.1.12] - 2020-11-01
 
@@ -986,7 +993,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.12...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.13...HEAD
+[v1.1.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.12...v1.1.13
 [v1.1.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.11...v1.1.12
 [v1.1.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.10...v1.1.11
 [v1.1.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.9...v1.1.10
