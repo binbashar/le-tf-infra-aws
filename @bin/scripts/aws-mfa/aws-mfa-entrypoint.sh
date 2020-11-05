@@ -11,7 +11,9 @@ set -o nounset
 
 # A simple logging function
 function log {
-    echo -e "[$(date +"%m-%d-%y %H:%M:%S")] $*"
+    if [[ "$MFA_SCRIPT_ENABLE_DEBUG" -ne "0" ]]; then
+        echo -e "[$(date +"%m-%d-%y %H:%M:%S")] $*"
+    fi
 }
 
 # Get the value of an entry in a config file
@@ -44,6 +46,7 @@ aws configure get profile.$profile_name.$profile_key
 # -----------------------------------------------------------------------------
 # Initialize variables
 # -----------------------------------------------------------------------------
+MFA_SCRIPT_ENABLE_DEBUG=`printenv MFA_SCRIPT_ENABLE_DEBUG || echo 0`
 BACKEND_CONFIG_FILE=`printenv BACKEND_CONFIG_FILE`
 COMMON_CONFIG_FILE=`printenv COMMON_CONFIG_FILE`
 SRC_AWS_CONFIG_FILE=`printenv SRC_AWS_CONFIG_FILE`
