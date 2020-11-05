@@ -94,7 +94,7 @@ fi
 # Loop through PROFILES and do all of the following
 # -----------------------------------------------------------------------------
 for i in "${UNIQ_PROFILES[@]}" ; do
-    log "CURRENT_PROFILE: $i"
+    echo "[MFA-SCRIPT] Processing profile: $i"
 
     # -----------------------------------------------------------------------------
     # Get the role, serial number and source profile from the AWS config file
@@ -121,7 +121,7 @@ for i in "${UNIQ_PROFILES[@]}" ; do
     else
         # If the MFA TOTP Key was not found, prompt the user for the MFA Token
         MFA_TOKEN_CODE=```
-    read -p 'Type in your token code: ' TOKEN_CODE
+    read -p "[MFA-SCRIPT] Type in your OTP: " TOKEN_CODE
     echo $TOKEN_CODE
     ```
     fi
@@ -171,6 +171,7 @@ for i in "${UNIQ_PROFILES[@]}" ; do
     aws configure set output $AWS_OUTPUT
     ```
 
+    echo "[MFA-SCRIPT] Credentials written.\n"
 done
 
 # Delegate execution to the given process
