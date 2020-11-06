@@ -48,35 +48,6 @@ Make sure you set the profile that has MFA enabled so that
 
 ## Shortcomings
 
-### Multiple profiles in the same Terraform layer are not supported
-The solution does not support all the use cases that Leverage has implemented.
-
-The MFA script only generates temporary credentials for the main profile:
-
-```provider "aws" {
-  ...
-  profile = var.profile
-  ...
-}
-```
-
-Other profiles are not supported. Typically data blocks that point to a different account. For instance:
-
-```
-data "terraform_remote_state" "vpc-apps-dev" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-apps-devstg-devops"
-    bucket  = "${var.project}-apps-devstg-terraform-backend"
-    key     = "apps-devstg/network/terraform.tfstate"
-  }
-}
-```
-
-Such data blocks refer to a different profile and need a different set of credentials. In order to support them, the script would also need to discover those profiles and prompt the user for the corresponding TOTP for that profile.
-
 ### Temporary credentials reuse is not supported
 The MFA workflow will generate new credentials every time you run a Makefile target that calls the AWS MFA script. Credentials are not checked for validity in order to favor reuse and speed up the temporary credentials generation procedure.
 
