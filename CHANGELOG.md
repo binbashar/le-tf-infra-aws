@@ -7,6 +7,14 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.16"></a>
+## [v1.1.16] - 2020-11-09
+
+- BBL-192 | udpating makefile lib ver to its latest stable ver
+- BBL-192 | pointing to latest Makefile-lib version
+- BBL-192 | security/base-identities apply validation + small sintaxt improvement
+
+
 <a name="v1.1.15"></a>
 ## [v1.1.15] - 2020-11-09
 
@@ -1005,7 +1013,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.15...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.16...HEAD
+[v1.1.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.15...v1.1.16
 [v1.1.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.14...v1.1.15
 [v1.1.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.13...v1.1.14
 [v1.1.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.12...v1.1.13
