@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.15"></a>
+## [v1.1.15] - 2020-11-09
+
+- Improve MFA script to better handle error conditions, improve logs, improve documentation ([#155](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/155))
+
+
 <a name="v1.1.14"></a>
 ## [v1.1.14] - 2020-11-06
 
@@ -999,7 +1005,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.14...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.15...HEAD
+[v1.1.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.14...v1.1.15
 [v1.1.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.13...v1.1.14
 [v1.1.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.12...v1.1.13
 [v1.1.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.11...v1.1.12
