@@ -25,9 +25,11 @@ data "aws_iam_policy_document" "bucket_policy" {
       #
       # Check for a condition that requires that uploads grant:
       # 1- Full control of the object to the bucket owner (canonical user ID)
-      # If your policy has this condition, then the user must upload objects with a command similar to the following:
+      # If your policy has this condition, then the user must upload objects
+      # with a command similar to the following:
       #
-      # aws s3api put-object --bucket my_bucket --key examplefile.txt --body ~/Documents/examplefi
+      # aws s3api put-object --bucket my_bucket --key example-file.txt \
+      #--body ~/Documents/example-file.txt
       condition {
         test     = "StringEquals"
         variable = "s3:x-amz-acl"
@@ -37,10 +39,14 @@ data "aws_iam_policy_document" "bucket_policy" {
         ]
       }
       #
-      # 2- Only when objects are encrypted by a certain AWS Key Management System (AWS KMS) key
-      # If your policy has this condition, then the user must upload objects with a command similar to the following:
+      # 2- Only when objects are encrypted by a certain AWS Key Management
+      # System (AWS KMS) key
+      # If your policy has this condition, then the user must upload objects
+      # with a command similar to the following:
       #
-      # aws s3api put-object --bucket my_bucket --key examplefile.txt --body ~/Documents/examplefile.txt --ssekms-key-id arn:aws:kms:us-east-1:111122223333:key/*
+      # aws s3api put-object --bucket my_bucket --key example-file.txt \
+      #--body ~/Documents/example-file.txt \
+      #--ssekms-key-id arn:aws:kms:us-east-1:111122223333:key/*
       condition {
         test     = "StringEquals"
         variable = "s3:x-amz-server-side-encryption-aws-kms-key-id"
