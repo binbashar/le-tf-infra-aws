@@ -19,9 +19,9 @@ module "iam_assumable_role_devops" {
   #
   # MFA setup
   #
-  role_requires_mfa    = false
-  mfa_age              = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
-  max_session_duration = 10800 # Max age of the session (in seconds) when assuming roles
+  role_requires_mfa    = true
+  mfa_age              = 43200 # Maximum CLI/API session duration in seconds between 3600 and 43200
+  max_session_duration = 3600  # Max age of valid MFA (in seconds) for roles which require MFA
   custom_role_policy_arns = [
     aws_iam_policy.devops_access.arn
   ]
@@ -49,8 +49,8 @@ module "iam_assumable_role_admin" {
   # MFA setup
   #
   role_requires_mfa    = true
-  mfa_age              = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
-  max_session_duration = 10800 # Max age of the session (in seconds) when assuming roles
+  mfa_age              = 43200 # Maximum CLI/API session duration in seconds between 3600 and 43200
+  max_session_duration = 3600  # Max age of valid MFA (in seconds) for roles which require MFA
 
   tags = local.tags
 }
@@ -74,8 +74,8 @@ module "iam_assumable_role_auditor" {
   # MFA setup
   #
   role_requires_mfa    = false
-  mfa_age              = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
-  max_session_duration = 10800 # Max age of the session (in seconds) when assuming roles
+  mfa_age              = 43200 # Maximum CLI/API session duration in seconds between 3600 and 43200
+  max_session_duration = 3600  # Max age of valid MFA (in seconds) for roles which require MFA
   custom_role_policy_arns = [
     "arn:aws:iam::aws:policy/SecurityAudit"
   ]
@@ -103,8 +103,8 @@ module "iam_assumable_role_oaar" {
   # MFA setup
   #
   role_requires_mfa    = true
-  mfa_age              = 3600 # Maximum CLI/API session duration in seconds between 3600 and 43200
-  max_session_duration = 7200 # Max age of the session (in seconds) when assuming roles
+  mfa_age              = 7200 # Maximum CLI/API session duration in seconds between 3600 and 43200
+  max_session_duration = 3600 # Max age of the session (in seconds) when assuming roles
 
   tags = local.tags
 }

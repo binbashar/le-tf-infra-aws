@@ -18,7 +18,7 @@ module "aws_iam_account_config" {
   require_lowercase_characters   = true
   require_symbols                = true
   require_uppercase_characters   = true
-  password_reuse_prevention      = 5
+  password_reuse_prevention      = 12
   allow_users_to_change_password = true
 }
 
