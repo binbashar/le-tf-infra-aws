@@ -7,6 +7,16 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.17"></a>
+## [v1.1.17] - 2020-11-13
+
+- BBL-445 | apps-prd/base-identities mfa for priviledged roles set to true
+- BBL-445 | apps-devstg/base-identities mfa for priviledged roles set to true
+- BBL-445 | security/base-identities mfa for priviledged roles set to true
+- BBL-445 | shared/base-identities mfa for priviledged roles set to true
+- BBL-445 | init-makefiles ref to latest ver
+
+
 <a name="v1.1.16"></a>
 ## [v1.1.16] - 2020-11-09
 
@@ -1013,7 +1023,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.16...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.17...HEAD
+[v1.1.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.16...v1.1.17
 [v1.1.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.15...v1.1.16
 [v1.1.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.14...v1.1.15
 [v1.1.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.13...v1.1.14
