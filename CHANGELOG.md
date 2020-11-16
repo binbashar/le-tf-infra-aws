@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.18"></a>
+## [v1.1.18] - 2020-11-16
+
+- BBL-446 | ci pre-commit integration + circleci slack notif improvement
+
+
 <a name="v1.1.17"></a>
 ## [v1.1.17] - 2020-11-13
 
@@ -1023,7 +1029,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.17...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.18...HEAD
+[v1.1.18]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.17...v1.1.18
 [v1.1.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.16...v1.1.17
 [v1.1.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.15...v1.1.16
 [v1.1.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.14...v1.1.15
