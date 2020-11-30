@@ -15,5 +15,5 @@ define TF_RM_RESOURCE_ARG
 "module.terraform_backend.aws_iam_role.bucket_replication[0]"
 endef
 
--include ../../@bin/makefiles/terraform13/terraform13.mk
+-include ../../@bin/makefiles/terraform13/terraform13-mfa.mk
 -include ../../@bin/makefiles/terraform13/terraform13-import-rm.mk
