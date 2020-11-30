@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.20"></a>
+## [v1.1.20] - 2020-11-30
+
+- BBL-192 | make format applied
+- BBL-192 | updating makefiles to use mfa + vpn ssl cert generation inline comments updated
+
+
 <a name="v1.1.19"></a>
 ## [v1.1.19] - 2020-11-19
 
@@ -1035,7 +1042,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.19...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.20...HEAD
+[v1.1.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.19...v1.1.20
 [v1.1.19]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.18...v1.1.19
 [v1.1.18]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.17...v1.1.18
 [v1.1.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.16...v1.1.17
