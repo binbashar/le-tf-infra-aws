@@ -81,12 +81,14 @@ module "terraform-aws-basic-layout" {
   #
   # UNCOMMENT in order to temporally expose VPN endpoint to:
   # 1.Renew LetsEncrypt private url cert (every 90 days)
-  #    a. must open port 80 (line 52)
-  #    b. must open port 443 (line 59)
-  #    c. must uncomment public DNS record block (lines 96-101)
+  #    a. must temporally open port 80 to the world (line 52)
+  #    b. must temporally open port 443 to the world (line 59)
+  #    c. must uncomment public DNS record block (lines 105-112)
   #    d. make apply
-  #    e. force SSL cert update (manually via UI or via API call)
-  #    f. rollback steps a,b & c + make apply
+  #    e. connect to the VPN and ssh to the Pritunl EC2
+  #    f. run '$sudo pritunl reset-ssl-cert'
+  #    g. force SSL cert update (manually via UI or via API call)
+  #    h. rollback steps a,b & c + make apply
   # 2.New users setup (to view profile links -> PIN reset + OTP / uri link for Pritunl Client import).
   #    a. must open port 443 (line 60)
   #    b. share new user setup links security (eg: LastPass / Bitwarden)
