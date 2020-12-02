@@ -7,6 +7,17 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.22"></a>
+## [v1.1.22] - 2020-12-02
+
+- BBL-192 | testing latest makefile-lib ver witi import mfa
+- BBL-192 | testing root with oaar-mfa + make import with mfa
+- BBL-192 | updated root tf backend iam profile to use OrganizationAccountAccessRole
+- BBL-192 | minor typo fix in var name
+- BBL-192 | pointing makefile lib to its latest stable version
+- BBL-192 | adding root OrganizationAccountAccessrole
+
+
 <a name="v1.1.21"></a>
 ## [v1.1.21] - 2020-12-01
 
@@ -1048,7 +1059,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.21...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.22...HEAD
+[v1.1.22]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.21...v1.1.22
 [v1.1.21]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.20...v1.1.21
 [v1.1.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.19...v1.1.20
 [v1.1.19]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.18...v1.1.19
