@@ -10,8 +10,8 @@ module "ec2_webhooks_proxy" {
   aws_ami_os_owner       = var.aws_ami_os_owner
   tag_approved_ami_value = var.tag_approved_ami_value
 
-  instance_type    = var.instance_type
-  vpc_id           = data.terraform_remote_state.vpc.outputs.vpc_id
+  instance_type = var.instance_type
+  vpc_id        = data.terraform_remote_state.vpc.outputs.vpc_id
 
   subnet_id                   = data.terraform_remote_state.vpc.outputs.public_subnets[0]
   associate_public_ip_address = var.associate_public_ip_address
