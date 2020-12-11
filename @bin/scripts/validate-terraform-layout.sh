@@ -49,8 +49,10 @@ else
     error " -> FAILED"
 fi
 
-log "Checking if backend key starts with $ACCOUNT_NAME and follows with $CATEGORY_NAME ..."
-CHECK_BACKEND_KEY_HAS_CATEGORY=`grep -r --include="config.tf" --exclude-dir=".terraform" ".*key\s*=\s*\"$ACCOUNT_NAME\/$CATEGORY_NAME" .`
+# Remove predefined prefixes in $CATEGORY_NAME
+CLEAN_CATEGORY_NAME=`echo $CATEGORY_NAME | sed "s/tool-//"`
+log "Checking if backend key starts with $ACCOUNT_NAME and follows with $CLEAN_CATEGORY_NAME ..."
+CHECK_BACKEND_KEY_HAS_CATEGORY=`grep -r --include="config.tf" --exclude-dir=".terraform" ".*key\s*=\s*\"$ACCOUNT_NAME\/$CLEAN_CATEGORY_NAME" .`
 if [ $? -eq 0 ]; then
     log " -> OK"
 else
@@ -90,7 +92,7 @@ fi
 
 log "Checking if base.config  contains $ACCOUNT_NAME ..."
 CONFIG_DIR="../config/"
-CHECK_CONFIG_PROFILE=`grep -r --include="base.config" "environment\s*=\s*\"$ACCOUNT_NAME\"" $CONFIG_DIR`
+CHECK_CONFIG_PROFILE=`grep -r --include="account.config" "environment\s*=\s*\"$ACCOUNT_NAME\"" $CONFIG_DIR`
 if [ $? -eq 0 ]; then
     log " -> OK"
 else
