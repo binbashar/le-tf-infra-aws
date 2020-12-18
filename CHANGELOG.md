@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.25"></a>
+## [v1.1.25] - 2020-12-18
+
+- BBL-263 | updating tf-backend module its latest tf-0.14 version + terraform format
+- BBL-263 | updating root context makefile w/ latest makefiles-lib ver + updating tf network module to its latest stable ver
+
+
 <a name="v1.1.24"></a>
 ## [v1.1.24] - 2020-12-11
 
@@ -1071,7 +1078,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.24...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.25...HEAD
+[v1.1.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.24...v1.1.25
 [v1.1.24]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.23...v1.1.24
 [v1.1.23]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.22...v1.1.23
 [v1.1.22]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.21...v1.1.22
