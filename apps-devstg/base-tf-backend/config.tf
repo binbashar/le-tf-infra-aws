@@ -3,7 +3,6 @@
 #=============================#
 provider "aws" {
   alias                   = "main_region"
-  version                 = "~> 3.0"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -11,20 +10,19 @@ provider "aws" {
 
 provider "aws" {
   alias                   = "secondary_region"
-  version                 = "~> 3.0"
   region                  = var.region_secondary
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
 terraform {
-  required_version = ">= 0.12.28"
+  required_version = ">= 0.14.2"
+
+  required_providers {
+    aws = "~> 3.0"
+  }
 
   backend "s3" {
     key = "apps-devstg/tf-backend/terraform.tfstate"
   }
-}
-
-provider "null" {
-  version = "~> 2.1"
 }

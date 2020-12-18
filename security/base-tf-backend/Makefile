@@ -14,10 +14,10 @@ define TF_RM_RESOURCE
 "module.terraform_backend.aws_iam_role.bucket_replication[0]"
 endef
 
--include ../../@bin/makefiles/terraform13/terraform13-mfa.mk
+-include ../../@bin/makefiles/terraform14/terraform14-mfa.mk
 #
 ## This include should only be uncommented when importing tf resources is needed
 ## warning: when not commented the arguments declared in this makefile will have preference
 ## over any previous included makefile.
 #
-#-include ../../@bin/makefiles/terraform13/terraform13-import-rm-mfa.mk
+#-include ../../@bin/makefiles/terraform14/terraform14-import-rm-mfa.mk
