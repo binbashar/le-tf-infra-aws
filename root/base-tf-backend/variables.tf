@@ -85,22 +85,3 @@ variable "appsprd_account_id" {
   type        = string
   description = "Account: Prod Modules & Libs"
 }
-
-#=============================#
-# Notifications               #
-#=============================#
-#
-# AWS SNS -> Lambda -> Slack: tools-monitoring
-#
-variable "sns_topic_name_monitoring" {
-  description = ""
-  default     = "sns-topic-slack-notify-monitoring-bb-monitoring"
-}
-
-#
-# AWS SNS -> Lambda -> Slack: tools-monitoring-sec
-#
-variable "sns_topic_name_monitoring_sec" {
-  description = ""
-  default     = "sns-topic-slack-notify-monitoring-bb-monitoring-sec"
-}
