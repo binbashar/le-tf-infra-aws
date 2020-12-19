@@ -21,8 +21,8 @@ module "schedule_ec2_stop_daily_midnight" {
   ec2_schedule = "true"
 
   # Enable scheduling on ec2 spot, ec2 autoscaling and rds
-  rds_schedule         = "false"     # to activate = "true"
-  autoscaling_schedule = "false"     # to activate = "true"
+  rds_schedule         = "false" # to activate = "true"
+  autoscaling_schedule = "false" # to activate = "true"
 
   # Set the tag use for identify resources to stop or start
   resources_tag = {
