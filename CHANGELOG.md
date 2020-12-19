@@ -7,6 +7,15 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.26"></a>
+## [v1.1.26] - 2020-12-19
+
+- BBL-453 | make format applied
+- BBL-453 | shared/tools-cloud-scheduler-stop-start layer updated to use its latest stable module ver + associated tags added to EC2 tools
+- BBL-453 | apps-devstg/tools-cloud-nuke layer updated to its latest stable module version
+- BBL-453 | renaming shared/tools-webhooks with '--' suffix to reflext that this layer it's not currently provisioned
+
+
 <a name="v1.1.25"></a>
 ## [v1.1.25] - 2020-12-18
 
@@ -1078,7 +1087,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.25...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.26...HEAD
+[v1.1.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.25...v1.1.26
 [v1.1.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.24...v1.1.25
 [v1.1.24]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.23...v1.1.24
 [v1.1.23]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.22...v1.1.23
