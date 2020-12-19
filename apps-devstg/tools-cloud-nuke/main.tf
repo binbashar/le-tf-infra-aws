@@ -1,5 +1,5 @@
 module "nuke_everything_daily_midnight" {
-  source = "github.com/binbashar/terraform-aws-lambda-nuke.git?ref=2.9.0"
+  source = "github.com/binbashar/terraform-aws-lambda-nuke.git?ref=2.10.0"
 
   # Define name to use for lambda function, cloudwatch event and iam role"
   name        = "${var.project}-${var.environment}-cloud-nuke-everything"
