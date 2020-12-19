@@ -1,9 +1,9 @@
 locals {
   tags = {
-    Name              = "${var.prefix}-${var.name}"
-    Terraform         = "true"
-    Environment       = var.environment
-    ScheduleStopDaily = true
+    Name                = "${var.prefix}-${var.name}"
+    Terraform           = "true"
+    Environment         = var.environment
+    ScheduleStopDaily   = true
   }
 
   user_data = <<EOF

@@ -5,7 +5,7 @@
 # Stop
 #
 module "schedule_ec2_stop_daily_midnight" {
-  source = "github.com/binbashar/terraform-aws-lambda-scheduler-stop-start?ref=2.8.0"
+  source = "github.com/binbashar/terraform-aws-lambda-scheduler-stop-start?ref=3.0.1"
   name   = "${var.project}-${var.environment}-schedule-stop-ec2"
 
   # Define the aws cloudwatch event rule schedule expression,
@@ -21,9 +21,8 @@ module "schedule_ec2_stop_daily_midnight" {
   ec2_schedule = "true"
 
   # Enable scheduling on ec2 spot, ec2 autoscaling and rds
-  spot_schedule        = "false" # to activate = "true"
-  rds_schedule         = "false" # to activate = "true"
-  autoscaling_schedule = "false" # to activate = "terminate"
+  rds_schedule         = "false"     # to activate = "true"
+  autoscaling_schedule = "false"     # to activate = "true"
 
   # Set the tag use for identify resources to stop or start
   resources_tag = {
@@ -35,7 +34,7 @@ module "schedule_ec2_stop_daily_midnight" {
 # Start
 #
 module "schedule_ec2_start_daily_morning" {
-  source = "github.com/binbashar/terraform-aws-lambda-scheduler-stop-start?ref=2.8.0"
+  source = "github.com/binbashar/terraform-aws-lambda-scheduler-stop-start?ref=3.0.1"
   name   = "${var.project}-${var.environment}-schedule-start-ec2"
 
   # Define the aws cloudwatch event rule schedule expression,
@@ -51,9 +50,8 @@ module "schedule_ec2_start_daily_morning" {
   ec2_schedule = "true"
 
   # Enable scheduling on ec2 spot, ec2 autoscaling and rds
-  spot_schedule        = "false" # to activate = "true"
   rds_schedule         = "false" # to activate = "true"
-  autoscaling_schedule = "false" # to activate = "terminate"
+  autoscaling_schedule = "false" # to activate = "true"
 
   # Set the tag use for identify resources to stop or start
   resources_tag = {
