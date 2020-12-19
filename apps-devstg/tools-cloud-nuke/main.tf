@@ -14,7 +14,7 @@ module "nuke_everything_daily_midnight" {
   # Define the resources that will not be destroyed, eg: key_pair,eip,
   # network_security,autoscaling,ebs,ec2,ecr,eks,elasticbeanstalk,elb,spot,
   # dynamodb,elasticache,rds,redshift,cloudwatch,endpoint,efs,glacier,s3"
-  exclude_resources = "cloudwatch,key_pair,s3,dynamodb,vpc"
+  exclude_resources = "cloudwatch,key_pair,s3,dynamodb,vpc,endpoint,network_acl"
 
   # Only destroy resources that were created before a certain period,
   # eg: 0d, 1d, ... ,7d etc
