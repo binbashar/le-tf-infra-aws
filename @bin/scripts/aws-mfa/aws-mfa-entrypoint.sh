@@ -101,7 +101,7 @@ for i in "${RAW_PROFILES[@]}" ; do
 done
 
 # And then we have to remove repeated profiles
-UNIQ_PROFILES=($(echo "${PROFILES[@]}" | tr ' ' '\n' | uniq | tr '\n' ' '))
+UNIQ_PROFILES=($(echo "${PROFILES[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
 if [[ "${#UNIQ_PROFILES[@]}" -eq 0 ]]; then
     error "Unable to find any profiles in config.tf"
     exit 100
