@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.28"></a>
+## [v1.1.28] - 2021-01-04
+
+- Fix an issue with MFA script failing to deduplicate the list of profiles that are parsed from Terraform config files ([#168](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/168))
+
+
 <a name="v1.1.27"></a>
 ## [v1.1.27] - 2020-12-19
 
@@ -1093,7 +1099,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.27...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.28...HEAD
+[v1.1.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.27...v1.1.28
 [v1.1.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.26...v1.1.27
 [v1.1.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.25...v1.1.26
 [v1.1.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.24...v1.1.25
