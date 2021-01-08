@@ -183,8 +183,7 @@ jobs:
             # secrets: setting ansible-vault pass file + rconf file decrypting
             echo "${ANSIBLE_VAULT_PASS_TF}" > .vault_pass
             make decrypt-non-interactive-conf
-            mv secrets.dec rclone.conf
-            chmod +rw rclone.conf
+            cp secrets.dec rclone.conf
             mkdir -p ~/.config/rclone
             cp rclone.conf ~/.config/rclone/rclone.conf
             # sync: calling rconf with the proper AWS ENV cred vars
