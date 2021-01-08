@@ -183,13 +183,13 @@ jobs:
             # secrets: setting ansible-vault pass file + rconf file decrypting
             echo "${ANSIBLE_VAULT_PASS_TF}" > .vault_pass
             make decrypt-non-interactive-conf
-            mv secrets.dec /home/circleci/project/shared/storage/@scripts/rclone.conf
+            mv secrets.dec rclone.conf
             # sync: calling rconf with the proper AWS ENV cred vars
             AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_SHARED_BACKUP_S3 \
             AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_SHARED_BACKUP_S3 \
             AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
             make apply-rclone
-            rm /home/circleci/project/shared/storage/@scripts/rclone.conf
+            rm /home/circleci/.config/rclone/rclone.conf
 
       - slack/notify:
           event: fail
