@@ -179,7 +179,7 @@ jobs:
           command: |
             # pre-reqs: install ansible and add ansible-vault binary to the path
             pwd && ls -ltra
-            pip3 install --use-feature=2020-resolver --user -I ansible==2.10.5;\
+            pip install -I ansible==2.10.5
             PATH=$PATH:~/.local/bin
             # secrets: setting ansible-vault pass file + rconf file decrypting
             echo "${ANSIBLE_VAULT_PASS_TF}" > .vault_pass
