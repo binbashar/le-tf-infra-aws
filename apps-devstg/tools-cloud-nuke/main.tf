@@ -1,5 +1,5 @@
 module "nuke_everything_daily_midnight" {
-  source = "github.com/binbashar/terraform-aws-lambda-nuke.git?ref=2.10.0"
+  source = "github.com/binbashar/terraform-aws-lambda-nuke.git?ref=2.12.0"
 
   # Define name to use for lambda function, cloudwatch event and iam role"
   name        = "${var.project}-${var.environment}-cloud-nuke-everything"
@@ -9,7 +9,7 @@ module "nuke_everything_daily_midnight" {
   # eg1: monday to friday at 22hs cron(0 22 ? * MON-FRI *)
   # eg2: once a week every friday at 00hs cron(0 00 ? * FRI *)
   # eg3: everyday at 00hs cron(0 00 * * ? *)
-  cloudwatch_schedule_expression = "cron(0 00 * * ? *)"
+  cloudwatch_schedule_expression = "cron(0 3 * * ? *)"
 
   # Define the resources that will not be destroyed, eg: key_pair,eip,
   # network_security,autoscaling,ebs,ec2,ecr,eks,elasticbeanstalk,elb,spot,
