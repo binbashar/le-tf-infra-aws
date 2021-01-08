@@ -22,7 +22,7 @@ echo "========================================================================="
 echo " Setting rclone configuration file                                       "
 echo "========================================================================="
 curl https://rclone.org/install.sh | sudo bash
-rclone config file
+#rclone config file
 cp ${PWD}/rclone.conf ~/.config/rclone/rclone.conf
 echo ""
 

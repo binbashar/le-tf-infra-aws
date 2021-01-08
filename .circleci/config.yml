@@ -185,8 +185,8 @@ jobs:
             make decrypt-non-interactive-conf
             sudo chown -R $USER:$USER ./secrets.dec
             mv ./secrets.dec ./rclone.conf
+            pwd && ls -ltra
             mkdir -p ~/.config/rclone
-            cp rclone.conf ~/.config/rclone/rclone.conf
             # sync: calling rconf with the proper AWS ENV cred vars
             AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_SHARED_BACKUP_S3 \
             AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_SHARED_BACKUP_S3 \
