@@ -2,7 +2,7 @@
 SHELL         := /bin/bash
 MAKEFILE_PATH := ./Makefile
 MAKEFILES_DIR := ./@bin/makefiles
-MAKEFILES_VER := v0.1.14
+MAKEFILES_VER := v0.1.15
 
 help:
 	@echo 'Available Commands:'
