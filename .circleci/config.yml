@@ -175,9 +175,6 @@ jobs:
           working_directory: ~/project/shared/storage/@scripts
           environment:
             ANSIBLE_VAULT_PASSWORD_FILE: .vault_pass
-            AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID_SHARED_BACKUP_S3
-            AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY_SHARED_BACKUP_S3
-            AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
           no_output_timeout: 120m
           command: |
             # pre-reqs: install ansible and add ansible-vault binary to the path
@@ -186,12 +183,12 @@ jobs:
             # secrets: setting ansible-vault pass file + rconf file decrypting
             echo "${ANSIBLE_VAULT_PASS_TF}" > .vault_pass
             make decrypt-non-interactive-conf
-            sudo chown -R $USER:$USER ./secrets.dec
+            #sudo chown -R $USER:$USER ./secrets.dec
             mv ./secrets.dec ./rclone.conf
             # sync: calling rconf with the proper AWS ENV cred vars
-            AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_SHARED_BACKUP_S3
-            AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_SHARED_BACKUP_S3
-            AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+            #AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_SHARED_BACKUP_S3 \
+            #AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_SHARED_BACKUP_S3 \
+            #AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
             make apply-rclone
             rm ~/.config/rclone/rclone.conf
 
