@@ -179,7 +179,7 @@ jobs:
           command: |
             # pre-reqs: install ansible and add ansible-vault binary to the path
             pwd && ls -ltra
-            make init-ansible-py
+            pip3 install --use-feature=2020-resolver --user -I ansible==2.10.5;\
             PATH=$PATH:~/.local/bin
             # secrets: setting ansible-vault pass file + rconf file decrypting
             echo "${ANSIBLE_VAULT_PASS_TF}" > .vault_pass
@@ -391,8 +391,14 @@ workflows:
           context: binbashar-org-global-context
           filters:
             branches:
-             ignore: # only branches matching the below regex filters will run
-               - master
+              ignore: # only branches matching the below regex filters will run
+                - master
+      - backup-bb-gdrive-to-s3:
+          context: binbashar-org-cron-context
+          filters:
+            branches:
+              ignore: # only branches matching the below regex filters will run
+                - master
       - release-version-with-changelog:
           context: binbashar-org-global-context
           filters:
