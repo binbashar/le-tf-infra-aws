@@ -179,16 +179,17 @@ jobs:
           command: |
             # pre-reqs: install ansible and add ansible-vault binary to the path
             pwd && ls -ltra
-            pip install -I ansible==2.10.5
             PATH=$PATH:~/.local/bin
             # secrets: setting ansible-vault pass file + rconf file decrypting
             echo "${ANSIBLE_VAULT_PASS_TF}" > .vault_pass
-            make decrypt
+            make decrypt-non-interactive-conf
+            mv secrets.dec rclone.conf
             # sync: calling rconf with the proper AWS ENV cred vars
             AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_SHARED_BACKUP_S3 \
             AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_SHARED_BACKUP_S3 \
             AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
-            make apply
+            make apply-rclone
+            rm rclone.conf
 
       - slack/notify:
           event: fail
