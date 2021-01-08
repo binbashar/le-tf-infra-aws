@@ -187,7 +187,10 @@ jobs:
             mv ./secrets.dec ./rclone.conf
             pwd && ls -ltra
             mkdir -p ~/.config/rclone
+            echo "###################"
             ls -ltra ~/.config/rclone/
+            cat ~/.config/rclone/rclone.conf
+            echo "###################"
             # sync: calling rconf with the proper AWS ENV cred vars
             AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_SHARED_BACKUP_S3 \
             AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_SHARED_BACKUP_S3 \
