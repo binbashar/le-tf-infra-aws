@@ -189,6 +189,7 @@ jobs:
             mkdir -p ~/.config/rclone
             echo "###################"
             ls -ltra ~/.config/rclone/
+            cp ./rclone.conf ~/.config/rclone/rclone.conf
             cat ~/.config/rclone/rclone.conf
             echo "###################"
             # sync: calling rconf with the proper AWS ENV cred vars
