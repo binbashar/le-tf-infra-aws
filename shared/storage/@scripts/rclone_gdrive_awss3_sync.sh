@@ -22,8 +22,8 @@ echo "========================================================================="
 echo " Setting rclone configuration file                                       "
 echo "========================================================================="
 curl https://rclone.org/install.sh | sudo bash
-rclone config file
-sudo cp ${PWD}/rclone.conf ~/.config/rclone/rclone.conf
+#rclone config file
+#cp ${PWD}/rclone.conf ~/.config/rclone/rclone.conf
 echo ""
 
 ## GDrive pull
