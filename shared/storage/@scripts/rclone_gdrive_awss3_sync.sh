@@ -24,8 +24,6 @@ echo "========================================================================="
 curl https://rclone.org/install.sh | sudo bash
 rclone config file
 cp ${PWD}/rclone.conf ~/.config/rclone/rclone.conf
-echo "## CREDS ##"
-cat ~/.config/rclone/rclone.conf
 echo ""
 
 ## GDrive pull
