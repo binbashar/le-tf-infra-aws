@@ -7,6 +7,36 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.29"></a>
+## [v1.1.29] - 2021-01-09
+
+- BBL-453 | leaving only cron rclone backup circile ci job
+- BBL-453 | passing aws keys through encrypted file
+- BBL-453 | moving credentials to encrypted file
+- BBL-453 | setting env vars at rclone ci stage
+- BBL-453 | leaving rconf config only at bash script
+- BBL-453 | re-adding creds setup to rclone bash script
+- BBL-453 | rclone.conf cp via ci job cmd
+- BBL-453 | adding some more rclone debugging related cmds to ci job
+- BBL-453 | adding ls cmd for debugging
+- BBL-453 | updating rclone script
+- BBL-453 | adding sudo chown to rclone ci cmd
+- BBL-453 | adding sudo to cp cmd
+- BBL-453 | changing mv w/ cp to avoid permission denied with rclone.conf
+- BBL-453 | adding read and write permissions to rclone.conf file before cp
+- BBL-453 | moving rclone conf mgmt to circleci conf
+- BBL-453 | updating circleci conf for make apply-rclone and script w/ sudo cp for config file
+- BBL-453 | exporting ENV vars for rclone script
+- BBL-453 | BBL-445 | adding sudo to make apply-rclone to fix permissions denied error
+- BBL-443 | script will take care of rclone.conf home cp
+- BBL-453 | using absolute path for rclone.conf
+- BBL-453 | fixing decyrpt without chmod on latest makefile-lib ver
+- BBL-453 | implementing make decrypt non interactive approach for rclone backup task
+- BBL-453 | adjusting pip install ansible at circleci config
+- BBL-453 | updating .circleci/config.yml to test drive to s3 backup job
+- BBL-453 | upgrading lambda cost optimization module versions + fix exec time considering GTM-3
+
+
 <a name="v1.1.28"></a>
 ## [v1.1.28] - 2021-01-04
 
@@ -1099,7 +1129,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.28...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.29...HEAD
+[v1.1.29]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.28...v1.1.29
 [v1.1.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.27...v1.1.28
 [v1.1.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.26...v1.1.27
 [v1.1.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.25...v1.1.26
