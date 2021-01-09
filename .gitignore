@@ -93,6 +93,7 @@ Thumbs.db
 #
 # Secret Files
 #
+*secrets.dec*
 *secrets.dec.*
 #
 # Scripts and Makefiles

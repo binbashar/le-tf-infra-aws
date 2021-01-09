@@ -11,12 +11,5 @@ help:
 #==============================================================#
 # RCLONE                                                       #
 #==============================================================#
-apply: ## run rclone sync script, remember to export your AWS credentials ENV vars
+apply-rclone: ## run rclone sync script, remember to export your AWS credentials ENV vars
 	bash rclone_gdrive_awss3_sync.sh rclone_bb_gdrive_awss3_sync
-
-decrypt: ## Decrypt secrets via ansible-vault
-	ansible-vault decrypt --output rclone.conf rclone.conf.enc
-
-encrypt: ## Encrypt secrets via ansible-vault
-	ansible-vault encrypt --output rclone.conf.enc rclone.conf \
-  && rm -rf rclone.conf
