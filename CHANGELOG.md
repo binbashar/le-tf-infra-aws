@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.30"></a>
+## [v1.1.30] - 2021-01-11
+
+- Implement credentials caching in MFA script ([#171](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/171))
+
+
 <a name="v1.1.29"></a>
 ## [v1.1.29] - 2021-01-09
 
@@ -1129,7 +1135,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.29...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.30...HEAD
+[v1.1.30]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.29...v1.1.30
 [v1.1.29]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.28...v1.1.29
 [v1.1.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.27...v1.1.28
 [v1.1.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.26...v1.1.27
