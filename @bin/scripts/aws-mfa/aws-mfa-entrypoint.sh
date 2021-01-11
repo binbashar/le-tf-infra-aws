@@ -162,7 +162,7 @@ for i in "${UNIQ_PROFILES[@]}" ; do
     MFA_DURATION=3600
     TEMP_FILE="$AWS_CACHE_DIR/$i"
     debug "TEMP_FILE=$TEMP_FILE"
-    
+
     while [[ $OTP_FAILED == true && $RETRIES_COUNT -lt $MAX_RETRIES ]]; do
 
         #
