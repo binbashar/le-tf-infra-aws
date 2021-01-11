@@ -68,6 +68,7 @@ SRC_AWS_CONFIG_FILE=`printenv SRC_AWS_CONFIG_FILE`
 SRC_AWS_SHARED_CREDENTIALS_FILE=`printenv SRC_AWS_SHARED_CREDENTIALS_FILE`
 TF_AWS_CONFIG_FILE=`printenv AWS_CONFIG_FILE`
 TF_AWS_SHARED_CREDENTIALS_FILE=`printenv AWS_SHARED_CREDENTIALS_FILE`
+AWS_CACHE_DIR=`printenv AWS_CACHE_DIR || echo /tmp/cache`
 AWS_REGION="$(get_config $BACKEND_CONFIG_FILE region)"
 AWS_OUTPUT=json
 debug "BACKEND_CONFIG_FILE=$BACKEND_CONFIG_FILE"
@@ -77,6 +78,24 @@ debug "TF_AWS_CONFIG_FILE=$TF_AWS_CONFIG_FILE"
 debug "TF_AWS_SHARED_CREDENTIALS_FILE=$TF_AWS_SHARED_CREDENTIALS_FILE"
 debug "AWS_REGION=$AWS_REGION"
 debug "AWS_OUTPUT=$AWS_OUTPUT"
+
+
+# -----------------------------------------------------------------------------
+# Pre-run Steps
+# -----------------------------------------------------------------------------
+
+# Make some pre-validations
+if [[ ! -f "$SRC_AWS_CONFIG_FILE" ]]; then
+    error "Unable to find 'AWS Config' file in path: $SRC_AWS_CONFIG_FILE"
+    exit 90
+fi
+if [[ ! -f "$SRC_AWS_SHARED_CREDENTIALS_FILE" ]]; then
+    error "Unable to find 'AWS Credentials' file in path: $SRC_AWS_SHARED_CREDENTIALS_FILE"
+    exit 91
+fi
+
+# Ensure cache credentials dir exists
+mkdir -p $AWS_CACHE_DIR
 
 
 # -----------------------------------------------------------------------------
@@ -140,9 +159,38 @@ for i in "${UNIQ_PROFILES[@]}" ; do
     MAX_RETRIES=3
     RETRIES_COUNT=0
     OTP_FAILED=true
-    MFA_DURATION=900
-    TEMP_FILE=/tmp/mfa-tmp-credentials
+    MFA_DURATION=3600
+    TEMP_FILE="$AWS_CACHE_DIR/$i"
+    debug "TEMP_FILE=$TEMP_FILE"
+    
     while [[ $OTP_FAILED == true && $RETRIES_COUNT -lt $MAX_RETRIES ]]; do
+
+        #
+        # Check if cached credentials exist: look for a file that correspond to
+        #       the current profile
+        #
+        if [[ -f "$TEMP_FILE" ]]; then
+            debug "Found cached credentials in TEMP_FILE=$TEMP_FILE"
+
+            # Get expiration date/timestamp
+            EXPIRATION_DATE=`cat $TEMP_FILE | jq .Credentials.Expiration | sed -e 's/"//g' | sed -e 's/T/ /' | sed -e 's/Z//'`
+            debug "EXPIRATION_DATE=$EXPIRATION_DATE"
+            EXPIRATION_TS=`date -d "$EXPIRATION_DATE" +"%s" || date +"%s"`
+            debug "EXPIRATION_TS=$EXPIRATION_TS"
+
+            # Compare current timestamp (plus a margin) with the expiration timestamp
+            CURRENT_TS=`date +"%s"`
+            CURRENT_TS_PLUS_MARGIN=`echo $(( $CURRENT_TS + (15 * 60) ))`
+            debug "CURRENT_TS=$CURRENT_TS"
+            debug "CURRENT_TS_PLUS_MARGIN=$CURRENT_TS_PLUS_MARGIN"
+            if [[ CURRENT_TS_PLUS_MARGIN -lt $EXPIRATION_TS ]]; then
+                info "MFA: Using cached credentials"
+
+                # Pretend the OTP succeeded and exit the while loop
+                OTP_FAILED=false
+                break
+            fi
+        fi
 
         # Let's see if can automatically generate the OTP
         if [[ $MFA_TOTP_KEY != "" ]]; then
@@ -209,7 +257,6 @@ for i in "${UNIQ_PROFILES[@]}" ; do
     debug "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:0:4}**************"
     debug "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:0:4}**************"
     debug "AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:0:4}**************"
-    rm $TEMP_FILE
 
     # Create a profile block in the AWS credentials file using the credentials above
     REPLACE_CREDENTIALS=```
