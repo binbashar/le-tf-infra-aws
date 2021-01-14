@@ -55,8 +55,8 @@ module "eks" {
   kubeconfig_aws_authenticator_additional_args = ["--cache"]
   kubeconfig_aws_authenticator_env_variables = {
     AWS_PROFILE                 = var.profile,
-    AWS_CONFIG_FILE             = "/Users/OJ/.aws/${var.project}/config",
-    AWS_SHARED_CREDENTIALS_FILE = "/Users/OJ/.aws/${var.project}/credentials"
+    AWS_CONFIG_FILE             = "~/.aws/${var.project}/config",
+    AWS_SHARED_CREDENTIALS_FILE = "~/.aws/${var.project}/credentials"
   }
 
   #
