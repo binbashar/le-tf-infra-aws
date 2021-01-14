@@ -1,5 +1,5 @@
 locals {
-  cluster_name = "${var.project}-${var.environment}-eks-${random_string.suffix.result}"
+  cluster_name = "${var.project}-${var.environment}-eks-sample"
 
   # Network Local Vars
   # https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html
@@ -27,18 +27,9 @@ locals {
     "172.19.10.0/23",
   ]
 
-  mgmt_worker_subnets = [
-    "172.18.0.0/20",
-    "172.18.32.0/20",
-    "172.19.0.0/20",
-  ]
-
   tags = {
-    Terraform                                     = "true"
-    Environment                                   = var.environment
-    GithubRepo                                    = "terraform-aws-vpc"
-    GithubOrg                                     = "binbashar"
-    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    Terraform   = "true"
+    Environment = var.environment
   }
 
   # We need these so that k8s aws cloud provider recognizes our private subnets
@@ -53,11 +44,6 @@ locals {
   }
 }
 
-resource "random_string" "suffix" {
-  length  = 8
-  special = false
-}
-
 locals {
   network_acls = {
     #
@@ -65,7 +51,7 @@ locals {
     #
     default_inbound = [
       {
-        rule_number = 900 # NTP traffic
+        rule_number = 900 # Allow NTP
         rule_action = "allow"
         from_port   = 123
         to_port     = 123
@@ -73,7 +59,7 @@ locals {
         cidr_block  = "0.0.0.0/0"
       },
       {
-        rule_number = 910 # Fltering known TCP ports (0-1024)
+        rule_number = 910 # Do not allow TCP low ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
         to_port     = 65525
@@ -81,7 +67,7 @@ locals {
         cidr_block  = "0.0.0.0/0"
       },
       {
-        rule_number = 920 # Fltering known UDP ports (0-1024)
+        rule_number = 920 # Do now allow UDP low ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
         to_port     = 65525
@@ -95,7 +81,7 @@ locals {
     #
     private_inbound = [
       {
-        rule_number = 100 # shared pritunl vpn server
+        rule_number = 100 # Allow traffic from Pritunl VPN server
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
@@ -103,20 +89,20 @@ locals {
         cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
       },
       {
-        rule_number = 110 # shared private subnet A
+        rule_number = 110 # Allow traffic from Shared private subnet A
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
         protocol    = "-1"
-        cidr_block  = data.terraform_remote_state.vpc-shared.outputs.private_subnets_cidr[0]
+        cidr_block  = data.terraform_remote_state.shared-vpc.outputs.private_subnets_cidr[0]
       },
       {
-        rule_number = 120 # shared private subnet B
+        rule_number = 120 # Allow traffic from Shared private subnet B
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
         protocol    = "-1"
-        cidr_block  = data.terraform_remote_state.vpc-shared.outputs.private_subnets_cidr[1]
+        cidr_block  = data.terraform_remote_state.shared-vpc.outputs.private_subnets_cidr[1]
       },
     ]
   }

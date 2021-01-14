@@ -1,12 +1,18 @@
 #
 # Providers
 #
-# AWS
-#
 provider "aws" {
-  version                 = "~> 2.69"
+  version                 = "~> 3.2"
   region                  = var.region
   profile                 = var.profile
+  shared_credentials_file = "~/.aws/${var.project}/config"
+}
+
+provider "aws" {
+  alias                   = "shared"
+  version                 = "~> 3.2"
+  region                  = var.region
+  profile                 = "${var.project}-shared-devops"
   shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
@@ -14,37 +20,17 @@ provider "aws" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.12.28"
+  required_version = ">= 0.13.2"
 
   backend "s3" {
-    key = "apps-devstg/k8s-eks/prerequisites/terraform.tfstate"
+    key = "apps-devstg/k8s-eks/vpc/terraform.tfstate"
   }
 }
 
-provider "random" {
-  version = "~> 2.1"
-}
-
-provider "local" {
-  version = "~> 1.2"
-}
-
-provider "null" {
-  version = "~> 2.1"
-}
-
-provider "template" {
-  version = "~> 2.1"
-}
-
-#=============================#
-# Data sources                #
-#=============================#
-
 #
-# data type from output for vpc
+# Data sources
 #
-data "terraform_remote_state" "vpc-shared" {
+data "terraform_remote_state" "shared-vpc" {
   backend = "s3"
 
   config = {
@@ -55,20 +41,17 @@ data "terraform_remote_state" "vpc-shared" {
   }
 }
 
-data "terraform_remote_state" "dns-shared" {
+data "terraform_remote_state" "shared-dns" {
   backend = "s3"
 
   config = {
     region  = var.region
     profile = "${var.project}-shared-devops"
     bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/dns/terraform.tfstate"
+    key     = "shared/dns/binbash.com.ar/terraform.tfstate"
   }
 }
 
-#
-# data type from output for tools-ec2
-#
 data "terraform_remote_state" "tools-vpn-server" {
   backend = "s3"
 

@@ -48,11 +48,6 @@ output "public_subnets_cidr" {
   value       = local.public_subnets
 }
 
-output "worker_mgmt_subnets_cidr" {
-  description = "List of IDs of public subnets"
-  value       = local.mgmt_worker_subnets
-}
-
 output "nat_gateway_ids" {
   description = "NAT Gateway IDs"
   value       = module.vpc-eks.natgw_ids

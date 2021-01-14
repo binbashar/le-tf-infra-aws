@@ -3,7 +3,7 @@
 #
 output "cluster_name" {
   description = "EKS Cluster Name"
-  value       = data.terraform_remote_state.vpc-eks.outputs.cluster_name
+  value       = data.terraform_remote_state.shared-eks-vpc.outputs.cluster_name
 }
 
 output "cluster_endpoint" {
@@ -29,12 +29,4 @@ output "config_map_aws_auth" {
 output "region" {
   description = "AWS region."
   value       = var.region
-}
-
-#
-# SG Worker Management
-#
-output "sg_all_worker_mgmt_id" {
-  description = "Security group for EKS Worker SSH management"
-  value       = aws_security_group.all_worker_mgmt.*.id
 }

@@ -91,7 +91,7 @@ variable "appsprd_account_id" {
 variable "cluster_version" {
   description = "Kubernetes version to use for the EKS cluster."
   type        = string
-  default     = "1.14"
+  default     = "1.17"
 }
 
 #
@@ -100,11 +100,20 @@ variable "cluster_version" {
 variable "cluster_endpoint_private_access" {
   description = "Indicates whether or not the Amazon EKS private API server endpoint is enabled."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "cluster_endpoint_public_access" {
   description = "Indicates whether or not the Amazon EKS public API server endpoint is enabled."
+  type        = bool
+  default     = false
+}
+
+#
+# Security: Private Access Rules
+#
+variable "cluster_create_endpoint_private_access_sg_rule" {
+  description = "Whether to create security group rules for the access to the Amazon EKS private API server endpoint."
   type        = bool
   default     = true
 }
@@ -116,12 +125,6 @@ variable "cluster_log_retention_in_days" {
   description = "Number of days to retain log events. Default retention - 90 days."
   type        = number
   default     = 60
-}
-
-variable "create_sg_eks_workers_customer" {
-  description = "true if EKS cutomer managed workers mgmt sg needs to be created"
-  type        = bool
-  default     = false
 }
 
 #
@@ -167,9 +170,9 @@ variable "map_accounts" {
   type        = list(string)
 
   default = [
-    "900980591242", # security
-    "763606934258", # shared
-    "523857393444", # apps-devstg
+    # "900980591242", # security
+    # "763606934258", # shared
+    # "523857393444", # apps-devstg
   ]
 }
 
@@ -182,10 +185,27 @@ variable "map_roles" {
   }))
 
   default = [
-    {
-      rolearn  = "arn:aws:iam::900980591242:role/DevOps"
-      username = "DevOps"
-      groups   = ["system:masters"]
-    },
+    # {
+    #   rolearn  = "arn:aws:iam::900980591242:role/DevOps"
+    #   username = "DevOps"
+    #   groups   = ["system:masters"]
+    # },
+  ]
+}
+
+variable "map_users" {
+  description = "Additional IAM users to add to the aws-auth configmap. See examples/basic/variables.tf for example format."
+  type = list(object({
+    userarn  = string
+    username = string
+    groups   = list(string)
+  }))
+
+  default = [
+    # {
+    #   userarn  = "arn:aws:iam:[ACCOUNT]:user/john.doe"
+    #   username = "john.doe"
+    #   groups   = ["system:masters"]
+    # }
   ]
 }
