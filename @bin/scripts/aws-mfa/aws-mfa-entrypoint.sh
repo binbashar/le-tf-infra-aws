@@ -180,7 +180,7 @@ for i in "${UNIQ_PROFILES[@]}" ; do
 
             # Compare current timestamp (plus a margin) with the expiration timestamp
             CURRENT_TS=`date +"%s"`
-            CURRENT_TS_PLUS_MARGIN=`echo $(( $CURRENT_TS + (15 * 60) ))`
+            CURRENT_TS_PLUS_MARGIN=`echo $(( $CURRENT_TS + (30 * 60) ))`
             debug "CURRENT_TS=$CURRENT_TS"
             debug "CURRENT_TS_PLUS_MARGIN=$CURRENT_TS_PLUS_MARGIN"
             if [[ CURRENT_TS_PLUS_MARGIN -lt $EXPIRATION_TS ]]; then
