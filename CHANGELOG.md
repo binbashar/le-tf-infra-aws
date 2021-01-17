@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.33"></a>
+## [v1.1.33] - 2021-01-17
+
+- BBL-24 | hashicorp vault cloud hvn and shared vpc peering
+
+
 <a name="v1.1.32"></a>
 ## [v1.1.32] - 2021-01-14
 
@@ -1147,7 +1153,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.32...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.33...HEAD
+[v1.1.33]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.32...v1.1.33
 [v1.1.32]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.31...v1.1.32
 [v1.1.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.30...v1.1.31
 [v1.1.30]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.29...v1.1.30
