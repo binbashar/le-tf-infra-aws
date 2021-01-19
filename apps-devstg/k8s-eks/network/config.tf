@@ -23,7 +23,7 @@ terraform {
   required_version = ">= 0.13.2"
 
   backend "s3" {
-    key = "apps-devstg/k8s-eks/vpc/terraform.tfstate"
+    key = "apps-devstg/k8s-eks/network/terraform.tfstate"
   }
 }
 
