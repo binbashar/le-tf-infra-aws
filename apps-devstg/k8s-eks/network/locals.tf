@@ -104,6 +104,30 @@ locals {
         protocol    = "-1"
         cidr_block  = data.terraform_remote_state.shared-vpc.outputs.private_subnets_cidr[1]
       },
+      {
+        rule_number = 200 # Allow traffic from EKS VPC private subnet A
+        rule_action = "allow"
+        from_port   = 443
+        to_port     = 443
+        protocol    = "tcp"
+        cidr_block  = local.private_subnets[0]
+      },
+      {
+        rule_number = 210 # Allow traffic from EKS VPC private subnet B
+        rule_action = "allow"
+        from_port   = 443
+        to_port     = 443
+        protocol    = "tcp"
+        cidr_block  = local.private_subnets[1]
+      },
+      {
+        rule_number = 220 # Allow traffic from EKS VPC private subnet C
+        rule_action = "allow"
+        from_port   = 443
+        to_port     = 443
+        protocol    = "tcp"
+        cidr_block  = local.private_subnets[2]
+      },
     ]
   }
 }
