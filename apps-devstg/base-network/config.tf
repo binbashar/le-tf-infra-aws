@@ -33,7 +33,7 @@ data "terraform_remote_state" "vpc-eks" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/k8s-eks/prerequisites/terraform.tfstate"
+    key     = "${var.environment}/k8s-eks/network/terraform.tfstate"
   }
 }
 

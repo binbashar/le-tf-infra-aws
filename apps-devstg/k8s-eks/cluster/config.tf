@@ -45,7 +45,7 @@ data "terraform_remote_state" "shared-eks-vpc" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "apps-devstg/k8s-eks/vpc/terraform.tfstate"
+    key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
   }
 }
 
