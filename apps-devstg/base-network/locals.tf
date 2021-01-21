@@ -70,7 +70,7 @@ locals {
         rule_number = 910 # Fltering known TCP ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
-        to_port     = 65525
+        to_port     = 65535
         protocol    = "tcp"
         cidr_block  = "0.0.0.0/0"
       },
@@ -78,7 +78,7 @@ locals {
         rule_number = 920 # Fltering known UDP ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
-        to_port     = 65525
+        to_port     = 65535
         protocol    = "udp"
         cidr_block  = "0.0.0.0/0"
       },
@@ -93,7 +93,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
       },
       {
@@ -101,7 +101,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = data.terraform_remote_state.vpc-shared.outputs.private_subnets_cidr[0]
       },
       {
@@ -109,7 +109,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = data.terraform_remote_state.vpc-shared.outputs.private_subnets_cidr[1]
       },
     ]
