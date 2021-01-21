@@ -7,6 +7,16 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.37"></a>
+## [v1.1.37] - 2021-01-21
+
+- BBL-24 | root/organization adding aws_service_access_principals -> "access-analyzer.amazonaws.com"
+- BBL-24 | updating shared/base-network NACLs protocol sintaxt for better understanding
+- BBL-24 | apps-prd/base-network migrated to tf-0.14 + latest tf-vpc module ver + NACLs port fixed
+- BBL-24 | apps-devstg/base-network migrated to tf-0.14 + latest tf-vpc module ver + NACLs port fixed
+- BBL-24 | updating root-context Makefile to use latest makefiles-lib ver
+
+
 <a name="v1.1.36"></a>
 ## [v1.1.36] - 2021-01-21
 
@@ -1184,7 +1194,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.36...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.37...HEAD
+[v1.1.37]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.36...v1.1.37
 [v1.1.36]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.35...v1.1.36
 [v1.1.35]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.34...v1.1.35
 [v1.1.34]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.33...v1.1.34
