@@ -99,3 +99,21 @@ variable "vpc_apps_devstg_eks_dns_assoc" {
   type        = bool
   default     = true
 }
+
+variable "vpc_vault_hvn_created" {
+  description = "true if the Hahicorp Vault Cloud HVN account VPC is created for Peering purposes"
+  type        = bool
+  default     = true
+}
+
+variable "vpc_vault_hvn_peering_connection_id" {
+  description = "Hahicorp Vault Cloud HVN VPC peering ID"
+  type        = string
+  default     = "pcx-044a76da32de14ba6"
+}
+
+variable "vpc_vault_hvn_cird" {
+  description = "Hahicorp Vault Cloud HVN VPC CIDR segment"
+  type        = string
+  default     = "172.25.16.0/20"
+}
