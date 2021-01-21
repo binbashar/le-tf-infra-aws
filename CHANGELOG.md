@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.35"></a>
+## [v1.1.35] - 2021-01-21
+
+- EKS updates ([#177](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/177))
+
+
 <a name="v1.1.34"></a>
 ## [v1.1.34] - 2021-01-19
 
@@ -1159,7 +1165,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.34...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.35...HEAD
+[v1.1.35]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.34...v1.1.35
 [v1.1.34]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.33...v1.1.34
 [v1.1.33]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.32...v1.1.33
 [v1.1.32]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.31...v1.1.32
