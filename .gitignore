@@ -111,6 +111,7 @@ Thumbs.db
 *terraform.jq
 *plan.json
 *state.json
+*plan.save
 #
 # Terratest
 #

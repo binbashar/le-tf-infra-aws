@@ -62,7 +62,7 @@ locals {
         rule_number = 910 # Do not allow TCP low ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
-        to_port     = 65525
+        to_port     = 65535
         protocol    = "tcp"
         cidr_block  = "0.0.0.0/0"
       },
@@ -70,7 +70,7 @@ locals {
         rule_number = 920 # Do now allow UDP low ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
-        to_port     = 65525
+        to_port     = 65535
         protocol    = "udp"
         cidr_block  = "0.0.0.0/0"
       },
@@ -84,7 +84,7 @@ locals {
         rule_number = 100 # Allow traffic from Pritunl VPN server
         rule_action = "allow"
         from_port   = 0
-        to_port     = 65536
+        to_port     = 65535
         protocol    = "all"
         cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
       },
@@ -92,7 +92,7 @@ locals {
         rule_number = 110 # Allow traffic from Shared private subnet A
         rule_action = "allow"
         from_port   = 0
-        to_port     = 65536
+        to_port     = 65535
         protocol    = "all"
         cidr_block  = data.terraform_remote_state.shared-vpc.outputs.private_subnets_cidr[0]
       },
@@ -100,7 +100,7 @@ locals {
         rule_number = 120 # Allow traffic from Shared private subnet B
         rule_action = "allow"
         from_port   = 0
-        to_port     = 65536
+        to_port     = 65535
         protocol    = "all"
         cidr_block  = data.terraform_remote_state.shared-vpc.outputs.private_subnets_cidr[1]
       },
@@ -108,7 +108,7 @@ locals {
         rule_number = 200 # Allow traffic from EKS VPC private subnet A
         rule_action = "allow"
         from_port   = 0
-        to_port     = 65536
+        to_port     = 65535
         protocol    = "all"
         cidr_block  = local.private_subnets[0]
       },
@@ -116,7 +116,7 @@ locals {
         rule_number = 210 # Allow traffic from EKS VPC private subnet B
         rule_action = "allow"
         from_port   = 0
-        to_port     = 65536
+        to_port     = 65535
         protocol    = "all"
         cidr_block  = local.private_subnets[1]
       },
@@ -124,9 +124,17 @@ locals {
         rule_number = 220 # Allow traffic from EKS VPC private subnet C
         rule_action = "allow"
         from_port   = 0
-        to_port     = 65536
+        to_port     = 65535
         protocol    = "all"
         cidr_block  = local.private_subnets[2]
+      },
+      {
+        rule_number = 300 # vault hvn vpc
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = var.vpc_vault_hvn_cird
       },
     ]
   }

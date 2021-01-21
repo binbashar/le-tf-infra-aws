@@ -2,7 +2,6 @@
 # Providers
 #
 provider "aws" {
-  version                 = "~> 3.2"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -10,7 +9,6 @@ provider "aws" {
 
 provider "aws" {
   alias                   = "shared"
-  version                 = "~> 3.2"
   region                  = var.region
   profile                 = "${var.project}-shared-devops"
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -20,7 +18,11 @@ provider "aws" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.13.2"
+  required_version = ">= 0.14.4"
+
+  required_providers {
+    aws = "~> 3.2"
+  }
 
   backend "s3" {
     key = "apps-devstg/k8s-eks/network/terraform.tfstate"
