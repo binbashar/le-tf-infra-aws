@@ -144,6 +144,14 @@ locals {
         protocol    = "-1"
         cidr_block  = data.terraform_remote_state.vpc-apps-prd.outputs.private_subnets_cidr[2]
       },
+      {
+        rule_number = 200 # vault hvn vpc
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "-1"
+        cidr_block  = var.vpc_vault_hvn_cird
+      },
     ]
   }
 }
