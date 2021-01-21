@@ -7,6 +7,25 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.36"></a>
+## [v1.1.36] - 2021-01-21
+
+- Merge branch 'master' into feature/BBL-24-vault-vpc-peering-update
+- BBL-24 | apps-devstg/k8s-eks/network locals.tf NACLs updated and applied
+- BBL-24 | apps-devstg/base-network vpc peering file name updated with requester on its name for easier understanding
+- BBL-24 | apps-devstg/k8s-eks/network upgrading to tf-0.14 + vpc peering with hashicorp Vault Cloud hvn
+- BBL-24 | apps-devstg/k8s-eks/network vpc peering file name updated with requester on its name for easier understanding
+- BBL-24 | apps-prd/base-network vpc peering file name updated with requester on its name for easier understanding
+- BBL-24 | shared/base-network updated to tf-0.14 + latest tf vpc module + hashicorp vault cloud hvn vpc peering updated and tested
+- BBL-24 | removing shared/base-network-integrations layer since we can't route traffic from other vpcs in the org (consider AWS TGW for this scenario)
+- BBL-24 | renaming shared/base-network peering conecctions with accepter or requester on its file name for easier understanding
+- BBL-24 | renaming not implemented shared/infra-prometheus layer with the '--' sufix to reflect it's not currently orchestrated
+- Merge branch 'master' into feature/BBL-24-vault-vpc-peering-update
+- BBL-24 | adding shared/base-network-integrations layer for vault cloud vpc peering
+- BBL-24 | updating .gitigore with plan.save filename
+- BBL-24 | updating makesfile-lib version
+
+
 <a name="v1.1.35"></a>
 ## [v1.1.35] - 2021-01-21
 
@@ -1165,7 +1184,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.35...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.36...HEAD
+[v1.1.36]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.35...v1.1.36
 [v1.1.35]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.34...v1.1.35
 [v1.1.34]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.33...v1.1.34
 [v1.1.33]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.32...v1.1.33
