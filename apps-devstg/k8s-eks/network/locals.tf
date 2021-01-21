@@ -84,48 +84,48 @@ locals {
         rule_number = 100 # Allow traffic from Pritunl VPN server
         rule_action = "allow"
         from_port   = 0
-        to_port     = 65535
-        protocol    = "-1"
+        to_port     = 65536
+        protocol    = "all"
         cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
       },
       {
         rule_number = 110 # Allow traffic from Shared private subnet A
         rule_action = "allow"
         from_port   = 0
-        to_port     = 65535
-        protocol    = "-1"
+        to_port     = 65536
+        protocol    = "all"
         cidr_block  = data.terraform_remote_state.shared-vpc.outputs.private_subnets_cidr[0]
       },
       {
         rule_number = 120 # Allow traffic from Shared private subnet B
         rule_action = "allow"
         from_port   = 0
-        to_port     = 65535
-        protocol    = "-1"
+        to_port     = 65536
+        protocol    = "all"
         cidr_block  = data.terraform_remote_state.shared-vpc.outputs.private_subnets_cidr[1]
       },
       {
         rule_number = 200 # Allow traffic from EKS VPC private subnet A
         rule_action = "allow"
-        from_port   = 443
-        to_port     = 443
-        protocol    = "tcp"
+        from_port   = 0
+        to_port     = 65536
+        protocol    = "all"
         cidr_block  = local.private_subnets[0]
       },
       {
         rule_number = 210 # Allow traffic from EKS VPC private subnet B
         rule_action = "allow"
-        from_port   = 443
-        to_port     = 443
-        protocol    = "tcp"
+        from_port   = 0
+        to_port     = 65536
+        protocol    = "all"
         cidr_block  = local.private_subnets[1]
       },
       {
         rule_number = 220 # Allow traffic from EKS VPC private subnet C
         rule_action = "allow"
-        from_port   = 443
-        to_port     = 443
-        protocol    = "tcp"
+        from_port   = 0
+        to_port     = 65536
+        protocol    = "all"
         cidr_block  = local.private_subnets[2]
       },
     ]
