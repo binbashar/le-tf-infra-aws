@@ -69,7 +69,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
       },
       {
@@ -77,7 +77,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = data.terraform_remote_state.vpc-apps-dev.outputs.private_subnets_cidr[0]
       },
       {
@@ -85,7 +85,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = data.terraform_remote_state.vpc-apps-dev.outputs.private_subnets_cidr[1]
       },
       {
@@ -93,7 +93,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = data.terraform_remote_state.vpc-apps-dev.outputs.private_subnets_cidr[2]
       },
       {
@@ -101,7 +101,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = data.terraform_remote_state.vpc-apps-dev-eks.outputs.private_subnets_cidr[0]
       },
       {
@@ -109,7 +109,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = data.terraform_remote_state.vpc-apps-dev-eks.outputs.private_subnets_cidr[1]
       },
       {
@@ -117,7 +117,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = data.terraform_remote_state.vpc-apps-dev-eks.outputs.private_subnets_cidr[2]
       },
       {
@@ -125,7 +125,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = data.terraform_remote_state.vpc-apps-prd.outputs.private_subnets_cidr[0]
       },
       {
@@ -133,7 +133,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = data.terraform_remote_state.vpc-apps-prd.outputs.private_subnets_cidr[1]
       },
       {
@@ -141,7 +141,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = data.terraform_remote_state.vpc-apps-prd.outputs.private_subnets_cidr[2]
       },
       {
@@ -149,7 +149,7 @@ locals {
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
-        protocol    = "-1"
+        protocol    = "all"
         cidr_block  = var.vpc_vault_hvn_cird
       },
     ]

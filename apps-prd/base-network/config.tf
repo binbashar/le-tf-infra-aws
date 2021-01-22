@@ -2,7 +2,6 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  version                 = "~> 3.0"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -12,7 +11,11 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.12.28"
+  required_version = ">= 0.14.4"
+
+  required_providers {
+    aws = "~> 3.2"
+  }
 
   backend "s3" {
     key = "apps-prd/network/terraform.tfstate"
@@ -52,7 +55,7 @@ data "terraform_remote_state" "vpc-shared" {
 }
 
 #
-# data type from output for vpc
+# data type from output for tools-ec2
 #
 data "terraform_remote_state" "tools-vpn-server" {
   backend = "s3"
