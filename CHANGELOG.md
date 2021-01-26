@@ -7,6 +7,15 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.38"></a>
+## [v1.1.38] - 2021-01-26
+
+- BBL-192 | root/organizations adding guarduty service principal to org + tf-0.14 adjustments
+- BBL-192 | apps-devstg/security-firewall WAF layer added to ref architecture
+- Merge branch 'master' of github.com:binbashar/le-tf-infra-aws
+- BBL-24 | root/organization aws_service_access_principals "access-analyzer.amazonaws.com" added
+
+
 <a name="v1.1.37"></a>
 ## [v1.1.37] - 2021-01-21
 
@@ -1194,7 +1203,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.37...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.38...HEAD
+[v1.1.38]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.37...v1.1.38
 [v1.1.37]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.36...v1.1.37
 [v1.1.36]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.35...v1.1.36
 [v1.1.35]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.34...v1.1.35
