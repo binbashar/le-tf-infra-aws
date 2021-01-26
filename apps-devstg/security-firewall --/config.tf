@@ -18,6 +18,6 @@ terraform {
   }
 
   backend "s3" {
-    key = "root/organization/terraform.tfstate"
+    key = "apps-devstg/security-firewall/terraform.tfstate"
   }
 }
