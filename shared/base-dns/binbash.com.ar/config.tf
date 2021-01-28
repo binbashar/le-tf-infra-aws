@@ -82,7 +82,7 @@ data "terraform_remote_state" "vpc-apps-devstg-eks" {
     region  = var.region
     profile = "${var.project}-apps-devstg-devops"
     bucket  = "${var.project}-apps-devstg-terraform-backend"
-    key     = "apps-devstg/k8s-eks/vpc/terraform.tfstate"
+    key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
   }
 }
 

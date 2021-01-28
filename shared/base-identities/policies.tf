@@ -220,3 +220,41 @@ data "aws_iam_policy_document" "backup_s3_binbash_gdrive" {
     resources = ["arn:aws:s3:::bb-shared-gdrive-backup/*"]
   }
 }
+
+
+#
+# DNS Management of "aws.binbash.com.ar" domain
+#
+resource "aws_iam_policy" "dns_manager_aws_binbash_com_ar" {
+   name        = "dns_manager_aws_binbash_com_ar"
+   description = "DNS management of aws.binbash.com.ar"
+   policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "route53:GetChange",
+            "Resource": "arn:aws:route53:::change/*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:ChangeResourceRecordSets",
+                "route53:ListResourceRecordSets"
+            ],
+            "Resource": "arn:aws:route53:::hostedzone/*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "route53:ListHostedZonesByName",
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+resource "aws_iam_user_policy_attachment" "cert_manager_dns_manager" {
+    user       = module.user_cert_manager.this_iam_user_name
+    policy_arn = aws_iam_policy.dns_manager_aws_binbash_com_ar.arn
+}
