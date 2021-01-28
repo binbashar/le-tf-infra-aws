@@ -226,9 +226,9 @@ data "aws_iam_policy_document" "backup_s3_binbash_gdrive" {
 # DNS Management of "aws.binbash.com.ar" domain
 #
 resource "aws_iam_policy" "dns_manager_aws_binbash_com_ar" {
-   name        = "dns_manager_aws_binbash_com_ar"
-   description = "DNS management of aws.binbash.com.ar"
-   policy = <<EOF
+  name        = "dns_manager_aws_binbash_com_ar"
+  description = "DNS management of aws.binbash.com.ar"
+  policy      = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -255,6 +255,6 @@ resource "aws_iam_policy" "dns_manager_aws_binbash_com_ar" {
 EOF
 }
 resource "aws_iam_user_policy_attachment" "cert_manager_dns_manager" {
-    user       = module.user_cert_manager.this_iam_user_name
-    policy_arn = aws_iam_policy.dns_manager_aws_binbash_com_ar.arn
+  user       = module.user_cert_manager.this_iam_user_name
+  policy_arn = aws_iam_policy.dns_manager_aws_binbash_com_ar.arn
 }

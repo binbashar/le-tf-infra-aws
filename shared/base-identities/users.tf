@@ -42,12 +42,12 @@ module "user_backup_s3" {
 # User: cert-manager       #
 #==========================#
 module "user_cert_manager" {
-    source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v2.20.0"
 
-    name = "cert.manager"
-    force_destroy = true
-    password_reset_required = true
+  name                    = "cert.manager"
+  force_destroy           = true
+  password_reset_required = true
 
-    create_iam_user_login_profile = false
-    create_iam_access_key = false
+  create_iam_user_login_profile = false
+  create_iam_access_key         = false
 }
