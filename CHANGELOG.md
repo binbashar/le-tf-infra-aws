@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.39"></a>
+## [v1.1.39] - 2021-01-28
+
+- Create user for cert-manager, use TF 13 with EKS layer, set sample DN… ([#180](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/180))
+
+
 <a name="v1.1.38"></a>
 ## [v1.1.38] - 2021-01-26
 
@@ -1203,7 +1209,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.38...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.39...HEAD
+[v1.1.39]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.38...v1.1.39
 [v1.1.38]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.37...v1.1.38
 [v1.1.37]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.36...v1.1.37
 [v1.1.36]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.35...v1.1.36
