@@ -129,7 +129,7 @@ module "iam_assumable_role_finops" {
   #
   # MFA setup
   #
-  role_requires_mfa    = false
+  role_requires_mfa    = true
   mfa_age              = 43200 # Maximum CLI/API session duration in seconds between 3600 and 43200
   max_session_duration = 3600  # Max age of the session (in seconds) when assuming roles
   custom_role_policy_arns = [
