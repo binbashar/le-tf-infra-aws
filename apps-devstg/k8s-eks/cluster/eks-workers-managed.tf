@@ -1,9 +1,10 @@
 module "eks" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v13.2.1"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v14.0.0"
 
   create_eks      = true
   cluster_name    = data.terraform_remote_state.shared-eks-vpc.outputs.cluster_name
   cluster_version = var.cluster_version
+  enable_irsa     = false
 
   #
   # Network configurations
@@ -27,8 +28,10 @@ module "eks" {
   #
   node_groups_defaults = {
     # Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS
-    ami_type  = "AL2_x86_64"
-    disk_size = 50
+    ami_type       = "AL2_x86_64"
+    disk_size      = 50
+    instance_types = ["t2.medium"]
+    k8s_labels     = local.tags
   }
 
   #
@@ -36,13 +39,9 @@ module "eks" {
   #
   node_groups = {
     sample = {
-      name             = "${data.terraform_remote_state.shared-eks-vpc.outputs.cluster_name}-sample"
       desired_capacity = 1
       max_capacity     = 3
       min_capacity     = 1
-
-      instance_type = "t2.medium"
-      k8s_labels    = local.tags
     }
   }
 
