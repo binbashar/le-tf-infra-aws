@@ -57,30 +57,3 @@ resource "aws_route53_record" "dev_aws_bb" {
   }
 }
 */
-
-
-#
-# For demo purposes only: private endpoints to Kubernetes utilities
-#
-# resource "aws_route53_record" "kubernetes_dashboard_devstg_aws_binbash_com_ar" {
-#   zone_id = aws_route53_zone.aws_private_hosted_zone_1.id
-#   name    = "kubernetes-dashboard.devstg.aws.binbash.com.ar"
-#   type    = "A"
-
-#   alias {
-#     name                   = "a755acad11b9a4418bc82737e4c21d23-673b0c36599864c2.elb.us-east-1.amazonaws.com"
-#     zone_id                = "Z26RNL4JYFTOTI"
-#     evaluate_target_health = true
-#   }
-# }
-# resource "aws_route53_record" "weave_scope_devstg_aws_binbash_com_ar" {
-#   zone_id = aws_route53_zone.aws_private_hosted_zone_1.id
-#   name    = "weave-scope.devstg.aws.binbash.com.ar"
-#   type    = "A"
-
-#   alias {
-#     name                   = "a755acad11b9a4418bc82737e4c21d23-673b0c36599864c2.elb.us-east-1.amazonaws.com"
-#     zone_id                = "Z26RNL4JYFTOTI"
-#     evaluate_target_health = true
-#   }
-# }
