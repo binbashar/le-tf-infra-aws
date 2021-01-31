@@ -173,9 +173,9 @@ module "iam_assumable_role_oaar" {
 module "role_cert_manager" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v2.20.0"
 
-  create_role   = true
-  role_name     = "cert-manager"
-  provider_url  = replace(data.terraform_remote_state.cluster-apps-devstg-eks.outputs.cluster_oidc_issuer_url, "https://", "")
+  create_role  = true
+  role_name    = "cert-manager"
+  provider_url = replace(data.terraform_remote_state.cluster-apps-devstg-eks.outputs.cluster_oidc_issuer_url, "https://", "")
 
   role_policy_arns = [
     aws_iam_policy.cert_manager_binbash_com_ar.arn
@@ -196,9 +196,9 @@ module "role_cert_manager" {
 module "role_external_dns" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v2.20.0"
 
-  create_role   = true
-  role_name     = "external-dns"
-  provider_url  = replace(data.terraform_remote_state.cluster-apps-devstg-eks.outputs.cluster_oidc_issuer_url, "https://", "")
+  create_role  = true
+  role_name    = "external-dns"
+  provider_url = replace(data.terraform_remote_state.cluster-apps-devstg-eks.outputs.cluster_oidc_issuer_url, "https://", "")
 
   role_policy_arns = [
     aws_iam_policy.external_dns_binbash_com_ar.arn
