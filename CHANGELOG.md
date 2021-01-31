@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.40"></a>
+## [v1.1.40] - 2021-01-31
+
+- Refactor EKS node group defaults, create identity provider for EKS, a… ([#181](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/181))
+
+
 <a name="v1.1.39"></a>
 ## [v1.1.39] - 2021-01-28
 
@@ -1209,7 +1215,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.39...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.40...HEAD
+[v1.1.40]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.39...v1.1.40
 [v1.1.39]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.38...v1.1.39
 [v1.1.38]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.37...v1.1.38
 [v1.1.37]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.36...v1.1.37
