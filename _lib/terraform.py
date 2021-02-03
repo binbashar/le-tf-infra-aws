@@ -22,16 +22,16 @@ docker_envs = [
     "--env=AWS_SHARED_CREDENTIALS_FILE=/root/.aws/%s/credentials" % (project),
     "--env=AWS_CONFIG_FILE=/root/.aws/%s/config" % (project),
 ]
+terraform_default_args = [
+    "-var-file=/config/backend.config",
+    "-var-file=/common-config/common.config",
+    "-var-file=/config/account.config"
+]
 
-
+#
+# Helper to build the docker commands.
+#
 def _build_cmd(command="", args=[], entrypoint=docker_entrypoint):
-    """
-    Helper to build the docker commands.
-
-    @type command
-    @type args
-    @type entrypoint
-    """
     cmd = docker_cmd + docker_volumes + docker_envs
     cmd.append("--entrypoint=%s" % entrypoint)
     cmd.append(docker_image)
@@ -48,22 +48,14 @@ def init():
 def plan():
     cmd = _build_cmd(
         command="plan",
-        args=[
-            "-var-file=/config/backend.config",
-            "-var-file=/common-config/common.config",
-            "-var-file=/config/account.config"
-        ]
+        args=terraform_default_args
     )
     return subprocess.call(cmd)
 
 def apply():
     cmd = _build_cmd(
         command="apply",
-        args=[
-            "-var-file=/config/backend.config",
-            "-var-file=/common-config/common.config",
-            "-var-file=/config/account.config"
-        ]
+        args=terraform_default_args
     )
     return subprocess.call(cmd)
 
