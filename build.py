@@ -6,6 +6,13 @@ from leverage import task
 # Import local libraries
 from _lib import terraform
 
+
+@task()
+def shell():
+    '''Run a shell Terraform container.'''
+    terraform.shell()
+
+
 @task()
 def version():
     '''Show terraform version.'''
@@ -27,6 +34,11 @@ def apply():
     terraform.apply()
 
 @task()
-def shell():
-    '''Run a shell Terraform container.'''
-    terraform.shell()
+def decrypt():
+    '''Decrypt secrets.tf via ansible-vault.'''
+    terraform.decrypt()
+
+@task()
+def encrypt():
+    '''Encrypt secrets.dec.tf via ansible-vault.'''
+    terraform.encrypt()
