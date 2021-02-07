@@ -44,6 +44,16 @@ def version():
     terraform.version()
 
 @task()
+def format():
+    '''Rewrite all Terraform files to meet the canonical format.'''
+    terraform.format()
+
+@task()
+def format_check():
+    '''Check if Terraform files do not meet the canonical format.'''
+    terraform.format_check()
+
+@task()
 def decrypt():
     '''Decrypt secrets.tf file.'''
     os.system("ansible-vault decrypt --output secrets.dec.tf secrets.enc")

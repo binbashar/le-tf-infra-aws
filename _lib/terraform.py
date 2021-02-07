@@ -66,8 +66,8 @@ def _build_cmd(command="", args=[], entrypoint=docker_entrypoint):
     cmd.append("--entrypoint=%s" % entrypoint)
     cmd.append(docker_image)
     if command != "":
-        cmd.append("--")
         if mfa_enabled:
+            cmd.append("--")
             cmd.append(env.get("TERRAFORM_ENTRYPOINT"))
         
         cmd.append(command)
@@ -121,11 +121,17 @@ def shell():
     return subprocess.call(cmd)
 
 def format_check():
-    cmd = _build_cmd(command="fmt", args=["-recursive", "-check", docker_workdir])
+    # We don't need MFA for this command
+    global mfa_enabled
+    mfa_enabled = False
+    cmd = _build_cmd(command="fmt", entrypoint="/bin/terraform", args=["-recursive", "-check", docker_workdir])
     return subprocess.call(cmd)
 
 def format():
-    cmd = _build_cmd(command="fmt", args=["-recursive"])
+    # We don't need MFA for this command
+    global mfa_enabled
+    mfa_enabled = False
+    cmd = _build_cmd(command="fmt", entrypoint="/bin/terraform", args=["-recursive"])
     return subprocess.call(cmd)
 
 def change_terraform_dir_ownership():
