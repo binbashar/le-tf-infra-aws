@@ -10,7 +10,7 @@ from _lib import terraform
 def init(*args):
     '''Initialize Terraform in this layer.'''
     terraform.init(list(args))
-    # terraform.change_terraform_dir_ownership()
+    terraform.change_terraform_dir_ownership()
 
 @task()
 def plan(*args):
