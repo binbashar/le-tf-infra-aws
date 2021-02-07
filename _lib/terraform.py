@@ -76,24 +76,40 @@ def _build_cmd(command="", args=[], entrypoint=docker_entrypoint):
     print("[DEBUG] %s" % (" ".join(cmd)))
     return cmd
 
-def init():
-    cmd = _build_cmd(command="init", args=["-backend-config=/config/backend.config"])
+def init(extra_args):
+    args = ["-backend-config=/config/backend.config"]
+    if extra_args:
+        args = args + extra_args
+
+    cmd = _build_cmd(command="init", args=args)
     return subprocess.call(cmd)
 
-def plan():
-    cmd = _build_cmd(command="plan", args=terraform_default_args)
+def plan(extra_args):
+    args = terraform_default_args
+    if extra_args:
+        args = args + extra_args
+    
+    cmd = _build_cmd(command="plan", args=args)
     return subprocess.call(cmd)
 
-def apply():
-    cmd = _build_cmd(command="apply", args=terraform_default_args)
+def apply(extra_args):
+    args = terraform_default_args
+    if extra_args:
+        args = args + extra_args
+    
+    cmd = _build_cmd(command="apply", args=args)
     return subprocess.call(cmd)
 
 def output():
     cmd = _build_cmd(command="output")
     return subprocess.call(cmd)
 
-def destroy():
-    cmd = _build_cmd(command="destroy", args=terraform_default_args)
+def destroy(extra_args):
+    args = terraform_default_args
+    if extra_args:
+        args = args + extra_args
+    
+    cmd = _build_cmd(command="destroy", args=args)
     return subprocess.call(cmd)
 
 def version():
@@ -111,17 +127,6 @@ def format_check():
 def format():
     cmd = _build_cmd(command="fmt", args=["-recursive"])
     return subprocess.call(cmd)
-
-def decrypt():
-    cmd = "ansible-vault decrypt --output secrets.dec.tf secrets.enc"
-    return os.system(cmd)
-
-def encrypt():
-    cmd = "ansible-vault encrypt --output secrets.enc secrets.dec.tf && rm -rf secrets.dec.tf"
-    return os.system(cmd)
-
-def validate_tf_layout():
-    return os.system("../../@bin/scripts/validate-terraform-layout.sh")
 
 def change_terraform_dir_ownership():
     return os.system("sudo chown -R $(id -u):$(id -g) ./.terraform")

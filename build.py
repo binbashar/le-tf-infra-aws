@@ -7,38 +7,53 @@ from leverage import task
 from _lib import terraform
 
 @task()
-def init():
-    '''Initialize Terraform.'''
-    terraform.init()
+def init(*args):
+    '''Initialize Terraform in this layer.'''
+    terraform.init(list(args))
+    # terraform.change_terraform_dir_ownership()
+
+@task()
+def plan(*args):
+    '''Generate a Terraform execution plan for this layer.'''
+    terraform.plan(list(args))
+
+@task()
+def apply(*args):
+    '''Build or change the Terraform infrastructre in this layer.'''
+    terraform.apply(list(args))
     terraform.change_terraform_dir_ownership()
 
 @task()
-def plan():
-    '''Plan Terraform.'''
-    terraform.plan()
+def output():
+    '''Show all terraform output variables of this layer.'''
+    terraform.output()
 
 @task()
-def apply():
-    '''Apply Terraform.'''
-    terraform.apply()
-    terraform.change_terraform_dir_ownership()
+def destroy(*args):
+    '''Destroy terraform infrastructure in this layer.'''
+    terraform.destroy(list(args))
 
 @task()
 def shell():
-    '''Open a shell into the Terraform container.'''
+    '''Open a shell into the Terraform container in this layer.'''
     terraform.shell()
 
 @task()
 def version():
-    '''Show terraform version.'''
+    '''Print terraform version.'''
     terraform.version()
 
 @task()
 def decrypt():
-    '''Decrypt secrets.tf via ansible-vault.'''
-    terraform.decrypt()
+    '''Decrypt secrets.tf file.'''
+    os.system("ansible-vault decrypt --output secrets.dec.tf secrets.enc")
 
 @task()
 def encrypt():
-    '''Encrypt secrets.dec.tf via ansible-vault.'''
-    terraform.encrypt()
+    '''Encrypt secrets.dec.tf file.'''
+    os.system("ansible-vault encrypt --output secrets.enc secrets.dec.tf && rm -rf secrets.dec.tf")
+
+@task()
+def validate_layout():
+    '''Validate the layout convention of this Terraform layer.'''
+    return os.system("../../@bin/scripts/validate-terraform-layout.sh")
