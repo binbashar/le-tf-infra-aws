@@ -6,18 +6,6 @@ from leverage import task
 # Import local libraries
 from _lib import terraform
 
-
-@task()
-def shell():
-    '''Run a shell Terraform container.'''
-    terraform.shell()
-
-
-@task()
-def version():
-    '''Show terraform version.'''
-    terraform.version()
-
 @task()
 def init():
     '''Initialize Terraform.'''
@@ -32,6 +20,16 @@ def plan():
 def apply():
     '''Apply Terraform.'''
     terraform.apply()
+
+@task()
+def shell():
+    '''Open a shell into the Terraform container.'''
+    terraform.shell()
+
+@task()
+def version():
+    '''Show terraform version.'''
+    terraform.version()
 
 @task()
 def decrypt():
