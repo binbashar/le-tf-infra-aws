@@ -122,3 +122,6 @@ def encrypt():
 
 def validate_tf_layout():
     return os.system("../../@bin/scripts/validate-terraform-layout.sh")
+
+def change_terraform_dir_ownership():
+    return os.system("sudo chown -R $(id -u):$(id -g) ./.terraform")

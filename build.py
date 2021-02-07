@@ -10,6 +10,7 @@ from _lib import terraform
 def init():
     '''Initialize Terraform.'''
     terraform.init()
+    terraform.change_terraform_dir_ownership()
 
 @task()
 def plan():
@@ -20,6 +21,7 @@ def plan():
 def apply():
     '''Apply Terraform.'''
     terraform.apply()
+    terraform.change_terraform_dir_ownership()
 
 @task()
 def shell():
