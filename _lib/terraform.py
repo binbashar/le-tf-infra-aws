@@ -69,9 +69,9 @@ def _build_cmd(command="", args=[], entrypoint=docker_entrypoint):
         if mfa_enabled:
             cmd.append("--")
             cmd.append(env.get("TERRAFORM_ENTRYPOINT"))
-        
+
         cmd.append(command)
-    
+
     cmd = cmd + args
     print("[DEBUG] %s" % (" ".join(cmd)))
     return cmd
@@ -88,7 +88,7 @@ def plan(extra_args):
     args = terraform_default_args
     if extra_args:
         args = args + extra_args
-    
+
     cmd = _build_cmd(command="plan", args=args)
     return subprocess.call(cmd)
 
@@ -96,7 +96,7 @@ def apply(extra_args):
     args = terraform_default_args
     if extra_args:
         args = args + extra_args
-    
+
     cmd = _build_cmd(command="apply", args=args)
     return subprocess.call(cmd)
 
@@ -108,7 +108,7 @@ def destroy(extra_args):
     args = terraform_default_args
     if extra_args:
         args = args + extra_args
-    
+
     cmd = _build_cmd(command="destroy", args=args)
     return subprocess.call(cmd)
 
