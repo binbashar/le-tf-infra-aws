@@ -11,7 +11,7 @@ data "aws_kms_ciphertext" "slack_url_monitoring_sec" {
 # Set create_with_kms_key = true
 # when providing value of kms_key_arn to create required IAM policy which allows to decrypt using specified KMS key.
 module "notify_slack_monitoring_sec" {
-  source = "github.com/binbashar/terraform-aws-notify-slack.git?ref=v4.5.0"
+  source = "github.com/binbashar/terraform-aws-notify-slack.git?ref=v4.9.0"
 
   #
   # Creation Flags
@@ -29,7 +29,10 @@ module "notify_slack_monitoring_sec" {
   kms_key_arn          = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
   lambda_function_name = "${var.project}-${var.environment}-notify-slack-monitoring-sec"
   lambda_description   = "Lambda function which sends notifications to Slack"
-  log_events           = false
+
+  log_events                             = true
+  cloudwatch_log_group_retention_in_days = 3
+
   sns_topic_name       = var.sns_topic_name_monitoring_sec
 
   cloudwatch_log_group_kms_key_id = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
