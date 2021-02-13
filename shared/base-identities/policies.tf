@@ -37,6 +37,7 @@ resource "aws_iam_policy" "devops_access" {
                 "dynamodb:*",
                 "ec2:*",
                 "ecr:*",
+                "ecr-public:*",
                 "ecs:*",
                 "eks:*",
                 "elasticloadbalancing:*",
