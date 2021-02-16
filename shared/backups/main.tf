@@ -2,8 +2,7 @@
 # Run daily backups on tagged resources
 #
 module "daily_backups_tagged_resources" {
-  # source = "github.com/binbashar/terraform-aws-backup-arg.git?ref=0.6.0"
-  source = "./terraform-aws-backup-arg"
+  source = "github.com/binbashar/terraform-aws-backup.git?ref=0.6.0"
 
   # Backup vaults are containers where your backups are stored. You can specify
   # a new one to be created by this module or omit it to use the default one.
@@ -45,19 +44,30 @@ module "daily_backups_tagged_resources" {
     },
   ]
 
-  notifications_sns_topic_name      = "backup-events"
-  notifications_backup_vault_events = [
+  tags = local.tags
+}
+
+module "daily_backups_notifications" {
+  source = "github.com/binbashar/terraform-aws-backup-notifications.git?ref=0.0.1"
+
+  enabled             = true
+  backup_vault_name   = local.vault_name
+  backup_vault_events = [
     "BACKUP_JOB_STARTED",
     "BACKUP_JOB_FAILED",
     "BACKUP_JOB_SUCCESSFUL",
   ]
-  notifications_topic_subscriptions = {
-    notify_slack = {
-      protocol = "lambda"
-      endpoint = data.terraform_remote_state.notifications.outputs.notify_slack_monitoring_sec_lambda_function_arn_monitoring_sec
-      endpoint_auto_confirms = true
-    }
-  }
 
-  tags = local.tags
+  # You can either pass the ARN of an existing SNS Topic
+  sns_topic_arn = data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring_sec
+
+  # Or have the module create a new SNS Topic to which the following subscriptors will be attached
+  topic_subscriptions = {
+    # notify_slack = {
+    #   protocol               = "lambda"
+    #   endpoint               = data.terraform_remote_state.notifications.outputs.notify_slack_monitoring_sec_lambda_function_arn_monitoring_sec
+    #   endpoint_auto_confirms = true
+    #   raw_message_delivery   = true
+    # }
+  }
 }
