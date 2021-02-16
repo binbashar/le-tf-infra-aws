@@ -6,7 +6,7 @@ module "daily_backups_tagged_resources" {
 
   # Backup vaults are containers where your backups are stored. You can specify
   # a new one to be created by this module or omit it to use the default one.
-  vault_name  = local.vault_name
+  vault_name = local.vault_name
 
   # Backup plans define your backup requirements, including backup schedules,
   # backup retention rules and lifecycle rules.
@@ -50,8 +50,8 @@ module "daily_backups_tagged_resources" {
 module "daily_backups_notifications" {
   source = "github.com/binbashar/terraform-aws-backup-notifications.git?ref=0.0.1"
 
-  enabled             = true
-  backup_vault_name   = local.vault_name
+  enabled           = true
+  backup_vault_name = local.vault_name
   backup_vault_events = [
     "BACKUP_JOB_STARTED",
     "BACKUP_JOB_FAILED",

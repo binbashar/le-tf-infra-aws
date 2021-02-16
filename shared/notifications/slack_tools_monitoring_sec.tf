@@ -33,7 +33,7 @@ module "notify_slack_monitoring_sec" {
   log_events                             = true
   cloudwatch_log_group_retention_in_days = 3
 
-  sns_topic_name       = var.sns_topic_name_monitoring_sec
+  sns_topic_name = var.sns_topic_name_monitoring_sec
 
   cloudwatch_log_group_kms_key_id = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
 }
