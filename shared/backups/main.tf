@@ -17,7 +17,7 @@ module "daily_backups_tagged_resources" {
   rules = [
     {
       name              = "daily-runs"
-      schedule          = "cron(0 10 * * ? *)"
+      schedule          = "cron(0 20 * * ? *)"
       target_vault_name = null
       start_window      = 120
       completion_window = 360
