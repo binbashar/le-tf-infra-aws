@@ -6,7 +6,7 @@
 # Assumable Role Cross-Account: DevOps
 #
 module "iam_assumable_role_devops" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v3.8.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.security_account_id}:root"
@@ -33,7 +33,7 @@ module "iam_assumable_role_devops" {
 # Assumable Role Cross-Account: Admin
 #
 module "iam_assumable_role_admin" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v3.8.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.security_account_id}:root"
@@ -59,7 +59,7 @@ module "iam_assumable_role_admin" {
 # Assumable Role Cross-Account: Auditor Role
 #
 module "iam_assumable_role_auditor" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v3.8.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.security_account_id}:root"
@@ -87,7 +87,7 @@ module "iam_assumable_role_auditor" {
 # Assumable Role Cross-Account: DeployMaster
 #
 module "iam_assumable_role_deploy_master" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v3.8.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.security_account_id}:root"
@@ -115,7 +115,7 @@ module "iam_assumable_role_deploy_master" {
 # Assumable Role Cross-Account: FinOps Role
 #
 module "iam_assumable_role_finops" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v3.8.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.security_account_id}:root"
@@ -144,7 +144,7 @@ module "iam_assumable_role_finops" {
 # Assumable Role Cross-Account: OrganizationAccountAccessRole
 #
 module "iam_assumable_role_oaar" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v3.8.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.root_account_id}:root"
@@ -170,45 +170,45 @@ module "iam_assumable_role_oaar" {
 #
 # Role: cert-manager for EKS OIDC
 #
-module "role_cert_manager" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v2.20.0"
+# module "role_cert_manager" {
+#   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v3.8.0"
 
-  create_role  = true
-  role_name    = "cert-manager"
-  provider_url = replace(data.terraform_remote_state.cluster-apps-devstg-eks.outputs.cluster_oidc_issuer_url, "https://", "")
+#   create_role  = true
+#   role_name    = "cert-manager"
+#   provider_url = replace(data.terraform_remote_state.cluster-apps-devstg-eks.outputs.cluster_oidc_issuer_url, "https://", "")
 
-  role_policy_arns = [
-    aws_iam_policy.cert_manager_binbash_com_ar.arn
-  ]
-  oidc_fully_qualified_subjects = [
-    "system:serviceaccount:cert-manager:cert-manager"
-  ]
+#   role_policy_arns = [
+#     aws_iam_policy.cert_manager_binbash_com_ar.arn
+#   ]
+#   oidc_fully_qualified_subjects = [
+#     "system:serviceaccount:cert-manager:cert-manager"
+#   ]
 
-  tags = {
-    Subject = "cert-manager"
-    Purpose = "eks-oidc"
-  }
-}
+#   tags = {
+#     Subject = "cert-manager"
+#     Purpose = "eks-oidc"
+#   }
+# }
 
 #
 # Role: external-dns for EKS OIDC
 #
-module "role_external_dns" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v2.20.0"
+# module "role_external_dns" {
+#   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v3.8.0"
 
-  create_role  = true
-  role_name    = "external-dns"
-  provider_url = replace(data.terraform_remote_state.cluster-apps-devstg-eks.outputs.cluster_oidc_issuer_url, "https://", "")
+#   create_role  = true
+#   role_name    = "external-dns"
+#   provider_url = replace(data.terraform_remote_state.cluster-apps-devstg-eks.outputs.cluster_oidc_issuer_url, "https://", "")
 
-  role_policy_arns = [
-    aws_iam_policy.external_dns_binbash_com_ar.arn
-  ]
-  oidc_fully_qualified_subjects = [
-    "system:serviceaccount:external-dns:external-dns"
-  ]
+#   role_policy_arns = [
+#     aws_iam_policy.external_dns_binbash_com_ar.arn
+#   ]
+#   oidc_fully_qualified_subjects = [
+#     "system:serviceaccount:external-dns:external-dns"
+#   ]
 
-  tags = {
-    Subject = "external-dns"
-    Purpose = "eks-oidc"
-  }
-}
+#   tags = {
+#     Subject = "external-dns"
+#     Purpose = "eks-oidc"
+#   }
+# }

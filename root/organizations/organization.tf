@@ -7,6 +7,7 @@ resource "aws_organizations_organization" "main" {
     "guardduty.amazonaws.com",
     "access-analyzer.amazonaws.com",
     "aws-artifact-account-sync.amazonaws.com",
+    "backup.amazonaws.com",
     "cloudtrail.amazonaws.com",
     "config.amazonaws.com",
   ]
@@ -15,5 +16,8 @@ resource "aws_organizations_organization" "main" {
   feature_set = "ALL"
 
   # Enable Service Control Policies to enable custom SCPs
-  enabled_policy_types = ["SERVICE_CONTROL_POLICY"]
+  enabled_policy_types = [
+    "SERVICE_CONTROL_POLICY",
+    "BACKUP_POLICY"
+  ]
 }

@@ -5,6 +5,7 @@ locals {
     Environment        = var.environment
     ScheduleStopDaily  = true
     ScheduleStartDaily = true
+    Backup             = "True"
   }
 
   user_data = <<EOF
