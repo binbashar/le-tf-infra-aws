@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.42"></a>
+## [v1.1.42] - 2021-02-16
+
+- AWS Backups ([#184](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/184))
+
+
 <a name="v1.1.41"></a>
 ## [v1.1.41] - 2021-02-08
 
@@ -1221,7 +1227,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.41...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.42...HEAD
+[v1.1.42]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.41...v1.1.42
 [v1.1.41]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.40...v1.1.41
 [v1.1.40]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.39...v1.1.40
 [v1.1.39]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.38...v1.1.39
