@@ -7,6 +7,15 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.43"></a>
+## [v1.1.43] - 2021-02-23
+
+- BBL-468 | applying leverage tf-format to every layer
+- Merge branch 'master' into fix/BBL-468-vpc-error
+- BBL-468 | pointing makefile-lib ver to the latest stable version
+- BBL-468 | upgrading base-network vpc module version to its latest stable ver + adding build.py per layer to enforce tf-0.14 to be used
+
+
 <a name="v1.1.42"></a>
 ## [v1.1.42] - 2021-02-16
 
@@ -1227,7 +1236,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.42...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.43...HEAD
+[v1.1.43]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.42...v1.1.43
 [v1.1.42]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.41...v1.1.42
 [v1.1.41]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.40...v1.1.41
 [v1.1.40]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.39...v1.1.40
