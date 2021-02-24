@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.1.44"></a>
+## [v1.1.44] - 2021-02-24
+
+- Update build script to restrict which tasks can be run from root or account paths ([#187](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/187))
+
+
 <a name="v1.1.43"></a>
 ## [v1.1.43] - 2021-02-23
 
@@ -1236,7 +1242,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.43...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.44...HEAD
+[v1.1.44]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.43...v1.1.44
 [v1.1.43]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.42...v1.1.43
 [v1.1.42]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.41...v1.1.42
 [v1.1.41]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.40...v1.1.41
