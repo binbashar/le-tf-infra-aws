@@ -53,7 +53,7 @@ module "eks" {
   config_output_path                           = var.config_output_path
   kubeconfig_aws_authenticator_additional_args = ["--cache"]
   kubeconfig_aws_authenticator_env_variables = {
-    AWS_PROFILE                 = var.profile,
+    AWS_PROFILE = var.profile,
     #
     # IMPORTANT: once the cluster is created you will need to replace $HOME
     #   with the path to your home directory because replacing environment
