@@ -2,7 +2,6 @@
 # Providers
 #
 provider "aws" {
-  version                 = "~> 3.2"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -12,8 +11,6 @@ provider "kubernetes" {
   host                   = data.aws_eks_cluster.cluster.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
   token                  = data.aws_eks_cluster_auth.cluster.token
-  load_config_file       = false
-  version                = "~> 1.13"
 }
 
 #
@@ -21,6 +18,11 @@ provider "kubernetes" {
 #
 terraform {
   required_version = ">= 0.12.28"
+
+  required_providers {
+    aws        = "~> 3.28"
+    kubernetes = "~> 2.0.2"
+  }
 
   backend "s3" {
     key = "apps-devstg/k8s-eks/cluster/terraform.tfstate"

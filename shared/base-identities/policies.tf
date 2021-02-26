@@ -259,7 +259,7 @@ EOF
 #
 # External DNS policy
 #
-resource "aws_iam_policy" "external_dns_binbash_com_ar" {
+resource "aws_iam_policy" "external_dns_aws_binbash_com_ar" {
   name        = "external_dns_binbash_com_ar"
   description = "External DNS permissions on binbash.com.ar"
   policy      = <<EOF
@@ -272,7 +272,6 @@ resource "aws_iam_policy" "external_dns_binbash_com_ar" {
                 "route53:ChangeResourceRecordSets"
             ],
             "Resource": [
-                "arn:aws:route53:::hostedzone/${data.terraform_remote_state.dns.outputs.aws_public_zone_id[0]}",
                 "arn:aws:route53:::hostedzone/${data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0]}"
             ]
         },
