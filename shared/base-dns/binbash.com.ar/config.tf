@@ -2,7 +2,6 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  version                 = "~> 3.2"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -10,7 +9,6 @@ provider "aws" {
 
 provider "aws" {
   alias                   = "apps-devstg"
-  version                 = "~> 3.2"
   region                  = var.region
   profile                 = "${var.project}-apps-devstg-devops"
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -18,7 +16,6 @@ provider "aws" {
 
 provider "aws" {
   alias                   = "apps-prd"
-  version                 = "~> 3.2"
   region                  = var.region
   profile                 = "${var.project}-apps-prd-devops"
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -29,6 +26,10 @@ provider "aws" {
 #=============================#
 terraform {
   required_version = ">= 0.12.28"
+
+  required_providers {
+    aws = "~> 3.2"
+  }
 
   backend "s3" {
     key = "shared/dns/binbash.com.ar/terraform.tfstate"
@@ -83,6 +84,17 @@ data "terraform_remote_state" "vpc-apps-devstg-eks" {
     profile = "${var.project}-apps-devstg-devops"
     bucket  = "${var.project}-apps-devstg-terraform-backend"
     key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "vpc-apps-devstg-certificates" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-apps-devstg-devops"
+    bucket  = "${var.project}-apps-devstg-terraform-backend"
+    key     = "apps-devstg/certificates/terraform.tfstate"
   }
 }
 

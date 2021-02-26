@@ -1,5 +1,5 @@
 #
-# AppsDevStg EKS OpenID Connect Provider
+# AppsDevStg EKS OpenID Connect Provider -- Enable or update upon cluster creation.
 #
 # resource "aws_iam_openid_connect_provider" "apps_devstg_eks" {
 #   client_id_list = ["sts.amazonaws.com"]

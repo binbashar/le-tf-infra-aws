@@ -4,7 +4,7 @@ module "eks" {
   create_eks      = true
   cluster_name    = data.terraform_remote_state.shared-eks-vpc.outputs.cluster_name
   cluster_version = var.cluster_version
-  enable_irsa     = false
+  enable_irsa     = true
 
   #
   # Network configurations
@@ -53,7 +53,12 @@ module "eks" {
   config_output_path                           = var.config_output_path
   kubeconfig_aws_authenticator_additional_args = ["--cache"]
   kubeconfig_aws_authenticator_env_variables = {
-    AWS_PROFILE                 = var.profile,
+    AWS_PROFILE = var.profile,
+    #
+    # IMPORTANT: once the cluster is created you will need to replace $HOME
+    #   with the path to your home directory because replacing environment
+    #   variables is not support by kubeconfig clients yet.
+    #
     AWS_CONFIG_FILE             = "$HOME/.aws/${var.project}/config",
     AWS_SHARED_CREDENTIALS_FILE = "$HOME/.aws/${var.project}/credentials"
   }

@@ -18,20 +18,6 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/identities/terraform.tfstate"
-  }
-}
-
-#
-# Data sources
-#
-data "terraform_remote_state" "cluster-eks" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-apps-devstg-devops"
-    bucket  = "${var.project}-apps-devstg-terraform-backend"
-    key     = "apps-devstg/k8s-eks/cluster/terraform.tfstate"
+    key = "apps-devstg/certificates/terraform.tfstate"
   }
 }
