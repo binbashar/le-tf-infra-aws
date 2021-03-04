@@ -1,0 +1,40 @@
+# Project (short name)
+project         = "bb"
+
+# Project (long name)
+project_long    = "binbash"
+
+# AWS Region for DR replicatin (required by the backend but also used for other resources)
+region_secondary      = "us-east-2"
+
+# Account IDs
+root_account_id       = "111111111111"
+security_account_id   = "222222222222"
+shared_account_id     = "333333333333"
+appsdevstg_account_id = "444444444444"
+appsprd_account_id    = "555555555555"
+
+# Hashicorp Vault private API endpoint
+vault_address = "https://bb-le-shared-vault-cluster.private.vault.XXXXXX.aws.hashicorp.cloud:8200"
+
+# Hashicorp Vault token
+#
+# Vault token that will be used by Terraform to authenticate.
+# 1st exec: admin token from https://portal.cloud.hashicorp.com/.
+# Following execs:
+#   1- Generate GitHub personal access token: https://github.com/settings/tokens
+#   2- Click “Generate new token“
+#   3- Choose one permission that is required: admin:org read:org
+#
+#  Get vault token from your GH one
+#   1- docker run -it vault:1.6.1 sh
+#   2- export VAULT_ADDR="https://vault-cluster.private.vault.XXXXXX.aws.hashicorp.cloud:8200"; export VAULT_NAMESPACE="admin"
+#   3- vault login -method=github
+#   5- input your GH personal access token
+#   6- Set /config/common.config -> vault_token="XXXXXXXXXXXXXXXXXXXXXXX"
+#
+#   NOTE: the admin token from https://portal.cloud.hashicorp.com/ will always work
+#   but it's use is defavoured for the nominated GH personal access token for
+#   security audit trail reasons
+#
+vault_token = "s.XXXXXXXXXXXXXXXXXXXXXX.Apshc"
