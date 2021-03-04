@@ -7,8 +7,19 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.1"></a>
+## [v1.2.1] - 2021-03-04
+
+- Create Vault infrastructure resources ([#190](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/190))
+
+
 <a name="v1.1.45"></a>
 ## [v1.1.45] - 2021-02-26
+
+
+
+<a name="v1.2.0"></a>
+## [v1.2.0] - 2021-02-26
 
 - Add WAF v2 and ACM certificate for EKS ALB ([#188](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/188))
 
@@ -1248,8 +1259,10 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.45...HEAD
-[v1.1.45]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.44...v1.1.45
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.1...HEAD
+[v1.2.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.45...v1.2.1
+[v1.1.45]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.0...v1.1.45
+[v1.2.0]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.44...v1.2.0
 [v1.1.44]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.43...v1.1.44
 [v1.1.43]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.42...v1.1.43
 [v1.1.42]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.41...v1.1.42
