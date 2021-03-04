@@ -30,16 +30,16 @@ module "vault_instance" {
 
   security_group_rules = [
     {
-      from_port = 22,
-      to_port   = 22,
-      protocol  = "tcp",
+      from_port   = 22,
+      to_port     = 22,
+      protocol    = "tcp",
       cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
       description = "Allow SSH"
     },
     {
-      from_port = 8200,
-      to_port   = 8200,
-      protocol  = "tcp",
+      from_port   = 8200,
+      to_port     = 8200,
+      protocol    = "tcp",
       cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
       description = "Vault UI and API"
     },
