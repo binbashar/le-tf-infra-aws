@@ -34,8 +34,8 @@ def apply(*args):
     terraform.apply(list(args))
     terraform.change_terraform_dir_ownership()
 
-@task()
-def output(checkdir):
+@task(checkdir)
+def output(*args):
     '''Show all terraform output variables of this layer.'''
     terraform.output()
 

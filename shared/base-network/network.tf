@@ -18,6 +18,10 @@ module "vpc" {
   enable_s3_endpoint       = true
   enable_dynamodb_endpoint = true
 
+  enable_kms_endpoint              = false
+  kms_endpoint_private_dns_enabled = false
+  # kms_endpoint_security_group_ids  = [aws_security_group.kms_vpce.id]
+
   manage_default_network_acl    = false
   public_dedicated_network_acl  = true // use dedicated network ACL for the public subnets.
   private_dedicated_network_acl = true // use dedicated network ACL for the private subnets.
@@ -28,3 +32,29 @@ module "vpc" {
 
   tags = local.tags
 }
+
+#
+# KMS VPC Endpoint: Security Group
+#
+# resource "aws_security_group" "kms_vpce" {
+#   name        = "kms_vpce"
+#   description = "Allow TLS inbound traffic"
+#   vpc_id      = module.vpc.vpc_id
+
+#   ingress {
+#     description = "TLS from VPC"
+#     from_port   = 443
+#     to_port     = 443
+#     protocol    = "tcp"
+#     cidr_blocks = [local.vpc_cidr_block]
+#   }
+
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   tags = local.tags
+# }
