@@ -29,7 +29,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/databases-pgsql/terraform.tfstate"
+    key = "apps-devstg/databases-mysql/terraform.tfstate"
   }
 }
 
