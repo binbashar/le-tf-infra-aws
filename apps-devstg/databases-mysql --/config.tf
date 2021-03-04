@@ -2,17 +2,31 @@
 # Providers
 #
 provider "aws" {
-  version                 = "~> 2.69"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
+}
+
+provider "vault" {
+  address = var.vault_address
+
+  /*
+  Vault token that will be used by Terraform to authenticate.
+  admin token from https://portal.cloud.hashicorp.com/.
+  */
+  token = var.vault_token
 }
 
 #
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.12.28"
+  required_version = ">= 0.14.4"
+
+  required_providers {
+    aws   = "~> 3.2"
+    vault = "~> 2.18.0"
+  }
 
   backend "s3" {
     key = "apps-devstg/databases-pgsql/terraform.tfstate"
@@ -39,4 +53,8 @@ data "terraform_remote_state" "vpc-shared" {
     bucket  = "${var.project}-shared-terraform-backend"
     key     = "shared/network/terraform.tfstate"
   }
+}
+
+data "vault_generic_secret" "database_secrets" {
+  path = "secrets/le-tf-infra-aws/apps-devstg/databases-mysql"
 }
