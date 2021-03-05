@@ -96,6 +96,10 @@ Thumbs.db
 *secrets.dec*
 *secrets.dec.*
 #
+# Config Files
+#
+*common.config
+#
 # Scripts and Makefiles
 #
 /@bin/makefiles
