@@ -7,6 +7,17 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.2"></a>
+## [v1.2.2] - 2021-03-05
+
+- BBL-24 | fixing inline comment at common.config.example
+- BBL-24 | apps-devstg/database-mysql state fixed
+- BBL-24 | ignoring commong.config since it has account ids
+- BBL-24 | removing common.config and adding common.config.example preparing repo for open-source ver
+- BBL-24 | shared layers to tf-0.14
+- BBL-24 | apps-devstg layer to tf-0.14 + secrets from hashicorp vault
+
+
 <a name="v1.2.1"></a>
 ## [v1.2.1] - 2021-03-04
 
@@ -1259,7 +1270,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.2...HEAD
+[v1.2.2]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.1...v1.2.2
 [v1.2.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.45...v1.2.1
 [v1.1.45]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.0...v1.1.45
 [v1.2.0]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.44...v1.2.0
