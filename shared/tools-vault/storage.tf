@@ -56,7 +56,7 @@ module "vault_backend" {
 
   tags = local.tags
 
-  depends_on = [ module.vault_backend_replica ]
+  depends_on = [module.vault_backend_replica]
 }
 
 #

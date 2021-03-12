@@ -26,7 +26,7 @@ module "demoapps" {
   replica_count = 1
 
   # Autoscaling settings
-  replica_scale_enabled       = false
+  replica_scale_enabled = false
   # replica_scale_min         = 1
   # replica_scale_max         = 3
   # replica_scale_cpu         = 85
@@ -57,7 +57,7 @@ module "demoapps" {
 
   # Security group settings
   create_security_group = true
-  allowed_cidr_blocks   = [
+  allowed_cidr_blocks = [
     data.terraform_remote_state.eks_vpc.outputs.vpc_cidr_block,
     data.terraform_remote_state.shared_vpc.outputs.vpc_cidr_block
   ]
