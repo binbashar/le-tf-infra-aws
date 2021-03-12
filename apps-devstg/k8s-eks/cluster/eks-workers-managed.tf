@@ -20,7 +20,8 @@ module "eks" {
 
   cluster_create_endpoint_private_access_sg_rule = var.cluster_create_endpoint_private_access_sg_rule
   cluster_endpoint_private_access_cidrs = [
-    data.terraform_remote_state.shared-vpc.outputs.vpc_cidr_block
+    data.terraform_remote_state.shared-vpc.outputs.vpc_cidr_block,
+    "172.25.16.0/20" # HCP Vault
   ]
 
   #

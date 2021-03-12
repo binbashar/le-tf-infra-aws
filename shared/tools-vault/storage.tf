@@ -55,6 +55,8 @@ module "vault_backend" {
   restrict_public_buckets = true
 
   tags = local.tags
+
+  depends_on = [module.vault_backend_replica]
 }
 
 #
