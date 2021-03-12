@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.3"></a>
+## [v1.2.3] - 2021-03-12
+
+- Create RDS Aurora ([#191](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/191))
+
+
 <a name="v1.2.2"></a>
 ## [v1.2.2] - 2021-03-05
 
@@ -1270,7 +1276,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.2...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.3...HEAD
+[v1.2.3]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.2...v1.2.3
 [v1.2.2]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.1...v1.2.2
 [v1.2.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.45...v1.2.1
 [v1.1.45]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.0...v1.1.45
