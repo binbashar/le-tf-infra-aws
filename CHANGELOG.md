@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.4"></a>
+## [v1.2.4] - 2021-03-16
+
+- Replicate small refactors made while working on helm and ansible repositories ([#192](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/192))
+
+
 <a name="v1.2.3"></a>
 ## [v1.2.3] - 2021-03-12
 
@@ -1276,7 +1282,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.3...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.4...HEAD
+[v1.2.4]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.3...v1.2.4
 [v1.2.3]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.2...v1.2.3
 [v1.2.2]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.1...v1.2.2
 [v1.2.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.1.45...v1.2.1
