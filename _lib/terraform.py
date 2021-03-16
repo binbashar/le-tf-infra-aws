@@ -61,43 +61,48 @@ terraform_default_args = [
 #
 # Helper to build the docker commands.
 #
-def _build_cmd(command="", args=[], entrypoint=docker_entrypoint):
+def _build_cmd(command="", args=[], entrypoint=docker_entrypoint, extra_args=[]):
+    # Start building the docker run command
     cmd = docker_cmd + docker_volumes + docker_envs
+
+    # Set the default entrypoint
     cmd.append("--entrypoint=%s" % entrypoint)
+
+    # Set the image to use
     cmd.append(docker_image)
     if command != "":
+        # Since MFA mode runs a different entrypoint, we also need to specify
+        # another binary to pass the execution to (in this case: helmsman)
         if mfa_enabled:
             cmd.append("--")
             cmd.append(env.get("TERRAFORM_ENTRYPOINT"))
 
+        # After the entrypoint has been figured out, append the helmsman command to run
         cmd.append(command)
 
+    # Append extra arguments if any were provided
+    if extra_args:
+        args = args + extra_args
+
+    # Finally append all the arguments to the docker command
     cmd = cmd + args
     print("[DEBUG] %s" % (" ".join(cmd)))
     return cmd
 
 def init(extra_args):
-    args = ["-backend-config=/config/backend.config"]
-    if extra_args:
-        args = args + extra_args
-
-    cmd = _build_cmd(command="init", args=args)
+    cmd = _build_cmd(
+        command="init",
+        args=["-backend-config=/config/backend.config"],
+        extra_args=extra_args
+    )
     return subprocess.call(cmd)
 
 def plan(extra_args):
-    args = terraform_default_args
-    if extra_args:
-        args = args + extra_args
-
-    cmd = _build_cmd(command="plan", args=args)
+    cmd = _build_cmd(command="plan", args=terraform_default_args, extra_args=extra_args)
     return subprocess.call(cmd)
 
 def apply(extra_args):
-    args = terraform_default_args
-    if extra_args:
-        args = args + extra_args
-
-    cmd = _build_cmd(command="apply", args=args)
+    cmd = _build_cmd(command="apply", args=terraform_default_args, extra_args=extra_args)
     return subprocess.call(cmd)
 
 def output():
@@ -105,11 +110,7 @@ def output():
     return subprocess.call(cmd)
 
 def destroy(extra_args):
-    args = terraform_default_args
-    if extra_args:
-        args = args + extra_args
-
-    cmd = _build_cmd(command="destroy", args=args)
+    cmd = _build_cmd(command="destroy", args=terraform_default_args, extra_args=extra_args)
     return subprocess.call(cmd)
 
 def version():
