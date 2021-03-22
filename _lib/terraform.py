@@ -21,7 +21,14 @@ if mfa_enabled:
 # Set docker image, workdir, and other default arguments
 docker_image = "%s:%s" % (env.get("TERRAFORM_IMAGE_NAME"), env.get("TERRAFORM_IMAGE_TAG"))
 docker_workdir = "/go/src/project"
-docker_cmd = ["docker", "run", "--rm", "--workdir=%s" % docker_workdir, "-it"]
+docker_cmd = [
+    "docker",
+    "run",
+    "--security-opt=label:disable",
+    "--rm",
+    "--workdir=%s" % docker_workdir,
+    "-it"
+]
 
 # Set docker volumes -- MFA uses additional volumes
 docker_volumes = [
