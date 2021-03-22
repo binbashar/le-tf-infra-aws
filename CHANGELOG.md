@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.5"></a>
+## [v1.2.5] - 2021-03-22
+
+- Add support for SELinux ([#193](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/193))
+
+
 <a name="v1.2.4"></a>
 ## [v1.2.4] - 2021-03-16
 
@@ -1282,7 +1288,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.4...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.5...HEAD
+[v1.2.5]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.4...v1.2.5
 [v1.2.4]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.3...v1.2.4
 [v1.2.3]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.2...v1.2.3
 [v1.2.2]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.1...v1.2.2
