@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.6"></a>
+## [v1.2.6] - 2021-03-25
+
+- Fix an issue with MFA config not properly honored in build.env ([#194](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/194))
+
+
 <a name="v1.2.5"></a>
 ## [v1.2.5] - 2021-03-22
 
@@ -1288,7 +1294,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.5...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.6...HEAD
+[v1.2.6]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.5...v1.2.6
 [v1.2.5]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.4...v1.2.5
 [v1.2.4]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.3...v1.2.4
 [v1.2.3]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.2...v1.2.3
