@@ -13,6 +13,9 @@ if project == "": raise Exception("Project is not set")
 # Enable MFA support?
 mfa_enabled = True if env.get("MFA_ENABLED", "true").lower() == "true" else False
 
+# Use TTY
+use_tty = True if env.get("USE_TTY", "false").lower() == "true" else False
+
 # Set default entrypoint, use the mfa entrypoint if mfa is enabled
 docker_entrypoint = env.get("TERRAFORM_ENTRYPOINT", "/bin/terraform")
 if mfa_enabled:
@@ -26,9 +29,17 @@ docker_cmd = [
     "run",
     "--security-opt=label:disable",
     "--rm",
-    "--workdir=%s" % docker_workdir,
-    "-it"
+    "--workdir=%s" % docker_workdir
 ]
+
+# Instruct docker to use a TTY -- This might be useful when running this on
+# an automation tool such as Jenkins which doesn't provide pseudo terminal
+# by default
+if use_tty:
+    docker_cmd.append("--tty")
+else:
+    # Otherwise, by default, we assume the CLI is being run on a terminal
+    docker_cmd.append("-it")
 
 # Set docker volumes -- MFA uses additional volumes
 docker_volumes = [
