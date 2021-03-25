@@ -11,7 +11,7 @@ project = env.get("PROJECT", "")
 if project == "": raise Exception("Project is not set")
 
 # Enable MFA support?
-mfa_enabled = True if env.get("MFA_ENABLED", "false") else False
+mfa_enabled = True if env.get("MFA_ENABLED", "true").lower() == "true" else False
 
 # Set default entrypoint, use the mfa entrypoint if mfa is enabled
 docker_entrypoint = env.get("TERRAFORM_ENTRYPOINT", "/bin/terraform")
