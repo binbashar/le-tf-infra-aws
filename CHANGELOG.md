@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.8"></a>
+## [v1.2.8] - 2021-03-26
+
+- Update Jenkins and EKS to allow running Terraform commands from Jenkins via Leverage CLI ([#196](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/196))
+
+
 <a name="v1.2.7"></a>
 ## [v1.2.7] - 2021-03-25
 
@@ -1300,7 +1306,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.7...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.8...HEAD
+[v1.2.8]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.7...v1.2.8
 [v1.2.7]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.6...v1.2.7
 [v1.2.6]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.5...v1.2.6
 [v1.2.5]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.4...v1.2.5
