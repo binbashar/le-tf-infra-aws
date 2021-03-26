@@ -87,6 +87,7 @@ data "aws_iam_policy_document" "cross_org_instance_access" {
     resources = [
       "arn:aws:iam::${var.appsdevstg_account_id}:role/DeployMaster",
       "arn:aws:iam::${var.appsprd_account_id}:role/DeployMaster",
+      "arn:aws:iam::${var.shared_account_id}:role/DeployMaster",
       "arn:aws:iam::${var.appsdevstg_account_id}:role/Auditor",
       "arn:aws:iam::${var.appsprd_account_id}:role/Auditor",
       "arn:aws:iam::${var.shared_account_id}:role/Auditor",

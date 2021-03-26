@@ -90,7 +90,8 @@ module "iam_assumable_role_deploy_master" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v3.8.0"
 
   trusted_role_arns = [
-    "arn:aws:iam::${var.security_account_id}:root"
+    "arn:aws:iam::${var.security_account_id}:root",
+    "arn:aws:iam::${var.shared_account_id}:root"
   ]
 
   create_role = true
@@ -139,22 +140,22 @@ module "iam_assumable_role_oaar" {
 #
 # Role: alb-ingress for EKS OIDC
 #
-module "alb_ingress" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v3.8.0"
+# module "alb_ingress" {
+#   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v3.8.0"
 
-  create_role  = true
-  role_name    = "alb-ingress"
-  provider_url = replace(data.terraform_remote_state.cluster-eks.outputs.cluster_oidc_issuer_url, "https://", "")
+#   create_role  = true
+#   role_name    = "alb-ingress"
+#   provider_url = replace(data.terraform_remote_state.cluster-eks.outputs.cluster_oidc_issuer_url, "https://", "")
 
-  role_policy_arns = [
-    aws_iam_policy.alb_ingress.arn
-  ]
-  oidc_fully_qualified_subjects = [
-    "system:serviceaccount:alb-ingress:alb-ingress"
-  ]
+#   role_policy_arns = [
+#     aws_iam_policy.alb_ingress.arn
+#   ]
+#   oidc_fully_qualified_subjects = [
+#     "system:serviceaccount:alb-ingress:alb-ingress"
+#   ]
 
-  tags = {
-    Subject = "alb-ingress"
-    Purpose = "eks-oidc"
-  }
-}
+#   tags = {
+#     Subject = "alb-ingress"
+#     Purpose = "eks-oidc"
+#   }
+# }
