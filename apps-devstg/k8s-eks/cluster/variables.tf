@@ -185,11 +185,12 @@ variable "map_roles" {
   }))
 
   default = [
-    # {
-    #   rolearn  = "arn:aws:iam::900980591242:role/DevOps"
-    #   username = "DevOps"
-    #   groups   = ["system:masters"]
-    # },
+    # Jenkins will assume this role in order to be able to destroy the cluster
+    {
+      rolearn  = "arn:aws:iam::523857393444:role/DeployMaster"
+      username = "DeployMaster"
+      groups   = ["system:masters"]
+    },
   ]
 }
 
