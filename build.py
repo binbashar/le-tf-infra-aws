@@ -56,9 +56,9 @@ def destroy(*args):
     terraform.destroy(list(args))
 
 @task()
-def shell():
+def shell(*args):
     '''Open a shell into the Terraform container in this layer.'''
-    terraform.shell()
+    terraform.shell(list(args))
 
 @task(_checkdir)
 def version():

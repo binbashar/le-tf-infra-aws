@@ -182,7 +182,7 @@ data "aws_iam_policy_document" "s3_demo_put_object" {
       "kms:ReEncrypt*"
     ]
     resources = [
-      "${data.terraform_remote_state.apps-devstg-keys.outputs.aws_kms_key_arn}"
+      data.terraform_remote_state.apps-devstg-keys.outputs.aws_kms_key_arn
     ]
   }
 }
