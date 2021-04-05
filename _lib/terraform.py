@@ -135,8 +135,8 @@ def version():
     cmd = _build_cmd(command="version")
     return subprocess.call(cmd)
 
-def shell():
-    cmd = _build_cmd(command="", entrypoint="/bin/sh")
+def shell(extra_args):
+    cmd = _build_cmd(command="", entrypoint="/bin/sh", extra_args=extra_args)
     return subprocess.call(cmd)
 
 def format_check():

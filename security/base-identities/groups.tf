@@ -2,7 +2,7 @@
 # Groups
 #
 module "iam_group_admins" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v3.8.0"
   name   = "admins"
 
   group_users = [
@@ -17,7 +17,7 @@ module "iam_group_admins" {
 }
 
 module "iam_group_auditors" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v3.8.0"
   name   = "auditors"
 
   group_users = [
@@ -32,7 +32,7 @@ module "iam_group_auditors" {
 }
 
 module "iam_group_devops" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v3.8.0"
   name   = "devops"
 
   group_users = [
@@ -47,7 +47,7 @@ module "iam_group_devops" {
 }
 
 module "iam_group_finops" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v3.8.0"
   name   = "finops"
 
   attach_iam_self_management_policy = false
@@ -66,11 +66,12 @@ module "iam_group_finops" {
 # Machine users groups
 #
 module "iam_group_deploymaster" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v3.8.0"
   name   = "deploymaster"
 
   group_users = [
     module.user_circle_ci.this_iam_user_name,
+    module.user_github_actions.this_iam_user_name,
   ]
 
   custom_group_policy_arns = [
@@ -79,7 +80,7 @@ module "iam_group_deploymaster" {
 }
 
 module "iam_group_s3_demo" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v3.8.0"
   name   = "s3_demo"
 
   attach_iam_self_management_policy = false

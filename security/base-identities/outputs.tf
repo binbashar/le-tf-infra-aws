@@ -65,6 +65,11 @@ output "user_circle_ci_iam_access_key_encrypted_secret" {
   sensitive   = true
 }*/
 
+output "user_github_actions_name" {
+  description = "The user's name"
+  value       = module.user_github_actions.this_iam_user_name
+}
+
 output "user_s3_demo_name" {
   description = "The user's name"
   value       = module.user_s3_demo.this_iam_user_name
