@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.9"></a>
+## [v1.2.9] - 2021-04-05
+
+- Create user for Github Actions workflows ([#197](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/197))
+
+
 <a name="v1.2.8"></a>
 ## [v1.2.8] - 2021-03-26
 
@@ -1306,7 +1312,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.8...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.9...HEAD
+[v1.2.9]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.8...v1.2.9
 [v1.2.8]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.7...v1.2.8
 [v1.2.7]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.6...v1.2.7
 [v1.2.6]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.5...v1.2.6
