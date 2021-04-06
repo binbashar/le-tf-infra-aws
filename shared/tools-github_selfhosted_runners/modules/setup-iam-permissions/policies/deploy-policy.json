@@ -1,0 +1,23 @@
+{
+  "Statement": [
+    {
+      "Action": [
+        "iam:*",
+        "s3:*",
+        "ec2:*",
+        "events:*",
+        "lambda:*",
+        "sqs:*",
+        "ssm:*",
+        "logs:*",
+        "apigateway:*",
+        "resource-groups:*",
+        "kms:*"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "Services"
+    }
+  ],
+  "Version": "2012-10-17"
+}

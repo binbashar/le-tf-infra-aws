@@ -1,0 +1,37 @@
+{
+  "Statement": [
+    {
+      "Action": [
+        "s3:*",
+        "ec2:*",
+        "lambda:*",
+        "logs:*",
+        "sqs:*",
+        "resource-groups:*",
+        "ssm:*",
+        "ssmmessages:*",
+        "ec2messages:*"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "ServiceBoundaries"
+    },
+    {
+      "Action": [
+        "iam:PassRole"
+      ],
+      "Effect": "Allow",
+      "Resource": "arn:aws:iam::${account_id}:role/${role_namespace}/*",
+      "Sid": "RoleInNamespace"
+    },
+    {
+      "Action": [
+        "kms:Decrypt"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "Decrypt"
+    }
+  ],
+  "Version": "2012-10-17"
+}
