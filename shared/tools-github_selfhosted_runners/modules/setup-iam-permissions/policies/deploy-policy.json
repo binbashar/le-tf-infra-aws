@@ -1,9 +1,6 @@
 {
-  "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "Services",
-      "Effect": "Allow",
       "Action": [
         "iam:*",
         "s3:*",
@@ -17,7 +14,10 @@
         "resource-groups:*",
         "kms:*"
       ],
-      "Resource": "*"
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "Services"
     }
-  ]
+  ],
+  "Version": "2012-10-17"
 }

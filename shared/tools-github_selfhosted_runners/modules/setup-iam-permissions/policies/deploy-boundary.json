@@ -1,25 +1,22 @@
 {
-  "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "CreateOrChangeOnlyWithBoundary",
-      "Effect": "Allow",
       "Action": [
         "iam:CreateRole",
         "iam:AttachRolePolicy",
         "iam:PutRolePermissionsBoundary",
         "iam:PutRolePolicy"
       ],
-      "Resource": "arn:aws:iam::${account_id}:role/${role_namespace}/*",
       "Condition": {
         "StringEquals": {
           "iam:PermissionsBoundary": "${permission_boundary}"
         }
-      }
+      },
+      "Effect": "Allow",
+      "Resource": "arn:aws:iam::${account_id}:role/${role_namespace}/*",
+      "Sid": "CreateOrChangeOnlyWithBoundary"
     },
     {
-      "Sid": "RoleInNamespace",
-      "Effect": "Allow",
       "Action": [
         "iam:TagRole",
         "iam:GetRolePolicy",
@@ -29,11 +26,11 @@
         "iam:DetachRolePolicy",
         "iam:DeleteRolePolicy"
       ],
-      "Resource": "arn:aws:iam::${account_id}:role/${role_namespace}/*"
+      "Effect": "Allow",
+      "Resource": "arn:aws:iam::${account_id}:role/${role_namespace}/*",
+      "Sid": "RoleInNamespace"
     },
     {
-      "Sid": "PolicyInNamespace",
-      "Effect": "Allow",
       "Action": [
         "iam:CreatePolicy",
         "iam:DeletePolicy",
@@ -42,11 +39,11 @@
         "iam:GetPolicyVersion",
         "iam:SetDefaultPolicyVersion"
       ],
-      "Resource": "arn:aws:iam::${account_id}:policy/${policy_namespace}/*"
+      "Effect": "Allow",
+      "Resource": "arn:aws:iam::${account_id}:policy/${policy_namespace}/*",
+      "Sid": "PolicyInNamespace"
     },
     {
-      "Sid": "InstanceProfileInNamespace",
-      "Effect": "Allow",
       "Action": [
         "iam:CreateInstanceProfile",
         "iam:RemoveRoleFromInstanceProfile",
@@ -54,11 +51,11 @@
         "iam:AddRoleToInstanceProfile",
         "iam:GetInstanceProfile"
       ],
-      "Resource": "arn:aws:iam::${account_id}:instance-profile/${instance_profile_namespace}/*"
+      "Effect": "Allow",
+      "Resource": "arn:aws:iam::${account_id}:instance-profile/${instance_profile_namespace}/*",
+      "Sid": "InstanceProfileInNamespace"
     },
     {
-      "Sid": "IamListActions",
-      "Effect": "Allow",
       "Action": [
         "iam:ListInstanceProfilesForRole",
         "iam:ListPolicies",
@@ -67,22 +64,22 @@
         "iam:ListRolePolicies",
         "iam:ListAttachedRolePolicies"
       ],
-      "Resource": "*"
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "IamListActions"
     },
     {
-      "Sid": "NoBoundaryPolicyEdit",
-      "Effect": "Deny",
       "Action": [
         "iam:CreatePolicyVersion",
         "iam:DeletePolicy",
         "iam:DeletePolicyVersion",
         "iam:SetDefaultPolicyVersion"
       ],
-      "Resource": "arn:aws:iam::${account_id}:policy/${boundary_namespace}/*"
+      "Effect": "Deny",
+      "Resource": "arn:aws:iam::${account_id}:policy/${boundary_namespace}/*",
+      "Sid": "NoBoundaryPolicyEdit"
     },
     {
-      "Sid": "Services",
-      "Effect": "Allow",
       "Action": [
         "s3:*",
         "ec2:*",
@@ -95,7 +92,10 @@
         "resource-groups:*",
         "kms:*"
       ],
-      "Resource": "*"
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "Services"
     }
-  ]
+  ],
+  "Version": "2012-10-17"
 }
