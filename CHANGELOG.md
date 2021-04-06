@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.11"></a>
+## [v1.2.11] - 2021-04-06
+
+- Update self-hosted github runners readme with further setup instructions and update secrets file ([#199](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/199))
+
+
 <a name="v1.2.10"></a>
 ## [v1.2.10] - 2021-04-06
 
@@ -1318,7 +1324,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.10...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.11...HEAD
+[v1.2.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.10...v1.2.11
 [v1.2.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.9...v1.2.10
 [v1.2.9]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.8...v1.2.9
 [v1.2.8]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.7...v1.2.8
