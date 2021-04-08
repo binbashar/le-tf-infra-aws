@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.12"></a>
+## [v1.2.12] - 2021-04-08
+
+- BBL-478-479 | Adding new collaborator users to aws security account withing DevOps group (DevOps role assumable cross-org)
+
+
 <a name="v1.2.11"></a>
 ## [v1.2.11] - 2021-04-06
 
@@ -1324,7 +1330,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.11...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.12...HEAD
+[v1.2.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.11...v1.2.12
 [v1.2.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.10...v1.2.11
 [v1.2.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.9...v1.2.10
 [v1.2.9]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.8...v1.2.9
