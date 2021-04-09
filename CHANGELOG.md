@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.13"></a>
+## [v1.2.13] - 2021-04-09
+
+- BBL-478-479 | adding vars to avoid tf warnings
+
+
 <a name="v1.2.12"></a>
 ## [v1.2.12] - 2021-04-08
 
@@ -1330,7 +1336,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.12...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.13...HEAD
+[v1.2.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.12...v1.2.13
 [v1.2.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.11...v1.2.12
 [v1.2.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.10...v1.2.11
 [v1.2.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.9...v1.2.10
