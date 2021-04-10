@@ -9,6 +9,10 @@ variable "region" {
   description = "AWS Region"
 }
 
+variable "region_secondary" {
+  description = "AWS Scondary Region for HA"
+}
+
 variable "profile" {
   type        = string
   description = "AWS Profile (required by the backend but also used for other resources)"
@@ -56,11 +60,6 @@ variable "environment" {
 #=============================#
 # Accounts & Extra Vars       #
 #=============================#
-variable "region_secondary" {
-  type        = string
-  description = "AWS Scondary Region for HA"
-}
-
 variable "root_account_id" {
   type        = string
   description = "Account: Root"
@@ -86,63 +85,10 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
-#=============================#
-# EC2 BASIC LAYOUT MODULE     #
-#=============================#
-#
-# General
-#
-variable "prefix" {
-  type        = string
-  description = "Prefix"
-  default     = "infra"
+variable "vault_token" {
+  type = string
 }
 
-variable "name" {
-  type        = string
-  description = "Name"
-  default     = "prometheus"
-}
-
-#
-# EC2 Attributes
-#
-variable "aws_ami_os_id" {
-  description = "AWS AMI Operating System Identificator"
-  default     = "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"
-}
-
-variable "aws_ami_os_owner" {
-  description = "AWS AMI Operating System Owner, eg: 099720109477 for Canonical "
-  default     = "099720109477"
-}
-
-variable "instance_type" {
-  type        = string
-  description = "EC2 Instance Type"
-  default     = "t3.large"
-}
-
-variable "ebs_optimized" {
-  type        = string
-  description = "Enable EBS Optimized"
-  default     = "false"
-}
-
-variable "associate_public_ip_address" {
-  type        = bool
-  description = "Associate a public IP address with the instance"
-  default     = false
-}
-
-variable "root_device_backup_tag" {
-  type        = string
-  description = "EC2 Root Block Device backup tag"
-  default     = "True"
-}
-
-variable "monitoring" {
-  type        = bool
-  description = "If true, the launched EC2 instance will have detailed monitoring enabled"
-  default     = false
+variable "vault_address" {
+  type = string
 }

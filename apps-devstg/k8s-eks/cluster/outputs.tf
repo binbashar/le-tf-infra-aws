@@ -1,6 +1,11 @@
 #
 # EKS Module
 #
+output "cluster_id" {
+  description = "EKS Cluster ID"
+  value       = module.eks.cluster_id
+}
+
 output "cluster_name" {
   description = "EKS Cluster Name"
   value       = data.terraform_remote_state.shared-eks-vpc.outputs.cluster_name
@@ -26,10 +31,10 @@ output "cluster_security_group_id" {
 #   value       = module.eks.kubeconfig
 # }
 
-output "config_map_aws_auth" {
-  description = "A kubernetes configuration to authenticate to this EKS cluster."
-  value       = module.eks.config_map_aws_auth
-}
+# output "config_map_aws_auth" {
+#   description = "A kubernetes configuration to authenticate to this EKS cluster."
+#   value       = module.eks.config_map_aws_auth
+# }
 
 output "region" {
   description = "AWS region."

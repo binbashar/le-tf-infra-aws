@@ -2,17 +2,20 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  version                 = "~> 2.56"
   region                  = var.region
   profile                 = var.profile
-  shared_credentials_file = "~/.aws/config"
+  shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
 #=============================#
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.12.20"
+  required_version = ">= 0.14.4"
+
+  required_providers {
+    aws = "~> 3.2"
+  }
 
   backend "s3" {
     key = "shared/prometheus/terraform.tfstate"
