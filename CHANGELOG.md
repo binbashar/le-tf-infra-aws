@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.14"></a>
+## [v1.2.14] - 2021-04-10
+
+- Move EKS identities to a separate layer to simplify create/destroy op… ([#202](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/202))
+
+
 <a name="v1.2.13"></a>
 ## [v1.2.13] - 2021-04-09
 
@@ -1336,7 +1342,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.13...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.14...HEAD
+[v1.2.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.13...v1.2.14
 [v1.2.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.12...v1.2.13
 [v1.2.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.11...v1.2.12
 [v1.2.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.10...v1.2.11
