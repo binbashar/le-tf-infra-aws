@@ -9,7 +9,7 @@ resource "kubernetes_config_map" "aws_auth" {
       {
         # "app.kubernetes.io/name"       = "aws-auth"
         # "app.kubernetes.io/version"    = "1.0.0"
-        "app.kubernetes.io/component"  = "aws-iam-authenticator"
+        "app.kubernetes.io/component" = "aws-iam-authenticator"
       },
       local.labels
     )
