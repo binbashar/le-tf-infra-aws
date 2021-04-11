@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.16"></a>
+## [v1.2.16] - 2021-04-11
+
+- Make sure we don't have aws auth managed by eks module ([#204](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/204))
+
+
 <a name="v1.2.15"></a>
 ## [v1.2.15] - 2021-04-10
 
@@ -1348,7 +1354,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.15...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.16...HEAD
+[v1.2.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.15...v1.2.16
 [v1.2.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.14...v1.2.15
 [v1.2.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.13...v1.2.14
 [v1.2.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.12...v1.2.13
