@@ -68,6 +68,7 @@ module "eks" {
   # Auth: aws-iam-authenticator config is no longer managed through this module.
   #       Please refer to the 'k8s-resources' layer instead.
   #
+  manage_aws_auth = var.manage_aws_auth
 
   #
   # Logging: which log types should be enabled and how long they should be kept for
