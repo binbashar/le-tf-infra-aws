@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.17"></a>
+## [v1.2.17] - 2021-04-11
+
+- Enable kubeconfig as an output of the EKS layer ([#205](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/205))
+
+
 <a name="v1.2.16"></a>
 ## [v1.2.16] - 2021-04-11
 
@@ -1354,7 +1360,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.16...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.17...HEAD
+[v1.2.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.16...v1.2.17
 [v1.2.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.15...v1.2.16
 [v1.2.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.14...v1.2.15
 [v1.2.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.13...v1.2.14
