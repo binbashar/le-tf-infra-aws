@@ -80,6 +80,14 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
+variable "vault_token" {
+  type = string
+}
+
+variable "vault_address" {
+  type = string
+}
+
 #=============================#
 # EC2 BASIC LAYOUT MODULE     #
 #=============================#

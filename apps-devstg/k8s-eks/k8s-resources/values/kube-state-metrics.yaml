@@ -1,3 +1,9 @@
+# Annotate pods so they are scraped by Prometheus
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
 # Available collectors for kube-state-metrics. By default all available
 # collectors are enabled.
 collectors:

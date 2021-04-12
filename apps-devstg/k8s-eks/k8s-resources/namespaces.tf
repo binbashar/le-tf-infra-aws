@@ -1,9 +1,9 @@
-# resource "kubernetes_namespace" "monitoring" {
-#   metadata {
-#     labels = {
-#       environment = var.environment
-#     }
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    labels = {
+      environment = var.environment
+    }
 
-#     name = "monitoring"
-#   }
-# }
+    name = "monitoring"
+  }
+}

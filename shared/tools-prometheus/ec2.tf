@@ -59,6 +59,13 @@ module "prometheus_grafana" {
       protocol    = "tcp",
       cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
       description = "Allow Prometheus & Grafana through Nginx"
+    },
+    {
+      from_port   = 9100,
+      to_port     = 9100,
+      protocol    = "tcp",
+      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
+      description = "Allow Node Exporter"
     }
   ]
 
