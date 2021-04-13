@@ -7,6 +7,42 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.17"></a>
+## [v1.2.17] - 2021-04-11
+
+- Enable kubeconfig as an output of the EKS layer ([#205](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/205))
+
+
+<a name="v1.2.16"></a>
+## [v1.2.16] - 2021-04-11
+
+- Make sure we don't have aws auth managed by eks module ([#204](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/204))
+
+
+<a name="v1.2.15"></a>
+## [v1.2.15] - 2021-04-10
+
+- Disable managing of AWS Auth in EKS cluster layer to favor the managi… ([#203](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/203))
+
+
+<a name="v1.2.14"></a>
+## [v1.2.14] - 2021-04-10
+
+- Move EKS identities to a separate layer to simplify create/destroy op… ([#202](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/202))
+
+
+<a name="v1.2.13"></a>
+## [v1.2.13] - 2021-04-09
+
+- BBL-478-479 | adding vars to avoid tf warnings
+
+
+<a name="v1.2.12"></a>
+## [v1.2.12] - 2021-04-08
+
+- BBL-478-479 | Adding new collaborator users to aws security account withing DevOps group (DevOps role assumable cross-org)
+
+
 <a name="v1.2.11"></a>
 ## [v1.2.11] - 2021-04-06
 
@@ -1324,7 +1360,13 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.11...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.17...HEAD
+[v1.2.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.16...v1.2.17
+[v1.2.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.15...v1.2.16
+[v1.2.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.14...v1.2.15
+[v1.2.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.13...v1.2.14
+[v1.2.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.12...v1.2.13
+[v1.2.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.11...v1.2.12
 [v1.2.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.10...v1.2.11
 [v1.2.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.9...v1.2.10
 [v1.2.9]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.8...v1.2.9

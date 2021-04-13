@@ -162,7 +162,7 @@ variable "kubeconfig_name" {
 #
 variable "manage_aws_auth" {
   description = "Whether to apply the aws-auth configmap file."
-  default     = true
+  default     = false
 }
 
 variable "map_accounts" {

@@ -7,8 +7,8 @@ module "iam_group_admins" {
 
   group_users = [
     module.user_diego_ojeda.this_iam_user_name,
-    module.user_marcos_pagnuco.this_iam_user_name,
     module.user_exequiel_barrirero.this_iam_user_name,
+    module.user_marcos_pagnuco.this_iam_user_name,
   ]
 
   custom_group_policy_arns = [
@@ -22,8 +22,8 @@ module "iam_group_auditors" {
 
   group_users = [
     module.user_diego_ojeda.this_iam_user_name,
-    module.user_marcos_pagnuco.this_iam_user_name,
     module.user_exequiel_barrirero.this_iam_user_name,
+    module.user_marcos_pagnuco.this_iam_user_name,
   ]
 
   custom_group_policy_arns = [
@@ -36,9 +36,11 @@ module "iam_group_devops" {
   name   = "devops"
 
   group_users = [
+    module.user_angelo_fenoglio.this_iam_user_name,
     module.user_diego_ojeda.this_iam_user_name,
-    module.user_marcos_pagnuco.this_iam_user_name,
     module.user_exequiel_barrirero.this_iam_user_name,
+    module.user_luis_gallardo.this_iam_user_name,
+    module.user_marcos_pagnuco.this_iam_user_name,
   ]
 
   custom_group_policy_arns = [
