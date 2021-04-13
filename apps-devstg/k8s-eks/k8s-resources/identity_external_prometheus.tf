@@ -3,35 +3,35 @@
 #
 resource "kubernetes_cluster_role" "external_prometheus" {
   metadata {
-    name      = "external-prometheus"
+    name = "external-prometheus"
   }
 
   rule {
     api_groups = [""]
-    resources  = [
-        "namespaces",
-        "nodes",
-        "nodes/proxy",
-        "services",
-        "services/proxy",
-        "endpoints",
-        "pods",
-        "pods/proxy",
+    resources = [
+      "namespaces",
+      "nodes",
+      "nodes/proxy",
+      "services",
+      "services/proxy",
+      "endpoints",
+      "pods",
+      "pods/proxy",
     ]
     verbs = ["get", "list", "watch"]
   }
 
   rule {
     api_groups = ["extensions"]
-    resources  = [
-        "ingresses",
+    resources = [
+      "ingresses",
     ]
     verbs = ["get", "list", "watch"]
   }
 
   rule {
     non_resource_urls = ["/metrics"]
-    verbs = ["get", "list", "watch"]
+    verbs             = ["get", "list", "watch"]
   }
 }
 

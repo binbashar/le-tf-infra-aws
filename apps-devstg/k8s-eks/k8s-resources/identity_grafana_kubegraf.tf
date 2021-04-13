@@ -8,32 +8,32 @@ resource "kubernetes_cluster_role" "grafana_kubegraf" {
 
   rule {
     api_groups = [""]
-    resources  = [
-        "namespaces",
-        "pods",
-        "services",
-        "componentstatuses",
-        "nodes",
-        "events",
+    resources = [
+      "namespaces",
+      "pods",
+      "services",
+      "componentstatuses",
+      "nodes",
+      "events",
     ]
     verbs = ["get", "list", "watch"]
   }
 
   rule {
     api_groups = ["batch"]
-    resources  = [
-        "jobs",
-        "cronjobs",
+    resources = [
+      "jobs",
+      "cronjobs",
     ]
     verbs = ["get", "list", "watch"]
   }
 
   rule {
     api_groups = ["apps"]
-    resources  = [
-        "deployments",
-        "daemonsets",
-        "statefulsets",
+    resources = [
+      "deployments",
+      "daemonsets",
+      "statefulsets",
     ]
     verbs = ["get", "list", "watch"]
   }
