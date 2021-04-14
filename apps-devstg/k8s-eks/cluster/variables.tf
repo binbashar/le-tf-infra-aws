@@ -85,6 +85,14 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
+variable "vault_token" {
+  type = string
+}
+
+variable "vault_address" {
+  type = string
+}
+
 #===========================================#
 # K8s EKS                                   #
 #===========================================#
@@ -162,7 +170,7 @@ variable "kubeconfig_name" {
 #
 variable "manage_aws_auth" {
   description = "Whether to apply the aws-auth configmap file."
-  default     = false
+  default     = true
 }
 
 variable "map_accounts" {
