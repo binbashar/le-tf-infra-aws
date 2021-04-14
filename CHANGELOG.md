@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.19"></a>
+## [v1.2.19] - 2021-04-14
+
+- Move back aws-iam-authenticator to the cluster layer and update k8s-resources layer with draft resources ([#207](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/207))
+
+
 <a name="v1.2.18"></a>
 ## [v1.2.18] - 2021-04-13
 
@@ -1366,7 +1372,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.18...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.19...HEAD
+[v1.2.19]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.18...v1.2.19
 [v1.2.18]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.17...v1.2.18
 [v1.2.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.16...v1.2.17
 [v1.2.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.15...v1.2.16
