@@ -8,7 +8,7 @@ resource "helm_release" "ingress_nginx_private" {
   chart      = "ingress-nginx"
   version    = "3.19.0"
 
-  values = [ file("chart-values/ingress-nginx-private.yaml") ]
+  values = [file("chart-values/ingress-nginx-private.yaml")]
 }
 
 #------------------------------------------------------------------------------
@@ -34,9 +34,9 @@ resource "helm_release" "external_dns_private" {
   chart      = "external-dns"
   version    = "4.6.0"
 
-  values = [ file("chart-values/external-dns-private.yaml") ]
+  values = [file("chart-values/external-dns-private.yaml")]
 
-  depends_on = [ helm_release.ingress_nginx_private ]
+  depends_on = [helm_release.ingress_nginx_private]
 }
 
 #------------------------------------------------------------------------------

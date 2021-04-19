@@ -34,7 +34,7 @@ resource "helm_release" "kubernetes_dashboard" {
   chart      = "kubernetes-dashboard"
   version    = "4.0.0"
 
-  values = [ file("chart-values/kubernetes-dashboard.yaml") ]
+  values = [file("chart-values/kubernetes-dashboard.yaml")]
 
   depends_on = [
     helm_release.ingress_nginx_private,

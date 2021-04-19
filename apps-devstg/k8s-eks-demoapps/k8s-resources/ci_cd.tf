@@ -8,7 +8,7 @@ resource "helm_release" "argo_cd" {
   chart      = "argo-cd"
   version    = "2.17.4"
 
-  values = [ file("chart-values/argo-cd.yaml") ]
+  values = [file("chart-values/argo-cd.yaml")]
 
   depends_on = [
     helm_release.ingress_nginx_private,
