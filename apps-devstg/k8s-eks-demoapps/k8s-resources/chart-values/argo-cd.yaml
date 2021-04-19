@@ -12,7 +12,7 @@ server:
       nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     hosts:
       - argocd.devstg.aws.binbash.com.ar
-    paths: 
+    paths:
       - /
     tls:
       - secretName: argocd-server-tls
