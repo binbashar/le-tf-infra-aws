@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.20"></a>
+## [v1.2.20] - 2021-04-19
+
+- Create EKS layer for DemoApps and its required layers ([#208](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/208))
+
+
 <a name="v1.2.19"></a>
 ## [v1.2.19] - 2021-04-14
 
@@ -1372,7 +1378,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.19...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.20...HEAD
+[v1.2.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.19...v1.2.20
 [v1.2.19]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.18...v1.2.19
 [v1.2.18]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.17...v1.2.18
 [v1.2.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.16...v1.2.17
