@@ -1,0 +1,18 @@
+controller:
+  # DaemonSet or Deployment
+  kind: DaemonSet
+
+  # Name of the ingress class to route through this controller
+  ingressClass: ingress-nginx-private
+
+  service:
+    enabled: true
+
+    annotations:
+      # For devstg we want an internal load balancer
+      service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+      # Use a Network Load Balancer (either nlb or alb)
+      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+
+defaultBackend:
+  enabled: true

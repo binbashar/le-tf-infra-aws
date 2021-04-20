@@ -1,0 +1,14 @@
+# Enable Recommender component
+recommender:
+  enabled: true
+
+# Enable Updater component
+updater:
+  enabled: true
+
+# Enable AdmissionController -- Be careful, it's advisable to install VPA in
+# recommendation mode first in order to understand how it works. Only enable
+# this after you are ready to let VPA modify your pods with the requests/limits
+# "recommended" by the other components.
+admissionController:
+  enabled: false

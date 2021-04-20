@@ -1,0 +1,4 @@
+# Whether the dashboard component should be installed
+dashboard:
+  enabled: true
+  replicaCount: 1
