@@ -8,55 +8,55 @@ resource "kubernetes_namespace" "monitoring" {
   }
 }
 
-# resource "kubernetes_namespace" "ingress_nginx" {
-#   metadata {
-#     labels = {
-#       environment = var.environment
-#     }
+resource "kubernetes_namespace" "ingress_nginx" {
+  metadata {
+    labels = {
+      environment = var.environment
+    }
 
-#     name = "ingress-nginx"
-#   }
-# }
+    name = "ingress-nginx"
+  }
+}
 
-# resource "kubernetes_namespace" "cert_manager" {
-#   metadata {
-#     labels = {
-#       environment = var.environment
-#     }
+resource "kubernetes_namespace" "cert_manager" {
+  metadata {
+    labels = {
+      environment = var.environment
+    }
 
-#     name = "cert-manager"
-#   }
-# }
+    name = "cert-manager"
+  }
+}
 
-# resource "kubernetes_namespace" "external_dns" {
-#   metadata {
-#     labels = {
-#       environment = var.environment
-#     }
+resource "kubernetes_namespace" "external_dns" {
+  metadata {
+    labels = {
+      environment = var.environment
+    }
 
-#     name = "external-dns"
-#   }
-# }
+    name = "external-dns"
+  }
+}
 
-# resource "kubernetes_namespace" "vault" {
-#   metadata {
-#     labels = {
-#       environment = var.environment
-#     }
+resource "kubernetes_namespace" "vault" {
+  metadata {
+    labels = {
+      environment = var.environment
+    }
 
-#     name = "vault"
-#   }
-# }
+    name = "vault"
+  }
+}
 
-# resource "kubernetes_namespace" "argo_cd" {
-#   metadata {
-#     labels = {
-#       environment = var.environment
-#     }
+resource "kubernetes_namespace" "argo_cd" {
+  metadata {
+    labels = {
+      environment = var.environment
+    }
 
-#     name = "argo-cd"
-#   }
-# }
+    name = "argo-cd"
+  }
+}
 
 resource "kubernetes_namespace" "gatus" {
   metadata {
