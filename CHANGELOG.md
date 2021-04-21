@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.23"></a>
+## [v1.2.23] - 2021-04-21
+
+- Force TF13 in EKS DemoApps k8s-resources ([#211](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/211))
+
+
 <a name="v1.2.22"></a>
 ## [v1.2.22] - 2021-04-21
 
@@ -1390,7 +1396,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.22...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.23...HEAD
+[v1.2.23]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.22...v1.2.23
 [v1.2.22]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.21...v1.2.22
 [v1.2.21]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.20...v1.2.21
 [v1.2.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.19...v1.2.20
