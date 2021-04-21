@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.21"></a>
+## [v1.2.21] - 2021-04-21
+
+- Implement Goldilocks ([#209](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/209))
+
+
 <a name="v1.2.20"></a>
 ## [v1.2.20] - 2021-04-19
 
@@ -1378,7 +1384,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.20...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.21...HEAD
+[v1.2.21]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.20...v1.2.21
 [v1.2.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.19...v1.2.20
 [v1.2.19]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.18...v1.2.19
 [v1.2.18]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.17...v1.2.18
