@@ -1,0 +1,33 @@
+# When enabled, prints DNS record changes rather than actually performing them
+dryRun: false
+# K8s resources type to be observed for new DNS entries by ExternalDNS
+sources:
+  # - service
+  - ingress
+# DNS provider where the DNS records will be created
+provider: aws
+# Limit possible target zones by domain suffixes (optional)
+domainFilters:
+  - binbash.com.ar
+# Limit possible target zones by zone id (optional)
+zoneIdFilters:
+  - Z1F75NUGYJVN3L
+# Modify how DNS records are synchronized between sources and providers (options: sync, upsert-only)
+policy: sync
+# Registry Type. Available types are: txt, noop
+## ref: https://github.com/kubernetes-sigs/external-dns/blob/master/docs/proposal/registry.md
+registry: txt
+# TXT Registry Identifier
+txtOwnerId: Z1F75NUGYJVN3L
+# Filter sources managed by external-dns via annotation using label selector semantics (optional)
+annotationFilter: kubernetes.io/ingress.class=ingress-nginx-public
+
+# Adjust the interval for DNS updates
+interval: 3m
+
+# Create a service account and tie it to the external-dns role
+serviceAccount:
+  create: true
+  name: external-dns-public
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::763606934258:role/demoapps-external-dns-public
