@@ -28,5 +28,5 @@ config:
 # Alerting settings
 #------------------------------------------------------------------------------
 # alerting:
-#   slack: 
+#   slack:
 #     webhook-url: "https://hooks.slack.com/services/**********/**********/**********"

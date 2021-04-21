@@ -14,7 +14,7 @@ create: ## Create a cluster
 	@echo $(LOCAL_IP) \
 		| xargs -I '{}' sed s/\{SERVER_ADDR\}/{}/ kind/config.yaml.example \
 		> kind/config.yaml
-	
+
 	# Create a kind cluster using the generated config file...
 	kind create cluster --name kind --config=kind/config.yaml
 
