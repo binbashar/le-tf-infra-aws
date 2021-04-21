@@ -8,7 +8,7 @@ resource "helm_release" "ingress_nginx_private" {
   repository = "https://kubernetes.github.io/ingress-nginx"
   chart      = "ingress-nginx"
   version    = "3.19.0"
-  values     = [ file("chart-values/ingress-nginx-private.yaml") ]
+  values     = [file("chart-values/ingress-nginx-private.yaml")]
 }
 
 #------------------------------------------------------------------------------
@@ -21,7 +21,7 @@ resource "helm_release" "ingress_nginx_public" {
   repository = "https://kubernetes.github.io/ingress-nginx"
   chart      = "ingress-nginx"
   version    = "3.19.0"
-  values     = [ file("chart-values/ingress-nginx-public.yaml") ]
+  values     = [file("chart-values/ingress-nginx-public.yaml")]
 }
 
 #------------------------------------------------------------------------------
@@ -34,7 +34,7 @@ resource "helm_release" "external_dns_private" {
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "external-dns"
   version    = "4.6.0"
-  values     = [ file("chart-values/external-dns-private.yaml") ]
+  values     = [file("chart-values/external-dns-private.yaml")]
 }
 
 #------------------------------------------------------------------------------
@@ -47,5 +47,5 @@ resource "helm_release" "external_dns_public" {
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "external-dns"
   version    = "4.6.0"
-  values     = [ file("chart-values/external-dns-public.yaml") ]
+  values     = [file("chart-values/external-dns-public.yaml")]
 }

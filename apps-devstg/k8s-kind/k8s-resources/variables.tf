@@ -97,19 +97,19 @@ variable "vault_address" {
 # Kubernetes Auth             #
 #=============================#
 variable "kubernetes_host" {
-  type    = string
+  type = string
 }
 
 variable "kubernetes_cluster_ca_certificate" {
-  type    = string
+  type = string
 }
 
 variable "kubernetes_client_key" {
-  type    = string
+  type = string
 }
 
 variable "kubernetes_client_certificate" {
-  type    = string
+  type = string
 }
 
 #=============================#

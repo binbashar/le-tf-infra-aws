@@ -8,7 +8,7 @@ resource "helm_release" "kubernetes_dashboard" {
   repository = "https://kubernetes.github.io/dashboard"
   chart      = "kubernetes-dashboard"
   version    = "4.0.0"
-  values     = [ file("chart-values/kubernetes-dashboard.yaml") ]
+  values     = [file("chart-values/kubernetes-dashboard.yaml")]
 }
 
 # ------------------------------------------------------------------------------
@@ -21,8 +21,8 @@ resource "helm_release" "goldilocks" {
   repository = "https://charts.fairwinds.com/stable"
   chart      = "goldilocks"
   version    = "3.2.1"
-  values     = [ file("chart-values/goldilocks.yaml") ]
-  depends_on = [ helm_release.vpa ]
+  values     = [file("chart-values/goldilocks.yaml")]
+  depends_on = [helm_release.vpa]
 }
 
 #------------------------------------------------------------------------------
@@ -35,5 +35,5 @@ resource "helm_release" "gatus" {
   repository = "https://avakarev.github.io/gatus-chart"
   chart      = "gatus"
   version    = "1.1.1"
-  values     = [ file("chart-values/gatus.yaml") ]
+  values     = [file("chart-values/gatus.yaml")]
 }

@@ -8,6 +8,6 @@ resource "helm_release" "vpa" {
   repository = "https://charts.fairwinds.com/stable"
   chart      = "vpa"
   version    = "0.3.2"
-  values     = [ file("chart-values/vpa.yaml") ]
-  depends_on = [ helm_release.metrics_server ]
+  values     = [file("chart-values/vpa.yaml")]
+  depends_on = [helm_release.metrics_server]
 }

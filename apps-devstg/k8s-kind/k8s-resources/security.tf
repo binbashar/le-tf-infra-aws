@@ -8,7 +8,7 @@ resource "helm_release" "cert_manager" {
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
   version    = "1.1.0"
-  values     = [ file("chart-values/cert-manager.yaml") ]
+  values     = [file("chart-values/cert-manager.yaml")]
 }
 
 #------------------------------------------------------------------------------
@@ -21,8 +21,8 @@ resource "helm_release" "clusterissuer_binbash" {
   repository = "https://binbashar.github.io/helm-charts/"
   chart      = "cert-manager-clusterissuer"
   version    = "0.2.0"
-  values     = [ file("chart-values/clusterissuer-binbash.yaml") ]
-  depends_on = [ helm_release.cert_manager ]
+  values     = [file("chart-values/clusterissuer-binbash.yaml")]
+  depends_on = [helm_release.cert_manager]
 }
 
 #------------------------------------------------------------------------------
@@ -35,5 +35,5 @@ resource "helm_release" "vault" {
   repository = "https://helm.releases.hashicorp.com"
   chart      = "vault"
   version    = "0.10.0"
-  values     = [ file("chart-values/vault.yaml") ]
+  values     = [file("chart-values/vault.yaml")]
 }
