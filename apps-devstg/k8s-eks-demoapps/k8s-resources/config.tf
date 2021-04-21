@@ -25,7 +25,7 @@ provider "helm" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.14.4"
+  required_version = ">= 0.13.6"
 
   required_providers {
     aws        = "~> 3.28"
