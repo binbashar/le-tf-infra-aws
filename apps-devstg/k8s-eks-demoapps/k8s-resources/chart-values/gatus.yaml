@@ -1,0 +1,32 @@
+#------------------------------------------------------------------------------
+# Configure endpoint to monitor
+#------------------------------------------------------------------------------
+config:
+  services:
+    - name: Binbash
+      url: https://binbash.com.ar
+      interval: 30s
+      conditions:
+        - '[STATUS] == 200'
+      # alerts:
+      #   - type: slack
+      #     enabled: true
+      #     description: "healthcheck failed 3 times in a row"
+      #     send-on-resolved: true
+    - name: Leverage
+      url: https://leverage.binbash.com.ar
+      interval: 30s
+      conditions:
+        - '[STATUS] == 200'
+      # alerts:
+      #   - type: slack
+      #     enabled: true
+      #     description: "healthcheck failed 3 times in a row"
+      #     send-on-resolved: true
+
+#------------------------------------------------------------------------------
+# Alerting settings
+#------------------------------------------------------------------------------
+# alerting:
+#   slack:
+#     webhook-url: "https://hooks.slack.com/services/**********/**********/**********"
