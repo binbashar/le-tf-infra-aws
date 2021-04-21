@@ -45,9 +45,7 @@ ingress:
     # The backend is expecting to handle HTTPS
     #nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
   hosts:
-    - host: gatus.devstg.aws.binbash.com.ar
-  path:
-    - /
+    - gatus.devstg.aws.binbash.com.ar
   tls:
     - secretName: gatus-server-tls
       hosts:
