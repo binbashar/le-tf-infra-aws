@@ -174,3 +174,8 @@ variable "enable_gatus" {
   type    = bool
   default = false
 }
+
+variable "enable_metallb" {
+  type    = bool
+  default = true
+}
