@@ -2,3 +2,22 @@
 dashboard:
   enabled: true
   replicaCount: 1
+
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/tls-acme: "true"
+      # Associate this ingress with the following ingress controller
+      kubernetes.io/ingress.class: ingress-nginx-private
+      # Use the following cert-manager clusterissuer
+      cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
+      # The backend is expecting to handle HTTPS
+      #nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    hosts:
+      - host: goldilocks.devstg.aws.binbash.com.ar
+        path:
+          - /
+    tls:
+      - secretName: goldilocks-server-tls
+        hosts:
+          - goldilocks.devstg.aws.binbash.com.ar

@@ -36,4 +36,9 @@ resource "helm_release" "gatus" {
   chart      = "gatus"
   version    = "1.1.1"
   values     = [file("chart-values/gatus.yaml")]
+  depends_on = [
+    helm_release.ingress_nginx_private,
+    helm_release.cert_manager,
+    helm_release.external_dns_private
+  ]
 }
