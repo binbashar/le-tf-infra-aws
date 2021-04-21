@@ -1,38 +1,19 @@
 #
 # Providers
 #
-provider "aws" {
-  region                  = var.region
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
-}
-
-locals {
-  kubernetes = {
-    # kubectl config view --raw --minify --flatten --output='jsonpath={.clusters[].cluster.server}'
-    host                   = "https://192.168.0.85:6443"
-    # kubectl config view --raw --minify --flatten --output='jsonpath={.clusters[].cluster.certificate-authority-data}'
-    cluster_ca_certificate = base64decode("LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM1ekNDQWMrZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJeE1EUXlNREV6TkRVd00xb1hEVE14TURReE9ERXpORFV3TTFvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTmluCjZSSFg5WnVCalgwWXpFb1VJM3Nwc3BXbFQ5cHBrbVljWFJkLzB2Z0Vja3didUlpSXNTQ2xNSS9waVpFdm9ZbnUKWkZhcithQTFESzcyL3E0eDF4MHQzeTVrOWl3c2k5VFdNZnFuTXdsMFhzd2E5M1d6ZHZ3V2pVbmRNbUIzaVo0TwpxaUREUnpmZ2hxeCsvOEViK1cwT3J1UVh6SGowQzUvTS9HcmxCK0JwcGtPWVE0cjlSMUZSSHFTVlNUK0pXeDVVCklydVZ6UzNVd3BFY1VnSHhWRDNHeWZsK0RxUjN4d3o3VXZRYmF4T2lrTjNIaitvd1JYTU0ybmhnN2xhL1BZZWgKaVl0UFFlZTB3amJoV2QvdWxCSjIzOFRXc3l6cWtDeTEyMGpDVzhyZlZJTi9lQnkwQzdaazcxd2kzdzBKMHo2RgpnOGFsZjk5Q3F4ZjBrMGk1Y0Y4Q0F3RUFBYU5DTUVBd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZPdUdJbHRmaHdxTi9nWGRHR3c3SFFLMnB4SnlNQTBHQ1NxR1NJYjMKRFFFQkN3VUFBNElCQVFCSENuaXdVY3QzK1Rxd2RhOVgvdDltY1FKOWZ1QmpIcFR4eUthaDlEd2xIcXp3bDJrOQpGbGhveFFmOFdZQ2JFc05nUGFhdlNkKytYNWFlQ0cvRU4ybWVwL21nYllYeENBSU50ZkpRbkxkR28wUjE5SE91ClV2bHFmbTQ5ME1rQnVKcHRITXpTY2NJQzFlNWpuNjQ5Vnl4UWFIQVRRbURtZnB2bGlaLzcwVENvNmwyT3UzR08KcjA3MnA1UTNnNkU2S1ZZZmFxTVYzWGJrZ1Z0KzJ2VDFsRmdkOFAvSlBxN1p3MFM2OEpsZVZmSEdvY05OY3poQwp5M1BPWnFodlVHQ0g4QnJ3TW1JLzU0TngvSHBzZGZvOU0rY2s5MDFTbWs4K2tybCtaT28rQ0dlUWRsajhHbTFLCk5oZmFPTjZyMVVFaEZSLzhmek1vRG1VT2lPaWtrWmVXNmlZNQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==")
-    # kubectl config view --raw --minify --flatten --output='jsonpath={.users[].user.client-key-data}'
-    client_key             = base64decode("LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBd09XUFQ1SXhrbzRKQzdoR1VqRzBhQnZpZEJTK0pONGZTTkdOOWg5NjB1RU1VUURHCkc0L2tUMHNpSTBFMXkxRWVHN0Uzd3k0b0dFTFpDZW8zbDFqcjAxMG43Z2tJeWZGS01qZjJ5bWxTdC9COGhtRjEKeE1aZVhVdlNlM0dIZFhwbUpFUU1qZWRxOTFKVUdHVGRzOXB2K1RoRGxvSmZ5T1ZXbjFyMFpPeEJudVM2QytweApzT2xRNThpMy9xbUx6QnlRK0hQcXBqTGRRQ3BMQS9NMHFFSHErK2FvR285QVhBWTlXWm4xWEZ3S3Jka1RGUDlNCjJ6MW1tTmJSUjNFS2cxcWJEVnpiZWJhNklHM2tjWThrNjdjVEpDeUg5SVNyZXNKU3JmR3pJNWFCUG15dnpBWHEKVzhCUFJadExiRzhXNEJ0cG1NRHNLVktqMVVmU2dmNXhoVmRVUXdJREFRQUJBb0lCQURsQTZiUjRjL1pINmk5cwpWcEwyNWRFdzFab1d2Z2s3VkpYTWZSSmNiWnhCNStIekZOb0JiNGFKaW14a1lvOGlXSWxucEdGdVJjQk50eFhXClN3SEZCdG9KZ0Z5S21lMDJqUXN5eVRGeTZYWm5EczdrQm95TlJGejBzRmlyYmNWVXV4UndqamxnUXNOOTBEQWQKWUNDTjZVWlRpTndYZms2bW8zdFJCOUVjdnExbU9TR2hsNFZTWGpHV2lMT3djVVY1S0puZXBlbWY4MzhBbk8ycQpWSVhlMkNZdHZoOUcyaDJLdGI4ODVLcXhnWVlKV283RDBqZFM4ZHJ4dS80RUpPWjhNbzhDZkdwN29NdWIvck0zCjZOei9kSEZ5STNReW5WRFprbmlzeFJoVUp6S0dJb1F5R0JyQm5EQkZuZ1RkenZGY3pJL0l3OEN0Z3hkcnJxdzcKK2JZeU1tRUNnWUVBd2hEMWpyd1NIYmVMdTVjaGg4YmlMeGl6blhUZmRWTnNhaVAxYXNGZ0RqV1BjbDJ0djFRVAoyNW9vWlZTNWRyK1JDU1FyL1dZLzcyV3ZTeitxL1dvaDF3UGFmQTI2a0xqSHp1MG8xWCtDUkZCTWpNc1RodUw0CjFRaVJqY21seXlCUndONENKcVkrQ3duakFTb0FKUEdGcGdIU3dUaFpBbWswb3FWSE84MWFXZThDZ1lFQS9uVU4KRmo2UldaQzQ0RU9kTjh1YTlDNFh5OHRId2RvTlhvNFc3RVpVem94QVRuZGhUU3hQMU5ualV2aFhGZmFxazl5OAp4RHFscElBRWg4VldUancyNk5nNDVEblE4NnJCNXNmMVNUTHRXbXhtREtrN0FiS3p0SzR0UlNJRWd0eCt5RUp4CjhPcnJGMmpxZXhRM013SkcwK2FxaDBIUk5FZzkyamJOK25lcER1MENnWUJZbWVlU21CanBTbUJZY0FLVis5NU8KUkVmVTdvUUxDK0JtZ1M1TjVDV1h0eXBidTV0VXkrMFpDTVBDcDdEWkgxTDNTblZ2QnB6UURxdStmajN4M3QrKwpTL3NYUWlsWVk1U055OGNsMmtZK0xDOFc1S3h3bS9XaFJYMDJyOGFxKzRGM3ZhUmJ3dkIybDdmMVV4aW54VUVRCmJxcXJIcSs4b3cydDZDbWlpdm5pTHdLQmdRQ1loYXJoZ1lGNFVVSXYwdmVEQVQwUlRpdWZVV3JpcklSRkFDQ0gKWWFUbDViV0tFdzYweG5IWG9QOGN0WlRscW1RV20wSmUwTlNHNU9GU1RKdnQ2elB5bitDQ0ZKSEY3TDJyU29JaApiVEJPZWhrMVQ1NzU1cGJISDN3dEt6WFBCc0hMNGVBUVM0KzlDWHM3YVNPcEpKMDEyTmF3bW1mKzBhcVppUzR3CkN0ZkFCUUtCZ0ZiRjdBVTRaMjY1M25TNzh6ZFdyTm1hU1loekVMb1g0UDJGNDJuV1cvZ0QyTjJONE1CUWtia2gKWVFoa1dXMWtYZlJySnBGQ2pYNlFhMzR3UFZPUnpGUzE2V1ZkQXRPNWw2Q1RMYlRIU1JUblc0aHd4WmlLK01saAp0L1AzQ0xWcHlhenFuWnltSVJPbUpVSWV6ZTBXUGVvVzlONVJQWkZnTndSMHlnRS9UYWM1Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==")
-    # kubectl config view --raw --minify --flatten --output='jsonpath={.users[].user.client-certificate-data}'
-    client_certificate     = base64decode("LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURFekNDQWZ1Z0F3SUJBZ0lJVDJqbzg1anhlT0F3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TVRBME1qQXhNelExTUROYUZ3MHlNakEwTWpBeE16UTFNRFphTURReApGekFWQmdOVkJBb1REbk41YzNSbGJUcHRZWE4wWlhKek1Sa3dGd1lEVlFRREV4QnJkV0psY201bGRHVnpMV0ZrCmJXbHVNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXdPV1BUNUl4a280SkM3aEcKVWpHMGFCdmlkQlMrSk40ZlNOR045aDk2MHVFTVVRREdHNC9rVDBzaUkwRTF5MUVlRzdFM3d5NG9HRUxaQ2VvMwpsMWpyMDEwbjdna0l5ZkZLTWpmMnltbFN0L0I4aG1GMXhNWmVYVXZTZTNHSGRYcG1KRVFNamVkcTkxSlVHR1RkCnM5cHYrVGhEbG9KZnlPVlduMXIwWk94Qm51UzZDK3B4c09sUTU4aTMvcW1MekJ5UStIUHFwakxkUUNwTEEvTTAKcUVIcSsrYW9HbzlBWEFZOVdabjFYRndLcmRrVEZQOU0yejFtbU5iUlIzRUtnMXFiRFZ6YmViYTZJRzNrY1k4awo2N2NUSkN5SDlJU3Jlc0pTcmZHekk1YUJQbXl2ekFYcVc4QlBSWnRMYkc4VzRCdHBtTURzS1ZLajFVZlNnZjV4CmhWZFVRd0lEQVFBQm8wZ3dSakFPQmdOVkhROEJBZjhFQkFNQ0JhQXdFd1lEVlIwbEJBd3dDZ1lJS3dZQkJRVUgKQXdJd0h3WURWUjBqQkJnd0ZvQVU2NFlpVzErSENvMytCZDBZYkRzZEFyYW5Fbkl3RFFZSktvWklodmNOQVFFTApCUUFEZ2dFQkFGeURkUHBIL1RwVE5FamwxQXJua3hXOWY1Sm9XejNDVncvc3JKRk81RjVxUmM0ZytHL1RFcXpWCm9tZlp1akdwRElkd1A4RForYlViN0p3R3ZXRzIveXBwNlBFYlVrSjA5citqOGsvaFcvcmxzTnBGTkVLWHNRb1kKb0lqSGM3TkZ0czlJWGg0VU5qUUZyVWlDVktUM2Q3bS9BWDZ2ajNSb1haUmg5K1RFYkswQjlnUDB0aW5tWW1SWApVanZLQWtJQUNXTWhsMG1nNVF4MSs3KzA3cmR6cDU0ekIrKzB2MCtOaWhVdzVIa0JIdEw0b3V5MEtXU1dieGtrCmIwa3FhaGkrVHdnNGZHSkVKWDNKeWtOZjdIMWJ2THRFWFNFT3NSRHZraUJ1R2hNT2ZXdEJZWlFvcXFkenFsMGwKa3E0ODVuVU4xdmdsTUtSMEF2dERodXFQYUNzMGdOYz0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=")
-  }
-}
-
 provider "kubernetes" {
-  host                   = local.kubernetes.host
-  cluster_ca_certificate = local.kubernetes.cluster_ca_certificate
-  client_key             = local.kubernetes.client_key
-  client_certificate     = local.kubernetes.client_certificate
+  host                   = var.kubernetes_host
+  cluster_ca_certificate = base64decode(var.kubernetes_cluster_ca_certificate)
+  client_key             = base64decode(var.kubernetes_client_key)
+  client_certificate     = base64decode(var.kubernetes_client_certificate)
 }
 
 provider "helm" {
   kubernetes {
-    host                   = local.kubernetes.host
-    cluster_ca_certificate = local.kubernetes.cluster_ca_certificate
-    client_key             = local.kubernetes.client_key
-    client_certificate     = local.kubernetes.client_certificate
+    host                   = var.kubernetes_host
+    cluster_ca_certificate = base64decode(var.kubernetes_cluster_ca_certificate)
+    client_key             = base64decode(var.kubernetes_client_key)
+    client_certificate     = base64decode(var.kubernetes_client_certificate)
   }
 }
 
@@ -43,12 +24,7 @@ terraform {
   required_version = ">= 0.14.4"
 
   required_providers {
-    aws        = "~> 3.28"
     helm       = "~> 2.1.0"
     kubernetes = "~> 2.0.2"
-  }
-
-  backend "s3" {
-    key = "apps-devstg/k8s-kind/k8s-resources/terraform.tfstate"
   }
 }
