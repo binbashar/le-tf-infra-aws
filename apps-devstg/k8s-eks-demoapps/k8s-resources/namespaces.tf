@@ -57,3 +57,14 @@ resource "kubernetes_namespace" "argo_cd" {
     name = "argo-cd"
   }
 }
+
+resource "kubernetes_namespace" "gatus" {
+  metadata {
+    labels = {
+      environment                        = var.environment
+      "goldilocks.fairwinds.com/enabled" = "true"
+    }
+
+    name = "gatus"
+  }
+}

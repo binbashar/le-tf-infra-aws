@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# DEMOAPPS: EmojiVoto
+# Linkerd EmojiVoto Demo Application
 #------------------------------------------------------------------------------
 # resource "helm_release" "emojivoto" {
 #   name       = "emojivoto"
@@ -8,12 +8,11 @@
 #   chart      = "argocd-application"
 #   version    = "0.2.0"
 #   values     = [ file("chart-values/demoapps-emojivoto.yaml") ]
-
 #   depends_on = [ helm_release.argo_cd ]
 # }
 
 #------------------------------------------------------------------------------
-# DEMOAPPS: Google Microservices Demo
+# Google Microservices Demo
 #------------------------------------------------------------------------------
 # resource "helm_release" "gmd" {
 #   name       = "gmd"
@@ -22,12 +21,11 @@
 #   chart      = "argocd-application"
 #   version    = "0.2.0"
 #   values     = [ file("chart-values/demoapps-gmd.yaml") ]
-
 #   depends_on = [ helm_release.argo_cd ]
 # }
 
 #------------------------------------------------------------------------------
-# DEMOAPPS: Weave Sock-Shop
+# Weave Sock-Shop Microservices Demo
 #------------------------------------------------------------------------------
 # resource "helm_release" "sockshop" {
 #   name       = "sockshop"
@@ -36,6 +34,5 @@
 #   chart      = "argocd-application"
 #   version    = "0.2.0"
 #   values     = [ file("chart-values/demoapps-sockshop.yaml") ]
-
 #   depends_on = [ helm_release.argo_cd ]
 # }
