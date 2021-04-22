@@ -7,6 +7,14 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.25"></a>
+## [v1.2.25] - 2021-04-22
+
+- Fix trailing whitespaces in chart yaml files
+- Fix trailing whitespaces
+- Add Metallb for for providing local LB to Kind
+
+
 <a name="v1.2.24"></a>
 ## [v1.2.24] - 2021-04-22
 
@@ -1402,7 +1410,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.24...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.25...HEAD
+[v1.2.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.24...v1.2.25
 [v1.2.24]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.23...v1.2.24
 [v1.2.23]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.22...v1.2.23
 [v1.2.22]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.21...v1.2.22
