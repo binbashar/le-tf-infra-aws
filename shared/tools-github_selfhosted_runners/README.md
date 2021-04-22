@@ -34,6 +34,10 @@ That small layer purpose simply provides a way to download the zip files that co
 After you created the AWS resources, you should have a Webhook endpoint in the output. You have to use it to activate the webhook in the Github App. Detailed instructions here:
 https://github.com/philips-labs/terraform-aws-github-runner#setup-github-app-part-2
 
+### Last minute checks
+- Please remember that the Github App needs to be installed in your organization.
+- Also, do not forget to create an offline runner. Refer to this to review why: https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners
+- Remember that the self-hosted runners need internet connectivity to provision software and also to talk back to Github to ship execution logs. We run our self-hosted runners in private subnets under Shared account, so it is mandatory to enable the NAT Gateway in said account for those runners to be able to pick up workflows which have matching labels.
 
 ## Troubleshooting
 * Refer to this: https://github.com/philips-labs/terraform-aws-github-runner#debugging

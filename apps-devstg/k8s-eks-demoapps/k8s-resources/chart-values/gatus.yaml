@@ -30,3 +30,23 @@ config:
 # alerting:
 #   slack:
 #     webhook-url: "https://hooks.slack.com/services/**********/**********/**********"
+
+#------------------------------------------------------------------------------
+# Ingress settings
+#------------------------------------------------------------------------------
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    # Associate this ingress with the following ingress controller
+    kubernetes.io/ingress.class: ingress-nginx-private
+    # Use the following cert-manager clusterissuer
+    cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
+    # The backend is expecting to handle HTTPS
+    #nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+  hosts:
+    - gatus.devstg.aws.binbash.com.ar
+  tls:
+    - secretName: gatus-server-tls
+      hosts:
+        - gatus.devstg.aws.binbash.com.ar
