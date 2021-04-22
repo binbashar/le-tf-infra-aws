@@ -68,3 +68,13 @@ resource "kubernetes_namespace" "gatus" {
     name = "gatus"
   }
 }
+
+resource "kubernetes_namespace" "metallb" {
+  metadata {
+    labels = {
+      environment = var.environment
+    }
+
+    name = "metallb-system"
+  }
+}
