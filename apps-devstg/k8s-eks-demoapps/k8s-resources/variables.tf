@@ -148,10 +148,10 @@ variable "enable_kubernetes_dashboard" {
 
 variable "enable_scaling" {
   type    = bool
-  default = true
+  default = false
 }
 
 variable "enable_gatus" {
   type    = bool
-  default = true
+  default = false
 }
