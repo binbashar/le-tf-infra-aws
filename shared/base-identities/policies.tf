@@ -42,6 +42,7 @@ resource "aws_iam_policy" "devops_access" {
                 "ecs:*",
                 "eks:*",
                 "elasticloadbalancing:*",
+                "es:*",
                 "events:*",
                 "guardduty:*",
                 "health:*",

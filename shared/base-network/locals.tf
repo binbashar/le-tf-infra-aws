@@ -152,6 +152,30 @@ locals {
         protocol    = "all"
         cidr_block  = var.vpc_vault_hvn_cird
       },
+      {
+        rule_number = 210 # apps-devstg-eks-demoapps private subnet A
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = data.terraform_remote_state.vpc-apps-dev-eks-demoapps.outputs.private_subnets_cidr[0]
+      },
+      {
+        rule_number = 220 # apps-devstg-eks-demoapps private subnet B
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = data.terraform_remote_state.vpc-apps-dev-eks-demoapps.outputs.private_subnets_cidr[1]
+      },
+      {
+        rule_number = 230 # apps-devstg-eks-demoapps private subnet C
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = data.terraform_remote_state.vpc-apps-dev-eks-demoapps.outputs.private_subnets_cidr[2]
+      },
     ]
   }
 }
