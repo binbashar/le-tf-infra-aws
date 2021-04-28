@@ -28,14 +28,14 @@ EOF
 
 resource "aws_iam_policy" "elasticsearch_kibana" {
   name        = "elasticsearch-kibana-policy"
-  description = "Access policy for Prometheus & Grafana"
+  description = "Access policy for ElasticSearch & Kibana"
 
   policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "PrometheusGrafanaCertbotRoute53List",
+      "Sid": "ElasticSearchKibanaCertbotRoute53List",
       "Action": [
         "route53:ListHostedZones",
         "route53:GetChange"
@@ -44,7 +44,7 @@ resource "aws_iam_policy" "elasticsearch_kibana" {
       "Resource": "*"
     },
     {
-      "Sid": "PrometheusGrafanaCertbotRoute53Change",
+      "Sid": "ElasticSearchKibanaCertbotRoute53Change",
       "Action": [
         "route53:ChangeResourceRecordSets"
       ],
