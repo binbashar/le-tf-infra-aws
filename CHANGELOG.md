@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.26"></a>
+## [v1.2.26] - 2021-04-28
+
+- Update self-hosted ElasticSearch/Kibana layer... ([#215](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/215))
+
+
 <a name="v1.2.25"></a>
 ## [v1.2.25] - 2021-04-22
 
@@ -1410,7 +1416,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.25...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.26...HEAD
+[v1.2.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.25...v1.2.26
 [v1.2.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.24...v1.2.25
 [v1.2.24]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.23...v1.2.24
 [v1.2.23]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.22...v1.2.23
