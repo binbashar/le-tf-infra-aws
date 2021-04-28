@@ -9,10 +9,6 @@ variable "region" {
   description = "AWS Region"
 }
 
-variable "region_secondary" {
-  description = "AWS Scondary Region for HA"
-}
-
 variable "profile" {
   type        = string
   description = "AWS Profile (required by the backend but also used for other resources)"
@@ -33,12 +29,9 @@ variable "encrypt" {
   description = "Enable AWS DynamoDB with server side encryption"
 }
 
-#
-# config/base.config
-#
-#=============================#
-# Project Variables           #
-#=============================#
+#==========================================
+# Project Variables (config/common.config)
+#==========================================
 variable "project" {
   type        = string
   description = "Project Name"
@@ -54,12 +47,14 @@ variable "environment" {
   description = "Environment Name"
 }
 
-#
-# config/extra.config
-#
-#=============================#
-# Accounts & Extra Vars       #
-#=============================#
+#==============================================
+# Accounts & Extra Vars (config/common.config)
+#==============================================
+variable "region_secondary" {
+  type        = string
+  description = "AWS Scondary Region for HA"
+}
+
 variable "root_account_id" {
   type        = string
   description = "Account: Root"
@@ -93,65 +88,17 @@ variable "vault_address" {
   type = string
 }
 
-#=============================#
-# Layer Flags                 #
-#=============================#
-variable "enable_private_ingress" {
-  type    = bool
-  default = false
+#==============================================================================
+# AMAZON ELASTICSEARCH SERVICE
+#==============================================================================
+variable "prefix" {
+  type        = string
+  description = "Prefix"
+  default     = "infra"
 }
 
-variable "enable_public_ingress" {
-  type    = bool
-  default = false
-}
-
-variable "enable_private_dns_sync" {
-  type    = bool
-  default = false
-}
-
-variable "enable_public_dns_sync" {
-  type    = bool
-  default = false
-}
-
-variable "enable_prometheus_dependencies" {
-  type    = bool
-  default = false
-}
-
-variable "enable_grafana_dependencies" {
-  type    = bool
-  default = false
-}
-
-variable "enable_cert_manager" {
-  type    = bool
-  default = false
-}
-
-variable "enable_vault" {
-  type    = bool
-  default = false
-}
-
-variable "enable_cicd" {
-  type    = bool
-  default = false
-}
-
-variable "enable_kubernetes_dashboard" {
-  type    = bool
-  default = false
-}
-
-variable "enable_scaling" {
-  type    = bool
-  default = false
-}
-
-variable "enable_gatus" {
-  type    = bool
-  default = false
+variable "name" {
+  type        = string
+  description = "Name"
+  default     = "managed-eskibana"
 }
