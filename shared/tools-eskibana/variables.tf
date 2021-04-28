@@ -86,6 +86,14 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
+variable "vault_token" {
+  type = string
+}
+
+variable "vault_address" {
+  type = string
+}
+
 #=============================#
 # EC2 BASIC LAYOUT MODULE     #
 #=============================#
@@ -109,7 +117,7 @@ variable "name" {
 #
 variable "aws_ami_os_id" {
   description = "AWS AMI Operating System Identificator"
-  default     = "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"
+  default     = "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"
 }
 
 variable "aws_ami_os_owner" {
@@ -126,7 +134,7 @@ variable "instance_type" {
 variable "ebs_optimized" {
   type        = string
   description = "Enable EBS Optimized"
-  default     = "false"
+  default     = "true"
 }
 
 variable "associate_public_ip_address" {

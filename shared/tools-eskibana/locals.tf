@@ -5,12 +5,4 @@ locals {
     Environment       = var.environment
     ScheduleStopDaily = true
   }
-
-  user_data = <<EOF
-#!/bin/bash
-echo "Hello Terraform! -> Installing pre-req packages here!"
-apt-get update
-apt-get install -y vim
-echo "DONE"
-EOF
 }
