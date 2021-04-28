@@ -16,8 +16,8 @@ module "managed_elasticsearch_kibana" {
 
   # VPC settings
   vpc_options = {
-    subnet_ids = tolist([ data.terraform_remote_state.vpc.outputs.private_subnets[0] ])
-    security_group_ids = tolist([ aws_security_group.eskibana.id ])
+    subnet_ids         = tolist([data.terraform_remote_state.vpc.outputs.private_subnets[0]])
+    security_group_ids = tolist([aws_security_group.eskibana.id])
   }
 
   # EBS volume settings
@@ -34,8 +34,8 @@ module "managed_elasticsearch_kibana" {
 
   # Enable logging to CloudWatch
   log_publishing_options = {
-    enabled                  = false
-    log_type                 = "INDEX_SLOW_LOGS"
+    enabled  = false
+    log_type = "INDEX_SLOW_LOGS"
   }
 
   # Use a custom domain
@@ -47,7 +47,7 @@ module "managed_elasticsearch_kibana" {
   }
 
   # Set up node-to-node encryption
-  node_to_node_encryption_enabled                = false
+  node_to_node_encryption_enabled = false
 
   # Configure automated snapshot start time
   snapshot_options_automated_snapshot_start_hour = "23"
