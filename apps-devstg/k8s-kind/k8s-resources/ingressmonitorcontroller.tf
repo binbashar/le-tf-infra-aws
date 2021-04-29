@@ -3,9 +3,9 @@
 #------------------------------------------------------------------------------
 resource "helm_release" "ingressmonitorcontroller" {
   count      = var.enable_ingressmonitorcontroller ? 1 : 0
-  name       = "ingressmonitorcontroller"
+  name       = "ingress-monitor-controller"
   repository = "https://binbashar.github.io/helm-charts/"
-  chart      = "ingressmonitorcontroller"
+  chart      = "ingress-monitor-controller"
   version    = "v2.0.14"
-  values     = [file("chart-values/ingressmonitorcontroller.yaml")]
+  values     = [file("chart-values/ingress-monitor-controller.yaml")]
 }
