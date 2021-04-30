@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.29"></a>
+## [v1.2.29] - 2021-04-30
+
+- Add FluentD to EKS DemoApps stack and other small changes to ElasticS… ([#219](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/219))
+
+
 <a name="v1.2.28"></a>
 ## [v1.2.28] - 2021-04-30
 
@@ -1433,7 +1439,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.28...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.29...HEAD
+[v1.2.29]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.28...v1.2.29
 [v1.2.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.27...v1.2.28
 [v1.2.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.26...v1.2.27
 [v1.2.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.25...v1.2.26
