@@ -8,7 +8,7 @@ elasticsearch:
     enabled: false
     user: null
     password: null
-  
+
   # Index naming
   indexName: "fluentd-apps-devstg-demoapps"
 
