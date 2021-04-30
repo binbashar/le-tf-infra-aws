@@ -1,0 +1,41 @@
+# Generated from /kubernetes/templates/chart/values.yaml.tmpl
+
+kubernetes:
+  host: https://kubernetes.default
+
+ingressMonitorController:
+  watchNamespace: ""
+  configSecretName: imc-config
+  useFullName: false
+  logLevel: info
+  logFormat: text
+  matchLabels:
+    group: com.stakater.platform
+    provider: stakater
+  deployment:
+    labels:
+      version: v2.0.14
+    annotations:
+      configmap.reloader.stakater.com/reload: ingressmonitorcontroller
+  config:
+    labels:
+      version: v2.0.14
+  rbac:
+    create: true
+  # Service account config for the agent pods
+  serviceAccount:
+    # Specifies whether a ServiceAccount should be created
+    create: true
+  image:
+    name: stakater/ingressmonitorcontroller
+    tag: v2.0.14
+    pullPolicy: Always
+  configFilePath: /etc/IngressMonitorController/config.yaml
+  data:
+    config.yaml: |-
+      providers:
+        - name: UptimeRobot
+          apiKey: 657a68d9ashdyasjdklkskuasd
+          apiURL: https://api.uptimerobot.com/v2/
+          alertContacts: "0544483_0_0-2628365_0_0-2633263_0_0"
+      enableMonitorDeletion: true

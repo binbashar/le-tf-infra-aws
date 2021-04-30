@@ -177,5 +177,10 @@ variable "enable_gatus" {
 
 variable "enable_metallb" {
   type    = bool
-  default = true
+  default = false
+}
+
+variable "enable_ingressmonitorcontroller" {
+  type    = bool
+  default = false
 }
