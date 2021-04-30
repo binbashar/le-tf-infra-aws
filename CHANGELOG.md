@@ -7,6 +7,16 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.28"></a>
+## [v1.2.28] - 2021-04-30
+
+- Chage ingress-monitor-controller-endpoint example
+- Add example values for ingressmonitorcontroller chart
+- Add ingressmonitorcontroller chart
+- Add Ingress Monitor Controller chart installation
+- Fix metallb enabled var
+
+
 <a name="v1.2.27"></a>
 ## [v1.2.27] - 2021-04-30
 
@@ -1423,7 +1433,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.27...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.28...HEAD
+[v1.2.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.27...v1.2.28
 [v1.2.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.26...v1.2.27
 [v1.2.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.25...v1.2.26
 [v1.2.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.24...v1.2.25
