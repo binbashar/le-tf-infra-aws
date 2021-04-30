@@ -12,7 +12,7 @@ resource "aws_security_group_rule" "ingress_shared_vpc" {
   from_port         = 443
   to_port           = 443
   protocol          = "tcp"
-  cidr_blocks       = [
+  cidr_blocks = [
     data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
     data.terraform_remote_state.apps-devstg-eks-demoapps-network.outputs.vpc_cidr_block
   ]

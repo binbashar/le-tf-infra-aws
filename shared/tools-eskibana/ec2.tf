@@ -47,9 +47,9 @@ module "ec2_elasticsearch_kibana" {
       description = "Allow SSH"
     },
     {
-      from_port   = 80,
-      to_port     = 80,
-      protocol    = "tcp",
+      from_port = 80,
+      to_port   = 80,
+      protocol  = "tcp",
       cidr_blocks = [
         data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
         data.terraform_remote_state.vpc-apps-dev-eks-demoapps.outputs.vpc_cidr_block,
