@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.27"></a>
+## [v1.2.27] - 2021-04-30
+
+- BBL-192 | updating README.md with new leverage cli approach
+- BBL-192 | shared/tools-managedeskibana referencing to the Binbash Leverage forked module by convention
+
+
 <a name="v1.2.26"></a>
 ## [v1.2.26] - 2021-04-28
 
@@ -1416,7 +1423,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.26...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.27...HEAD
+[v1.2.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.26...v1.2.27
 [v1.2.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.25...v1.2.26
 [v1.2.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.24...v1.2.25
 [v1.2.24]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.23...v1.2.24
