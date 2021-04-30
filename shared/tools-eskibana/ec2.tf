@@ -50,7 +50,10 @@ module "ec2_elasticsearch_kibana" {
       from_port   = 80,
       to_port     = 80,
       protocol    = "tcp",
-      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
+      cidr_blocks = [
+        data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
+        data.terraform_remote_state.vpc-apps-dev-eks-demoapps.outputs.vpc_cidr_block,
+      ],
       description = "Allow ElasticSearch/Kibana through Nginx"
     },
     {
@@ -59,10 +62,10 @@ module "ec2_elasticsearch_kibana" {
       protocol  = "tcp",
       cidr_blocks = [
         data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
-        data.terraform_remote_state.vpc-devstg.outputs.vpc_cidr_block,
+        data.terraform_remote_state.vpc-apps-dev-eks-demoapps.outputs.vpc_cidr_block,
       ],
       description = "Allow ElasticSearch/Kibana through Nginx"
-    }
+    },
   ]
 
   dns_records_internal_hosted_zone = [

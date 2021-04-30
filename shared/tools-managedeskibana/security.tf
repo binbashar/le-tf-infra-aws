@@ -12,37 +12,10 @@ resource "aws_security_group_rule" "ingress_shared_vpc" {
   from_port         = 443
   to_port           = 443
   protocol          = "tcp"
-  cidr_blocks       = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block]
-}
-
-resource "aws_security_group_rule" "ingress_es_shared_vpc" {
-  security_group_id = aws_security_group.eskibana.id
-  description       = "Allow inbound traffic from Shared VPC"
-  type              = "ingress"
-  from_port         = 9200
-  to_port           = 9200
-  protocol          = "tcp"
-  cidr_blocks       = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block]
-}
-
-resource "aws_security_group_rule" "ingress_eks_demoapps_vpc" {
-  security_group_id = aws_security_group.eskibana.id
-  description       = "Allow inbound traffic from EKS DemoApps VPC"
-  type              = "ingress"
-  from_port         = 443
-  to_port           = 443
-  protocol          = "tcp"
-  cidr_blocks       = [data.terraform_remote_state.apps-devstg-eks-demoapps-network.outputs.vpc_cidr_block]
-}
-
-resource "aws_security_group_rule" "ingress_es_eks_demoapps_vpc" {
-  security_group_id = aws_security_group.eskibana.id
-  description       = "Allow inbound traffic from EKS DemoApps VPC"
-  type              = "ingress"
-  from_port         = 9200
-  to_port           = 9200
-  protocol          = "tcp"
-  cidr_blocks       = [data.terraform_remote_state.apps-devstg-eks-demoapps-network.outputs.vpc_cidr_block]
+  cidr_blocks       = [
+    data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
+    data.terraform_remote_state.apps-devstg-eks-demoapps-network.outputs.vpc_cidr_block
+  ]
 }
 
 resource "aws_security_group_rule" "egress_all" {

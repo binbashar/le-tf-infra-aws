@@ -1,0 +1,52 @@
+# If you use an AWS ES that requires signed requests, you can enable and configure this
+awsSigningSidecar:
+  enabled: false
+
+elasticsearch:
+  # Auth connection settings
+  auth:
+    enabled: false
+    user: null
+    password: null
+  
+  # Index naming
+  indexName: "fluentd-apps-devstg-demoapps"
+
+  # ElasticSearch connection settings
+  hosts: ["elasticsearch.aws.binbash.com.ar:443"]
+  scheme: "https"
+  sslVerify: true
+  sslVersion: "TLSv1_2"
+
+  # Useful for debugging
+  logLevel: "info"
+
+  # Define an index template
+  template:
+    enabled: false
+    overwrite: false
+    useLegacy: true
+    name: fluentd-template
+    file: fluentd-template.json
+    content: |-
+      {
+        "index_patterns": [
+            "fluentd-*"
+        ],
+        "settings": {
+            "index": {
+                "number_of_replicas": "0"
+            }
+        }
+      }
+
+# Toggle default configuration blocks
+configMaps:
+  useDefaults:
+    systemConf: true
+    containersInputConf: true
+    containersKeepTimeKey: false
+    systemInputConf: true
+    forwardInputConf: true
+    monitoringConf: true
+    outputConf: true

@@ -67,3 +67,14 @@ data "terraform_remote_state" "vpc-devstg" {
     key     = "apps-devstg/network/terraform.tfstate"
   }
 }
+
+data "terraform_remote_state" "vpc-apps-dev-eks-demoapps" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-apps-devstg-devops"
+    bucket  = "${var.project}-apps-devstg-terraform-backend"
+    key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
+  }
+}

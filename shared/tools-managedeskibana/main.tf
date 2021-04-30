@@ -1,5 +1,5 @@
 module "managed_elasticsearch_kibana" {
-  source = "github.com/lgallard/terraform-aws-elasticsearch?ref=0.9.1"
+  source = "github.com/binbashar/terraform-aws-elasticsearch?ref=0.9.1"
 
   # Domain (cluster) name and ElasticSearch version
   domain_name           = local.domain_name
@@ -9,7 +9,7 @@ module "managed_elasticsearch_kibana" {
   cluster_config = {
     dedicated_master_enabled = false
     instance_count           = "1"
-    instance_type            = "t3.small.elasticsearch"
+    instance_type            = "t3.medium.elasticsearch"
     zone_awareness_enabled   = false
     availability_zone_count  = "1"
   }
