@@ -155,3 +155,8 @@ variable "enable_gatus" {
   type    = bool
   default = false
 }
+
+variable "enable_logging" {
+  type    = bool
+  default = false
+}

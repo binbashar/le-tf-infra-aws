@@ -128,7 +128,7 @@ variable "aws_ami_os_owner" {
 variable "instance_type" {
   type        = string
   description = "EC2 Instance Type"
-  default     = "r5.large"
+  default     = "t3.large"
 }
 
 variable "ebs_optimized" {

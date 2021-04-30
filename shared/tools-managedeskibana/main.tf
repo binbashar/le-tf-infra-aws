@@ -9,7 +9,7 @@ module "managed_elasticsearch_kibana" {
   cluster_config = {
     dedicated_master_enabled = false
     instance_count           = "1"
-    instance_type            = "t3.small.elasticsearch"
+    instance_type            = "t3.medium.elasticsearch"
     zone_awareness_enabled   = false
     availability_zone_count  = "1"
   }
