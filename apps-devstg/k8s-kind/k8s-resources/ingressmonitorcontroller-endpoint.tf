@@ -17,7 +17,7 @@ resource "helm_release" "ingressmonitorcontroller-endpoint" {
 resource "helm_release" "kubernetes_dashboard_imc_endpoint" {
   count      = var.enable_ingressmonitorcontroller ? 1 : 0
   name       = "kubernetes-dashboard"
-  repository = "http://192.168.0.37:8879/charts"
+  repository = "https://binbashar.github.io/helm-charts/"
   chart      = "ingress-monitor-controller-endpoint"
   version    = "0.1.1"
   values = [
