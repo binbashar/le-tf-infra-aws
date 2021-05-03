@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.2.30"></a>
+## [v1.2.30] - 2021-05-03
+
+- Fix chart repo url
+- Add IMC ingress endpoint for Kubernetes Dashboard
+
+
 <a name="v1.2.29"></a>
 ## [v1.2.29] - 2021-04-30
 
@@ -1439,7 +1446,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.29...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.30...HEAD
+[v1.2.30]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.29...v1.2.30
 [v1.2.29]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.28...v1.2.29
 [v1.2.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.27...v1.2.28
 [v1.2.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.26...v1.2.27
