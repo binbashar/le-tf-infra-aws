@@ -5,7 +5,7 @@ awsSigningSidecar:
 elasticsearch:
   # Auth connection settings
   auth:
-    enabled: false
+    enabled: true
     user: elastic
     password: changeme
 
@@ -16,8 +16,8 @@ elasticsearch:
     prefix: "fluentd-apps-devstg-demoapps"
 
   # ElasticSearch connection settings
-  hosts: ["elasticsearch.aws.binbash.com.ar:443"]
-  scheme: "https"
+  hosts: ["192.168.0.85:9200"]
+  scheme: "http"
   sslVerify: true
   sslVersion: "TLSv1_2"
 
