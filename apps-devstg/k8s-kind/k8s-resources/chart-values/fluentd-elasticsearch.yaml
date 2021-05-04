@@ -42,7 +42,7 @@ elasticsearch:
             }
         }
       }
-  
+
   # Configure Index Lifecycle Management policies
   ilm:
     enabled: true
