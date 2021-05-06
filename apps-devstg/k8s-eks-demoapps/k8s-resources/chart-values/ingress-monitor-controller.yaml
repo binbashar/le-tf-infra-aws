@@ -35,7 +35,7 @@ ingressMonitorController:
     config.yaml: |-
       providers:
         - name: UptimeRobot
-          apiKey: 657a68d9ashdyasjdklkskuasd
+          apiKey: u1282182-d5bd77c22030c6df73d031aa
           apiURL: https://api.uptimerobot.com/v2/
-          alertContacts: "0544483_0_0-2628365_0_0-2633263_0_0"
+          alertContacts: "01282182_0_0"
       enableMonitorDeletion: true
