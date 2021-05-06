@@ -124,3 +124,39 @@ variable "vpc_vault_hvn_cird" {
   type        = string
   default     = "172.25.16.0/20"
 }
+
+variable "vpc_enable_nat_gateway" {
+  description = "Enable NAT Gatewway"
+  type        = bool
+  default     = false
+}
+
+variable "vpc_single_nat_gateway" {
+  description = "Single NAT Gatewway"
+  type        = bool
+  default     = true
+}
+
+variable "vpc_enable_dns_hostnames" {
+  description = "Enable DNS HOSTNAME"
+  type        = bool
+  default     = true
+}
+
+variable "vpc_enable_vpn_gateway" {
+  description = "Enable VPN Gateway"
+  type        = bool
+  default     = false
+}
+
+variable "vpc_enable_s3_endpoint" {
+  description = "Enable S3 endpoint"
+  type        = bool
+  default     = true
+}
+
+variable "vpc_enable_dynamodb_endpoint" {
+  description = "Enable DynamoDB endpoint"
+  type        = bool
+  default     = true
+}
