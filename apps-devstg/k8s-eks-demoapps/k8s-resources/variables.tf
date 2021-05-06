@@ -160,3 +160,8 @@ variable "enable_logging" {
   type    = bool
   default = false
 }
+
+variable "enable_ingressmonitorcontroller" {
+  type    = bool
+  default = false
+}
