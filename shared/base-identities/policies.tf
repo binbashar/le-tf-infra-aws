@@ -25,6 +25,7 @@ resource "aws_iam_policy" "devops_access" {
                 "application-autoscaling:*",
                 "apigateway:*",
                 "aws-portal:*",
+                "aws-marketplace:*",
                 "backup:*",
                 "backup-storage:*",
                 "ce:*",
