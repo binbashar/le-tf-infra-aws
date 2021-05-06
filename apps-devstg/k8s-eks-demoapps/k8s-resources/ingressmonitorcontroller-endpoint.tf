@@ -25,7 +25,7 @@ resource "helm_release" "kubernetes_dashboard_imc_endpoint" {
       {
         name        = "kubernetes-dashboard",
         namespace   = "monitoring",
-        ingressName = "kubernetes_dashboard"
+        ingressName = "kubernetes-dashboard"
       }
     )
   ]

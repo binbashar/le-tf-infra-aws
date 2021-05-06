@@ -4,13 +4,13 @@ rbac:
 ingress:
   enabled: true
   annotations:
-    kubernetes.io/ingress.class: ingress-nginx-private
+    kubernetes.io/ingress.class: ingress-nginx-public
     kubernetes.io/tls-acme: 'true'
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
   hosts:
-    - kubernetes-dashboard.devstg.aws.binbash.com.ar
+    - kubernetes-dashboard.devstg.binbash.com.ar
   tls:
     - secretName: kubernetes-dashboard-tls
       hosts:
-        - kubernetes-dashboard.devstg.aws.binbash.com.ar
+        - kubernetes-dashboard.devstg.binbash.com.ar
