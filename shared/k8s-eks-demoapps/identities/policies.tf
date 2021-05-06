@@ -62,3 +62,35 @@ resource "aws_iam_policy" "demoapps_external_dns_private" {
 }
 EOF
 }
+
+#
+# External DNS policy
+#
+resource "aws_iam_policy" "demoapps_external_dns_public" {
+  name        = "demoapps-external-dns-public"
+  description = "External DNS permissions on binbash.com.ar"
+  policy      = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:ChangeResourceRecordSets"
+            ],
+            "Resource": [
+                "arn:aws:route53:::hostedzone/${data.terraform_remote_state.dns.outputs.aws_public_zone_id[0]}"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:ListHostedZones",
+                "route53:ListResourceRecordSets"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
