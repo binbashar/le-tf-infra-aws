@@ -3,7 +3,7 @@
 #
 endpoint:
   name: ${name}
-  namespace: monitoring
+  namespace: ${namespace}
   type: ingress
   forceHttps: true
   ingressName: ${ingressName}
