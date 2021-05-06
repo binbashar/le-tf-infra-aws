@@ -12,11 +12,11 @@ module "vpc" {
   public_subnets  = local.public_subnets
 
   enable_nat_gateway       = var.vpc_enable_nat_gateway
-  single_nat_gateway       = var.single_nat_gateway
-  enable_dns_hostnames     = var.enable_dns_hostnames
-  enable_vpn_gateway       = var.enable_vpn_gateway
-  enable_s3_endpoint       = var.enable_s3_endpoint
-  enable_dynamodb_endpoint = var.enable_dynamodb_endpoint
+  single_nat_gateway       = var.vpc_single_nat_gateway
+  enable_dns_hostnames     = var.vpc_enable_dns_hostnames
+  enable_vpn_gateway       = var.vpc_enable_vpn_gateway
+  enable_s3_endpoint       = var.vpc_enable_s3_endpoint
+  enable_dynamodb_endpoint = var.vpc_enable_dynamodb_endpoint
 
   enable_kms_endpoint              = false
   kms_endpoint_private_dns_enabled = false
