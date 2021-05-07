@@ -59,6 +59,20 @@ Tasks in build file build.py:
 Powered by Leverage 0.0.18 - A Lightweight Python Build Tool based on Pynt.
 ```
 
+📒 **CONSIDERATION:** Fully working `terraform` cli 
+
+For example if you want to check the `terraform state`
+1. From your shell navigate to the corresponding leverage architecture layer (eg: `cd shared/base-network/`)
+2. `$ leverage shell` 
+3. Run MFA script (/root/scripts/aws-mfa/aws-mfa-entrypoint.sh)
+      ```shell
+   /go/src/project # /root/scripts/aws-mfa/aws-mfa-entrypoint.sh
+   [05-07-21 12:24:46] [INFO] MFA: Found 3 profile/s
+   [05-07-21 12:24:46] [INFO] MFA: Attempting to get temporary credentials for profile=bb-apps-devstg-devops
+    MFA: Please type in your OTP:
+   ```
+4. Run `terraform state [cmd] (or any other terraform cmd)
+
 # Release Management
 ### CircleCi PR auto-release job
 
