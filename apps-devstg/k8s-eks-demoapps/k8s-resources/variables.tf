@@ -165,3 +165,13 @@ variable "enable_ingressmonitorcontroller" {
   type    = bool
   default = false
 }
+
+variable "kubernetes_dashboard_ingress_class" {
+  type    = string
+  default = "ingress-nginx-private"
+}
+
+variable "kubernetes_dashboard_hosts" {
+  type    = string
+  default = "kubernetes-dashboard.devstg.aws.binbash.com.ar"
+}
