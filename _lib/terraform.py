@@ -139,6 +139,10 @@ def shell(extra_args):
     cmd = _build_cmd(command="", entrypoint="/bin/sh", extra_args=extra_args)
     return subprocess.call(cmd)
 
+def state():
+    cmd = _build_cmd(command="", extra_args=["--", "/bin/sh"])
+    return subprocess.call(cmd)
+
 def format_check():
     # We don't need MFA for this command
     global mfa_enabled
