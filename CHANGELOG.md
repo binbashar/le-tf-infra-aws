@@ -7,6 +7,29 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.2"></a>
+## [v1.3.2] - 2021-05-11
+
+- Add a small Terraform State helper to Leverage build file ([#232](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/232))
+
+
+<a name="v1.3.1"></a>
+## [v1.3.1] - 2021-05-07
+
+- Add vault vars to shared/base-network ([#228](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/228))
+
+
+<a name="v1.2.31"></a>
+## [v1.2.31] - 2021-05-06
+
+
+
+<a name="v1.3.0"></a>
+## [v1.3.0] - 2021-05-06
+
+- Add fluentd to k8s-kind layer and update demoapps layer to enable flu… ([#221](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/221))
+
+
 <a name="v1.2.30"></a>
 ## [v1.2.30] - 2021-05-03
 
@@ -1446,7 +1469,11 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.30...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.2...HEAD
+[v1.3.2]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.1...v1.3.2
+[v1.3.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.31...v1.3.1
+[v1.2.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.0...v1.2.31
+[v1.3.0]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.30...v1.3.0
 [v1.2.30]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.29...v1.2.30
 [v1.2.29]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.28...v1.2.29
 [v1.2.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.27...v1.2.28

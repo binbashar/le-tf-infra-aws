@@ -185,6 +185,11 @@ variable "enable_ingressmonitorcontroller" {
   default = false
 }
 
+variable "enable_logging" {
+  type    = bool
+  default = false
+}
+
 variable "demoapps" {
   type    = any
   default = {}
