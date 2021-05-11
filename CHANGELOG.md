@@ -7,6 +7,27 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.3"></a>
+## [v1.3.3] - 2021-05-11
+
+- Merge branch 'master' into feature/eks-imc
+- Add IMC endpoint conditional for emojivoto
+- Add demoapss changes into Kind layer
+- Add placeholder for UptimeRObot apkey and Aaertcontacts
+- Set default values via tfvars
+- Set K8s Dashboard as private
+- Add Kubernates Dashboard chart parameterization
+- Add network variables for each account
+- Fix variable names
+- Enable private ingresses & dns sync
+- Add external-dns-public role & policy
+- Add variables to the VPC module
+- Add k8s dashboard public endpoint
+- Add missing namespace variable in chart template
+- Update apky for Ingress Monitor Controller
+- Add Ingress Monitor Controller to k8s-eks-demoapps layer
+
+
 <a name="v1.3.2"></a>
 ## [v1.3.2] - 2021-05-11
 
@@ -1469,7 +1490,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.2...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.3...HEAD
+[v1.3.3]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.2...v1.3.3
 [v1.3.2]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.1...v1.3.2
 [v1.3.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.31...v1.3.1
 [v1.2.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.0...v1.2.31
