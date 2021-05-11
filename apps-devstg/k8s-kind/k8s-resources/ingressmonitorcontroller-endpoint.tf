@@ -36,7 +36,7 @@ resource "helm_release" "kubernetes_dashboard_imc_endpoint" {
 # ArgoCD emojivoto - Ingress Endpoint
 #------------------------------------------------------------------------------
 resource "helm_release" "emojivoto_imc_endpoint" {
-  count      = var.enable_ingressmonitorcontroller ? 1 : 0
+  count      = var.enable_ingressmonitorcontroller && lookup(var.imc, "emojivoto_endpoint", false) ? 1 : 0
   name       = "emojivoto"
   repository = "https://binbashar.github.io/helm-charts/"
   chart      = "ingress-monitor-controller-endpoint"

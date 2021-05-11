@@ -17,6 +17,7 @@
 #imc = {
 #  uptimerobot_apikey        = "APIKEY"
 #  uptimerobot_alertcontacts = "uptimerobot_alertcontacts"
+#  emojivoto_endpoint        = false
 #}
 
 #------------------------------------------------------------------------------
@@ -26,4 +27,12 @@
 #kubernetes_dashboard_ingress_class = "ingress-nginx-public"
 #kubernetes_dashboard_hosts         = "kubernetes-dashboard.devstg.binbash.com.ar"
 
+#------------------------------------------------------------------------------
+# Demo Apps - ArgoCD
+#------------------------------------------------------------------------------
 #enable_cicd = true
+#demoapps = {
+#  emojivoto = true
+#  gdm       = false
+#  sockshop  = true
+#}
