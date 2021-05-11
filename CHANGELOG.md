@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.2"></a>
+## [v1.3.2] - 2021-05-11
+
+- Add a small Terraform State helper to Leverage build file ([#232](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/232))
+
+
 <a name="v1.3.1"></a>
 ## [v1.3.1] - 2021-05-07
 
@@ -1463,7 +1469,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.2...HEAD
+[v1.3.2]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.1...v1.3.2
 [v1.3.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.31...v1.3.1
 [v1.2.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.0...v1.2.31
 [v1.3.0]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.30...v1.3.0
