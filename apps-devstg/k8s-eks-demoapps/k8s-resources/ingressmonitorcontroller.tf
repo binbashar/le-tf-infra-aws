@@ -7,5 +7,12 @@ resource "helm_release" "ingressmonitorcontroller" {
   repository = "https://binbashar.github.io/helm-charts/"
   chart      = "ingress-monitor-controller"
   version    = "v2.0.14"
-  values     = [file("chart-values/ingress-monitor-controller.yaml")]
+  values = [
+    templatefile("chart-values/ingress-monitor-controller.yaml",
+      {
+        uptimerobot_apikey        = lookup(var.imc, "uptimerobot_apikey", "APIKEY")
+        uptimerobot_alertcontacts = lookup(var.imc, "uptimerobot_alertcontacts", "ALERTCONTACTS")
+      }
+    )
+  ]
 }
