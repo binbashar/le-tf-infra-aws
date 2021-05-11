@@ -189,3 +189,16 @@ variable "enable_logging" {
   type    = bool
   default = false
 }
+
+variable "demoapps" {
+  type    = any
+  default = {}
+}
+
+#==================================#
+# Ingress Monitor Controller (IMC) #
+#==================================#
+variable "imc" {
+  type    = any
+  default = {}
+}

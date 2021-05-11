@@ -8,7 +8,14 @@ resource "helm_release" "kubernetes_dashboard" {
   repository = "https://kubernetes.github.io/dashboard"
   chart      = "kubernetes-dashboard"
   version    = "4.0.0"
-  values     = [file("chart-values/kubernetes-dashboard.yaml")]
+  values = [
+    templatefile("chart-values/kubernetes-dashboard.yaml",
+      {
+        ingress_class = var.kubernetes_dashboard_ingress_class,
+        hosts         = var.kubernetes_dashboard_hosts,
+      }
+    )
+  ]
 }
 
 # ------------------------------------------------------------------------------

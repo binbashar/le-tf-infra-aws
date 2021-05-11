@@ -160,3 +160,26 @@ variable "enable_logging" {
   type    = bool
   default = false
 }
+
+variable "enable_ingressmonitorcontroller" {
+  type    = bool
+  default = false
+}
+
+variable "kubernetes_dashboard_ingress_class" {
+  type    = string
+  default = "ingress-nginx-private"
+}
+
+variable "kubernetes_dashboard_hosts" {
+  type    = string
+  default = "kubernetes-dashboard.devstg.aws.binbash.com.ar"
+}
+
+#==================================#
+# Ingress Monitor Controller (IMC) #
+#==================================#
+variable "imc" {
+  type    = any
+  default = {}
+}
