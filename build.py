@@ -86,6 +86,21 @@ def encrypt():
     os.system("ansible-vault encrypt --output secrets.enc secrets.dec.tf && rm -rf secrets.dec.tf")
 
 @task(_checkdir)
+def state():
+    '''Perform Terraform state operations.'''
+    print('''
+===============================================================================
+- IMPORTANT:
+===============================================================================
+- Leverage CLI does not yet support Terraform state operations. However this
+- task provides a small helper to make it a bit easier.
+- This task will present you with a shell that is ready to run Terraform state
+- commands such as `terraform state list` and more.
+===============================================================================
+''')
+    terraform.state()
+
+@task(_checkdir)
 def validate_layout():
     '''Validate the layout convention of this Terraform layer.'''
     return os.system("../../@bin/scripts/validate-terraform-layout.sh")
