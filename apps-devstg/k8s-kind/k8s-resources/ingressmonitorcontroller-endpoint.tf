@@ -25,9 +25,30 @@ resource "helm_release" "kubernetes_dashboard_imc_endpoint" {
       {
         name        = "kubernetes-dashboard",
         namespace   = "monitoring",
-        ingressName = "kubernetes_dashboard"
+        ingressName = "kubernetes-dashboard"
       }
     )
   ]
   depends_on = [helm_release.ingressmonitorcontroller, helm_release.kubernetes_dashboard]
+}
+
+#------------------------------------------------------------------------------
+# ArgoCD emojivoto - Ingress Endpoint
+#------------------------------------------------------------------------------
+resource "helm_release" "emojivoto_imc_endpoint" {
+  count      = var.enable_ingressmonitorcontroller ? 1 : 0
+  name       = "emojivoto"
+  repository = "https://binbashar.github.io/helm-charts/"
+  chart      = "ingress-monitor-controller-endpoint"
+  version    = "0.1.1"
+  values = [
+    templatefile("chart-values/ingress-monitor-controller-ingress-endpoint.yaml",
+      {
+        name        = "emojivoto-web",
+        namespace   = "demo-emojivoto"
+        ingressName = "emojivoto"
+      }
+    )
+  ]
+  depends_on = [helm_release.ingressmonitorcontroller, helm_release.emojivoto]
 }
