@@ -176,6 +176,11 @@ variable "kubernetes_dashboard_hosts" {
   default = "kubernetes-dashboard.devstg.aws.binbash.com.ar"
 }
 
+variable "demoapps" {
+  type    = any
+  default = {}
+}
+
 #==================================#
 # Ingress Monitor Controller (IMC) #
 #==================================#
