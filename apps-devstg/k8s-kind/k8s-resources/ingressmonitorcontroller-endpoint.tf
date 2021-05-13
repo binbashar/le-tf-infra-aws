@@ -2,7 +2,7 @@
 # IngressMonitorController - Static Endpoint
 #------------------------------------------------------------------------------
 resource "helm_release" "ingressmonitorcontroller-endpoint" {
-  count      = var.enable_ingressmonitorcontroller ? 1 : 0
+  count      = var.enable_ingressmonitorcontroller && lookup(var.imc, "example_endpoint", false) ? 1 : 0
   name       = "ingress-monitor-controller-endpoint"
   repository = "https://binbashar.github.io/helm-charts/"
   chart      = "ingress-monitor-controller-endpoint"
@@ -15,7 +15,7 @@ resource "helm_release" "ingressmonitorcontroller-endpoint" {
 # IngressMonitorController - Ingress Endpoint
 #------------------------------------------------------------------------------
 resource "helm_release" "kubernetes_dashboard_imc_endpoint" {
-  count      = var.enable_ingressmonitorcontroller ? 1 : 0
+  count      = var.enable_ingressmonitorcontroller && var.enable_kubernetes_dashboard ? 1 : 0
   name       = "kubernetes-dashboard"
   repository = "https://binbashar.github.io/helm-charts/"
   chart      = "ingress-monitor-controller-endpoint"
