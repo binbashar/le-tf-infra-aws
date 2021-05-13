@@ -1,7 +1,9 @@
-#
+#------------------------------------------------------------------------------
 # Service Account & Permissions: Grafana KubeGraf Application
-#
+#------------------------------------------------------------------------------
 resource "kubernetes_cluster_role" "grafana_kubegraf" {
+  count = var.enable_grafana_dependencies ? 1 : 0
+
   metadata {
     name = "grafana-kubegraf"
   }
@@ -40,6 +42,8 @@ resource "kubernetes_cluster_role" "grafana_kubegraf" {
 }
 
 resource "kubernetes_cluster_role_binding" "grafana_kubegraf" {
+  count = var.enable_grafana_dependencies ? 1 : 0
+
   metadata {
     name = "grafana-kubegraf"
   }
@@ -56,6 +60,8 @@ resource "kubernetes_cluster_role_binding" "grafana_kubegraf" {
 }
 
 resource "kubernetes_service_account" "grafana_kubegraf" {
+  count = var.enable_grafana_dependencies ? 1 : 0
+
   metadata {
     name      = "grafana-kubegraf"
     namespace = "kube-system"

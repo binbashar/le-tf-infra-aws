@@ -1,4 +1,8 @@
-server:
+# Whether the dashboard component should be installed
+dashboard:
+  enabled: true
+  replicaCount: 1
+
   ingress:
     enabled: true
     annotations:
@@ -7,14 +11,13 @@ server:
       kubernetes.io/ingress.class: ingress-nginx-private
       # Use the following cert-manager clusterissuer
       cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
-      # The backend (ArgoCD Server) is expecting to handle HTTPS
-      # nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+      # The backend is expecting to handle HTTPS
+      #nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     hosts:
-      - argocd.devstg.aws.binbash.com.ar
-    paths:
-      - /
+      - host: goldilocks.devstg.aws.binbash.com.ar
+        paths:
+          - /
     tls:
-      - secretName: argocd-server-tls
+      - secretName: goldilocks-server-tls
         hosts:
-          - argocd.devstg.aws.binbash.com.ar
+          - goldilocks.devstg.aws.binbash.com.ar
