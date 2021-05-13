@@ -7,6 +7,19 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.4"></a>
+## [v1.3.4] - 2021-05-13
+
+- Add external-dns role & policies for k8s-eks
+- Add logic to enanle IMC endpoints using variables
+- * Remove terraform version constraint * CHange role used for public extenral-dns
+- Merge branch 'feature/k8s-eks-imc' of github.com:binbashar/le-tf-infra-aws into feature/k8s-eks-imc
+- Copy demoapps.tf
+- Copy demoapps.tf
+- Replicate demoapss files in k8-eks layer
+- Replicate k8s-eks-demoapps in k8s-eks
+
+
 <a name="v1.3.3"></a>
 ## [v1.3.3] - 2021-05-11
 
@@ -1490,7 +1503,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.3...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.4...HEAD
+[v1.3.4]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.3...v1.3.4
 [v1.3.3]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.2...v1.3.3
 [v1.3.2]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.1...v1.3.2
 [v1.3.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.31...v1.3.1
