@@ -1,9 +1,23 @@
+# If you use AWS EKS, remember you need to annotate the service account for IRSA
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::763606934258:role/demoapps-aws-es-proxy
+
 # If you use an AWS ES that requires signed requests, you can enable and configure this
 awsSigningSidecar:
-  enabled: false
+  enabled: true
+  image:
+    repository: abutaha/aws-es-proxy
+    tag: v1.1
+  extraEnvs:
+  - name: AWS_ROLE_ARN
+    value: "arn:aws:iam::763606934258:role/demoapps-aws-es-proxy"
+  - name: AWS_WEB_IDENTITY_TOKEN_FILE
+    value: "/var/run/secrets/eks.amazonaws.com/serviceaccount/token"
 
 elasticsearch:
-  # Auth connection settings
+  # Auth connection settings (they won't work with AWS ES)
   auth:
     enabled: false
     user: elastic
@@ -16,7 +30,7 @@ elasticsearch:
     prefix: "fluentd-apps-devstg-demoapps"
 
   # ElasticSearch connection settings
-  hosts: ["vpc-abcdef0123456789.region.es.amazonaws.com:443"]
+  hosts: ["vpc-es-aws-binbash-6uuj35w6h36g66nr74omalvtji.us-east-1.es.amazonaws.com"]
   scheme: "https"
   sslVerify: true
   sslVersion: "TLSv1_2"
