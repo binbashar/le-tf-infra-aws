@@ -7,8 +7,8 @@
 #   repository = "https://binbashar.github.io/helm-charts/"
 #   chart      = "argocd-application"
 #   version    = "0.2.0"
-#   values     = [ file("chart-values/demoapps-emojivoto.yaml") ]
-#   depends_on = [ helm_release.argo_cd ]
+#   values     = [file("chart-values/demoapps-emojivoto.yaml")]
+#   depends_on = [helm_release.argo_cd]
 # }
 
 #------------------------------------------------------------------------------

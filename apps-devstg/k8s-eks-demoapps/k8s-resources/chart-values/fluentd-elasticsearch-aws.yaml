@@ -27,7 +27,7 @@ elasticsearch:
     prefix: "fluentd-apps-devstg-demoapps"
 
   # ElasticSearch connection settings
-  hosts: ["vpc-es-aws-binbash-6uuj35w6h36g66nr74omalvtji.us-east-1.es.amazonaws.com"]
+  hosts: ["vpc-es-aws-binbash-6uuj35w6h36g66nr74omalvtji.us-east-1.es.amazonaws.com:443"]
   scheme: "https"
   sslVerify: true
   sslVersion: "TLSv1_2"
@@ -53,25 +53,6 @@ elasticsearch:
             }
         }
       }
-
-  # Configure Index Lifecycle Management policies (not compatible as-is with AWS ES)
-  # ilm:
-  #   enabled: true
-  #   policy_id: fluentd-policy
-  #   policy:
-  #     phases:
-  #       hot:
-  #         min_age: 0ms
-  #         actions:
-  #           rollover:
-  #             max_age: 30d
-  #             max_size: 20gb
-  #           set_priority:
-  #               priority: 100
-  #       delete:
-  #         min_age: 30d
-  #         actions:
-  #           delete: {}
 
 # Toggle default configuration blocks
 configMaps:

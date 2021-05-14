@@ -94,25 +94,6 @@ variable "vault_address" {
 }
 
 #=============================#
-# Kubernetes Auth             #
-#=============================#
-variable "kubernetes_host" {
-  type = string
-}
-
-variable "kubernetes_cluster_ca_certificate" {
-  type = string
-}
-
-variable "kubernetes_client_key" {
-  type = string
-}
-
-variable "kubernetes_client_certificate" {
-  type = string
-}
-
-#=============================#
 # Layer Flags                 #
 #=============================#
 variable "enable_private_ingress" {
@@ -175,7 +156,7 @@ variable "enable_gatus" {
   default = false
 }
 
-variable "enable_metallb" {
+variable "enable_logging" {
   type    = bool
   default = false
 }
@@ -185,7 +166,25 @@ variable "enable_ingressmonitorcontroller" {
   default = false
 }
 
-variable "enable_logging" {
-  type    = bool
-  default = false
+variable "kubernetes_dashboard_ingress_class" {
+  type    = string
+  default = "ingress-nginx-private"
+}
+
+variable "kubernetes_dashboard_hosts" {
+  type    = string
+  default = "kubernetes-dashboard.devstg.aws.binbash.com.ar"
+}
+
+variable "demoapps" {
+  type    = any
+  default = {}
+}
+
+#==================================#
+# Ingress Monitor Controller (IMC) #
+#==================================#
+variable "imc" {
+  type    = any
+  default = {}
 }

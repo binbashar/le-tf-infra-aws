@@ -7,6 +7,46 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.4"></a>
+## [v1.3.4] - 2021-05-13
+
+- Add external-dns role & policies for k8s-eks
+- Add logic to enanle IMC endpoints using variables
+- * Remove terraform version constraint * CHange role used for public extenral-dns
+- Merge branch 'feature/k8s-eks-imc' of github.com:binbashar/le-tf-infra-aws into feature/k8s-eks-imc
+- Copy demoapps.tf
+- Copy demoapps.tf
+- Replicate demoapss files in k8-eks layer
+- Replicate k8s-eks-demoapps in k8s-eks
+
+
+<a name="v1.3.3"></a>
+## [v1.3.3] - 2021-05-11
+
+- Merge branch 'master' into feature/eks-imc
+- Add IMC endpoint conditional for emojivoto
+- Add demoapss changes into Kind layer
+- Add placeholder for UptimeRObot apkey and Aaertcontacts
+- Set default values via tfvars
+- Set K8s Dashboard as private
+- Add Kubernates Dashboard chart parameterization
+- Add network variables for each account
+- Fix variable names
+- Enable private ingresses & dns sync
+- Add external-dns-public role & policy
+- Add variables to the VPC module
+- Add k8s dashboard public endpoint
+- Add missing namespace variable in chart template
+- Update apky for Ingress Monitor Controller
+- Add Ingress Monitor Controller to k8s-eks-demoapps layer
+
+
+<a name="v1.3.2"></a>
+## [v1.3.2] - 2021-05-11
+
+- Add a small Terraform State helper to Leverage build file ([#232](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/232))
+
+
 <a name="v1.3.1"></a>
 ## [v1.3.1] - 2021-05-07
 
@@ -1463,7 +1503,10 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.4...HEAD
+[v1.3.4]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.3...v1.3.4
+[v1.3.3]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.2...v1.3.3
+[v1.3.2]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.1...v1.3.2
 [v1.3.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.31...v1.3.1
 [v1.2.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.0...v1.2.31
 [v1.3.0]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.2.30...v1.3.0
