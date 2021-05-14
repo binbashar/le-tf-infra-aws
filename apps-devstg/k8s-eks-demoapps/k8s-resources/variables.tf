@@ -156,7 +156,12 @@ variable "enable_gatus" {
   default = false
 }
 
-variable "enable_logging" {
+variable "enable_logging_awses" {
+  type    = bool
+  default = false
+}
+
+variable "enable_logging_selfhosted" {
   type    = bool
   default = false
 }

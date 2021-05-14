@@ -94,3 +94,23 @@ resource "aws_iam_policy" "demoapps_external_dns_public" {
 }
 EOF
 }
+
+#
+# AWS ES Proxy
+#
+resource "aws_iam_policy" "demoapps_aws_es_proxy" {
+  name        = "demoapps-aws-es-proxy"
+  description = "AWS ES Proxy permissions on AWS ElasticSearch"
+  policy      = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "es:*",
+            "Resource": "arn:aws:es:us-east-1:763606934258:domain/es-aws-binbash/*"
+        }
+    ]
+}
+EOF
+}

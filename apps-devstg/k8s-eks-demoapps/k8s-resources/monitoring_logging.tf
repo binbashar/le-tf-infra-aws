@@ -10,28 +10,27 @@
 # }
 
 #------------------------------------------------------------------------------
-# fluentd: collect cluster logs and ship them to ElasticSearch
+# fluentd + AWS ElasticSearch: collect cluster logs and ship them to AWS ES
 #------------------------------------------------------------------------------
-# resource "helm_release" "fluentd" {
-#   count      = var.enable_logging ? 1 : 0
-#   name       = "fluentd"
-#   namespace  = kubernetes_namespace.monitoring.id
-#   repository = "https://binbashar.github.io/helm-charts/"
-#   chart      = "fluentd-daemonset"
-#   version    = "0.1.0"
-#   values     = [file("chart-values/fluentd-daemonset.yaml")]
-# }
-
-#------------------------------------------------------------------------------
-# fluentd: this one uses a different chart which support many more features,
-#          however it was not verified to be a working solution yet
-#------------------------------------------------------------------------------
-resource "helm_release" "fluentd" {
-  count      = var.enable_logging ? 1 : 0
-  name       = "fluentd"
+resource "helm_release" "fluentd_awses" {
+  count      = var.enable_logging_awses ? 1 : 0
+  name       = "fluentd-awses"
   namespace  = kubernetes_namespace.monitoring.id
   repository = "https://kokuwaio.github.io/helm-charts"
   chart      = "fluentd-elasticsearch"
-  version    = "11.10.0"
-  values     = [file("chart-values/fluentd-elasticsearch.yaml")]
+  version    = "11.12.0"
+  values     = [file("chart-values/fluentd-elasticsearch-aws.yaml")]
+}
+
+#------------------------------------------------------------------------------
+# fluentd + Self-hosted ElasticSearch: collect cluster logs and ship them to ES
+#------------------------------------------------------------------------------
+resource "helm_release" "fluentd_selfhosted" {
+  count      = var.enable_logging_selfhosted ? 1 : 0
+  name       = "fluentd-selfhosted"
+  namespace  = kubernetes_namespace.monitoring.id
+  repository = "https://kokuwaio.github.io/helm-charts"
+  chart      = "fluentd-elasticsearch"
+  version    = "11.12.0"
+  values     = [file("chart-values/fluentd-elasticsearch-selfhosted.yaml")]
 }

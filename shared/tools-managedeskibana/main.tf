@@ -52,7 +52,10 @@ module "managed_elasticsearch_kibana" {
   # Configure automated snapshot start time
   snapshot_options_automated_snapshot_start_hour = "23"
 
-  # Open access policy
+  # Access policy:
+  #   - You can make it open to anyone (if you know the endpoint you can connect to it)
+  #   - Or you can use specific roles/users (keep in mind that you will need to use signed requests in order to talk to AWS ES)
+  #
   access_policies = <<POLICY
 {
   "Version": "2012-10-17",
@@ -61,7 +64,9 @@ module "managed_elasticsearch_kibana" {
       "Effect": "Allow",
       "Action": "es:*",
       "Principal": {
-        "AWS": ["*"]
+        "AWS": [
+          "arn:aws:iam::763606934258:role/demoapps-aws-es-proxy"
+        ]
       },
       "Resource": "arn:aws:es:${var.region}:${var.shared_account_id}:domain/${local.domain_name}/*"
     }
