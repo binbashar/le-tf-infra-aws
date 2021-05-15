@@ -93,9 +93,9 @@ resource "aws_iam_role_policy_attachment" "prometheus_grafana_role_permissions" 
 }
 
 resource "aws_iam_policy" "prometheus_grafana_assume_role" {
-    name        = "prometheus_grafana_assume_role"
-    description = "Allow Prometheus/Grafana instance to assume Grafana role in other accounts"
-    policy = <<EOF
+  name        = "prometheus_grafana_assume_role"
+  description = "Allow Prometheus/Grafana instance to assume Grafana role in other accounts"
+  policy      = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
