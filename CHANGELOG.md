@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.7"></a>
+## [v1.3.7] - 2021-05-18
+
+- Remove network.auto.tfvars from the repo so they do not override custom values defined in terraform.tfvars file used by workflows ([#236](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/236))
+
+
 <a name="v1.3.6"></a>
 ## [v1.3.6] - 2021-05-17
 
@@ -1515,7 +1521,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.6...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.7...HEAD
+[v1.3.7]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.6...v1.3.7
 [v1.3.6]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.5...v1.3.6
 [v1.3.5]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.4...v1.3.5
 [v1.3.4]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.3...v1.3.4
