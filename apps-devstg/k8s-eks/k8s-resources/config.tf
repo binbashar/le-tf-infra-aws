@@ -41,6 +41,13 @@ terraform {
 #
 # Data Sources
 #
+
+# Get the current Account ID
+data "aws_caller_identity" "current" {}
+
+# Get the current AWS region configured in the provider
+data "aws_region" "current" {}
+
 data "aws_eks_cluster" "cluster" {
   name = data.terraform_remote_state.eks-cluster.outputs.cluster_id
 }
