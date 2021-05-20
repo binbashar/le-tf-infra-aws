@@ -46,3 +46,10 @@ It will submit the restore task. To check its status use `describe`:
 $  velero --kubeconfig ../cluster/kube_config restore describe velero-argocd-20210520124058-20210520104418
 ```
 
+## TODOs
+
+Things to evaluate:
+
+
+* Update  **iam-assumable-role-with-oidc** module version to v.4.x. in the architecture to support a list of `provider_urls` in the roles to be assumed.
+* Have a definition of clusters that allows to condense the oidc issuers in a tfstate to obtain a list of clusters and provide it to the **iam-assumable-role-with-oidc** module through the `provider_urls` parameter input.
