@@ -61,7 +61,9 @@ initContainers:
 # SecurityContext to use for the Velero deployment. Optional.
 # Set fsGroup for `AWS IAM Roles for Service Accounts`
 # see more informations at: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
-securityContext: {}
+securityContext:
+  fsGroup: 65534
+#securityContext: {}
   # fsGroup: 1337
 
 # Pod priority class name to use for the Velero deployment. Optional.
@@ -142,7 +144,7 @@ configuration:
   backupStorageLocation:
     # name is the name of the backup storage location where backups should be stored. If a name is not provided,
     # a backup storage location will be created with the name "default". Optional.
-    name:
+    name: bb-le
     # provider is the name for the backup storage location provider. If omitted
     # `configuration.provider` will be used instead.
     provider: aws
@@ -156,8 +158,8 @@ configuration:
     default: true
     # Additional provider-specific configuration. See link above
     # for details of required/optional fields for your provider.
-    config: {}
-    #  region:
+    config:
+      region: us-east-1
     #  s3ForcePathStyle:
     #  s3Url:
     #  kmsKeyId:
@@ -180,8 +182,8 @@ configuration:
     provider: aws
     # Additional provider-specific configuration. See link above
     # for details of required/optional fields for your provider.
-    config: {}
-  #    region:
+    config:
+      region: us-east-1
   #    apiTimeout:
   #    resourceGroup:
   #    The ID of the subscription where volume snapshots should be stored, if different from the cluster’s subscription. If specified, also requires `configuration.volumeSnapshotLocation.config.resourceGroup`to be set. (Azure only)
@@ -245,12 +247,9 @@ rbac:
 serviceAccount:
   server:
     create: true
-    name: velero-backups
+    name: velero-server
     annotations:
-      eks.amazonaws.com/role-arn: arn:aws:iam::523857393444:role/velero-backups
-    name:
-    annotations:
-    labels:
+      eks.amazonaws.com/role-arn: ${iam_role}
 
 # Info about the secret to be used by the Velero deployment, which
 # should contain credentials for the cloud provider IAM account you've
@@ -288,7 +287,7 @@ credentials:
 # Whether to create backupstoragelocation crd, if false => do not create a default backup location
 backupsEnabled: true
 # Whether to create volumesnapshotlocation crd, if false => disable snapshot feature
-snapshotsEnabled: true
+snapshotsEnabled: false
 
 # Whether to deploy the restic daemonset.
 deployRestic: false
@@ -350,24 +349,41 @@ restic:
 #       includedNamespaces:
 #       - foo
 schedules:
-  cluster-backup:
+%{ for k, v in schedules ~}
+  ${k}:
     labels:
-      target: all-cluster
+      target: ${v["target"]}
     annotations:
-      myannotation: cluster-backup
-    schedule: "0 0/6 * * *"
+      myannotation: ${k}
+    schedule: "${v["schedule"]}"
     template:
-      ttl: "24h"
-  argo-backup:
-    labels:
-      target: argocd
-    annotations:
-      myannotation: argo-backup
-    schedule: "0 0/6 * * *"
-    template:
-      ttl: "24h"
+      ttl: ${v["ttl"]}
+%{ if lookup(v,"includedNamespaces", null) != null ~}
       includedNamespaces:
-        - argo-cd
+%{ for n in v["includedNamespaces"] ~}
+        - ${n}
+%{ endfor ~}
+%{ endif ~}
+%{ endfor }
+#schedules:
+#  cluster-backup:
+#    labels:
+#      target: all-cluster
+#    annotations:
+#      myannotation: cluster-backup
+#    schedule: "0 * * * *"
+#    template:
+#      ttl: "24h"
+#  argo-backup:
+#    labels:
+#      target: argocd
+#    annotations:
+#      myannotation: argo-backup
+#    schedule: "0 0/6 * * *"
+#    template:
+#      ttl: "24h"
+#      includedNamespaces:
+#        - argo-cd
 
 # Velero ConfigMaps.
 # Eg:

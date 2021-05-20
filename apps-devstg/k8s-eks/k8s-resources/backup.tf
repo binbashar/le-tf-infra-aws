@@ -3,6 +3,7 @@
 #------------------------------------------------------------------------------
 resource "helm_release" "velero" {
   name       = "velero"
+  count      = var.enable_backups ? 1 : 0
   namespace  = kubernetes_namespace.velero.id
   repository = "https://vmware-tanzu.github.io/helm-charts"
   chart      = "velero"
@@ -10,7 +11,9 @@ resource "helm_release" "velero" {
   values = [
     templatefile("chart-values/velero.yaml",
       {
-        bucket = aws_s3_bucket.valero_s3.id
+        bucket    = aws_s3_bucket.valero_s3.id
+        iam_role  = "arn:aws:iam::523857393444:role/velero-backups"
+        schedules = var.schedules
       }
     )
   ]
@@ -21,6 +24,11 @@ resource "helm_release" "velero" {
 #------------------------------------------------------------------------------
 # Buckets
 resource "aws_s3_bucket" "valero_s3" {
-  name = "le-${var.environment}-valero"
-  acl  = "private"
+  bucket = "le-${var.environment}-valero"
+  acl    = "private"
+
+  versioning {
+    enabled = true
+  }
+
 }

@@ -191,15 +191,14 @@ module "iam_assumable_role_grafana" {
 # Assumable Role Cross-Account: Velero Backups
 #
 module "iam_assumable_role_velero" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.0.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.1.0"
 
   create_role = true
   role_name   = "velero-backups"
   role_path   = "/"
 
   provider_urls = [
-    replace(data.terraform_remote_state.cluster-apps-devstg-eks.outputs.cluster_oidc_issuer_url, "https://", ""),
-    replace(data.terraform_remote_state.cluster-apps-qa-eks.outputs.cluster_oidc_issuer_url, "https://", "")
+    replace(data.terraform_remote_state.cluster-eks.outputs.cluster_oidc_issuer_url, "https://", ""),
   ]
 
   #
@@ -210,7 +209,7 @@ module "iam_assumable_role_velero" {
   ]
 
   oidc_fully_qualified_subjects = [
-    "system:serviceaccount:velero:velero-backups"
+    "system:serviceaccount:velero:velero-server"
   ]
 
   tags = local.tags
