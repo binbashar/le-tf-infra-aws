@@ -23,8 +23,8 @@ resource "helm_release" "velero" {
 # Velero S3 Storage
 #------------------------------------------------------------------------------
 # Buckets
-resource "aws_s3_bucket" "valero_s3" {
-  bucket = "le-${var.environment}-valero"
+resource "aws_s3_bucket" "velero_s3" {
+  bucket = "le-${var.environment}-velero"
   acl    = "private"
 
   versioning {
