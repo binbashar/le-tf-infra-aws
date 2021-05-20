@@ -48,15 +48,9 @@
 #    ttl      = "24h"
 #  }
 #  argo-backup = {
-#    target             = "argod"
+#    target             = "argcd"
 #    schedule           = "0 0/6 * * *"
 #    ttl                = "24h"
 #    includedNamespaces = ["argo-cd"]
 #  }
-#  #  wordpress = {
-#  #  target             = "wordpress"
-#  #  schedule           = "*/10 * * * *"
-#  #  ttl                = "24h"
-#  #   includedNamespaces = ["wordpress"]
-#  # }
 #}
