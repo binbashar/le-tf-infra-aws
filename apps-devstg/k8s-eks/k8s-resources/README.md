@@ -4,8 +4,6 @@ In order to have backups we have implemented [Velero](https://velero.io/), which
 
 This implementation uses the official [Velero Chart](https://artifacthub.io/packages/helm/vmware-tanzu/velero) according to the [official documentation](https://velero.io/docs/v1.6/) and the [AWS plugin](https://github.com/vmware-tanzu/velero-plugin-for-aws).
 
-
-
 ## Defining backups
 
 Use the `enable_backups` and `schedules` to define Kubernetes backups in a `*.auto.tfvars` file as follows:
