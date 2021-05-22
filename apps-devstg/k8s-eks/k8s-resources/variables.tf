@@ -176,6 +176,12 @@ variable "kubernetes_dashboard_hosts" {
   default = "kubernetes-dashboard.devstg.aws.binbash.com.ar"
 }
 
+variable "enable_backups" {
+  type    = bool
+  default = false
+}
+
+
 variable "demoapps" {
   type    = any
   default = {}
@@ -185,6 +191,14 @@ variable "demoapps" {
 # Ingress Monitor Controller (IMC) #
 #==================================#
 variable "imc" {
+  type    = any
+  default = {}
+}
+
+#==================================#
+# Backups                          #
+#==================================#
+variable "schedules" {
   type    = any
   default = {}
 }

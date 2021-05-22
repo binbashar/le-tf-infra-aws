@@ -68,3 +68,13 @@ resource "kubernetes_namespace" "gatus" {
     name = "gatus"
   }
 }
+
+resource "kubernetes_namespace" "velero" {
+  metadata {
+    labels = {
+      environment = var.environment
+    }
+
+    name = "velero"
+  }
+}

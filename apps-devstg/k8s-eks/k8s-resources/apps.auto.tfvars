@@ -36,3 +36,21 @@
 #  gdm       = false
 #  sockshop  = true
 #}
+
+#------------------------------------------------------------------------------
+# Backups
+#------------------------------------------------------------------------------
+#enable_backups = true
+#schedules = {
+#  cluster-backup = {
+#    target   = "all-cluster"
+#    schedule = "0 * * * *"
+#    ttl      = "24h"
+#  }
+#  argo-backup = {
+#    target             = "argcd"
+#    schedule           = "0 0/6 * * *"
+#    ttl                = "24h"
+#    includedNamespaces = ["argo-cd"]
+#  }
+#}
