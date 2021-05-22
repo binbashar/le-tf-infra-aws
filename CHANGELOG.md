@@ -7,6 +7,19 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.8"></a>
+## [v1.3.8] - 2021-05-22
+
+- Remove empty lines
+- Add minimum background overview regarding Velero in README
+- Add TODOs into the README
+- Add account & region data sources
+- Add backup documentation
+- Fix typo in resource name
+- Add velelro implementation
+- Add Velero implementetion for k8s-eks
+
+
 <a name="v1.3.7"></a>
 ## [v1.3.7] - 2021-05-18
 
@@ -1521,7 +1534,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.7...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.8...HEAD
+[v1.3.8]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.7...v1.3.8
 [v1.3.7]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.6...v1.3.7
 [v1.3.6]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.5...v1.3.6
 [v1.3.5]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.4...v1.3.5
