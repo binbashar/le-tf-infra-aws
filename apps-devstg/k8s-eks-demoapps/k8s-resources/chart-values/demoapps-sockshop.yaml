@@ -6,7 +6,7 @@ source:
   path: sock-shop/helm
 
   helm:
-    # The value file below determines whether we use an in-cluster 
+    # The value file below determines whether we use an in-cluster
     valueFiles:
     - ${valueFile}
 
