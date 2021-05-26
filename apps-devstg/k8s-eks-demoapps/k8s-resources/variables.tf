@@ -181,6 +181,26 @@ variable "kubernetes_dashboard_hosts" {
   default = "kubernetes-dashboard.devstg.aws.binbash.com.ar"
 }
 
+variable "enable_demoapps_sockshop" {
+  type    = bool
+  default = false
+}
+
+variable "enable_demoapps_sockshop_aws_integration" {
+  type    = bool
+  default = false
+}
+
+variable "enable_demoapps_gmd" {
+  type    = bool
+  default = false
+}
+
+variable "enable_demoapps_gmd_aws_integration" {
+  type    = bool
+  default = false
+}
+
 #==================================#
 # Ingress Monitor Controller (IMC) #
 #==================================#

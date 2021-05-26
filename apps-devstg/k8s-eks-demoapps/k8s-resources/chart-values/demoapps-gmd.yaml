@@ -3,7 +3,12 @@ project: default
 source:
   repoURL: https://github.com/binbashar/le-demo-apps.git
   targetRevision: HEAD
-  path: google-microservices-demo/kubernetes
+  path: google-microservices-demo/helm
+
+  helm:
+    # The value file below determines whether we use an in-cluster 
+    valueFiles:
+    - ${valueFile}
 
 destination:
   server: https://kubernetes.default.svc

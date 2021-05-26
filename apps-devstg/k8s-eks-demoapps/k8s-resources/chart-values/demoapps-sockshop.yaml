@@ -2,8 +2,13 @@ project: default
 
 source:
   repoURL: https://github.com/binbashar/le-demo-apps.git
-  targetRevision: HEAD
-  path: sock-shop/kubernetes
+  targetRevision: demoapps
+  path: sock-shop/helm
+
+  helm:
+    # The value file below determines whether we use an in-cluster 
+    valueFiles:
+    - ${valueFile}
 
 destination:
   server: https://kubernetes.default.svc
