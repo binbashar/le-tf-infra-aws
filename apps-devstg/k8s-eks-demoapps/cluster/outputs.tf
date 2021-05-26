@@ -16,6 +16,11 @@ output "cluster_endpoint" {
   value       = module.eks_demoapps.cluster_endpoint
 }
 
+output "cluster_certificate_authority_data" {
+  description = "CA certificate for EKS control plane."
+  value       = module.eks_demoapps.cluster_certificate_authority_data
+}
+
 output "cluster_oidc_issuer_url" {
   description = "EKS OpenID Connect Issuer URL."
   value       = module.eks_demoapps.cluster_oidc_issuer_url
