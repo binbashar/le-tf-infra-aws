@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.11"></a>
+## [v1.3.11] - 2021-05-26
+
+- Add CA certificate to EKS DemoApps outputs ([#244](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/244))
+
+
 <a name="v1.3.10"></a>
 ## [v1.3.10] - 2021-05-26
 
@@ -1546,7 +1552,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.10...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.11...HEAD
+[v1.3.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.10...v1.3.11
 [v1.3.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.9...v1.3.10
 [v1.3.9]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.8...v1.3.9
 [v1.3.8]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.7...v1.3.8
