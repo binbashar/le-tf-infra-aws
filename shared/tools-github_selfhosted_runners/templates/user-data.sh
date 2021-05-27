@@ -11,6 +11,8 @@ USER_NAME=runners
 useradd -m -s /bin/bash $USER_NAME
 USER_ID=$(id -ru $USER_NAME)
 
+echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
 # install and configure cloudwatch logging agent
 wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
 dpkg -i -E ./amazon-cloudwatch-agent.deb
