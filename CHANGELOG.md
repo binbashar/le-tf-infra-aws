@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.12"></a>
+## [v1.3.12] - 2021-05-27
+
+- Make sure GH Runners' encrypted secrets match the actual ones, update runners user-data to enable passwordless sudo, and push to the repo zip files that are needed to deploy the runners ([#245](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/245))
+
+
 <a name="v1.3.11"></a>
 ## [v1.3.11] - 2021-05-26
 
@@ -1552,7 +1558,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.11...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.12...HEAD
+[v1.3.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.11...v1.3.12
 [v1.3.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.10...v1.3.11
 [v1.3.10]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.9...v1.3.10
 [v1.3.9]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.8...v1.3.9
