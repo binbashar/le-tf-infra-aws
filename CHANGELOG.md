@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.14"></a>
+## [v1.3.14] - 2021-05-27
+
+- Update leverage output so it supports passing arguments ([#247](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/247))
+
+
 <a name="v1.3.13"></a>
 ## [v1.3.13] - 2021-05-27
 
@@ -1564,7 +1570,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.13...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.14...HEAD
+[v1.3.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.13...v1.3.14
 [v1.3.13]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.12...v1.3.13
 [v1.3.12]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.11...v1.3.12
 [v1.3.11]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.10...v1.3.11
