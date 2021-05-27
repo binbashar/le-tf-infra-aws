@@ -48,7 +48,7 @@ def output(*args):
                                         > leverage output
                                         > leverage output["-json"]
     '''
-    terraform.output()
+    terraform.output(list(args))
 
 @task(_checkdir)
 def destroy(*args):

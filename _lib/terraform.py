@@ -123,8 +123,8 @@ def apply(extra_args):
     cmd = _build_cmd(command="apply", args=terraform_default_args, extra_args=extra_args)
     return subprocess.call(cmd)
 
-def output():
-    cmd = _build_cmd(command="output")
+def output(extra_args):
+    cmd = _build_cmd(command="output", extra_args=extra_args)
     return subprocess.call(cmd)
 
 def destroy(extra_args):
