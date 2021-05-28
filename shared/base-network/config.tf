@@ -94,9 +94,9 @@ data "terraform_remote_state" "vpc-apps" {
   backend = "s3"
 
   config = {
-    region  = lookup(each.value, region)
-    profile = lookup(each.value, profile)
-    bucket  = lookup(each.value, bucket)
-    key     = lookup(each.value, key)
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
   }
 }
