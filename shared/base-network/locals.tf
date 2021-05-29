@@ -178,4 +178,32 @@ locals {
       },
     ]
   }
+
+  # Data source definitions
+  data_vpcs = {
+    vpc-apps-dev = {
+      region  = var.region
+      profile = "${var.project}-apps-devstg-devops"
+      bucket  = "${var.project}-apps-devstg-terraform-backend"
+      key     = "apps-devstg/network/terraform.tfstate"
+    }
+    vpc-apps-dev-eks = {
+      region  = var.region
+      profile = "${var.project}-apps-devstg-devops"
+      bucket  = "${var.project}-apps-devstg-terraform-backend"
+      key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
+    }
+    vpc-apps-dev-eks-demoapps = {
+      region  = var.region
+      profile = "${var.project}-apps-devstg-devops"
+      bucket  = "${var.project}-apps-devstg-terraform-backend"
+      key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
+    }
+    vpc-apps-prd = {
+      region  = var.region
+      profile = "${var.project}-apps-prd-devops"
+      bucket  = "${var.project}-apps-prd-terraform-backend"
+      key     = "apps-prd/network/terraform.tfstate"
+    }
+  }
 }

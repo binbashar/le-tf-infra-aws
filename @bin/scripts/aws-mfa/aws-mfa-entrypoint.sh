@@ -105,7 +105,13 @@ mkdir -p $AWS_CACHE_DIR
 # Parse all available profiles in config.tf
 set +e
 RAW_PROFILES=()
-PARSED_PROFILES=`grep -E "^\s+profile" config.tf`
+#PARSED_PROFILES=`grep -E "^\s+profile" config.tf`
+PARSED_PROFILES=`grep -v "lookup" config.tf | grep -E "^\s+profile"`
+while IFS= read -r line ; do
+    RAW_PROFILES+=(`echo $line | sed 's/ //g' | sed 's/[\"\$\{\}]//g'`)
+done <<< "$PARSED_PROFILES"
+
+PARSED_PROFILES=`grep -E "^\s+profile" locals.tf`
 while IFS= read -r line ; do
     RAW_PROFILES+=(`echo $line | sed 's/ //g' | sed 's/[\"\$\{\}]//g'`)
 done <<< "$PARSED_PROFILES"

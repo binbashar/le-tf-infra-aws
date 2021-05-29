@@ -11,7 +11,7 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.14.4"
+  required_version = ">= 0.14.11"
 
   required_providers {
     aws = "~> 3.0"
@@ -43,46 +43,60 @@ data "terraform_remote_state" "tools-vpn-server" {
 #
 # data type from output for vpc
 #
-data "terraform_remote_state" "vpc-apps-dev" {
+#data "terraform_remote_state" "vpc-apps-dev" {
+#  backend = "s3"
+#
+#  config = {
+#    region  = var.region
+#    profile = "${var.project}-apps-devstg-devops"
+#    bucket  = "${var.project}-apps-devstg-terraform-backend"
+#    key     = "apps-devstg/network/terraform.tfstate"
+#  }
+#}
+
+#data "terraform_remote_state" "vpc-apps-dev-eks" {
+#  backend = "s3"
+#
+#  config = {
+#    region  = var.region
+#    profile = "${var.project}-apps-devstg-devops"
+#    bucket  = "${var.project}-apps-devstg-terraform-backend"
+#    key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
+#  }
+#}
+
+#data "terraform_remote_state" "vpc-apps-dev-eks-demoapps" {
+#  backend = "s3"
+#
+#  config = {
+#    region  = var.region
+#    profile = "${var.project}-apps-devstg-devops"
+#    bucket  = "${var.project}-apps-devstg-terraform-backend"
+#    key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
+#  }
+#}
+
+#data "terraform_remote_state" "vpc-apps-prd" {
+#  backend = "s3"
+#
+#  config = {
+#    region  = var.region
+#    profile = "${var.project}-apps-prd-devops"
+#    bucket  = "${var.project}-apps-prd-terraform-backend"
+#    key     = "apps-prd/network/terraform.tfstate"
+#  }
+#}
+
+data "terraform_remote_state" "vpc-apps" {
+
+  for_each = local.data_vpcs
+
   backend = "s3"
 
   config = {
-    region  = var.region
-    profile = "${var.project}-apps-devstg-devops"
-    bucket  = "${var.project}-apps-devstg-terraform-backend"
-    key     = "apps-devstg/network/terraform.tfstate"
-  }
-}
-
-data "terraform_remote_state" "vpc-apps-dev-eks" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-apps-devstg-devops"
-    bucket  = "${var.project}-apps-devstg-terraform-backend"
-    key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
-  }
-}
-
-data "terraform_remote_state" "vpc-apps-dev-eks-demoapps" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-apps-devstg-devops"
-    bucket  = "${var.project}-apps-devstg-terraform-backend"
-    key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
-  }
-}
-
-data "terraform_remote_state" "vpc-apps-prd" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-apps-prd-devops"
-    bucket  = "${var.project}-apps-prd-terraform-backend"
-    key     = "apps-prd/network/terraform.tfstate"
+    region  = lookup(each.value, region)
+    profile = lookup(each.value, profile)
+    bucket  = lookup(each.value, bucket)
+    key     = lookup(each.value, key)
   }
 }
