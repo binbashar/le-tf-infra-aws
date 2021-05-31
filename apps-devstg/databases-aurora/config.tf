@@ -42,14 +42,14 @@ data "terraform_remote_state" "vpc" {
 }
 
 
-data "terraform_remote_state" "eks_vpc" {
+data "terraform_remote_state" "eks_vpc_demoapps" {
   backend = "s3"
 
   config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/k8s-eks/network/terraform.tfstate"
+    key     = "${var.environment}/k8s-eks-demoapps/network/terraform.tfstate"
   }
 }
 

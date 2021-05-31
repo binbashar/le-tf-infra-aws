@@ -1,5 +1,12 @@
+#
+# Note: for the sake of simplicity we are storing the db admin credentials
+#       under the same path of a demoapp. In other words, demoapps will use
+#       use admin credentials for talking to the db. Later on, we will have
+#       to store admin credentials under a separate path and create separate,
+#       more restrictied credentials for demoapps.
+#
 data "vault_generic_secret" "devstg_database_aurora" {
-  path = "secrets/le-tf-infra-aws/apps-devstg/databases-aurora"
+  path = "secrets/devstg/le-demo-apps/sock-shop"
 }
 
 module "demoapps" {
@@ -14,7 +21,7 @@ module "demoapps" {
   # Initial database and credentials
   database_name          = "demoapps"
   username               = "admin"
-  password               = data.vault_generic_secret.devstg_database_aurora.data["db_demoapps_admin_password"]
+  password               = data.vault_generic_secret.devstg_database_aurora.data["database-aurora"]
   create_random_password = false
 
   # VPC and Subnets
@@ -58,7 +65,7 @@ module "demoapps" {
   # Security group settings
   create_security_group = true
   allowed_cidr_blocks = [
-    data.terraform_remote_state.eks_vpc.outputs.vpc_cidr_block,
+    data.terraform_remote_state.eks_vpc_demoapps.outputs.vpc_cidr_block,
     data.terraform_remote_state.shared_vpc.outputs.vpc_cidr_block
   ]
 
