@@ -102,15 +102,16 @@ mkdir -p $AWS_CACHE_DIR
 # 1. Figure out all the AWS profiles used by Terraform
 # -----------------------------------------------------------------------------
 
-# Parse all available profiles in config.tf
+# Parse all available profiles in config.tf and locals.tf
 set +e
 RAW_PROFILES=()
-#PARSED_PROFILES=`grep -E "^\s+profile" config.tf`
+# config.tf
 PARSED_PROFILES=`grep -v "lookup" config.tf | grep -E "^\s+profile"`
 while IFS= read -r line ; do
     RAW_PROFILES+=(`echo $line | sed 's/ //g' | sed 's/[\"\$\{\}]//g'`)
 done <<< "$PARSED_PROFILES"
 
+# locals.tf
 PARSED_PROFILES=`grep -E "^\s+profile" locals.tf`
 while IFS= read -r line ; do
     RAW_PROFILES+=(`echo $line | sed 's/ //g' | sed 's/[\"\$\{\}]//g'`)

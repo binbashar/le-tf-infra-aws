@@ -2,7 +2,7 @@
 # Statics S3 Bucket + CloudFront CDN for moderncare.com
 #
 module "www_binbash_com_ar_statics" {
-  source = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=0.35.0"
+  source = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=0.69.0"
 
   # Common: bucket naming convention is "[PROJECT]-[ENV]-statics-[DOMAIN_NAME]"
   namespace = "${var.project}-${var.environment}-statics"
@@ -25,10 +25,12 @@ module "www_binbash_com_ar_statics" {
 
   # S3 settings
   origin_force_destroy     = true
+  minimum_protocol_version = "TLSv1"
   cors_allowed_origins     = ["www.${local.public_domain}", local.public_domain]
   cors_allowed_headers     = ["*"]
   cors_allowed_methods     = ["GET", "HEAD"]
   additional_bucket_policy = data.aws_iam_policy_document.additional_static_bucket_policy.json
+  versioning_enabled       = false
 
   tags = local.tags
 }
