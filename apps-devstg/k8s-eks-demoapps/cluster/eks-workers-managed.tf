@@ -40,9 +40,9 @@ module "eks_demoapps" {
   #
   node_groups = {
     main = {
-      desired_capacity = 1
+      desired_capacity = 2
       max_capacity     = 3
-      min_capacity     = 1
+      min_capacity     = 2
     }
   }
 
