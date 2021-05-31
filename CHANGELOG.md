@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.17"></a>
+## [v1.3.17] - 2021-05-31
+
+- Add data source reimplementation using for_each
+
+
 <a name="v1.3.16"></a>
 ## [v1.3.16] - 2021-05-29
 
@@ -1584,7 +1590,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.16...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.17...HEAD
+[v1.3.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.16...v1.3.17
 [v1.3.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.15...v1.3.16
 [v1.3.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.14...v1.3.15
 [v1.3.14]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.13...v1.3.14
