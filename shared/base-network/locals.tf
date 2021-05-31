@@ -29,6 +29,43 @@ locals {
 }
 
 locals {
+
+  # Fixed private inbounds
+  fixed_private_inbound = [
+    {
+      rule_number = 10 # shared pritunl vpn server
+      rule_action = "allow"
+      from_port   = 0
+      to_port     = 65535
+      protocol    = "all"
+      cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
+    },
+    {
+      rule_number = 20 # vault hvn vpc
+      rule_action = "allow"
+      from_port   = 0
+      to_port     = 65535
+      protocol    = "all"
+      cidr_block  = var.vpc_vault_hvn_cird
+    },
+  ]
+
+  # Dynamic private inbounds
+  dynamic_private_inbound = flatten([
+    for index, state in data.terraform_remote_state.vpc-apps : [
+      for i in range(length(state.outputs.private_subnets_cidr)) :
+      {
+        rule_number = 100 * (index(keys(data.terraform_remote_state.vpc-apps), index) + 1) + 10 * i # apps private subnet A,B,C
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = state.outputs.private_subnets_cidr[i]
+      }
+    ]
+  ])
+  private_inbound = concat(local.fixed_private_inbound, local.dynamic_private_inbound)
+
   network_acls = {
     #
     # Allow / Deny VPC private subnets inbound default traffic
@@ -63,120 +100,7 @@ locals {
     #
     # Allow VPC private subnets inbound traffic
     #
-    private_inbound = [
-      {
-        rule_number = 100 # shared pritunl vpn server
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
-      },
-      {
-        rule_number = 110 # apps-devstg private subnet A
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.vpc-apps-dev.outputs.private_subnets_cidr[0]
-      },
-      {
-        rule_number = 120 # apps-devstg private subnet B
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.vpc-apps-dev.outputs.private_subnets_cidr[1]
-      },
-      {
-        rule_number = 130 # apps-devstg private subnet C
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.vpc-apps-dev.outputs.private_subnets_cidr[2]
-      },
-      {
-        rule_number = 140 # apps-devstg-eks private subnet A
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.vpc-apps-dev-eks.outputs.private_subnets_cidr[0]
-      },
-      {
-        rule_number = 150 # apps-devstg-eks private subnet B
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.vpc-apps-dev-eks.outputs.private_subnets_cidr[1]
-      },
-      {
-        rule_number = 160 # apps-devstg-eks private subnet C
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.vpc-apps-dev-eks.outputs.private_subnets_cidr[2]
-      },
-      {
-        rule_number = 170 # apps-prd private subnet A
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.vpc-apps-prd.outputs.private_subnets_cidr[0]
-      },
-      {
-        rule_number = 180 # apps-prd private subnet B
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.vpc-apps-prd.outputs.private_subnets_cidr[1]
-      },
-      {
-        rule_number = 190 # apps-prd private subnet C
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.vpc-apps-prd.outputs.private_subnets_cidr[2]
-      },
-      {
-        rule_number = 200 # vault hvn vpc
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = var.vpc_vault_hvn_cird
-      },
-      {
-        rule_number = 210 # apps-devstg-eks-demoapps private subnet A
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.vpc-apps-dev-eks-demoapps.outputs.private_subnets_cidr[0]
-      },
-      {
-        rule_number = 220 # apps-devstg-eks-demoapps private subnet B
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.vpc-apps-dev-eks-demoapps.outputs.private_subnets_cidr[1]
-      },
-      {
-        rule_number = 230 # apps-devstg-eks-demoapps private subnet C
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.vpc-apps-dev-eks-demoapps.outputs.private_subnets_cidr[2]
-      },
-    ]
+    private_inbound = local.private_inbound
   }
 
   # Data source definitions
