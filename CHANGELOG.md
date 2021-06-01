@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.18"></a>
+## [v1.3.18] - 2021-06-01
+
+- Feature | Demoapps + RDS, Vault and ArgoCD integration ([#251](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/251))
+
+
 <a name="v1.3.17"></a>
 ## [v1.3.17] - 2021-05-31
 
@@ -1590,7 +1596,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.17...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.18...HEAD
+[v1.3.18]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.17...v1.3.18
 [v1.3.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.16...v1.3.17
 [v1.3.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.15...v1.3.16
 [v1.3.15]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.14...v1.3.15
