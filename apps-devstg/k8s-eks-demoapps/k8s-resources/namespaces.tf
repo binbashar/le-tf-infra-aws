@@ -56,6 +56,10 @@ resource "kubernetes_namespace" "argo_cd" {
 
     name = "argo-cd"
   }
+
+  timeouts {
+    delete = "15m"
+  }
 }
 
 resource "kubernetes_namespace" "gatus" {

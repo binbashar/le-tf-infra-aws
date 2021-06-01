@@ -201,6 +201,11 @@ variable "enable_demoapps_gmd_aws_integration" {
   default = false
 }
 
+variable "enable_demoapps_emojivoto" {
+  type    = bool
+  default = false
+}
+
 #==================================#
 # Ingress Monitor Controller (IMC) #
 #==================================#
