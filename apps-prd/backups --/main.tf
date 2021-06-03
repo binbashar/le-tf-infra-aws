@@ -1,14 +1,39 @@
-#
-# CONSIDERATION: To be considered
-# https://trello.com/c/QOZ0aIGB/55-tf-modules-aws-backup-todo-issues
-#
 module "nightly_backups" {
-  source = "github.com/binbashar/terraform-aws-backup-by-tags.git?ref=0.1.7"
-  name   = "nightly_backups"
-  tags   = local.tags
-  selection_by_tags = {
-    "Backup" = "True"
-  }
-  schedule     = "cron(0 5 * * ? *)"
-  delete_after = 21
+
+  source  = "lgallard/backup/aws"
+  version = "0.11.6"
+
+  # Plan
+  plan_name = "nightly_backups"
+
+  # Multiple rules using a list of maps
+  rules = [
+    {
+      name                     = "rule-1"
+      schedule                 = "cron(0 5 * * ? *)"
+      target_vault_name        = "default"
+      start_window             = 120
+      completion_window        = 360
+      enable_continuous_backup = true
+      lifecycle = {
+        delete_after = 21
+      }
+    }
+  ]
+
+  # Selection by tags
+  selections = [
+    {
+      name = "selection-by-tags"
+      selection_tags = [
+        {
+          type  = "STRINGEQUALS"
+          key   = "Backup"
+          value = "True"
+        }
+      ]
+    }
+  ]
+
+  tags = local.tags
 }
