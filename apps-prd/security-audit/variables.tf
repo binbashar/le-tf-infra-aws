@@ -103,5 +103,5 @@ variable "create_dashboard" {
 variable "metrics" {
   type        = any
   description = "Metrics definitions"
-  defaults    = {}
+  default     = {}
 }
