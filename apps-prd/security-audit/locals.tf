@@ -4,9 +4,11 @@ locals {
     Environment = var.environment
   }
 
+  alarm_sufix = "${var.environment}-account"
+
   metrics = [
     for metric in var.metrics : {
-      metric_name               = lookup(metric, "metric_name", null)
+      metric_name               = local.alarm_suffix != null ? join("-", tolist([lookup(metric, "metric_name", null), local.alarm_suffix])) : lookup(metric, "metric_name", null)
       filter_pattern            = lookup(metric, "filter_pattern", null)
       metric_namespace          = lookup(metric, "metric_namespace", null)
       metric_value              = lookup(metric, "metric_value", null)
