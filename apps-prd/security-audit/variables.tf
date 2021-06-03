@@ -100,3 +100,8 @@ variable "create_dashboard" {
   description = "When true a dashboard that displays the statistics as a line graph will be created in CloudWatch"
   default     = true
 }
+variable "metrics" {
+  type        = any
+  description = "Metrics definitions"
+  defaults    = {}
+}

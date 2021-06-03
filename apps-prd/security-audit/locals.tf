@@ -1,38 +1,23 @@
 locals {
-
-  metrics = [
-    {
-      metric_name               = "AuthorizationFailureCount"
-      filter_pattern            = "{ ($.errorCode = \"*UnauthorizedOperation\") || ($.errorCode = \"AccessDenied*\") }"
-      metric_namespace          = var.metric_namespace
-      metric_value              = null
-      alarm_name                = null
-      alarm_comparison_operator = null
-      alarm_evaluation_periods  = null
-      alarm_period              = "600"
-      alarm_statistic           = null
-      alarm_treat_missing_data  = null
-      alarm_threshold           = "10"
-      alarm_description         = "Alarms when an unauthorized API call is made."
-    },
-    {
-      metric_name               = "S3BucketActivityEventCount"
-      filter_pattern            = "{ ($.eventSource = s3.amazonaws.com) && (($.eventName = PutBucketAcl) || ($.eventName = PutBucketPolicy) || ($.eventName = PutBucketCors) || ($.eventName = PutBucketLifecycle) || ($.eventName = PutBucketReplication) || ($.eventName = DeleteBucketPolicy) || ($.eventName = DeleteBucketCors) || ($.eventName = DeleteBucketLifecycle) || ($.eventName = DeleteBucketReplication)) }"
-      metric_namespace          = var.metric_namespace
-      metric_value              = null
-      alarm_name                = null
-      alarm_comparison_operator = null
-      alarm_evaluation_periods  = null
-      alarm_period              = null
-      alarm_statistic           = null
-      alarm_treat_missing_data  = null
-      alarm_threshold           = null
-      alarm_description         = "Alarms when an unauthorized API call is made."
-    },
-  ]
-
   tags = {
     Terraform   = "true"
     Environment = var.environment
   }
+
+  metrics = [
+    for metric in var.metrics : {
+      metric_name               = lookup(metric, "metric_name", null)
+      filter_pattern            = lookup(metric, "filter_pattern", null)
+      metric_namespace          = lookup(metric, "metric_namespace", null)
+      metric_value              = lookup(metric, "metric_value", null)
+      alarm_name                = lookup(metric, "alarm_name", null)
+      alarm_comparison_operator = lookup(metric, "alarm_comparison_operator", null)
+      alarm_evaluation_periods  = lookup(metric, "alarm_evaluation_periods", null)
+      alarm_period              = lookup(metric, "alarm_period", null)
+      alarm_statistic           = lookup(metric, "alarm_statistic", null)
+      alarm_treat_missing_data  = lookup(metric, "alarm_treat_missing_data", null)
+      alarm_threshold           = lookup(metric, "alarm_threshold", null)
+      alarm_description         = lookup(metric, "alarm_description", null)
+    }
+  ]
 }
