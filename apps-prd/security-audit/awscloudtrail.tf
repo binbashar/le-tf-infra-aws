@@ -25,14 +25,8 @@ module "cloudtrail_api_alarms" {
   # sns_topic_arn     = data.terraform_remote_state.notifications.outputs.sns_topic_arn
   sns_topic_arn = null
 
-  # Set custom threshold to the following alarms
-  alarm_threshold = {
-    "AuthorizationFailureCount" = "10"
-  }
-  # Set custom period to the following alarms
-  alarm_period = {
-    "AuthorizationFailureCount" = "600"
-  }
+
+  metrics = local.metrics
 }
 
 #==================================================================#
