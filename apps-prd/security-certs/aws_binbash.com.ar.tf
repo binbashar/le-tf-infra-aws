@@ -31,7 +31,7 @@ resource "aws_route53_record" "cert_validation_aws_binbash_com_ar" {
   provider = aws.shared-route53
 
   for_each = {
-    for dvo in aws_acm_certificate.aws_binbash_com_ar.domain_validation_options : dvo.domain_name => {
+    for dvo in local.domain_validation_options_aws_binbash_com_ar : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
@@ -45,4 +45,22 @@ resource "aws_route53_record" "cert_validation_aws_binbash_com_ar" {
 
   zone_id = data.terraform_remote_state.dns-shared.outputs.aws_public_zone_id[0]
 
+}
+
+# Avoid duplicate cert_validation records like in domain-org and *.domain.org
+locals {
+
+  domains_aws_binbash_com_ar = aws_acm_certificate.aws_binbash_com_ar.domain_validation_options
+
+  # Get domain names as a list to be able to comapre records like domain-org to *.domain.org
+  domains_names_aws_binbash_com_ar = [
+    for domain in local.domains_aws_binbash_com_ar :
+    domain.domain_name
+  ]
+
+  # Avoid domain-org alike records
+  domain_validation_options_aws_binbash_com_ar = [
+    for domain in local.domains_aws_binbash_com_ar :
+    domain if !contains(local.domains_names_aws_binbash_com_ar, "*.${domain.domain_name}")
+  ]
 }
