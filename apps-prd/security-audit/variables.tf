@@ -100,3 +100,15 @@ variable "create_dashboard" {
   description = "When true a dashboard that displays the statistics as a line graph will be created in CloudWatch"
   default     = true
 }
+
+variable "metrics" {
+  type        = any
+  description = "Metrics definitions"
+  default     = {}
+}
+
+variable "alarm_suffix" {
+  type        = string
+  description = "Alarm name suffix. You can use it to separate different AWS account. Set to `null` to avoid adding a suffix."
+  default     = null
+}

@@ -130,3 +130,33 @@ variable "vpc_enable_dynamodb_endpoint" {
   type        = bool
   default     = true
 }
+
+variable "enable_kms_endpoint" {
+  description = "Enable KMS endpoint"
+  type        = bool
+  default     = false
+}
+
+variable "enable_kms_endpoint_private_dns" {
+  description = "Enable KMS endpoint"
+  type        = bool
+  default     = false
+}
+
+variable "manage_default_network_acl" {
+  description = "Manage default Network ACL"
+  type        = bool
+  default     = false
+}
+
+variable "public_dedicated_network_acl" {
+  description = "Manage default Network ACL"
+  type        = bool
+  default     = true
+}
+
+variable "private_dedicated_network_acl" {
+  description = "Manage default Network ACL"
+  type        = bool
+  default     = true
+}
