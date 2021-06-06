@@ -7,6 +7,40 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.19"></a>
+## [v1.3.19] - 2021-06-06
+
+- Add build.env to security-certs
+- Update AuthorizationFailureCount alarm threshold
+- Add AWS icon to slack notifications in lambda env variables
+- Update Slack channels names
+- Add implementation to avoid duplicated Route53 records for alternative domains in ACM
+- * Ugrade app-prd/security-base to TF 0.14.11 * Bump version for terraform-aws-root-login-notifications module
+- * Add alarm_suffix variable * Add security-sec sns topic * Fix cloud_watch_logs_group_arn attribute
+- Update metrics object generation
+- Remove alarm_sufix variable
+- Fix typo in  metrics definitinions variable
+- Add metrics definitinions variable
+- Change CloudWatch metrics definitions according to lastet module versions
+- * Ugrade app-prd/backups layer to TF 0.14.11 * Change to terraform-aws-backup module
+- * Ugrade app-prd/security-compliance layer to TF 0.14.11 * Bump versions for terraform-aws-logs and terraform-config modules
+- * Ugrade app-prd/ec2-fleet layer to TF 0.14.11 * Bump versions for terraform-aws-security-group and terraform-aws-instance modules
+- Ugrade app-prd/security-cert to TF 0.14.11
+- * Ugrade app-prd/security-keys to TF 0.14.11 * Bump versions for terraform-aws-kms-key module
+- * Ugrade app-prd/security-audit to TF 0.14.11 * Bump versions for terraform-aws-cloudtrail and terraform-aws-cloudtrail-cloudwatch-alarms.
+- Ugrade app-prd/cdn-s3-frontend to TF 0.14.11
+- * Ugrade app-prd/cdn-s3-frontend to TF 14 *  Bump versions for terraform-aws-cloudfront-s3-cdn nodule
+- Ugrade app-prd/security-audit layer to TF 14
+- * Ugrade app-prd/notification layer to TF 14 * Bump versions for terraform-aws-notify-slack module
+- Ugrade app-prd/cdn-s3-frontend to TF 14
+- Merge branch 'feature/tf-14' of github.com:binbashar/le-tf-infra-aws into feature/tf-14
+- Ugrade app-prd/base-tf-backend to TF 14
+- * Ugrade app-prd/base-identities to TF 14 * Bump module versions for aws-iam (user, group, role) role
+- * Upgrade app-prd/base-network to TF 14 * Bump module versions for vpc, vpc-flowlog, natgw-notifications modules * Add KMS VPC Endpoint support * Removed commented old data source definitio code
+- * Ugrade app-prd/base-identities to TF 14 * Bump module versions for aws-iam (user, group, role) role
+- * Upgrade app-prd/base-network to TF 14 * Bump module versions for vpc, vpc-flowlog, natgw-notifications modules * Add KMS VPC Endpoint support * Removed commented old data source definitio code
+
+
 <a name="v1.3.18"></a>
 ## [v1.3.18] - 2021-06-01
 
@@ -1596,7 +1630,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.18...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.19...HEAD
+[v1.3.19]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.18...v1.3.19
 [v1.3.18]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.17...v1.3.18
 [v1.3.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.16...v1.3.17
 [v1.3.16]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.15...v1.3.16
