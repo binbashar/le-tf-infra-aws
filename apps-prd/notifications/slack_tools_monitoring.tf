@@ -22,7 +22,7 @@ module "notify_slack_monitoring" {
   #
   # Slack Webhook URL + Channel
   #
-  slack_channel     = "tools-monitoring"
+  slack_channel     = "le-tools-monitoring"
   slack_username    = "aws-binbash-org"
   slack_webhook_url = data.aws_kms_ciphertext.slack_url_monitoring.ciphertext_blob
 
