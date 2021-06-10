@@ -1,6 +1,3 @@
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
-
 locals {
 
   region = var.region == null ? data.aws_region.current.name : var.region
@@ -36,6 +33,7 @@ locals {
       alarm_treat_missing_data  = lookup(metric, "alarm_treat_missing_data", local.alarm_defaults["treat_missing_data"])
     }
   }
+
   tags = {
     Terraform   = "true"
     Environment = var.environment

@@ -23,8 +23,8 @@ module "notify_slack_monitoring_sec" {
   # Slack Webhook URL + Channel
   #
   slack_channel     = "le-tools-monitoring-sec"
-  slack_emoji       = ":AWS3:"
   slack_username    = "aws-binbash-org"
+  slack_emoji       = ":AWS3:"
   slack_webhook_url = data.aws_kms_ciphertext.slack_url_monitoring_sec.ciphertext_blob
 
   kms_key_arn          = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
