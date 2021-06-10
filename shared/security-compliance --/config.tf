@@ -2,7 +2,6 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  version                 = "~> 3.2"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -12,7 +11,11 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.12.28"
+  required_version = ">= 0.14.11"
+
+  required_providers {
+    aws = "~> 3.2"
+  }
 
   backend "s3" {
     key = "shared/security-compliance/terraform.tfstate"
