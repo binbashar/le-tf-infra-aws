@@ -11,7 +11,7 @@ data "aws_kms_ciphertext" "slack_url_monitoring" {
 # Set create_with_kms_key = true
 # when providing value of kms_key_arn to create required IAM policy which allows to decrypt using specified KMS key.
 module "notify_slack_monitoring" {
-  source = "github.com/binbashar/terraform-aws-notify-slack.git?ref=v4.9.0"
+  source = "github.com/binbashar/terraform-aws-notify-slack.git?ref=v4.15.0"
 
   #
   # Creation Flags
@@ -22,8 +22,9 @@ module "notify_slack_monitoring" {
   #
   # Slack Webhook URL + Channel
   #
-  slack_channel     = "tools-monitoring"
+  slack_channel     = "le-tools-monitoring"
   slack_username    = "aws-binbash-org"
+  slack_emoji       = ":AWS3:"
   slack_webhook_url = data.aws_kms_ciphertext.slack_url_monitoring.ciphertext_blob
 
   kms_key_arn          = data.terraform_remote_state.keys.outputs.aws_kms_key_arn

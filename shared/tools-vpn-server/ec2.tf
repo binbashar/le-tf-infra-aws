@@ -2,7 +2,7 @@
 # EC2 Pritunl OpenVPN
 #
 module "terraform-aws-basic-layout" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.20"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.23"
   prefix = var.prefix
   name   = var.name
 

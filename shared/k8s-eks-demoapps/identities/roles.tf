@@ -2,7 +2,7 @@
 # Role: cert-manager for EKS OIDC -- Enable or update upon cluster creation.
 #
 module "role_cert_manager" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v3.8.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.1.0"
 
   create_role  = true
   role_name    = "demoapps-cert-manager"
@@ -25,7 +25,7 @@ module "role_cert_manager" {
 # Role: external-dns (private) for EKS OIDC -- Enable or update upon cluster creation.
 #
 module "role_external_dns_private" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v3.8.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.1.0"
 
   create_role  = true
   role_name    = "demoapps-external-dns-private"
@@ -48,7 +48,7 @@ module "role_external_dns_private" {
 # Role: external-dns (public) for EKS OIDC -- Enable or update upon cluster creation.
 #
 module "role_external_dns_public" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v3.8.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.1.0"
 
   create_role  = true
   role_name    = "demoapps-external-dns-public"
@@ -71,7 +71,7 @@ module "role_external_dns_public" {
 # Role: aws-es-proxy
 #
 module "role_aws_es_proxy" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v3.8.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.1.0"
 
   create_role  = true
   role_name    = "demoapps-aws-es-proxy"

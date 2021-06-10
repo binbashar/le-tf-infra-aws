@@ -7,7 +7,7 @@
 # Stop
 #
 module "schedule_ec2_stop_daily_midnight" {
-  source = "github.com/binbashar/terraform-aws-lambda-scheduler-stop-start?ref=3.1.0"
+  source = "github.com/binbashar/terraform-aws-lambda-scheduler-stop-start?ref=3.1.3"
   name   = "${var.project}-${var.environment}-schedule-stop-ec2"
 
   # Define the aws cloudwatch event rule schedule expression,
@@ -36,7 +36,7 @@ module "schedule_ec2_stop_daily_midnight" {
 # Start
 #
 module "schedule_ec2_start_daily_morning" {
-  source = "github.com/binbashar/terraform-aws-lambda-scheduler-stop-start?ref=3.1.0"
+  source = "github.com/binbashar/terraform-aws-lambda-scheduler-stop-start?ref=3.1.3"
   name   = "${var.project}-${var.environment}-schedule-start-ec2"
 
   # Define the aws cloudwatch event rule schedule expression,

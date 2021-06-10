@@ -25,17 +25,12 @@ terraform {
 #=============================#
 # Data sources                #
 #=============================#
-data "terraform_remote_state" "keys" {
-  backend = "s3"
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
-  config = {
-    region  = var.region
-    profile = var.profile
-    bucket  = var.bucket
-    key     = "${var.environment}/security-keys/terraform.tfstate"
-  }
-}
-
+#
+# data type from output for notifications
+#
 data "terraform_remote_state" "notifications" {
   backend = "s3"
 
@@ -44,6 +39,17 @@ data "terraform_remote_state" "notifications" {
     profile = var.profile
     bucket  = var.bucket
     key     = "${var.environment}/notifications/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "keys" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/security-keys/terraform.tfstate"
   }
 }
 

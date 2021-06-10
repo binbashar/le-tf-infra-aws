@@ -1,6 +1,6 @@
 locals {
   default_lifecycle_policy_rules = [
-    "${module.ecr_lifecycle_rule_default_policy_bycount.policy_rule}",
+    module.ecr_lifecycle_rule_default_policy_bycount.policy_rule,
   ]
 
   #
