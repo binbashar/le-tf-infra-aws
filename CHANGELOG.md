@@ -7,6 +7,32 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.20"></a>
+## [v1.3.20] - 2021-06-10
+
+- Upgrade shared/tools-vpn-server and shared/tools-vault layers to TF 0.14.11
+- Upgrade shared/tools-vault to TF 0.14.11
+- Upgrade shared/tools-prometheus to TF 0.14.11
+- Upgrade shared/tools-managedeskibana to TF 0.14.11
+- Upgrade shared/tools-jenkins to TF 0.14.11
+- Upgrade shared/tools-github_selfhosted_runners to TF 0.14.11
+- Upgrade shared/tools-eskibana to TF 0.14.11
+- Upgrade shared/tools-cloud-scheduler-stop-start to TF 0.14.11
+- Upgrade shared/tools-cloud-scheduler-stop-start to TF 0.14.11
+- Upgrade shared/storage to TF 0.14.11
+- Upgrade shared/security-keys-dr to TF 0.14.11
+- Upgrade shared/security-compliance to TF 0.14.11
+- Upgrade shared/security-base to TF 0.14.11
+- Upgrade shared/security-audit to TF 0.14.11
+- Upgrade shared/k8s-eks-demoapps/identities layer to TF 0.14.11
+- Upgrade shared/k8s-eks/identities layer to TF 0.14.11
+- * Upgrade shared/container-registry layer to TF 0.14.11 * Upgrade shared/ec2-fleet layer to TF 0.14.11
+- * Upgrade shared/base-dns to TF 0.14.11 * Add eks-demoapps VPC to Route 53 private zone
+- Upgrade shared/backups to TF 0.14.11
+- Upgrade shared/base-f-backend to TF 0.14.11
+- Upgrade shared/base-identities to TF 0.14.11
+
+
 <a name="v1.3.19"></a>
 ## [v1.3.19] - 2021-06-06
 
@@ -1630,7 +1656,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.19...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.20...HEAD
+[v1.3.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.19...v1.3.20
 [v1.3.19]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.18...v1.3.19
 [v1.3.18]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.17...v1.3.18
 [v1.3.17]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.16...v1.3.17
