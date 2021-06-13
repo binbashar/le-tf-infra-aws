@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.21"></a>
+## [v1.3.21] - 2021-06-13
+
+- Fix Terraform version ([#262](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/262))
+
+
 <a name="v1.3.20"></a>
 ## [v1.3.20] - 2021-06-10
 
@@ -1656,7 +1662,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.20...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.21...HEAD
+[v1.3.21]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.20...v1.3.21
 [v1.3.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.19...v1.3.20
 [v1.3.19]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.18...v1.3.19
 [v1.3.18]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.17...v1.3.18
