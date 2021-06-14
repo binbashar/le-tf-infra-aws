@@ -7,6 +7,21 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.23"></a>
+## [v1.3.23] - 2021-06-14
+
+- Upgrade security/security-monitoring-dr to TF 0.14.11
+- Upgrade security/security-monitoring to TF 0.14.11
+- Upgrade security/security-keys to TF 0.14.11
+- Upgrade security/security-compliance to TF 0.14.11
+- Upgrade security/security-base to TF 0.14.11
+- Upgrade security/security-audit to TF 0.14.11
+- Fix metric name suffix in app-prd
+- Fix metric name suffix in shared
+- Fix alarm name suffix in app-prd
+- Upgrade security/base-identities to TF 0.14.11
+
+
 <a name="v1.3.22"></a>
 ## [v1.3.22] - 2021-06-13
 
@@ -1668,7 +1683,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.22...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.23...HEAD
+[v1.3.23]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.22...v1.3.23
 [v1.3.22]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.21...v1.3.22
 [v1.3.21]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.20...v1.3.21
 [v1.3.20]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.19...v1.3.20
