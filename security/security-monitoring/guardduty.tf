@@ -6,7 +6,7 @@
 # https://github.com/terraform-providers/terraform-provider-aws/issues/14607
 #
 module "guardduty" {
-  source = "github.com/binbashar/terraform-aws-guardduty-multiaccount.git//modules/multiaccount-setup?ref=v0.0.3"
+  source = "github.com/binbashar/terraform-aws-guardduty-multiaccount.git//modules/multiaccount-setup?ref=v0.0.7"
 
   guarduty_enabled                           = true
   guardduty_organization_members_auto_enable = false

@@ -14,8 +14,7 @@ module "cloudtrail" {
 }
 
 module "cloudtrail_api_alarms" {
-  source = "github.com/binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=0.13.0"
-
+  source            = "github.com/binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=0.13.0"
   log_group_region  = var.region
   log_group_name    = aws_cloudwatch_log_group.cloudtrail.name
   metric_namespace  = var.metric_namespace

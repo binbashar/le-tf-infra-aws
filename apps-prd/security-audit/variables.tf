@@ -106,9 +106,3 @@ variable "metrics" {
   description = "Metrics definitions"
   default     = {}
 }
-
-variable "alarm_suffix" {
-  type        = string
-  description = "Alarm name suffix. You can use it to separate different AWS account. Set to `null` to avoid adding a suffix."
-  default     = null
-}
