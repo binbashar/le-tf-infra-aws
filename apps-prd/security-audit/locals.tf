@@ -2,7 +2,7 @@ locals {
 
   region = var.region == null ? data.aws_region.current.name : var.region
 
-  alarm_suffix = null
+  alarm_suffix = "${var.environment}-account"
 
   alarm_defaults = {
     period              = 300 // 5 min
@@ -19,7 +19,7 @@ locals {
       filter_pattern            = lookup(metric, "filter_pattern", null)
       metric_namespace          = var.metric_namespace != null ? var.metric_namespace : lookup(metric, "metric_namespace", null)
       metric_value              = lookup(metric, "metric_value", null)
-      alarm_name                = local.alarm_suffix != null ? join("-", tolist([lookup(metric, "metric_name", null), "alarm".local.alarm_suffix])) : "${lookup(metric, "metric_name", null)}-alarm"
+      alarm_name                = local.alarm_suffix != null ? join("-", tolist([lookup(metric, "metric_name", null), local.alarm_suffix, "alarm"])) : "${lookup(metric, "metric_name", null)}-alarm"
       alarm_comparison_operator = lookup(metric, "alarm_comparison_operator", null)
       alarm_evaluation_periods  = lookup(metric, "alarm_evaluation_periods", null)
       alarm_period              = lookup(metric, "alarm_period", local.alarm_defaults["period"])
