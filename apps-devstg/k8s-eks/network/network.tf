@@ -2,7 +2,7 @@
 # EKS VPC
 #
 module "vpc-eks" {
-  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v2.71.0"
+  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.1.0"
 
   name = local.vpc_name
   cidr = local.vpc_cidr_block
@@ -11,13 +11,10 @@ module "vpc-eks" {
   private_subnets = local.private_subnets
   public_subnets  = local.public_subnets
 
-  enable_nat_gateway       = var.vpc_enable_nat_gateway
-  single_nat_gateway       = var.vpc_single_nat_gateway
-  enable_dns_hostnames     = var.vpc_enable_dns_hostnames
-  enable_vpn_gateway       = var.vpc_enable_vpn_gateway
-  enable_s3_endpoint       = var.vpc_enable_s3_endpoint
-  enable_dynamodb_endpoint = var.vpc_enable_dynamodb_endpoint
-
+  enable_nat_gateway   = var.vpc_enable_nat_gateway
+  single_nat_gateway   = var.vpc_single_nat_gateway
+  enable_dns_hostnames = var.vpc_enable_dns_hostnames
+  enable_vpn_gateway   = var.vpc_enable_vpn_gateway
 
   # Use a custom network ACL rules for private and public subnets
   manage_default_network_acl    = false
@@ -31,4 +28,24 @@ module "vpc-eks" {
   public_subnet_tags  = local.public_subnet_tags
   private_subnet_tags = local.private_subnet_tags
   tags                = local.tags
+}
+
+
+# VPC Endpoints
+module "vpc_endpoints" {
+  source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.1.0"
+
+  for_each = var.vpc_endpoints
+
+  vpc_id = module.vpc-eks.vpc_id
+
+  endpoints = {
+    endpoint = merge(each.value,
+      {
+        route_table_ids = concat(module.vpc-eks.private_route_table_ids, module.vpc-eks.public_route_table_ids)
+      }
+    )
+  }
+
+  tags = local.tags
 }
