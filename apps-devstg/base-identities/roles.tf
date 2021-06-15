@@ -193,6 +193,9 @@ module "iam_assumable_role_grafana" {
 module "iam_assumable_role_velero" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.1.0"
 
+  # Check if outout exists
+  count = try(data.terraform_remote_state.cluster-eks.outputs.cluster_oidc_issuer_url, null) != null ? 1 : 0
+
   create_role = true
   role_name   = "velero-backups"
   role_path   = "/"
