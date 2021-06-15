@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.24"></a>
+## [v1.3.24] - 2021-06-15
+
+- Add HPA and Cluster Autoscaler to DemoApps ([#265](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/265))
+
+
 <a name="v1.3.23"></a>
 ## [v1.3.23] - 2021-06-14
 
@@ -1683,7 +1689,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.23...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.24...HEAD
+[v1.3.24]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.23...v1.3.24
 [v1.3.23]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.22...v1.3.23
 [v1.3.22]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.21...v1.3.22
 [v1.3.21]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.20...v1.3.21
