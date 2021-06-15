@@ -2,7 +2,7 @@
 # Account Resources
 #
 module "aws_iam_account_config" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-account?ref=v2.20.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-account?ref=v4.1.0"
 
   // If IAM account alias was previously set (either via AWS console or during the creation of an account from AWS
   // Organizations) you will see this error:
@@ -18,7 +18,7 @@ module "aws_iam_account_config" {
   require_lowercase_characters   = true
   require_symbols                = true
   require_uppercase_characters   = true
-  password_reuse_prevention      = 5
+  password_reuse_prevention      = 12
   allow_users_to_change_password = true
 }
 
