@@ -2,7 +2,7 @@
 # Account Resources
 #
 module "aws_iam_account_config" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-account?ref=v3.8.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-account?ref=v4.1.0"
 
   // If IAM account alias was previously set (either via AWS console or during the creation of an account from AWS
   // Organizations) you will see this error:
