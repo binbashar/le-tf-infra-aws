@@ -12,8 +12,8 @@ provider "vault" {
 
   /*
   Vault token that will be used by Terraform to authenticate.
-  admin token from https://portal.cloud.hashicorp.com/.
-  */
+ admin token from https://portal.cloud.hashicorp.com/.
+ */
   token = var.vault_token
 }
 
@@ -21,7 +21,7 @@ provider "vault" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.14.4"
+  required_version = ">= 0.14.11"
 
   required_providers {
     aws   = "~> 3.2"
