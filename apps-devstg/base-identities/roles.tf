@@ -202,6 +202,7 @@ module "iam_assumable_role_velero" {
 
   provider_urls = [
     replace(data.terraform_remote_state.cluster-eks.outputs.cluster_oidc_issuer_url, "https://", ""),
+    replace(data.terraform_remote_state.cluster-eks-demoapps.outputs.cluster_oidc_issuer_url, "https://", ""),
   ]
 
   #
