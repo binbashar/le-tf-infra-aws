@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.25"></a>
+## [v1.3.25] - 2021-06-15
+
+- BBL-192 | Upgrading root/base-identities to tf-0.14.11 + adding new user to root account
+
+
 <a name="v1.3.24"></a>
 ## [v1.3.24] - 2021-06-15
 
@@ -1689,7 +1695,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.24...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.25...HEAD
+[v1.3.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.24...v1.3.25
 [v1.3.24]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.23...v1.3.24
 [v1.3.23]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.22...v1.3.23
 [v1.3.22]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.21...v1.3.22
