@@ -40,9 +40,9 @@ module "eks_demoapps" {
   #
   node_groups = {
     main = {
-      desired_capacity = 2
+      desired_capacity = 1
       max_capacity     = 3
-      min_capacity     = 2
+      min_capacity     = 1
     }
   }
 
@@ -87,5 +87,8 @@ module "eks_demoapps" {
   #
   # Tags
   #
-  tags = local.tags
+  tags = merge(local.tags,
+    map("k8s.io/cluster-autoscaler/enabled", "TRUE"),
+    map("k8s.io/cluster-autoscaler/${data.terraform_remote_state.shared-eks-demoapps-vpc.outputs.cluster_name}", "owned")
+  )
 }

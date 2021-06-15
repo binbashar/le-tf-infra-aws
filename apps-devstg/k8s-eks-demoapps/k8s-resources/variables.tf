@@ -146,7 +146,17 @@ variable "enable_kubernetes_dashboard" {
   default = false
 }
 
-variable "enable_scaling" {
+variable "enable_hpa_scaling" {
+  type    = bool
+  default = false
+}
+
+variable "enable_vpa_scaling" {
+  type    = bool
+  default = false
+}
+
+variable "enable_cluster_autoscaling" {
   type    = bool
   default = false
 }

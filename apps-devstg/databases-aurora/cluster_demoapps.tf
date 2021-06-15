@@ -5,8 +5,8 @@
 #       to store admin credentials under a separate path and create separate,
 #       more restrictied credentials for demoapps.
 #
-data "vault_generic_secret" "devstg_database_aurora" {
-  path = "secrets/devstg/le-demo-apps/sock-shop"
+data "vault_generic_secret" "databases_aurora" {
+  path = "secrets/le-tf-infra-aws/apps-devstg/databases-aurora"
 }
 
 module "demoapps" {
@@ -21,7 +21,7 @@ module "demoapps" {
   # Initial database and credentials
   database_name          = "demoapps"
   username               = "admin"
-  password               = data.vault_generic_secret.devstg_database_aurora.data["database-aurora"]
+  password               = data.vault_generic_secret.databases_aurora.data["administrator_password"]
   create_random_password = false
 
   # VPC and Subnets
