@@ -21,7 +21,7 @@ provider "helm" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.14.4"
+  required_version = ">= 0.14.11"
 
   required_providers {
     helm       = "~> 2.1.0"
