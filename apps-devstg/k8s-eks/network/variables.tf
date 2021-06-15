@@ -153,5 +153,14 @@ variable "vpc_enable_vpn_gateway" {
 variable "vpc_endpoints" {
   description = "VPC endpoints"
   type        = any
-  default     = {}
+  default = {
+    s3 = {
+      service      = "s3"
+      service_type = "Gateway"
+    }
+    dynamodb = {
+      service      = "dynamodb"
+      service_type = "Gateway"
+    }
+  }
 }
