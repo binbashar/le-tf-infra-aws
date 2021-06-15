@@ -1,0 +1,25 @@
+# AWS Region (if using auto-discovery feature)
+awsRegion: ${aws_region}
+
+# -----------------------------------------------------------------------------
+# Enable auto-discovery of tagged-instances
+# By default ASGs need to match:
+#   - k8s.io/cluster-autoscaler/enabled
+#   - k8s.io/cluster-autoscaler/<YOUR CLUSTER NAME>
+# -----------------------------------------------------------------------------
+autoDiscovery:
+  clusterName: ${cluster_name}
+
+# -----------------------------------------------------------------------------
+# Use the following if you want to specify your ASGs explicitly
+# -----------------------------------------------------------------------------
+# autoscalingGroups:
+#   - name: your-asg-name
+#     maxSize: 10
+#     minSize: 1
+
+# We'll use a feature of EKS called IAM roles for service accounts
+rbac:
+  serviceAccount:
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::523857393444:role/demoapps-cluster-autoscaler
