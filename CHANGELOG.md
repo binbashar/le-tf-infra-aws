@@ -7,6 +7,39 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.26"></a>
+## [v1.3.26] - 2021-06-16
+
+- Change Terraform module sources to point to binbash repos
+- Upgrade apps-devstg/k8s-eks-demoapps TF 0.14.11
+- Upgrade apps-devstg/tools-cloud-nuke TF 0.14.11
+- Upgrade /apps-devstg/storage TF 0.14.11
+- Upgrade apps-devstg/security-keys-dr TF 0.14.11
+- Upgrade apps-devstg/security-keys TF 0.14.11
+- Upgrade apps-devstg/security-firewall TF 0.14.11
+- Upgrade apps-devstg/security-compliance TF 0.14.11
+- Upgrade apps-devstg/security-certs TF 0.14.11
+- Upgrade apps-devstg/security-base  TF 0.14.11
+- Upgrade apps-devstg/security-audit TF 0.14.11
+- Upgrade apps-devstg/notifications  TF 0.14.11
+- Upgrade apps-devstg/k8s-kind/k8s-resources TF 0.14.11
+- Upgrade apps-devstg/ec2-fleet-ansible to TF 0.14.11
+- Upgrade apps-devstg/databases-pgsql to TF 0.14.11
+- Upgrade apps-devstg/databases-mysql to TF 0.14.11
+- Upgrade apps-devstg/base-identities to TF 0.14.11
+- Upgrade apps-devstg/base-tf-backend to TF 0.14.11
+- Upgrade apps-devstg/k8s-eks/network to TF 0.14.11
+- Upgrade apps-devstg/base-identities to TF 0.14.11
+- Upgrade apps-devstg/base-identities to TF 0.14.11
+- Upgrade apps-devstg/base-identities to TF 0.14.11
+- Upgrade apps-devstg/k8s-eks/k8s-resources to TF 0.14.11
+- Upgrade apps-devstg/k8s-eks/clusters to TF 0.14.11
+- Upgrade apps-devstg/k8s-eks/network to TF 0.14.11
+- Upgrade apps-devstg/k8s-eks/network to TF 0.14.11
+- Upgrade apps-devstg/base-certificates to TF 0.14.11
+- Upgrade apps-devstg/backups to TF 0.14.11
+
+
 <a name="v1.3.25"></a>
 ## [v1.3.25] - 2021-06-15
 
@@ -1695,7 +1728,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.25...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.26...HEAD
+[v1.3.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.25...v1.3.26
 [v1.3.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.24...v1.3.25
 [v1.3.24]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.23...v1.3.24
 [v1.3.23]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.22...v1.3.23
