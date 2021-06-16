@@ -16,6 +16,15 @@ resource "aws_organizations_organizational_unit" "shared" {
 }
 
 #
+# Networks: this is for networks access
+#
+resource "aws_organizations_organizational_unit" "networks" {
+  name      = "networks"
+  parent_id = aws_organizations_organization.main.roots.0.id
+}
+
+
+#
 # Apps DevStg: this is for applications and services under your Project.
 #
 resource "aws_organizations_organizational_unit" "bbl_apps_devstg" {

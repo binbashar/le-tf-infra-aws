@@ -76,6 +76,11 @@ variable "shared_account_id" {
   description = "Account: Shared Resources"
 }
 
+variable "networks_account_id" {
+  type        = string
+  description = "Account: Networks Resources"
+}
+
 variable "appsdevstg_account_id" {
   type        = string
   description = "Account: Dev Modules & Libs"

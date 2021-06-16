@@ -15,6 +15,14 @@ resource "aws_organizations_policy_attachment" "shared" {
 }
 
 #
+# Networks Organizational Unit Policies
+#
+resource "aws_organizations_policy_attachment" "networks" {
+  policy_id = aws_organizations_policy.default.id
+  target_id = aws_organizations_organizational_unit.networks.id
+}
+
+#
 # Project Organizational Unit Policies (should cover devstg)
 #
 resource "aws_organizations_policy_attachment" "apps_devstg" {
