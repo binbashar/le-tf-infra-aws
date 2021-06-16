@@ -1,7 +1,5 @@
 module "nightly_backups" {
-
-  source  = "lgallard/backup/aws"
-  version = "0.11.6"
+  source = "github.com/binbashar/terraform-aws-backup.git?ref=0.11.6"
 
   # Plan
   plan_name = "nightly_backups"
