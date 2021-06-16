@@ -2,7 +2,7 @@
 # Pre-req: Logs bucket
 #
 module "log_bucket_demo_files" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v1.13.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v2.4.0"
 
   bucket        = "${local.bucket_name}-logs"
   acl           = "log-delivery-write"
@@ -64,7 +64,7 @@ module "log_bucket_demo_files" {
 # S3 Bucket Module Instantiation        #
 #=======================================#
 module "s3_bucket_demo_files" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v1.13.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v2.4.0"
 
   bucket        = local.bucket_name
   acl           = "private"
@@ -105,7 +105,7 @@ module "s3_bucket_demo_files" {
   }
 
   logging = {
-    target_bucket = module.log_bucket_demo_files.this_s3_bucket_id
+    target_bucket = module.log_bucket_demo_files.s3_bucket_id
     target_prefix = "logs/"
   }
 
@@ -180,7 +180,7 @@ module "s3_bucket_demo_files" {
 # S3 Bucket Module Instantiation Replica #
 #========================================#
 module "s3_bucket_demo_files_replica" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v1.13.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v2.4.0"
 
   providers = {
     aws = aws.secondary_region
@@ -245,7 +245,3 @@ module "s3_bucket_demo_files_replica" {
 
   tags = local.tags
 }
-
-
-
-

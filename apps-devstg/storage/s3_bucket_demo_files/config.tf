@@ -2,7 +2,6 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  version                 = "~> 3.0"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
@@ -10,7 +9,6 @@ provider "aws" {
 
 provider "aws" {
   alias                   = "secondary_region"
-  version                 = "~> 3.0"
   region                  = var.region_secondary
   profile                 = var.profile
   shared_credentials_file = "~/.aws/bb/config"
@@ -20,7 +18,11 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.13.2"
+  required_version = ">= 0.14.11"
+
+  required_providers {
+    aws = "~> 3.2"
+  }
 
   backend "s3" {
     key = "apps-devstg/storage-bucket-demo-files/terraform.tfstate"
