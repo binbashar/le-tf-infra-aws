@@ -1,5 +1,5 @@
 module "eks_demoapps" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v14.0.0"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v17.1.0"
 
   create_eks      = true
   cluster_name    = data.terraform_remote_state.shared-eks-demoapps-vpc.outputs.cluster_name
@@ -51,7 +51,7 @@ module "eks_demoapps" {
   #
   kubeconfig_name                              = var.kubeconfig_name
   write_kubeconfig                             = var.write_kubeconfig
-  config_output_path                           = var.config_output_path
+  kubeconfig_output_path                       = var.config_output_path
   kubeconfig_aws_authenticator_additional_args = ["--cache"]
   kubeconfig_aws_authenticator_env_variables = {
     AWS_PROFILE = var.profile,

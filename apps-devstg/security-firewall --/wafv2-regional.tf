@@ -2,7 +2,7 @@
 # Create a WAF v2 for EKS' ALB
 #
 module "wafv2_regional_alb" {
-  source = "github.com/binbashar/terraform-aws-waf-webaclv2.git?ref=1.5.1"
+  source = "github.com/binbashar/terraform-aws-waf-webaclv2.git?ref=3.0.1"
 
   name_prefix = "${var.environment}-wafv2-albs"
   scope       = "REGIONAL"
