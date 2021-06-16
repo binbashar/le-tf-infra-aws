@@ -14,7 +14,7 @@ resource "aws_s3_account_public_access_block" "main" {
 }
 
 module "root-login-notifications" {
-  source = "github.com/binbashar/terraform-aws-root-login-notifications.git?ref=v2.1.1"
+  source = "github.com/binbashar/terraform-aws-root-login-notifications.git?ref=v2.3.0"
 
   alarm_suffix = "${var.environment}-account"
   send_sns     = true
