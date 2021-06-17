@@ -30,7 +30,6 @@ module "vpc-eks" {
   tags                = local.tags
 }
 
-
 # VPC Endpoints
 module "vpc_endpoints" {
   source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.1.0"
