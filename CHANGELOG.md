@@ -7,6 +7,25 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.28"></a>
+## [v1.3.28] - 2021-06-17
+
+- Upgrade root/organizations to TF 0.14.11
+- Upgrade root/organizations to TF 0.14.11
+- Upgrade root/organizations TF 0.14.11
+- Upgrade root/security-monitoring-dr to TF 0.14.11
+- Upgrade root/security-monitoring to TF 0.14.11
+- Upgrade root/security-keys to TF 0.14.11
+- Upgrade root/security-base to TF 0.14.11
+- Upgrade root/security-compliance to TF 0.14.11
+- Upgrade root/security-audit to TF 0.14.11
+- Upgrade root/organizations to TF 0.14.11
+- Upgrade root/notifications to TF 0.14.11
+- Upgrade root/cost-mgmt to TF 0.14.11
+- Upgrade base-tf-backend to TF 0.14.11
+- Upgrade root/backups to TF 0.14.11
+
+
 <a name="v1.3.27"></a>
 ## [v1.3.27] - 2021-06-17
 
@@ -1734,7 +1753,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.27...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.28...HEAD
+[v1.3.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.27...v1.3.28
 [v1.3.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.26...v1.3.27
 [v1.3.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.25...v1.3.26
 [v1.3.25]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.24...v1.3.25
