@@ -31,3 +31,22 @@ module "vpc-eks" {
   private_subnet_tags = local.private_subnet_tags
   tags                = local.tags
 }
+
+# VPC Endpoints
+module "vpc_endpoints" {
+  source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.1.0"
+
+  for_each = var.vpc_endpoints
+
+  vpc_id = module.vpc-eks.vpc_id
+
+  endpoints = {
+    endpoint = merge(each.value,
+      {
+        route_table_ids = concat(module.vpc-eks.private_route_table_ids, module.vpc-eks.public_route_table_ids)
+      }
+    )
+  }
+
+  tags = local.tags
+}
