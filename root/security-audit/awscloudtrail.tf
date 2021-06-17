@@ -1,5 +1,5 @@
 module "cloudtrail" {
-  source                        = "github.com/binbashar/terraform-aws-cloudtrail.git?ref=0.14.0"
+  source                        = "github.com/binbashar/terraform-aws-cloudtrail.git?ref=0.20.0"
   namespace                     = var.project
   stage                         = var.environment
   name                          = "cloudtrail-org"
@@ -8,30 +8,21 @@ module "cloudtrail" {
   include_global_service_events = "true"
   is_multi_region_trail         = "true"
   s3_bucket_name                = data.terraform_remote_state.security_audit.outputs.bucket_id
-  cloud_watch_logs_group_arn    = aws_cloudwatch_log_group.cloudtrail.arn
+  cloud_watch_logs_group_arn    = "${aws_cloudwatch_log_group.cloudtrail.arn}:*"
   cloud_watch_logs_role_arn     = aws_iam_role.cloudtrail_cloudwatch_events.arn
   kms_key_arn                   = data.terraform_remote_state.security_keys.outputs.aws_kms_key_arn
 }
 
 module "cloudtrail_api_alarms" {
-  source = "github.com/binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=v0.5.3"
+  source            = "github.com/binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=0.13.0"
+  log_group_region  = var.region
+  log_group_name    = aws_cloudwatch_log_group.cloudtrail.name
+  metric_namespace  = var.metric_namespace
+  dashboard_enabled = var.create_dashboard
 
-  region           = var.region
-  log_group_name   = aws_cloudwatch_log_group.cloudtrail.name
-  alarm_suffix     = "${var.environment}-account"
-  metric_namespace = var.metric_namespace
-  create_dashboard = var.create_dashboard
   # Uncomment if /notifications SNS is configured and you want to send notifications via slack
-  sns_topic_arn = data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring_sec # null (to deactivate)
-
-  # Set custom threshold to the following alarms
-  alarm_threshold = {
-    "AuthorizationFailureCount" = "10"
-  }
-  # Set custom period to the following alarms
-  alarm_period = {
-    "AuthorizationFailureCount" = "600"
-  }
+  sns_topic_arn = data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring_sec
+  metrics       = local.metrics
 }
 
 #==================================================================#

@@ -28,6 +28,16 @@ resource "aws_organizations_account" "shared" {
 }
 
 #
+# Networks: this account will be used to host network resources that are consumed
+#  or provide services to the other accounts.
+#
+resource "aws_organizations_account" "network" {
+  name      = "binbash-aws-net"
+  email     = "binbash-aws-net@binbash.com.ar"
+  parent_id = aws_organizations_organizational_unit.network.id
+}
+
+#
 # Project DevStg: services and resources related to development/stage are
 #  placed and maintained here.
 #
