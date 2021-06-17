@@ -17,9 +17,9 @@ resource "aws_organizations_policy_attachment" "shared" {
 #
 # Networks Organizational Unit Policies
 #
-resource "aws_organizations_policy_attachment" "networks" {
+resource "aws_organizations_policy_attachment" "network" {
   policy_id = aws_organizations_policy.default.id
-  target_id = aws_organizations_organizational_unit.networks.id
+  target_id = aws_organizations_organizational_unit.network.id
 }
 
 #

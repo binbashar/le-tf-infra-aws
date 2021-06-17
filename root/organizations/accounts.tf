@@ -28,10 +28,10 @@ resource "aws_organizations_account" "shared" {
 }
 
 #
-# Networks: this account will be used to host networks resources that are consumed
+# Networks: this account will be used to host network resources that are consumed
 #  or provide services to the other accounts.
 #
-resource "aws_organizations_account" "networks" {
+resource "aws_organizations_account" "network" {
   name      = "binbash-aws-net"
   email     = "binbash-aws-net@binbash.com.ar"
   parent_id = aws_organizations_organizational_unit.shared.id

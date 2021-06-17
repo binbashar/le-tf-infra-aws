@@ -16,10 +16,10 @@ resource "aws_organizations_organizational_unit" "shared" {
 }
 
 #
-# Networks: this is for networks access
+# Networks: this is for network access
 #
-resource "aws_organizations_organizational_unit" "networks" {
-  name      = "networks"
+resource "aws_organizations_organizational_unit" "network" {
+  name      = "network"
   parent_id = aws_organizations_organization.main.roots.0.id
 }
 
