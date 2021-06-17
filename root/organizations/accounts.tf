@@ -33,7 +33,7 @@ resource "aws_organizations_account" "shared" {
 #
 resource "aws_organizations_account" "networks" {
   name      = "binbash-aws-net"
-  email     = "binbash-aws-sr@binbash.com.ar"
+  email     = "binbash-aws-net@binbash.com.ar"
   parent_id = aws_organizations_organizational_unit.shared.id
 }
 
