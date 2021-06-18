@@ -14,7 +14,7 @@ resource "aws_s3_bucket" "gdrive_backup" {
   }
 
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 
   server_side_encryption_configuration {
