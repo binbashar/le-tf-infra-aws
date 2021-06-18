@@ -7,6 +7,19 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.29"></a>
+## [v1.3.29] - 2021-06-18
+
+- shared account: disabling storage/backup-gdrive layer
+- shared account: renaming storage layer adding a sub-layer for better segregation of future storage resources
+- shared account: removing deprecated Makefiles
+- security account: removing deprecated Makefiles
+- root account: removing deprecated Makefiles
+- apps-prd account: removing deprecated Makefiles
+- apps-devstg account: removing deprecated Makefiles
+- bug/[#253](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/253) | updating circleci pipeline to use tf-0.14 + removing backup job
+
+
 <a name="v1.3.28"></a>
 ## [v1.3.28] - 2021-06-17
 
@@ -1753,7 +1766,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.28...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.29...HEAD
+[v1.3.29]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.28...v1.3.29
 [v1.3.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.27...v1.3.28
 [v1.3.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.26...v1.3.27
 [v1.3.26]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.25...v1.3.26
