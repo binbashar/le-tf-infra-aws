@@ -22,7 +22,7 @@ terraform {
     aws = "~> 3.0"
   }
 
-  #backend "s3" {
-  #  key = "network/tf-backend/terraform.tfstate"
-  #}
+  backend "s3" {
+    key = "network/tf-backend/terraform.tfstate"
+  }
 }
