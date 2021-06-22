@@ -10,7 +10,7 @@ locals {
       region  = var.region
       profile = "${var.project}-shared-devops"
       bucket  = "${var.project}-shared-terraform-backend"
-      key     = "shared/shared/terraform.tfstate"
+      key     = "shared/network/terraform.tfstate"
     }
     vpc-apps-prd = {
       region  = var.region

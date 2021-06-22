@@ -16,12 +16,13 @@ module "tgw" {
   enable_vpn_ecmp_support                = lookup(var.tgw_defaults, "enable_vpn_ecmp_support", true)
   ram_allow_external_principals          = lookup(var.tgw_defaults, "ram_allow_external_principals", false)
   ram_principals                         = var.ram_principals
+  share_tgw                              = lookup(var.tgw_defaults, "share_tgw", true)
 
 
   vpc_attachments = {
-    for v in data.terraform_remote_state.vpc : vpc_id => {
-      vpc_id                                          = data.terraform_remote_state.vpcs.vpc_id          # module.vpc.vpc_id
-      subnet_ids                                      = data.terraform_remote_state.vpcs.private_subnets # module.vpc.private_subnets
+    for vpc in data.terraform_remote_state.vpcs : vpc.outputs.vpc_id => {
+      vpc_id                                          = vpc.outputs.vpc_id          # module.vpc.vpc_id
+      subnet_ids                                      = vpc.outputs.private_subnets # module.vpc.private_subnets
       dns_support                                     = lookup(var.tgw_defaults["vpc_attachments"], "dns_support", true)
       ipv6_support                                    = lookup(var.tgw_defaults["vpc_attachments"], "ipv6_support", false)
       transit_gateway_default_route_table_association = lookup(var.tgw_defaults["vpc_attachments"], "transit_gateway_default_route_table_association", false)

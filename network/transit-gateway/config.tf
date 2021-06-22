@@ -27,7 +27,7 @@ terraform {
 #=============================#
 
 # VPC remote states
-data "terraform_remote_state" "vpc" {
+data "terraform_remote_state" "vpcs" {
 
   for_each = local.data_vpcs
 

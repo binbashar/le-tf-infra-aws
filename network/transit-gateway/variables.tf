@@ -119,6 +119,7 @@ variable "tgw_defaults" {
     enable_default_route_table_propagation = true
     enable_dns_support                     = true
     ram_allow_external_principals          = true
+    share_tgw                              = true
     vpc_attachments = {
       dns_support                                     = true
       ipv6_support                                    = false
