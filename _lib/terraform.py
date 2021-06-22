@@ -52,6 +52,8 @@ docker_volumes = [
 if mfa_enabled:
     docker_volumes.append("--volume=%s/@bin/scripts:/root/scripts" % (path.get_root_path()))
     docker_volumes.append("--volume=%s/.aws/%s:/root/tmp/%s" % (path.get_home_path(), project, project))
+    if "awsvault" in docker_entrypoint:
+        docker_volumes.append("--volume=%s/.awsvault:/root/.awsvault" % path.get_home_path())
 else:
     docker_volumes.append("--volume=%s/.aws/%s:/root/.aws/%s" % (path.get_home_path(), project, project))
 
