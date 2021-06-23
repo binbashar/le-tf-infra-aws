@@ -6,12 +6,12 @@ locals {
 
   # Data source definitions
   data_vpcs = {
-    vpc-shared = {
-      region  = var.region
-      profile = "${var.project}-shared-devops"
-      bucket  = "${var.project}-shared-terraform-backend"
-      key     = "shared/network/terraform.tfstate"
-    }
+    #    vpc-shared = {
+    #  region  = var.region
+    #  profile = "${var.project}-shared-devops"
+    #  bucket  = "${var.project}-shared-terraform-backend"
+    #  key     = "shared/network/terraform.tfstate"
+    #}
     vpc-apps-prd = {
       region  = var.region
       profile = "${var.project}-apps-prd-devops"
