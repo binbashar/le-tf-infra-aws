@@ -39,10 +39,7 @@ module "bb_mysql_db" {
   # Database credentials
   name     = "${var.project}_${replace(var.environment, "apps-", "")}_binbash_mysql"
   username = "administrator"
-  #
-  # Secret from secrets.enc
-  #password = local.secrets.database_admin_password
-  #
+
   # Secret from Hashicorp Vault
   password = data.vault_generic_secret.database_secrets.data["database_admin_password"]
   port     = "3306"
