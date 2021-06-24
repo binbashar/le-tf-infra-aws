@@ -1,6 +1,3 @@
-#
-# config/backend.config
-#
 #================================#
 # Terraform AWS Backend Settings #
 #================================#
@@ -29,9 +26,6 @@ variable "encrypt" {
   description = "Enable AWS DynamoDB with server side encryption"
 }
 
-#
-# config/base.config
-#
 #=============================#
 # Project Variables           #
 #=============================#
@@ -50,9 +44,6 @@ variable "environment" {
   description = "Environment Name"
 }
 
-#
-# config/extra.config
-#
 #=============================#
 # Accounts & Extra Vars       #
 #=============================#
@@ -103,4 +94,17 @@ variable "sns_topic_name_monitoring" {
 variable "sns_topic_name_monitoring_sec" {
   description = ""
   default     = "sns-topic-slack-notify-monitoring-sec"
+}
+
+#=============================#
+# Hashicorp Vault Vars        #
+#=============================#
+variable "vault_address" {
+  type        = string
+  description = "Hashicorp vault api endpoint address"
+}
+
+variable "vault_token" {
+  type        = string
+  description = "Hashicorp vault admin token"
 }
