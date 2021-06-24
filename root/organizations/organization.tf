@@ -10,6 +10,7 @@ resource "aws_organizations_organization" "main" {
     "backup.amazonaws.com",
     "cloudtrail.amazonaws.com",
     "config.amazonaws.com",
+    "ram.amazonaws.com",
   ]
 
   # Enable all feature set to enable SCPs
