@@ -7,6 +7,16 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.30"></a>
+## [v1.3.30] - 2021-06-24
+
+- shared/tools-github-selfhosted-runners renaming layer with - and migrating secrets to vault
+- shared/base-network peering id updated
+- shared/notifications secrets migrated to vault
+- apps-devstg/databases removing secrets.enc favouring vault source secret
+- Add another MFA script that supports using aws-vault and remove build… ([#271](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/271))
+
+
 <a name="v1.3.29"></a>
 ## [v1.3.29] - 2021-06-18
 
@@ -1766,7 +1776,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.29...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.30...HEAD
+[v1.3.30]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.29...v1.3.30
 [v1.3.29]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.28...v1.3.29
 [v1.3.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.27...v1.3.28
 [v1.3.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.26...v1.3.27
