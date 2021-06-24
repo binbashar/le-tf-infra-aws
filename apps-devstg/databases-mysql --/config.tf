@@ -1,12 +1,15 @@
-#
-# Providers
-#
+#=============================#
+# AWS Provider Settings       #
+#=============================#
 provider "aws" {
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
+#=============================#
+# Vault Provider Settings     #
+#=============================#
 provider "vault" {
   address = var.vault_address
 
@@ -17,9 +20,9 @@ provider "vault" {
   token = var.vault_token
 }
 
-#
-# Backend Config (partial)
-#
+#=============================#
+# Backend Config (partial)    #
+#=============================#
 terraform {
   required_version = ">= 0.14.11"
 
@@ -33,6 +36,9 @@ terraform {
   }
 }
 
+#=============================#
+# Data sources                #
+#=============================#
 data "terraform_remote_state" "vpc" {
   backend = "s3"
 
