@@ -23,7 +23,7 @@ resource "aws_route" "priv_route_table_1_to_vault_hvn_vpc" {
 
   route_table_id            = element(module.vpc.private_route_table_ids, 0)
   destination_cidr_block    = var.vpc_vault_hvn_cird
-  vpc_peering_connection_id = var.vpc_vault_hvn_peering_connection_id
+  vpc_peering_connection_id = aws_vpc_peering_connection_accepter.with_vault_hvn[0].id
 }
 
 resource "aws_route" "pub_route_table_1_to_vault_hvn_vpc" {
@@ -31,5 +31,5 @@ resource "aws_route" "pub_route_table_1_to_vault_hvn_vpc" {
 
   route_table_id            = element(module.vpc.public_route_table_ids, 0)
   destination_cidr_block    = var.vpc_vault_hvn_cird
-  vpc_peering_connection_id = var.vpc_vault_hvn_peering_connection_id
+  vpc_peering_connection_id = aws_vpc_peering_connection_accepter.with_vault_hvn[0].id
 }
