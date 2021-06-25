@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.31"></a>
+## [v1.3.31] - 2021-06-25
+
+- Fix peerings with HCP Vault ([#273](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/273))
+
+
 <a name="v1.3.30"></a>
 ## [v1.3.30] - 2021-06-24
 
@@ -1776,7 +1782,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.30...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.31...HEAD
+[v1.3.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.30...v1.3.31
 [v1.3.30]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.29...v1.3.30
 [v1.3.29]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.28...v1.3.29
 [v1.3.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.27...v1.3.28
