@@ -8,6 +8,13 @@ provider "aws" {
 }
 
 provider "aws" {
+  alias                   = "network"
+  region                  = var.region
+  profile                 = var.profile
+  shared_credentials_file = "~/.aws/${var.project}/config"
+}
+
+provider "aws" {
   alias                   = "shared"
   region                  = var.region
   profile                 = "${var.project}-shared-devops"
