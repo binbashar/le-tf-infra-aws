@@ -1,44 +1,80 @@
-#
-# Transit Gateway
-#
-module "tgw" {
-  source = "github.com/binbashar/terraform-aws-transit-gateway.git?ref=v2.4.0"
+module "transit_gateway" {
+  source  = "cloudposse/transit-gateway/aws"
+  version = "0.4.0"
 
-  # Enable TGW
-  create_tgw = var.enable_tgw
+  name = "${var.project_long}-tgw"
 
-  name                                   = "${var.project_long}-tgw"
-  description                            = "TGW shared with several other AWS accounts"
-  enable_auto_accept_shared_attachments  = lookup(var.tgw_defaults, "enable_auto_accept_shared_attachments", true) # When "true" there is no need for RAM resources if using multiple AWS accounts
-  enable_default_route_table_association = lookup(var.tgw_defaults, "enable_default_route_table_association", true)
-  enable_default_route_table_propagation = lookup(var.tgw_defaults, "enable_default_route_table_propagation", true)
-  enable_dns_support                     = lookup(var.tgw_defaults, "enable_dns_support", true)
-  enable_vpn_ecmp_support                = lookup(var.tgw_defaults, "enable_vpn_ecmp_support", true)
-  ram_allow_external_principals          = lookup(var.tgw_defaults, "ram_allow_external_principals", false)
-  ram_principals                         = var.ram_principals
-  share_tgw                              = lookup(var.tgw_defaults, "share_tgw", true)
+  ram_resource_share_enabled = true
 
+  create_transit_gateway                                         = true
+  create_transit_gateway_route_table                             = true
+  create_transit_gateway_vpc_attachment                          = false
+  create_transit_gateway_route_table_association_and_propagation = true
 
-  vpc_attachments = {
-    for vpc in data.terraform_remote_state.vpcs : vpc.outputs.vpc_id => {
-      vpc_id                                          = vpc.outputs.vpc_id          # module.vpc.vpc_id
-      subnet_ids                                      = vpc.outputs.private_subnets # module.vpc.private_subnets
-      dns_support                                     = lookup(var.tgw_defaults["vpc_attachments"], "dns_support", true)
-      ipv6_support                                    = lookup(var.tgw_defaults["vpc_attachments"], "ipv6_support", false)
-      transit_gateway_default_route_table_association = lookup(var.tgw_defaults["vpc_attachments"], "transit_gateway_default_route_table_association", false)
-      transit_gateway_default_route_table_propagation = lookup(var.tgw_defaults["vpc_attachments"], "transit_gateway_default_route_table_propagation", false)
-
-      tgw_routes = [
-        {
-          destination_cidr_block = "30.0.0.0/16"
-        },
+  config = {
+    for k, v in data.terraform_remote_state.apps-prd-vpcs : v.outputs.vpc_id => {
+      vpc_id                            = null
+      vpc_cidr                          = null
+      subnet_ids                        = null
+      subnet_route_table_ids            = null
+      route_to                          = null
+      route_to_cidr_blocks              = null
+      transit_gateway_vpc_attachment_id = module.transit_gateway_vpc_attachments_and_subnet_routes_prod.transit_gateway_vpc_attachment_ids[k]
+      static_routes = [
         {
           blackhole              = true
           destination_cidr_block = "0.0.0.0/0"
+        },
+        {
+          blackhole              = false
+          destination_cidr_block = "172.16.1.0/24"
         }
       ]
     }
   }
 
-  tags = local.tags
+}
+
+module "transit_gateway_vpc_attachments_and_subnet_routes_prod" {
+
+  source  = "cloudposse/transit-gateway/aws"
+  version = "0.4.0"
+
+  #for_each = data.terraform_remote_state.apps-prd-vpcs
+
+  # `prod` account can access the Transit Gateway in the `network` account since we shared the Transit Gateway with the Organization using Resource Access Manager
+  existing_transit_gateway_id             = module.transit_gateway.transit_gateway_id
+  existing_transit_gateway_route_table_id = module.transit_gateway.transit_gateway_route_table_id
+
+  create_transit_gateway                                         = false
+  create_transit_gateway_route_table                             = false
+  create_transit_gateway_vpc_attachment                          = true
+  create_transit_gateway_route_table_association_and_propagation = false
+
+  config = {
+    for k, v in data.terraform_remote_state.apps-prd-vpcs : k => {
+      vpc_id                 = v.outputs.vpc_id
+      vpc_cidr               = v.outputs.vpc_cidr_block
+      subnet_ids             = v.outputs.private_subnets
+      subnet_route_table_ids = v.outputs.private_route_table_ids
+      route_to               = null
+      route_to_cidr_blocks = concat(
+        [
+          #"172.18.32.0/20", # apps-devstg
+          #"172.19.0.0/20",  # apps-devstg/k8s-eks
+          #"172.19.16.0/20"  # apps-devstg/k8s-eks-demoapps
+        ],
+        #[for v in values(data.terraform_remote_state.shared-vpcs) : v.outputs.vpc_cidr_block],      # shared
+        [for v in values(data.terraform_remote_state.network-vpcs) : v.outputs.vpc_cidr_block],     # network
+        [for v in values(data.terraform_remote_state.apps-devstg-vpcs) : v.outputs.vpc_cidr_block], # apps-devstg
+      )
+
+      static_routes                     = null
+      transit_gateway_vpc_attachment_id = null
+    }
+  }
+
+  providers = {
+    aws = aws.apps-prd
+  }
 }
