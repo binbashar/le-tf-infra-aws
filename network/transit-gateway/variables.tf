@@ -128,9 +128,3 @@ variable "tgw_defaults" {
     }
   }
 }
-
-variable "ram_principals" {
-  description = "A list of principals to share TGW with."
-  type        = list(any)
-  default     = []
-}
