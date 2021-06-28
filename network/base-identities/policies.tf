@@ -70,7 +70,9 @@ resource "aws_iam_policy" "devops_access" {
                 "vpc:*",
                 "waf:*",
                 "wafv2:*",
-                "waf-regional:*"
+                "waf-regional:*",
+                "organizations:DescribeOrganization",
+                "organizations:ListAccounts"
             ],
             "Resource": [
                 "*"

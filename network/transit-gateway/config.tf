@@ -22,6 +22,13 @@ provider "aws" {
 }
 
 provider "aws" {
+  alias                   = "apps-devstg"
+  region                  = var.region
+  profile                 = "${var.project}-apps-devstg-devops"
+  shared_credentials_file = "~/.aws/${var.project}/config"
+}
+
+provider "aws" {
   alias                   = "apps-prd"
   region                  = var.region
   profile                 = "${var.project}-apps-prd-devops"

@@ -104,27 +104,19 @@ variable "vault_token" {
 #===========================================#
 # Networking                                #
 #===========================================#
-variable "enable_tgw" {
+variable "enabled_tgw" {
   description = "Enable Transit Gateway Support"
   type        = bool
   default     = true
 }
 
-variable "tgw_defaults" {
-  description = "Default values for the TransitVPC attachments"
+variable "enabled_vpc_attach" {
+  description = "Enable Transit Gateway Support per account"
   type        = any
   default = {
-    enable_auto_accept_shared_attachments  = true
-    enable_default_route_table_association = true
-    enable_default_route_table_propagation = true
-    enable_dns_support                     = true
-    ram_allow_external_principals          = true
-    share_tgw                              = true
-    vpc_attachments = {
-      dns_support                                     = true
-      ipv6_support                                    = false
-      transit_gateway_default_route_table_association = false
-      transit_gateway_default_route_table_propagation = false
-    }
+    shared      = false
+    network     = false
+    apps-devstg = false
+    apps-prd    = false
   }
 }
