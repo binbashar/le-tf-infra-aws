@@ -35,6 +35,10 @@ module "tgw_vpc_attachments_and_subnet_routes_network" {
     }
   }
 
+  tags = {
+    Name = "${var.project}-network-vpc-attach"
+  }
+
   providers = {
     aws = aws.network
   }
@@ -71,6 +75,10 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-devstg" {
       static_routes                     = null
       transit_gateway_vpc_attachment_id = null
     }
+  }
+
+  tags = {
+    Name = "${var.project}-apps-devstg-vpc-attach"
   }
 
   providers = {
@@ -111,6 +119,10 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd" {
       static_routes                     = null
       transit_gateway_vpc_attachment_id = null
     }
+  }
+
+  tags = {
+    Name = "${var.project}-apps-prd-vpc-attach"
   }
 
   providers = {

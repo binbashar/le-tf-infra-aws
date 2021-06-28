@@ -23,12 +23,7 @@ module "tgw" {
         route_to                          = null
         route_to_cidr_blocks              = null
         transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network[0].transit_gateway_vpc_attachment_ids[k]
-        static_routes = [
-          {
-            blackhole              = false
-            destination_cidr_block = "0.0.0.0/0"
-          }
-        ]
+        static_routes                     = []
       }
     } : {},
     # apps-devstg private
@@ -41,12 +36,7 @@ module "tgw" {
         route_to                          = null
         route_to_cidr_blocks              = null
         transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_apps-devstg[0].transit_gateway_vpc_attachment_ids[k]
-        static_routes = [
-          {
-            blackhole              = false
-            destination_cidr_block = "172.16.1.0/24"
-          }
-        ]
+        static_routes                     = []
       }
     } : {},
     # apps-prd private
@@ -59,16 +49,7 @@ module "tgw" {
         route_to                          = null
         route_to_cidr_blocks              = null
         transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_apps-prd[0].transit_gateway_vpc_attachment_ids[k]
-        static_routes = [
-          # {
-          #  blackhole              = true
-          #  destination_cidr_block = "0.0.0.0/0"
-          #},
-          #{
-          #  blackhole              = false
-          #  destination_cidr_block = "172.16.1.0/24"
-          #}
-        ]
+        static_routes                     = []
       }
     } : {},
   )
