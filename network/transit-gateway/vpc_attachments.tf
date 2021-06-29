@@ -1,4 +1,4 @@
-# network VPC attachments
+# network VPC attachments (private)
 module "tgw_vpc_attachments_and_subnet_routes_network" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway-1?ref=0.4.0"
@@ -11,26 +11,17 @@ module "tgw_vpc_attachments_and_subnet_routes_network" {
   create_transit_gateway                                         = false
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
-  create_transit_gateway_route_table_association_and_propagation = true
+  create_transit_gateway_route_table_association_and_propagation = false
 
   config = {
     for k, v in data.terraform_remote_state.network-vpcs : k => {
-      vpc_id                 = v.outputs.vpc_id
-      vpc_cidr               = v.outputs.vpc_cidr_block
-      subnet_ids             = v.outputs.private_subnets
-      subnet_route_table_ids = v.outputs.private_route_table_ids
-      route_to               = null
-      route_to_cidr_blocks = concat(
-        #[for v in values(data.terraform_remote_state.shared-vpcs) : v.outputs.vpc_cidr_block],      # shared
-        [for v in values(data.terraform_remote_state.apps-devstg-vpcs) : v.outputs.vpc_cidr_block], # apps-devstg
-        [for v in values(data.terraform_remote_state.apps-prd-vpcs) : v.outputs.vpc_cidr_block],    # apps-prd
-      )
-      static_routes = [
-        {
-          blackhole              = false
-          destination_cidr_block = "0.0.0.0/0"
-        }
-      ]
+      vpc_id                            = v.outputs.vpc_id
+      vpc_cidr                          = v.outputs.vpc_cidr_block
+      subnet_ids                        = v.outputs.private_subnets
+      subnet_route_table_ids            = v.outputs.private_route_table_ids
+      route_to                          = null
+      route_to_cidr_blocks              = null
+      static_routes                     = null
       transit_gateway_vpc_attachment_id = null
     }
   }
@@ -69,7 +60,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-devstg" {
       route_to_cidr_blocks = concat(
         ["0.0.0.0/0"], #tgw
         #[for v in values(data.terraform_remote_state.shared-vpcs) : v.outputs.vpc_cidr_block],  # shared
-        [for v in values(data.terraform_remote_state.network-vpcs) : v.outputs.vpc_cidr_block], # network
+        #[for v in values(data.terraform_remote_state.network-vpcs) : v.outputs.vpc_cidr_block], # network
       )
 
       static_routes                     = null
@@ -113,9 +104,8 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd" {
       route_to_cidr_blocks = concat(
         ["0.0.0.0/0"], #tgw
         #[for v in values(data.terraform_remote_state.shared-vpcs) : v.outputs.vpc_cidr_block], # shared
-        [for v in values(data.terraform_remote_state.network-vpcs) : v.outputs.vpc_cidr_block], # network
+        #[for v in values(data.terraform_remote_state.network-vpcs) : v.outputs.vpc_cidr_block], # network
       )
-
       static_routes                     = null
       transit_gateway_vpc_attachment_id = null
     }
