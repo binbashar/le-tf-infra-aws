@@ -114,8 +114,8 @@ variable "enabled_vpc_attach" {
   description = "Enable Transit Gateway Support per account"
   type        = any
   default = {
-    shared      = false
     network     = false
+    shared      = false
     apps-devstg = false
     apps-prd    = false
   }
