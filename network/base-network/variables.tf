@@ -177,12 +177,6 @@ variable "enable_kms_endpoint" {
   default     = false
 }
 
-variable "enable_kms_endpoint_private_dns" {
-  description = "Enable KMS endpoint"
-  type        = bool
-  default     = false
-}
-
 variable "manage_default_network_acl" {
   description = "Manage default Network ACL"
   type        = bool
@@ -199,4 +193,19 @@ variable "private_dedicated_network_acl" {
   description = "Manage default Network ACL"
   type        = bool
   default     = true
+}
+
+variable "vpc_endpoints" {
+  description = "VPC endpoints"
+  type        = any
+  default = {
+    s3 = {
+      service      = "s3"
+      service_type = "Gateway"
+    }
+    dynamodb = {
+      service      = "dynamodb"
+      service_type = "Gateway"
+    }
+  }
 }

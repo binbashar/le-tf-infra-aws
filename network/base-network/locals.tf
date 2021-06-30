@@ -104,6 +104,12 @@ locals {
 
   # Data source definitions
   data_vpcs = {
+    vpc-network = {
+      region  = var.region
+      profile = "${var.project}-network-devops"
+      bucket  = "${var.project}-network-terraform-backend"
+      key     = "network/network/terraform.tfstate"
+    }
     #    vpc-apps-dev = {
     #  region  = var.region
     #  profile = "${var.project}-apps-devstg-devops"
