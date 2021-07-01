@@ -54,6 +54,17 @@ data "terraform_remote_state" "vpc-shared" {
   }
 }
 
+data "terraform_remote_state" "vpc-network" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-network-devops"
+    bucket  = "${var.project}-network-terraform-backend"
+    key     = "network/network/terraform.tfstate"
+  }
+}
+
 #
 # data type from output for tools-ec2
 #

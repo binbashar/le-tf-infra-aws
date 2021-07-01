@@ -3,8 +3,8 @@
 ## Requisites
 Make sure you have enabled RAM in the Organization account by:
 
-* Setting RAM to Access enabled in AWS Oganizations > Services
-* **Enable sharing with AWS Organizations**  in Resource Acccess Manager > Settings
+* Setting RAM to Access enabled in AWS Organization > Services
+* **Enable sharing with AWS Organizations**  in Resource Access Manager > Settings
 
 
 ## Deployment
