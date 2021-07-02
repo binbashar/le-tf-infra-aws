@@ -209,3 +209,20 @@ variable "vpc_endpoints" {
     }
   }
 }
+
+variable "enabled_tgw" {
+  description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = true
+}
+
+variable "enabled_vpc_attach" {
+  description = "Enable VPC attachments per account"
+  type        = any
+  default = {
+    network     = false
+    shared      = false
+    apps-devstg = false
+    apps-prd    = false
+  }
+}
