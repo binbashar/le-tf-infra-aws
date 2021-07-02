@@ -29,41 +29,19 @@ locals {
 
 locals {
 
-  # Fixed private inbounds
-  fixed_private_inbound = [
-    {
-      rule_number = 10 # shared pritunl vpn server
-      rule_action = "allow"
-      from_port   = 0
-      to_port     = 65535
-      protocol    = "all"
-      cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
-    },
-    {
-      rule_number = 20 # vault hvn vpc
-      rule_action = "allow"
-      from_port   = 0
-      to_port     = 65535
-      protocol    = "all"
-      cidr_block  = var.vpc_vault_hvn_cird
-    },
-  ]
-
-  # Dynamic private inbounds
-  dynamic_private_inbound = flatten([
-    for index, state in data.terraform_remote_state.vpc-apps : [
-      for i in range(length(state.outputs.private_subnets_cidr)) :
+  # private inbounds
+  private_inbound = flatten([
+    for index, state in local.datasources-vpcs : [
       {
-        rule_number = 100 * (index(keys(data.terraform_remote_state.vpc-apps), index) + 1) + 10 * i # apps private subnet A,B,C
+        rule_number = 10 * (index(keys(local.datasources-vpcs), index) + 1)
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
         protocol    = "all"
-        cidr_block  = state.outputs.private_subnets_cidr[i]
+        cidr_block  = state.outputs.vpc_cidr_block
       }
     ]
   ])
-  private_inbound = concat(local.fixed_private_inbound, local.dynamic_private_inbound)
 
   network_acls = {
     #
@@ -71,7 +49,23 @@ locals {
     #
     default_inbound = [
       {
-        rule_number = 900 # NTP traffic
+        rule_number = 900 # shared pritunl vpn server
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
+      },
+      {
+        rule_number = 910 # vault hvn vpc
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = var.vpc_vault_hvn_cird
+      },
+      {
+        rule_number = 920 # NTP traffic
         rule_action = "allow"
         from_port   = 123
         to_port     = 123
@@ -79,7 +73,7 @@ locals {
         cidr_block  = "0.0.0.0/0"
       },
       {
-        rule_number = 910 # Fltering known TCP ports (0-1024)
+        rule_number = 930 # Fltering known TCP ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
         to_port     = 65525
@@ -87,7 +81,7 @@ locals {
         cidr_block  = "0.0.0.0/0"
       },
       {
-        rule_number = 920 # Fltering known UDP ports (0-1024)
+        rule_number = 940 # Fltering known UDP ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
         to_port     = 65525
@@ -103,36 +97,64 @@ locals {
   }
 
   # Data source definitions
-  data_vpcs = {
-    vpc-network = {
+  #
+
+  # shared
+  shared-vpcs = {
+    shared = {
+      region  = var.region
+      profile = "${var.project}-shared-devops"
+      bucket  = "${var.project}-shared-terraform-backend"
+      key     = "shared/network/terraform.tfstate"
+    }
+  }
+
+  # network
+  network-vpcs = {
+    base = {
       region  = var.region
       profile = "${var.project}-network-devops"
       bucket  = "${var.project}-network-terraform-backend"
       key     = "network/network/terraform.tfstate"
     }
-    #    vpc-apps-dev = {
-    #  region  = var.region
-    #  profile = "${var.project}-apps-devstg-devops"
-    #  bucket  = "${var.project}-apps-devstg-terraform-backend"
-    #  key     = "apps-devstg/network/terraform.tfstate"
-    #}
-    #vpc-apps-dev-eks = {
-    #  region  = var.region
-    #  profile = "${var.project}-apps-devstg-devops"
-    #  bucket  = "${var.project}-apps-devstg-terraform-backend"
-    #  key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
-    #}
-    #vpc-apps-dev-eks-demoapps = {
-    #  region  = var.region
-    #  profile = "${var.project}-apps-devstg-devops"
-    #  bucket  = "${var.project}-apps-devstg-terraform-backend"
-    #  key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
-    #}
-    vpc-apps-prd = {
+  }
+
+  # apps-devstg
+  apps-devstg-vpcs = {
+    base = {
+      region  = var.region
+      profile = "${var.project}-apps-devstg-devops"
+      bucket  = "${var.project}-apps-devstg-terraform-backend"
+      key     = "apps-devstg/network/terraform.tfstate"
+    }
+    k8s-eks = {
+      region  = var.region
+      profile = "${var.project}-apps-devstg-devops"
+      bucket  = "${var.project}-apps-devstg-terraform-backend"
+      key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
+    }
+    eks-demoapps = {
+      region  = var.region
+      profile = "${var.project}-apps-devstg-devops"
+      bucket  = "${var.project}-apps-devstg-terraform-backend"
+      key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
+    }
+  }
+
+  # apps-prd
+  apps-prd-vpcs = {
+    base = {
       region  = var.region
       profile = "${var.project}-apps-prd-devops"
       bucket  = "${var.project}-apps-prd-terraform-backend"
       key     = "apps-prd/network/terraform.tfstate"
     }
   }
+
+  datasources-vpcs = merge(
+    data.terraform_remote_state.network-vpcs,     # network
+    data.terraform_remote_state.shared-vpcs,      # shared
+    data.terraform_remote_state.apps-devstg-vpcs, # apps-devstg-vpcs
+    data.terraform_remote_state.apps-prd-vpcs,    # apps-prd-vpcs
+  )
 }
