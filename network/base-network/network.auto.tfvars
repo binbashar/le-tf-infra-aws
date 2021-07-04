@@ -2,10 +2,10 @@
 vpc_enable_nat_gateway = false
 
 # Transit Gateway
-enabled_tgw = false
+enable_tgw = false
 
 # TGW VPC Attahcments
-enabled_vpc_attach = {
+enable_vpc_attach = {
   network     = false
   shared      = false
   apps-devstg = false

@@ -2,7 +2,7 @@ module "tgw" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
 
-  count = var.enabled_tgw ? 1 : 0
+  count = var.enable_tgw ? 1 : 0
   name  = "${var.project}-tgw"
 
   ram_resource_share_enabled = true
@@ -14,7 +14,7 @@ module "tgw" {
 
   config = merge(
     # network private
-    lookup(var.enabled_vpc_attach, "network", false) ? {
+    lookup(var.enable_vpc_attach, "network", false) ? {
       for k, v in data.terraform_remote_state.network-vpcs : v.outputs.vpc_id => {
         vpc_id                            = null
         vpc_cidr                          = null
@@ -32,7 +32,7 @@ module "tgw" {
       }
     } : {},
     # apps-devstg private
-    lookup(var.enabled_vpc_attach, "apps-devstg", false) ? {
+    lookup(var.enable_vpc_attach, "apps-devstg", false) ? {
       for k, v in data.terraform_remote_state.apps-devstg-vpcs : v.outputs.vpc_id => {
         vpc_id                            = null
         vpc_cidr                          = null
@@ -45,7 +45,7 @@ module "tgw" {
       }
     } : {},
     # apps-prd private
-    lookup(var.enabled_vpc_attach, "apps-prd", false) ? {
+    lookup(var.enable_vpc_attach, "apps-prd", false) ? {
       for k, v in data.terraform_remote_state.apps-prd-vpcs : v.outputs.vpc_id => {
         vpc_id                            = null
         vpc_cidr                          = null
@@ -73,7 +73,7 @@ resource "aws_route" "network_public_route_to_tgw" {
       data.terraform_remote_state.network-vpcs,     # network
       data.terraform_remote_state.apps-devstg-vpcs, # apps-devstag
       data.terraform_remote_state.apps-prd-vpcs,    # apps-prd
-    ) : k => v if lookup(var.enabled_vpc_attach, "network", false)
+    ) : k => v if lookup(var.enable_vpc_attach, "network", false)
   }
 
   # ...add a route into the network public RT

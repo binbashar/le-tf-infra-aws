@@ -54,3 +54,8 @@ output "private_route_table_ids" {
   description = "List of IDs of private route tables"
   value       = module.vpc.private_route_table_ids
 }
+
+output "enable_tgw" {
+  description = "This is set to `true` if the Transit Gateway is enabled"
+  value       = var.enable_tgw
+}

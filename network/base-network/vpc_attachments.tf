@@ -3,7 +3,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
 
-  count = var.enabled_tgw && var.enabled_vpc_attach["network"] ? 1 : 0
+  count = var.enable_tgw && var.enable_vpc_attach["network"] ? 1 : 0
 
   # network account can access the Transit Gateway in the network: account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
@@ -40,7 +40,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-devstg" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
 
-  count = var.enabled_tgw && var.enabled_vpc_attach["apps-devstg"] ? 1 : 0
+  count = var.enable_tgw && var.enable_vpc_attach["apps-devstg"] ? 1 : 0
 
   # apps-devstg account can access the Transit Gateway in the network account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
@@ -82,7 +82,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
 
-  count = var.enabled_tgw && var.enabled_vpc_attach["apps-prd"] ? 1 : 0
+  count = var.enable_tgw && var.enable_vpc_attach["apps-prd"] ? 1 : 0
 
   name = "${var.project}-apps-prd-vpc-attach"
 
