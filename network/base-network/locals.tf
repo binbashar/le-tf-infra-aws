@@ -101,7 +101,7 @@ locals {
 
   # shared
   shared-vpcs = {
-    shared = {
+    shared-base = {
       region  = var.region
       profile = "${var.project}-shared-devops"
       bucket  = "${var.project}-shared-terraform-backend"
@@ -111,7 +111,7 @@ locals {
 
   # network
   network-vpcs = {
-    base = {
+    network-base = {
       region  = var.region
       profile = "${var.project}-network-devops"
       bucket  = "${var.project}-network-terraform-backend"
@@ -121,19 +121,19 @@ locals {
 
   # apps-devstg
   apps-devstg-vpcs = {
-    base = {
+    apps-devstg-base = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/network/terraform.tfstate"
     }
-    k8s-eks = {
+    apps-devstg-k8s-eks = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
     }
-    eks-demoapps = {
+    apps-devstg-eks-demoapps = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
@@ -143,11 +143,17 @@ locals {
 
   # apps-prd
   apps-prd-vpcs = {
-    base = {
+    apps-prd-base = {
       region  = var.region
       profile = "${var.project}-apps-prd-devops"
       bucket  = "${var.project}-apps-prd-terraform-backend"
       key     = "apps-prd/network/terraform.tfstate"
+    }
+    apps-prd-k8s-eks = {
+      region  = var.region
+      profile = "${var.project}-apps-prd-devops"
+      bucket  = "${var.project}-apps-prd-terraform-backend"
+      key     = "apps-prd/k8s-eks/network/terraform.tfstate"
     }
   }
 

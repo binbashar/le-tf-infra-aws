@@ -65,20 +65,27 @@ module "tgw" {
 }
 
 # Update network public RT
-resource "aws_route" "network_public_route_to_tgw" {
+resource "aws_route" "apps_devstg_public_route_to_tgw" {
 
   # For each vpc...
-  for_each = {
-    for k, v in merge(
-      data.terraform_remote_state.network-vpcs,     # network
-      data.terraform_remote_state.apps-devstg-vpcs, # apps-devstag
-      data.terraform_remote_state.apps-prd-vpcs,    # apps-prd
-    ) : k => v if lookup(var.enable_vpc_attach, "network", false)
-  }
+  for_each = data.terraform_remote_state.apps-devstg-vpcs
 
   # ...add a route into the network public RT
-  route_table_id = data.terraform_remote_state.network-vpcs["base"].outputs.public_route_table_ids[0]
+  route_table_id         = module.vpc.public_route_table_ids[0]
+  destination_cidr_block = each.value.outputs.vpc_cidr_block
+  transit_gateway_id     = module.tgw[0].transit_gateway_id
 
+  depends_on = [module.tgw_vpc_attachments_and_subnet_routes_network]
+
+}
+
+resource "aws_route" "apps_prd_public_route_to_tgw" {
+
+  # For each vpc...
+  for_each = data.terraform_remote_state.apps-prd-vpcs
+
+  # ...add a route into the network public RT
+  route_table_id         = module.vpc.public_route_table_ids[0]
   destination_cidr_block = each.value.outputs.vpc_cidr_block
   transit_gateway_id     = module.tgw[0].transit_gateway_id
 

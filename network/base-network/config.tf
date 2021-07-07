@@ -79,7 +79,6 @@ data "terraform_remote_state" "network-vpcs" {
     profile = lookup(each.value, "profile")
     bucket  = lookup(each.value, "bucket")
     key     = lookup(each.value, "key")
-    #key     = "network/network/terraform.tfstate"
   }
 
 }
