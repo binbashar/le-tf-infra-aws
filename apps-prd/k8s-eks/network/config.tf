@@ -47,6 +47,17 @@ data "terraform_remote_state" "tools-vpn-server" {
   }
 }
 
+data "terraform_remote_state" "shared-dns" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
+    key     = "shared/dns/binbash.com.ar/terraform.tfstate"
+  }
+}
+
 # VPC remote states for network
 data "terraform_remote_state" "network-vpcs" {
   for_each = local.network-vpcs
@@ -58,7 +69,6 @@ data "terraform_remote_state" "network-vpcs" {
     profile = lookup(each.value, "profile")
     bucket  = lookup(each.value, "bucket")
     key     = lookup(each.value, "key")
-    #key     = "network/network/terraform.tfstate"
   }
 
 }

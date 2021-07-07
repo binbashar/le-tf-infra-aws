@@ -119,7 +119,7 @@ locals {
 
   # shared
   shared-vpcs = {
-    shared = {
+    shared-base = {
       region  = var.region
       profile = "${var.project}-shared-devops"
       bucket  = "${var.project}-shared-terraform-backend"
@@ -129,7 +129,7 @@ locals {
 
   # network
   network-vpcs = {
-    base = {
+    network-base = {
       region  = var.region
       profile = "${var.project}-network-devops"
       bucket  = "${var.project}-network-terraform-backend"
