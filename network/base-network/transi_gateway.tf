@@ -57,6 +57,19 @@ module "tgw" {
         static_routes                     = null
       }
     } : {},
+    # shared private
+    lookup(var.enable_vpc_attach, "shared", false) ? {
+      for k, v in data.terraform_remote_state.shared-vpcs : v.outputs.vpc_id => {
+        vpc_id                            = null
+        vpc_cidr                          = null
+        subnet_ids                        = null
+        subnet_route_table_ids            = null
+        route_to                          = null
+        route_to_cidr_blocks              = null
+        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_shared[0].transit_gateway_vpc_attachment_ids[k]
+        static_routes                     = null
+      }
+    } : {},
   )
 
   providers = {
