@@ -96,8 +96,8 @@ variable "vault_address" {
 #===========================================#
 # Networking                                #
 #===========================================#
-variable "vpc_apps_devstg_eks_created" {
-  description = "true if Dev account EKS VPC is created for Peering purposes"
+variable "vpc_shared_created" {
+  description = "true if Shared account EKS VPC exists and needs DNS association"
   type        = bool
   default     = true
 }
