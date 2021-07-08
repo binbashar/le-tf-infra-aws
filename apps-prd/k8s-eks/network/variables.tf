@@ -96,14 +96,8 @@ variable "vault_address" {
 #===========================================#
 # Networking                                #
 #===========================================#
-variable "vpc_apps_prd_eks_created" {
-  description = "true if Prd account EKS VPC is created for Peering purposes"
-  type        = bool
-  default     = true
-}
-
-variable "vpc_apps_prd_eks_dns_assoc" {
-  description = "true if Prd account EKS VPC exists and needs DNS association"
+variable "vpc_shared_created" {
+  description = "true if Shared account EKS VPC exists and needs DNS association"
   type        = bool
   default     = true
 }
