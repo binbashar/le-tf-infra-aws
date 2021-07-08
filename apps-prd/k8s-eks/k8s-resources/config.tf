@@ -34,7 +34,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/k8s-eks/k8s-resources/terraform.tfstate"
+    key = "apps-prd/k8s-eks/k8s-resources/terraform.tfstate"
   }
 }
 
@@ -63,6 +63,6 @@ data "terraform_remote_state" "eks-cluster" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "apps-devstg/k8s-eks/cluster/terraform.tfstate"
+    key     = "apps-prd/k8s-eks/cluster/terraform.tfstate"
   }
 }

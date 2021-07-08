@@ -173,7 +173,7 @@ variable "kubernetes_dashboard_ingress_class" {
 
 variable "kubernetes_dashboard_hosts" {
   type    = string
-  default = "kubernetes-dashboard.devstg.aws.binbash.com.ar"
+  default = "kubernetes-dashboard.prd.aws.binbash.com.ar"
 }
 
 variable "enable_backups" {
