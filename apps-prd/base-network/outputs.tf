@@ -57,5 +57,5 @@ output "private_route_table_ids" {
 
 output "vpc_peering_id_with_shared" {
   description = "VPC peering ID with shared"
-  value       = join("", try(aws_vpc_peering_connection.apps_prd_eks_vpc_with_shared_vpc[*].id, null))
+  value       = join("", try(aws_vpc_peering_connection.apps_prd_vpc_with_shared_vpc[*].id, null))
 }
