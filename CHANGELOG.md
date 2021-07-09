@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.34"></a>
+## [v1.3.34] - 2021-07-09
+
+- * Fix typo in transit_gateway.tf * Add comment to use network.auto.tfvars
+
+
 <a name="v1.3.33"></a>
 ## [v1.3.33] - 2021-07-09
 
@@ -1838,7 +1844,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.33...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.34...HEAD
+[v1.3.34]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.33...v1.3.34
 [v1.3.33]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.32...v1.3.33
 [v1.3.32]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.31...v1.3.32
 [v1.3.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.30...v1.3.31
