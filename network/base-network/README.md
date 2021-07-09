@@ -14,7 +14,7 @@ Make sure you have enabled RAM in the Organization account by:
 
 In order to deploy the Transit Gateway follow these steps:
 
-1. First time deployment: Set to `false` all vpc attachments first in `var.enable_vpc_attach`
+1. First time deployment: Set to `false` all vpc attachments first in `var.enable_vpc_attach` (consider taking advange of the `network.auto.tfvars` file for this purpose).
 2. After deploying the Transit Gateway select the vpc attachment to enable in the `var.enable_vpc_attach` by setting to `true`
 
 
