@@ -7,6 +7,56 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.33"></a>
+## [v1.3.33] - 2021-07-09
+
+- Remove build.env files
+- Add shared/k8s-eks-prd layer
+- Add TGW / VPC Peering toggle to apps-prd
+- Add TGW & VPC Peering toggle for apps-devstg/k8s-eks/network
+- Add Togggle between TGW & VPC Peering
+- Add vpc-apps-prd-eks in VPCs
+- Update vpc shared variable name
+- Add Enable resource sharing with AWS Organizations
+- Update README for Transit Gateway & RAM enabling
+- Add apps-prd layer
+- Add prd rout into shared public route table
+- Add shared vpc attachments
+- Add apps-prd/k8s-eks layer
+- Update apps-prd/network layerCC
+- Update network public RT logic
+- Add apps-prd/k8s-eks/network layer
+- Add apps-prd/k8s-eks/network layer
+- Add TGW enabled output
+- Move Transit Gateway to base-network
+- Add NACL definition
+- Update TGW README
+- Update VPC and VPC endpoints modules
+- Remove unnecesary comment
+- Remove unused IAM users
+- Update tgw.tfvars
+- Remove unused static route definition
+- Add VPC CIDRs to networ public RT
+- Add Name tag to VPC attachments
+- Fix typos in README
+- Implement single internet exit point from multiple VPCs using TGW
+- Add network account to TGW
+- Add implementation using the CloudPosse module
+- Add TGG implementation using the CloudPosse module
+- Enable trusted access with AWS RAM in the Organization
+- Add VPC network datasource to the TGW
+- Add base-network to network account
+- Add vpc definition for networks account
+- Update vpcs references
+- Add code for TGW
+- Add permission to assume roles for Devops, Auditor, FinOps, etc
+- Fix roles & groups in network/base-identities layer
+- Add remote bucket backend for network account
+- Fix typo in network layer
+- Disable remote state for network account
+- Add network account definitions
+
+
 <a name="v1.3.32"></a>
 ## [v1.3.32] - 2021-06-29
 
@@ -1788,7 +1838,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.32...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.33...HEAD
+[v1.3.33]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.32...v1.3.33
 [v1.3.32]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.31...v1.3.32
 [v1.3.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.30...v1.3.31
 [v1.3.30]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.29...v1.3.30
