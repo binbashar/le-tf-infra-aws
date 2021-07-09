@@ -129,5 +129,11 @@ locals {
       bucket  = "${var.project}-apps-prd-terraform-backend"
       key     = "apps-prd/network/terraform.tfstate"
     }
+    vpc-apps-prd-eks = {
+      region  = var.region
+      profile = "${var.project}-apps-prd-devops"
+      bucket  = "${var.project}-apps-prd-terraform-backend"
+      key     = "apps-prd/k8s-eks/network/terraform.tfstate"
+    }
   }
 }

@@ -27,20 +27,6 @@ terraform {
 #=============================#
 
 #
-# data type from output for vpc
-#
-data "terraform_remote_state" "vpc-eks" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = var.profile
-    bucket  = var.bucket
-    key     = "${var.environment}/k8s-eks/network/terraform.tfstate"
-  }
-}
-
-#
 # data type from output for notifications
 #
 data "terraform_remote_state" "notifications" {
@@ -51,6 +37,20 @@ data "terraform_remote_state" "notifications" {
     profile = var.profile
     bucket  = var.bucket
     key     = "${var.environment}/notifications/terraform.tfstate"
+  }
+}
+
+#
+# data type from output for tools-ec2
+#
+data "terraform_remote_state" "tools-vpn-server" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
+    key     = "shared/vpn/terraform.tfstate"
   }
 }
 
@@ -68,16 +68,13 @@ data "terraform_remote_state" "vpc-shared" {
   }
 }
 
-#
-# data type from output for tools-ec2
-#
-data "terraform_remote_state" "tools-vpn-server" {
+data "terraform_remote_state" "vpc-network" {
   backend = "s3"
 
   config = {
     region  = var.region
-    profile = "${var.project}-shared-devops"
-    bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/vpn/terraform.tfstate"
+    profile = "${var.project}-network-devops"
+    bucket  = "${var.project}-network-terraform-backend"
+    key     = "network/network/terraform.tfstate"
   }
 }

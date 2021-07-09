@@ -1,0 +1,20 @@
+server:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/tls-acme: "true"
+      # Associate this ingress with the following ingress controller
+      kubernetes.io/ingress.class: ingress-nginx-private
+      # Use the following cert-manager clusterissuer
+      cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
+      # The backend (ArgoCD Server) is expecting to handle HTTPS
+      # nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    hosts:
+      - argocd.prd.aws.binbash.com.ar
+    paths:
+      - /
+    tls:
+      - secretName: argocd-server-tls
+        hosts:
+          - argocd.prd.aws.binbash.com.ar

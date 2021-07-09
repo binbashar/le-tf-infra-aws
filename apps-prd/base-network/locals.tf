@@ -112,6 +112,30 @@ locals {
         protocol    = "all"
         cidr_block  = data.terraform_remote_state.vpc-shared.outputs.private_subnets_cidr[1]
       },
+      {
+        rule_number = 130 # network private subnet A
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = data.terraform_remote_state.vpc-network.outputs.private_subnets_cidr[0]
+      },
+      {
+        rule_number = 140 # network private subnet B
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = data.terraform_remote_state.vpc-network.outputs.private_subnets_cidr[1]
+      },
+      {
+        rule_number = 150 # network private subnet C
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = data.terraform_remote_state.vpc-network.outputs.private_subnets_cidr[2]
+      },
     ]
   }
 }
