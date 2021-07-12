@@ -2,7 +2,7 @@
 # Ref: https://github.com/philips-labs/terraform-aws-github-runner#overview
 #
 module "github_selfhosted_runners" {
-  source = "github.com/binbashar/terraform-aws-github-runner?ref=v0.13.1"
+  source = "github.com/binbashar/terraform-aws-github-runner?ref=v0.13.0"
 
   # VPC settings
   aws_region = var.region
