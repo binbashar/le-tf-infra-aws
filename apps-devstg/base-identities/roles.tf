@@ -190,17 +190,24 @@ module "iam_assumable_role_grafana" {
 #
 # Assumable Role Cross-Account: Velero Backups
 #
-module "iam_assumable_role_velero" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.1.0"
 
-  create_role = true
-  role_name   = "velero-backups"
-  role_path   = "/"
-
-  provider_urls = [
+locals {
+  velero_eks_cluster_oidc_issuer_urls = [
     try(replace(data.terraform_remote_state.cluster-eks.outputs.cluster_oidc_issuer_url, "https://", ""), null),
     try(replace(data.terraform_remote_state.cluster-eks-demoapps.outputs.cluster_oidc_issuer_url, "https://", ""), null),
   ]
+
+  velero_providers_urls = [for i in local.velero_eks_cluster_oidc_issuer_urls : i if i != null]
+}
+
+module "iam_assumable_role_velero" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.1.0"
+
+  create_role = length(local.velero_providers_urls) > 0 ? true : false
+  role_name   = "velero-backups"
+  role_path   = "/"
+
+  provider_urls = local.velero_providers_urls
 
   #
   # MFA setup
