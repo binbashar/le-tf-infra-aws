@@ -18,12 +18,14 @@ locals {
     "${var.region}c"
   ]
 
+  private_subnets_cidr = ["172.18.64.0/21"]
   private_subnets = [
     "172.18.64.0/23",
     "172.18.66.0/23",
     "172.18.68.0/23",
   ]
 
+  public_subnets_cidr = ["172.18.72.0/21"]
   public_subnets = [
     "172.18.72.0/23",
     "172.18.74.0/23",
