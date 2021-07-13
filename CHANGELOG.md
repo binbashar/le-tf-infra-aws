@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.39"></a>
+## [v1.3.39] - 2021-07-13
+
+- Downgrade all EKS DemoApps layers to Terraform v0.14.4 ([#284](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/284))
+
+
 <a name="v1.3.38"></a>
 ## [v1.3.38] - 2021-07-13
 
@@ -1869,7 +1875,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.38...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.39...HEAD
+[v1.3.39]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.38...v1.3.39
 [v1.3.38]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.37...v1.3.38
 [v1.3.37]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.36...v1.3.37
 [v1.3.36]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.35...v1.3.36
