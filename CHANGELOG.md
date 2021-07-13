@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.36"></a>
+## [v1.3.36] - 2021-07-13
+
+- Fix dynamic role creation for iam-assumable-role-with-oidc
+- Add support access to devops
+
+
 <a name="v1.3.35"></a>
 ## [v1.3.35] - 2021-07-13
 
@@ -1850,7 +1857,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.35...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.36...HEAD
+[v1.3.36]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.35...v1.3.36
 [v1.3.35]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.34...v1.3.35
 [v1.3.34]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.33...v1.3.34
 [v1.3.33]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.32...v1.3.33
