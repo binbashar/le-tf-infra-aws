@@ -91,4 +91,8 @@ module "eks_demoapps" {
     map("k8s.io/cluster-autoscaler/enabled", "TRUE"),
     map("k8s.io/cluster-autoscaler/${data.terraform_remote_state.shared-eks-demoapps-vpc.outputs.cluster_name}", "owned")
   )
+
+  # Note: we are keeping this line commented out because it is used by the
+  # demoapps workflows
+  #wait_for_cluster_cmd = "pwd"
 }
