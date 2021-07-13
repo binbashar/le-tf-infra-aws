@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.35"></a>
+## [v1.3.35] - 2021-07-13
+
+- Add support permissions to DevOps role in Shared ([#279](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/279))
+
+
 <a name="v1.3.34"></a>
 ## [v1.3.34] - 2021-07-09
 
@@ -1844,7 +1850,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.34...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.35...HEAD
+[v1.3.35]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.34...v1.3.35
 [v1.3.34]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.33...v1.3.34
 [v1.3.33]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.32...v1.3.33
 [v1.3.32]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.31...v1.3.32
