@@ -8,7 +8,7 @@ resource "aws_vpc_peering_connection_accepter" "shared_accepters" {
   vpc_peering_connection_id = each.value.outputs.vpc_peering_id_with_shared
   auto_accept               = true
 
-  tags = merge(map("Name", "accepter-shared-from-${each.value.outputs.vpc_name}"), local.tags)
+  tags = merge(tomap({ "Name" = "accepter-shared-from-${each.value.outputs.vpc_name}" }), local.tags)
 }
 
 #
