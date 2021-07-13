@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.38"></a>
+## [v1.3.38] - 2021-07-13
+
+- Update DemoApps layers to Terraform v.0.15.5 ([#283](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/283))
+
+
 <a name="v1.3.37"></a>
 ## [v1.3.37] - 2021-07-13
 
@@ -1863,7 +1869,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.37...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.38...HEAD
+[v1.3.38]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.37...v1.3.38
 [v1.3.37]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.36...v1.3.37
 [v1.3.36]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.35...v1.3.36
 [v1.3.35]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.34...v1.3.35
