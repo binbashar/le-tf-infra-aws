@@ -226,3 +226,9 @@ variable "enable_vpc_attach" {
     apps-prd    = false
   }
 }
+
+variable "enable_network_firewall" {
+  description = "Enable AWS Network Firewall support"
+  type        = bool
+  default     = false
+}

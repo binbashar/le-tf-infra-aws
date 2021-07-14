@@ -15,20 +15,33 @@ module "tgw" {
   config = merge(
     # network private
     lookup(var.enable_vpc_attach, "network", false) ? {
-      for k, v in data.terraform_remote_state.network-vpcs : v.outputs.vpc_id => {
+      (data.terraform_remote_state.network-vpcs["network-base"].outputs.vpc_id) = {
         vpc_id                            = null
         vpc_cidr                          = null
         subnet_ids                        = null
         subnet_route_table_ids            = null
         route_to                          = null
         route_to_cidr_blocks              = []
-        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network[0].transit_gateway_vpc_attachment_ids[k]
-        static_routes = k == "netwok-base" ? [
+        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network[0].transit_gateway_vpc_attachment_ids["network-base"]
+        static_routes = [
           {
             blackhole              = false
-            destination_cidr_block = "0.0.0.0/0"
+            destination_cidr_block = var.enable_network_firewall ? data.terraform_remote_state.network-vpcs["network-inspection"].outputs.vpc_cidr : "0.0.0.0/0"
           }
-        ] : null
+        ]
+      }
+    } : {},
+    # network inspection private
+    lookup(var.enable_vpc_attach, "network", false) ? {
+      (data.terraform_remote_state.network-vpcs["network-inspection"].outputs.vpc_id) = {
+        vpc_id                            = null
+        vpc_cidr                          = null
+        subnet_ids                        = null
+        subnet_route_table_ids            = null
+        route_to                          = null
+        route_to_cidr_blocks              = []
+        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network[0].transit_gateway_vpc_attachment_ids["network-inspection"]
+        static_routes                     = null
       }
     } : {},
     # apps-devstg private
