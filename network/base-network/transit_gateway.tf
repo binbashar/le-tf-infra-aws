@@ -23,12 +23,12 @@ module "tgw" {
         route_to                          = null
         route_to_cidr_blocks              = []
         transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network[0].transit_gateway_vpc_attachment_ids[k]
-        static_routes = [
+        static_routes = k == "netwok-base" ? [
           {
             blackhole              = false
             destination_cidr_block = "0.0.0.0/0"
-          },
-        ]
+          }
+        ] : null
       }
     } : {},
     # apps-devstg private
