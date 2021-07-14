@@ -111,13 +111,13 @@ variable "vpc_apps_devstg_eks_dns_assoc" {
 variable "vpc_vault_hvn_created" {
   description = "true if the Hahicorp Vault Cloud HVN account VPC is created for Peering purposes"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "vpc_vault_hvn_peering_connection_id" {
   description = "Hahicorp Vault Cloud HVN VPC peering ID"
   type        = string
-  default     = "pcx-044a76da32de14ba6"
+  default     = "pcx-0c270c9be265da78d"
 }
 
 variable "vpc_vault_hvn_cird" {

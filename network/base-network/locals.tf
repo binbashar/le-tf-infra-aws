@@ -14,16 +14,18 @@ locals {
     "${var.region}c"
   ]
 
+  private_subnets_cidr = ["172.20.0.0/21"]
   private_subnets = [
     "172.20.0.0/23",
     "172.20.2.0/23",
     "172.20.4.0/23",
   ]
 
+  public_subnets_cidr = ["172.20.8.0/21"]
   public_subnets = [
-    "172.20.6.0/23",
     "172.20.8.0/23",
     "172.20.10.0/23",
+    "172.20.12.0/23",
   ]
 }
 
@@ -38,7 +40,7 @@ locals {
         from_port   = 0
         to_port     = 65535
         protocol    = "all"
-        cidr_block  = state.outputs.vpc_cidr_block
+        cidr_block  = state.outputs.private_subnets_cidr[0]
       }
     ]
   ])

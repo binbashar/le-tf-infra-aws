@@ -31,13 +31,13 @@ output "public_subnets" {
 }
 
 output "private_subnets_cidr" {
-  description = "List of IDs of private subnets"
-  value       = local.private_subnets
+  description = "CIDRS of private subnets"
+  value       = local.private_subnets_cidr
 }
 
 output "public_subnets_cidr" {
-  description = "List of IDs of public subnets"
-  value       = local.public_subnets
+  description = "CIDR of public subnets"
+  value       = local.public_subnets_cidr
 }
 
 output "nat_gateway_ids" {
