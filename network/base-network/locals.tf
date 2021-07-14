@@ -21,7 +21,7 @@ locals {
     "172.20.4.0/23",
   ]
 
-  public_subnets_cidr = ["172.20.8.0/23"]
+  public_subnets_cidr = ["172.20.8.0/21"]
   public_subnets = [
     "172.20.8.0/23",
     "172.20.10.0/23",
