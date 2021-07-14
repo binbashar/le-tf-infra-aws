@@ -15,16 +15,18 @@ locals {
     "${var.region}c",
   ]
 
+  private_subnets_cidr = ["172.19.0.0/21"]
   private_subnets = [
     "172.19.0.0/23",
     "172.19.2.0/23",
     "172.19.4.0/23",
   ]
 
+  public_subnets_cidr = ["172.19.8.0/21"]
   public_subnets = [
-    "172.19.6.0/23",
     "172.19.8.0/23",
     "172.19.10.0/23",
+    "172.19.12.0/23",
   ]
 
   tags = {
@@ -55,7 +57,7 @@ locals {
         from_port   = 0
         to_port     = 65535
         protocol    = "all"
-        cidr_block  = state.outputs.vpc_cidr_block
+        cidr_block  = state.outputs.private_subnets_cidr[0]
       }
     ]
   ])
@@ -74,15 +76,7 @@ locals {
         cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
       },
       {
-        rule_number = 910 # vault hvn vpc
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = var.vpc_vault_hvn_cird
-      },
-      {
-        rule_number = 920 # NTP traffic
+        rule_number = 910 # NTP traffic
         rule_action = "allow"
         from_port   = 123
         to_port     = 123
@@ -90,7 +84,7 @@ locals {
         cidr_block  = "0.0.0.0/0"
       },
       {
-        rule_number = 930 # Fltering known TCP ports (0-1024)
+        rule_number = 920 # Fltering known TCP ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
         to_port     = 65525
@@ -98,7 +92,7 @@ locals {
         cidr_block  = "0.0.0.0/0"
       },
       {
-        rule_number = 940 # Fltering known UDP ports (0-1024)
+        rule_number = 930 # Fltering known UDP ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
         to_port     = 65525
