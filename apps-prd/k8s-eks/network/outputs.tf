@@ -39,12 +39,12 @@ output "public_subnets" {
 }
 
 output "private_subnets_cidr" {
-  description = "List of IDs of private subnets"
+  description = "CIDR of private subnets"
   value       = local.private_subnets_cidr
 }
 
 output "public_subnets_cidr" {
-  description = "List of IDs of public subnets"
+  description = "CIDR of public subnets"
   value       = local.public_subnets_cidr
 }
 

@@ -58,7 +58,7 @@ locals {
         from_port   = 0
         to_port     = 65535
         protocol    = "all"
-        cidr_block  = state.outputs.vpc_cidr_block
+        cidr_block  = state.outputs.private_subnets_cidr[0]
       }
     ]
   ])
