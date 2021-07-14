@@ -119,6 +119,12 @@ locals {
       bucket  = "${var.project}-network-terraform-backend"
       key     = "network/network/terraform.tfstate"
     }
+    network-inspection = {
+      region  = var.region
+      profile = "${var.project}-network-devops"
+      bucket  = "${var.project}-network-terraform-backend"
+      key     = "network/network-firewall/terraform.tfstate"
+    }
   }
 
   # apps-devstg

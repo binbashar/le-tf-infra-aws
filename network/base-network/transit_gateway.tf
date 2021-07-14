@@ -83,7 +83,7 @@ resource "aws_route" "apps_devstg_public_route_to_tgw" {
   # For each vpc...
   for_each = {
     for k, v in data.terraform_remote_state.apps-devstg-vpcs :
-    k => v if var.enable_tgw
+    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
   }
 
   # ...add a route into the network public RT
@@ -100,7 +100,7 @@ resource "aws_route" "apps_prd_public_route_to_tgw" {
   # For each vpc...
   for_each = {
     for k, v in data.terraform_remote_state.apps-prd-vpcs :
-    k => v if var.enable_tgw
+    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
   }
 
   # ...add a route into the network public RT
@@ -118,7 +118,7 @@ resource "aws_route" "shared_public_apps_devstg_route_to_tgw" {
   # For each vpc...
   for_each = {
     for k, v in data.terraform_remote_state.apps-devstg-vpcs :
-    k => v if var.enable_tgw
+    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
   }
 
   # ...add a route into the network public RT
@@ -137,7 +137,7 @@ resource "aws_route" "shared_public_apps_prd_route_to_tgw" {
   # For each vpc...
   for_each = {
     for k, v in data.terraform_remote_state.apps-prd-vpcs :
-    k => v if var.enable_tgw
+    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
   }
 
   # ...add a route into the network public RT
