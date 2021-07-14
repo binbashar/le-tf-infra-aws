@@ -7,6 +7,16 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.40"></a>
+## [v1.3.40] - 2021-07-14
+
+- Fix NACL and public subnets range
+- Fix NACL in shared/base-network
+- Fix NACL in apps-devstg/k8s-eks/network$
+- Fix NACL in apps-prd/k8s-eks/network
+- Fix NACL in apps-prd/base-network
+
+
 <a name="v1.3.39"></a>
 ## [v1.3.39] - 2021-07-13
 
@@ -1875,7 +1885,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.39...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.40...HEAD
+[v1.3.40]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.39...v1.3.40
 [v1.3.39]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.38...v1.3.39
 [v1.3.38]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.37...v1.3.38
 [v1.3.37]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.36...v1.3.37
