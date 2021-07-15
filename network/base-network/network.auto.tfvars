@@ -11,3 +11,6 @@ enable_vpc_attach = {
   apps-devstg = false
   apps-prd    = false
 }
+
+# Network Firewall
+enable_network_firewall = false

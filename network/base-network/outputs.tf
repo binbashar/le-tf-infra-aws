@@ -59,3 +59,8 @@ output "enable_tgw" {
   description = "This is set to `true` if the Transit Gateway is enabled"
   value       = var.enable_tgw
 }
+
+output "enable_network_firewall" {
+  description = "This is set to `true` if the AWS Network Firewall is enabled"
+  value       = var.enable_network_firewall
+}
