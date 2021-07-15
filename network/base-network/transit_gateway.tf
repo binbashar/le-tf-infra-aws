@@ -22,11 +22,11 @@ module "tgw" {
         subnet_route_table_ids            = null
         route_to                          = null
         route_to_cidr_blocks              = []
-        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network[0].transit_gateway_vpc_attachment_ids["network-base"]
+        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network["network-base"].transit_gateway_vpc_attachment_ids["network-base"]
         static_routes = [
           {
             blackhole              = false
-            destination_cidr_block = var.enable_network_firewall ? data.terraform_remote_state.network-vpcs["network-inspection"].outputs.vpc_cidr : "0.0.0.0/0"
+            destination_cidr_block = "0.0.0.0/0"
           }
         ]
       }
@@ -40,7 +40,7 @@ module "tgw" {
         subnet_route_table_ids            = null
         route_to                          = null
         route_to_cidr_blocks              = []
-        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network[0].transit_gateway_vpc_attachment_ids["network-inspection"]
+        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network_inspection["network-inspection"].transit_gateway_vpc_attachment_ids["network-inspection"]
         static_routes                     = null
       }
     } : {},
