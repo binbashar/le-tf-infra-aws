@@ -56,3 +56,19 @@ output "this_security_group_id" {
   description = "The security group ID of the cluster"
   value       = module.demoapps.this_security_group_id
 }
+
+output "demoapps_sockshop_username" {
+  description = "Sock-Shop DemoApp Username"
+  value       = mysql_user.sockshop.user
+}
+
+output "demoapps_sockshop_password" {
+  description = "Sock-Shop DemoApp Password"
+  value       = mysql_user.sockshop.password
+  sensitive   = true
+}
+
+output "demoapps_sockshop_database_name" {
+  description = "Sock-Shop DemoApp Database Name"
+  value       = mysql_database.sockshop.name
+}
