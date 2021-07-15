@@ -64,7 +64,7 @@ output "demoapps_sockshop_username" {
 
 output "demoapps_sockshop_password" {
   description = "Sock-Shop DemoApp Password"
-  value       = mysql_user.sockshop.password
+  value       = random_password.sockhsop.result
   sensitive   = true
 }
 
