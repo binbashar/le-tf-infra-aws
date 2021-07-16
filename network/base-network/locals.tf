@@ -171,11 +171,4 @@ locals {
     data.terraform_remote_state.apps-devstg-vpcs, # apps-devstg-vpcs
     data.terraform_remote_state.apps-prd-vpcs,    # apps-prd-vpcs
   )
-
-  # Check enabled options
-  enable_network          = var.enable_tgw && lookup(var.enable_vpc_attach, "network", false)
-  enable_network-firewall = var.enable_tgw && lookup(var.enable_vpc_attach, "network", false)
-  enable_shared           = var.enable_tgw && lookup(var.enable_vpc_attach, "shared", false)
-  enable_apps-devstg      = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
-  enable_apps-prd         = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
 }
