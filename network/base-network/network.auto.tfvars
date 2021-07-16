@@ -14,3 +14,6 @@ enable_vpc_attach = {
 
 # Network Firewall
 enable_network_firewall = false
+
+# Disable some resources (debug)
+disable = true
