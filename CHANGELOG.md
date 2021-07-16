@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.41"></a>
+## [v1.3.41] - 2021-07-16
+
+- Update Aurora layer to also create MySQL resources for Sock-Shop DemoApp ([#286](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/286))
+
+
 <a name="v1.3.40"></a>
 ## [v1.3.40] - 2021-07-14
 
@@ -1885,7 +1891,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.40...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.41...HEAD
+[v1.3.41]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.40...v1.3.41
 [v1.3.40]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.39...v1.3.40
 [v1.3.39]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.38...v1.3.39
 [v1.3.38]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.37...v1.3.38
