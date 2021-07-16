@@ -32,7 +32,7 @@ module "tgw" {
       }
     } : {},
     # network inspection private
-    lookup(var.enable_vpc_attach, "network", false) ? {
+    lookup(var.enable_vpc_attach, "network", false) && var.enable_network_firewall ? {
       (data.terraform_remote_state.network-vpcs["network-inspection"].outputs.vpc_id) = {
         vpc_id                            = null
         vpc_cidr                          = null
@@ -53,7 +53,7 @@ module "tgw" {
         subnet_route_table_ids            = null
         route_to                          = null
         route_to_cidr_blocks              = null
-        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_apps-devstg[0].transit_gateway_vpc_attachment_ids[k]
+        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_apps-devstg[k].transit_gateway_vpc_attachment_ids[k]
         static_routes                     = null
       }
     } : {},
@@ -66,7 +66,7 @@ module "tgw" {
         subnet_route_table_ids            = null
         route_to                          = null
         route_to_cidr_blocks              = null
-        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_apps-prd[0].transit_gateway_vpc_attachment_ids[k]
+        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_apps-prd[k].transit_gateway_vpc_attachment_ids[k]
         static_routes                     = null
       }
     } : {},
@@ -79,7 +79,7 @@ module "tgw" {
         subnet_route_table_ids            = null
         route_to                          = null
         route_to_cidr_blocks              = null
-        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_shared[0].transit_gateway_vpc_attachment_ids[k]
+        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_shared[k].transit_gateway_vpc_attachment_ids[k]
         static_routes                     = null
       }
     } : {},

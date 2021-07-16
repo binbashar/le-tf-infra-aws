@@ -48,7 +48,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network" {
 
   for_each = {
     for k, v in { "network-base" = data.terraform_remote_state.network-vpcs["network-base"] } :
-    k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false)
+    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "network", false)
   }
 
   # network account can access the Transit Gateway in the network: account since we shared the Transit Gateway with the Organization using Resource Access Manager
