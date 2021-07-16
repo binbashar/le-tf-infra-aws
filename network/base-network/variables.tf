@@ -232,3 +232,9 @@ variable "enable_network_firewall" {
   type        = bool
   default     = false
 }
+
+variable "disable" {
+  description = "Use this to disable some resources deployments (helpful for debugging)"
+  type        = bool
+  default     = false
+}

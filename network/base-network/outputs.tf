@@ -60,6 +60,11 @@ output "enable_tgw" {
   value       = var.enable_tgw
 }
 
+output "enable_vpc_attach" {
+  description = "VPC attachments per account"
+  value       = var.enable_vpc_attach
+}
+
 output "enable_network_firewall" {
   description = "This is set to `true` if the AWS Network Firewall is enabled"
   value       = var.enable_network_firewall

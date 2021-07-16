@@ -9,7 +9,7 @@
 # VPC Apps Prd w/ Shared
 #
 resource "aws_vpc_peering_connection" "apps_prd_vpc_with_shared_vpc" {
-  count = var.vpc_shared_created && !data.terraform_remote_state.network-vpcs["network-base"].outputs.enable_tgw ? 1 : 0
+  count = var.vpc_shared_created && !data.terraform_remote_state.network-vpcs["network-base"].outputs.enable_vpc_attach["apps-prd"] ? 1 : 0
 
   peer_owner_id = var.shared_account_id
   peer_vpc_id   = data.terraform_remote_state.shared-vpcs["shared-base"].outputs.vpc_id
@@ -28,7 +28,7 @@ resource "aws_vpc_peering_connection" "apps_prd_vpc_with_shared_vpc" {
 # read more: https://github.com/binbashar/le-tf-infra-aws/issues/49
 #
 resource "aws_route" "priv_route_table_1_apps_prd_vpc_to_shared_vpc" {
-  count = var.vpc_shared_created && !data.terraform_remote_state.network-vpcs["network-base"].outputs.enable_tgw ? 1 : 0
+  count = var.vpc_shared_created && !data.terraform_remote_state.network-vpcs["network-base"].outputs.enable_vpc_attach["apps-prd"] ? 1 : 0
 
   route_table_id            = element(module.vpc.private_route_table_ids, 0)
   destination_cidr_block    = data.terraform_remote_state.shared-vpcs["shared-base"].outputs.vpc_cidr_block
@@ -36,7 +36,7 @@ resource "aws_route" "priv_route_table_1_apps_prd_vpc_to_shared_vpc" {
 }
 
 resource "aws_route" "pub_route_table_1_apps_prd_vpc_to_shared_vpc" {
-  count = var.vpc_shared_created && !data.terraform_remote_state.network-vpcs["network-base"].outputs.enable_tgw ? 1 : 0
+  count = var.vpc_shared_created && !data.terraform_remote_state.network-vpcs["network-base"].outputs.enable_vpc_attach["apps-prd"] ? 1 : 0
 
   route_table_id            = element(module.vpc.public_route_table_ids, 0)
   destination_cidr_block    = data.terraform_remote_state.shared-vpcs["shared-base"].outputs.vpc_cidr_block
