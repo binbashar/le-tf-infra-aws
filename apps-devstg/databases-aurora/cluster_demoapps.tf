@@ -6,7 +6,7 @@
 #       more restrictied credentials for demoapps.
 #
 data "vault_generic_secret" "databases_aurora" {
-  path = "secrets/le-tf-infra-aws/apps-devstg/databases-aurora"
+  path = "secrets/bb/apps-devstg/databases-aurora"
 }
 
 module "demoapps" {

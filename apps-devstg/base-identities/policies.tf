@@ -155,6 +155,7 @@ resource "aws_iam_policy" "deploy_master_access" {
                 "elasticloadbalancing:*",
                 "iam:*",
                 "logs:*",
+                "rds:*",
                 "route53:*",
                 "route53domains:*",
                 "s3:*",
