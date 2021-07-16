@@ -3,10 +3,7 @@
 #
 resource "aws_vpc_peering_connection_accepter" "shared_accepters" {
 
-  for_each = {
-    for k, v in local.datasources-vpcs :
-    k => v if !lookup(data.terraform_remote_state.network-vpcs["network-base"].outputs.enable_vpc_attach, k, false)
-  }
+  for_each = local.datasources-vpcs
 
   vpc_peering_connection_id = each.value.outputs.vpc_peering_id_with_shared
   auto_accept               = true
@@ -24,10 +21,7 @@ resource "aws_vpc_peering_connection_accepter" "shared_accepters" {
 #
 resource "aws_route" "priv_route_table_to_apps_vpc" {
 
-  for_each = {
-    for k, v in local.datasources-vpcs :
-    k => v if !lookup(data.terraform_remote_state.network-vpcs["network-base"].outputs.enable_vpc_attach, k, false)
-  }
+  for_each = local.datasources-vpcs
 
   route_table_id            = element(module.vpc.private_route_table_ids, 0)
   destination_cidr_block    = each.value.outputs.vpc_cidr_block
@@ -36,10 +30,7 @@ resource "aws_route" "priv_route_table_to_apps_vpc" {
 
 resource "aws_route" "pub_route_table_to_apps_vpc" {
 
-  for_each = {
-    for k, v in local.datasources-vpcs :
-    k => v if !lookup(data.terraform_remote_state.network-vpcs["network-base"].outputs.enable_vpc_attach, k, false)
-  }
+  for_each = local.datasources-vpcs
 
   route_table_id            = element(module.vpc.public_route_table_ids, 0)
   destination_cidr_block    = each.value.outputs.vpc_cidr_block
