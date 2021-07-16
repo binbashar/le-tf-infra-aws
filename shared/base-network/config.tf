@@ -40,6 +40,20 @@ data "terraform_remote_state" "tools-vpn-server" {
   }
 }
 
+# VPC remote states for network
+data "terraform_remote_state" "network-vpcs" {
+  for_each = local.network-vpcs
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
+  }
+}
+
 # VPC remote states for apps-devstg
 data "terraform_remote_state" "apps-devstg-vpcs" {
 
