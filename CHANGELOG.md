@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.42"></a>
+## [v1.3.42] - 2021-07-17
+
+- Add missing permissions to sockshop demoapp user ([#287](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/287))
+
+
 <a name="v1.3.41"></a>
 ## [v1.3.41] - 2021-07-16
 
@@ -1891,7 +1897,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.41...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.42...HEAD
+[v1.3.42]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.41...v1.3.42
 [v1.3.41]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.40...v1.3.41
 [v1.3.40]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.39...v1.3.40
 [v1.3.39]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.38...v1.3.39
