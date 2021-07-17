@@ -87,7 +87,7 @@ module "tgw_inspection_route_table" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
 
-  count = var.enable_tgw && var.enable_network_firewall ? 1 : 0
+  count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? 1 : 0
 
   name = "${var.project}-inspection-rt"
 
@@ -124,7 +124,7 @@ module "tgw_inspection_route_table" {
 
 
 resource "aws_ec2_transit_gateway_route" "inspection" {
-  count = var.enable_tgw && var.enable_network_firewall ? 1 : 0
+  count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? 1 : 0
 
   destination_cidr_block         = "0.0.0.0/0"
   transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
@@ -132,18 +132,11 @@ resource "aws_ec2_transit_gateway_route" "inspection" {
 }
 
 resource "aws_ec2_transit_gateway_route_table_association" "inspection" {
-  count = var.enable_tgw && var.enable_network_firewall ? 1 : 0
+  count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? 1 : 0
 
   transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network_inspection["network-inspection"].transit_gateway_vpc_attachment_ids["network-inspection"]
 }
-
-#resource "aws_ec2_transit_gateway_route_table_propagation" "inspection" {
-#  count = var.enable_tgw && var.enable_network_firewall ? 1 : 0
-#
-#  transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
-#  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network_inspection["network-inspection"].transit_gateway_vpc_attachment_ids["network-inspection"]
-#}
 
 # Update network public RT
 resource "aws_route" "apps_devstg_public_route_to_tgw" {
