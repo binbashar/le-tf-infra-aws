@@ -69,3 +69,13 @@ output "enable_network_firewall" {
   description = "This is set to `true` if the AWS Network Firewall is enabled"
   value       = var.enable_network_firewall
 }
+
+output "tgw_route_tabe_id" {
+  description = "TGW default route table id"
+  value       = var.enable_tgw ? module.tgw[0].transit_gateway_route_table_id : null
+}
+
+output "tgw_inspection_route_tabe_id" {
+  description = "TGW inspection route table id"
+  value       = var.enable_tgw ? module.tgw_vpc_attachments_and_subnet_routes_network_inspection["network-inspection"].transit_gateway_route_table_id : null
+}

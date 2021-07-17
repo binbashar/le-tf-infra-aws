@@ -31,19 +31,6 @@ module "tgw" {
         ]
       }
     } : {},
-    # network inspection private
-    lookup(var.enable_vpc_attach, "network", false) && var.enable_network_firewall ? {
-      (data.terraform_remote_state.network-vpcs["network-inspection"].outputs.vpc_id) = {
-        vpc_id                            = null
-        vpc_cidr                          = null
-        subnet_ids                        = null
-        subnet_route_table_ids            = null
-        route_to                          = null
-        route_to_cidr_blocks              = []
-        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network_inspection["network-inspection"].transit_gateway_vpc_attachment_ids["network-inspection"]
-        static_routes                     = null
-      }
-    } : {},
     # apps-devstg private
     lookup(var.enable_vpc_attach, "apps-devstg", false) ? {
       for k, v in data.terraform_remote_state.apps-devstg-vpcs : v.outputs.vpc_id => {
@@ -85,10 +72,78 @@ module "tgw" {
     } : {},
   )
 
+  tags = {
+    Name = "${var.project}-tgw"
+  }
+
   providers = {
     aws = aws.network
   }
 }
+
+# RT
+
+module "tgw_inspection_route_table" {
+
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+
+  count = var.enable_tgw && var.enable_network_firewall ? 1 : 0
+
+  name = "${var.project}-inspection-rt"
+
+  existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
+  create_transit_gateway                                         = false
+  create_transit_gateway_route_table                             = true
+  create_transit_gateway_vpc_attachment                          = false
+  create_transit_gateway_route_table_association_and_propagation = false
+
+  config = {
+    inspection = {
+      vpc_id                            = null
+      vpc_cidr                          = null
+      subnet_ids                        = null
+      subnet_route_table_ids            = null
+      route_to                          = null
+      route_to_cidr_blocks              = null
+      transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network_inspection["network-inspection"].transit_gateway_vpc_attachment_ids["network-inspection"]
+      static_routes = [
+        {
+          blackhole              = false
+          destination_cidr_block = "0.0.0.0/0"
+        }
+      ]
+    }
+  }
+
+  tags = local.tags
+
+  providers = {
+    aws = aws.network
+  }
+}
+
+
+resource "aws_ec2_transit_gateway_route" "inspection" {
+  count = var.enable_tgw && var.enable_network_firewall ? 1 : 0
+
+  destination_cidr_block         = "0.0.0.0/0"
+  transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network_inspection["network-inspection"].transit_gateway_vpc_attachment_ids["network-inspection"]
+}
+
+resource "aws_ec2_transit_gateway_route_table_association" "inspection" {
+  count = var.enable_tgw && var.enable_network_firewall ? 1 : 0
+
+  transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network_inspection["network-inspection"].transit_gateway_vpc_attachment_ids["network-inspection"]
+}
+
+#resource "aws_ec2_transit_gateway_route_table_propagation" "inspection" {
+#  count = var.enable_tgw && var.enable_network_firewall ? 1 : 0
+#
+#  transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
+#  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network_inspection["network-inspection"].transit_gateway_vpc_attachment_ids["network-inspection"]
+#}
 
 # Update network public RT
 resource "aws_route" "apps_devstg_public_route_to_tgw" {

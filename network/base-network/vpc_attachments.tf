@@ -11,29 +11,25 @@ module "tgw_vpc_attachments_and_subnet_routes_network_inspection" {
   # network account can access the Transit Gateway in the network: account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
   create_transit_gateway                                         = false
-  create_transit_gateway_route_table                             = true
+  create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
   create_transit_gateway_route_table_association_and_propagation = false
 
   config = {
     (each.key) = {
-      vpc_id                 = each.value.outputs.vpc_id
-      vpc_cidr               = each.value.outputs.vpc_cidr_block
-      subnet_ids             = each.value.outputs.private_subnets
-      subnet_route_table_ids = each.value.outputs.private_route_table_ids
-      route_to               = null
-      route_to_cidr_blocks = concat(
-        ["0.0.0.0/0"], #tgw
-        #[for v in values(data.terraform_remote_state.shared-vpcs) : v.outputs.vpc_cidr_block],  # shared
-        #[for v in values(data.terraform_remote_state.network-vpcs) : v.outputs.vpc_cidr_block], # network
-      )
+      vpc_id                            = each.value.outputs.vpc_id
+      vpc_cidr                          = each.value.outputs.vpc_cidr_block
+      subnet_ids                        = each.value.outputs.private_subnets
+      subnet_route_table_ids            = each.value.outputs.private_route_table_ids
+      route_to                          = null
+      route_to_cidr_blocks              = null
       static_routes                     = null
       transit_gateway_vpc_attachment_id = null
     }
   }
 
   tags = {
-    Name = "${var.project}-${each.key}-vpc-attach"
+    Name = "${var.project}-${each.key}-vpc"
   }
 
   providers = {
@@ -135,11 +131,11 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd" {
     k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
   }
 
-  name = "${var.project}-apps-prd-vpc-attach"
+  name = "${var.project}-apps-prd-vpc"
 
   # apps-prd account can access the Transit Gateway in the network account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
-  existing_transit_gateway_route_table_id                        = var.enable_tgw && var.enable_network_firewall ? module.tgw_vpc_attachments_and_subnet_routes_network_inspection["network-inspection"].transit_gateway_route_table_id : module.tgw[0].transit_gateway_route_table_id
+  existing_transit_gateway_route_table_id                        = var.enable_tgw && var.enable_network_firewall ? module.tgw_inspection_route_table[0].transit_gateway_route_table_id : module.tgw[0].transit_gateway_route_table_id
   create_transit_gateway                                         = false
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
@@ -162,9 +158,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd" {
     }
   }
 
-  tags = {
-    Name = "${var.project}-apps-prd-vpc"
-  }
+  tags = local.tags
 
   providers = {
     aws = aws.apps-prd
