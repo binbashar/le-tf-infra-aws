@@ -26,19 +26,16 @@ terraform {
 # Data sources                #
 #=============================#
 
-
-# VPC remote states for network
-data "terraform_remote_state" "network-vpcs" {
-  for_each = local.network-vpcs
-
+#
+# Inspection Network
+#
+data "terraform_remote_state" "inspection_vpc" {
   backend = "s3"
 
   config = {
-    region  = lookup(each.value, "region")
-    profile = lookup(each.value, "profile")
-    bucket  = lookup(each.value, "bucket")
-    key     = lookup(each.value, "key")
+    region  = var.region
+    profile = "${var.project}-network-devops"
+    bucket  = "${var.project}-network-terraform-backend"
+    key     = "network/network/terraform.tfstate"
   }
-
 }
-

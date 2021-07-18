@@ -1,61 +1,14 @@
-# VPC ID
-output "vpc_id" {
-  description = "VPC ID"
-  value       = module.vpc.vpc_id
-}
-
-output "vpc_name" {
-  description = "VPC Name"
-  value       = local.vpc_name
-}
-
-output "vpc_cidr_block" {
-  description = "VPC CIDR Block"
-  value       = local.vpc_cidr_block
-}
-
-output "availability_zones" {
-  description = "List of availability zones"
-  value       = local.azs
-}
-
-# Subnets
-output "private_subnets" {
-  description = "List of IDs of private subnets"
-  value       = module.vpc.private_subnets
-}
-
-output "public_subnets" {
-  description = "List of IDs of public subnets"
-  value       = module.vpc.public_subnets
-}
-
-output "private_subnets_cidr" {
-  description = "CIDRS of private subnets"
-  value       = local.private_subnets_cidr
-}
-
-output "public_subnets_cidr" {
-  description = "CIDR of public subnets"
-  value       = local.public_subnets_cidr
-}
-
-output "nat_gateway_ids" {
-  description = "NAT Gateway IDs"
-  value       = module.vpc.natgw_ids
-}
-
-output "public_route_table_ids" {
-  description = "List of IDs of public route tables"
-  value       = module.vpc.public_route_table_ids
-}
-
-output "private_route_table_ids" {
-  description = "List of IDs of private route tables"
-  value       = module.vpc.private_route_table_ids
-}
-
-output "enable_tgw" {
-  description = "This is set to `true` if the Transit Gateway is enabled"
-  value       = var.enable_tgw
-}
+#output "network_firewall_status" {
+##  description = "Nested list of information about the current status of the firewall."
+#  value       = aws_networkfirewall_firewall.firewall.firewall_status
+#}
+#
+#output "network_firewall_status_sync_states" {
+#  description = "Set of subnets configured for use by the firewall."
+#  value       = aws_networkfirewall_firewall.firewall.firewall_status[0]["sync_states"]
+#}
+#
+#output "network_firewall_status_sync_states_attachment" {
+#  description = "Nested list describing the attachment status of the firewall's association with a single VPC subnet."
+#  value       = lookup(aws_networkfirewall_firewall.firewall.firewall_status[0]["sync_states"], "attachment")
+#}
