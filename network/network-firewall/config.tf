@@ -36,6 +36,6 @@ data "terraform_remote_state" "inspection_vpc" {
     region  = var.region
     profile = "${var.project}-network-devops"
     bucket  = "${var.project}-network-terraform-backend"
-    key     = "network/network/terraform.tfstate"
+    key     = "network/inspection-network/terraform.tfstate"
   }
 }

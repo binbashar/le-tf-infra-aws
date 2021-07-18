@@ -1,15 +1,15 @@
 # VPC ID
-output "inspection_vpc_id" {
+output "vpc_id" {
   description = "VPC ID"
   value       = module.vpc.vpc_id
 }
 
-output "inspection_vpc_name" {
+output "vpc_name" {
   description = "VPC Name"
   value       = local.vpc_name
 }
 
-output "inspection_vpc_cidr_block" {
+output "vpc_cidr_block" {
   description = "VPC CIDR Block"
   value       = local.vpc_cidr_block
 }
