@@ -1,10 +1,10 @@
-# network inspection VPC attachments (private)
+# Network Firewall VPC attachment - Inspection subnets (private)
 module "tgw_vpc_attachments_and_subnet_routes_network_inspection" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
 
   for_each = {
-    for k, v in { "network-inspection" = data.terraform_remote_state.network-vpcs["network-inspection"] } :
+    for k, v in { "network-inspection" = data.terraform_remote_state.network-vpcs["network-firewall"] } :
     k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false)
   }
 

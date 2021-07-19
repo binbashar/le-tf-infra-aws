@@ -2,11 +2,11 @@
 resource "aws_networkfirewall_firewall" "firewall" {
   name                = "network-firewall"
   firewall_policy_arn = aws_networkfirewall_firewall_policy.policy.arn
-  vpc_id              = data.terraform_remote_state.inspection_vpc.outputs["vpc_id"]
+  vpc_id              = module.vpc.vpc_id
 
   # subnet_mapping
   dynamic "subnet_mapping" {
-    for_each = values(data.terraform_remote_state.inspection_vpc.outputs["network_firewall_subnets"])
+    for_each = values(module.network_firewall_private_subnets.az_subnet_ids)
 
     content {
       subnet_id = subnet_mapping.value

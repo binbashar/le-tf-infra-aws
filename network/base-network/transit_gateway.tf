@@ -1,3 +1,4 @@
+# AWS Transit Gateway
 module "tgw" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
@@ -81,8 +82,9 @@ module "tgw" {
   }
 }
 
-# RT
-
+#
+# Route Table defitions
+#
 module "tgw_inspection_route_table" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
@@ -121,7 +123,6 @@ module "tgw_inspection_route_table" {
     aws = aws.network
   }
 }
-
 
 resource "aws_ec2_transit_gateway_route" "inspection" {
   count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? 1 : 0
@@ -210,4 +211,33 @@ resource "aws_route" "shared_public_apps_prd_route_to_tgw" {
 
   provider = aws.shared
 
+}
+
+# Update Inspection & AWS Network Firewall route tables
+data "aws_route_table" "inspection_route_table" {
+  for_each = {
+    for k, v in data.terraform_remote_state.network-firewall[0].outputs["inspection_subnets"] :
+    k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false)
+  }
+
+  subnet_id = each.value
+}
+
+resource "aws_route" "inspection_to_endpoint" {
+  for_each               = { for s in data.terraform_remote_state.network-firewall[0].outputs["sync_states"][0] : s["availability_zone"] => s["attachment"] }
+  route_table_id         = data.aws_route_table.inspection_route_table[each.key].id
+  vpc_endpoint_id        = each.value[0]["endpoint_id"]
+  destination_cidr_block = "0.0.0.0/0"
+}
+
+data "aws_route_table" "network_firewall_route_table" {
+  for_each  = data.terraform_remote_state.network-firewall[0].outputs["network_firewall_subnets"]
+  subnet_id = each.value
+}
+
+resource "aws_route" "network_firewall_tgw" {
+  for_each               = { for s in data.terraform_remote_state.network-firewall[0].outputs["sync_states"][0] : s["availability_zone"] => s["attachment"] }
+  route_table_id         = data.aws_route_table.network_firewall_route_table[each.key].id
+  transit_gateway_id     = "tgw-0f7ac1bbc7ba1a09e"
+  destination_cidr_block = "0.0.0.0/0"
 }
