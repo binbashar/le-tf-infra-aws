@@ -144,11 +144,18 @@ resource "aws_ec2_transit_gateway_route" "network_firewall_default" {
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network["network-base"].transit_gateway_vpc_attachment_ids["network-base"]
 }
 
-resource "aws_ec2_transit_gateway_route_table_association" "network-firewall-association" {
+resource "aws_ec2_transit_gateway_route_table_association" "network-inspection-association" {
   count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? 1 : 0
 
   transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network_firewall["network-firewall"].transit_gateway_vpc_attachment_ids["network-firewall"]
+}
+
+resource "aws_ec2_transit_gateway_route_table_association" "network-base-association" {
+  count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? 1 : 0
+
+  transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network["network-base"].transit_gateway_vpc_attachment_ids["network-base"]
 }
 
 # shared
@@ -160,7 +167,7 @@ resource "aws_ec2_transit_gateway_route_table_association" "shared-rt-associatio
   }
 
   transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
-  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-prd[each.key].transit_gateway_vpc_attachment_ids[each.key]
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_shared[each.key].transit_gateway_vpc_attachment_ids[each.key]
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "shared-rt-propagations" {
@@ -170,7 +177,7 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "shared-rt-propagatio
   }
 
   transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
-  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-prd[each.key].transit_gateway_vpc_attachment_ids[each.key]
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_shared[each.key].transit_gateway_vpc_attachment_ids[each.key]
 
 }
 
@@ -183,7 +190,7 @@ resource "aws_ec2_transit_gateway_route_table_association" "apps-devstg-rt-assoc
   }
 
   transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
-  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-prd[each.key].transit_gateway_vpc_attachment_ids[each.key]
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-devstg[each.key].transit_gateway_vpc_attachment_ids[each.key]
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "apps-devstg-rt-propagations" {
@@ -193,7 +200,7 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "apps-devstg-rt-propa
   }
 
   transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
-  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-prd[each.key].transit_gateway_vpc_attachment_ids[each.key]
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-devstg[each.key].transit_gateway_vpc_attachment_ids[each.key]
 
 }
 
