@@ -24,29 +24,50 @@ resource "aws_networkfirewall_firewall_policy" "policy" {
     stateless_default_actions          = ["aws:pass"]
     stateless_fragment_default_actions = ["aws:drop"]
 
-    stateful_rule_group_reference {
-      resource_arn = aws_networkfirewall_rule_group.rule_group.arn
+    stateless_rule_group_reference {
+      priority     = 10
+      resource_arn = aws_networkfirewall_rule_group.staless_rule_group.arn
     }
 
     stateful_rule_group_reference {
-      resource_arn = aws_networkfirewall_rule_group.rule_group2.arn
+      resource_arn = aws_networkfirewall_rule_group.staleful_rule_group.arn
     }
   }
 
   tags = local.tags
 }
 
-# Rule group
-resource "aws_networkfirewall_rule_group" "rule_group" {
-  capacity = 100
-  name     = "test-example"
-  type     = "STATEFUL"
+# Stateless rule groups
+resource "aws_networkfirewall_rule_group" "staless_rule_group" {
+  description = "Stateless Rule"
+  capacity    = 100
+  name        = "default-forward"
+  type        = "STATELESS"
   rule_group {
     rules_source {
-      rules_source_list {
-        generated_rules_type = "ALLOWLIST"
-        target_types         = ["HTTP_HOST"]
-        targets              = ["www.example.com"]
+      stateless_rules_and_custom_actions {
+        stateless_rule {
+          priority = 10
+          rule_definition {
+            actions = ["aws:forward_to_sfe"]
+            match_attributes {
+              source {
+                address_definition = "0.0.0.0/0"
+              }
+              #source_port {
+              #  from_port = 0
+              #  to_port   = 0
+              #}
+              destination {
+                address_definition = "0.0.0.0/0"
+              }
+              #destination_port {
+              #  from_port = 0
+              #  to_port   = 0
+              #}
+            }
+          }
+        }
       }
     }
   }
@@ -54,20 +75,31 @@ resource "aws_networkfirewall_rule_group" "rule_group" {
   tags = local.tags
 }
 
-# Rule group 2
-resource "aws_networkfirewall_rule_group" "rule_group2" {
-  capacity = 100
-  name     = "rule-group2-example"
-  type     = "STATEFUL"
+# Stateful rule groups
+resource "aws_networkfirewall_rule_group" "staleful_rule_group" {
+  capacity    = 50
+  description = "Deny Wikipedia access"
+  name        = "deny-wikipedia"
+  type        = "STATEFUL"
   rule_group {
+    rule_variables {
+      ip_sets {
+        key = "HOME_NET"
+        ip_set {
+          definition = ["0.0.0.0/0"]
+        }
+
+      }
+    }
     rules_source {
       rules_source_list {
         generated_rules_type = "DENYLIST"
-        target_types         = ["HTTP_HOST"]
-        targets              = ["test.example.com"]
+        target_types         = ["TLS_SNI", "HTTP_HOST"]
+        targets              = ["wikipedia.org"]
       }
     }
   }
 
   tags = local.tags
+
 }
