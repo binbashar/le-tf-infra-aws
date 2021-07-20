@@ -95,7 +95,7 @@ resource "aws_networkfirewall_rule_group" "staleful_rule_group" {
       rules_source_list {
         generated_rules_type = "DENYLIST"
         target_types         = ["TLS_SNI", "HTTP_HOST"]
-        targets              = ["wikipedia.org"]
+        targets              = [".wikipedia.org"]
       }
     }
   }
