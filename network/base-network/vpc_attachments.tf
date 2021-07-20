@@ -1,10 +1,12 @@
 # Network Firewall VPC attachment - Inspection subnets (private)
-module "tgw_vpc_attachments_and_subnet_routes_network_inspection" {
+module "tgw_vpc_attachments_and_subnet_routes_network_firewall" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
 
   for_each = {
-    for k, v in { "network-inspection" = data.terraform_remote_state.network-vpcs["network-firewall"] } :
+    for k, v in {
+      "network-firewall" = data.terraform_remote_state.network-firewall
+    } :
     k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false)
   }
 
@@ -19,8 +21,8 @@ module "tgw_vpc_attachments_and_subnet_routes_network_inspection" {
     (each.key) = {
       vpc_id                            = each.value.outputs.vpc_id
       vpc_cidr                          = each.value.outputs.vpc_cidr_block
-      subnet_ids                        = each.value.outputs.private_subnets
-      subnet_route_table_ids            = each.value.outputs.private_route_table_ids
+      subnet_ids                        = values(each.value.outputs.inspection_subnets)
+      subnet_route_table_ids            = values(each.value.outputs.inspection_route_table_ids)
       route_to                          = null
       route_to_cidr_blocks              = null
       static_routes                     = null
@@ -43,7 +45,14 @@ module "tgw_vpc_attachments_and_subnet_routes_network" {
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
 
   for_each = {
-    for k, v in { "network-base" = data.terraform_remote_state.network-vpcs["network-base"] } :
+    for k, v in {
+      network-base = {
+        vpc_id                  = module.vpc.vpc_id
+        vpc_cidr_block          = local.vpc_cidr_block
+        private_subnets         = module.vpc.private_subnets
+        private_route_table_ids = module.vpc.private_route_table_ids
+      }
+    } :
     k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "network", false)
   }
 
@@ -57,10 +66,10 @@ module "tgw_vpc_attachments_and_subnet_routes_network" {
 
   config = {
     (each.key) = {
-      vpc_id                            = each.value.outputs.vpc_id
-      vpc_cidr                          = each.value.outputs.vpc_cidr_block
-      subnet_ids                        = each.value.outputs.private_subnets
-      subnet_route_table_ids            = each.value.outputs.private_route_table_ids
+      vpc_id                            = each.value.vpc_id
+      vpc_cidr                          = each.value.vpc_cidr_block
+      subnet_ids                        = each.value.private_subnets
+      subnet_route_table_ids            = each.value.private_route_table_ids
       route_to                          = null
       route_to_cidr_blocks              = null
       static_routes                     = null
@@ -89,7 +98,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-devstg" {
 
   # apps-devstg account can access the Transit Gateway in the network account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
-  existing_transit_gateway_route_table_id                        = var.enable_tgw && var.enable_network_firewall ? module.tgw_vpc_attachments_and_subnet_routes_network_inspection["network-inspection"].transit_gateway_route_table_id : module.tgw[0].transit_gateway_route_table_id
+  existing_transit_gateway_route_table_id                        = var.enable_tgw && var.enable_network_firewall ? module.tgw_vpc_attachments_and_subnet_routes_network_firewall["network-firewall"].transit_gateway_route_table_id : module.tgw[0].transit_gateway_route_table_id
   create_transit_gateway                                         = false
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
@@ -177,7 +186,7 @@ module "tgw_vpc_attachments_and_subnet_routes_shared" {
 
   # apps-devstg account can access the Transit Gateway in the network account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
-  existing_transit_gateway_route_table_id                        = var.enable_tgw && lookup(var.enable_vpc_attach, "shared", false) ? module.tgw_vpc_attachments_and_subnet_routes_network_inspection["network-inspection"].transit_gateway_route_table_id : module.tgw[0].transit_gateway_route_table_id
+  existing_transit_gateway_route_table_id                        = var.enable_tgw && lookup(var.enable_vpc_attach, "shared", false) ? try(module.tgw_vpc_attachments_and_subnet_routes_network_firewall["network-firewall"].transit_gateway_route_table_id, null) : module.tgw[0].transit_gateway_route_table_id
   create_transit_gateway                                         = false
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true

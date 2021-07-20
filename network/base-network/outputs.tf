@@ -77,5 +77,5 @@ output "tgw_route_tabe_id" {
 
 output "tgw_inspection_route_tabe_id" {
   description = "TGW inspection route table id"
-  value       = var.enable_tgw && lookup(var.enable_vpc_attach, "network", false) ? module.tgw_vpc_attachments_and_subnet_routes_network_inspection["network-inspection"].transit_gateway_route_table_id : null
+  value       = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? module.tgw_vpc_attachments_and_subnet_routes_network_firewall["network-firewall"].transit_gateway_route_table_id : null
 }

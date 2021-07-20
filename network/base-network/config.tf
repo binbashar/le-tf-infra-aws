@@ -70,8 +70,6 @@ data "terraform_remote_state" "tools-vpn-server" {
 
 data "terraform_remote_state" "network-firewall" {
 
-  count = var.enable_network_firewall ? 1 : 0
-
   backend = "s3"
 
   config = {
@@ -85,7 +83,7 @@ data "terraform_remote_state" "network-firewall" {
 
 # VPC remote states for network
 data "terraform_remote_state" "network-vpcs" {
-  for_each = local.network-vpcs
+  for_each = var.enable_network_firewall ? local.network-vpcs : {}
 
   backend = "s3"
 
