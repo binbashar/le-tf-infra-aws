@@ -17,11 +17,12 @@ resource "mysql_user" "sockshop" {
   user               = "catalogue_user"
   host               = "%"
   plaintext_password = random_password.sockhsop.result
+  depends_on         = [module.demoapps]
 }
 
 resource "mysql_grant" "sockshop" {
   user       = mysql_user.sockshop.user
   host       = mysql_user.sockshop.host
   database   = mysql_database.sockshop.name
-  privileges = ["SELECT", "INSERT", "UPDATE", "DELETE", "CREATE", "REFERENCES"]
+  privileges = ["SELECT", "INSERT", "UPDATE", "DELETE", "CREATE", "REFERENCES", "DROP"]
 }
