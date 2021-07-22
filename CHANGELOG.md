@@ -7,6 +7,39 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.43"></a>
+## [v1.3.43] - 2021-07-22
+
+- Remove debuggin code
+- Remove extra lines
+- Add private subnet cidr in NACLs rules
+- * Add enable_network_firewall variable * Add prefix to resource names
+- Update  deny example using AWS Network Firewall DomainList
+- Fix TGW route table associations for NETFW
+- Add deny example using AWS Network Firewall DomainList
+- Add route table association toggle
+- * Move inspection-vpc into network-firewall layer * Move Network firewall RT login to TGW layer
+- Add default routes for inspection and nework firewall route tables
+- Move inspection vpc definition to inspection-network
+- Move inspection vpc definition to base-network
+- Add toggle condition for network attachments
+- Add implementation fro the inspection TGW route table
+- Fix tgw_vpc_attachments_and_subnet_routes indices ref
+- Add disable variable in tfvars
+- * Add dynamic RT assignation based on enable_network_firewall var * Add disable variable to prevent some resources to be deploy (for debuggig)
+- Add toggle for TGW / VPC peering per VPCs level
+- Add TGW / VPC Peering per VPCwq
+- Fix dynamic vpc attachments
+- Add toggle in TGW route table association to support AWS Firewall network
+- Add enable_network_firewall for tfvars and ouputs
+- Change to for_each iteration for modules
+- Add treatement for inspection network VPC & TGW
+- Add treatement for the default route in the network VPC
+- Add network inspection & RT togglin per VPC attachment
+- Add network-firewall layer
+- Grant access to Devops for AW Firewall Manager and AWS Network Firewall
+
+
 <a name="v1.3.42"></a>
 ## [v1.3.42] - 2021-07-17
 
@@ -1897,7 +1930,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.42...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.43...HEAD
+[v1.3.43]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.42...v1.3.43
 [v1.3.42]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.41...v1.3.42
 [v1.3.41]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.40...v1.3.41
 [v1.3.40]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.39...v1.3.40
