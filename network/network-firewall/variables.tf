@@ -195,3 +195,8 @@ variable "private_dedicated_network_acl" {
   default     = true
 }
 
+variable "enable_network_firewall" {
+  description = "Enable AWS Network Firewall support"
+  type        = bool
+  default     = false
+}

@@ -1,6 +1,9 @@
 # Firewall
 resource "aws_networkfirewall_firewall" "firewall" {
-  name                = "network-firewall"
+
+  count = var.enable_network_firewall ? 1 : 0
+
+  name                = "${var.project}-${var.environment}-network-firewall"
   firewall_policy_arn = aws_networkfirewall_firewall_policy.policy.arn
   vpc_id              = module.vpc.vpc_id
 
@@ -18,7 +21,10 @@ resource "aws_networkfirewall_firewall" "firewall" {
 
 # Policy
 resource "aws_networkfirewall_firewall_policy" "policy" {
-  name = "network-firewall-policy-example"
+
+  count = var.enable_network_firewall ? 1 : 0
+
+  name = "${var.project}-${var.environment}-network-firewall-policy"
 
   firewall_policy {
     stateless_default_actions          = ["aws:pass"]
@@ -39,9 +45,13 @@ resource "aws_networkfirewall_firewall_policy" "policy" {
 
 # Stateless rule groups
 resource "aws_networkfirewall_rule_group" "staless_rule_group" {
+
+  yycount = var.enable_network_firewall ? 1 : 0
+
+  name = "${var.project}-${var.environment}-default-forward"
+
   description = "Stateless Rule"
   capacity    = 100
-  name        = "default-forward"
   type        = "STATELESS"
   rule_group {
     rules_source {
@@ -77,9 +87,12 @@ resource "aws_networkfirewall_rule_group" "staless_rule_group" {
 
 # Stateful rule groups
 resource "aws_networkfirewall_rule_group" "staleful_rule_group" {
+
+  count = var.enable_network_firewall ? 1 : 0
+
+  name        = "${var.project}-${var.environment}-deny-wikipedia"
   capacity    = 50
   description = "Deny Wikipedia access"
-  name        = "deny-wikipedia"
   type        = "STATEFUL"
   rule_group {
     rule_variables {
@@ -101,5 +114,4 @@ resource "aws_networkfirewall_rule_group" "staleful_rule_group" {
   }
 
   tags = local.tags
-
 }
