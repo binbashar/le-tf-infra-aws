@@ -4,7 +4,7 @@ module "tgw" {
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
 
   count = var.enable_tgw ? 1 : 0
-  name  = "${var.project}-tgw"
+  name  = "${var.project}-${var.environment}-tgw"
 
   ram_resource_share_enabled = true
 
@@ -74,7 +74,7 @@ module "tgw" {
   )
 
   tags = {
-    Name = "${var.project}-tgw"
+    Name = "${var.project}-${var.environment}-tgw"
   }
 
   providers = {
@@ -91,7 +91,7 @@ module "tgw_inspection_route_table" {
 
   count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? 1 : 0
 
-  name = "${var.project}-inspection"
+  name = "${var.project}-${var.environment}-inspection"
 
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
   create_transit_gateway                                         = false

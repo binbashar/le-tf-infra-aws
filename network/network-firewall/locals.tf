@@ -16,6 +16,9 @@ locals {
     #"${var.region}c"
   ]
 
+  # This includes the inspection and te firewall subnets
+  private_subnets_cidr = ["172.20.16.0/20"]
+
   inspection_subnets_cidr = ["172.20.16.0/21"]
   inspection_subnets = [
     "172.20.16.0/23",

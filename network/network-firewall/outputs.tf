@@ -25,6 +25,10 @@ output "network_firewall_subnets" {
   value       = module.network_firewall_private_subnets.az_subnet_ids
 }
 
+output "private_subnets_cidr" {
+  description = "CIDRS of private subnets"
+  value       = local.private_subnets_cidr
+}
 output "inspection_subnets_cidr" {
   description = "CIDRS of inspection subnets"
   value       = local.inspection_subnets_cidr
@@ -48,15 +52,15 @@ output "inspection_route_table_ids" {
 # Network Firewall
 output "network_firewall_status" {
   description = "Nested list of information about the current status of the firewall."
-  value       = aws_networkfirewall_firewall.firewall.firewall_status
+  value       = var.enable_network_firewall ? aws_networkfirewall_firewall.firewall[0].firewall_status : []
 }
 
 output "sync_states" {
   description = "Set of subnets configured for use by the firewall."
-  value       = aws_networkfirewall_firewall.firewall.firewall_status.*.sync_states
+  value       = var.enable_network_firewall ? aws_networkfirewall_firewall.firewall[0].firewall_status.*.sync_states : []
 }
 
 output "network_firewall_subnet_id_endpoint_id" {
   description = "Map of endpoint_id per subnet_id"
-  value       = { for v in aws_networkfirewall_firewall.firewall.firewall_status[0]["sync_states"].*.attachment : v[0]["subnet_id"] => v[0]["endpoint_id"] }
+  value       = var.enable_network_firewall ? { for v in aws_networkfirewall_firewall.firewall[0].firewall_status[0]["sync_states"].*.attachment : v[0]["subnet_id"] => v[0]["endpoint_id"] } : {}
 }

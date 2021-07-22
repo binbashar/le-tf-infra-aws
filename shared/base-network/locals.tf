@@ -52,6 +52,14 @@ locals {
     #
     default_inbound = [
       {
+        rule_number = 800 # own private subnet cidr
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = local.private_subnets_cidr[0]
+      },
+      {
         rule_number = 900 # shared pritunl vpn server
         rule_action = "allow"
         from_port   = 0

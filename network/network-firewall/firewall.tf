@@ -3,8 +3,8 @@ resource "aws_networkfirewall_firewall" "firewall" {
 
   count = var.enable_network_firewall ? 1 : 0
 
-  name                = "${var.project}-${var.environment}-network-firewall"
-  firewall_policy_arn = aws_networkfirewall_firewall_policy.policy.arn
+  name                = "${var.project}-${var.environment}-firewall"
+  firewall_policy_arn = aws_networkfirewall_firewall_policy.policy[0].arn
   vpc_id              = module.vpc.vpc_id
 
   # subnet_mapping
@@ -24,7 +24,7 @@ resource "aws_networkfirewall_firewall_policy" "policy" {
 
   count = var.enable_network_firewall ? 1 : 0
 
-  name = "${var.project}-${var.environment}-network-firewall-policy"
+  name = "${var.project}-${var.environment}-firewall-policy"
 
   firewall_policy {
     stateless_default_actions          = ["aws:pass"]
@@ -32,11 +32,11 @@ resource "aws_networkfirewall_firewall_policy" "policy" {
 
     stateless_rule_group_reference {
       priority     = 10
-      resource_arn = aws_networkfirewall_rule_group.staless_rule_group.arn
+      resource_arn = aws_networkfirewall_rule_group.staless_rule_group[0].arn
     }
 
     stateful_rule_group_reference {
-      resource_arn = aws_networkfirewall_rule_group.staleful_rule_group.arn
+      resource_arn = aws_networkfirewall_rule_group.staleful_rule_group[0].arn
     }
   }
 
@@ -46,7 +46,7 @@ resource "aws_networkfirewall_firewall_policy" "policy" {
 # Stateless rule groups
 resource "aws_networkfirewall_rule_group" "staless_rule_group" {
 
-  yycount = var.enable_network_firewall ? 1 : 0
+  count = var.enable_network_firewall ? 1 : 0
 
   name = "${var.project}-${var.environment}-default-forward"
 
