@@ -195,38 +195,6 @@ variable "private_dedicated_network_acl" {
   default     = true
 }
 
-variable "vpc_endpoints" {
-  description = "VPC endpoints"
-  type        = any
-  default = {
-    s3 = {
-      service      = "s3"
-      service_type = "Gateway"
-    }
-    dynamodb = {
-      service      = "dynamodb"
-      service_type = "Gateway"
-    }
-  }
-}
-
-variable "enable_tgw" {
-  description = "Enable Transit Gateway Support"
-  type        = bool
-  default     = true
-}
-
-variable "enable_vpc_attach" {
-  description = "Enable VPC attachments per account"
-  type        = any
-  default = {
-    network     = false
-    shared      = false
-    apps-devstg = false
-    apps-prd    = false
-  }
-}
-
 variable "enable_network_firewall" {
   description = "Enable AWS Network Firewall support"
   type        = bool

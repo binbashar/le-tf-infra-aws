@@ -113,11 +113,11 @@ locals {
 
   # network
   network-vpcs = {
-    network-base = {
+    network-firewall = {
       region  = var.region
       profile = "${var.project}-network-devops"
       bucket  = "${var.project}-network-terraform-backend"
-      key     = "network/network/terraform.tfstate"
+      key     = "network/network-firewall/terraform.tfstate"
     }
   }
 
@@ -160,9 +160,10 @@ locals {
   }
 
   datasources-vpcs = merge(
-    data.terraform_remote_state.network-vpcs,     # network
-    data.terraform_remote_state.shared-vpcs,      # shared
-    data.terraform_remote_state.apps-devstg-vpcs, # apps-devstg-vpcs
-    data.terraform_remote_state.apps-prd-vpcs,    # apps-prd-vpcs
+    data.terraform_remote_state.network-vpcs, # network
+    #data.terraform_remote_state.shared-vpcs,      # shared
+    #data.terraform_remote_state.apps-devstg-vpcs, # apps-devstg-vpcs
+    data.terraform_remote_state.apps-prd-vpcs, # apps-prd-vpcs
   )
 }
+

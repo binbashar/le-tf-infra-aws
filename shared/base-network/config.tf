@@ -40,10 +40,27 @@ data "terraform_remote_state" "tools-vpn-server" {
   }
 }
 
+# VPC remote states for network
+data "terraform_remote_state" "network-vpcs" {
+  for_each = local.network-vpcs
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
+  }
+}
+
 # VPC remote states for apps-devstg
 data "terraform_remote_state" "apps-devstg-vpcs" {
 
-  for_each = local.apps-devstg-vpcs
+  for_each = {
+    for k, v in local.apps-devstg-vpcs :
+    k => v if !v["tgw"]
+  }
 
   backend = "s3"
 
@@ -58,7 +75,10 @@ data "terraform_remote_state" "apps-devstg-vpcs" {
 # VPC remote states for apps-prd
 data "terraform_remote_state" "apps-prd-vpcs" {
 
-  for_each = local.apps-prd-vpcs
+  for_each = {
+    for k, v in local.apps-prd-vpcs :
+    k => v if !v["tgw"]
+  }
 
   backend = "s3"
 

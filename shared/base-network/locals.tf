@@ -52,6 +52,14 @@ locals {
     #
     default_inbound = [
       {
+        rule_number = 800 # own private subnet cidr
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = local.private_subnets_cidr[0]
+      },
+      {
         rule_number = 900 # shared pritunl vpn server
         rule_action = "allow"
         from_port   = 0
@@ -102,6 +110,16 @@ locals {
   # Data source definitions
   #
 
+  # network
+  network-vpcs = {
+    network-base = {
+      region  = var.region
+      profile = "${var.project}-network-devops"
+      bucket  = "${var.project}-network-terraform-backend"
+      key     = "network/network/terraform.tfstate"
+    }
+  }
+
   # apps-devstg
   apps-devstg-vpcs = {
     apps-devstg-base = {
@@ -109,18 +127,21 @@ locals {
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/network/terraform.tfstate"
+      tgw     = false
     }
     apps-devstg-k8s-eks = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
+      tgw     = false
     }
     apps-devstg-eks-demoapps = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
+      tgw     = false
     }
   }
 
@@ -131,12 +152,14 @@ locals {
       profile = "${var.project}-apps-prd-devops"
       bucket  = "${var.project}-apps-prd-terraform-backend"
       key     = "apps-prd/network/terraform.tfstate"
+      tgw     = false
     }
     apps-prd-k8s-eks = {
       region  = var.region
       profile = "${var.project}-apps-prd-devops"
       bucket  = "${var.project}-apps-prd-terraform-backend"
       key     = "apps-prd/k8s-eks/network/terraform.tfstate"
+      tgw     = false
     }
   }
 
