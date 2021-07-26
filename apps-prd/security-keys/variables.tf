@@ -92,7 +92,7 @@ variable "appsprd_account_id" {
 variable "compute_ssh_key_name" {
   type        = string
   description = "EC2 ssh public key name"
-  default     = "bb-infra-deployer"
+  default     = "apps-prd-default"
 }
 
 variable "compute_ssh_public_key" {

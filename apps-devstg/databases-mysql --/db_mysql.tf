@@ -41,7 +41,7 @@ module "bb_mysql_db" {
   username = "administrator"
 
   # Secret from Hashicorp Vault
-  password = data.vault_generic_secret.database_secrets.data["database_admin_password"]
+  password = data.vault_generic_secret.database_secrets.data["administrator_password"]
   port     = "3306"
 
   # Backup and maintenance
