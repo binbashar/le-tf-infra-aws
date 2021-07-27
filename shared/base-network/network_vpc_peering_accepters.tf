@@ -3,12 +3,12 @@
 #
 resource "aws_vpc_peering_connection_accepter" "shared_accepters" {
 
-  for_each = data.terraform_remote_state.vpc-apps
+  for_each = local.datasources-vpcs
 
   vpc_peering_connection_id = each.value.outputs.vpc_peering_id_with_shared
   auto_accept               = true
 
-  tags = merge(map("Name", "accepter-shared-from-${each.value.outputs.vpc_name}"), local.tags)
+  tags = merge(tomap({ "Name" = "accepter-shared-from-${each.value.outputs.vpc_name}" }), local.tags)
 }
 
 #
@@ -21,7 +21,7 @@ resource "aws_vpc_peering_connection_accepter" "shared_accepters" {
 #
 resource "aws_route" "priv_route_table_to_apps_vpc" {
 
-  for_each = data.terraform_remote_state.vpc-apps
+  for_each = local.datasources-vpcs
 
   route_table_id            = element(module.vpc.private_route_table_ids, 0)
   destination_cidr_block    = each.value.outputs.vpc_cidr_block
@@ -30,7 +30,7 @@ resource "aws_route" "priv_route_table_to_apps_vpc" {
 
 resource "aws_route" "pub_route_table_to_apps_vpc" {
 
-  for_each = data.terraform_remote_state.vpc-apps
+  for_each = local.datasources-vpcs
 
   route_table_id            = element(module.vpc.public_route_table_ids, 0)
   destination_cidr_block    = each.value.outputs.vpc_cidr_block

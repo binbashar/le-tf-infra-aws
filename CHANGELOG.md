@@ -7,6 +7,170 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.43"></a>
+## [v1.3.43] - 2021-07-22
+
+- Remove debuggin code
+- Remove extra lines
+- Add private subnet cidr in NACLs rules
+- * Add enable_network_firewall variable * Add prefix to resource names
+- Update  deny example using AWS Network Firewall DomainList
+- Fix TGW route table associations for NETFW
+- Add deny example using AWS Network Firewall DomainList
+- Add route table association toggle
+- * Move inspection-vpc into network-firewall layer * Move Network firewall RT login to TGW layer
+- Add default routes for inspection and nework firewall route tables
+- Move inspection vpc definition to inspection-network
+- Move inspection vpc definition to base-network
+- Add toggle condition for network attachments
+- Add implementation fro the inspection TGW route table
+- Fix tgw_vpc_attachments_and_subnet_routes indices ref
+- Add disable variable in tfvars
+- * Add dynamic RT assignation based on enable_network_firewall var * Add disable variable to prevent some resources to be deploy (for debuggig)
+- Add toggle for TGW / VPC peering per VPCs level
+- Add TGW / VPC Peering per VPCwq
+- Fix dynamic vpc attachments
+- Add toggle in TGW route table association to support AWS Firewall network
+- Add enable_network_firewall for tfvars and ouputs
+- Change to for_each iteration for modules
+- Add treatement for inspection network VPC & TGW
+- Add treatement for the default route in the network VPC
+- Add network inspection & RT togglin per VPC attachment
+- Add network-firewall layer
+- Grant access to Devops for AW Firewall Manager and AWS Network Firewall
+
+
+<a name="v1.3.42"></a>
+## [v1.3.42] - 2021-07-17
+
+- Add missing permissions to sockshop demoapp user ([#287](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/287))
+
+
+<a name="v1.3.41"></a>
+## [v1.3.41] - 2021-07-16
+
+- Update Aurora layer to also create MySQL resources for Sock-Shop DemoApp ([#286](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/286))
+
+
+<a name="v1.3.40"></a>
+## [v1.3.40] - 2021-07-14
+
+- Fix NACL and public subnets range
+- Fix NACL in shared/base-network
+- Fix NACL in apps-devstg/k8s-eks/network$
+- Fix NACL in apps-prd/k8s-eks/network
+- Fix NACL in apps-prd/base-network
+
+
+<a name="v1.3.39"></a>
+## [v1.3.39] - 2021-07-13
+
+- Downgrade all EKS DemoApps layers to Terraform v0.14.4 ([#284](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/284))
+
+
+<a name="v1.3.38"></a>
+## [v1.3.38] - 2021-07-13
+
+- Update DemoApps layers to Terraform v.0.15.5 ([#283](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/283))
+
+
+<a name="v1.3.37"></a>
+## [v1.3.37] - 2021-07-13
+
+- Modify PRD private subnet CIDR to define a single entry that encompas… ([#281](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/281))
+
+
+<a name="v1.3.36"></a>
+## [v1.3.36] - 2021-07-13
+
+- Fix dynamic role creation for iam-assumable-role-with-oidc
+- Add support access to devops
+
+
+<a name="v1.3.35"></a>
+## [v1.3.35] - 2021-07-13
+
+- Add support permissions to DevOps role in Shared ([#279](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/279))
+
+
+<a name="v1.3.34"></a>
+## [v1.3.34] - 2021-07-09
+
+- * Fix typo in transit_gateway.tf * Add comment to use network.auto.tfvars
+
+
+<a name="v1.3.33"></a>
+## [v1.3.33] - 2021-07-09
+
+- Remove build.env files
+- Add shared/k8s-eks-prd layer
+- Add TGW / VPC Peering toggle to apps-prd
+- Add TGW & VPC Peering toggle for apps-devstg/k8s-eks/network
+- Add Togggle between TGW & VPC Peering
+- Add vpc-apps-prd-eks in VPCs
+- Update vpc shared variable name
+- Add Enable resource sharing with AWS Organizations
+- Update README for Transit Gateway & RAM enabling
+- Add apps-prd layer
+- Add prd rout into shared public route table
+- Add shared vpc attachments
+- Add apps-prd/k8s-eks layer
+- Update apps-prd/network layerCC
+- Update network public RT logic
+- Add apps-prd/k8s-eks/network layer
+- Add apps-prd/k8s-eks/network layer
+- Add TGW enabled output
+- Move Transit Gateway to base-network
+- Add NACL definition
+- Update TGW README
+- Update VPC and VPC endpoints modules
+- Remove unnecesary comment
+- Remove unused IAM users
+- Update tgw.tfvars
+- Remove unused static route definition
+- Add VPC CIDRs to networ public RT
+- Add Name tag to VPC attachments
+- Fix typos in README
+- Implement single internet exit point from multiple VPCs using TGW
+- Add network account to TGW
+- Add implementation using the CloudPosse module
+- Add TGG implementation using the CloudPosse module
+- Enable trusted access with AWS RAM in the Organization
+- Add VPC network datasource to the TGW
+- Add base-network to network account
+- Add vpc definition for networks account
+- Update vpcs references
+- Add code for TGW
+- Add permission to assume roles for Devops, Auditor, FinOps, etc
+- Fix roles & groups in network/base-identities layer
+- Add remote bucket backend for network account
+- Fix typo in network layer
+- Disable remote state for network account
+- Add network account definitions
+
+
+<a name="v1.3.32"></a>
+## [v1.3.32] - 2021-06-29
+
+- Update Github Runners' EC2 userdata script to match the installed module version ([#275](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/275))
+
+
+<a name="v1.3.31"></a>
+## [v1.3.31] - 2021-06-25
+
+- Fix peerings with HCP Vault ([#273](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/273))
+
+
+<a name="v1.3.30"></a>
+## [v1.3.30] - 2021-06-24
+
+- shared/tools-github-selfhosted-runners renaming layer with - and migrating secrets to vault
+- shared/base-network peering id updated
+- shared/notifications secrets migrated to vault
+- apps-devstg/databases removing secrets.enc favouring vault source secret
+- Add another MFA script that supports using aws-vault and remove build… ([#271](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/271))
+
+
 <a name="v1.3.29"></a>
 ## [v1.3.29] - 2021-06-18
 
@@ -1766,7 +1930,21 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.29...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.43...HEAD
+[v1.3.43]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.42...v1.3.43
+[v1.3.42]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.41...v1.3.42
+[v1.3.41]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.40...v1.3.41
+[v1.3.40]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.39...v1.3.40
+[v1.3.39]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.38...v1.3.39
+[v1.3.38]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.37...v1.3.38
+[v1.3.37]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.36...v1.3.37
+[v1.3.36]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.35...v1.3.36
+[v1.3.35]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.34...v1.3.35
+[v1.3.34]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.33...v1.3.34
+[v1.3.33]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.32...v1.3.33
+[v1.3.32]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.31...v1.3.32
+[v1.3.31]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.30...v1.3.31
+[v1.3.30]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.29...v1.3.30
 [v1.3.29]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.28...v1.3.29
 [v1.3.28]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.27...v1.3.28
 [v1.3.27]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.26...v1.3.27

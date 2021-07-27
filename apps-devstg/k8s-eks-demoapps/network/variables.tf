@@ -90,6 +90,11 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
+variable "network_account_id" {
+  type        = string
+  description = "Account: Network"
+}
+
 variable "vault_token" {
   type = string
 }
@@ -122,7 +127,7 @@ variable "vpc_vault_hvn_created" {
 variable "vpc_vault_hvn_peering_connection_id" {
   description = "Hahicorp Vault Cloud HVN VPC peering ID"
   type        = string
-  default     = "pcx-00777634d2a60c6a6"
+  default     = "pcx-0c270c9be265da78d"
 }
 
 variable "vpc_vault_hvn_cird" {

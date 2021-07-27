@@ -18,12 +18,14 @@ locals {
     "${var.region}c"
   ]
 
+  private_subnets_cidr = ["172.18.32.0/21"]
   private_subnets = [
     "172.18.32.0/23",
     "172.18.34.0/23",
     "172.18.36.0/23",
   ]
 
+  public_subnets_cidr = ["172.18.40.0/21"]
   public_subnets = [
     "172.18.40.0/23",
     "172.18.42.0/23",
@@ -58,6 +60,14 @@ locals {
     # Allow / Deny VPC private subnets inbound default traffic
     #
     default_inbound = [
+      {
+        rule_number = 800 # own private subnet cidr
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = local.private_subnets_cidr[0]
+      },
       {
         rule_number = 900 # NTP traffic
         rule_action = "allow"

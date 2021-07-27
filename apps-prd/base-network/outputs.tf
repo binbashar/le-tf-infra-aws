@@ -31,13 +31,13 @@ output "public_subnets" {
 }
 
 output "private_subnets_cidr" {
-  description = "List of IDs of private subnets"
-  value       = local.private_subnets
+  description = "CIDR of private subnets"
+  value       = local.private_subnets_cidr
 }
 
 output "public_subnets_cidr" {
-  description = "List of IDs of public subnets"
-  value       = local.public_subnets
+  description = "CIDR of public subnets"
+  value       = local.public_subnets_cidr
 }
 
 output "nat_gateway_ids" {
@@ -55,13 +55,7 @@ output "private_route_table_ids" {
   value       = module.vpc.private_route_table_ids
 }
 
-# TODO: Deprecate this output
-output "vpc_peering_id_apps_prd_with_shared" {
-  description = "VPC peering ID with shared"
-  value       = var.vpc_shared_created == true ? join("", aws_vpc_peering_connection.apps_prd_vpc_with_shared_vpc[*].id) : null
-}
-
 output "vpc_peering_id_with_shared" {
   description = "VPC peering ID with shared"
-  value       = var.vpc_shared_created == true ? join("", aws_vpc_peering_connection.apps_prd_vpc_with_shared_vpc[*].id) : null
+  value       = join("", try(aws_vpc_peering_connection.apps_prd_vpc_with_shared_vpc[*].id, null))
 }

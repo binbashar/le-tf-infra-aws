@@ -48,6 +48,7 @@ resource "aws_iam_policy" "devops_access" {
                 "s3:*",
                 "sns:*",
                 "ssm:*",
+                "support:*",
                 "tag:*",
                 "trustedadvisor:*",
                 "vpc:*"

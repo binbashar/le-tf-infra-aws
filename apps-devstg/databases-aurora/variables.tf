@@ -91,6 +91,11 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
+variable "network_account_id" {
+  type        = string
+  description = "Account: Network"
+}
+
 variable "vault_address" {
   type        = string
   description = "Hashicorp vault api endpoint address"

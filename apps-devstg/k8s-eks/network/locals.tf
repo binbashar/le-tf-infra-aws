@@ -15,16 +15,18 @@ locals {
     "${var.region}c",
   ]
 
+  private_subnets_cidr = ["172.19.0.0/21"]
   private_subnets = [
     "172.19.0.0/23",
     "172.19.2.0/23",
     "172.19.4.0/23",
   ]
 
+  public_subnets_cidr = ["172.19.8.0/21"]
   public_subnets = [
-    "172.19.6.0/23",
     "172.19.8.0/23",
     "172.19.10.0/23",
+    "172.19.12.0/23",
   ]
 
   tags = {
@@ -45,13 +47,36 @@ locals {
 }
 
 locals {
+
+  # private inbounds
+  private_inbound = flatten([
+    for index, state in local.datasources-vpcs : [
+      {
+        rule_number = 10 * (index(keys(local.datasources-vpcs), index) + 1)
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = state.outputs.private_subnets_cidr[0]
+      }
+    ]
+  ])
+
   network_acls = {
     #
     # Allow / Deny VPC private subnets inbound default traffic
     #
     default_inbound = [
       {
-        rule_number = 900 # Allow NTP
+        rule_number = 900 # shared pritunl vpn server
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
+      },
+      {
+        rule_number = 910 # NTP traffic
         rule_action = "allow"
         from_port   = 123
         to_port     = 123
@@ -59,18 +84,18 @@ locals {
         cidr_block  = "0.0.0.0/0"
       },
       {
-        rule_number = 910 # Do not allow TCP low ports (0-1024)
+        rule_number = 920 # Fltering known TCP ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
-        to_port     = 65535
+        to_port     = 65525
         protocol    = "tcp"
         cidr_block  = "0.0.0.0/0"
       },
       {
-        rule_number = 920 # Do now allow UDP low ports (0-1024)
+        rule_number = 930 # Fltering known UDP ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
-        to_port     = 65535
+        to_port     = 65525
         protocol    = "udp"
         cidr_block  = "0.0.0.0/0"
       },
@@ -79,63 +104,34 @@ locals {
     #
     # Allow VPC private subnets inbound traffic
     #
-    private_inbound = [
-      {
-        rule_number = 100 # Allow traffic from Pritunl VPN server
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
-      },
-      {
-        rule_number = 110 # Allow traffic from Shared private subnet A
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.shared-vpc.outputs.private_subnets_cidr[0]
-      },
-      {
-        rule_number = 120 # Allow traffic from Shared private subnet B
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.shared-vpc.outputs.private_subnets_cidr[1]
-      },
-      {
-        rule_number = 200 # Allow traffic from EKS VPC private subnet A
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = local.private_subnets[0]
-      },
-      {
-        rule_number = 210 # Allow traffic from EKS VPC private subnet B
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = local.private_subnets[1]
-      },
-      {
-        rule_number = 220 # Allow traffic from EKS VPC private subnet C
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = local.private_subnets[2]
-      },
-      {
-        rule_number = 300 # vault hvn vpc
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = var.vpc_vault_hvn_cird
-      },
-    ]
+    private_inbound = local.private_inbound
   }
+
+  # Data source definitions
+  #
+
+  # shared
+  shared-vpcs = {
+    shared-base = {
+      region  = var.region
+      profile = "${var.project}-shared-devops"
+      bucket  = "${var.project}-shared-terraform-backend"
+      key     = "shared/network/terraform.tfstate"
+    }
+  }
+
+  # network
+  network-vpcs = {
+    network-base = {
+      region  = var.region
+      profile = "${var.project}-network-devops"
+      bucket  = "${var.project}-network-terraform-backend"
+      key     = "network/network/terraform.tfstate"
+    }
+  }
+
+  datasources-vpcs = merge(
+    data.terraform_remote_state.network-vpcs, # network
+    data.terraform_remote_state.shared-vpcs,  # shared
+  )
 }

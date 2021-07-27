@@ -5,7 +5,15 @@ ${pre_install}
 
 # Install AWS CLI
 apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install -y awscli jq curl wget git uidmap unzip
+DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    awscli \
+    jq \
+    curl \
+    wget \
+    git \
+    uidmap \
+    build-essential \
+    unzip
 
 USER_NAME=runners
 useradd -m -s /bin/bash $USER_NAME

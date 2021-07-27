@@ -41,20 +41,6 @@ data "terraform_remote_state" "notifications" {
 }
 
 #
-# data type from output for vpc
-#
-data "terraform_remote_state" "vpc-shared" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-shared-devops"
-    bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/network/terraform.tfstate"
-  }
-}
-
-#
 # data type from output for tools-ec2
 #
 data "terraform_remote_state" "tools-vpn-server" {
@@ -65,5 +51,35 @@ data "terraform_remote_state" "tools-vpn-server" {
     profile = "${var.project}-shared-devops"
     bucket  = "${var.project}-shared-terraform-backend"
     key     = "shared/vpn/terraform.tfstate"
+  }
+}
+
+
+# VPC remote states for network
+data "terraform_remote_state" "network-vpcs" {
+  for_each = local.network-vpcs
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
+  }
+}
+
+# VPC remote states for shared
+data "terraform_remote_state" "shared-vpcs" {
+
+  for_each = local.shared-vpcs
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
   }
 }
