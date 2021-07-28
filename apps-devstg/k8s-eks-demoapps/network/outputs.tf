@@ -40,12 +40,12 @@ output "public_subnets" {
 
 output "private_subnets_cidr" {
   description = "List of IDs of private subnets"
-  value       = local.private_subnets
+  value       = local.private_subnets_cidr
 }
 
 output "public_subnets_cidr" {
   description = "List of IDs of public subnets"
-  value       = local.public_subnets
+  value       = local.public_subnets_cidr
 }
 
 output "nat_gateway_ids" {

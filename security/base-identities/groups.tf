@@ -45,7 +45,6 @@ module "iam_group_devops" {
 
   custom_group_policy_arns = [
     aws_iam_policy.assume_devops_role.arn,
-    aws_iam_policy.assume_deploymaster_role.arn,
   ]
 }
 
