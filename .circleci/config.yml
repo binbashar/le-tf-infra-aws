@@ -31,13 +31,17 @@ jobs:
             #
             # Install pre-commit
             sudo -H python3 pip3 install pre-commit
-#            sudo -H python3 pip3 install pre-commit --user
-#            sudo -H python3 pip install pre-commit
-#            sudo -H python3 pip install pre-commit --user
-#            python3 pip3 install pre-commit
-#            python3 pip3 install pre-commit --user
-#            python3 pip install pre-commit
-#            python3 pip install pre-commit --user
+            # sudo -H python3 pip3 install pre-commit --user
+            # sudo -H python3 pip install pre-commit
+            # sudo -H python3 pip install pre-commit --user
+            # python3 pip3 install pre-commit
+            # python3 pip3 install pre-commit --user
+            # python3 pip install pre-commit
+            # python3 pip install pre-commit --user
+            # pip3 install pre-commit
+            # pip3 install pre-commit --user
+            # pip install pre-commit
+            # pip install pre-commit --user
             which pre-commit
             where pre-commit
             pre-commit
