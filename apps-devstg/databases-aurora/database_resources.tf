@@ -9,7 +9,7 @@ resource "random_password" "sockhsop" {
   min_lower        = 8
   min_upper        = 8
   min_numeric      = 8
-  min_special      = 5
+  min_special      = 0
   override_special = ""
 }
 
