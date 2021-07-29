@@ -30,7 +30,6 @@ locals {
 }
 
 locals {
-
   # private inbounds
   private_inbound = flatten([
     for index, state in local.datasources-vpcs : [
@@ -167,3 +166,20 @@ locals {
   )
 }
 
+locals {
+  customer_gateways = { for k, v in var.customer_gateways :
+    k => {
+      bgp_asn    = v["bgp_asn"]
+      ip_address = v["ip_address"]
+    }
+  }
+
+  vpn_static_routes = flatten([for k, v in var.customer_gateways :
+    [for r in lookup(v, "static_routes", []) :
+      {
+        cgw   = k
+        route = r
+      }
+    ]
+  ])
+}
