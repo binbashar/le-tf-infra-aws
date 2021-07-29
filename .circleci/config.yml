@@ -30,7 +30,7 @@ jobs:
           command: |
             #
             # Install pre-commit
-            pip install pre-commit
+            pip3 install pre-commit
             #
             # Install terraform
             sudo apt-get install unzip curl
@@ -52,7 +52,7 @@ jobs:
 
       - run:
           name: Install awscli
-          command: sudo -H pip install awscli
+          command: sudo -H pip3 install awscli
 
       - run:
           name: Configure awscli
