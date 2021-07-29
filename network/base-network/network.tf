@@ -16,7 +16,6 @@ module "vpc" {
   enable_dns_hostnames = var.vpc_enable_dns_hostnames
   enable_vpn_gateway   = var.vpc_enable_vpn_gateway
 
-
   # Use a custom network ACL rules for private and public subnets
   manage_default_network_acl    = var.manage_default_network_acl
   public_dedicated_network_acl  = var.public_dedicated_network_acl  // use dedicated network ACL for the public subnets.
@@ -26,6 +25,11 @@ module "vpc" {
     local.network_acls["private_inbound"],
   )
 
+  # VPN Gateway
+  amazon_side_asn   = var.vpn_gateway_amazon_side_asn
+  customer_gateways = local.customer_gateways
+
+  # Tags
   tags = local.tags
 }
 
