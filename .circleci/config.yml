@@ -30,7 +30,7 @@ jobs:
           command: |
             #
             # Install pre-commit
-            pip3 install pre-commit
+            python3 -m pip install pre-commit --user
             #
             # Install terraform
             sudo apt-get install unzip curl
