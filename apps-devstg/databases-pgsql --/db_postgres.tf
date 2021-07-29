@@ -24,7 +24,7 @@ resource "aws_security_group_rule" "allow_postgresql_port" {
 # Binbash Reference DB
 #
 module "bb_postgres_db" {
-  source = "github.com/binbashar/terraform-aws-rds.git?ref=v3.1.0"
+  source = "github.com/binbashar/terraform-aws-rds.git?ref=v3.3.0"
 
   # Instance settings
   # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html
@@ -39,7 +39,12 @@ module "bb_postgres_db" {
   # Database credentials
   name     = "${var.project}_${replace(var.environment, "apps-", "")}_binbash_postgres"
   username = "administrator"
-  password = local.secrets.database_admin_password
+
+  ## Secret from secrets.enc
+  #password = local.secrets.database_admin_password
+
+  ## Secret from Hashicorp Vault
+  password = data.vault_generic_secret.database_secrets.data["administrator_password"]
   port     = "5432"
 
   # Backup and maintenance

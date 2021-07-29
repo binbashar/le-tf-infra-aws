@@ -9,10 +9,6 @@ variable "region" {
   description = "AWS Region"
 }
 
-variable "region_secondary" {
-  description = "AWS Scondary Region for HA"
-}
-
 variable "profile" {
   type        = string
   description = "AWS Profile (required by the backend but also used for other resources)"
@@ -33,9 +29,6 @@ variable "encrypt" {
   description = "Enable AWS DynamoDB with server side encryption"
 }
 
-#
-# config/base.config
-#
 #=============================#
 # Project Variables           #
 #=============================#
@@ -54,12 +47,14 @@ variable "environment" {
   description = "Environment Name"
 }
 
-#
-# config/extra.config
-#
 #=============================#
 # Accounts & Extra Vars       #
 #=============================#
+variable "region_secondary" {
+  type        = string
+  description = "AWS Scondary Region for HA"
+}
+
 variable "root_account_id" {
   type        = string
   description = "Account: Root"
@@ -73,6 +68,11 @@ variable "security_account_id" {
 variable "shared_account_id" {
   type        = string
   description = "Account: Shared Resources"
+}
+
+variable "network_account_id" {
+  type        = string
+  description = "Account: Networking Resources"
 }
 
 variable "appsdevstg_account_id" {
@@ -102,4 +102,17 @@ variable "sns_topic_name_monitoring" {
 variable "sns_topic_name_monitoring_sec" {
   description = ""
   default     = "sns-topic-slack-notify-monitoring-sec"
+}
+
+#=============================#
+# Hashicorp Vault Vars        #
+#=============================#
+variable "vault_address" {
+  type        = string
+  description = "Hashicorp vault api endpoint address"
+}
+
+variable "vault_token" {
+  type        = string
+  description = "Hashicorp vault admin token"
 }

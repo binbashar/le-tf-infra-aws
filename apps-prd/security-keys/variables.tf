@@ -76,6 +76,11 @@ variable "shared_account_id" {
   description = "Account: Shared Resources"
 }
 
+variable "network_account_id" {
+  type        = string
+  description = "Account: Networking Resources"
+}
+
 variable "appsdevstg_account_id" {
   type        = string
   description = "Account: Dev Modules & Libs"
@@ -92,7 +97,7 @@ variable "appsprd_account_id" {
 variable "compute_ssh_key_name" {
   type        = string
   description = "EC2 ssh public key name"
-  default     = "bb-infra-deployer"
+  default     = "apps-prd-default"
 }
 
 variable "compute_ssh_public_key" {
