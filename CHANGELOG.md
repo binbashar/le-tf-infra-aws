@@ -7,6 +7,25 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.44"></a>
+## [v1.3.44] - 2021-07-29
+
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | using pip3 in ci pipeline
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | using pip3 in ci pipeline
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | using pip3 in ci pipeline
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | adding ci step to register HashiCorp GPG keys
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | upgrading circleci ubuntu vm version
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | upgrading circleci ubuntu vm version
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | merging latest master code and fixing conflicts
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | config/common.config.example updated including new supported network account
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | security/security-monitoring-* layers integrated with vault hcp
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | shared/base-identities removing not necessary user
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | integrating cross account notification layers with vault hcp
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | integrating apps-devstg/databases-* layers with vault hcp
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | adding network_account_id variable cross account layers
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | integrating apps-devstg/databases layers with vault
+
+
 <a name="v1.3.43"></a>
 ## [v1.3.43] - 2021-07-22
 
@@ -1930,7 +1949,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.43...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.44...HEAD
+[v1.3.44]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.43...v1.3.44
 [v1.3.43]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.42...v1.3.43
 [v1.3.42]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.41...v1.3.42
 [v1.3.41]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.40...v1.3.41
