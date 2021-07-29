@@ -6,7 +6,7 @@ jobs:
   #
   test-static-code-and-linting:
     machine:
-      image: ubuntu-1604:202007-01 # Ubuntu 16.04, Docker v19.03.12, Docker Compose v1.26.1
+      image: ubuntu-2004:202010-01 # Ubuntu 16.04, Docker v19.03.12, Docker Compose v1.26.1
 
       # This job has been blocked because Docker Layer Caching is not available on your plan.
       # Should upgrade if necessary.
