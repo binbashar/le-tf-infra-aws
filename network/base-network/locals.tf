@@ -151,17 +151,17 @@ locals {
       bucket  = "${var.project}-apps-prd-terraform-backend"
       key     = "apps-prd/network/terraform.tfstate"
     }
-    apps-prd-k8s-eks = {
-      region  = var.region
-      profile = "${var.project}-apps-prd-devops"
-      bucket  = "${var.project}-apps-prd-terraform-backend"
-      key     = "apps-prd/k8s-eks/network/terraform.tfstate"
-    }
+    #apps-prd-k8s-eks = {
+    #  region  = var.region
+    # profile = "${var.project}-apps-prd-devops"
+    #  bucket  = "${var.project}-apps-prd-terraform-backend"
+    # key     = "apps-prd/k8s-eks/network/terraform.tfstate"
+    #}
   }
 
   datasources-vpcs = merge(
     data.terraform_remote_state.network-vpcs, # network
-    #data.terraform_remote_state.shared-vpcs,      # shared
+    #data.terraform_remote_state.shared-vpcs,  # shared
     #data.terraform_remote_state.apps-devstg-vpcs, # apps-devstg-vpcs
     data.terraform_remote_state.apps-prd-vpcs, # apps-prd-vpcs
   )
