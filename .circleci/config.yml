@@ -30,7 +30,8 @@ jobs:
           command: |
             #
             # Install pre-commit
-            python3 -m pip install pre-commit
+            sudo -H pip3 install pre-commit
+
             #
             # Install terraform
             sudo apt-get install unzip curl
@@ -154,7 +155,7 @@ jobs:
   #
   release-version-with-changelog:
     machine:
-      image: ubuntu-1604:202007-01
+      image: ubuntu-2004:202107-01 # Ubuntu 16.04, Docker v19.03.12, Docker Compose v1.26.1
       docker_layer_caching: false
 
     environment:
