@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.46"></a>
+## [v1.3.46] - 2021-07-30
+
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | very small circleci sintaxt enhancement
+
+
 <a name="v1.3.45"></a>
 ## [v1.3.45] - 2021-07-30
 
@@ -1963,7 +1969,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.45...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.46...HEAD
+[v1.3.46]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.45...v1.3.46
 [v1.3.45]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.44...v1.3.45
 [v1.3.44]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.43...v1.3.44
 [v1.3.43]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.42...v1.3.43
