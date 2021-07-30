@@ -31,7 +31,6 @@ jobs:
             #
             # Install pre-commit
             sudo -H pip3 install pre-commit
-
             #
             # Install terraform
             sudo apt-get install unzip curl
