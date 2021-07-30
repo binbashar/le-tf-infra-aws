@@ -2,7 +2,7 @@ project: default
 
 source:
   repoURL: https://github.com/binbashar/le-demo-apps.git
-  targetRevision: master
+  targetRevision: demoapps
   path: sock-shop/helm
 
   helm:
