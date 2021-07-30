@@ -5,7 +5,7 @@ module "vpn_gateways" {
 
   #for_each = var.customer_gateways
   for_each = { for k, v in var.customer_gateways :
-    k => v if var.enable_tgw
+    k => v if var.enable_tgw && var.vpc_enable_vpn_gateway
   }
 
   connect_to_transit_gateway = true
@@ -27,7 +27,7 @@ module "vpn_gateways" {
 resource "aws_ec2_transit_gateway_route" "vpn_static_routes" {
 
   for_each = { for k, v in local.vpn_static_routes :
-    k => v if var.enable_tgw
+    k => v if var.enable_tgw && var.vpc_enable_vpn_gateway
   }
 
   destination_cidr_block         = lookup(each.value, "route")

@@ -27,7 +27,7 @@ module "vpc" {
 
   # VPN Gateway
   amazon_side_asn   = var.vpn_gateway_amazon_side_asn
-  customer_gateways = local.customer_gateways
+  customer_gateways = var.vpc_enable_vpn_gateway ? local.customer_gateways : {}
 
   # Tags
   tags = local.tags
