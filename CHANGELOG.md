@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.47"></a>
+## [v1.3.47] - 2021-07-30
+
+- Fix duplicated variable: 'network_account_id' ([#294](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/294))
+
+
 <a name="v1.3.46"></a>
 ## [v1.3.46] - 2021-07-30
 
@@ -1969,7 +1975,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.46...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.47...HEAD
+[v1.3.47]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.46...v1.3.47
 [v1.3.46]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.45...v1.3.46
 [v1.3.45]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.44...v1.3.45
 [v1.3.44]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.43...v1.3.44
