@@ -16,7 +16,7 @@ enable_vpc_attach = {
 enable_network_firewall = false
 
 # VPN Gateways
-enable_vpn_gateway = false
+vpc_enable_vpn_gateway = false
 customer_gateways = {
   cgw1 = {
     bgp_asn    = 65220
