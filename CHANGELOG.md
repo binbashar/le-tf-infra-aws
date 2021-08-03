@@ -7,6 +7,20 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.48"></a>
+## [v1.3.48] - 2021-08-03
+
+- Merge branch 'feature/tgw-vpn-attachments' of github.com:binbashar/le-tf-infra-aws into feature/tgw-vpn-attachments
+- Add all VPN Gateway parameters supported by the module
+- Add comments for TGW routes in the vpc attachacmemts
+- Support 1 or more rule creation based in the amount of CIDR blocks
+- Add vpn gateways support
+- Add all VPN Gateway parameters supported by the module
+- Add comments for TGW routes in the vpc attachacmemts
+- Support 1 or more rule creation based in the amount of CIDR blocks
+- Add vpn gateways support
+
+
 <a name="v1.3.47"></a>
 ## [v1.3.47] - 2021-07-30
 
@@ -1975,7 +1989,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.47...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.48...HEAD
+[v1.3.48]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.47...v1.3.48
 [v1.3.47]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.46...v1.3.47
 [v1.3.46]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.45...v1.3.46
 [v1.3.45]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.44...v1.3.45
