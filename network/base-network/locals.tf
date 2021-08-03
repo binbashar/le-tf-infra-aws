@@ -30,17 +30,17 @@ locals {
 }
 
 locals {
-
   # private inbounds
   private_inbound = flatten([
     for index, state in local.datasources-vpcs : [
+      for k, v in state.outputs.private_subnets_cidr :
       {
-        rule_number = 10 * (index(keys(local.datasources-vpcs), index) + 1)
+        rule_number = 10 * (index(keys(local.datasources-vpcs), index) + 1) + 100 * k
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
         protocol    = "all"
-        cidr_block  = state.outputs.private_subnets_cidr[0]
+        cidr_block  = state.outputs.private_subnets_cidr[k]
       }
     ]
   ])
@@ -151,19 +151,36 @@ locals {
       bucket  = "${var.project}-apps-prd-terraform-backend"
       key     = "apps-prd/network/terraform.tfstate"
     }
-    apps-prd-k8s-eks = {
-      region  = var.region
-      profile = "${var.project}-apps-prd-devops"
-      bucket  = "${var.project}-apps-prd-terraform-backend"
-      key     = "apps-prd/k8s-eks/network/terraform.tfstate"
-    }
+    #apps-prd-k8s-eks = {
+    #  region  = var.region
+    # profile = "${var.project}-apps-prd-devops"
+    #  bucket  = "${var.project}-apps-prd-terraform-backend"
+    # key     = "apps-prd/k8s-eks/network/terraform.tfstate"
+    #}
   }
 
   datasources-vpcs = merge(
     data.terraform_remote_state.network-vpcs, # network
-    #data.terraform_remote_state.shared-vpcs,      # shared
+    #data.terraform_remote_state.shared-vpcs,  # shared
     #data.terraform_remote_state.apps-devstg-vpcs, # apps-devstg-vpcs
     data.terraform_remote_state.apps-prd-vpcs, # apps-prd-vpcs
   )
 }
 
+locals {
+  customer_gateways = { for k, v in var.customer_gateways :
+    k => {
+      bgp_asn    = v["bgp_asn"]
+      ip_address = v["ip_address"]
+    }
+  }
+
+  vpn_static_routes = flatten([for k, v in var.customer_gateways :
+    [for r in lookup(v, "static_routes", []) :
+      {
+        cgw   = k
+        route = r
+      }
+    ]
+  ])
+}
