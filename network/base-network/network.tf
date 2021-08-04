@@ -50,6 +50,8 @@ module "vpc_endpoints" {
   }
 
   tags = local.tags
+
+  depends_on = [module.vpc]
 }
 
 #
@@ -77,4 +79,6 @@ resource "aws_security_group" "kms_vpce" {
   }
 
   tags = local.tags
+
+  depends_on = [module.vpc]
 }

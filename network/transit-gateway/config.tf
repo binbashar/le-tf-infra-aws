@@ -46,7 +46,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "network/network/terraform.tfstate"
+    key = "network/transit-gateway/terraform.tfstate"
   }
 }
 
@@ -68,19 +68,8 @@ data "terraform_remote_state" "tools-vpn-server" {
   }
 }
 
-data "terraform_remote_state" "tgw" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-network-devops"
-    bucket  = "${var.project}-network-terraform-backend"
-    key     = "network/transit-gateway/terraform.tfstate"
-  }
-}
-
-
 data "terraform_remote_state" "network-firewall" {
+
   backend = "s3"
 
   config = {
@@ -88,12 +77,14 @@ data "terraform_remote_state" "network-firewall" {
     profile = "${var.project}-network-devops"
     bucket  = "${var.project}-network-terraform-backend"
     key     = "network/network-firewall/terraform.tfstate"
+
   }
 }
 
 # VPC remote states for network
 data "terraform_remote_state" "network-vpcs" {
-  for_each = var.enable_network_firewall ? local.network-vpcs : {}
+
+  for_each = local.network-vpcs
 
   backend = "s3"
 
