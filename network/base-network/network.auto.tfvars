@@ -21,6 +21,8 @@ customer_gateways = {
     }
     vpn_connection_static_routes_only = true
     static_routes                     = ["10.10.0.0/20", "10.30.0.0/20"]
+    local_ipv4_network_cidr           = "10.0.0.0/16"
+    #remote_ipv4_network_cidr          = "0.0.0.0/0"
   },
   cgw2 = {
     bgp_asn    = 65220

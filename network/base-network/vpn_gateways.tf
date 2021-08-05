@@ -1,7 +1,7 @@
 # Network Firewall VPC attachment - Inspection subnets (private)
 module "vpn_gateways" {
 
-  source = "github.com/binbashar/terraform-aws-vpn-gateway?ref=v2.10.0"
+  source = "git::https://github.com/binbashar/terraform-aws-vpn-gateway.git?ref=feature/ipv4_cidrs"
 
   for_each = { for k, v in var.customer_gateways :
     k => v if var.enable_tgw && var.vpc_enable_vpn_gateway
@@ -11,6 +11,10 @@ module "vpn_gateways" {
   vpn_connection_static_routes_only = lookup(each.value, "vpn_connection_static_routes_only", false)
   transit_gateway_id                = data.terraform_remote_state.tgw.outputs.tgw_id
   customer_gateway_id               = module.vpc.this_customer_gateway[each.key].id
+
+  # local & remote IPv4 CDIRs
+  local_ipv4_network_cidr  = lookup(each.value, "local_ipv4_network_cidr", "0.0.0.0/0")
+  remote_ipv4_network_cidr = lookup(each.value, "remote_ipv4_network_cidr", "0.0.0.0/0")
 
   ###########
   # Tunnels #
