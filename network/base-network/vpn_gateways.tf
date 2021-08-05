@@ -73,10 +73,10 @@ resource "aws_ec2_transit_gateway_route" "vpn_static_routes" {
 #  TGW VPN RT associations
 resource "aws_ec2_transit_gateway_route_table_association" "vpn-rt-associations" {
 
-  for_each = { for k, v in var.customer_gateways :
+  for_each = { for k, v in module.vpn_gateways :
     k => v if var.enable_tgw && var.vpc_enable_vpn_gateway
   }
 
   transit_gateway_route_table_id = data.terraform_remote_state.tgw.outputs.tgw_route_table_id
-  transit_gateway_attachment_id  = module.vpn_gateways[lookup(each.value, "cgw")].vpn_connection_transit_gateway_attachment_id
+  transit_gateway_attachment_id  = each.value.vpn_connection_transit_gateway_attachment_id
 }
