@@ -1,7 +1,6 @@
 # Firewall
 resource "aws_networkfirewall_firewall" "firewall" {
 
-  #count = var.enable_network_firewall && length(data.terraform_remote_state.inspection_vpc.outputs) > 0 ? 1 : 0
   count = var.enable_network_firewall ? 1 : 0
 
   name                = "${var.project}-${var.environment}-firewall"
