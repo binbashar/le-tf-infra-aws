@@ -19,7 +19,8 @@ customer_gateways = {
       inside_cidr   = "169.254.10.4/30"
       preshared_key = "pr3shr3_k3y2"
     }
-    static_routes = ["10.10.0.0/20", "10.30.0.0/20"]
+    vpn_connection_static_routes_only = true
+    static_routes                     = ["10.10.0.0/20", "10.30.0.0/20"]
   },
   cgw2 = {
     bgp_asn    = 65220

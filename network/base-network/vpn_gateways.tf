@@ -7,11 +7,10 @@ module "vpn_gateways" {
     k => v if var.enable_tgw && var.vpc_enable_vpn_gateway
   }
 
-  connect_to_transit_gateway = true
-  #transit_gateway_id         = module.tgw[0].transit_gateway_id
-  transit_gateway_id = data.terraform_remote_state.tgw.outputs.tgw_id
-
-  customer_gateway_id = module.vpc.this_customer_gateway[each.key].id
+  connect_to_transit_gateway        = true
+  vpn_connection_static_routes_only = lookup(each.value, "vpn_connection_static_routes_only", false)
+  transit_gateway_id                = data.terraform_remote_state.tgw.outputs.tgw_id
+  customer_gateway_id               = module.vpc.this_customer_gateway[each.key].id
 
   ###########
   # Tunnels #
