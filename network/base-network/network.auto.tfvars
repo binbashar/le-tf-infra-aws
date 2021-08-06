@@ -2,9 +2,6 @@
 vpc_enable_nat_gateway = false
 vpc_single_nat_gateway = true
 
-# Network Firewall
-enable_network_firewall = false
-
 # VPN Gateways
 vpc_enable_vpn_gateway = false
 customer_gateways = {

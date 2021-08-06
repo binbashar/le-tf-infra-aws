@@ -1,5 +1,5 @@
 # Transit Gateway
-enable_tgw = false
+# enable_tgw = false # Set this value in the ./config
 
 # TGW VPC Attahcments
 enable_vpc_attach = {

@@ -205,3 +205,9 @@ variable "private_dedicated_network_acl" {
   type        = bool
   default     = true
 }
+
+variable "enable_tgw" {
+  description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = false
+}
