@@ -76,11 +76,6 @@ variable "shared_account_id" {
   description = "Account: Shared Resources"
 }
 
-variable "network_account_id" {
-  type        = string
-  description = "Account: Networking Resources"
-}
-
 variable "appsdevstg_account_id" {
   type        = string
   description = "Account: Dev Modules & Libs"
@@ -92,22 +87,28 @@ variable "appsprd_account_id" {
 }
 
 #===========================================#
-# Security                                  #
+# Transit Gateway                           #
 #===========================================#
-variable "compute_ssh_key_name" {
-  type        = string
-  description = "EC2 ssh public key name"
-  default     = "apps-prd-default"
+
+variable "enable_tgw" {
+  description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = false
 }
 
-variable "compute_ssh_public_key" {
-  type        = string
-  description = "EC2 ssh public key"
-  default     = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCwqY8pH6XktrIOZ4JK2eaWg4QRkIkr2ua4IqfPhU+RPzCdBLCv1imX9kevX+dd0rplQAHibagouwLie99rEv1qR1Lt82jOXkBACdLCDaW5CGn2LTKFHN3Lm+oFRu9jzKRB6d2hm0qNuECvL1X2QAgbeGq5RDTwxVLg33l/EggpNbZZoh11w/UrSkvy2wYuYtLAN5oGj47+mvxpRvrcYK99zMOla6M6C5MrxllxaNcZXaO7cHZFLNFG5mbfJ/MdzHy9u46v3cf012UzhkrSkCqLSz2r2U25gKNWcOqmE0AMNW6qLBWmXnG+wUEBebX9v4KDRKfjbxpWJLQdr5CHav4l delivery@delivery-I7567"
+variable "enable_vpc_attach" {
+  description = "Enable VPC attachments per account"
+  type        = any
+  default = {
+    network     = false
+    shared      = false
+    apps-devstg = false
+    apps-prd    = false
+  }
 }
 
-variable "kms_key_name" {
-  type        = string
-  description = "KMS key solution name, e.g. 'app' or 'jenkins'"
-  default     = "kms"
+variable "enable_network_firewall" {
+  description = "Enable AWS Network Firewall support"
+  type        = bool
+  default     = false
 }

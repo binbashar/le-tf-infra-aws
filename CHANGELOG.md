@@ -7,6 +7,83 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.49"></a>
+## [v1.3.49] - 2021-08-07
+
+- Disable TGW by default
+- Add enable_tgw in the common.config example file
+- Fix wrong condition for TGW/Peerings toggle
+- Pinterraform-aws-vpn-gateway module
+- Fix wrong inspection route table id output value
+- Add local_ipv4_network_cidr and remote_ipv4_network_cidr support
+- Add TGW VPN route table associations
+- Set single nat gateway for all AZs as default
+- Add TGW VPN route table associationsç
+- Add vpn_connection_static_routes_only parameter in auto.tfvars
+- Fix Network Firewall endpoints issue when adding / removing subnets
+- Fix Network Firewall endpoints issue when adding / removing subnets
+- Separate logic for network-base and TGW layers
+
+
+<a name="v1.3.48"></a>
+## [v1.3.48] - 2021-08-03
+
+- Merge branch 'feature/tgw-vpn-attachments' of github.com:binbashar/le-tf-infra-aws into feature/tgw-vpn-attachments
+- Add all VPN Gateway parameters supported by the module
+- Add comments for TGW routes in the vpc attachacmemts
+- Support 1 or more rule creation based in the amount of CIDR blocks
+- Add vpn gateways support
+- Add all VPN Gateway parameters supported by the module
+- Add comments for TGW routes in the vpc attachacmemts
+- Support 1 or more rule creation based in the amount of CIDR blocks
+- Add vpn gateways support
+
+
+<a name="v1.3.47"></a>
+## [v1.3.47] - 2021-07-30
+
+- Fix duplicated variable: 'network_account_id' ([#294](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/294))
+
+
+<a name="v1.3.46"></a>
+## [v1.3.46] - 2021-07-30
+
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | very small circleci sintaxt enhancement
+
+
+<a name="v1.3.45"></a>
+## [v1.3.45] - 2021-07-30
+
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | updating vm in release job
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | adding some pre-commit debugging commands
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | adding some pre-commit debugging commands
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | adding some pre-commit debugging commands
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | adding some pre-commit debugging commands
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | adding some pre-commit debugging commands
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | adding some pre-commit debugging commands
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | adding some pre-commit debugging commands
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | adding some pre-commit debugging commands
+
+
+<a name="v1.3.44"></a>
+## [v1.3.44] - 2021-07-29
+
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | using pip3 in ci pipeline
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | using pip3 in ci pipeline
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | using pip3 in ci pipeline
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | adding ci step to register HashiCorp GPG keys
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | upgrading circleci ubuntu vm version
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | upgrading circleci ubuntu vm version
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | merging latest master code and fixing conflicts
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | config/common.config.example updated including new supported network account
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | security/security-monitoring-* layers integrated with vault hcp
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | shared/base-identities removing not necessary user
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | integrating cross account notification layers with vault hcp
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | integrating apps-devstg/databases-* layers with vault hcp
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | adding network_account_id variable cross account layers
+- [#154](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/154) | integrating apps-devstg/databases layers with vault
+
+
 <a name="v1.3.43"></a>
 ## [v1.3.43] - 2021-07-22
 
@@ -1930,7 +2007,13 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.43...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.49...HEAD
+[v1.3.49]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.48...v1.3.49
+[v1.3.48]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.47...v1.3.48
+[v1.3.47]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.46...v1.3.47
+[v1.3.46]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.45...v1.3.46
+[v1.3.45]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.44...v1.3.45
+[v1.3.44]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.43...v1.3.44
 [v1.3.43]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.42...v1.3.43
 [v1.3.42]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.41...v1.3.42
 [v1.3.41]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.40...v1.3.41

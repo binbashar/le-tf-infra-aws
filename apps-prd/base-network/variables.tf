@@ -76,6 +76,11 @@ variable "shared_account_id" {
   description = "Account: Shared Resources"
 }
 
+variable "network_account_id" {
+  type        = string
+  description = "Account: Networking Resources"
+}
+
 variable "appsdevstg_account_id" {
   type        = string
   description = "Account: Dev Modules & Libs"
@@ -159,4 +164,10 @@ variable "private_dedicated_network_acl" {
   description = "Manage default Network ACL"
   type        = bool
   default     = true
+}
+
+variable "enable_tgw" {
+  description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = false
 }

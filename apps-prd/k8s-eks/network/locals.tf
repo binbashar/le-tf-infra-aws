@@ -52,13 +52,14 @@ locals {
   # private inbounds
   private_inbound = flatten([
     for index, state in local.datasources-vpcs : [
+      for k, v in state.outputs.private_subnets_cidr :
       {
-        rule_number = 10 * (index(keys(local.datasources-vpcs), index) + 1)
+        rule_number = 10 * (index(keys(local.datasources-vpcs), index) + 1) + 100 * k
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
         protocol    = "all"
-        cidr_block  = state.outputs.private_subnets_cidr[0]
+        cidr_block  = state.outputs.private_subnets_cidr[k]
       }
     ]
   ])

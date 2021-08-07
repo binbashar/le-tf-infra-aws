@@ -27,8 +27,8 @@ terraform {
   required_version = ">= 0.14.11"
 
   required_providers {
-    aws   = "~> 3.2"
-    vault = "~> 2.18.0"
+    aws   = "~> 3.8"
+    vault = ">= 2.21.0"
   }
 
   backend "s3" {
@@ -62,5 +62,5 @@ data "terraform_remote_state" "vpc-shared" {
 }
 
 data "vault_generic_secret" "database_secrets" {
-  path = "secrets/le-tf-infra-aws/apps-devstg/databases-mysql"
+  path = "secrets/${var.project}/${var.environment}/databases-mysql"
 }

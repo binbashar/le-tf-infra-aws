@@ -1,3 +1,17 @@
+# terraform-aws-transit-gateway - vpc attachments
+#
+# Each vpc attachment config can contain the following fields:
+#
+#  vpc_id -  The ID of the VPC for which to create a VPC attachment and route table associations and propagations.
+#  vpc_cidr - VPC CIDR block.
+#  subnet_route_table_ids - The IDs of the subnet route tables. The route tables are used to add routes to allow traffix from the subnets in one VPC to the other VPC attachments.
+#  route_to - A set of names to route traffic from the current environment to the specified environments.
+#    Example: ["apps-prd", apps-prd-eks"]. Specify either route_to or route_to_cidr_blocks. route_to_cidr_blocks supersedes route_to.
+#  route_to_cidr_blocks - A set of VPC CIDR blocks to route traffic from the current environment to the specified VPC CIDR blocks.
+#    Specify either route_to or route_to_cidr_blocks. route_to_cidr_blocks supersedes route_to.
+#  static_routes - A list of Transit Gateway static route configurations. Note that static routes have a higher precedence than propagated routes.
+#  transit_gateway_vpc_attachment_id - An existing Transit Gateway Attachment ID. If provided, the module will use it instead of creating a new one.
+
 # AWS Transit Gateway
 module "tgw" {
 
@@ -16,14 +30,15 @@ module "tgw" {
   config = merge(
     # network private
     lookup(var.enable_vpc_attach, "network", false) ? {
-      (module.vpc.vpc_id) = {
+      for k, v in data.terraform_remote_state.network-vpcs : v.outputs.vpc_id => {
         vpc_id                            = null
         vpc_cidr                          = null
         subnet_ids                        = null
         subnet_route_table_ids            = null
         route_to                          = null
         route_to_cidr_blocks              = []
-        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network["network-base"].transit_gateway_vpc_attachment_ids["network-base"]
+        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network[k].transit_gateway_vpc_attachment_ids[k]
+
         static_routes = [
           {
             blackhole              = false
@@ -108,7 +123,6 @@ module "tgw_inspection_route_table" {
       route_to                          = null
       route_to_cidr_blocks              = null
       transit_gateway_vpc_attachment_id = null
-      #transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network_firewall["network-firewall"].transit_gateway_vpc_attachment_ids["network-firewall"]
       static_routes = [
         {
           blackhole              = false
@@ -239,7 +253,7 @@ resource "aws_route" "apps_devstg_public_route_to_tgw" {
   }
 
   # ...add a route into the network public RT
-  route_table_id         = module.vpc.public_route_table_ids[0]
+  route_table_id         = data.terraform_remote_state.network-vpcs["network-base"].outputs.public_route_table_ids[0]
   destination_cidr_block = each.value.outputs.vpc_cidr_block
   transit_gateway_id     = module.tgw[0].transit_gateway_id
 
@@ -256,7 +270,7 @@ resource "aws_route" "apps_prd_public_route_to_tgw" {
   }
 
   # ...add a route into the network public RT
-  route_table_id         = module.vpc.public_route_table_ids[0]
+  route_table_id         = data.terraform_remote_state.network-vpcs["network-base"].outputs.public_route_table_ids[0]
   destination_cidr_block = each.value.outputs.vpc_cidr_block
   transit_gateway_id     = module.tgw[0].transit_gateway_id
 

@@ -7,5 +7,6 @@ module "guardduty_monitor" {
   monitor_name                   = "default_guardduty_monitor"
   monitor_role_name              = "default_guardduty_monitor_role"
   event_rule_name                = "default_guardduty_monitor"
-  monitor_slack_notification_url = local.secrets.slack_webhook_monitoring_sec
+  monitor_slack_notification_url = data.vault_generic_secret.slack_hook_url_monitoring.data["slack_webhook_monitoring_sec"]
+
 }

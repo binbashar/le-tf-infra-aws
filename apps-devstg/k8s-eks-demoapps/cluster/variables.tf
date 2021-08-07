@@ -75,6 +75,11 @@ variable "shared_account_id" {
   description = "Account: Shared Resources"
 }
 
+variable "network_account_id" {
+  type        = string
+  description = "Account: Networking Resources"
+}
+
 variable "appsdevstg_account_id" {
   type        = string
   description = "Account: Dev Modules & Libs"
@@ -83,11 +88,6 @@ variable "appsdevstg_account_id" {
 variable "appsprd_account_id" {
   type        = string
   description = "Account: Prod Modules & Libs"
-}
-
-variable "network_account_id" {
-  type        = string
-  description = "Account: Network"
 }
 
 variable "vault_token" {

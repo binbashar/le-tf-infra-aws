@@ -158,3 +158,9 @@ variable "vpc_endpoints" {
     }
   }
 }
+
+variable "enable_tgw" {
+  description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = false
+}

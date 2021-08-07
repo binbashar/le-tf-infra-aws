@@ -11,8 +11,9 @@ region_secondary      = "us-east-2"
 root_account_id       = "111111111111"
 security_account_id   = "222222222222"
 shared_account_id     = "333333333333"
-appsdevstg_account_id = "444444444444"
-appsprd_account_id    = "555555555555"
+network_account_id    = "444444444444"
+appsdevstg_account_id = "555555555555"
+appsprd_account_id    = "666666666666"
 
 # Hashicorp Vault private API endpoint
 vault_address = "https://bb-le-shared-vault-cluster.private.vault.XXXXXX.aws.hashicorp.cloud:8200"
@@ -38,3 +39,10 @@ vault_address = "https://bb-le-shared-vault-cluster.private.vault.XXXXXX.aws.has
 #   security audit trail reasons
 #
 vault_token = "s.XXXXXXXXXXXXXXXXXXXXXX.Apshc"
+
+# The following values will be moved to another config file in a future release
+#
+# Networking
+
+# Enable TGW
+enable_tgw = false

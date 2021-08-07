@@ -32,4 +32,11 @@ locals {
     #"172.20.26.0/23",
     #"172.20.28.0/23",
   ]
+
+  # AWS Network Firewall
+  firewall_endpoints = [
+    "${var.region}a",
+    #"${var.region}b",
+    #"${var.region}c"
+  ]
 }

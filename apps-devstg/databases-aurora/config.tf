@@ -7,9 +7,17 @@ provider "aws" {
   shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
+#=============================#
+# Vault Provider Settings     #
+#=============================#
 provider "vault" {
   address = var.vault_address
-  token   = var.vault_token
+
+  /*
+  Vault token that will be used by Terraform to authenticate.
+ admin token from https://portal.cloud.hashicorp.com/.
+ */
+  token = var.vault_token
 }
 
 provider "mysql" {
@@ -22,10 +30,11 @@ provider "mysql" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.14.4"
+  required_version = ">= 0.14.11"
 
-  backend "s3" {
-    key = "apps-devstg/databases-aurora/terraform.tfstate"
+  required_providers {
+    aws   = "~> 3.8"
+    vault = "~> 2.18.0"
   }
 
   required_providers {
@@ -51,7 +60,6 @@ data "terraform_remote_state" "vpc" {
   }
 }
 
-
 data "terraform_remote_state" "eks_vpc_demoapps" {
   backend = "s3"
 
@@ -72,4 +80,15 @@ data "terraform_remote_state" "shared_vpc" {
     bucket  = "${var.project}-shared-terraform-backend"
     key     = "shared/network/terraform.tfstate"
   }
+}
+
+#
+# Note: for the sake of simplicity we are storing the db admin credentials
+#       under the same path of a demoapp. In other words, demoapps will use
+#       use admin credentials for talking to the db. Later on, we will have
+#       to store admin credentials under a separate path and create separate,
+#       more restrictied credentials for demoapps.
+#
+data "vault_generic_secret" "databases_aurora" {
+  path = "secrets/${var.project}/${var.environment}/databases-aurora"
 }
