@@ -59,14 +59,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network" {
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
 
   for_each = {
-    for k, v in {
-      network-base = {
-        vpc_id                  = module.vpc.vpc_id
-        vpc_cidr_block          = local.vpc_cidr_block
-        private_subnets         = module.vpc.private_subnets
-        private_route_table_ids = module.vpc.private_route_table_ids
-      }
-    } :
+    for k, v in data.terraform_remote_state.network-vpcs :
     k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "network", false)
   }
 
@@ -80,10 +73,10 @@ module "tgw_vpc_attachments_and_subnet_routes_network" {
 
   config = {
     (each.key) = {
-      vpc_id                            = each.value.vpc_id
-      vpc_cidr                          = each.value.vpc_cidr_block
-      subnet_ids                        = each.value.private_subnets
-      subnet_route_table_ids            = each.value.private_route_table_ids
+      vpc_id                            = each.value.outputs.vpc_id
+      vpc_cidr                          = each.value.outputs.vpc_cidr_block
+      subnet_ids                        = each.value.outputs.private_subnets
+      subnet_route_table_ids            = each.value.outputs.private_route_table_ids
       route_to                          = null
       route_to_cidr_blocks              = null
       static_routes                     = null

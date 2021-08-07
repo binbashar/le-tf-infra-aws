@@ -30,14 +30,15 @@ module "tgw" {
   config = merge(
     # network private
     lookup(var.enable_vpc_attach, "network", false) ? {
-      (module.vpc.vpc_id) = {
+      for k, v in data.terraform_remote_state.network-vpcs : v.outputs.vpc_id => {
         vpc_id                            = null
         vpc_cidr                          = null
         subnet_ids                        = null
         subnet_route_table_ids            = null
         route_to                          = null
         route_to_cidr_blocks              = []
-        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network["network-base"].transit_gateway_vpc_attachment_ids["network-base"]
+        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_network[k].transit_gateway_vpc_attachment_ids[k]
+
         static_routes = [
           {
             blackhole              = false
@@ -252,7 +253,7 @@ resource "aws_route" "apps_devstg_public_route_to_tgw" {
   }
 
   # ...add a route into the network public RT
-  route_table_id         = module.vpc.public_route_table_ids[0]
+  route_table_id         = data.terraform_remote_state.network-vpcs["network-base"].outputs.public_route_table_ids[0]
   destination_cidr_block = each.value.outputs.vpc_cidr_block
   transit_gateway_id     = module.tgw[0].transit_gateway_id
 
@@ -269,7 +270,7 @@ resource "aws_route" "apps_prd_public_route_to_tgw" {
   }
 
   # ...add a route into the network public RT
-  route_table_id         = module.vpc.public_route_table_ids[0]
+  route_table_id         = data.terraform_remote_state.network-vpcs["network-base"].outputs.public_route_table_ids[0]
   destination_cidr_block = each.value.outputs.vpc_cidr_block
   transit_gateway_id     = module.tgw[0].transit_gateway_id
 

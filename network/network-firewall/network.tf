@@ -9,7 +9,7 @@ module "vpc" {
 }
 
 module "inspection_private_subnets" {
-  source = "cloudposse/multi-az-subnets/aws"
+  source = "github.com/binbashar/terraform-aws-multi-az-subnets?ref=0.14.0"
 
   name               = "${var.project}-${var.environment}-inspection"
   vpc_id             = module.vpc.vpc_id
@@ -18,7 +18,6 @@ module "inspection_private_subnets" {
   type               = "private"
   max_subnets        = 4
   tags               = local.tags
-
 }
 
 module "network_firewall_private_subnets" {

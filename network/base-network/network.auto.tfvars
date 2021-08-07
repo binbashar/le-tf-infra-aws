@@ -1,19 +1,6 @@
 # NAT GW
 vpc_enable_nat_gateway = false
-
-# Transit Gateway
-enable_tgw = false
-
-# TGW VPC Attahcments
-enable_vpc_attach = {
-  network     = false
-  shared      = false
-  apps-devstg = false
-  apps-prd    = false
-}
-
-# Network Firewall
-enable_network_firewall = false
+vpc_single_nat_gateway = true
 
 # VPN Gateways
 vpc_enable_vpn_gateway = false
@@ -29,7 +16,10 @@ customer_gateways = {
       inside_cidr   = "169.254.10.4/30"
       preshared_key = "pr3shr3_k3y2"
     }
-    static_routes = ["10.10.0.0/20", "10.30.0.0/20"]
+    vpn_connection_static_routes_only = true
+    static_routes                     = ["10.10.0.0/20", "10.30.0.0/20"]
+    local_ipv4_network_cidr           = "10.0.0.0/16"
+    #remote_ipv4_network_cidr          = "0.0.0.0/0"
   },
   cgw2 = {
     bgp_asn    = 65220

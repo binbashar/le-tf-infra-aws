@@ -76,11 +76,6 @@ variable "shared_account_id" {
   description = "Account: Shared Resources"
 }
 
-variable "network_account_id" {
-  type        = string
-  description = "Account: Networking Resources"
-}
-
 variable "appsdevstg_account_id" {
   type        = string
   description = "Account: Dev Modules & Libs"
@@ -92,82 +87,28 @@ variable "appsprd_account_id" {
 }
 
 #===========================================#
-# Networking                                #
+# Transit Gateway                           #
 #===========================================#
-variable "vpc_shared_created" {
-  description = "true if Shared account VPC is created for Peering purposes"
-  type        = bool
-  default     = true
-}
-
-variable "vpc_enable_nat_gateway" {
-  description = "Enable NAT Gatewway"
-  type        = bool
-  default     = false
-}
-
-variable "vpc_single_nat_gateway" {
-  description = "Single NAT Gatewway"
-  type        = bool
-  default     = true
-}
-
-variable "vpc_enable_dns_hostnames" {
-  description = "Enable DNS HOSTNAME"
-  type        = bool
-  default     = true
-}
-
-variable "vpc_enable_vpn_gateway" {
-  description = "Enable VPN Gateway"
-  type        = bool
-  default     = false
-}
-
-variable "vpc_enable_s3_endpoint" {
-  description = "Enable S3 endpoint"
-  type        = bool
-  default     = true
-}
-
-variable "vpc_enable_dynamodb_endpoint" {
-  description = "Enable DynamoDB endpoint"
-  type        = bool
-  default     = true
-}
-
-variable "enable_kms_endpoint" {
-  description = "Enable KMS endpoint"
-  type        = bool
-  default     = false
-}
-
-variable "enable_kms_endpoint_private_dns" {
-  description = "Enable KMS endpoint"
-  type        = bool
-  default     = false
-}
-
-variable "manage_default_network_acl" {
-  description = "Manage default Network ACL"
-  type        = bool
-  default     = false
-}
-
-variable "public_dedicated_network_acl" {
-  description = "Manage default Network ACL"
-  type        = bool
-  default     = true
-}
-
-variable "private_dedicated_network_acl" {
-  description = "Manage default Network ACL"
-  type        = bool
-  default     = true
-}
 
 variable "enable_tgw" {
   description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = false
+}
+
+variable "enable_vpc_attach" {
+  description = "Enable VPC attachments per account"
+  type        = any
+  default = {
+    network     = false
+    shared      = false
+    apps-devstg = false
+    apps-prd    = false
+  }
+}
+
+variable "enable_network_firewall" {
+  description = "Enable AWS Network Firewall support"
   type        = bool
   default     = false
 }

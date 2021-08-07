@@ -1,17 +1,20 @@
 # Network Firewall VPC attachment - Inspection subnets (private)
 module "vpn_gateways" {
 
-  source = "github.com/binbashar/terraform-aws-vpn-gateway?ref=v2.10.0"
+  source = "github.com/binbashar/terraform-aws-vpn-gateway.git?ref=v2.10.1"
 
-  #for_each = var.customer_gateways
   for_each = { for k, v in var.customer_gateways :
     k => v if var.enable_tgw && var.vpc_enable_vpn_gateway
   }
 
-  connect_to_transit_gateway = true
-  transit_gateway_id         = module.tgw[0].transit_gateway_id
+  connect_to_transit_gateway        = true
+  vpn_connection_static_routes_only = lookup(each.value, "vpn_connection_static_routes_only", false)
+  transit_gateway_id                = data.terraform_remote_state.tgw.outputs.tgw_id
+  customer_gateway_id               = module.vpc.this_customer_gateway[each.key].id
 
-  customer_gateway_id = module.vpc.this_customer_gateway[each.key].id
+  # local & remote IPv4 CDIRs
+  local_ipv4_network_cidr  = lookup(each.value, "local_ipv4_network_cidr", "0.0.0.0/0")
+  remote_ipv4_network_cidr = lookup(each.value, "remote_ipv4_network_cidr", "0.0.0.0/0")
 
   ###########
   # Tunnels #
@@ -67,7 +70,17 @@ resource "aws_ec2_transit_gateway_route" "vpn_static_routes" {
   }
 
   destination_cidr_block         = lookup(each.value, "route")
-  transit_gateway_route_table_id = var.enable_tgw && var.enable_network_firewall ? module.tgw_vpc_attachments_and_subnet_routes_network_firewall["network-firewall"].transit_gateway_route_table_id : module.tgw[0].transit_gateway_route_table_id
+  transit_gateway_route_table_id = var.enable_tgw && var.enable_network_firewall ? data.terraform_remote_state.tgw.outputs.tgw_inspection_route_table_id : data.terraform_remote_state.tgw.outputs.tgw_route_table_id
   transit_gateway_attachment_id  = module.vpn_gateways[lookup(each.value, "cgw")].vpn_connection_transit_gateway_attachment_id
 }
 
+#  TGW VPN RT associations
+resource "aws_ec2_transit_gateway_route_table_association" "vpn-rt-associations" {
+
+  for_each = { for k, v in module.vpn_gateways :
+    k => v if var.enable_tgw && var.vpc_enable_vpn_gateway
+  }
+
+  transit_gateway_route_table_id = data.terraform_remote_state.tgw.outputs.tgw_route_table_id
+  transit_gateway_attachment_id  = each.value.vpn_connection_transit_gateway_attachment_id
+}

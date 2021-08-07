@@ -9,7 +9,9 @@ resource "aws_networkfirewall_firewall" "firewall" {
 
   # subnet_mapping
   dynamic "subnet_mapping" {
-    for_each = values(module.network_firewall_private_subnets.az_subnet_ids)
+    for_each = [for k, v in module.network_firewall_private_subnets.az_subnet_ids :
+      v if contains(local.firewall_endpoints, k)
+    ]
 
     content {
       subnet_id = subnet_mapping.value
