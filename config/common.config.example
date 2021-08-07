@@ -39,3 +39,10 @@ vault_address = "https://bb-le-shared-vault-cluster.private.vault.XXXXXX.aws.has
 #   security audit trail reasons
 #
 vault_token = "s.XXXXXXXXXXXXXXXXXXXXXX.Apshc"
+
+# The following values will be moved to another config file in a future release
+#
+# Networking
+
+# Enable TGW
+enable_tgw = false
