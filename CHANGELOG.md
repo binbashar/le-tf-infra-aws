@@ -7,6 +7,24 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.49"></a>
+## [v1.3.49] - 2021-08-07
+
+- Disable TGW by default
+- Add enable_tgw in the common.config example file
+- Fix wrong condition for TGW/Peerings toggle
+- Pinterraform-aws-vpn-gateway module
+- Fix wrong inspection route table id output value
+- Add local_ipv4_network_cidr and remote_ipv4_network_cidr support
+- Add TGW VPN route table associations
+- Set single nat gateway for all AZs as default
+- Add TGW VPN route table associationsç
+- Add vpn_connection_static_routes_only parameter in auto.tfvars
+- Fix Network Firewall endpoints issue when adding / removing subnets
+- Fix Network Firewall endpoints issue when adding / removing subnets
+- Separate logic for network-base and TGW layers
+
+
 <a name="v1.3.48"></a>
 ## [v1.3.48] - 2021-08-03
 
@@ -1989,7 +2007,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.48...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.49...HEAD
+[v1.3.49]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.48...v1.3.49
 [v1.3.48]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.47...v1.3.48
 [v1.3.47]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.46...v1.3.47
 [v1.3.46]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.45...v1.3.46
