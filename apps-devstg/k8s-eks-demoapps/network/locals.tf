@@ -101,28 +101,20 @@ locals {
         cidr_block  = data.terraform_remote_state.shared-vpc.outputs.private_subnets_cidr[0]
       },
       {
-        rule_number = 200 # Allow traffic from EKS VPC private subnet A
+        rule_number = 200 # Allow traffic from EKS DemoApps VPC private subnets
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
         protocol    = "all"
-        cidr_block  = local.private_subnets[0]
+        cidr_block  = local.private_subnets_cidr[0]
       },
       {
-        rule_number = 210 # Allow traffic from EKS VPC private subnet B
+        rule_number = 250 # Allow traffic from DevStg VPC private subnets
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
         protocol    = "all"
-        cidr_block  = local.private_subnets[1]
-      },
-      {
-        rule_number = 220 # Allow traffic from EKS VPC private subnet C
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = local.private_subnets[2]
+        cidr_block  = data.terraform_remote_state.devstg-vpc.outputs.private_subnets_cidr[0]
       },
       {
         rule_number = 300 # vault hvn vpc

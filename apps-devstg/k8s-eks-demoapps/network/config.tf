@@ -32,6 +32,17 @@ terraform {
 #
 # Data sources
 #
+data "terraform_remote_state" "devstg-vpc" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-apps-devstg-devops"
+    bucket  = "${var.project}-apps-devstg-terraform-backend"
+    key     = "apps-devstg/network/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "shared-vpc" {
   backend = "s3"
 

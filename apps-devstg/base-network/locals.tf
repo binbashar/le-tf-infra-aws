@@ -107,21 +107,13 @@ locals {
         cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
       },
       {
-        rule_number = 110 # shared private subnet A
+        rule_number = 110 # shared private subnets
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
         protocol    = "all"
         cidr_block  = data.terraform_remote_state.vpc-shared.outputs.private_subnets_cidr[0]
-      },
-      {
-        rule_number = 120 # shared private subnet B
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = data.terraform_remote_state.vpc-shared.outputs.private_subnets_cidr[1]
-      },
+      }
     ]
   }
 }
