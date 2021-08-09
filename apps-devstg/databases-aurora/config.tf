@@ -40,6 +40,10 @@ terraform {
       version = "1.10.4"
     }
   }
+
+  backend "s3" {
+    key = "apps-devstg/databases-aurora/terraform.tfstate"
+  }
 }
 
 #=============================#
