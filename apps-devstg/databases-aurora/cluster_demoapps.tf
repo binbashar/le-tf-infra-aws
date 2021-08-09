@@ -1,14 +1,3 @@
-#
-# Note: for the sake of simplicity we are storing the db admin credentials
-#       under the same path of a demoapp. In other words, demoapps will use
-#       use admin credentials for talking to the db. Later on, we will have
-#       to store admin credentials under a separate path and create separate,
-#       more restrictied credentials for demoapps.
-#
-data "vault_generic_secret" "databases_aurora" {
-  path = "secrets/bb/apps-devstg/databases-aurora"
-}
-
 module "demoapps" {
   source = "github.com/binbashar/terraform-aws-rds-aurora.git?ref=v3.7.0"
 
@@ -47,7 +36,8 @@ module "demoapps" {
   apply_immediately = true
 
   # Automatic backup settings
-  backup_retention_period = 7
+  backup_retention_period = 1
+  preferred_backup_window = "14:00-15:00"
 
   # This avoid a snapshot before destroy the cluster
   skip_final_snapshot = true

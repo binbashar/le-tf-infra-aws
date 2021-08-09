@@ -30,15 +30,11 @@ provider "mysql" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.14.11"
+  required_version = ">= 0.14.4"
 
   required_providers {
-    aws   = "~> 3.8"
-    vault = "~> 2.18.0"
-  }
-
-  required_providers {
-    aws = ">= 3.8"
+    aws   = ">= 3.8"
+    vault = "~> 2.20.0"
     mysql = {
       source  = "winebarrel/mysql"
       version = "1.10.4"

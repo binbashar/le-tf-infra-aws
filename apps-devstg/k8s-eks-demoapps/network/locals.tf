@@ -17,12 +17,14 @@ locals {
     "${var.region}c",
   ]
 
+  private_subnets_cidr = ["172.19.16.0/21"]
   private_subnets = [
     "172.19.16.0/23",
     "172.19.18.0/23",
     "172.19.20.0/23",
   ]
 
+  public_subnets_cidr = ["172.19.24.0/21"]
   public_subnets = [
     "172.19.24.0/23",
     "172.19.26.0/23",
@@ -91,7 +93,7 @@ locals {
         cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
       },
       {
-        rule_number = 110 # Allow traffic from Shared private subnet A
+        rule_number = 110 # Allow traffic from Shared private subnets
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
@@ -99,36 +101,20 @@ locals {
         cidr_block  = data.terraform_remote_state.shared-vpc.outputs.private_subnets_cidr[0]
       },
       {
-        rule_number = 120 # Allow traffic from Shared private subnet B
+        rule_number = 200 # Allow traffic from EKS DemoApps VPC private subnets
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
         protocol    = "all"
-        cidr_block  = data.terraform_remote_state.shared-vpc.outputs.private_subnets_cidr[1]
+        cidr_block  = local.private_subnets_cidr[0]
       },
       {
-        rule_number = 200 # Allow traffic from EKS VPC private subnet A
+        rule_number = 250 # Allow traffic from DevStg VPC private subnets
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535
         protocol    = "all"
-        cidr_block  = local.private_subnets[0]
-      },
-      {
-        rule_number = 210 # Allow traffic from EKS VPC private subnet B
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = local.private_subnets[1]
-      },
-      {
-        rule_number = 220 # Allow traffic from EKS VPC private subnet C
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = local.private_subnets[2]
+        cidr_block  = data.terraform_remote_state.devstg-vpc.outputs.private_subnets_cidr[0]
       },
       {
         rule_number = 300 # vault hvn vpc

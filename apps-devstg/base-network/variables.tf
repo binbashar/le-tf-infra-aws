@@ -91,6 +91,16 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
+variable "vault_address" {
+  type        = string
+  description = "Vault Address"
+}
+
+variable "vault_token" {
+  type        = string
+  description = "Vault Token"
+}
+
 #===========================================#
 # Networking                                #
 #===========================================#
@@ -134,4 +144,10 @@ variable "vpc_enable_dynamodb_endpoint" {
   description = "Enable DynamoDB endpoint"
   type        = bool
   default     = true
+}
+
+variable "enable_tgw" {
+  description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = false
 }
