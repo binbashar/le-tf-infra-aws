@@ -161,6 +161,7 @@ resource "aws_iam_policy" "deploy_master_access" {
                 "ec2:*",
                 "ecr:*",
                 "iam:*",
+                "network-firewall:*",
                 "logs:*",
                 "route53:*",
                 "route53domains:*",
