@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.52"></a>
+## [v1.3.52] - 2021-08-15
+
+- Add grant network firewall to deploymaster role
+
+
 <a name="v1.3.51"></a>
 ## [v1.3.51] - 2021-08-09
 
@@ -2019,7 +2025,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.51...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.52...HEAD
+[v1.3.52]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.51...v1.3.52
 [v1.3.51]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.50...v1.3.51
 [v1.3.50]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.49...v1.3.50
 [v1.3.49]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.48...v1.3.49
