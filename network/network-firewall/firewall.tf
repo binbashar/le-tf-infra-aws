@@ -17,7 +17,9 @@ module "firewall" {
 
   subnet_mapping = module.network_firewall_private_subnets.az_subnet_ids
 
+  # Stateless rule groups
   stateless_rule_groups = {
+    # stateless-group-1 rules
     staless-group-1 = {
       description = "Staless rules"
       priority    = 10
@@ -48,5 +50,19 @@ module "firewall" {
     }
   }
 
+  # Stateful rules
+  stateful_rule_groups = {
+    # rules_source_list examples
+    stateful-group-1 = {
+      description = "Stateful Inspection for denying access to domains"
+      capacity    = 100
+      #rule_variables = {}
+      rules_source_list = {
+        generated_rules_type = "DENYLIST"
+        target_types         = ["TLS_SNI", "HTTP_HOST"]
+        targets              = [".wikipedia.org", ".bad-domain.com"]
+      }
+    }
+  }
 }
 
