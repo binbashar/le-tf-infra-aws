@@ -52,15 +52,15 @@ output "inspection_route_table_ids" {
 # Network Firewall
 output "network_firewall_status" {
   description = "Nested list of information about the current status of the firewall."
-  value       = var.enable_network_firewall && length(data.terraform_remote_state.inspection_vpc.outputs) > 0 ? aws_networkfirewall_firewall.firewall[0].firewall_status : []
+  value       = var.enable_network_firewall && length(data.terraform_remote_state.inspection_vpc.outputs) > 0 ? module.firewall[0].network_firewall_status : []
 }
 
 output "sync_states" {
   description = "Set of subnets configured for use by the firewall."
-  value       = var.enable_network_firewall && length(data.terraform_remote_state.inspection_vpc.outputs) > 0 ? aws_networkfirewall_firewall.firewall[0].firewall_status.*.sync_states : []
+  value       = var.enable_network_firewall && length(data.terraform_remote_state.inspection_vpc.outputs) > 0 ? module.firewall[0].network_firewall_status.*.sync_states : []
 }
 
 output "network_firewall_subnet_id_endpoint_id" {
   description = "Map of endpoint_id per subnet_id"
-  value       = var.enable_network_firewall && length(data.terraform_remote_state.inspection_vpc.outputs) > 0 ? { for v in aws_networkfirewall_firewall.firewall[0].firewall_status[0]["sync_states"].*.attachment : v[0]["subnet_id"] => v[0]["endpoint_id"] } : {}
+  value       = var.enable_network_firewall && length(data.terraform_remote_state.inspection_vpc.outputs) > 0 ? { for v in module.firewall[0].network_firewall_status[0]["sync_states"].*.attachment : v[0]["subnet_id"] => v[0]["endpoint_id"] } : {}
 }
