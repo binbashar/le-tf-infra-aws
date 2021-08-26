@@ -7,6 +7,16 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.55"></a>
+## [v1.3.55] - 2021-08-26
+
+- Add README for the HOME_NET use case
+- Add HOME_NET variable in stateful-group-1 rule
+- Remove not longer used customer_gateways variable
+- Move customer gateways definitions to a locals file
+- Move customer gateways definitions to a locals file
+
+
 <a name="v1.3.54"></a>
 ## [v1.3.54] - 2021-08-25
 
@@ -2039,7 +2049,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.54...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.55...HEAD
+[v1.3.55]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.54...v1.3.55
 [v1.3.54]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.53...v1.3.54
 [v1.3.53]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.52...v1.3.53
 [v1.3.52]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.51...v1.3.52
