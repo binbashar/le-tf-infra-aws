@@ -238,9 +238,3 @@ variable "vpn_gateway_amazon_side_asn" {
   type        = number
   default     = 64512
 }
-
-variable "customer_gateways" {
-  description = "Customer Gateways"
-  type        = any
-  default     = {}
-}
