@@ -56,7 +56,11 @@ module "firewall" {
     stateful-group-1 = {
       description = "Stateful Inspection for denying access to domains"
       capacity    = 100
-      #rule_variables = {}
+      rule_variables = {
+        ip_sets = {
+          HOME_NET = ["0.0.0.0/0"]
+        }
+      }
       rules_source_list = {
         generated_rules_type = "DENYLIST"
         target_types         = ["TLS_SNI", "HTTP_HOST"]
