@@ -168,14 +168,14 @@ locals {
 }
 
 locals {
-  customer_gateways = { for k, v in var.customer_gateways :
+  customer_gateways = { for k, v in local.customer_gateways :
     k => {
       bgp_asn    = v["bgp_asn"]
       ip_address = v["ip_address"]
     }
   }
 
-  vpn_static_routes = flatten([for k, v in var.customer_gateways :
+  vpn_static_routes = flatten([for k, v in local.customer_gateways :
     [for r in lookup(v, "static_routes", []) :
       {
         cgw   = k
