@@ -168,7 +168,7 @@ locals {
 }
 
 locals {
-  customer_gateways = { for k, v in local.customer_gateways :
+  cgws = { for k, v in local.customer_gateways :
     k => {
       bgp_asn    = v["bgp_asn"]
       ip_address = v["ip_address"]
