@@ -21,6 +21,7 @@ resource "aws_iam_policy" "devops_access" {
             "Effect": "Allow",
             "Action": [
                 "acm:*",
+                "athena:*",
                 "autoscaling:*",
                 "application-autoscaling:*",
                 "apigateway:*",
@@ -45,6 +46,7 @@ resource "aws_iam_policy" "devops_access" {
                 "elasticloadbalancing:*",
                 "es:*",
                 "events:*",
+                "glue:*",
                 "guardduty:*",
                 "health:*",
                 "iam:*",
