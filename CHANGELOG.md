@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.56"></a>
+## [v1.3.56] - 2021-08-27
+
+- Fix Shared VPC FlowLogs, add DevOps role permissions on Athena, and create a role for Grafana on the network account ([#302](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/302))
+
+
 <a name="v1.3.55"></a>
 ## [v1.3.55] - 2021-08-26
 
@@ -2049,7 +2055,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.55...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.56...HEAD
+[v1.3.56]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.55...v1.3.56
 [v1.3.55]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.54...v1.3.55
 [v1.3.54]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.53...v1.3.54
 [v1.3.53]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.52...v1.3.53
