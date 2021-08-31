@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.57"></a>
+## [v1.3.57] - 2021-08-31
+
+- Update DevOps and DeployMaster permissions ([#303](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/303))
+
+
 <a name="v1.3.56"></a>
 ## [v1.3.56] - 2021-08-27
 
@@ -2055,7 +2061,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.56...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.57...HEAD
+[v1.3.57]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.56...v1.3.57
 [v1.3.56]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.55...v1.3.56
 [v1.3.55]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.54...v1.3.55
 [v1.3.54]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.53...v1.3.54
