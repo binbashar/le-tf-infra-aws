@@ -22,3 +22,10 @@
 2. Run `echo "YOUR ENCRYPTED STRING PASSWORD HERE" | base64 --decode > a_file_with_your_pass`
 3. Run `gpg --decrypt a_file_with_your_pass` to effectively decrypt your pass using your gpg key and its passphrase
 4. If all went well, the decrypted password should be there
+
+
+## Troubleshooting
+
+###  GPG issues on Mac
+Some people had issues generating valid GPG keys on Mac computers. When applying Terraform to create the user you would get an error complaining about the key. The issue seemed to be related to the Terraform AWS Provider and the Go library that is used to use the key.
+A proper solution was not found yet however a workaround for it was to spin up a Linux computer to generate the GPG key (either another computer of yours or a VM). After that you can export the key, copy it to your Mac and import it to GPG.
