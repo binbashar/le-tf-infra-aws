@@ -86,6 +86,11 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
+variable "network_account_id" {
+  type        = string
+  description = "Account: Networking Resources"
+}
+
 variable "vault_address" {
   type        = string
   description = "Vault Address"
