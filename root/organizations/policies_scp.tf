@@ -103,3 +103,47 @@ resource "aws_organizations_policy" "standard" {
 }
 JSON
 }
+
+#
+# Delete protection policy (scp)
+#
+#
+resource "aws_organizations_policy" "delete_protection" {
+  name        = "delete-protection"
+  description = "Delete protection"
+
+  content = <<JSON
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Statement1",
+      "Effect": "Deny",
+      "Action": [
+        "ec2:DeleteTransitGateway",
+        "ec2:ModifyTransitGateway",
+        "ec2:ModifyTransitGatewayVpcAttachment",
+        "ec2:DeleteTransitGatewayConnectPeer",
+        "ec2:DeleteTransitGatewayConnect",
+        "ec2:DeleteTransitGatewayMulticastDomain",
+        "ec2:DeleteTransitGatewayPeeringAttachment",
+        "ec2:DeleteTransitGatewayPrefixListReference",
+        "ec2:DeleteTransitGatewayRoute",
+        "ec2:DeleteTransitGatewayRouteTable",
+        "ec2:DeleteTransitGatewayVpcAttachment"
+      ],
+      "Resource": [
+        "*"
+      ],
+      "Condition": {
+        "ForAnyValue:StringEquals": {
+          "aws:ResourceTag/protection": [
+            "on"
+          ]
+        }
+      }
+    }
+  ]
+}
+JSON
+}
