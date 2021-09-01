@@ -107,7 +107,6 @@ JSON
 #
 # Delete protection policy (scp)
 #
-#
 resource "aws_organizations_policy" "delete_protection" {
   name        = "delete-protection"
   description = "Delete protection"
@@ -139,6 +138,49 @@ resource "aws_organizations_policy" "delete_protection" {
         "ForAnyValue:StringEquals": {
           "aws:ResourceTag/protection": [
             "on"
+          ]
+        }
+      }
+    }
+  ]
+}
+JSON
+}
+
+#
+# Delete protection policy (scp)
+#
+resource "aws_organizations_policy" "tag_protection" {
+  name        = "tag-protection"
+  description = "This policy prevents all user but DevOps role to delete or modify tags on EC2, RDs and EKS resources"
+
+  content = <<JSON
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Statement1",
+      "Effect": "Deny",
+      "Action": [
+        "ec2:DeleteTags",
+        "ec2:CreateTags",
+        "rds:AddTagsToResource",
+        "rds:RemoveTagsFromResource",
+        "eks:TagResource",
+        "eks:UntagResource"
+      ],
+      "Resource": [
+        "*"
+      ],
+      "Condition": {
+        "ForAnyValue:StringEqualsIfExists": {
+          "aws:TagKeys": [
+            "protection"
+          ]
+        },
+        "ForAnyValue:StringNotEquals": {
+          "aws:PrincipalArn": [
+            "arn:aws:iam::*:role/DevOps"
           ]
         }
       }
