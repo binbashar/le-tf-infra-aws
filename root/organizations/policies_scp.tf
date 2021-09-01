@@ -163,10 +163,7 @@ resource "aws_organizations_policy" "tag_protection" {
       "Effect": "Deny",
       "Action": [
         "ec2:DeleteTags",
-        "ec2:CreateTags",
-        "rds:AddTagsToResource",
         "rds:RemoveTagsFromResource",
-        "eks:TagResource",
         "eks:UntagResource"
       ],
       "Resource": [
