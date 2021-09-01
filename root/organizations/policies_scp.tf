@@ -162,22 +162,23 @@ resource "aws_organizations_policy" "tag_protection" {
       "Sid": "Statement1",
       "Effect": "Deny",
       "Action": [
+        "ec2:CreateTags",
         "ec2:DeleteTags",
+        "rds:AddTagsToResource",
         "rds:RemoveTagsFromResource",
-        "eks:UntagResource"
+        "eks:UntagResource",
+        "eks:TagResource"
       ],
       "Resource": [
         "*"
       ],
       "Condition": {
-        "ForAnyValue:StringEqualsIfExists": {
-          "aws:TagKeys": [
-            "protection"
-          ]
-        },
-        "ForAnyValue:StringNotEquals": {
+        "StringNotEquals": {
           "aws:PrincipalArn": [
-            "arn:aws:iam::*:role/DevOps"
+            "arn:aws:iam::${aws_organizations_account.shared.id}:role/DevOps",
+            "arn:aws:iam::${aws_organizations_account.network.id}:role/DevOps",
+            "arn:aws:iam::${aws_organizations_account.apps_devstg.id}:role/DevOps",
+            "arn:aws:iam::${aws_organizations_account.apps_prd.id}:role/DevOps"
           ]
         }
       }
