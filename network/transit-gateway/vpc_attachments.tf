@@ -24,6 +24,8 @@ module "tgw_vpc_attachments_and_subnet_routes_network_firewall" {
     k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false)
   }
 
+  name = "${var.project}-${each.key}-vpc"
+
   # network account can access the Transit Gateway in the network: account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
   create_transit_gateway                                         = false
@@ -44,9 +46,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network_firewall" {
     }
   }
 
-  tags = {
-    Name = "${var.project}-${each.key}-vpc"
-  }
+  tags = local.tags
 
   providers = {
     aws = aws.network
@@ -62,6 +62,8 @@ module "tgw_vpc_attachments_and_subnet_routes_network" {
     for k, v in data.terraform_remote_state.network-vpcs :
     k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "network", false)
   }
+
+  name = "${var.project}-${each.key}-vpc"
 
   # network account can access the Transit Gateway in the network: account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
@@ -84,9 +86,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network" {
     }
   }
 
-  tags = {
-    Name = "${var.project}-${each.key}-vpc"
-  }
+  tags = local.tags
 
   providers = {
     aws = aws.network
@@ -102,6 +102,8 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-devstg" {
     for k, v in data.terraform_remote_state.apps-devstg-vpcs :
     k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
   }
+
+  name = "${var.project}-${each.key}-vpc"
 
   # apps-devstg account can access the Transit Gateway in the network account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
@@ -128,9 +130,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-devstg" {
     }
   }
 
-  tags = {
-    Name = "${var.project}-apps-devstg-vpc"
-  }
+  tags = local.tags
 
   providers = {
     aws = aws.apps-devstg
@@ -147,7 +147,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd" {
     k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
   }
 
-  name = "${var.project}-apps-prd-vpc"
+  name = "${var.project}-${each.key}-vpc"
 
   # apps-prd account can access the Transit Gateway in the network account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
@@ -191,6 +191,8 @@ module "tgw_vpc_attachments_and_subnet_routes_shared" {
     k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "shared", false)
   }
 
+  name = "${var.project}-${each.key}-vpc"
+
   # apps-devstg account can access the Transit Gateway in the network account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
   existing_transit_gateway_route_table_id                        = var.enable_tgw && lookup(var.enable_vpc_attach, "shared", false) ? try(module.tgw_vpc_attachments_and_subnet_routes_network_firewall["network-firewall"].transit_gateway_route_table_id, null) : module.tgw[0].transit_gateway_route_table_id
@@ -215,9 +217,7 @@ module "tgw_vpc_attachments_and_subnet_routes_shared" {
     }
   }
 
-  tags = {
-    Name = "${var.project}-shared-vpc"
-  }
+  tags = local.tags
 
   providers = {
     aws = aws.shared
