@@ -1,8 +1,8 @@
 locals {
   tags = {
-    Terraform   = "true"
-    Environment = var.environment
-    protection  = "on"
+    Terraform           = "true"
+    Environment         = var.environment
+    ProtectFromDeletion = "true"
   }
 }
 

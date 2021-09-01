@@ -136,8 +136,8 @@ resource "aws_organizations_policy" "delete_protection" {
       ],
       "Condition": {
         "ForAnyValue:StringEquals": {
-          "aws:ResourceTag/protection": [
-            "on"
+          "aws:ResourceTag/ProtectFromDeletion": [
+            "true"
           ]
         }
       }
