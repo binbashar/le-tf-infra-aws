@@ -178,8 +178,7 @@ resource "aws_organizations_policy" "tag_protection" {
             "arn:aws:iam::${aws_organizations_account.shared.id}:role/DevOps",
             "arn:aws:iam::${aws_organizations_account.network.id}:role/DevOps",
             "arn:aws:iam::${aws_organizations_account.apps_devstg.id}:role/DevOps",
-            "arn:aws:iam::${aws_organizations_account.apps_prd.id}:role/DevOps",
-            "arn:aws:iam::${aws_organizations_account.shared.id}:role/aws-backup-plan-daily-backups-role"
+            "arn:aws:iam::${aws_organizations_account.apps_prd.id}:role/DevOps"
           ]
         },
         "ForAnyValue:StringEquals": {
