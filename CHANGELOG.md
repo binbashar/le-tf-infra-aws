@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.58"></a>
+## [v1.3.58] - 2021-09-01
+
+- Fix undeclared variable warning ([#304](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/304))
+
+
 <a name="v1.3.57"></a>
 ## [v1.3.57] - 2021-08-31
 
@@ -2061,7 +2067,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.57...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.58...HEAD
+[v1.3.58]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.57...v1.3.58
 [v1.3.57]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.56...v1.3.57
 [v1.3.56]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.55...v1.3.56
 [v1.3.55]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.54...v1.3.55
