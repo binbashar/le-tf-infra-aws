@@ -7,6 +7,21 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.60"></a>
+## [v1.3.60] - 2021-09-02
+
+- Remove aws backup role from SCP policy
+- Add tag key condition fro creation/deletion of EC2, EKS and RDS tags
+- Change tag key/value to make its purpose clearer
+- Add delete_protection policy in all accounts
+- Add tag protection policy (SCP) for DevOps roles
+- Remove create tag denial
+- Add tag protection policy (SCP)
+- Add profile and region variable to RAM enabling command
+- Add protection tag in locals
+- Add delete proctecton policy (SCP)
+
+
 <a name="v1.3.59"></a>
 ## [v1.3.59] - 2021-09-02
 
@@ -2073,7 +2088,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.59...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.60...HEAD
+[v1.3.60]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.59...v1.3.60
 [v1.3.59]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.58...v1.3.59
 [v1.3.58]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.57...v1.3.58
 [v1.3.57]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.56...v1.3.57
