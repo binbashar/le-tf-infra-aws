@@ -103,3 +103,92 @@ resource "aws_organizations_policy" "standard" {
 }
 JSON
 }
+
+#
+# Delete protection policy (scp)
+#
+resource "aws_organizations_policy" "delete_protection" {
+  name        = "delete-protection"
+  description = "Delete protection"
+
+  content = <<JSON
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Statement1",
+      "Effect": "Deny",
+      "Action": [
+        "ec2:DeleteTransitGateway",
+        "ec2:ModifyTransitGateway",
+        "ec2:ModifyTransitGatewayVpcAttachment",
+        "ec2:DeleteTransitGatewayConnectPeer",
+        "ec2:DeleteTransitGatewayConnect",
+        "ec2:DeleteTransitGatewayMulticastDomain",
+        "ec2:DeleteTransitGatewayPeeringAttachment",
+        "ec2:DeleteTransitGatewayPrefixListReference",
+        "ec2:DeleteTransitGatewayRoute",
+        "ec2:DeleteTransitGatewayRouteTable",
+        "ec2:DeleteTransitGatewayVpcAttachment"
+      ],
+      "Resource": [
+        "*"
+      ],
+      "Condition": {
+        "ForAnyValue:StringEquals": {
+          "aws:ResourceTag/ProtectFromDeletion": [
+            "true"
+          ]
+        }
+      }
+    }
+  ]
+}
+JSON
+}
+
+#
+# Delete protection policy (scp)
+#
+resource "aws_organizations_policy" "tag_protection" {
+  name        = "tag-protection"
+  description = "This policy prevents all user but DevOps role to delete or modify tags on EC2, RDs and EKS resources"
+
+  content = <<JSON
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Statement1",
+      "Effect": "Deny",
+      "Action": [
+        "ec2:CreateTags",
+        "ec2:DeleteTags",
+        "rds:AddTagsToResource",
+        "rds:RemoveTagsFromResource",
+        "eks:UntagResource",
+        "eks:TagResource"
+      ],
+      "Resource": [
+        "*"
+      ],
+      "Condition": {
+        "StringNotEquals": {
+          "aws:PrincipalArn": [
+            "arn:aws:iam::${aws_organizations_account.shared.id}:role/DevOps",
+            "arn:aws:iam::${aws_organizations_account.network.id}:role/DevOps",
+            "arn:aws:iam::${aws_organizations_account.apps_devstg.id}:role/DevOps",
+            "arn:aws:iam::${aws_organizations_account.apps_prd.id}:role/DevOps"
+          ]
+        },
+        "ForAnyValue:StringEquals": {
+          "aws:TagKeys": [
+            "ProtectFromDeletion"
+          ]
+        }
+      }
+    }
+  ]
+}
+JSON
+}

@@ -88,9 +88,7 @@ module "tgw" {
     } : {},
   )
 
-  tags = {
-    Name = "${var.project}-${var.environment}-tgw"
-  }
+  tags = local.tags
 
   providers = {
     aws = aws.network
