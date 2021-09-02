@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.59"></a>
+## [v1.3.59] - 2021-09-02
+
+- Reduce number of subnets in Network and add a few more permissions to DevOps role in Shared ([#306](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/306))
+
+
 <a name="v1.3.58"></a>
 ## [v1.3.58] - 2021-09-01
 
@@ -2067,7 +2073,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.58...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.59...HEAD
+[v1.3.59]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.58...v1.3.59
 [v1.3.58]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.57...v1.3.58
 [v1.3.57]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.56...v1.3.57
 [v1.3.56]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.55...v1.3.56
