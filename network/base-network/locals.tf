@@ -11,21 +11,18 @@ locals {
   azs = [
     "${var.region}a",
     "${var.region}b",
-    "${var.region}c"
   ]
 
   private_subnets_cidr = ["172.20.0.0/21"]
   private_subnets = [
     "172.20.0.0/23",
     "172.20.2.0/23",
-    "172.20.4.0/23",
   ]
 
   public_subnets_cidr = ["172.20.8.0/21"]
   public_subnets = [
     "172.20.8.0/23",
     "172.20.10.0/23",
-    "172.20.12.0/23",
   ]
 }
 

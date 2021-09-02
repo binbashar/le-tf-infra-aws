@@ -36,6 +36,7 @@ resource "aws_iam_policy" "devops_access" {
                 "cloudwatch:*",
                 "config:*",
                 "compute-optimizer:*",
+                "datasync:*",
                 "dlm:*",
                 "dynamodb:*",
                 "ec2:*",
@@ -67,13 +68,15 @@ resource "aws_iam_policy" "devops_access" {
                 "sns:*",
                 "sqs:*",
                 "ssm:*",
+                "sts:*",
                 "support:*",
                 "tag:*",
                 "trustedadvisor:*",
                 "vpc:*",
                 "waf:*",
                 "wafv2:*",
-                "waf-regional:*"
+                "waf-regional:*",
+                "wellarchitected:*"
             ],
             "Resource": [
                 "*"
