@@ -7,6 +7,14 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.61"></a>
+## [v1.3.61] - 2021-09-06
+
+- removing legacy diagram files
+- running make pre-commit to fix -> Trim Trailing Whitespaces check
+- Adding code of conduct, updateing license and adding contributing guidelines
+
+
 <a name="v1.3.60"></a>
 ## [v1.3.60] - 2021-09-02
 
@@ -2088,7 +2096,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.60...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.61...HEAD
+[v1.3.61]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.60...v1.3.61
 [v1.3.60]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.59...v1.3.60
 [v1.3.59]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.58...v1.3.59
 [v1.3.58]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.57...v1.3.58
