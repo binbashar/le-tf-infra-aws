@@ -115,7 +115,7 @@ EOF
 # User Managed Policy: SecOps Access
 #
 resource "aws_iam_policy" "secops_access" {
-  name        = "devops_access"
+  name        = "secops_access"
   description = "Services enabled for SecOps role"
 
   #
