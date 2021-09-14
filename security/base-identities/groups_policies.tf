@@ -48,11 +48,11 @@ resource "aws_iam_policy" "assume_secops_role" {
                 "sts:AssumeRole"
             ],
             "Resource": [
-                "arn:aws:iam::${var.shared_account_id}:role/DevOps",
-                "arn:aws:iam::${var.network_account_id}:role/DevOps",
-                "arn:aws:iam::${var.security_account_id}:role/DevOps",
-                "arn:aws:iam::${var.appsdevstg_account_id}:role/DevOps",
-                "arn:aws:iam::${var.appsprd_account_id}:role/DevOps"
+                "arn:aws:iam::${var.shared_account_id}:role/SecOps",
+                "arn:aws:iam::${var.network_account_id}:role/SecOps",
+                "arn:aws:iam::${var.security_account_id}:role/SecOps",
+                "arn:aws:iam::${var.appsdevstg_account_id}:role/SecOps",
+                "arn:aws:iam::${var.appsprd_account_id}:role/SecOps"
             ]
         }
     ]
