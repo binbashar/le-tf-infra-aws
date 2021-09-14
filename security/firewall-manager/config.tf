@@ -8,9 +8,9 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias                   = "admin"
+  alias                   = "management"
   region                  = var.region
-  profile                 = var.profile
+  profile                 = "bb-root-oaar"
   shared_credentials_file = "~/.aws/${var.project}/config"
 }
 

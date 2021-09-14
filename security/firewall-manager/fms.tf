@@ -1,10 +1,16 @@
+# Asssociate Firewall Manager Service adminidtator account
+resource "aws_fms_admin_account" "default" {
+  account_id = var.security_account_id
+  provider   = aws.management
+}
+
 module "fms" {
   #source = "github.com/binbashar/terraform-aws-firewall-manager.git?ref=0.2.0"
   source = "git::https://github.com/binbashar/terraform-aws-firewall-manager.git?ref=fix/default-values"
 
 
-  # Associate an AWS Firewall Manager administrator account.
-  admin_account_id = var.security_account_id
+  # Disable association of the FMS administrator account from the module
+  admin_account_enabled = false
 
   # Security Groups Usage Audit Policies
   security_groups_usage_audit_policies = []
@@ -18,7 +24,7 @@ module "fms" {
       name                        = "nfw-policy"
       delete_all_policy_resources = false
       exclude_resource_tags       = false
-      remediation_enabled         = false
+      remediation_enabled         = true
       resource_type_list          = ["AWS::EC2::VPC"]
       resource_tags               = null
       include_account_ids         = null
@@ -26,8 +32,8 @@ module "fms" {
 
       policy_data = {
         stateless_rule_group_references     = []
-        tateless_default_actions            = []
-        stateless_fragment_default_actions  = []
+        stateless_default_actions           = ["aws:pass"]
+        stateless_fragment_default_actions  = ["aws:drop"]
         stateless_custom_actions            = []
         stateful_rule_group_references_arns = null
         orchestration_config = {
@@ -39,8 +45,9 @@ module "fms" {
 
   ]
 
+  depends_on = [aws_fms_admin_account.default]
+
   providers = {
     aws.admin = aws
   }
-
 }
