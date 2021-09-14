@@ -27,7 +27,7 @@ module "terraform-aws-config" {
   config_delivery_frequency      = "Six_Hours"
 
   # Aggregate data from all organization accounts on this account
-  aggregate_organization = true
+  aggregate_organization = false
 
   # IAM Config Rules w/ password policy check
   check_root_account_mfa_enabled   = true
@@ -70,14 +70,14 @@ module "terraform-aws-config" {
   check_s3_bucket_public_write_prohibited = true
 
   # Tags Config Rules
-  check_required_tags          = true
-  required_tags_resource_types = ["S3::Bucket,EC2::Instances"]
-  required_tags = {
-    tag1Key   = "Terraform"
-    tag1Value = "true"
-    tag2Key   = "Environment"
-    tag3Value = var.environment
-  }
+  # check_required_tags          = true
+  # required_tags_resource_types = ["S3::Bucket,EC2::Instances"]
+  # required_tags = {
+  #   tag1Key   = "Terraform"
+  #   tag1Value = "true"
+  #   tag2Key   = "Environment"
+  #   tag3Value = var.environment
+  # }
   check_approved_amis_by_tag = true
   ami_required_tag_key_value = "ApprovedAMI:true"
 }
