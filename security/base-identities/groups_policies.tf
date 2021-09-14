@@ -34,7 +34,7 @@ EOF
 #
 # Policy: Assume SecOps Role (Cross-Org Accounts)
 #
-resource "aws_iam_policy" "assume_devops_role" {
+resource "aws_iam_policy" "assume_secops_role" {
   name        = "assume_secops_role"
   description = "Allow assume SecOps role in member accounts"
 
