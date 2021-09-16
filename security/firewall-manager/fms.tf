@@ -8,7 +8,7 @@ module "fms" {
   # Security Groups Usage Audit Policies
   security_groups_usage_audit_policies = [
     {
-      name               = "unused-sg"
+      name               = "sgs-usage-audit-policy"
       resource_type_list = ["AWS::EC2::SecurityGroup"]
 
       policy_data = {
@@ -21,7 +21,7 @@ module "fms" {
   # Web Application Firewall V2 Policies
   waf_v2_policies = [
     {
-      name                        = "linux-policy"
+      name                        = "waf-v2-policy"
       delete_all_policy_resources = true
       exclude_resource_tags       = false
       remediation_enabled         = true
