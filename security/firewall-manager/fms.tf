@@ -22,7 +22,7 @@ module "fms" {
   waf_v2_policies = [
     {
       name                        = "linux-policy"
-      delete_all_policy_resources = false
+      delete_all_policy_resources = true
       exclude_resource_tags       = false
       remediation_enabled         = true
       resource_type_list          = ["AWS::ElasticLoadBalancingV2::LoadBalancer", "AWS::ApiGateway::Stage"]
@@ -34,7 +34,7 @@ module "fms" {
 
       policy_data = {
         default_action                        = "allow"
-        override_customer_web_acl_association = false
+        override_customer_web_acl_association = true
         pre_process_rule_groups = [
           {
             "managedRuleGroupIdentifier" : {
@@ -112,8 +112,8 @@ module "fms_cloudfront" {
 
   # Web Application Firewall V2 Policies
   waf_v2_policies = [
-    { name                        = "cf-linux-policy"
-      delete_all_policy_resources = false
+    { name                        = "cf-lnx-policy"
+      delete_all_policy_resources = true
       exclude_resource_tags       = false
       remediation_enabled         = false
       resource_type               = "AWS::CloudFront::Distribution"
@@ -124,7 +124,7 @@ module "fms_cloudfront" {
 
       policy_data = {
         default_action                        = "allow"
-        override_customer_web_acl_association = false
+        override_customer_web_acl_association = true
         pre_process_rule_groups = [
           {
             "managedRuleGroupIdentifier" : {
