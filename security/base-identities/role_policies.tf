@@ -131,6 +131,8 @@ resource "aws_iam_policy" "secops_access" {
             "Action": [
                 "access-analyzer:*",
                 "acm:*",
+                "apigateway:*",
+                "appsync:*",
                 "aws-portal:*",
                 "backup:*",
                 "backup-storage:*",
@@ -142,6 +144,7 @@ resource "aws_iam_policy" "secops_access" {
                 "dlm:*",
                 "dynamodb:*",
                 "ec2:*",
+                "elasticloadbalancing:*",
                 "events:*",
                 "fms:*",
                 "guardduty:*",
@@ -161,7 +164,11 @@ resource "aws_iam_policy" "secops_access" {
                 "support:*",
                 "tag:*",
                 "trustedadvisor:*",
-                "vpc:*"
+                "vpc:*",
+                "waf:*",
+                "waf-regional:*",
+                "wafv2:*"
+
             ],
             "Resource": [
                 "*"
