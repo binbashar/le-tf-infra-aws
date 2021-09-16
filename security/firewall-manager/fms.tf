@@ -95,8 +95,6 @@ module "fms" {
   #  }
   #]
 
-  depends_on = [aws_fms_admin_account.default]
-
   providers = {
     aws.admin = aws
   }
