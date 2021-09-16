@@ -144,8 +144,6 @@ module "fms_cloudfront" {
     }
   ]
 
-  depends_on = [aws_fms_admin_account.default]
-
   providers = {
     aws.admin = aws
   }
