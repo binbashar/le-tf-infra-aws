@@ -7,13 +7,6 @@ provider "aws" {
   shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
-provider "aws" {
-  alias                   = "management"
-  region                  = var.region
-  profile                 = "bb-root-oaar"
-  shared_credentials_file = "~/.aws/${var.project}/config"
-}
-
 #=============================#
 # Backend Config (partial)    #
 #=============================#
