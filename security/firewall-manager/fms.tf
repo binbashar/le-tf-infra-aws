@@ -27,7 +27,7 @@ module "fms" {
       remediation_enabled         = true
       resource_type_list          = ["AWS::EC2::VPC"]
       resource_tags               = null
-      include_account_ids         = null
+      include_account_ids         = { account = [var.network_account_id] }
       exclude_account_ids         = null
 
       policy_data = {
