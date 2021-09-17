@@ -71,7 +71,7 @@ module "terraform-aws-config" {
 
   # Tags Config Rules
   check_required_tags          = true
-  required_tags_resource_types = ["S3::Bucket,EC2::Instances"]
+  required_tags_resource_types = ["S3::Bucket", "EC2::Instances"]
   required_tags = {
     tag1Key   = "Terraform"
     tag1Value = "true"

@@ -64,6 +64,21 @@ module "iam_group_finops" {
   ]
 }
 
+module "iam_group_secops" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v4.1.0"
+  name   = "secops"
+
+  group_users = [
+    module.user_diego_ojeda.iam_user_name,
+    module.user_exequiel_barrirero.iam_user_name,
+    module.user_luis_gallardo.iam_user_name,
+  ]
+
+  custom_group_policy_arns = [
+    aws_iam_policy.assume_secops_role.arn,
+  ]
+}
+
 #
 # Machine users groups
 #
