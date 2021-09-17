@@ -7,6 +7,32 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.62"></a>
+## [v1.3.62] - 2021-09-17
+
+- Rename service policies
+- Add SecOps role in the network account
+- Update policies default values
+- Remove not longer needed dependency
+- Remove not longer needed dependency
+- Remove root profile
+- Add FMS account association from the root layer
+- * Add Web ACL rules for CloudFromt * Remove FMS account assocition from the security layer
+- Add policies for secops role
+- Fix required_tags_resource_types typo
+- Add default FMS account association logic & NFS staless default actions
+- * Disable aggregate organization setting
+- Fix assume role for secops
+- * Set module source to binbash fork / branch * Add provider anmed aws.admin in fms module * Define fms account in module * Set orchestration config for nfw
+- Fix SecOps aws_iam_policy resource name
+- Add SecOps groups and cross-account access
+- Fix SecOps aws_iam_policy resource name
+- Add SecOps role
+- Add SecOps role
+- Add first implementation for Firewall Manager
+- Set network security-compliance tftste file
+
+
 <a name="v1.3.61"></a>
 ## [v1.3.61] - 2021-09-06
 
@@ -2096,7 +2122,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.61...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.62...HEAD
+[v1.3.62]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.61...v1.3.62
 [v1.3.61]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.60...v1.3.61
 [v1.3.60]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.59...v1.3.60
 [v1.3.59]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.58...v1.3.59
