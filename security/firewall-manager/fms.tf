@@ -59,22 +59,22 @@ module "fms" {
   network_firewall_policies = [
     {
       name                        = "nfw-policy"
-      delete_all_policy_resources = false
+      delete_all_policy_resources = true
       exclude_resource_tags       = false
-      remediation_enabled         = true
+      remediation_enabled         = true # Must be set to `true`
       resource_type_list          = ["AWS::EC2::VPC"]
       resource_tags               = null
       include_account_ids         = { accounts = [var.network_account_id] }
       exclude_account_ids         = {}
 
       policy_data = {
-        stateless_rule_group_references     = []
-        stateless_default_actions           = ["aws:pass"]
-        stateless_fragment_default_actions  = ["aws:drop"]
-        stateless_custom_actions            = []
-        stateful_rule_group_references_arns = null
+        stateless_default_actions           = lookup(module.firewall.network_firewall_policy[0]["firewall_policy"][0], "stateless_default_actions", [])
+        stateless_fragment_default_actions  = lookup(module.firewall.network_firewall_policy[0]["firewall_policy"][0], "stateless_fragment_default_actions", [])
+        stateless_rule_group_references     = [for v in lookup(module.firewall.network_firewall_policy[0]["firewall_policy"][0], "stateless_rule_group_reference", []) : { "resourceARN" = v["resource_arn"], "priority" = v["priority"] }]
+        stateless_custom_actions            = lookup(module.firewall.network_firewall_policy[0]["firewall_policy"][0], "stateless_custom_actions", [])
+        stateful_rule_group_references_arns = [for v in lookup(module.firewall.network_firewall_policy[0]["firewall_policy"][0], "stateful_rule_group_reference", []) : v["resource_arn"]]
         orchestration_config = {
-          single_firewall_endpoint_per_vpc = false
+          single_firewall_endpoint_per_vpc = true # Set to `false` for deploying a NFW per subnet
           allowed_ipv4_cidrs               = []
         }
       }
