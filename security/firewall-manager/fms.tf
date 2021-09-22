@@ -95,6 +95,29 @@ module "fms" {
   #  }
   #]
 
+
+  # AWS DNS Firewall
+  dns_firewall_policies = [
+    {
+      name                        = "dns-policy"
+      delete_all_policy_resources = true
+      exclude_resource_tags       = false
+      remediation_enabled         = true
+      resource_type               = "AWS::EC2::VPC"
+      resource_tags               = null
+      include_account_ids         = { accounts = [var.network_account_id] }
+      exclude_account_ids         = {}
+      logging_configuration       = null
+      policy_data = {
+        pre_process_rule_groups = [
+        { "ruleGroupId" : aws_route53_resolver_firewall_rule_group.example.id, "priority" : 10 }]
+      }
+    }
+  ]
+
+
+  depends_on = [module.firewall, aws_route53_resolver_firewall_rule_group.example]
+
   providers = {
     aws.admin = aws
   }
