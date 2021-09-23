@@ -19,6 +19,11 @@ variable "bucket" {
   description = "AWS S3 TF State Backend Bucket"
 }
 
+variable "some_new_var" {
+  type  = string
+  description = "Some description"
+}
+
 variable "dynamodb_table" {
   type        = string
   description = "AWS DynamoDB TF Lock state table name"

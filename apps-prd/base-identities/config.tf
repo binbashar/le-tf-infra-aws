@@ -17,7 +17,7 @@ terraform {
     aws = "~> 3.27"
   }
 
-  backend "s3" {
-    key = "apps-prd/identities/terraform.tfstate"
-  }
+  #backend "s3" {
+  #  key = "apps-prd/identities/terraform.tfstate"
+  #}
 }
