@@ -109,6 +109,8 @@ def _build_cmd(command="", args=[], entrypoint=docker_entrypoint, extra_args=[])
     print("[DEBUG] %s" % (" ".join(cmd)))
     return cmd
 
+# Some other comment
+
 def init(extra_args):
     cmd = _build_cmd(
         command="init",
