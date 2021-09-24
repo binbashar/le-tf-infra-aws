@@ -17,6 +17,8 @@ def _checkdir():
         print("This task cannot be run from account path")
         sys.exit(0)
 
+## Somechange
+
 @task(_checkdir)
 def init(*args):
     '''
