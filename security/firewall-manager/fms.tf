@@ -1,6 +1,5 @@
 module "fms" {
-  #source = "github.com/binbashar/terraform-aws-firewall-manager.git?ref=0.2.0"
-  source = "git::https://github.com/binbashar/terraform-aws-firewall-manager.git?ref=fix/default-values"
+  source = "github.com/binbashar/terraform-aws-firewall-manager.git?ref=0.2.0-bb"
 
   # Disable association of the FMS administrator account from the module
   admin_account_enabled = false
@@ -8,15 +7,34 @@ module "fms" {
   # Security Groups Usage Audit Policies
   security_groups_usage_audit_policies = [
     {
-      name               = "sgs-usage-audit-policy"
-      resource_type_list = ["AWS::EC2::SecurityGroup"]
+      name                        = "sgs-usage-audit-policy"
+      delete_all_policy_resources = true
+      exclude_resource_tags       = false
+      remediation_enabled         = true
+      resource_tags               = null
+      resource_type_list          = ["AWS::EC2::SecurityGroup"]
 
       policy_data = {
         delete_unused_security_groups      = false
-        coalesce_redundant_security_groups = false
+        coalesce_redundant_security_groups = true
       }
     }
   ]
+
+  # Security Groups_common_policies
+  #security_groups_common_policies = [
+  #  {
+  #    name               = "disabled-all"
+  #    resource_type_list = ["AWS::EC2::SecurityGroup"]
+  #
+  #    policy_data = {
+  #      revert_manual_security_group_changes         = false
+  #      exclusive_resource_security_group_management = false
+  #      apply_to_all_ec2_instance_enis               = false
+  #      security_groups                              = [module.vpc.security_group_id]
+  #    }
+  #  }
+  #]
 
   # Web Application Firewall V2 Policies
   waf_v2_policies = [
@@ -27,14 +45,15 @@ module "fms" {
       remediation_enabled         = true
       resource_type_list          = ["AWS::ElasticLoadBalancingV2::LoadBalancer", "AWS::ApiGateway::Stage"]
       resource_type               = null
-      resource_tags               = null
+      resource_tags               = { "fms" = "True" }
       include_account_ids         = { accounts = [var.network_account_id, var.security_account_id] }
       exclude_account_ids         = {}
       logging_configuration       = null
 
       policy_data = {
-        default_action                        = "allow"
-        override_customer_web_acl_association = true
+        default_action                          = "allow"
+        override_customer_web_acl_association   = true
+        sampledRequestsEnabledForDefaultActions = null
         pre_process_rule_groups = [
           {
             "managedRuleGroupIdentifier" : {
@@ -45,7 +64,8 @@ module "fms" {
             "overrideAction" : { "type" : "NONE" },
             "ruleGroupArn" : null,
             "excludeRules" : [],
-            "ruleGroupType" : "ManagedRuleGroup"
+            "ruleGroupType" : "ManagedRuleGroup",
+            "sampledRequestsEnabled" : null
           }
         ]
       }
@@ -115,8 +135,7 @@ module "fms" {
     }
   ]
 
-
-  depends_on = [module.firewall, aws_route53_resolver_firewall_rule_group.example]
+  #  depends_on = [module.firewall, aws_route53_resolver_firewall_rule_group.example]
 
   providers = {
     aws.admin = aws
@@ -124,8 +143,7 @@ module "fms" {
 }
 
 module "fms_cloudfront" {
-  #source = "github.com/binbashar/terraform-aws-firewall-manager.git?ref=0.2.0"
-  source = "git::https://github.com/binbashar/terraform-aws-firewall-manager.git?ref=fix/default-values"
+  source = "github.com/binbashar/terraform-aws-firewall-manager.git?ref=0.2.0-bb"
 
   # Disable association of the FMS administrator account from the module
   admin_account_enabled = false
