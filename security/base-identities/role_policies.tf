@@ -153,6 +153,8 @@ resource "aws_iam_policy" "secops_access" {
                 "kms:*",
                 "lambda:*",
                 "logs:*",
+                "network-firewall:*",
+                "networkmanager:*",
                 "organizations:Describe*",
                 "organizations:List*",
                 "route53:*",
