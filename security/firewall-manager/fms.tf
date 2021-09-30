@@ -135,7 +135,7 @@ module "fms" {
     }
   ]
 
-  #  depends_on = [module.firewall, aws_route53_resolver_firewall_rule_group.example]
+  depends_on = [module.firewall, aws_route53_resolver_firewall_rule_group.example]
 
   providers = {
     aws.admin = aws
