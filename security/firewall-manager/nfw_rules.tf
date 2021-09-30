@@ -1,7 +1,6 @@
 module "firewall" {
 
-  #source = "github.com/binbashar/terraform-aws-network-firewall.git?ref=v0.1.0"
-  source = "git::https://github.com/binbashar/terraform-aws-network-firewall.git?ref=fix/readme"
+  source = "github.com/binbashar/terraform-aws-network-firewall.git?ref=v0.1.2"
 
   name                    = "${var.project}-${var.environment}-firewall"
   create_network_firewall = false
