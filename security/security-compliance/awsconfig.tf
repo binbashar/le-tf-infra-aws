@@ -27,7 +27,8 @@ module "terraform-aws-config" {
   config_delivery_frequency      = "Six_Hours"
 
   # Aggregate data from all organization accounts on this account
-  aggregate_organization = false
+  config_aggregator_name = "${var.project}-${var.environment}-awsconfig-aggregator"
+  aggregate_organization = true
 
   # IAM Config Rules w/ password policy check
   check_root_account_mfa_enabled   = true
