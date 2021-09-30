@@ -45,7 +45,7 @@ module "fms" {
       remediation_enabled         = true
       resource_type_list          = ["AWS::ElasticLoadBalancingV2::LoadBalancer", "AWS::ApiGateway::Stage"]
       resource_type               = null
-      resource_tags               = { "fms" = "True" }
+      resource_tags               = { "FirewallManager" = "True" }
       include_account_ids         = { accounts = [var.network_account_id, var.security_account_id] }
       exclude_account_ids         = {}
       logging_configuration       = null
