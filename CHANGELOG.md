@@ -7,6 +7,18 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.63"></a>
+## [v1.3.63] - 2021-09-30
+
+- Add resource dependecies for FMS
+- Change Network Firewall module version
+- Update terraform-aws-firewall-manager module source to Binbash release
+- * Update terraform-aws-firewall-manager module source to Binbash release * Update fms policies & rules
+- Add DNS Firewall rules support in FMS
+- Ad Network Firewall rules definitions
+- Add Network Firewall Policies
+
+
 <a name="v1.3.62"></a>
 ## [v1.3.62] - 2021-09-17
 
@@ -2122,7 +2134,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.62...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.63...HEAD
+[v1.3.63]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.62...v1.3.63
 [v1.3.62]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.61...v1.3.62
 [v1.3.61]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.60...v1.3.61
 [v1.3.60]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.59...v1.3.60
