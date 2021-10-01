@@ -7,6 +7,22 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.64"></a>
+## [v1.3.64] - 2021-10-01
+
+- Change tag refs to lowerCamelCase
+- Change FirewallManager resource_tags to true
+- Fix tfstate path
+- Rename wrong filename
+- Remove AWS config authorization resources
+- Remove AWS config authorization resources
+- Remove AWS config authorization resources
+- Add AWS Config delegation to the Security account
+- Add AWS Config delegation to the Security account
+- Update resource_tags to use FirewallManager tag
+- Add AWS Config agregator into the Security account
+
+
 <a name="v1.3.63"></a>
 ## [v1.3.63] - 2021-09-30
 
@@ -2134,7 +2150,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.63...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.64...HEAD
+[v1.3.64]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.63...v1.3.64
 [v1.3.63]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.62...v1.3.63
 [v1.3.62]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.61...v1.3.62
 [v1.3.61]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.60...v1.3.61
