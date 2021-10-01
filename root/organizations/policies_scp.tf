@@ -136,7 +136,7 @@ resource "aws_organizations_policy" "delete_protection" {
       ],
       "Condition": {
         "ForAnyValue:StringEquals": {
-          "aws:ResourceTag/ProtectFromDeletion": [
+          "aws:ResourceTag/protectFromDeletion": [
             "true"
           ]
         }
@@ -183,7 +183,7 @@ resource "aws_organizations_policy" "tag_protection" {
         },
         "ForAnyValue:StringEquals": {
           "aws:TagKeys": [
-            "ProtectFromDeletion"
+            "protectFromDeletion"
           ]
         }
       }
