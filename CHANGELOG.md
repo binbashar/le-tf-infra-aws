@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.65"></a>
+## [v1.3.65] - 2021-10-06
+
+- Add more permissions to DevOps role in order try out more AWS services ([#312](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/312))
+
+
 <a name="v1.3.64"></a>
 ## [v1.3.64] - 2021-10-01
 
@@ -2150,7 +2156,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.64...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.65...HEAD
+[v1.3.65]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.64...v1.3.65
 [v1.3.64]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.63...v1.3.64
 [v1.3.63]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.62...v1.3.63
 [v1.3.62]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.61...v1.3.62
