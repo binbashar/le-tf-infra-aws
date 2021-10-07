@@ -7,6 +7,14 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.66"></a>
+## [v1.3.66] - 2021-10-06
+
+- Small sso org enabling change
+- Merge branch 'master' into feature/open-soruce-repo
+- sso + jumpcloud
+
+
 <a name="v1.3.65"></a>
 ## [v1.3.65] - 2021-10-06
 
@@ -2156,7 +2164,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.65...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.66...HEAD
+[v1.3.66]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.65...v1.3.66
 [v1.3.65]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.64...v1.3.65
 [v1.3.64]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.63...v1.3.64
 [v1.3.63]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.62...v1.3.63
