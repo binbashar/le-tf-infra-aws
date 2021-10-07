@@ -1,5 +1,5 @@
 locals {
-  cluster_name = "${var.project}-${var.environment}-eks-sample"
+  cluster_name = "${var.project}-${var.environment}-eks-primary"
 
   # Network Local Vars
   # https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html
