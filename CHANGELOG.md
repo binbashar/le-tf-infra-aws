@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.67"></a>
+## [v1.3.67] - 2021-10-07
+
+- Refactor all accounts directories to add region subdirectories ([#314](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/314))
+
+
 <a name="v1.3.66"></a>
 ## [v1.3.66] - 2021-10-06
 
@@ -2164,7 +2170,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.66...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.67...HEAD
+[v1.3.67]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.66...v1.3.67
 [v1.3.66]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.65...v1.3.66
 [v1.3.65]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.64...v1.3.65
 [v1.3.64]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.63...v1.3.64
