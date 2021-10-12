@@ -1,0 +1,35 @@
+name: Test layers
+
+on: [pull_request]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  run_test:  
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: binbashar/ghaction-leverage-aws-credentials@v0.2.2
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_prd_account_id: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
+
+      - name: run_tests
+        run: |
+          pwd
+          ls -la
+          make init-makefiles
+      # - name:
+      # - uses: actions/github-script@v5
+      #   with:
+      #     script: |
+      #       github.rest.issues.createComment({
+      #         issue_number: context.issue.number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body: ""
+      #       })
