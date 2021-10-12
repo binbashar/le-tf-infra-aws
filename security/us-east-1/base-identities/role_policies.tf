@@ -3,7 +3,7 @@
 #
 
 #
-# Customer Managed Policy: DevOps Access
+# User Managed Policy: DevOps Access
 #
 resource "aws_iam_policy" "devops_access" {
   name        = "devops_access"
@@ -20,63 +20,39 @@ resource "aws_iam_policy" "devops_access" {
             "Sid": "MultiServiceFullAccessCustom",
             "Effect": "Allow",
             "Action": [
+                "access-analyzer:*",
                 "acm:*",
-                "athena:*",
-                "autoscaling:*",
-                "application-autoscaling:*",
-                "apigateway:*",
                 "aws-portal:*",
-                "aws-marketplace:*",
                 "backup:*",
                 "backup-storage:*",
                 "ce:*",
                 "cloudformation:*",
-                "cloudfront:*",
                 "cloudtrail:*",
                 "cloudwatch:*",
                 "config:*",
-                "compute-optimizer:*",
-                "datasync:*",
                 "dlm:*",
                 "dynamodb:*",
                 "ec2:*",
-                "ecr:*",
-                "ecr-public:*",
-                "ecs:*",
-                "eks:*",
-                "elasticloadbalancing:*",
-                "es:*",
                 "events:*",
-                "glue:*",
                 "guardduty:*",
                 "health:*",
                 "iam:*",
                 "kms:*",
                 "lambda:*",
                 "logs:*",
-                "ram:*",
-                "rds:*",
-                "redshift:*",
-                "resource-explorer:*",
-                "resource-groups:*",
+                "organizations:Describe*",
+                "organizations:List*",
                 "route53:*",
                 "route53domains:*",
                 "route53resolver:*",
                 "s3:*",
-                "ses:*",
-                "shield:*",
                 "sns:*",
-                "sqs:*",
                 "ssm:*",
-                "sts:*",
+                "sso:*",
                 "support:*",
                 "tag:*",
                 "trustedadvisor:*",
-                "vpc:*",
-                "waf:*",
-                "wafv2:*",
-                "waf-regional:*",
-                "wellarchitected:*"
+                "vpc:*"
             ],
             "Resource": [
                 "*"
@@ -137,44 +113,65 @@ EOF
 }
 
 #
-# Customer Managed Policy: DeployMaster
+# User Managed Policy: SecOps Access
 #
-resource "aws_iam_policy" "deploy_master_access" {
-  name        = "deploy_master_access"
-  description = "Services enabled for DeployMaster role"
+resource "aws_iam_policy" "secops_access" {
+  name        = "secops_access"
+  description = "Services enabled for SecOps role"
 
+  #
+  # IMPORTANT: Multiple condition keys in the same statement are not supported for some ec2 and rds actions.
+  #
   policy = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
         {
+            "Sid": "MultiServiceFullAccessCustom",
             "Effect": "Allow",
             "Action": [
-                "athena:*",
-                "budgets:*",
-                "cloudfront:*",
+                "access-analyzer:*",
+                "acm:*",
+                "apigateway:*",
+                "appsync:*",
+                "aws-portal:*",
+                "backup:*",
+                "backup-storage:*",
+                "ce:*",
+                "cloudformation:*",
                 "cloudtrail:*",
                 "cloudwatch:*",
                 "config:*",
-                "ecr:*",
-                "elasticloadbalancing:*",
-                "iam:*",
+                "dlm:*",
                 "dynamodb:*",
                 "ec2:*",
-                "ecr:*",
-                "glue:*",
+                "elasticloadbalancing:*",
+                "events:*",
+                "fms:*",
+                "guardduty:*",
+                "health:*",
                 "iam:*",
+                "kms:*",
+                "lambda:*",
                 "logs:*",
+                "network-firewall:*",
+                "networkmanager:*",
+                "organizations:Describe*",
+                "organizations:List*",
                 "route53:*",
                 "route53domains:*",
+                "route53resolver:*",
                 "s3:*",
                 "sns:*",
                 "ssm:*",
-                "sqs:*",
+                "support:*",
+                "tag:*",
+                "trustedadvisor:*",
                 "vpc:*",
                 "waf:*",
-                "wafv2:*",
-                "waf-regional:*"
+                "waf-regional:*",
+                "wafv2:*"
+
             ],
             "Resource": [
                 "*"
@@ -188,49 +185,48 @@ resource "aws_iam_policy" "deploy_master_access" {
                     ]
                 }
             }
+        },
+        {
+            "Sid": "Ec2RunInstanceCustomSize",
+            "Effect": "Deny",
+            "Action": "ec2:RunInstances",
+            "Resource": [
+                "arn:aws:ec2:*:*:instance/*"
+            ],
+            "Condition": {
+                "ForAnyValue:StringNotLike": {
+                    "ec2:InstanceType": [
+                        "*.nano",
+                        "*.micro",
+                        "*.small",
+                        "*.medium",
+                        "*.large"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "RdsFullAccessCustomSize",
+            "Effect": "Deny",
+            "Action": [
+                "rds:CreateDBInstance",
+                "rds:CreateDBCluster"
+            ],
+            "Resource": [
+                "arn:aws:rds:*:*:db:*"
+            ],
+            "Condition": {
+                "ForAnyValue:StringNotLike": {
+                    "rds:DatabaseClass": [
+                        "*.micro",
+                        "*.small",
+                        "*.medium",
+                        "*.large"
+                    ]
+                }
+            }
         }
     ]
 }
 EOF
-}
-
-#
-# Customer Managed Policy: FinOps Role Access + Group (backup-s3 Group)
-#
-resource "aws_iam_policy" "s3_put_gdrive_to_s3_backup" {
-  name   = "AllowS3PutBackup"
-  path   = "/"
-  policy = data.aws_iam_policy_document.backup_s3_binbash_gdrive.json
-}
-
-data "aws_iam_policy_document" "backup_s3_binbash_gdrive" {
-  statement {
-    sid    = "ListAllMyBuckets"
-    effect = "Allow"
-    actions = [
-      "s3:ListAllMyBuckets",
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    sid    = "ListBucket"
-    effect = "Allow"
-    actions = [
-      "s3:ListBucket",
-    ]
-    resources = ["arn:aws:s3:::bb-shared-gdrive-backup"]
-  }
-
-  statement {
-    sid    = "PutDeleteBucketObjetc"
-    effect = "Allow"
-    actions = [
-      "s3:PutObject",
-      "s3:PutObjectAcl",
-      "s3:GetObject",
-      "s3:DeleteObject"
-    ]
-    resources = ["arn:aws:s3:::bb-shared-gdrive-backup/*"]
-  }
 }

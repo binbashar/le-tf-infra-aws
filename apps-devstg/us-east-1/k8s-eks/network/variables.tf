@@ -125,7 +125,7 @@ variable "vpc_vault_hvn_peering_connection_id" {
   default     = "pcx-0c270c9be265da78d"
 }
 
-variable "vpc_vault_hvn_cird" {
+variable "vpc_vault_hvn_cidr" {
   description = "Hahicorp Vault Cloud HVN VPC CIDR segment"
   type        = string
   default     = "172.25.16.0/20"
