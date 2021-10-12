@@ -116,19 +116,19 @@ variable "vpc_apps_devstg_eks_dns_assoc" {
 variable "vpc_vault_hvn_created" {
   description = "true if the Hahicorp Vault Cloud HVN account VPC is created for Peering purposes"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "vpc_vault_hvn_peering_connection_id" {
   description = "Hahicorp Vault Cloud HVN VPC peering ID"
   type        = string
-  default     = "pcx-0c270c9be265da78d"
+  default     = "pcx-036fa9a653f029b42"
 }
 
 variable "vpc_vault_hvn_cidr" {
   description = "Hahicorp Vault Cloud HVN VPC CIDR segment"
   type        = string
-  default     = ""
+  default     = "172.25.16.0/20"
 }
 
 variable "vpc_enable_nat_gateway" {

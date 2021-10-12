@@ -97,6 +97,14 @@ locals {
         protocol    = "udp"
         cidr_block  = "0.0.0.0/0"
       },
+      {
+        rule_number = 940 # HCP Vault HVN vpc
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = var.vpc_vault_hvn_cidr
+      },
     ]
 
     #
