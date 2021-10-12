@@ -10,7 +10,7 @@
 module "user_auditor_ci" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v4.1.0"
 
-  name                    = "modded_auditor.ci"
+  name                    = "non_modded_auditor.ci"
   force_destroy           = true
   password_reset_required = true
 
