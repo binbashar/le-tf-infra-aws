@@ -2,7 +2,7 @@
 # EKS VPC
 #
 module "vpc-eks" {
-  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.1.0"
+  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.7.0"
 
   name = local.vpc_name
   cidr = local.vpc_cidr_block

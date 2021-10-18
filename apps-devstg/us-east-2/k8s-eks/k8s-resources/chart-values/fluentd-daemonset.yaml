@@ -2,7 +2,7 @@
 # Environment Variables
 #
 env:
-  FLUENT_ELASTICSEARCH_HOST: "elasticsearch.us-east-1.aws.binbash.com.ar"
+  FLUENT_ELASTICSEARCH_HOST: "elasticsearch.us-east-2.aws.binbash.com.ar"
   FLUENT_ELASTICSEARCH_PORT: "443"
   FLUENT_ELASTICSEARCH_SCHEME: "https"
   FLUENT_ELASTICSEARCH_SSL_VERIFY: "true"

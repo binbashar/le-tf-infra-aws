@@ -1,7 +1,7 @@
 locals {
   cluster_name = "${var.project}-${var.environment}-eks-secondary"
 
-  vpc_name = "${var.project}-${var.environment}-vpc-eks-dr"
+  vpc_name = "${var.project}-${var.environment}-vpc-eks-secondary"
   # Ref: https://www.davidc.net/sites/default/subnets/subnets.html?network=10.10.0.0&mask=16&division=15.7231
   vpc_cidr_block = "10.10.0.0/16"
   azs = [
@@ -66,6 +66,14 @@ locals {
     #
     default_inbound = [
       {
+        rule_number = 200 # Allow traffic from this vpc's private subnets
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = local.private_subnets_cidr[0]
+      },
+      {
         rule_number = 900 # shared pritunl vpn server
         rule_action = "allow"
         from_port   = 0
@@ -113,10 +121,9 @@ locals {
     private_inbound = local.private_inbound
   }
 
-  # Data source definitions
   #
-
-  # shared
+  # Data Source: Shared
+  #
   shared-vpcs = {
     shared-base = {
       region  = var.region
@@ -126,7 +133,9 @@ locals {
     }
   }
 
-  # network
+  #
+  # Data Source: Network
+  #
   network-vpcs = {
     network-base = {
       region  = var.region
@@ -136,6 +145,9 @@ locals {
     }
   }
 
+  #
+  # Data Sources
+  #
   datasources-vpcs = merge(
     data.terraform_remote_state.network-vpcs, # network
     data.terraform_remote_state.shared-vpcs,  # shared
