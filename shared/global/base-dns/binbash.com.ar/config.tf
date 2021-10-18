@@ -98,6 +98,17 @@ data "terraform_remote_state" "vpc-apps-devstg-eks" {
   }
 }
 
+data "terraform_remote_state" "vpc-apps-devstg-eks-dr" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-apps-devstg-devops"
+    bucket  = "${var.project}-apps-devstg-terraform-backend"
+    key     = "apps-devstg/k8s-eks-dr/network/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "vpc-apps-devstg-certificates" {
   backend = "s3"
 
@@ -128,5 +139,16 @@ data "terraform_remote_state" "vpc-apps-prd" {
     profile = "${var.project}-apps-prd-devops"
     bucket  = "${var.project}-apps-prd-terraform-backend"
     key     = "apps-prd/network/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "vpc-apps-prd-eks" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-apps-prd-devops"
+    bucket  = "${var.project}-apps-prd-terraform-backend"
+    key     = "apps-prd/k8s-eks/network/terraform.tfstate"
   }
 }
