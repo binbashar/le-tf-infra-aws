@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.69"></a>
+## [v1.3.69] - 2021-10-18
+
+- Create EKS layers in the secondary region ([#315](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/315))
+
+
 <a name="v1.3.68"></a>
 ## [v1.3.68] - 2021-10-08
 
@@ -2176,7 +2182,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.68...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.69...HEAD
+[v1.3.69]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.68...v1.3.69
 [v1.3.68]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.67...v1.3.68
 [v1.3.67]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.66...v1.3.67
 [v1.3.66]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.65...v1.3.66
