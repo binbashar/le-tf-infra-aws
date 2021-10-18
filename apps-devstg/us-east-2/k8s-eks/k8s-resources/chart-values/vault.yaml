@@ -1,0 +1,2 @@
+injector:
+  externalVaultAddr: https://bb-le-shared-vault-cluster.private.vault.11eb5727-ed8f-98cd-a33c-0242ac110007.aws.hashicorp.cloud:8200

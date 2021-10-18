@@ -144,6 +144,13 @@ locals {
       key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
       tgw     = false
     }
+    apps-devstg-k8s-eks-dr = {
+      region  = var.region
+      profile = "${var.project}-apps-devstg-devops"
+      bucket  = "${var.project}-apps-devstg-terraform-backend"
+      key     = "apps-devstg/k8s-eks-dr/network/terraform.tfstate"
+      tgw     = false
+    }
   }
 
   # apps-prd

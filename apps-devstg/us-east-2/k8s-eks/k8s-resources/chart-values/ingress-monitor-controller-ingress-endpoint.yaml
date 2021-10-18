@@ -1,0 +1,13 @@
+#
+# EndpointMonitor - Ingress
+#
+endpoint:
+  name: ${name}
+  namespace: ${namespace}
+  type: ingress
+  forceHttps: true
+  ingressName: ${ingressName}
+  provider:
+    name: uptimeRobot
+    interval: 600
+    monitorType: http
