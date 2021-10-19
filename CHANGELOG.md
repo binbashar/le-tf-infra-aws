@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.70"></a>
+## [v1.3.70] - 2021-10-19
+
+- Create SockShop DemoApp ECR repositories in both regions; also create DR VPC in Shared ([#316](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/316))
+
+
 <a name="v1.3.69"></a>
 ## [v1.3.69] - 2021-10-18
 
@@ -2182,7 +2188,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.69...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.70...HEAD
+[v1.3.70]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.69...v1.3.70
 [v1.3.69]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.68...v1.3.69
 [v1.3.68]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.67...v1.3.68
 [v1.3.67]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.66...v1.3.67
