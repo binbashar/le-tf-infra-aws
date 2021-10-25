@@ -57,3 +57,7 @@ data "terraform_remote_state" "keys" {
 data "vault_generic_secret" "slack_hook_url_monitoring" {
   path = "secrets/${var.project}/${var.environment}/notifications"
 }
+
+data "vault_generic_secret" "notifications" {
+  path = "secrets/${var.project}/${var.environment}/notifications"
+}

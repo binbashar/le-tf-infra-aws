@@ -104,6 +104,11 @@ variable "sns_topic_name_monitoring_sec" {
   default     = "sns-topic-slack-notify-monitoring-sec"
 }
 
+variable "sns_topic_name_sms" {
+  description = ""
+  default     = "sns-topic-sms"
+}
+
 #=============================#
 # Hashicorp Vault Vars        #
 #=============================#
