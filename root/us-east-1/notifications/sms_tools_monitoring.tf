@@ -1,4 +1,4 @@
-module "sns" {
+module "notify_sms" {
   source = "github.com/binbashar/terraform-aws-sns-topic.git?ref=0.19.2"
 
   name = var.sns_topic_name_sms
