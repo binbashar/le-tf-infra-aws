@@ -5,16 +5,22 @@ module "notify_sms" {
 
   subscribers = {
     phone1 = {
-      protocol = "sms"
-      endpoint = data.vault_generic_secret.notifications.data["phone1"]
+      protocol               = "sms"
+      endpoint               = data.vault_generic_secret.notifications.data["phone1"]
+      endpoint_auto_confirms = true
+      raw_message_delivery   = true
     }
     #phone2 = {
-    #  protocol = "sms"
-    #  endpoint = data.vault_generic_secret.notifications.data["phone2"]
+    #  protocol               = "sms"
+    #  endpoint               = data.vault_generic_secret.notifications.data["phone2"]
+    #  endpoint_auto_confirms = true
+    #  raw_message_delivery   = true
     #}
     #phone3 = {
-    #  protocol = "sms"
-    #  endpoint = data.vault_generic_secret.notifications.data["phone3"]
+    #  protocol               = "sms"
+    #  endpoint               = data.vault_generic_secret.notifications.data["phone3"]
+    #  endpoint_auto_confirms = true
+    #  raw_message_delivery   = true
     #}
   }
 
