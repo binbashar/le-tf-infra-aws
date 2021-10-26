@@ -1,16 +1,16 @@
 module "eks" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v17.1.0"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v17.20.0"
 
   create_eks      = true
-  cluster_name    = data.terraform_remote_state.shared-eks-vpc.outputs.cluster_name
+  cluster_name    = data.terraform_remote_state.eks-vpc.outputs.cluster_name
   cluster_version = var.cluster_version
   enable_irsa     = true
 
   #
   # Network configurations
   #
-  vpc_id  = data.terraform_remote_state.shared-eks-vpc.outputs.vpc_id
-  subnets = data.terraform_remote_state.shared-eks-vpc.outputs.private_subnets
+  vpc_id  = data.terraform_remote_state.eks-vpc.outputs.vpc_id
+  subnets = data.terraform_remote_state.eks-vpc.outputs.private_subnets
 
   #
   # Security: public vs private access (and private access rules)
@@ -21,8 +21,13 @@ module "eks" {
   cluster_create_endpoint_private_access_sg_rule = var.cluster_create_endpoint_private_access_sg_rule
   cluster_endpoint_private_access_cidrs = [
     data.terraform_remote_state.shared-vpc.outputs.vpc_cidr_block,
-    "172.25.16.0/20" # HCP Vault
+    "172.25.16.0/20" # HCP Vault HVN
   ]
+
+  #
+  # Important: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster#kubernetes_network_config
+  #
+  cluster_service_ipv4_cidr = "10.100.0.0/16"
 
   #
   # Managed Nodes Default Settings
@@ -39,7 +44,7 @@ module "eks" {
   # List of Managed Node Groups
   #
   node_groups = {
-    sample = {
+    main = {
       desired_capacity = 1
       max_capacity     = 3
       min_capacity     = 1
@@ -87,5 +92,8 @@ module "eks" {
   #
   # Tags
   #
-  tags = local.tags
+  tags = merge(local.tags,
+    map("k8s.io/cluster-autoscaler/enabled", "TRUE"),
+    map("k8s.io/cluster-autoscaler/${data.terraform_remote_state.eks-vpc.outputs.cluster_name}", "owned")
+  )
 }

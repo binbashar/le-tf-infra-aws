@@ -8,7 +8,7 @@ output "cluster_id" {
 
 output "cluster_name" {
   description = "EKS Cluster Name"
-  value       = data.terraform_remote_state.shared-eks-vpc.outputs.cluster_name
+  value       = data.terraform_remote_state.eks-vpc.outputs.cluster_name
 }
 
 output "cluster_endpoint" {

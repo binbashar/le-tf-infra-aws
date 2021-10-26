@@ -27,7 +27,7 @@ module "eks" {
   #
   # Important: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster#kubernetes_network_config
   #
-  cluster_service_ipv4_cidr = "10.100.0.0/16"
+  cluster_service_ipv4_cidr = "10.101.0.0/16"
 
   #
   # Managed Nodes Default Settings

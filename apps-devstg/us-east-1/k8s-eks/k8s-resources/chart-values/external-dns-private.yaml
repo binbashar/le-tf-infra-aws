@@ -18,7 +18,7 @@ policy: sync
 ## ref: https://github.com/kubernetes-sigs/external-dns/blob/master/docs/proposal/registry.md
 registry: txt
 # TXT Registry Identifier
-txtOwnerId: Z0720681OVT4N4IWRPDJ
+txtOwnerId: priv-k8s
 # Filter sources managed by external-dns via annotation using label selector semantics (optional)
 annotationFilter: kubernetes.io/ingress.class=ingress-nginx-private
 
@@ -30,4 +30,4 @@ serviceAccount:
   create: true
   name: external-dns-private
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::763606934258:role/demoapps-external-dns-private
+    eks.amazonaws.com/role-arn: arn:aws:iam::763606934258:role/external-dns-private

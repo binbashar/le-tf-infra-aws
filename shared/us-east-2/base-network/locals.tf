@@ -125,6 +125,15 @@ locals {
     }
   }
   apps-prd-vpcs = {}
+  shared-vpcs = {
+    shared-vpc = {
+      region  = var.region
+      profile = var.profile
+      bucket  = var.bucket
+      key     = "${var.environment}/network/terraform.tfstate"
+      tgw     = false
+    }
+  }
 
   datasources-vpcs = merge(
     data.terraform_remote_state.apps-devstg-vpcs,

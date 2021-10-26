@@ -40,7 +40,7 @@ data "aws_eks_cluster_auth" "cluster" {
   name = module.eks.cluster_id
 }
 
-data "terraform_remote_state" "shared-eks-vpc" {
+data "terraform_remote_state" "eks-vpc" {
   backend = "s3"
 
   config = {
