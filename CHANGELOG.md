@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.71"></a>
+## [v1.3.71] - 2021-10-26
+
+- Shared DR: VPC Peerings ([#318](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/318))
+
+
 <a name="v1.3.70"></a>
 ## [v1.3.70] - 2021-10-19
 
@@ -2188,7 +2194,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.70...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.71...HEAD
+[v1.3.71]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.70...v1.3.71
 [v1.3.70]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.69...v1.3.70
 [v1.3.69]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.68...v1.3.69
 [v1.3.68]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.67...v1.3.68
