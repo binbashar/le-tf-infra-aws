@@ -97,7 +97,7 @@ output "notify_slack_monitoring_sec_lambda_function_version_monitoring_sec" {
   value       = module.notify_slack_monitoring_sec.notify_slack_lambda_function_version
 }
 
-output "sns_topic_arn_sms" {
-  description = "ARN of the created SNS topic for SMS"
-  value       = module.notify_sms.arn
+output "sns_topic_sms" {
+  description = "SNS topic for SMS"
+  value       = module.notify_sms.sns_topic
 }
