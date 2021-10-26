@@ -8,25 +8,27 @@ locals {
   # not overlap this range. Otherwise, you will receive the following error:
   # Error: : error upgrading connection: error dialing backend: dial tcp 172.17.nn.nn:10250: getsockopt: no route to host
   vpc_name       = "${var.project}-${var.environment}-vpc-eks"
-  vpc_cidr_block = "172.19.0.0/20"
+  vpc_cidr_block = "10.0.0.0/16"
   azs = [
     "${var.region}a",
     "${var.region}b",
     "${var.region}c",
   ]
 
-  private_subnets_cidr = ["172.19.0.0/21"]
+  private_subnets_cidr = ["10.0.0.0/17"]
   private_subnets = [
-    "172.19.0.0/23",
-    "172.19.2.0/23",
-    "172.19.4.0/23",
+    "10.0.0.0/19",
+    "10.0.32.0/19",
+    "10.0.64.0/19",
+    # "10.0.96.0/19"
   ]
 
-  public_subnets_cidr = ["172.19.8.0/21"]
+  public_subnets_cidr = ["10.0.128.0/17"]
   public_subnets = [
-    "172.19.8.0/23",
-    "172.19.10.0/23",
-    "172.19.12.0/23",
+    "10.0.128.0/19",
+    "10.0.160.0/19",
+    "10.0.192.0/19",
+    # "10.0.224.0/19"
   ]
 
   tags = {
@@ -68,6 +70,14 @@ locals {
     # Allow / Deny VPC private subnets inbound default traffic
     #
     default_inbound = [
+      {
+        rule_number = 200 # Allow traffic from this vpc's private subnets
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = local.private_subnets_cidr[0]
+      },
       {
         rule_number = 900 # shared pritunl vpn server
         rule_action = "allow"

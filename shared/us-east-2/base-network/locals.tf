@@ -125,9 +125,38 @@ locals {
     }
   }
   apps-prd-vpcs = {}
+  shared-vpcs = {
+    shared-vpc = {
+      region  = var.region
+      profile = var.profile
+      bucket  = var.bucket
+      key     = "${var.environment}/network/terraform.tfstate"
+      tgw     = false
+    }
+  }
 
   datasources-vpcs = merge(
     data.terraform_remote_state.apps-devstg-vpcs,
     data.terraform_remote_state.apps-prd-vpcs,
   )
+
+  #
+  # Build a list of maps that includes the data needed to establish the VPC Peerings
+  #
+  vpc_peerings_devstg = var.enable_tgw ? [] : [
+    for dsv in data.terraform_remote_state.apps-devstg-vpcs : {
+      this_vpc_id          = module.vpc.vpc_id
+      this_route_table_ids = concat(module.vpc.private_route_table_ids, module.vpc.public_route_table_ids)
+      peer_vpc_id          = dsv.outputs.vpc_id
+      peer_route_table_ids = concat(dsv.outputs.public_route_table_ids, dsv.outputs.private_route_table_ids)
+    }
+  ]
+  vpc_peerings_shared = var.enable_tgw ? [] : [
+    for dsv in data.terraform_remote_state.shared-vpcs : {
+      this_vpc_id          = module.vpc.vpc_id
+      this_route_table_ids = concat(module.vpc.private_route_table_ids, module.vpc.public_route_table_ids)
+      peer_vpc_id          = dsv.outputs.vpc_id
+      peer_route_table_ids = concat(dsv.outputs.public_route_table_ids, dsv.outputs.private_route_table_ids)
+    }
+  ]
 }
