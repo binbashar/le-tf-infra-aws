@@ -71,13 +71,13 @@ module "ec2_elasticsearch_kibana" {
   dns_records_internal_hosted_zone = [
     {
       zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
-      name    = "kibana.aws.binbash.com.ar",
+      name    = "kibana.${var.region}.aws.binbash.com.ar",
       type    = "A",
       ttl     = 3600
     },
     {
       zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
-      name    = "elasticsearch.aws.binbash.com.ar",
+      name    = "elasticsearch.${var.region}.aws.binbash.com.ar",
       type    = "A",
       ttl     = 3600
     }

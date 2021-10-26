@@ -72,13 +72,13 @@ module "prometheus_grafana" {
   dns_records_internal_hosted_zone = [
     {
       zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
-      name    = "prometheus.aws.binbash.com.ar",
+      name    = "prometheus.${var.region}.aws.binbash.com.ar",
       type    = "A",
       ttl     = 3600
     },
     {
       zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
-      name    = "grafana.aws.binbash.com.ar",
+      name    = "grafana.${var.region}.aws.binbash.com.ar",
       type    = "A",
       ttl     = 3600
     }
