@@ -3,25 +3,13 @@ module "notify_sms" {
 
   name = var.sns_topic_name_sms
 
-  subscribers = {
-    phone1 = {
+  subscribers = { for v in ["phone1", "phone2", "phone3", "phone4", "phone5"] :
+    v => {
       protocol               = "sms"
-      endpoint               = data.vault_generic_secret.notifications.data["phone1"]
+      endpoint               = data.vault_generic_secret.notifications.data[v]
       endpoint_auto_confirms = true
       raw_message_delivery   = false
     }
-    #phone2 = {
-    #  protocol               = "sms"
-    #  endpoint               = data.vault_generic_secret.notifications.data["phone2"]
-    #  endpoint_auto_confirms = true
-    #  raw_message_delivery   = false
-    #}
-    #phone3 = {
-    #  protocol               = "sms"
-    #  endpoint               = data.vault_generic_secret.notifications.data["phone3"]
-    #  endpoint_auto_confirms = true
-    #  raw_message_delivery   = false
-    #}
   }
 
   # Policy
