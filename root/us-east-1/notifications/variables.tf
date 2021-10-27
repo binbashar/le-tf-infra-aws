@@ -104,9 +104,9 @@ variable "sns_topic_name_monitoring_sec" {
   default     = "sns-topic-slack-notify-monitoring-sec"
 }
 
-variable "sns_topic_name_sms" {
+variable "sns_topic_name_costs" {
   description = ""
-  default     = "sns-topic-sms"
+  default     = "sns-topic-costs"
 }
 
 #=============================#

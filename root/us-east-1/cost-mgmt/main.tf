@@ -8,7 +8,8 @@ module "aws_cost_mgmt_billing_alert_50" {
   aws_env                   = "${var.project}-${var.environment}-50"
   monthly_billing_threshold = var.monthly_billing_threshold_50
   currency                  = var.currency
-  sns_topic_arns            = [data.terraform_remote_state.notifications.outputs.sns_topic_arn_sms, data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring]
+  create_sns_topic          = false
+  sns_topic_arns            = [data.terraform_remote_state.notifications.outputs.sns_topic_arn_costs]
 
   tags = local.tags
 }
@@ -20,7 +21,8 @@ module "aws_cost_mgmt_billing_alert_100" {
   aws_env                   = "${var.project}-${var.environment}-100"
   monthly_billing_threshold = var.monthly_billing_threshold_100
   currency                  = var.currency
-  sns_topic_arns            = [data.terraform_remote_state.notifications.outputs.sns_topic_arn_sms, data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring]
+  create_sns_topic          = false
+  sns_topic_arns            = [data.terraform_remote_state.notifications.outputs.sns_topic_arn_costs]
 
   tags = local.tags
 }
@@ -41,7 +43,7 @@ module "aws_cost_mgmt_budget_notif_75" {
   notification_threshold = var.notification_threshold_75
   aws_sns_account_id     = var.root_account_id
   create_sns_topic       = false
-  sns_topic_arns         = [data.terraform_remote_state.notifications.outputs.sns_topic_arn_sms, data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring]
+  sns_topic_arns         = [data.terraform_remote_state.notifications.outputs.sns_topic_arn_costs]
 }
 
 # Budget = U$S100 at 100%
@@ -57,5 +59,5 @@ module "aws_cost_mgmt_budget_notif_100" {
   notification_threshold = var.notification_threshold_100
   aws_sns_account_id     = var.root_account_id
   create_sns_topic       = false
-  sns_topic_arns         = [data.terraform_remote_state.notifications.outputs.sns_topic_arn_sms, data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring]
+  sns_topic_arns         = [data.terraform_remote_state.notifications.outputs.sns_topic_arn_costs]
 }
