@@ -11,12 +11,12 @@ module "prometheus_grafana" {
   tag_approved_ami_value = var.tag_approved_ami_value
 
   instance_type = var.instance_type
-  vpc_id        = data.terraform_remote_state.vpc.outputs.vpc_id
+  vpc_id        = data.terraform_remote_state.vpc-dr.outputs.vpc_id
 
-  subnet_id                   = data.terraform_remote_state.vpc.outputs.private_subnets[0]
+  subnet_id                   = data.terraform_remote_state.vpc-dr.outputs.private_subnets[0]
   associate_public_ip_address = var.associate_public_ip_address
-  key_pair_name               = data.terraform_remote_state.security.outputs.aws_key_pair_name
-  instance_profile            = aws_iam_instance_profile.prometheus_grafana.name
+  key_pair_name               = data.terraform_remote_state.keys-dr.outputs.aws_key_pair_name
+  instance_profile            = aws_iam_instance_profile.prometheus_grafana_dr.name
   ebs_optimized               = var.ebs_optimized
   monitoring                  = var.monitoring
 
@@ -61,6 +61,9 @@ module "prometheus_grafana" {
       description = "Allow Prometheus & Grafana through Nginx"
     },
     {
+      #
+      # TODO: this may not be needed -- also we shouldn't need to bind node-exporter to 0.0.0.0
+      #
       from_port   = 9100,
       to_port     = 9100,
       protocol    = "tcp",
@@ -72,13 +75,13 @@ module "prometheus_grafana" {
   dns_records_internal_hosted_zone = [
     {
       zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
-      name    = "prometheus.${var.region}.aws.binbash.com.ar",
+      name    = "prometheus.${var.region_secondary}.aws.binbash.com.ar",
       type    = "A",
       ttl     = 3600
     },
     {
       zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
-      name    = "grafana.${var.region}.aws.binbash.com.ar",
+      name    = "grafana.${var.region_secondary}.aws.binbash.com.ar",
       type    = "A",
       ttl     = 3600
     }
