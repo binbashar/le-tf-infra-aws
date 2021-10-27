@@ -2,7 +2,7 @@
 # Statics S3 Bucket + CloudFront CDN for moderncare.com
 #
 module "dev_aws_binbash_com_ar" {
-  source = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=0.35.0"
+  source = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=0.75.0"
 
   # Common: bucket naming convention is "bb-apps-devstg-frontend-[DOMAIN_NAME]-origin"
   namespace = "${var.project}-${var.environment}-frontend"
@@ -33,6 +33,7 @@ module "dev_aws_binbash_com_ar" {
   minimum_protocol_version = "TLSv1"
   encryption_enabled       = true
   additional_bucket_policy = data.aws_iam_policy_document.additional_bucket_policy.json
+  versioning_enabled       = true
 
   logging_enabled     = true
   log_expiration_days = 90 # N° of days after which to expunge the objects
