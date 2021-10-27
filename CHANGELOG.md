@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.72"></a>
+## [v1.3.72] - 2021-10-27
+
+- Create ElasticSearch/Kibana and Prometheus/Grafana in the Shared DR ([#319](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/319))
+
+
 <a name="v1.3.71"></a>
 ## [v1.3.71] - 2021-10-26
 
@@ -2194,7 +2200,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.71...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.72...HEAD
+[v1.3.72]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.71...v1.3.72
 [v1.3.71]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.70...v1.3.71
 [v1.3.70]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.69...v1.3.70
 [v1.3.69]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.68...v1.3.69
