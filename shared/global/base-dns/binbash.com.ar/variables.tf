@@ -91,6 +91,16 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
+variable "vault_address" {
+  type        = string
+  description = "Vault Address"
+}
+
+variable "vault_token" {
+  type        = string
+  description = "Vault Token"
+}
+
 #===========================================#
 # DNS                                       #
 #===========================================#
