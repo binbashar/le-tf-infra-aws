@@ -1,17 +1,17 @@
 #
 # Statics S3 Bucket + CloudFront CDN for moderncare.com
 #
-module "www_binbash_com_ar" {
-  source = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=0.69.0"
+module "dev_aws_binbash_com_ar" {
+  source = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=0.75.0"
 
-  # Common: bucket naming convention is "bb-apps-prd-frontend-[DOMAIN_NAME]-origin"
-  namespace            = "${var.project}-${var.environment}-frontend"
-  name                 = "www.${local.public_domain_name}"
-  aliases              = ["www.${local.public_domain}", local.public_domain]
-  cors_allowed_origins = ["www.${local.public_domain}", local.public_domain]
+  # Common: bucket naming convention is "bb-apps-devstg-frontend-[DOMAIN_NAME]-origin"
+  namespace = "${var.project}-${var.environment}-frontend"
+  name      = local.domain_name
+  stage     = "dev" # needed to distinguish between dev, qa, stg, etc.
+  aliases   = ["dev.${local.domain_name}"]
 
   # Certificate settings
-  acm_certificate_arn = data.terraform_remote_state.certificates.outputs.binbash_com_ar_arn
+  acm_certificate_arn = data.terraform_remote_state.certificates.outputs.aws_binbash_com_ar_arn
   price_class         = "PriceClass_100"
 
   # CloudFront settings
@@ -33,7 +33,7 @@ module "www_binbash_com_ar" {
   minimum_protocol_version = "TLSv1"
   encryption_enabled       = true
   additional_bucket_policy = data.aws_iam_policy_document.additional_bucket_policy.json
-  versioning_enabled       = false
+  versioning_enabled       = true
 
   logging_enabled     = true
   log_expiration_days = 90 # N° of days after which to expunge the objects
@@ -61,7 +61,7 @@ data "aws_iam_policy_document" "additional_bucket_policy" {
     ]
 
     resources = [
-      "arn:aws:s3:::${module.www_binbash_com_ar.s3_bucket}/*"
+      "arn:aws:s3:::${module.dev_aws_binbash_com_ar.s3_bucket}/*"
     ]
 
     #
@@ -76,31 +76,19 @@ data "aws_iam_policy_document" "additional_bucket_policy" {
 
 
 # Here we need a different AWS provider because CloudFront certificates
-# DNS binbash.com.ar | www.binbash.com.ar associated with CF records needs to be created in
+# DNS dev.aws.binbash.com.ar associated with CF records needs to be created in
 # binbash-shared account
 #
-resource "aws_route53_record" "pub_A_www_binbash_com_ar" {
+resource "aws_route53_record" "priv_oring_dev_aws_binbash_com_ar" {
   provider = aws.shared-route53
-  zone_id  = data.terraform_remote_state.dns-shared.outputs.aws_public_zone_id[0]
-  name     = "www.${local.public_domain}"
+  zone_id  = data.terraform_remote_state.dns-shared.outputs.aws_internal_zone_id[0]
+  name     = "dev.${local.domain_name}"
   type     = "A"
 
   alias {
     evaluate_target_health = false
-    name                   = module.www_binbash_com_ar.cf_domain_name
-    zone_id                = module.www_binbash_com_ar.cf_hosted_zone_id
+    name                   = module.dev_aws_binbash_com_ar.cf_domain_name
+    zone_id                = module.dev_aws_binbash_com_ar.cf_hosted_zone_id
   }
 }
 
-resource "aws_route53_record" "pub_A_binbash_com_ar" {
-  provider = aws.shared-route53
-  zone_id  = data.terraform_remote_state.dns-shared.outputs.aws_public_zone_id[0]
-  name     = local.public_domain
-  type     = "A"
-
-  alias {
-    evaluate_target_health = false
-    name                   = module.www_binbash_com_ar.cf_domain_name
-    zone_id                = module.www_binbash_com_ar.cf_hosted_zone_id
-  }
-}
