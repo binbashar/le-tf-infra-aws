@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.74"></a>
+## [v1.3.74] - 2021-10-28
+
+- updating .gitignore to avoid common.tfvars
+- removing common.tfvars
+
+
 <a name="v1.3.73"></a>
 ## [v1.3.73] - 2021-10-28
 
@@ -2218,7 +2225,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.73...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.74...HEAD
+[v1.3.74]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.73...v1.3.74
 [v1.3.73]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.72...v1.3.73
 [v1.3.72]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.71...v1.3.72
 [v1.3.71]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.70...v1.3.71
