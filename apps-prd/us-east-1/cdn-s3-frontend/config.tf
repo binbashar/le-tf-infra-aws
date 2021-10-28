@@ -14,8 +14,7 @@ provider "aws" {
 #
 provider "aws" {
   region                  = var.region
-  profile                 = "${var.project}-shared-devops"
-//  profile                 = var.profile_shared
+  profile                 = var.profile_shared
   shared_credentials_file = "~/.aws/${var.project}/config"
   alias                   = "shared-route53"
 }
