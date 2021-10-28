@@ -93,7 +93,7 @@ Thumbs.db
 #
 # Config Files
 #
-*common.config
+*common.tfvars
 #
 # Scripts and Makefiles
 #
