@@ -21,7 +21,7 @@
 ############
 id_rsa
 id_dsa
-*keys/
+**/keys/
 
 # OS generated files #
 ######################
@@ -93,7 +93,7 @@ Thumbs.db
 #
 # Config Files
 #
-*common.tfvars
+#*common.tfvars
 #
 # Scripts and Makefiles
 #
