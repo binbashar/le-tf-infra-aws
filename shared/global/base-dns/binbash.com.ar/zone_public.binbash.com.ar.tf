@@ -30,12 +30,31 @@ resource "aws_route53_record" "aws_public_hosted_zone_1_mx_records" {
 }
 
 #
+# A records
+#
+resource "aws_route53_record" "pub_A_binbash_com_ar" {
+  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
+  name     = "binbash.com.ar"
+  records = ["23.236.62.147"]
+  type     = "A"
+  ttl     = 300
+}
+
+#
 # CNAME records
 #
 resource "aws_route53_record" "pub_CNAME_leverage_binbash_com_ar" {
   zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
   name    = "leverage.binbash.com.ar"
   records = ["binbashar.github.io"]
+  type    = "CNAME"
+  ttl     = 300
+}
+
+resource "aws_route53_record" "pub_CNAME_www_binbash_com_ar" {
+  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
+  name    = "www.binbash.com.ar"
+  records = ["www33.wixdns.net"]
   type    = "CNAME"
   ttl     = 300
 }

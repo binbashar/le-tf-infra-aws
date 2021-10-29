@@ -218,7 +218,7 @@ variable "vpc_endpoints" {
 variable "enable_tgw" {
   description = "Enable Transit Gateway Support"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "enable_vpc_attach" {
