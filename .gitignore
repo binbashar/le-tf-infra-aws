@@ -21,7 +21,7 @@
 ############
 id_rsa
 id_dsa
-*keys/
+**/keys/
 
 # OS generated files #
 ######################
