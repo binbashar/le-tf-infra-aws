@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.75"></a>
+## [v1.3.75] - 2021-10-29
+
+- Revert "Revert "Feature | build.env to tf 1.0.9 + configs updated to .tfvars  => leverage cli 1.1.0 + deactivate cf-s3-www.binbash.com.ar""
+
+
 <a name="v1.3.74"></a>
 ## [v1.3.74] - 2021-10-28
 
@@ -2225,7 +2231,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.74...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.75...HEAD
+[v1.3.75]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.74...v1.3.75
 [v1.3.74]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.73...v1.3.74
 [v1.3.73]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.72...v1.3.73
 [v1.3.72]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.71...v1.3.72
