@@ -7,6 +7,22 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.77"></a>
+## [v1.3.77] - 2021-10-30
+
+- Add SNS Topic for Lambda and SMS
+- Change to SNS topic for costs
+- Add Bugets for SMS notifications
+- Add loop for SNS phone subscribers
+- Fix SNS policy & raw_message_delivery default option
+- Add sns_topic_sms output
+- Add required parameters for SNS subscribers
+- Update terraform-aws-cost-billing-alarm module version
+- * Update cost & billing source * Add SMS SNT topic arn
+- Add SMS SNS Topic output
+- Add support to SNS Topic for SMS
+
+
 <a name="v1.3.76"></a>
 ## [v1.3.76] - 2021-10-29
 
@@ -2238,7 +2254,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.76...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.77...HEAD
+[v1.3.77]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.76...v1.3.77
 [v1.3.76]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.75...v1.3.76
 [v1.3.75]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.74...v1.3.75
 [v1.3.74]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.73...v1.3.74
