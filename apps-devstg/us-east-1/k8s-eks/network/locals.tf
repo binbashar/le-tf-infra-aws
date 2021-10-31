@@ -49,7 +49,6 @@ locals {
 }
 
 locals {
-
   # private inbounds
   private_inbound = flatten([
     for index, state in local.datasources-vpcs : [
@@ -121,6 +120,10 @@ locals {
   # Data source definitions
   #
 
+  #########
+  # NACLs #
+  #########
+
   # shared
   shared-vpcs = {
     shared-base = {
@@ -139,10 +142,46 @@ locals {
       bucket  = "${var.project}-network-terraform-backend"
       key     = "network/network/terraform.tfstate"
     }
+    network-firewall = {
+      region  = var.region
+      profile = "${var.project}-network-devops"
+      bucket  = "${var.project}-network-terraform-backend"
+      key     = "network/network-firewall/terraform.tfstate"
+    }
   }
 
   datasources-vpcs = merge(
     data.terraform_remote_state.network-vpcs, # network
     data.terraform_remote_state.shared-vpcs,  # shared
   )
+
+  ################
+  # VPC Peerings #
+  ################
+
+  # apps-devstg
+  apps-devstg-vpcs = {
+    apps-devstg-base = {
+      region  = var.region
+      profile = "${var.project}-apps-devstg-devops"
+      bucket  = "${var.project}-apps-devstg-terraform-backend"
+      key     = "apps-devstg/network/terraform.tfstate"
+      tgw     = false
+    }
+    apps-devstg-k8s-eks = {
+      region  = var.region
+      profile = "${var.project}-apps-devstg-devops"
+      bucket  = "${var.project}-apps-devstg-terraform-backend"
+      key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
+      tgw     = false
+    }
+    apps-devstg-k8s-eks-demoapps = {
+      region  = var.region
+      profile = "${var.project}-apps-devstg-devops"
+      bucket  = "${var.project}-apps-devstg-terraform-backend"
+      key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
+      tgw     = false
+    }
+  }
+
 }

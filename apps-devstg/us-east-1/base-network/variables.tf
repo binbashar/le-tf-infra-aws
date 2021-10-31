@@ -134,16 +134,16 @@ variable "vpc_enable_vpn_gateway" {
   default     = false
 }
 
-variable "vpc_enable_s3_endpoint" {
-  description = "Enable S3 endpoint"
+variable "enable_kms_endpoint" {
+  description = "Enable KMS endpoint"
   type        = bool
-  default     = true
+  default     = false
 }
 
-variable "vpc_enable_dynamodb_endpoint" {
-  description = "Enable DynamoDB endpoint"
+variable "enable_kms_endpoint_private_dns" {
+  description = "Enable KMS endpoint"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "enable_tgw" {
