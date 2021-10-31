@@ -83,3 +83,21 @@ data "terraform_remote_state" "shared-vpcs" {
     key     = lookup(each.value, "key")
   }
 }
+
+# VPC remote states for apps-prd
+data "terraform_remote_state" "apps-prd-vpcs" {
+
+  for_each = {
+    for k, v in local.apps-prd-vpcs :
+    k => v if !v["tgw"]
+  }
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
+  }
+}
