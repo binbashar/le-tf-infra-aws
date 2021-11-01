@@ -1,7 +1,7 @@
 #
 # EKS VPC
 #
-module "vpc-eks" {
+module "vpc" {
   source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.10.0"
 
   name = local.vpc_name
