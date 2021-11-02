@@ -2,14 +2,21 @@ project: default
 
 source:
   repoURL: https://github.com/binbashar/le-demo-apps.git
-  targetRevision: HEAD
-  path: sock-shop/kubernetes
+  targetRevision: sockshop
+  path: sock-shop/helm
+  helm:
+    valueFiles:
+      - values.yaml
 
 destination:
   server: https://kubernetes.default.svc
   namespace: demo-sock-shop
 
 syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
+    allowEmpty: false
   syncOptions:
     - Validate=true
     - CreateNamespace=true

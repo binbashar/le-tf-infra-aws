@@ -1,7 +1,9 @@
 #
 # AppsDevStg EKS OpenID Connect Provider -- Enable or update upon cluster creation.
 #
-resource "aws_iam_openid_connect_provider" "apps_devstg_eks" {
+resource "aws_iam_openid_connect_provider" "eks" {
+  provider = aws.shared
+
   client_id_list = ["sts.amazonaws.com"]
   url            = data.terraform_remote_state.apps-devstg-eks-cluster.outputs.cluster_oidc_issuer_url
 

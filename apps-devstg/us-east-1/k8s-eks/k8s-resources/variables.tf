@@ -131,7 +131,7 @@ variable "enable_grafana_dependencies" {
   default = false
 }
 
-variable "enable_cert_manager" {
+variable "enable_certmanager" {
   type    = bool
   default = false
 }
@@ -157,6 +157,16 @@ variable "enable_scaling" {
 }
 
 variable "enable_gatus" {
+  type    = bool
+  default = false
+}
+
+variable "enable_logging_awses" {
+  type    = bool
+  default = false
+}
+
+variable "enable_logging_selfhosted" {
   type    = bool
   default = false
 }

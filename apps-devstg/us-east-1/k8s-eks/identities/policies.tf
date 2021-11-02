@@ -1,8 +1,10 @@
 #
-# CertManager policy
+# CertManager policy: binbash.com.ar
 #
-resource "aws_iam_policy" "cert_manager_binbash_com_ar" {
-  name        = "cert_manager_binbash_com_ar"
+resource "aws_iam_policy" "certmanager_binbash_com_ar" {
+  provider = aws.shared
+
+  name        = "${local.environment}-certmanager-binbash.com.ar"
   description = "CertManager permissions on binbash.com.ar"
   policy      = <<EOF
 {
@@ -32,11 +34,12 @@ EOF
 }
 
 #
-# External DNS policy
+# External DNS policy: aws.binbash.com.ar
 #
-resource "aws_iam_policy" "external_dns_aws_binbash_com_ar" {
-  name        = "external_dns_binbash_com_ar"
-  description = "External DNS permissions on aws.binbash.com.ar"
+resource "aws_iam_policy" "externaldns_aws_binbash_com_ar" {
+  provider    = aws.shared
+  name        = "${local.environment}-externaldns-aws.binbash.com.ar"
+  description = "ExternalDNS permissions on aws.binbash.com.ar"
   policy      = <<EOF
 {
     "Version": "2012-10-17",
@@ -62,12 +65,14 @@ resource "aws_iam_policy" "external_dns_aws_binbash_com_ar" {
 }
 EOF
 }
+
 #
-# External DNS policy
+# External DNS policy: binbash.com.ar
 #
-resource "aws_iam_policy" "external_dns_public" {
-  name        = "external-dns-public"
-  description = "External DNS permissions on binbash.com.ar"
+resource "aws_iam_policy" "externaldns_binbash_com_ar" {
+  provider    = aws.shared
+  name        = "${local.environment}-externaldns-binbash.com.ar"
+  description = "ExternalDNS permissions on binbash.com.ar"
   policy      = <<EOF
 {
     "Version": "2012-10-17",

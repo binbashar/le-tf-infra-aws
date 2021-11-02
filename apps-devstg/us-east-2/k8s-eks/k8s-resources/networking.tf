@@ -27,16 +27,16 @@ resource "helm_release" "ingress_nginx_public" {
 #------------------------------------------------------------------------------
 # External DNS (Private): Sync ingresses hosts with your DNS server.
 #------------------------------------------------------------------------------
-resource "helm_release" "external_dns_private" {
+resource "helm_release" "externaldns_private" {
   count      = var.enable_private_dns_sync ? 1 : 0
-  name       = "external-dns-private"
-  namespace  = kubernetes_namespace.external_dns.id
+  name       = "externaldns-private"
+  namespace  = kubernetes_namespace.externaldns.id
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "external-dns"
   version    = "4.6.0"
   values = [
-    templatefile("chart-values/external-dns-private.yaml", {
-      roleArn = "arn:aws:iam::${var.shared_account_id}:role/appsdevstg-externaldns-private"
+    templatefile("chart-values/externaldns-private.yaml", {
+      roleArn = "arn:aws:iam::${var.shared_account_id}:role/appsdevstg-dr-externaldns-private"
     })
   ]
 }
@@ -44,16 +44,16 @@ resource "helm_release" "external_dns_private" {
 #------------------------------------------------------------------------------
 # External DNS (Public): Sync ingresses hosts with your DNS server.
 #------------------------------------------------------------------------------
-resource "helm_release" "external_dns_public" {
+resource "helm_release" "externaldns_public" {
   count      = var.enable_public_ingress ? 1 : 0
-  name       = "external-dns-public"
-  namespace  = kubernetes_namespace.external_dns.id
+  name       = "externaldns-public"
+  namespace  = kubernetes_namespace.externaldns.id
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "external-dns"
   version    = "4.6.0"
   values = [
-    templatefile("chart-values/external-dns-public.yaml", {
-      roleArn = "arn:aws:iam::${var.shared_account_id}:role/appsdevstg-externaldns-public"
+    templatefile("chart-values/externaldns-public.yaml", {
+      roleArn = "arn:aws:iam::${var.shared_account_id}:role/appsdevstg-dr-externaldns-public"
     })
   ]
 }

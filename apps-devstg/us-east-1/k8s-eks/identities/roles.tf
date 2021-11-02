@@ -1,68 +1,80 @@
 #
-# Role: cert-manager for EKS OIDC -- Enable or update upon cluster creation.
+# Role: cert-manager for EKS OIDC
 #
-module "role_cert_manager" {
+module "role_certmanager" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.1.0"
 
+  providers = {
+    aws = aws.shared
+  }
+
   create_role  = true
-  role_name    = "cert-manager"
+  role_name    = "${local.environment}-certmanager"
   provider_url = replace(data.terraform_remote_state.apps-devstg-eks-cluster.outputs.cluster_oidc_issuer_url, "https://", "")
 
   role_policy_arns = [
-    aws_iam_policy.cert_manager_binbash_com_ar.arn
+    aws_iam_policy.certmanager_binbash_com_ar.arn
   ]
   oidc_fully_qualified_subjects = [
-    "system:serviceaccount:cert-manager:cert-manager"
+    "system:serviceaccount:certmanager:certmanager"
   ]
 
   tags = {
-    Subject = "cert-manager"
+    Subject = "certmanager"
     Purpose = "eks-oidc"
   }
 }
 
 #
-# Role: external-dns (private) for EKS OIDC -- Enable or update upon cluster creation.
+# Role: external-dns (private) for EKS OIDC
 #
-module "role_external_dns_private" {
+module "role_externaldns_private" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.1.0"
 
+  providers = {
+    aws = aws.shared
+  }
+
   create_role  = true
-  role_name    = "external-dns-private"
+  role_name    = "${local.environment}-externaldns-private"
   provider_url = replace(data.terraform_remote_state.apps-devstg-eks-cluster.outputs.cluster_oidc_issuer_url, "https://", "")
 
   role_policy_arns = [
-    aws_iam_policy.external_dns_aws_binbash_com_ar.arn
+    aws_iam_policy.externaldns_aws_binbash_com_ar.arn
   ]
   oidc_fully_qualified_subjects = [
-    "system:serviceaccount:external-dns:external-dns-private"
+    "system:serviceaccount:externaldns:externaldns-private"
   ]
 
   tags = {
-    Subject = "external-dns-private"
+    Subject = "externaldns-private"
     Purpose = "eks-oidc"
   }
 }
+
 #
+# Role: external-dns (public) for EKS OIDC
 #
-# Role: external-dns (public) for EKS OIDC -- Enable or update upon cluster creation.
-#
-module "role_external_dns_public" {
+module "role_externaldns_public" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.1.0"
 
+  providers = {
+    aws = aws.shared
+  }
+
   create_role  = true
-  role_name    = "external-dns-public"
+  role_name    = "${local.environment}-externaldns-public"
   provider_url = replace(data.terraform_remote_state.apps-devstg-eks-cluster.outputs.cluster_oidc_issuer_url, "https://", "")
 
   role_policy_arns = [
-    aws_iam_policy.external_dns_public.arn
+    aws_iam_policy.externaldns_binbash_com_ar.arn
   ]
   oidc_fully_qualified_subjects = [
-    "system:serviceaccount:external-dns:external-dns-public"
+    "system:serviceaccount:externaldns:externaldns-public"
   ]
 
   tags = {
-    Subject = "external-dns-public"
+    Subject = "externaldns-public"
     Purpose = "eks-oidc"
   }
 }
