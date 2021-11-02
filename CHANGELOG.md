@@ -7,6 +7,60 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.77"></a>
+## [v1.3.77] - 2021-10-30
+
+- Add SNS Topic for Lambda and SMS
+- Change to SNS topic for costs
+- Add Bugets for SMS notifications
+- Add loop for SNS phone subscribers
+- Fix SNS policy & raw_message_delivery default option
+- Add sns_topic_sms output
+- Add required parameters for SNS subscribers
+- Update terraform-aws-cost-billing-alarm module version
+- * Update cost & billing source * Add SMS SNT topic arn
+- Add SMS SNS Topic output
+- Add support to SNS Topic for SMS
+
+
+<a name="v1.3.76"></a>
+## [v1.3.76] - 2021-10-29
+
+- ignoring common.tfvars
+- removing common.tfvars and updating keys dir in gitignore
+
+
+<a name="v1.3.75"></a>
+## [v1.3.75] - 2021-10-29
+
+- Revert "Revert "Feature | build.env to tf 1.0.9 + configs updated to .tfvars  => leverage cli 1.1.0 + deactivate cf-s3-www.binbash.com.ar""
+
+
+<a name="v1.3.74"></a>
+## [v1.3.74] - 2021-10-28
+
+- updating .gitignore to avoid common.tfvars
+- removing common.tfvars
+
+
+<a name="v1.3.73"></a>
+## [v1.3.73] - 2021-10-28
+
+- Revert "Feature | build.env to tf 1.0.9 + configs updated to .tfvars  => leverage cli 1.1.0 + deactivate cf-s3-www.binbash.com.ar"
+- fixing .gitignore from common.config to common.tfvars
+- Renaming common.config.example to .tfvars.example removing common.tfvars
+- adding missing vars to avoid warnings + adding new www.binbash.com.ar records
+- IMPORTANT! Setting network/us-east-1/base-network => var enable_tgw = false by default
+- renaming apps-prd/config/backend.config to backend.tfvars
+- removing shared/us-east-1/base-network/build.env since it has been tested with tf 1.0.9 and everything works fine
+- Fixing leverage cli organization version variable to terraform 1.0.9
+- pointing cds-s3-frontend stack to its latets terraform version (tested and working fine)
+- disabling and destroying old dev.binbash.com.ar and www.binbash.com.ar cloudfront + s3 stacks
+- updating .gitignore to include every keys dir through wilcard expression
+- renaming all configs as .tfvars
+- Updating network account to have DR std dir structure
+
+
 <a name="v1.3.72"></a>
 ## [v1.3.72] - 2021-10-27
 
@@ -2200,7 +2254,12 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.72...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.77...HEAD
+[v1.3.77]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.76...v1.3.77
+[v1.3.76]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.75...v1.3.76
+[v1.3.75]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.74...v1.3.75
+[v1.3.74]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.73...v1.3.74
+[v1.3.73]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.72...v1.3.73
 [v1.3.72]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.71...v1.3.72
 [v1.3.71]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.70...v1.3.71
 [v1.3.70]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.69...v1.3.70
