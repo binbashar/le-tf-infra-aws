@@ -37,8 +37,11 @@ data "aws_iam_policy_document" "kms" {
     resources = ["*"]
 
     principals {
-      type        = "Service"
-      identifiers = ["cloudtrail.amazonaws.com"]
+      type = "Service"
+      identifiers = [
+        "cloudtrail.amazonaws.com",
+        "cloudwatch.amazonaws.com"
+      ]
     }
     condition {
       test     = "StringLike"
