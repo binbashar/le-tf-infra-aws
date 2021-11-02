@@ -35,7 +35,7 @@ module "cloudtrail_s3_bucket" {
 }
 
 module "cloudtrail_api_alarms" {
-  source            = "github.com/binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=0.13.0"
+  source            = "github.com/binbashar/terraform-aws-cloudtrail-cloudwatch-alarms.git?ref=0.14.3"
   log_group_region  = var.region
   log_group_name    = aws_cloudwatch_log_group.cloudtrail.name
   metric_namespace  = var.metric_namespace
@@ -44,6 +44,9 @@ module "cloudtrail_api_alarms" {
   # Uncomment if /notifications SNS is configured and you want to send notifications via slack
   sns_topic_arn = data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring_sec
   metrics       = local.metrics
+
+  kms_master_key_id = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+
 }
 
 #==================================================================#
