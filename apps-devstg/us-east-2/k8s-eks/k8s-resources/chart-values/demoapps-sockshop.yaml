@@ -2,11 +2,22 @@ project: default
 
 source:
   repoURL: https://github.com/binbashar/le-demo-apps.git
-  targetRevision: sockshop
+  targetRevision: HEAD
   path: sock-shop/helm
   helm:
     valueFiles:
       - values.yaml
+    parameters:
+      - name: "frontend.ingress.hosts[0]"
+        value: "sockshopapp.devstg.aws.binbash.com.ar"
+      - name: "frontend.ingress.hosts[1]"
+        value: "sockshopapp.${region}.devstg.aws.binbash.com.ar"
+      - name: "frontend.ingress.tls[0].secretName"
+        value: "front-end-tls"
+      - name: "frontend.ingress.tls[0].hosts[0]"
+        value: "sockshopapp.devstg.aws.binbash.com.ar"
+      - name: "frontend.ingress.tls[0].hosts[1]"
+        value: "sockshopapp.${region}.devstg.aws.binbash.com.ar"
 
 destination:
   server: https://kubernetes.default.svc

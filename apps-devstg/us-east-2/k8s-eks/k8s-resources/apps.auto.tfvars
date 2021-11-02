@@ -21,9 +21,11 @@ enable_private_dns_sync = true
 enable_vault = false
 
 #------------------------------------------------------------------------------
-# Auto-scaling
+# Scaling
 #------------------------------------------------------------------------------
-enable_scaling = false
+enable_hpa_scaling         = false
+enable_vpa_scaling         = false
+enable_cluster_autoscaling = true
 
 #------------------------------------------------------------------------------
 # Monitoring
@@ -55,7 +57,7 @@ enable_cicd = true
 demoapps = {
   emojivoto = false
   gdm       = false
-  sockshop  = false
+  sockshop  = true
 }
 
 #------------------------------------------------------------------------------

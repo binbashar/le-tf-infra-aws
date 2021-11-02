@@ -39,5 +39,9 @@ resource "helm_release" "vault" {
   repository = "https://helm.releases.hashicorp.com"
   chart      = "vault"
   version    = "0.10.0"
-  values     = [file("chart-values/vault.yaml")]
+  values = [
+    templatefile("chart-values/vault.yaml", {
+      vaultAddress = var.vault_address
+    })
+  ]
 }

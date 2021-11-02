@@ -28,7 +28,7 @@ resource "helm_release" "node_exporter" {
 # Metrics Server: Expose cluster metrics.
 #------------------------------------------------------------------------------
 resource "helm_release" "metrics_server" {
-  count      = var.enable_scaling ? 1 : 0
+  count      = (var.enable_hpa_scaling || var.enable_vpa_scaling) ? 1 : 0
   name       = "metrics-server"
   namespace  = kubernetes_namespace.monitoring.id
   repository = "https://charts.bitnami.com/bitnami"

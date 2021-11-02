@@ -1,2 +1,2 @@
 injector:
-  externalVaultAddr: https://example.com
+  externalVaultAddr: ${vaultAddress}

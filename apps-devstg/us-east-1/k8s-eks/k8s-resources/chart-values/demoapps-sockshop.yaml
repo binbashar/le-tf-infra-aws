@@ -2,26 +2,12 @@ project: default
 
 source:
   repoURL: https://github.com/binbashar/le-demo-apps.git
-  targetRevision: sockshop
+  targetRevision: HEAD
   path: sock-shop/helm
   helm:
+    valueFiles:
+      - values.yaml
     parameters:
-      - name: "carts.image"
-        value: ${accountid}.dkr.ecr.${region}.amazonaws.com/weaveworksdemos/carts:0.4.8
-      - name: "cataloguedb.image"
-        value: ${accountid}.dkr.ecr.${region}.amazonaws.com/weaveworksdemos/catalogue-db:0.3.0
-      - name: "catalogue.image"
-        value: ${accountid}.dkr.ecr.${region}.amazonaws.com/weaveworksdemos/catalogue:0.3.5
-      - name: "frontend.image"
-        value: ${accountid}.dkr.ecr.${region}.amazonaws.com/weaveworksdemos/front-end:0.3.12
-      - name: "frontend.ingress.enabled"
-        value: "true"
-      - name: "frontend.ingress.annotations.cert-manager\\.io/cluster-issuer"
-        value: "clusterissuer-binbash-cert-manager-clusterissuer"
-      - name: "frontend.ingress.annotations.kubernetes\\.io/ingress\\.class"
-        value: "ingress-nginx-private"
-      - name: "frontend.ingress.annotations.kubernetes\\.io/tls-acme"
-        value: "true"
       - name: "frontend.ingress.hosts[0]"
         value: "sockshopapp.devstg.aws.binbash.com.ar"
       - name: "frontend.ingress.hosts[1]"
@@ -32,22 +18,6 @@ source:
         value: "sockshopapp.devstg.aws.binbash.com.ar"
       - name: "frontend.ingress.tls[0].hosts[1]"
         value: "sockshopapp.${region}.devstg.aws.binbash.com.ar"
-      - name: "orders.image"
-        value: ${accountid}.dkr.ecr.${region}.amazonaws.com/weaveworksdemos/orders:0.4.7
-      - name: "payment.image"
-        value: ${accountid}.dkr.ecr.${region}.amazonaws.com/weaveworksdemos/payment:0.4.3
-      - name: "queuemaster.image"
-        value: ${accountid}.dkr.ecr.${region}.amazonaws.com/weaveworksdemos/queue-master:0.3.1
-      - name: "shipping.image"
-        value: ${accountid}.dkr.ecr.${region}.amazonaws.com/weaveworksdemos/shipping:0.4.8
-      - name: "userdb.image"
-        value: ${accountid}.dkr.ecr.${region}.amazonaws.com/weaveworksdemos/user-db:0.4.0
-      - name: "user.image"
-        value: ${accountid}.dkr.ecr.${region}.amazonaws.com/weaveworksdemos/user:0.4.7
-      - name: "cataloguedb.enabled"
-        value: "true"
-      - name: "cataloguemigrations.enabled"
-        value: "false"
 
 destination:
   server: https://kubernetes.default.svc

@@ -97,3 +97,46 @@ resource "aws_iam_policy" "externaldns_binbash_com_ar" {
 }
 EOF
 }
+
+#
+# Cluster Autoscaler
+#
+resource "aws_iam_policy" "cluster_autoscaler" {
+  name        = "${local.prefix}-cluster-autoscaler"
+  description = "Cluster Autoscaler"
+  policy      = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "EksWorkerAutoscalingAll",
+            "Effect": "Allow",
+            "Action": [
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:DescribeAutoScalingInstances",
+                "autoscaling:DescribeLaunchConfigurations",
+                "autoscaling:DescribeTags",
+                "ec2:DescribeLaunchTemplateVersions"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "EksWorkerAutoscalingOwn",
+            "Effect": "Allow",
+            "Action": [
+                "autoscaling:SetDesiredCapacity",
+                "autoscaling:TerminateInstanceInAutoScalingGroup",
+                "autoscaling:UpdateAutoScalingGroup"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "autoscaling:ResourceTag/k8s.io/cluster-autoscaler/enabled": "true",
+                    "autoscaling:ResourceTag/kubernetes.io/cluster/${data.terraform_remote_state.apps-devstg-eks-dr-cluster.outputs.cluster_name}": "owned"
+                }
+            }
+        }
+    ]
+}
+EOF
+}
