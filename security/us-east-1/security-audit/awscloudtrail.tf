@@ -14,7 +14,7 @@ module "cloudtrail" {
 }
 
 module "cloudtrail_s3_bucket" {
-  source                 = "github.com/binbashar/terraform-aws-cloudtrail-s3-bucket.git?ref=0.18.0"
+  source                 = "github.com/binbashar/terraform-aws-cloudtrail-s3-bucket.git?ref=0.23.1"
   namespace              = var.project
   stage                  = var.environment
   name                   = "cloudtrail-org"
