@@ -35,8 +35,8 @@ jobs:
             # Install terraform
             sudo apt-get install unzip curl
             curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-            wget https://releases.hashicorp.com/terraform/${TERRAFORM_VER}/terraform_${TERRAFORM_VER}_linux_amd64.zip
-            unzip terraform_${TERRAFORM_VER}_linux_amd64.zip
+            wget https://releases.hashicorp.com/terraform/${TERRAFORM_VER_REF_ARCH}/terraform_${TERRAFORM_VER_REF_ARCH}_linux_amd64.zip
+            unzip terraform_${TERRAFORM_VER_REF_ARCH}_linux_amd64.zip
             sudo mv terraform /usr/local/bin/
             terraform --version
             #
