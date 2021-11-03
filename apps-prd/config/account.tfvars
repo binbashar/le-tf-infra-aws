@@ -3,4 +3,4 @@
 #
 
 # Environment Name
-environment     = "apps-prd"
+environment = "apps-prd"
