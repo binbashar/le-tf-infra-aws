@@ -17,6 +17,7 @@ repos:
           - --markdown-linebreak-ext=md
 
   - repo: git://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.43.0
+    rev: v1.55.0
     hooks:
       - id: terraform_fmt
+      - id: terraform_validate

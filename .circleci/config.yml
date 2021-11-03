@@ -75,10 +75,6 @@ jobs:
             cp /home/circleci/.aws/credentials /home/circleci/.aws/bb/credentials
             cp /home/circleci/.aws/config /home/circleci/.aws/bb/config
 
-      - run:
-          name: test-terraform-linting
-          command: make tflint-deep
-
       - slack/notify:
           event: fail
           mentions: '@leverage-support'
