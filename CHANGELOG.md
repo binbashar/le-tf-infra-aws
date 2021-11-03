@@ -7,6 +7,25 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.78"></a>
+## [v1.3.78] - 2021-11-03
+
+- disabling terraform validate in pre-commit since it's failing to be reviewed in a future PR
+- adding Circleci new variable for Ref Arch terraform version 1.0.9
+- apps-devstg/us-east-1/database-aurora/rds-export-to-s3 module fixed to its latest version instead of master
+- Using latest makefile lib test file for terraform v1.0.9 + deprecating tflint (not support for recursive checks) + updating pre-commit terraform hook checks including terraform validate
+- make pre-commit applied to get terraform fmt command applied
+- Update shared / security-audit terraform modules
+- Update root / security-audit terraform modules
+- Update network / security-audit terraform modules
+- Change string to boolean values
+- Change string to boolean values
+- Update devstg / security-audit terraform modules
+- Update security-audit terraform modules
+- Update terraform-aws-kms-key module version
+- Grant CloudWatch to use KSM Keys
+
+
 <a name="v1.3.77"></a>
 ## [v1.3.77] - 2021-10-30
 
@@ -2254,7 +2273,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.77...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.78...HEAD
+[v1.3.78]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.77...v1.3.78
 [v1.3.77]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.76...v1.3.77
 [v1.3.76]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.75...v1.3.76
 [v1.3.75]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.74...v1.3.75
