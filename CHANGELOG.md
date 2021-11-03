@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.79"></a>
+## [v1.3.79] - 2021-11-03
+
+- Update notifications layers
+- Add secops role in devstg
+
+
 <a name="v1.3.78"></a>
 ## [v1.3.78] - 2021-11-03
 
@@ -2273,7 +2280,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.78...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.79...HEAD
+[v1.3.79]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.78...v1.3.79
 [v1.3.78]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.77...v1.3.78
 [v1.3.77]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.76...v1.3.77
 [v1.3.76]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.75...v1.3.76
