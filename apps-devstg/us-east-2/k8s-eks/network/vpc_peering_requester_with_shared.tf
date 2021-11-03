@@ -11,7 +11,7 @@ resource "aws_vpc_peering_connection" "apps_devstg_eks_vpc_with_shared_vpc" {
   vpc_id      = module.vpc-eks.vpc_id
   auto_accept = false
 
-  tags = merge(map("Name", "requester-apps-devstg-eks-dr-to-shared"), local.tags)
+  tags = merge({ "Name" = "requester-apps-devstg-eks-dr-to-shared" }, local.tags)
 }
 
 #

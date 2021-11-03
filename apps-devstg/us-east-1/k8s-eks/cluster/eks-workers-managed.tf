@@ -93,7 +93,7 @@ module "eks" {
   # Tags
   #
   tags = merge(local.tags,
-    map("k8s.io/cluster-autoscaler/enabled", "TRUE"),
-    map("k8s.io/cluster-autoscaler/${data.terraform_remote_state.eks-vpc.outputs.cluster_name}", "owned")
+    { "k8s.io/cluster-autoscaler/enabled" = "TRUE" },
+    { "k8s.io/cluster-autoscaler/${data.terraform_remote_state.eks-vpc.outputs.cluster_name}" = "owned" }
   )
 }
