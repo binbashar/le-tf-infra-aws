@@ -3,14 +3,15 @@ module "cloudtrail" {
   namespace                     = var.project
   stage                         = var.environment
   name                          = "cloudtrail-org"
-  enable_logging                = "true"
-  enable_log_file_validation    = "true"
-  include_global_service_events = "true"
-  is_multi_region_trail         = "true"
+  enable_logging                = true
+  enable_log_file_validation    = true
+  include_global_service_events = true
+  is_multi_region_trail         = true
   s3_bucket_name                = module.cloudtrail_s3_bucket.bucket_id
   cloud_watch_logs_group_arn    = "${aws_cloudwatch_log_group.cloudtrail.arn}:*"
   cloud_watch_logs_role_arn     = aws_iam_role.cloudtrail_cloudwatch_events.arn
   kms_key_arn                   = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
+  #is_organization_trail        = true
 }
 
 module "cloudtrail_s3_bucket" {
@@ -45,6 +46,7 @@ module "cloudtrail_api_alarms" {
   sns_topic_arn = data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring_sec
   metrics       = local.metrics
 
+  # KMS key use for encrypting the Amazon SNS topic.
   kms_master_key_id = data.terraform_remote_state.keys.outputs.aws_kms_key_id
 
 }
