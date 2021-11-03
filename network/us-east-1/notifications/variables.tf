@@ -109,3 +109,16 @@ variable "sns_topic_name_monitoring_sec" {
   description = ""
   default     = "sns-topic-slack-notify-monitoring-sec"
 }
+
+#=============================#
+# Hashicorp Vault Vars        #
+#=============================#
+variable "vault_address" {
+  type        = string
+  description = "Hashicorp vault api endpoint address"
+}
+
+variable "vault_token" {
+  type        = string
+  description = "Hashicorp vault admin token"
+}
