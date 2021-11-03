@@ -13,9 +13,9 @@ provider "aws" {
 # binbash-shared route53 cross-account ACM dns validation update
 #
 provider "aws" {
-  region                  = var.region
-  profile                 = "${var.project}-shared-devops"
-//  profile                 = var.profile_shared
+  region  = var.region
+  profile = "${var.project}-shared-devops"
+  //  profile                 = var.profile_shared
   shared_credentials_file = "~/.aws/${var.project}/config"
   alias                   = "shared-route53"
 }

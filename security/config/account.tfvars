@@ -3,4 +3,4 @@
 #
 
 # Environment Name
-environment     = "security"
+environment = "security"

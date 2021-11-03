@@ -34,9 +34,9 @@ resource "aws_route53_record" "aws_public_hosted_zone_1_mx_records" {
 #
 resource "aws_route53_record" "pub_A_binbash_com_ar" {
   zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
-  name     = "binbash.com.ar"
+  name    = "binbash.com.ar"
   records = ["23.236.62.147"]
-  type     = "A"
+  type    = "A"
   ttl     = 300
 }
 
