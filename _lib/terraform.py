@@ -63,17 +63,17 @@ docker_envs = [
     "--env=AWS_CONFIG_FILE=/root/.aws/%s/config" % (project),
 ]
 if mfa_enabled:
-    docker_envs.append("--env=BACKEND_CONFIG_FILE=/config/backend.config")
-    docker_envs.append("--env=COMMON_CONFIG_FILE=/common-config/common.config")
+    docker_envs.append("--env=BACKEND_CONFIG_FILE=/config/backend.tfvars")
+    docker_envs.append("--env=COMMON_CONFIG_FILE=/common-config/common.tfvars")
     docker_envs.append("--env=SRC_AWS_CONFIG_FILE=/root/tmp/%s/config" % (project))
     docker_envs.append("--env=SRC_AWS_SHARED_CREDENTIALS_FILE=/root/tmp/%s/credentials" % (project))
     docker_envs.append("--env=AWS_CACHE_DIR=/root/tmp/%s/cache" % (project))
 
 # Set Terraform default arguments -- normally used for plan, apply, destroy, and others
 terraform_default_args = [
-    "-var-file=/config/backend.config",
-    "-var-file=/common-config/common.config",
-    "-var-file=/config/account.config"
+    "-var-file=/config/backend.tfvars",
+    "-var-file=/common-config/common.tfvars",
+    "-var-file=/config/account.tfvars"
 ]
 
 # -------------------------------------------------------------------
@@ -112,7 +112,7 @@ def _build_cmd(command="", args=[], entrypoint=docker_entrypoint, extra_args=[])
 def init(extra_args):
     cmd = _build_cmd(
         command="init",
-        args=["-backend-config=/config/backend.config"],
+        args=["-backend-config=/config/backend.tfvars"],
         extra_args=extra_args
     )
     return subprocess.call(cmd)
