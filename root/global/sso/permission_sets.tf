@@ -12,6 +12,15 @@ module "permission_sets" {
       policy_attachments = ["arn:aws:iam::aws:policy/AdministratorAccess"]
     },
     {
+      name               = "DevOps",
+      description        = "Grants permissions for managing most resources except billing.",
+      relay_state        = "",
+      session_duration   = local.session_duration,
+      tags               = local.tags,
+      inline_policy      = data.aws_iam_policy_document.devops.json,
+      policy_attachments = []
+    },
+    {
       name               = "FinOps",
       description        = "Grants permissions for billing and cost management.",
       relay_state        = "",
@@ -38,14 +47,14 @@ module "permission_sets" {
       inline_policy      = "",
       policy_attachments = ["arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"]
     },
-    # {
-    #   name               = "Automation",
-    #   description        = "Grants permissions for build, deployment and other automation tasks.",
-    #   relay_state        = "",
-    #   session_duration   = local.session_duration,
-    #   tags               = local.tags,
-    #   inline_policy      = data.aws_iam_policy_document.Automation.json,
-    #   policy_attachments = []
-    # }
+    {
+      name               = "GithubAutomation",
+      description        = "GrantsGrants permissions for automation tasks that run on Github Actions.",
+      relay_state        = "",
+      session_duration   = local.session_duration,
+      tags               = local.tags,
+      inline_policy      = data.aws_iam_policy_document.github_automation.json,
+      policy_attachments = []
+    }
   ]
 }
