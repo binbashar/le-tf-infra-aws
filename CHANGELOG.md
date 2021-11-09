@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.3.81"></a>
+## [v1.3.81] - 2021-11-09
+
+- Create a custom policy and permission set for DevOps, plus other small adjustments ([#331](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/331))
+
+
 <a name="v1.3.80"></a>
 ## [v1.3.80] - 2021-11-08
 
@@ -2286,7 +2292,8 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.80...HEAD
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.81...HEAD
+[v1.3.81]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.80...v1.3.81
 [v1.3.80]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.79...v1.3.80
 [v1.3.79]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.78...v1.3.79
 [v1.3.78]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.77...v1.3.78
