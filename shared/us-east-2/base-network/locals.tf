@@ -115,22 +115,27 @@ locals {
   #
   # Data source definitions
   #
-  apps-devstg-vpcs = {
+  # apps-devstg-dr
+  apps-devstg-dr-vpcs = {
     apps-devstg-k8s-eks-dr = {
-      region  = var.region
+      region  = var.region_secondary
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/k8s-eks-dr/network/terraform.tfstate"
       tgw     = false
     }
   }
-  apps-prd-vpcs = {}
-  shared-vpcs = {
-    shared-vpc = {
-      region  = var.region
+  # apps-prd-dr
+  apps-prd-dr-vpcs = {}
+
+
+  # shared-dr
+  shared-dr-vpcs = {
+    shared-dr-base = {
+      region  = var.region_secondary
       profile = var.profile
-      bucket  = var.bucket
-      key     = "${var.environment}/network/terraform.tfstate"
+      bucket  = "${var.project}-shared-terraform-backend"
+      key     = "shared/network-dr/terraform.tfstate"
       tgw     = false
     }
   }

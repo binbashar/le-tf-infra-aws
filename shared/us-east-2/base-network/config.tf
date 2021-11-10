@@ -8,14 +8,21 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias                   = "devstg_eks_dr"
+  alias                   = "apps-devstg-dr"
   region                  = var.region_secondary
   profile                 = "${var.project}-apps-devstg-devops"
   shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
 provider "aws" {
-  alias                   = "shared_main"
+  alias                   = "apps-prd-dr"
+  region                  = var.region_secondary
+  profile                 = "${var.project}-apps-prd-devops"
+  shared_credentials_file = "~/.aws/${var.project}/config"
+}
+
+provider "aws" {
+  alias                   = "shared-primary"
   region                  = var.region
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
