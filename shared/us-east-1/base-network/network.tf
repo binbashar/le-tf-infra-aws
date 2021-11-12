@@ -2,7 +2,7 @@
 # Network Resources
 #
 module "vpc" {
-  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v2.78.0"
+  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.11.0"
 
   name = local.vpc_name
   cidr = local.vpc_cidr_block
@@ -11,17 +11,12 @@ module "vpc" {
   private_subnets = local.private_subnets
   public_subnets  = local.public_subnets
 
-  enable_nat_gateway       = var.vpc_enable_nat_gateway
-  single_nat_gateway       = var.vpc_single_nat_gateway
-  enable_dns_hostnames     = var.vpc_enable_dns_hostnames
-  enable_vpn_gateway       = var.vpc_enable_vpn_gateway
-  enable_s3_endpoint       = var.vpc_enable_s3_endpoint
-  enable_dynamodb_endpoint = var.vpc_enable_dynamodb_endpoint
+  enable_nat_gateway   = var.vpc_enable_nat_gateway
+  single_nat_gateway   = var.vpc_single_nat_gateway
+  enable_dns_hostnames = var.vpc_enable_dns_hostnames
+  enable_vpn_gateway   = var.vpc_enable_vpn_gateway
 
-  enable_kms_endpoint              = var.enable_kms_endpoint
-  kms_endpoint_private_dns_enabled = var.enable_kms_endpoint_private_dns
-  kms_endpoint_security_group_ids  = var.enable_kms_endpoint ? [aws_security_group.kms_vpce[0].id] : []
-
+  # Use a custom network ACL rules for private and public subnets
   manage_default_network_acl    = var.manage_default_network_acl
   public_dedicated_network_acl  = var.public_dedicated_network_acl  // use dedicated network ACL for the public subnets.
   private_dedicated_network_acl = var.private_dedicated_network_acl // use dedicated network ACL for the private subnets.
@@ -29,6 +24,50 @@ module "vpc" {
     local.network_acls["default_inbound"],
     local.network_acls["private_inbound"],
   )
+
+  tags = local.tags
+}
+
+# VPC Endpoints
+locals {
+  vpc_endpoints = merge({
+    # S3
+    s3 = {
+      service      = "s3"
+      service_type = "Gateway"
+    }
+    # DynamamoDB
+    dynamodb = {
+      service      = "dynamodb"
+      service_type = "Gateway"
+    }
+    },
+    # KMS
+    { for k, v in { kms = "Interface" } :
+      k => {
+        service             = k
+        service_type        = v
+        security_group_ids  = aws_security_group.kms_vpce[0].id
+        private_dns_enabled = var.enable_kms_endpoint_private_dns
+      } if var.enable_kms_endpoint
+    }
+  )
+}
+
+module "vpc_endpoints" {
+  source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.11.0"
+
+  for_each = local.vpc_endpoints
+
+  vpc_id = module.vpc.vpc_id
+
+  endpoints = {
+    endpoint = merge(each.value,
+      {
+        route_table_ids = concat(module.vpc.private_route_table_ids, module.vpc.public_route_table_ids)
+      }
+    )
+  }
 
   tags = local.tags
 }

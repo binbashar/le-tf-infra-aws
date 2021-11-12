@@ -2,7 +2,7 @@
 # EKS VPC
 #
 module "vpc-eks" {
-  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.10.0"
+  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.11.0"
 
   name = local.vpc_name
   cidr = local.vpc_cidr_block
@@ -56,16 +56,16 @@ locals {
   )
 }
 module "vpc_endpoints" {
-  source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.10.0"
+  source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.11.0"
 
   for_each = local.vpc_endpoints
 
-  vpc_id = module.vpc.vpc_id
+  vpc_id = module.vpc-eks.vpc_id
 
   endpoints = {
     endpoint = merge(each.value,
       {
-        route_table_ids = concat(module.vpc.private_route_table_ids, module.vpc.public_route_table_ids)
+        route_table_ids = concat(module.vpc-eks.private_route_table_ids, module.vpc-eks.public_route_table_ids)
       }
     )
   }
@@ -80,7 +80,7 @@ resource "aws_security_group" "kms_vpce" {
   count       = var.enable_kms_endpoint ? 1 : 0
   name        = "kms_vpce"
   description = "Allow TLS inbound traffic"
-  vpc_id      = module.vpc.vpc_id
+  vpc_id      = module.vpc-eks.vpc_id
 
   ingress {
     description = "TLS from VPC"

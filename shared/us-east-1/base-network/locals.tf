@@ -149,7 +149,7 @@ locals {
   # apps-devstg-dr
   apps-devstg-dr-vpcs = {
     apps-devstg-k8s-eks-dr = {
-      region  = var.region_secondary
+      region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/k8s-eks-dr/network/terraform.tfstate"
@@ -181,7 +181,7 @@ locals {
   # shared-dr
   shared-dr-vpcs = {
     shared-dr-base = {
-      region  = var.region_secondary
+      region  = var.region
       profile = var.profile
       bucket  = "${var.project}-shared-terraform-backend"
       key     = "shared/network-dr/terraform.tfstate"

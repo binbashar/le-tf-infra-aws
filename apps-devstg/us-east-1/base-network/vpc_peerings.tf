@@ -5,11 +5,12 @@ module "vpc_peering_apps_devstg_to_eks_clusters" {
 
   for_each = {
     for k, v in local.apps-devstg-vpcs :
-    k => v if !v["tgw"] || k == "apps-devstg-base" # No peerings when TGW enabled or against the base network
+    k => v if !v["tgw"] && k != "apps-devstg-base" # No peerings when TGW enabled or against the base network
   }
 
   providers = {
     aws.this = aws
+    aws.peer = aws
   }
 
   this_vpc_id = module.vpc.vpc_id
