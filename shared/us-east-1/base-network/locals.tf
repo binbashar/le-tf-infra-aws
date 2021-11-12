@@ -190,7 +190,10 @@ locals {
   }
 
   datasources-vpcs = merge(
-    data.terraform_remote_state.apps-devstg-vpcs, # apps-devstg-vpcs
-    data.terraform_remote_state.apps-prd-vpcs,    # apps-prd-vpcs
+    var.enable_tgw ? data.terraform_remote_state.network-vpcs : null, # network
+    data.terraform_remote_state.apps-devstg-vpcs,                     # apps-devstg-vpcs
+    data.terraform_remote_state.apps-devstg-dr-vpcs,                  # apps-devstg-dr-vpcs
+    data.terraform_remote_state.apps-prd-vpcs,                        # apps-prd-vpcs
+    data.terraform_remote_state.apps-prd-dr-vpcs,                     # apps-prd-dr-vpcs
   )
 }
