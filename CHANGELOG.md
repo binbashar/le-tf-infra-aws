@@ -7,8 +7,38 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v1.4.1"></a>
+## [v1.4.1] - 2021-11-12
+
+- Update network datasources for the primary region
+- Update network datasources for secondary region
+- Update vpc and endpoints modules version
+- Update network datasources
+- Remove build.env variable
+- Add NFW & TGW README
+- Update peerings definitions
+- Update peering definitions
+- * Fix VPC Peerings condition * Change VPC module name to ease code reading * Remove wrong EKS cluster definition * Remove unused vpc_peering_id_with_shared output * Comment network accoun fata source to isolate private subnet cidr   output issue
+- Add vpc peeerings file for apps-prd
+- Update account references
+- Updat variables definitions for apps-prd  k8s-eks
+- Update VPCs, VPC Enpoin s and config files
+- Update VPC peerings code for apps-devstg
+- * Fix VPC Peerings condition * Change VPC module name to ease code reading * Remove wrong EKS cluster definition * Remove unused vpc_peering_id_with_shared output * Comment network accoun fata source to isolate private subnet cidr   output issue
+- Add vpc peeerings file for apps-prd
+- Update account references
+- Updat variables definitions for apps-prd  k8s-eks
+- Update VPCs, VPC Enpoin s and config files
+- Update VPC peerings code for apps-devstg
+
+
 <a name="v1.3.81"></a>
 ## [v1.3.81] - 2021-11-09
+
+
+
+<a name="v1.4.0"></a>
+## [v1.4.0] - 2021-11-09
 
 - Create a custom policy and permission set for DevOps, plus other small adjustments ([#331](https://github.com/binbashar/bb-devops-tf-infra-aws/issues/331))
 
@@ -2292,8 +2322,10 @@ All notable changes to this project will be documented in this file.
 - BBL-16 binbash org baseline/placeholders files
 
 
-[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.81...HEAD
-[v1.3.81]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.80...v1.3.81
+[Unreleased]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.4.1...HEAD
+[v1.4.1]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.81...v1.4.1
+[v1.3.81]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.4.0...v1.3.81
+[v1.4.0]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.80...v1.4.0
 [v1.3.80]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.79...v1.3.80
 [v1.3.79]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.78...v1.3.79
 [v1.3.78]: https://github.com/binbashar/bb-devops-tf-infra-aws/compare/v1.3.77...v1.3.78
