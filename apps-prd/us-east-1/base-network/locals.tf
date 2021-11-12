@@ -126,6 +126,10 @@ locals {
   # Data source definitions
   #
 
+  #########
+  # NACLs #
+  #########
+
   # shared
   shared-vpcs = {
     shared-base = {
@@ -153,7 +157,29 @@ locals {
   }
 
   datasources-vpcs = merge(
-    data.terraform_remote_state.network-vpcs, # network
-    data.terraform_remote_state.shared-vpcs,  # shared
+    var.enable_tgw ? data.terraform_remote_state.network-vpcs : null, # network
+    data.terraform_remote_state.shared-vpcs,                          # shared
   )
+
+  ################
+  # VPC Peerings #
+  ################
+
+  # apps-prd
+  apps-prd-vpcs = {
+    apps-prd-base = {
+      region  = var.region
+      profile = "${var.project}-apps-prd-devops"
+      bucket  = "${var.project}-apps-prd-terraform-backend"
+      key     = "apps-prd/network/terraform.tfstate"
+      tgw     = false
+    }
+    apps-prd-k8s-eks = {
+      region  = var.region
+      profile = "${var.project}-apps-prd-devops"
+      bucket  = "${var.project}-apps-prd-terraform-backend"
+      key     = "apps-prd/k8s-eks/network/terraform.tfstate"
+      tgw     = false
+    }
+  }
 }

@@ -7,7 +7,7 @@ resource "aws_vpc_peering_connection_accepter" "with_vault_hvn" {
   vpc_peering_connection_id = var.vpc_vault_hvn_peering_connection_id
   auto_accept               = true
 
-  tags = merge(map("Name", "accepter-shared-from-vault-hvn"), local.tags)
+  tags = merge({ Name = "accepter-shared-from-vault-hvn" }, local.tags)
 }
 
 #

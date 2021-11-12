@@ -140,13 +140,13 @@ locals {
 
   # network
   network-vpcs = {
-    network-base = {
-      region  = var.region
-      profile = "${var.project}-network-devops"
-      bucket  = "${var.project}-network-terraform-backend"
-      key     = "network/network/terraform.tfstate"
-    }
     network-firewall = {
+      network-base = {
+        region  = var.region
+        profile = "${var.project}-network-devops"
+        bucket  = "${var.project}-network-terraform-backend"
+        key     = "network/network/terraform.tfstate"
+      }
       region  = var.region
       profile = "${var.project}-network-devops"
       bucket  = "${var.project}-network-terraform-backend"
@@ -155,7 +155,7 @@ locals {
   }
 
   datasources-vpcs = merge(
-    data.terraform_remote_state.network-vpcs, # network
-    data.terraform_remote_state.shared-vpcs,  # shared
+    var.enable_tgw ? data.terraform_remote_state.network-vpcs : null, # network
+    data.terraform_remote_state.shared-vpcs,                          # shared
   )
 }

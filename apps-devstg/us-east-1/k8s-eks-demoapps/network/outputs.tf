@@ -62,19 +62,3 @@ output "private_route_table_ids" {
   description = "List of IDs of private route tables"
   value       = module.vpc-eks.private_route_table_ids
 }
-
-# TODO: Deprecate this output
-output "vpc_peering_id_apps_devstg_eks_demoapps_with_shared" {
-  description = "VPC peering ID with shared"
-  value       = var.vpc_apps_devstg_eks_created == true ? join("", aws_vpc_peering_connection.apps_devstg_eks_vpc_with_shared_vpc[*].id) : null
-}
-
-output "vpc_peering_id_with_shared" {
-  description = "VPC peering ID with shared"
-  value       = var.vpc_apps_devstg_eks_created == true ? join("", aws_vpc_peering_connection.apps_devstg_eks_vpc_with_shared_vpc[*].id) : null
-}
-
-output "vpc_peering_id_with_devstg" {
-  description = "VPC peering ID with devstg"
-  value       = var.vpc_apps_devstg_eks_created == true ? join("", aws_vpc_peering_connection.apps_devstg_eks_vpc_with_devstg_vpc[*].id) : null
-}

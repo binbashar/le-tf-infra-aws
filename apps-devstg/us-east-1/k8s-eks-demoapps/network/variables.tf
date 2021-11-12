@@ -155,17 +155,20 @@ variable "vpc_enable_vpn_gateway" {
   default     = false
 }
 
-variable "vpc_endpoints" {
-  description = "VPC endpoints"
-  type        = any
-  default = {
-    s3 = {
-      service      = "s3"
-      service_type = "Gateway"
-    }
-    dynamodb = {
-      service      = "dynamodb"
-      service_type = "Gateway"
-    }
-  }
+variable "enable_kms_endpoint" {
+  description = "Enable KMS endpoint"
+  type        = bool
+  default     = false
+}
+
+variable "enable_kms_endpoint_private_dns" {
+  description = "Enable KMS endpoint"
+  type        = bool
+  default     = false
+}
+
+variable "enable_tgw" {
+  description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = false
 }
