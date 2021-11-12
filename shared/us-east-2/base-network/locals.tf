@@ -115,10 +115,32 @@ locals {
   #
   # Data source definitions
   #
+
+  # network
+  network-vpcs = {
+    network-base = {
+      region  = var.region
+      profile = "${var.project}-network-devops"
+      bucket  = "${var.project}-network-terraform-backend"
+      key     = "network/network/terraform.tfstate"
+    }
+  }
+
+  # shared
+  shared-vpcs = {
+    shared-base = {
+      region  = var.region
+      profile = "${var.project}-shared-devops"
+      bucket  = "${var.project}-shared-terraform-backend"
+      key     = "shared/network/terraform.tfstate"
+      tgw     = false
+    }
+  }
+
   # apps-devstg-dr
   apps-devstg-dr-vpcs = {
     apps-devstg-k8s-eks-dr = {
-      region  = var.region_secondary
+      region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/k8s-eks-dr/network/terraform.tfstate"
@@ -132,7 +154,7 @@ locals {
   # shared-dr
   shared-dr-vpcs = {
     shared-dr-base = {
-      region  = var.region_secondary
+      region  = var.region
       profile = var.profile
       bucket  = "${var.project}-shared-terraform-backend"
       key     = "shared/network-dr/terraform.tfstate"
@@ -141,7 +163,8 @@ locals {
   }
 
   datasources-vpcs = merge(
-    data.terraform_remote_state.apps-devstg-vpcs,
-    data.terraform_remote_state.apps-prd-vpcs,
+    var.enable_tgw ? data.terraform_remote_state.network-vpcs : null, # network
+    data.terraform_remote_state.apps-devstg-dr-vpcs,                  # devstg-dr
+    data.terraform_remote_state.apps-prd-dr-vpcs,                     # apps-prd-dr
   )
 }

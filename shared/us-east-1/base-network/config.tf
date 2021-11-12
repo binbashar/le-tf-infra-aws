@@ -38,7 +38,7 @@ provider "aws" {
 provider "aws" {
   alias                   = "shared-dr"
   region                  = var.region_secondary
-  profile                 = "${var.project}-apps-prd-devops"
+  profile                 = "${var.project}-shared-devops"
   shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
