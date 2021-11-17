@@ -1,14 +1,11 @@
 #
 # GuardDuty is enabled in this account as a delegated admin
 #
-# IMPORTANT: Enabling S3 Protection is not supported by Terraform AWS provider yet.
-# The following issue is already open regarding that:
-# https://github.com/terraform-providers/terraform-provider-aws/issues/14607
-#
 module "guardduty" {
-  source = "github.com/binbashar/terraform-aws-guardduty-multiaccount.git//modules/multiaccount-setup?ref=v0.0.7"
+  source = "github.com/binbashar/terraform-aws-guardduty-multiaccount.git//modules/multiaccount-setup?ref=v0.0.9"
 
   guarduty_enabled                           = true
+  guarduty_s3_protection_enabled             = true
   guardduty_organization_members_auto_enable = false
   guardduty_member_accounts = {
     shared = {

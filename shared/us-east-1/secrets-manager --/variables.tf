@@ -29,9 +29,6 @@ variable "encrypt" {
   description = "Enable AWS DynamoDB with server side encryption"
 }
 
-#
-# config/base.config
-#
 #=============================#
 # Project Variables           #
 #=============================#
@@ -50,9 +47,6 @@ variable "environment" {
   description = "Environment Name"
 }
 
-#
-# config/extra.config
-#
 #=============================#
 # Accounts & Extra Vars       #
 #=============================#
@@ -61,7 +55,7 @@ variable "region_secondary" {
   description = "AWS Scondary Region for HA"
 }
 
-variable "root_account_id" {
+variable "management_account_id" {
   type        = string
   description = "Account: Root"
 }
@@ -76,34 +70,27 @@ variable "shared_account_id" {
   description = "Account: Shared Resources"
 }
 
-variable "network_account_id" {
-  type        = string
-  description = "Account: Networking Resources"
-}
-
-variable "appsdevstg_account_id" {
+variable "appsdev_account_id" {
   type        = string
   description = "Account: Dev Modules & Libs"
 }
 
-variable "appsprd_account_id" {
+variable "appstest_account_id" {
   type        = string
-  description = "Account: Prod Modules & Libs"
-}
-
-variable "vault_address" {
-  type        = string
-  description = "Vault Address"
-}
-
-variable "vault_token" {
-  type        = string
-  description = "Vault Token"
+  description = "Account: Test Modules & Libs"
 }
 
 #=============================#
 # Notifications               #
 #=============================#
+#
+# AWS SNS -> Lambda -> Slack: tools-monitoring
+#
+variable "sns_topic_name_monitoring" {
+  description = ""
+  default     = "sns-topic-slack-notify-monitoring"
+}
+
 #
 # AWS SNS -> Lambda -> Slack: tools-monitoring-sec
 #
@@ -111,3 +98,5 @@ variable "sns_topic_name_monitoring_sec" {
   description = ""
   default     = "sns-topic-slack-notify-monitoring-sec"
 }
+
+
