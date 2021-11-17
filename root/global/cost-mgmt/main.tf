@@ -32,8 +32,7 @@ module "aws_cost_mgmt_billing_alert_100" {
 #
 # Budget = U$S100 at 75%
 module "aws_cost_mgmt_budget_notif_75" {
-  #source = "github.com/binbashar/terraform-aws-cost-budget.git?ref=v1.0.10"
-  source = "git::https://github.com/binbashar/terraform-aws-cost-budget.git?ref=feature/single-block"
+  source = "github.com/binbashar/terraform-aws-cost-budget.git?ref=v1.0.12"
 
   aws_env                = "${var.environment}-75-percent"
   currency               = var.currency
@@ -48,8 +47,7 @@ module "aws_cost_mgmt_budget_notif_75" {
 
 # Budget = U$S100 at 100%
 module "aws_cost_mgmt_budget_notif_100" {
-  #source = "github.com/binbashar/terraform-aws-cost-budget.git?ref=v1.0.10"
-  source = "git::https://github.com/binbashar/terraform-aws-cost-budget.git?ref=feature/single-block"
+  source = "github.com/binbashar/terraform-aws-cost-budget.git?ref=v1.0.12"
 
   aws_env                = "${var.environment}-100-percent"
   currency               = var.currency
