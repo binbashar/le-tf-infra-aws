@@ -46,7 +46,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "network/network/terraform.tfstate"
+    key = "network/network-dr/terraform.tfstate"
   }
 }
 
