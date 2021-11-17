@@ -41,10 +41,11 @@ jobs:
             terraform --version
             #
             # Install terraform-docs
-            sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-            curl -Lo ./terraform-docs https://github.com/terraform-docs/terraform-docs/releases/download/v0.10.1/terraform-docs-v0.10.1-$(uname | tr '[:upper:]' '[:lower:]')-amd64
-            chmod +x ./terraform-docs
+            curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.16.0/terraform-docs-v0.16.0-$(uname)-amd64.tar.gz
+            tar -xzf terraform-docs.tar.gz
+            chmod +x terraform-docs
             sudo mv ./terraform-docs /usr/local/bin/terraform-docs
+            terraform-docs --version
 
       - run:
           name: test-terraform-format-and-docs
