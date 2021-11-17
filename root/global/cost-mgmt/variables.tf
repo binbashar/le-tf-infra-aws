@@ -25,7 +25,7 @@ variable "dynamodb_table" {
 }
 
 variable "encrypt" {
-  type        = string
+  type        = bool
   description = "Enable AWS DynamoDB with server side encryption"
 }
 
@@ -61,6 +61,11 @@ variable "region_secondary" {
   description = "AWS Scondary Region for HA"
 }
 
+variable "root_account_id" {
+  type        = string
+  description = "Account: Root"
+}
+
 variable "security_account_id" {
   type        = string
   description = "Account: Security & Users Management"
@@ -86,8 +91,14 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
-variable "root_account_id" {
-  description = "Account: Root Organization"
+variable "vault_address" {
+  type        = string
+  description = "Vault Address"
+}
+
+variable "vault_token" {
+  type        = string
+  description = "Vault Token"
 }
 
 #==============================#
