@@ -147,6 +147,7 @@ locals {
       tgw     = false
     }
   }
+
   # apps-prd-dr
   apps-prd-dr-vpcs = {}
 
