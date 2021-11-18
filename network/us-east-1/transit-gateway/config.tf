@@ -68,6 +68,7 @@ data "terraform_remote_state" "tools-vpn-server" {
   }
 }
 
+# Network Firewall
 data "terraform_remote_state" "network-firewall" {
 
   backend = "s3"
@@ -78,6 +79,19 @@ data "terraform_remote_state" "network-firewall" {
     bucket  = "${var.project}-network-terraform-backend"
     key     = "network/network-firewall/terraform.tfstate"
 
+  }
+}
+
+# Transit Gateway in the secondary region
+data "terraform_remote_state" "tgw-dr" {
+
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-network-devops"
+    bucket  = "${var.project}-network-terraform-backend"
+    key     = "network/transit-gateway-dr/terraform.tfstate"
   }
 }
 
@@ -131,6 +145,21 @@ data "terraform_remote_state" "apps-devstg-vpcs" {
 data "terraform_remote_state" "apps-prd-vpcs" {
 
   for_each = local.apps-prd-vpcs
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
+  }
+}
+
+# VPC remote states for network-dr
+data "terraform_remote_state" "network-dr-vpcs" {
+
+  for_each = local.network-dr-vpcs
 
   backend = "s3"
 

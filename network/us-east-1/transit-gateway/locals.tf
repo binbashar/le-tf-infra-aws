@@ -68,6 +68,16 @@ locals {
     #}
   }
 
+  # network-dr
+  network-dr-vpcs = {
+    network-base = {
+      region  = var.region
+      profile = "${var.project}-network-devops"
+      bucket  = "${var.project}-network-terraform-backend"
+      key     = "network/network-dr/terraform.tfstate"
+    }
+  }
+
   datasources-vpcs = merge(
     data.terraform_remote_state.network-vpcs, # network
     #data.terraform_remote_state.shared-vpcs,  # shared
