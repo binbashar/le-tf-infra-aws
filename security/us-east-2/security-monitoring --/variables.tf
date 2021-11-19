@@ -29,6 +29,9 @@ variable "encrypt" {
   description = "Enable AWS DynamoDB with server side encryption"
 }
 
+#
+# config/common.tfvars
+#
 #=============================#
 # Project Variables           #
 #=============================#
@@ -52,7 +55,7 @@ variable "environment" {
 #=============================#
 variable "region_secondary" {
   type        = string
-  description = "AWS Scondary Region for HA"
+  description = "AWS Secondary Region for HA"
 }
 
 variable "root_account_id" {
