@@ -31,6 +31,7 @@ Install the `leverage` cli following its [instructions](https://github.com/binba
 You'll get all the necessary commands to automatically operate this module via a dockerized approach,
 example shown below
 
+#### Project context commands
 ```shell
 ╭─    ~/Binbash/repos/Leverage/ref-architecture/le-tf-infra-aws/shared/base-network  on   master !2 ······························································································ ✔  at 08:52:43 
 ╰─ leverage
@@ -53,6 +54,36 @@ Commands:
   run          Perform specified task(s) and all of its dependencies.
   terraform    Run Terraform commands in a custom containerized...
   tf           Run Terraform commands in a custom containerized...
+```
+
+#### Layer context Terraform commands 
+```shell
+╭─    ~/B/r/L/ref-architecture/le-tf-infra-aws  on   feature/guarduty-update · ✔  at 12:13:36 
+╰─ leverage terraform
+Usage: leverage terraform [OPTIONS] COMMAND [ARGS]...
+
+  Run Terraform commands in a custom containerized environment that provides
+  extra functionality when interacting with your cloud provider such as
+  handling multi factor authentication for you. All terraform subcommands that
+  receive extra args will pass the given strings as is to their corresponding
+  Terraform counterparts in the container. For example as in `leverage
+  terraform apply -auto-approve` or `leverage terraform init -reconfigure`
+
+Options:
+  -h, --help  Show this message and exit.
+
+Commands:
+  apply     Build or change the infrastructure in this layer.
+  aws       Run a command in AWS cli.
+  destroy   Destroy infrastructure in this layer.
+  format    Check if all files meet the canonical format and rewrite them...
+  import    Import a resource.
+  init      Initialize this layer.
+  output    Show all output variables of this layer.
+  plan      Generate an execution plan for this layer.
+  shell     Open a shell into the Terraform container in this layer.
+  validate  Validate code of the current directory.
+  version   Print version.
 ```
 
 # Release Management
