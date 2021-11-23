@@ -22,7 +22,7 @@ locals {
 
   # network-dr
   network-dr-vpcs = {
-    network-base = {
+    network-base-dr = {
       region  = var.region
       profile = "${var.project}-network-devops"
       bucket  = "${var.project}-network-terraform-backend"
@@ -44,9 +44,9 @@ locals {
   apps-prd-vpcs = {}
 
   datasources-vpcs = merge(
-    data.terraform_remote_state.network-vpcs, # network
-    #data.terraform_remote_state.shared-vpcs,  # shared
-    #data.terraform_remote_state.apps-devstg-vpcs, # apps-devstg-vpcs
-    data.terraform_remote_state.apps-prd-vpcs, # apps-prd-vpcs
+    data.terraform_remote_state.network-dr-vpcs,     # network-dr
+    data.terraform_remote_state.shared-dr-vpcs,      # shared-dr
+    data.terraform_remote_state.apps-devstg-dr-vpcs, # apps-devstg-dr-vpcs
+    data.terraform_remote_state.apps-prd-vpcs-dr,    # apps-prd-dr-vpcs
   )
 }

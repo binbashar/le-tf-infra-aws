@@ -57,18 +57,18 @@ terraform {
 #
 # data type from output for tools-ec2
 #
-data "terraform_remote_state" "tools-vpn-server" {
+data "terraform_remote_state" "tools-vpn-server-dr" {
   backend = "s3"
 
   config = {
     region  = var.region
     profile = "${var.project}-shared-devops"
     bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/vpn/terraform.tfstate"
+    key     = "shared/vpn-dr/terraform.tfstate"
   }
 }
 
-data "terraform_remote_state" "network-firewall" {
+data "terraform_remote_state" "network-firewall-dr" {
 
   backend = "s3"
 
@@ -76,15 +76,15 @@ data "terraform_remote_state" "network-firewall" {
     region  = var.region
     profile = "${var.project}-network-devops"
     bucket  = "${var.project}-network-terraform-backend"
-    key     = "network/network-firewall/terraform.tfstate"
+    key     = "network/network-firewall-dr/terraform.tfstate"
 
   }
 }
 
-# VPC remote states for network
-data "terraform_remote_state" "network-vpcs" {
+# VPC remote states for network-dr
+data "terraform_remote_state" "network-dr-vpcs" {
 
-  for_each = local.network-vpcs
+  for_each = local.network-dr-vpcs
 
   backend = "s3"
 
@@ -97,25 +97,10 @@ data "terraform_remote_state" "network-vpcs" {
 
 }
 
-# VPC remote states for shared
-data "terraform_remote_state" "shared-vpcs" {
+# VPC remote states for shared-dr
+data "terraform_remote_state" "shared-dr-vpcs" {
 
-  for_each = local.shared-vpcs
-
-  backend = "s3"
-
-  config = {
-    region  = lookup(each.value, "region")
-    profile = lookup(each.value, "profile")
-    bucket  = lookup(each.value, "bucket")
-    key     = lookup(each.value, "key")
-  }
-}
-
-# VPC remote states for apps-devstg
-data "terraform_remote_state" "apps-devstg-vpcs" {
-
-  for_each = local.apps-devstg-vpcs
+  for_each = local.shared-dr-vpcs
 
   backend = "s3"
 
@@ -127,10 +112,25 @@ data "terraform_remote_state" "apps-devstg-vpcs" {
   }
 }
 
-# VPC remote states for apps-prd
-data "terraform_remote_state" "apps-prd-vpcs" {
+# VPC remote states for apps-devstg-dr
+data "terraform_remote_state" "apps-devstg-dr-vpcs" {
 
-  for_each = local.apps-prd-vpcs
+  for_each = local.apps-devstg-dr-vpcs
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
+  }
+}
+
+# VPC remote states for apps-prd-dr
+data "terraform_remote_state" "apps-prd-dr-vpcs" {
+
+  for_each = local.apps-prd-dr-vpcs
 
   backend = "s3"
 
