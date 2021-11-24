@@ -59,43 +59,43 @@ data "aws_caller_identity" "current" {}
 #
 # data type from output for tools-ec2
 #
-data "terraform_remote_state" "tools-vpn-server" {
-  backend = "s3"
+#data "terraform_remote_state" "tools-vpn-server-dr" {
+#  backend = "s3"
+#
+#  config = {
+#    region  = var.region
+#    profile = "${var.project}-shared-devops"
+#    bucket  = "${var.project}-shared-terraform-backend"
+#    key     = "shared/vpn-dr/terraform.tfstate"
+#  }
+#}
 
-  config = {
-    region  = var.region
-    profile = "${var.project}-shared-devops"
-    bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/vpn/terraform.tfstate"
-  }
-}
-
-data "terraform_remote_state" "tgw" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-network-devops"
-    bucket  = "${var.project}-network-terraform-backend"
-    key     = "network/transit-gateway/terraform.tfstate"
-  }
-}
+#data "terraform_remote_state" "tgw-dr" {
+#  backend = "s3"
+#
+#  config = {
+#    region  = var.region
+#    profile = "${var.project}-network-devops"
+#    bucket  = "${var.project}-network-terraform-backend"
+#    key     = "network/transit-gateway-dr/terraform.tfstate"
+#  }
+#}
 
 
-data "terraform_remote_state" "network-firewall" {
-  backend = "s3"
+#data "terraform_remote_state" "network-firewall-dr" {
+#  backend = "s3"
+#
+#  config = {
+#    region  = var.region
+#    profile = "${var.project}-network-devops"
+#    bucket  = "${var.project}-network-terraform-backend"
+#    key     = "network/network-firewall-dr/terraform.tfstate"
+#  }
+#}
 
-  config = {
-    region  = var.region
-    profile = "${var.project}-network-devops"
-    bucket  = "${var.project}-network-terraform-backend"
-    key     = "network/network-firewall/terraform.tfstate"
-  }
-}
-
-# VPC remote states for network
-data "terraform_remote_state" "network-vpcs" {
-  for_each = var.enable_network_firewall ? local.network-vpcs : {}
+# VPC remote states for network-dr
+data "terraform_remote_state" "network-dr-vpcs" {
+  for_each = var.enable_network_firewall ? local.network-dr-vpcs : {}
 
   backend = "s3"
 
@@ -108,10 +108,10 @@ data "terraform_remote_state" "network-vpcs" {
 
 }
 
-# VPC remote states for shared
-data "terraform_remote_state" "shared-vpcs" {
+# VPC remote states for shared-dr
+data "terraform_remote_state" "shared-dr-vpcs" {
 
-  for_each = local.shared-vpcs
+  for_each = local.shared-dr-vpcs
 
   backend = "s3"
 
