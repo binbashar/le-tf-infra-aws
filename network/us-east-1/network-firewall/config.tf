@@ -21,21 +21,3 @@ terraform {
     key = "network/network-firewall/terraform.tfstate"
   }
 }
-
-#=============================#
-# Data sources                #
-#=============================#
-
-#
-# Inspection Network
-#
-data "terraform_remote_state" "inspection_vpc" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-network-devops"
-    bucket  = "${var.project}-network-terraform-backend"
-    key     = "network/network-firewall/terraform.tfstate"
-  }
-}
