@@ -47,6 +47,6 @@ locals {
     data.terraform_remote_state.network-dr-vpcs,     # network-dr
     data.terraform_remote_state.shared-dr-vpcs,      # shared-dr
     data.terraform_remote_state.apps-devstg-dr-vpcs, # apps-devstg-dr
-    data.terraform_remote_state.apps-prd-dr-vpcs-dr, # apps-prd-dr
+    data.terraform_remote_state.apps-prd-dr-vpcs,    # apps-prd-dr
   )
 }

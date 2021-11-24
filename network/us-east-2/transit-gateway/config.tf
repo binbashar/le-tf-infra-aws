@@ -57,16 +57,16 @@ terraform {
 #
 # data type from output for tools-ec2
 #
-data "terraform_remote_state" "tools-vpn-server-dr" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-shared-devops"
-    bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/vpn-dr/terraform.tfstate"
-  }
-}
+#data "terraform_remote_state" "tools-vpn-server-dr" {
+#  backend = "s3"
+#
+#  config = {
+#    region  = var.region_secondary
+#    profile = "${var.project}-shared-devops"
+#    bucket  = "${var.project}-shared-terraform-backend"
+#    key     = "shared/vpn-dr/terraform.tfstate"
+#  }
+#}
 
 data "terraform_remote_state" "network-firewall-dr" {
 
