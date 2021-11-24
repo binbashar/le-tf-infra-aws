@@ -40,13 +40,13 @@ locals {
     }
   }
 
-  # apps-prd
-  apps-prd-vpcs = {}
+  # apps-prd-dr
+  apps-prd-dr-vpcs = {}
 
   datasources-vpcs = merge(
     data.terraform_remote_state.network-dr-vpcs,     # network-dr
     data.terraform_remote_state.shared-dr-vpcs,      # shared-dr
-    data.terraform_remote_state.apps-devstg-dr-vpcs, # apps-devstg-dr-vpcs
-    data.terraform_remote_state.apps-prd-vpcs-dr,    # apps-prd-dr-vpcs
+    data.terraform_remote_state.apps-devstg-dr-vpcs, # apps-devstg-dr
+    data.terraform_remote_state.apps-prd-dr-vpcs-dr, # apps-prd-dr
   )
 }
