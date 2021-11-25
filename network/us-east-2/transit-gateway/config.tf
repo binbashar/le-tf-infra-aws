@@ -81,6 +81,19 @@ data "terraform_remote_state" "network-firewall-dr" {
   }
 }
 
+data "terraform_remote_state" "tgw" {
+
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-network-devops"
+    bucket  = "${var.project}-network-terraform-backend"
+    key     = "network/transit-gateway/terraform.tfstate"
+
+  }
+}
+
 # VPC remote states for network-dr
 data "terraform_remote_state" "network-dr-vpcs" {
 
