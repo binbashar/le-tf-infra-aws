@@ -1,5 +1,6 @@
 locals {
-  customer_gateways = {
+  customer_gateways = {}
+  customer_gateways_ = {
     cgw1 = {
       bgp_asn    = 65220
       ip_address = "172.83.124.10"

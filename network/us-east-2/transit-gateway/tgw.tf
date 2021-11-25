@@ -197,7 +197,7 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "shared-rt-propagatio
 resource "aws_ec2_transit_gateway_route_table_association" "apps-devstg-rt-associations" {
 
   for_each = {
-    for k, v in data.terraform_remote_state.apps-devstg-vpcs :
+    for k, v in data.terraform_remote_state.apps-devstg-dr-vpcs :
     k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "apps-devstg", false)
   }
 
@@ -220,12 +220,12 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "apps-devstg-rt-propa
 resource "aws_ec2_transit_gateway_route_table_association" "apps-prd-rt-associations" {
 
   for_each = {
-    for k, v in data.terraform_remote_state.apps-prd-vpcs :
+    for k, v in data.terraform_remote_state.apps-prd-dr-vpcs :
     k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "apps-prd-dr", false)
   }
 
   transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
-  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-prd[each.key].transit_gateway_vpc_attachment_ids[each.key]
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-prd-dr[each.key].transit_gateway_vpc_attachment_ids[each.key]
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "apps-prd-rt-propagations" {
@@ -327,7 +327,7 @@ data "aws_route_table" "inspection_route_table" {
 
 resource "aws_route" "inspection_to_endpoint" {
   for_each = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network-dr", false) ? {
-    for s in data.terraform_remote_state.network-firewall.outputs["sync_states"][0] :
+    for s in data.terraform_remote_state.network-firewall-dr.outputs["sync_states"][0] :
     s["availability_zone"] => s["attachment"]
   } : {}
 
@@ -339,7 +339,7 @@ resource "aws_route" "inspection_to_endpoint" {
 
 data "aws_route_table" "network_firewall_route_table" {
   for_each = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network-dr", false) ? {
-    for k, v in data.terraform_remote_state.network-firewall.outputs["network_firewall_subnets-dr"] :
+    for k, v in data.terraform_remote_state.network-firewall-dr.outputs["network_firewall_subnets-dr"] :
   k => v } : {}
 
   subnet_id = each.value
@@ -347,7 +347,7 @@ data "aws_route_table" "network_firewall_route_table" {
 
 resource "aws_route" "network_firewall_tgw" {
   for_each = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network-dr", false) ? {
-    for s in data.terraform_remote_state.network-firewall.outputs["sync_states"][0] :
+    for s in data.terraform_remote_state.network-firewall-dr.outputs["sync_states"][0] :
     s["availability_zone"] => s["attachment"]
   } : {}
 

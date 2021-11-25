@@ -6,11 +6,11 @@ locals {
 
   # Network Local Vars
   # https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html
-  vpc_name       = "${var.project}-${var.environment}-vpc"
+  vpc_name       = "${var.project}-${var.environment}-dr-vpc"
   vpc_cidr_block = "172.20.32.0/20"
   azs = [
-    "${var.region}a",
-    "${var.region}b",
+    "${var.region_secondary}a",
+    "${var.region_secondary}b",
   ]
 
   private_subnets_cidr = ["172.20.32.0/21"]
@@ -47,14 +47,14 @@ locals {
     # Allow / Deny VPC private subnets inbound default traffic
     #
     default_inbound = [
-      {
-        rule_number = 900 # shared pritunl vpn server
-        rule_action = "allow"
-        from_port   = 0
-        to_port     = 65535
-        protocol    = "all"
-        cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
-      },
+      #{
+      #  rule_number = 900 # shared pritunl vpn server
+      #  rule_action = "allow"
+      #  from_port   = 0
+      #  to_port     = 65535
+      #  protocol    = "all"
+      #  cidr_block  = "${data.terraform_remote_state.tools-vpn-server.outputs.instance_private_ip}/32"
+      #},
       {
         rule_number = 910 # vault hvn vpc
         rule_action = "allow"
@@ -98,69 +98,44 @@ locals {
   # Data source definitions
   #
 
-  # shared
-  shared-vpcs = {
-    shared-base = {
+  # shared-dr
+  shared-dr-vpcs = {
+    shared-dr-base = {
       region  = var.region
       profile = "${var.project}-shared-devops"
       bucket  = "${var.project}-shared-terraform-backend"
-      key     = "shared/network/terraform.tfstate"
+      key     = "shared/network-dr/terraform.tfstate"
     }
   }
 
-  # network
-  network-vpcs = {
-    network-firewall = {
+  # network-dr
+  network-dr-vpcs = {
+    network-firewall-dr = {
       region  = var.region
       profile = "${var.project}-network-devops"
       bucket  = "${var.project}-network-terraform-backend"
-      key     = "network/network-firewall/terraform.tfstate"
+      key     = "network/network-firewall-dr/terraform.tfstate"
     }
   }
 
-  # apps-devstg
-  apps-devstg-vpcs = {
-    apps-devstg-base = {
+  # apps-devstg-dr
+  apps-devstg-dr-vpcs = {
+    apps-devstg-k8s-eks-dr = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
-      key     = "apps-devstg/network/terraform.tfstate"
-    }
-    apps-devstg-k8s-eks = {
-      region  = var.region
-      profile = "${var.project}-apps-devstg-devops"
-      bucket  = "${var.project}-apps-devstg-terraform-backend"
-      key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
-    }
-    apps-devstg-eks-demoapps = {
-      region  = var.region
-      profile = "${var.project}-apps-devstg-devops"
-      bucket  = "${var.project}-apps-devstg-terraform-backend"
-      key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
+      key     = "apps-devstg/k8s-eks-dr/network/terraform.tfstate"
     }
   }
 
-  # apps-prd
-  apps-prd-vpcs = {
-    apps-prd-base = {
-      region  = var.region
-      profile = "${var.project}-apps-prd-devops"
-      bucket  = "${var.project}-apps-prd-terraform-backend"
-      key     = "apps-prd/network/terraform.tfstate"
-    }
-    #apps-prd-k8s-eks = {
-    #  region  = var.region
-    # profile = "${var.project}-apps-prd-devops"
-    #  bucket  = "${var.project}-apps-prd-terraform-backend"
-    # key     = "apps-prd/k8s-eks/network/terraform.tfstate"
-    #}
-  }
+  # apps-prd-dr
+  apps-prd-dr-vpcs = {}
 
   datasources-vpcs = merge(
-    data.terraform_remote_state.network-vpcs, # network
-    #data.terraform_remote_state.shared-vpcs,  # shared
-    #data.terraform_remote_state.apps-devstg-vpcs, # apps-devstg-vpcs
-    data.terraform_remote_state.apps-prd-vpcs, # apps-prd-vpcs
+    data.terraform_remote_state.network-dr-vpcs,     # network-dr
+    data.terraform_remote_state.shared-dr-vpcs,      # shared-dr
+    data.terraform_remote_state.apps-devstg-dr-vpcs, # apps-devstg-dr
+    data.terraform_remote_state.apps-prd-dr-vpcs,    # apps-prd-dr
   )
 }
 

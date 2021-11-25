@@ -123,10 +123,10 @@ data "terraform_remote_state" "shared-dr-vpcs" {
   }
 }
 
-# VPC remote states for apps-devstg
-data "terraform_remote_state" "apps-devstg-vpcs" {
+# VPC remote states for apps-devstg-dr
+data "terraform_remote_state" "apps-devstg-dr-vpcs" {
 
-  for_each = local.apps-devstg-vpcs
+  for_each = local.apps-devstg-dr-vpcs
 
   backend = "s3"
 
@@ -138,10 +138,10 @@ data "terraform_remote_state" "apps-devstg-vpcs" {
   }
 }
 
-# VPC remote states for apps-prd
-data "terraform_remote_state" "apps-prd-vpcs" {
+# VPC remote states for apps-prd-dr
+data "terraform_remote_state" "apps-prd-dr-vpcs" {
 
-  for_each = local.apps-prd-vpcs
+  for_each = local.apps-prd-dr-vpcs
 
   backend = "s3"
 

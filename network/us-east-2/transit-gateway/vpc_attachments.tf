@@ -143,7 +143,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd-dr" {
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
 
   for_each = {
-    for k, v in data.terraform_remote_state.apps-prd-vpcs :
+    for k, v in data.terraform_remote_state.apps-prd-dr-vpcs :
     k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
   }
 
