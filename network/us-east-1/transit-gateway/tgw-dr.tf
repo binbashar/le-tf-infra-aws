@@ -6,5 +6,5 @@ resource "aws_ec2_transit_gateway_peering_attachment" "tgw-dr" {
   peer_region             = var.region_secondary
   peer_transit_gateway_id = data.terraform_remote_state.tgw-dr.outputs.tgw_id
 
-  tags = local.tags
+  tags = merge({ Name = "tgw - tgw-dr" }, local.tags)
 }
