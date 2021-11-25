@@ -156,10 +156,44 @@ data "terraform_remote_state" "apps-prd-vpcs" {
   }
 }
 
+#
+# Secondary region
+#
+
+# VPC remote states for share-dr
+data "terraform_remote_state" "shared-dr-vpcs" {
+
+  for_each = local.shared-dr-vpcs
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
+  }
+}
+
 # VPC remote states for network-dr
 data "terraform_remote_state" "network-dr-vpcs" {
 
   for_each = local.network-dr-vpcs
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
+  }
+}
+
+# VPC remote states for apps-devstg-dr
+data "terraform_remote_state" "apps-devstg-dr-vpcs" {
+
+  for_each = local.apps-devstg-dr-vpcs
 
   backend = "s3"
 
