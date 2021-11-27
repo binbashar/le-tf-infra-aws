@@ -92,10 +92,7 @@ data "terraform_remote_state" "network-vpcs" {
 # VPC remote states for apps-devstg
 data "terraform_remote_state" "apps-devstg-vpcs" {
 
-  for_each = {
-    for k, v in local.apps-devstg-vpcs :
-    k => v if !v["tgw"]
-  }
+  for_each = local.apps-devstg-vpcs
 
   backend = "s3"
 
@@ -110,10 +107,7 @@ data "terraform_remote_state" "apps-devstg-vpcs" {
 # VPC remote states for apps-devstg-dr
 data "terraform_remote_state" "apps-devstg-dr-vpcs" {
 
-  for_each = {
-    for k, v in local.apps-devstg-dr-vpcs :
-    k => v if !v["tgw"]
-  }
+  for_each = local.apps-devstg-dr-vpcs
 
   backend = "s3"
 
@@ -128,10 +122,7 @@ data "terraform_remote_state" "apps-devstg-dr-vpcs" {
 # VPC remote states for apps-prd
 data "terraform_remote_state" "apps-prd-vpcs" {
 
-  for_each = {
-    for k, v in local.apps-prd-vpcs :
-    k => v if !v["tgw"]
-  }
+  for_each = local.apps-prd-vpcs
 
   backend = "s3"
 
@@ -146,10 +137,7 @@ data "terraform_remote_state" "apps-prd-vpcs" {
 # VPC remote states for apps-prd-dr
 data "terraform_remote_state" "apps-prd-dr-vpcs" {
 
-  for_each = {
-    for k, v in local.apps-prd-dr-vpcs :
-    k => v if !v["tgw"]
-  }
+  for_each = local.apps-prd-dr-vpcs
 
   backend = "s3"
 
@@ -164,10 +152,7 @@ data "terraform_remote_state" "apps-prd-dr-vpcs" {
 # VPC remote states for apps-devstg-dr
 data "terraform_remote_state" "shared-dr-vpcs" {
 
-  for_each = {
-    for k, v in local.shared-dr-vpcs :
-    k => v if !v["tgw"]
-  }
+  for_each = local.shared-dr-vpcs
 
   backend = "s3"
 

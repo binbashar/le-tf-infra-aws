@@ -6,7 +6,7 @@ module "vpc_peering_apps_devstg_to_shared" {
 
   for_each = {
     for k, v in local.apps-devstg-vpcs :
-    k => v if !v["tgw"]
+    k => v if var.enable_tgw != true
   }
 
   providers = {
@@ -40,7 +40,7 @@ module "vpc_peering_apps_devstg_dr_to_shared" {
 
   for_each = {
     for k, v in local.apps-devstg-dr-vpcs :
-    k => v if !v["tgw"]
+    k => v if var.enable_tgw != true
   }
 
   providers = {
@@ -74,7 +74,7 @@ module "vpc_peering_apps_prd_to_shared" {
 
   for_each = {
     for k, v in local.apps-prd-vpcs :
-    k => v if !v["tgw"]
+    k => v if var.enable_tgw != true
   }
 
   providers = {
@@ -108,7 +108,7 @@ module "vpc_peering_apps_prd_dr_to_shared" {
 
   for_each = {
     for k, v in local.apps-prd-dr-vpcs :
-    k => v if !v["tgw"]
+    k => v if var.enable_tgw != true
   }
 
   providers = {
@@ -142,7 +142,7 @@ module "vpc_peering_shared_dr_to_shared" {
 
   for_each = {
     for k, v in local.shared-dr-vpcs :
-    k => v if !v["tgw"]
+    k => v if var.enable_tgw != true
   }
 
   providers = {
