@@ -5,7 +5,7 @@ metrics = [
     alarm_description = "Alarms when an unauthorized API call is made."
     filter_pattern    = "{ ($.errorCode = \"*UnauthorizedOperation\") || ($.errorCode = \"AccessDenied*\") }"
     alarm_period      = "120"
-    alarm_threshold   = "6"
+    alarm_threshold   = "10"
   },
   {
     metric_name       = "S3BucketActivityEventCount"
