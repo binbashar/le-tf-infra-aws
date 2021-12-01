@@ -56,7 +56,7 @@ Commands:
   tf           Run Terraform commands in a custom containerized...
 ```
 
-#### Layer context Terraform commands 
+#### Layer context Terraform commands
 ```shell
 ╭─    ~/B/r/L/ref-architecture/le-tf-infra-aws  on   feature/guarduty-update · ✔  at 12:13:36 
 ╰─ leverage terraform
