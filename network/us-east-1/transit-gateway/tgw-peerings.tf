@@ -21,6 +21,18 @@ resource "aws_ec2_transit_gateway_route_table_association" "tgw-dr-association" 
 # Add routes
 
 #
+# network-dr
+#
+resource "aws_ec2_transit_gateway_route" "network-dr" {
+
+  for_each = { for k, v in local.network-dr-vpcs : k => v if var.enable_tgw && try(data.terraform_remote_state.tgw-dr.outputs.tgw_id != null, false) }
+
+  destination_cidr_block         = data.terraform_remote_state.network-dr-vpcs[each.key].outputs.vpc_cidr_block
+  transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
+  transit_gateway_attachment_id  = try(aws_ec2_transit_gateway_peering_attachment.tgw-dr[0].id, null)
+}
+
+#
 # shared-dr
 #
 resource "aws_ec2_transit_gateway_route" "shared-dr" {

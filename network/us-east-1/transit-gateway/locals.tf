@@ -84,7 +84,7 @@ locals {
 
   # network-dr
   network-dr-vpcs = {
-    network-base = {
+    network-base-dr = {
       region  = var.region
       profile = "${var.project}-network-devops"
       bucket  = "${var.project}-network-terraform-backend"

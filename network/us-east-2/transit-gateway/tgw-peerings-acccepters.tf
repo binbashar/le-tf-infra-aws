@@ -13,3 +13,53 @@ resource "aws_ec2_transit_gateway_route_table_association" "tgw-association" {
   transit_gateway_route_table_id = module.tgw-dr[0].transit_gateway_route_table_id
   transit_gateway_attachment_id  = try(aws_ec2_transit_gateway_peering_attachment_accepter.tgw-accepters.id, null)
 }
+
+# Add routes
+
+#
+# network
+#
+resource "aws_ec2_transit_gateway_route" "network" {
+
+  for_each = { for k, v in local.network-vpcs : k => v if var.enable_tgw && try(data.terraform_remote_state.tgw.outputs.tgw_id != null, false) }
+
+  destination_cidr_block         = data.terraform_remote_state.network-vpcs[each.key].outputs.vpc_cidr_block
+  transit_gateway_route_table_id = module.tgw-dr[0].transit_gateway_route_table_id
+  transit_gateway_attachment_id  = try(aws_ec2_transit_gateway_peering_attachment_accepter.tgw-accepters.id, null)
+}
+
+#
+# shared
+#
+resource "aws_ec2_transit_gateway_route" "shared" {
+
+  for_each = { for k, v in local.shared-vpcs : k => v if var.enable_tgw && try(data.terraform_remote_state.tgw.outputs.tgw_id != null, false) }
+
+  destination_cidr_block         = data.terraform_remote_state.shared-vpcs[each.key].outputs.vpc_cidr_block
+  transit_gateway_route_table_id = module.tgw-dr[0].transit_gateway_route_table_id
+  transit_gateway_attachment_id  = try(aws_ec2_transit_gateway_peering_attachment_accepter.tgw-accepters.id, null)
+}
+
+#
+# apps-devstg
+#
+resource "aws_ec2_transit_gateway_route" "apps-devstg" {
+
+  for_each = { for k, v in local.apps-devstg-vpcs : k => v if var.enable_tgw && try(data.terraform_remote_state.tgw.outputs.tgw_id != null, false) }
+
+  destination_cidr_block         = data.terraform_remote_state.apps-devstg-vpcs[each.key].outputs.vpc_cidr_block
+  transit_gateway_route_table_id = module.tgw-dr[0].transit_gateway_route_table_id
+  transit_gateway_attachment_id  = try(aws_ec2_transit_gateway_peering_attachment_accepter.tgw-accepters.id, null)
+}
+
+#
+# apps-prd
+#
+resource "aws_ec2_transit_gateway_route" "apps-prd" {
+
+  for_each = { for k, v in local.apps-prd-vpcs : k => v if var.enable_tgw && try(data.terraform_remote_state.tgw.outputs.tgw_id != null, false) }
+
+  destination_cidr_block         = data.terraform_remote_state.apps-prd-vpcs[each.key].outputs.vpc_cidr_block
+  transit_gateway_route_table_id = module.tgw-dr[0].transit_gateway_route_table_id
+  transit_gateway_attachment_id  = try(aws_ec2_transit_gateway_peering_attachment_accepter.tgw-accepters.id, null)
+}
