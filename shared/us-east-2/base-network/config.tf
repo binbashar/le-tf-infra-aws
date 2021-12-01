@@ -60,6 +60,7 @@ data "terraform_remote_state" "tools-vpn-server" {
 
 # VPC remote states for network
 data "terraform_remote_state" "network-vpcs" {
+
   for_each = local.network-vpcs
 
   backend = "s3"
@@ -74,10 +75,8 @@ data "terraform_remote_state" "network-vpcs" {
 
 # VPC remote states for shared
 data "terraform_remote_state" "shared-vpcs" {
-  for_each = {
-    for k, v in local.shared-vpcs :
-    k => v if !v["tgw"]
-  }
+
+  for_each = local.shared-vpcs
 
   backend = "s3"
 
@@ -92,10 +91,7 @@ data "terraform_remote_state" "shared-vpcs" {
 # VPC remote states for apps-devstg-dr
 data "terraform_remote_state" "apps-devstg-dr-vpcs" {
 
-  for_each = {
-    for k, v in local.apps-devstg-dr-vpcs :
-    k => v if !v["tgw"]
-  }
+  for_each = local.apps-devstg-dr-vpcs
 
   backend = "s3"
 
@@ -110,10 +106,7 @@ data "terraform_remote_state" "apps-devstg-dr-vpcs" {
 # VPC remote states for apps-prd-dr
 data "terraform_remote_state" "apps-prd-dr-vpcs" {
 
-  for_each = {
-    for k, v in local.apps-prd-dr-vpcs :
-    k => v if !v["tgw"]
-  }
+  for_each = local.apps-prd-dr-vpcs
 
   backend = "s3"
 

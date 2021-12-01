@@ -133,7 +133,6 @@ locals {
       profile = "${var.project}-shared-devops"
       bucket  = "${var.project}-shared-terraform-backend"
       key     = "shared/network/terraform.tfstate"
-      tgw     = false
     }
   }
 
@@ -144,7 +143,6 @@ locals {
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/k8s-eks-dr/network/terraform.tfstate"
-      tgw     = false
     }
   }
 
@@ -159,7 +157,6 @@ locals {
       profile = var.profile
       bucket  = "${var.project}-shared-terraform-backend"
       key     = "shared/network-dr/terraform.tfstate"
-      tgw     = false
     }
   }
 
