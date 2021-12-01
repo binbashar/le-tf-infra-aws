@@ -28,7 +28,7 @@ module "tgw-dr" {
   create_transit_gateway_route_table_association_and_propagation = var.enable_network_firewall ? false : true
 
   config = merge(
-    # network private
+    # network-dr private
     lookup(var.enable_vpc_attach, "network-dr", false) ? {
       for k, v in data.terraform_remote_state.network-dr-vpcs : v.outputs.vpc_id => {
         vpc_id                            = null
@@ -47,7 +47,7 @@ module "tgw-dr" {
         ]
       }
     } : {},
-    # apps-devstg private
+    # apps-devstg-dr private
     lookup(var.enable_vpc_attach, "apps-devstg-dr", false) ? {
       for k, v in data.terraform_remote_state.apps-devstg-dr-vpcs : v.outputs.vpc_id => {
         vpc_id                            = null
@@ -60,7 +60,7 @@ module "tgw-dr" {
         static_routes                     = null
       }
     } : {},
-    # apps-prd private
+    # apps-prd-dr private
     lookup(var.enable_vpc_attach, "apps-prd-dr", false) ? {
       for k, v in data.terraform_remote_state.apps-prd-dr-vpcs : v.outputs.vpc_id => {
         vpc_id                            = null
@@ -73,7 +73,7 @@ module "tgw-dr" {
         static_routes                     = null
       }
     } : {},
-    # shared private
+    # shared-dr private
     lookup(var.enable_vpc_attach, "shared-dr", false) ? {
       for k, v in data.terraform_remote_state.shared-dr-vpcs : v.outputs.vpc_id => {
         vpc_id                            = null

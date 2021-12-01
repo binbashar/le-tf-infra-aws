@@ -5,7 +5,7 @@ module "vpc_peering_apps_prd_to_eks_clusters" {
 
   for_each = {
     for k, v in local.apps-prd-vpcs :
-    k => v if !v["tgw"] && k != "apps-prd-base" # No peerings when TGW enabled or against the base network
+    k => v if !var.enable_tgw && k != "apps-prd-base" # No peerings when TGW enabled or against the base network
   }
 
   providers = {
