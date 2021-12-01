@@ -2,7 +2,7 @@
 # Assumable Role Cross-Account: OrganizationAccountAccessRole
 #
 module "iam_assumable_role_oaar" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.1.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.7.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.root_account_id}:root"
