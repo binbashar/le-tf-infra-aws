@@ -1,6 +1,17 @@
 #
 # users.tf sensitive data output (alphabetically ordered)
 #
+output "user_angelo_fenoglio_name" {
+  description = "The user's name"
+  value       = module.user_angelo_fenoglio.iam_user_name
+}
+
+/*output "user_angelo_fenoglio_login_profile_encrypted_password" {
+  description = "The encrypted password, base64 encoded"
+  value       = module.user_angelo_fenoglio.iam_user_login_profile_encrypted_password
+  sensitive   = true
+}*/
+
 output "user_diego_ojeda_name" {
   description = "The user's name"
   value       = module.user_diego_ojeda.iam_user_name
@@ -20,6 +31,17 @@ output "user_exequiel_barrirero_name" {
 /*output "user_exequiel_barrirero_login_profile_encrypted_password" {
   description = "The encrypted password, base64 encoded"
   value       = module.user_exequiel_barrirero.iam_user_login_profile_encrypted_password
+  sensitive   = true
+}*/
+
+output "user_jose_peinado_name" {
+  description = "The user's name"
+  value       = module.user_jose_peinado.iam_user_name
+}
+
+/*output "user_jose_peinado_login_profile_encrypted_password" {
+  description = "The encrypted password, base64 encoded"
+  value       = module.user_jose_peinado.iam_user_login_profile_encrypted_password
   sensitive   = true
 }*/
 
