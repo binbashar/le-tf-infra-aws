@@ -15,7 +15,7 @@
 # Network Firewall VPC attachment - Inspection subnets (private)
 module "tgw_vpc_attachments_and_subnet_routes_network_firewall" {
 
-  source = "git::https:github.com/github.com/binbashar/terraform-aws-transit-gateway?ref=feature/appliance_mode_support"
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.6.0"
 
   for_each = {
     for k, v in {
@@ -57,7 +57,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network_firewall" {
 # network VPC attachments (private)
 module "tgw_vpc_attachments_and_subnet_routes_network" {
 
-  source = "git::https:github.com/github.com/binbashar/terraform-aws-transit-gateway?ref=feature/appliance_mode_support"
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.6.0"
 
   for_each = {
     for k, v in data.terraform_remote_state.network-vpcs :
@@ -98,7 +98,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network" {
 # apps-devstg VPC attachments
 module "tgw_vpc_attachments_and_subnet_routes_apps-devstg" {
 
-  source = "git::https:github.com/github.com/binbashar/terraform-aws-transit-gateway?ref=feature/appliance_mode_support"
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.6.0"
 
   for_each = {
     for k, v in data.terraform_remote_state.apps-devstg-vpcs :
@@ -143,7 +143,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-devstg" {
 # apps-prd VPC attachments
 module "tgw_vpc_attachments_and_subnet_routes_apps-prd" {
 
-  source = "git::https:github.com/github.com/binbashar/terraform-aws-transit-gateway?ref=feature/appliance_mode_support"
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.6.0"
 
   for_each = {
     for k, v in data.terraform_remote_state.apps-prd-vpcs :
@@ -188,8 +188,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd" {
 # shared VPC attachments
 module "tgw_vpc_attachments_and_subnet_routes_shared" {
 
-  source = "git::https:github.com/github.com/binbashar/terraform-aws-transit-gateway?ref=feature/appliance_mode_support"
-
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.6.0"
 
   for_each = {
     for k, v in data.terraform_remote_state.shared-vpcs :
