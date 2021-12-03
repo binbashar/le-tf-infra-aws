@@ -32,7 +32,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network_firewall" {
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
   create_transit_gateway_route_table_association_and_propagation = false
-  appliance_mode_support                                         = "enable"
+  vpc_attachment_appliance_mode_support                          = "enable"
 
   config = {
     (each.key) = {
@@ -73,7 +73,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network" {
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
   create_transit_gateway_route_table_association_and_propagation = false
-  appliance_mode_support                                         = "enable"
+  vpc_attachment_appliance_mode_support                          = "enable"
 
   config = {
     (each.key) = {
@@ -114,7 +114,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-devstg" {
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
   create_transit_gateway_route_table_association_and_propagation = false
-  appliance_mode_support                                         = "enable"
+  vpc_attachment_appliance_mode_support                          = "enable"
 
   config = {
     (each.key) = {
@@ -159,7 +159,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd" {
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
   create_transit_gateway_route_table_association_and_propagation = false
-  appliance_mode_support                                         = "enable"
+  vpc_attachment_appliance_mode_support                          = "enable"
 
   config = {
     (each.key) = {
@@ -204,7 +204,7 @@ module "tgw_vpc_attachments_and_subnet_routes_shared" {
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
   create_transit_gateway_route_table_association_and_propagation = false
-  appliance_mode_support                                         = "enable"
+  vpc_attachment_appliance_mode_support                          = "enable"
 
   config = {
     (each.key) = {
