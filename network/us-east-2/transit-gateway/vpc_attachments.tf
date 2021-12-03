@@ -15,7 +15,7 @@
 # Network Firewall VPC attachment - Inspection subnets (private)
 module "tgw_vpc_attachments_and_subnet_routes_network-firewall-dr" {
 
-  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.6.0"
 
   for_each = {
     for k, v in {
@@ -32,6 +32,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network-firewall-dr" {
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
   create_transit_gateway_route_table_association_and_propagation = false
+  vpc_attachment_appliance_mode_support                          = "enable"
 
   config = {
     (each.key) = {
@@ -56,7 +57,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network-firewall-dr" {
 # network VPC attachments (private)
 module "tgw_vpc_attachments_and_subnet_routes_network-dr" {
 
-  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.6.0"
 
   for_each = {
     for k, v in data.terraform_remote_state.network-dr-vpcs :
@@ -72,6 +73,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network-dr" {
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
   create_transit_gateway_route_table_association_and_propagation = false
+  vpc_attachment_appliance_mode_support                          = "enable"
 
   config = {
     (each.key) = {
@@ -96,7 +98,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network-dr" {
 # apps-devstg VPC attachments
 module "tgw_vpc_attachments_and_subnet_routes_apps-devstg-dr" {
 
-  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.6.0"
 
   for_each = {
     for k, v in data.terraform_remote_state.apps-devstg-dr-vpcs :
@@ -112,6 +114,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-devstg-dr" {
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
   create_transit_gateway_route_table_association_and_propagation = false
+  vpc_attachment_appliance_mode_support                          = "enable"
 
   config = {
     (each.key) = {
@@ -140,7 +143,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-devstg-dr" {
 # apps-prd VPC attachments
 module "tgw_vpc_attachments_and_subnet_routes_apps-prd-dr" {
 
-  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.6.0"
 
   for_each = {
     for k, v in data.terraform_remote_state.apps-prd-dr-vpcs :
@@ -156,6 +159,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd-dr" {
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
   create_transit_gateway_route_table_association_and_propagation = false
+  vpc_attachment_appliance_mode_support                          = "enable"
 
   config = {
     (each.key) = {
@@ -184,7 +188,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd-dr" {
 # shared VPC attachments
 module "tgw_vpc_attachments_and_subnet_routes_shared-dr" {
 
-  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.6.0"
 
   for_each = {
     for k, v in data.terraform_remote_state.shared-dr-vpcs :
@@ -200,6 +204,7 @@ module "tgw_vpc_attachments_and_subnet_routes_shared-dr" {
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
   create_transit_gateway_route_table_association_and_propagation = false
+  vpc_attachment_appliance_mode_support                          = "enable"
 
   config = {
     (each.key) = {
