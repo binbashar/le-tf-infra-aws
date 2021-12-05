@@ -3,7 +3,7 @@
 ## Instructions
 1. Open `terraform.tfvars
 2. Locate the line where the `customers` list is
-3. Add an entry to that list in order to onboard a new customer / user / project 
+3. Add an entry to that list in order to onboard a new customer / user / project
     1. For instance, "jane.doe" and "john.doe" can be added to the list as follows:
         ```
         customers = [
@@ -12,11 +12,11 @@
           #EOL#
         ]
         ```
-    2. Entries on this list determine names of AWS resource that will be created 
+    2. Entries on this list determine names of AWS resource that will be created
        (e.g. S3 bucket name, IAM user/policy/role name). Because of that, the only characters allowed
        are: lowercase letters, numbers, dots (.), and hyphens (-).
-    3. The `#EOL#` mark at the end of the list could help with making this process more automated. 
-       The idea is to replace that mark using simple bash commands such as this 
+    3. The `#EOL#` mark at the end of the list could help with making this process more automated.
+       The idea is to replace that mark using simple bash commands such as this
        one: `cat terraform.tfvars | gsed 's/#EOL#/\"mike\",\n  #EOL#/'`
 4. Run Terraform
     1. Run `leverage tf init` to initialize this layer (if necessary)
@@ -24,12 +24,12 @@
     3. Run `leverage tf apply` to create/update/delete actual resources
 5. After the last command succeeds, it should reveal the output of this layer
     1. Locate the user that was created; the one that matches the entry you added to the list
-    2. Grab the AWS IAM programmatic credentials and the AWS IAM role that matches 
+    2. Grab the AWS IAM programmatic credentials and the AWS IAM role that matches
        your entry. You will need *securely* share these with the actual customer
     3. Example Output:
       ```
       Outputs:
-  
+
       customers_buckets = {
         "jane.doe" = "bb-cfs-customer-jane.doe-files"
         "john.doe" = "bb-cfs-customer-john.doe-files"
@@ -51,16 +51,16 @@
         "john.doe" = "cfs-user-john.doe"
       }
       ```
-       
+
 6. Setting up credentials
    1. 💻 🔑 **Method 1:** The bucket is created in the `binbash-apps-devstg` account, so in order to list the
-      bucket you would need to assume a role that is also in `binbash-apps-devstg` account. 
+      bucket you would need to assume a role that is also in `binbash-apps-devstg` account.
       The role is also an output of the layer.
-      
-      So to test access with a bucket list command 
-      `aws s3 ls s3://bb-cfs-customer-jane.doe-files --profile bb-apps-devstg-jane.doe` and to make 
+
+      So to test access with a bucket list command
+      `aws s3 ls s3://bb-cfs-customer-jane.doe-files --profile bb-apps-devstg-jane.doe` and to make
       it work you would have to create a corresponding profile in the `./aws/bb/config` file
-      
+
       ```
       [profile bb-apps-devstg-jane.doe]
       output=json
@@ -68,8 +68,8 @@
       role_arn=arn:aws:iam::XXXXXXXXXXXX:role/cfs-role-jane.doe
       source_profile=bb-security-jane.doe
       ```
-      
-      and also put the programmatic credentials of the customer in the `./aws/bb/credentials`  file, 
+
+      and also put the programmatic credentials of the customer in the `./aws/bb/credentials`  file,
 
       ```
       [bb-security-jane.doe]
@@ -80,8 +80,8 @@
       ```
 
       similar to how the [Leverage cli is configured](https://leverage.binbash.com.ar/user-guide/features/identities/credentials/).
-  
-    2. 💻 🔑 **Method 2** : Another way to test the credentials without setting those profiles 
+
+    2. 💻 🔑 **Method 2** : Another way to test the credentials without setting those profiles
        would be:
 
       ```
@@ -93,10 +93,10 @@
           --role-session-name any-session-name-here \
           --duration-seconds 3600
       ```
-      
-      This command should output temporary credentials that you can then use to list the bucket. 
+
+      This command should output temporary credentials that you can then use to list the bucket.
       Then on another terminal tab you could run:
-      
+
       ```
       export AWS_ACCESS_KEY_ID=[FROM_THE_OUTPUT_OF_ASSUME_ROLE_CMD]
       export AWS_SECRET_ACCESS_KEY=[FROM_THE_OUTPUT_OF_ASSUME_ROLE_CMD]
