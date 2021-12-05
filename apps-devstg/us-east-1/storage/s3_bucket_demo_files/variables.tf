@@ -1,9 +1,6 @@
-#
-# config/backend.config
-#
-#================================#
-# Terraform AWS Backend Settings #
-#================================#
+#==============================================================#
+# Terraform AWS Backend Settings (shared/config/backend.tfvars #
+#==============================================================#
 variable "region" {
   type        = string
   description = "AWS Region"
@@ -29,12 +26,9 @@ variable "encrypt" {
   description = "Enable AWS DynamoDB with server side encryption"
 }
 
-#
-# config/base.config
-#
-#=============================#
-# Project Variables           #
-#=============================#
+#==========================================#
+# Project Variables (config/common.tfvars) #
+#==========================================#
 variable "project" {
   type        = string
   description = "Project Name"
@@ -50,15 +44,9 @@ variable "environment" {
   description = "Environment Name"
 }
 
-#
-# config/extra.config
-#
-#=============================#
-# Accounts & Extra Vars       #
-#=============================#
 variable "region_secondary" {
   type        = string
-  description = "AWS Scondary Region for HA"
+  description = "AWS Secondary Region for HA"
 }
 
 variable "root_account_id" {
@@ -89,4 +77,27 @@ variable "appsdevstg_account_id" {
 variable "appsprd_account_id" {
   type        = string
   description = "Account: Prod Modules & Libs"
+}
+
+variable "vault_address" {
+  type        = string
+  description = "Vault Address"
+}
+
+variable "vault_token" {
+  type        = string
+  description = "Vault Token"
+}
+
+#=================#
+# Layer Variables #
+#=================#
+variable "prefix" {
+  type    = string
+  default = "cfs"
+}
+
+variable "customers" {
+  type    = list(string)
+  default = []
 }

@@ -25,6 +25,7 @@ id_dsa
 !/security/global/base-identities/keys
 !/root/global/base-identities/keys
 !/shared/global/base-identities/keys
+!/apps-devstg/us-east-1/storage/s3_bucket_hipaa --/keys
 
 # OS generated files #
 ######################
