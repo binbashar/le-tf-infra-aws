@@ -4,9 +4,7 @@ locals {
     Environment         = var.environment
     ProtectFromDeletion = "true"
   }
-}
 
-locals {
   # Data source definitions
   #
 

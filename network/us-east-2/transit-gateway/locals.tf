@@ -103,7 +103,6 @@ locals {
     #}
   }
 
-
   datasources-vpcs = merge(
     data.terraform_remote_state.network-dr-vpcs,     # network-dr
     data.terraform_remote_state.shared-dr-vpcs,      # shared-dr
