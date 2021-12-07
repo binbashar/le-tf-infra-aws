@@ -23,7 +23,7 @@ module "sftp_customer_user" {
   user_name                 = each.key
   role_name                 = "${each.key}-sftp-role"
   home_directory_bucket     = data.terraform_remote_state.apps-devstg-storage-s3-bucket[each.key].outputs.customers_buckets
-  home_directory_key_prefix = "sftp/"
+  home_directory_key_prefix = "/"
   allowed_actions = [
     "s3:GetObject",
     "s3:GetObjectACL",
