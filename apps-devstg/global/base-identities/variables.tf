@@ -90,3 +90,16 @@ variable "appsprd_account_id" {
   type        = string
   description = "Account: Prod Modules & Libs"
 }
+
+#=============================#
+# Hashicorp Vault Vars        #
+#=============================#
+variable "vault_address" {
+  type        = string
+  description = "Hashicorp vault api endpoint address"
+}
+
+variable "vault_token" {
+  type        = string
+  description = "Hashicorp vault admin token"
+}
