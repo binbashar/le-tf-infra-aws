@@ -1,7 +1,7 @@
 # S3 HIPAA buckets for File Sharing
 
 ## Instructions
-1. Open `terraform.tfvars
+1. Open `terraform.tfvars`
 2. Locate the line where the `customers` list is
 3. Add an entry to that list in order to onboard a new customer / user / project
     1. For instance, "jane.doe" and "john.doe" can be added to the list as follows:
