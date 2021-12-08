@@ -86,6 +86,11 @@ variable "appsprd_account_id" {
   description = "Account: Prod Modules & Libs"
 }
 
+variable "network_account_id" {
+  type        = string
+  description = "Account: Networking Resources"
+}
+
 variable "vault_address" {
   type        = string
   description = "Vault Address"
@@ -94,6 +99,16 @@ variable "vault_address" {
 variable "vault_token" {
   type        = string
   description = "Vault Token"
+}
+
+#===========================================#
+# Transit Gateway                           #
+#===========================================#
+
+variable "enable_tgw" {
+  description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = false
 }
 
 #===========================================#
