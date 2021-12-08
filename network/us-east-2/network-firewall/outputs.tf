@@ -15,12 +15,12 @@ output "vpc_cidr_block" {
 }
 
 # Subnets
-output "inspection_subnets" {
+output "inspection_subnets-dr" {
   description = "Map of AZ names to subnet IDs of inspection subnets"
   value       = module.inspection_private_subnets.az_subnet_ids
 }
 
-output "network_firewall_subnets" {
+output "network_firewall_subnets-dr" {
   description = "Map of AZ names to subnet IDs of network firewall subnets"
   value       = module.network_firewall_private_subnets.az_subnet_ids
 }
