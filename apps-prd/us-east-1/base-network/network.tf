@@ -49,12 +49,41 @@ locals {
       k => {
         service             = k
         service_type        = v
-        security_group_ids  = aws_security_group.kms_vpce[0].id
+        security_group_ids  = [aws_security_group.kms_vpce[0].id]
         private_dns_enabled = var.enable_kms_endpoint_private_dns
       } if var.enable_kms_endpoint
-    }
+    },
+    # SSM
+    { for k, v in { ssm = "Interface" } :
+      k => {
+        service             = k
+        service_type        = v
+        subnet_ids          = module.vpc.private_subnets
+        security_group_ids  = [aws_security_group.ssm_vpce[0].id]
+        private_dns_enabled = true
+      } if var.enable_ssm_endpoints
+    },
+    { for k, v in { ec2messages = "Interface" } :
+      k => {
+        service             = k
+        service_type        = v
+        subnet_ids          = module.vpc.private_subnets
+        security_group_ids  = [aws_security_group.ssm_vpce[0].id]
+        private_dns_enabled = true
+      } if var.enable_ssm_endpoints
+    },
+    { for k, v in { ssmmessages = "Interface" } :
+      k => {
+        service             = k
+        service_type        = v
+        subnet_ids          = module.vpc.private_subnets
+        security_group_ids  = [aws_security_group.ssm_vpce[0].id]
+        private_dns_enabled = true
+      } if var.enable_ssm_endpoints
+    },
   )
 }
+
 module "vpc_endpoints" {
   source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.11.0"
 
@@ -79,6 +108,34 @@ module "vpc_endpoints" {
 resource "aws_security_group" "kms_vpce" {
   count       = var.enable_kms_endpoint ? 1 : 0
   name        = "kms_vpce"
+  description = "Allow TLS inbound traffic"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    description = "TLS from VPC"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [local.vpc_cidr_block]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = local.tags
+}
+
+#
+# SSM VPC Endpoint: Security Group
+#
+resource "aws_security_group" "ssm_vpce" {
+  #count       = var.enable_kms_endpoint ? 1 : 0
+  count       = 1
+  name        = "ssm_vpce"
   description = "Allow TLS inbound traffic"
   vpc_id      = module.vpc.vpc_id
 

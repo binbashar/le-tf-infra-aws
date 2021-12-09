@@ -89,7 +89,7 @@ data "terraform_remote_state" "apps-prd-vpcs" {
 
   for_each = {
     for k, v in local.apps-prd-vpcs :
-    k => v if !v["tgw"]
+    k => v if var.enable_tgw
   }
 
   backend = "s3"
