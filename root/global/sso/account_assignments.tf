@@ -14,36 +14,36 @@ module "account_assignments" {
     },
     {
       account             = var.shared_account_id,
-      permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn,
-      permission_set_name = "DevOps",
+      permission_set_arn  = module.permission_sets.permission_sets["Administrator"].arn,
+      permission_set_name = "Administrator",
       principal_type      = "GROUP",
       principal_name      = "AWS_Administrators"
     },
     {
       account             = var.security_account_id,
-      permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn,
-      permission_set_name = "DevOps",
+      permission_set_arn  = module.permission_sets.permission_sets["Administrator"].arn,
+      permission_set_name = "Administrator",
       principal_type      = "GROUP",
       principal_name      = "AWS_Administrators"
     },
     {
       account             = var.network_account_id,
-      permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn,
-      permission_set_name = "DevOps",
+      permission_set_arn  = module.permission_sets.permission_sets["Administrator"].arn,
+      permission_set_name = "Administrator",
       principal_type      = "GROUP",
       principal_name      = "AWS_Administrators"
     },
     {
       account             = var.appsdevstg_account_id,
-      permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn,
-      permission_set_name = "DevOps",
+      permission_set_arn  = module.permission_sets.permission_sets["Administrator"].arn,
+      permission_set_name = "Administrator",
       principal_type      = "GROUP",
       principal_name      = "AWS_Administrators"
     },
     {
       account             = var.appsprd_account_id,
-      permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn,
-      permission_set_name = "DevOps",
+      permission_set_arn  = module.permission_sets.permission_sets["Administrator"].arn,
+      permission_set_name = "Administrator",
       principal_type      = "GROUP",
       principal_name      = "AWS_Administrators"
     },

@@ -59,6 +59,7 @@ data "aws_iam_policy_document" "devops" {
       "support:*",
       "tag:*",
       "trustedadvisor:*",
+      "transfer:*",
       "vpc:*",
       "waf:*",
       "wafv2:*",
