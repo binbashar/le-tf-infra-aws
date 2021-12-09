@@ -10,13 +10,13 @@
 #  - MFA Delete: TBD -- For the sake of data safety, but can be easily set up at any time
 # -----------------------------------------------------------------------------
 module "customer_sftp" {
-  source        = "github.com/binbashar/terraform-aws-sftp.git?ref=1.1"
-  for_each      = toset(var.customers)
+  source   = "github.com/binbashar/terraform-aws-sftp.git?ref=1.1"
+  for_each = toset(var.customers)
 
   name          = "${var.project}-${var.prefix}-customer-${each.key}-files"
   iam_role_name = "sftp-logging-role"
 
-  tags          = local.tags
+  tags = local.tags
 }
 
 # resource "aws_route53_record" "main" {

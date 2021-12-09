@@ -23,10 +23,10 @@ provider "aws" {
 # created in binbash-shared account
 #
 provider "aws" {
-  alias                     = "shared-route53"
-  region                    = var.region
-  profile                   = "${var.project}-shared-devops"
-  shared_credentials_file   = "~/.aws/${var.project}/config"
+  alias                   = "shared-route53"
+  region                  = var.region
+  profile                 = "${var.project}-shared-devops"
+  shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
 #=============================#
@@ -53,7 +53,7 @@ data "terraform_remote_state" "shared-dns" {
   config = {
     region  = var.region
     profile = "${var.project}-shared-devops"
-    bucket  = var.bucket
+    bucket  = "${var.project}-shared-terraform-backend"
     key     = "shared/dns/binbash.com.ar/terraform.tfstate"
   }
 }
@@ -65,6 +65,6 @@ data "terraform_remote_state" "apps-devstg-storage-s3-bucket" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${environment}/storage-s3-bucket-hipaa/terraform.tfstate"
+    key     = "${var.environment}/storage-s3-bucket-hipaa/terraform.tfstate"
   }
 }
