@@ -40,7 +40,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/storage-s3-bucket-hipaa/terraform.tfstate"
+    key = "apps-devstg/storage-file-transfer-sftp/terraform.tfstate"
   }
 }
 
@@ -52,7 +52,7 @@ data "terraform_remote_state" "shared-dns" {
 
   config = {
     region  = var.region
-    profile = var.profile
+    profile = "${var.project}-shared-devops"
     bucket  = var.bucket
     key     = "shared/dns/binbash.com.ar/terraform.tfstate"
   }

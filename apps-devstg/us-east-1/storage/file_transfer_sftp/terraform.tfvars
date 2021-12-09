@@ -3,6 +3,5 @@
 #
 customers = [
   "jane.doe",
-  "john.doe"
   #EOL#
 ]
