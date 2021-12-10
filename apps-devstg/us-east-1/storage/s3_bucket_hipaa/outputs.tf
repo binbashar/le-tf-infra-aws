@@ -6,6 +6,14 @@ output "customers_buckets" {
   }
 }
 
+output "customers_buckets_arn" {
+  description = "Customers' buckets ARN"
+
+  value = {
+    for k, mod in module.customers_buckets : k => mod.s3_bucket_arn
+  }
+}
+
 output "customers_roles" {
   description = "Customers' roles"
 
