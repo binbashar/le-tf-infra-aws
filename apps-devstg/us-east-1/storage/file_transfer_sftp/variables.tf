@@ -97,7 +97,15 @@ variable "prefix" {
   default = "cfs"
 }
 
+# variable "customers" {
+#   type    = list(string)
+#   default = []
+# }
+
 variable "customers" {
-  type    = list(string)
-  default = []
+  type = map(object({
+    username       = string
+    ssh_public_key = string
+  }))
+  default = {}
 }
