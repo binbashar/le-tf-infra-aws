@@ -9,7 +9,7 @@ module "sftp_customer_user" {
   sftp_server_id  = module.customer_sftp.sftp_server_id
   ssh_public_keys = [each.value["ssh_public_key"]]
   user_name       = each.value["username"]
-  role_name       = "${each.value["username"]}-sftp-role"
+  role_name       = "${var.prefix}-sftp-${each.value["username"]}"
 
   home_directory_bucket = {
     id  = data.terraform_remote_state.apps-devstg-storage-s3-bucket.outputs.customers_buckets[each.value["username"]],
