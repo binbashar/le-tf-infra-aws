@@ -119,3 +119,8 @@ variable "server_host_key" {
   type    = string
   default = null
 }
+
+variable "base_domain" {
+  type    = string
+  default = "binbash.com.ar"
+}

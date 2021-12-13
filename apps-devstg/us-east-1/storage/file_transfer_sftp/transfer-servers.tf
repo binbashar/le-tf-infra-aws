@@ -31,7 +31,7 @@ module "customer_sftp" {
 resource "aws_route53_record" "main" {
   provider = aws.shared
 
-  name    = "${var.project}-${var.prefix}-customers-sftp.binbash.com.ar"
+  name    = "${var.project}-${var.prefix}-customers-sftp.${var.base_domain}"
   zone_id = data.terraform_remote_state.shared-dns.outputs.aws_public_zone_id[0]
   type    = "CNAME"
   ttl     = "3600"
