@@ -53,14 +53,8 @@ use to make changes on AWS.
 * Read the following [AWS page doc](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html) 
   to understand how to set up a profile to assume a role
 
-#### How?
-Install the `leverage` cli following its [instructions](https://github.com/binbashar/leverage)
 
-### Why?
-You'll get all the necessary commands to automatically operate this module via a dockerized approach,
-example shown below
-
-#### Project context commands
+## Project context commands
 ```shell
 ╭─    ~/Binbash/repos/Leverage/ref-architecture/le-tf-infra-aws/shared/base-network  on   master !2 ······························································································ ✔  at 08:52:43 
 ╰─ leverage
@@ -85,7 +79,7 @@ Commands:
   tf           Run Terraform commands in a custom containerized...
 ```
 
-#### Layer context Terraform commands
+## Layer context Terraform commands
 ```shell
 ╭─    ~/B/r/L/ref-architecture/le-tf-infra-aws  on   feature/guarduty-update · ✔  at 12:13:36 
 ╰─ leverage terraform
