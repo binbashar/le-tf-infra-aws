@@ -104,7 +104,7 @@ variable "vault_address" {
 variable "cluster_version" {
   description = "Kubernetes version to use for the EKS cluster."
   type        = string
-  default     = "1.18"
+  default     = "1.19"
 }
 
 #
@@ -176,60 +176,4 @@ variable "kubeconfig_name" {
 variable "manage_aws_auth" {
   description = "Whether to apply the aws-auth configmap file."
   default     = true
-}
-
-variable "map_accounts" {
-  description = "Additional AWS account numbers to add to the aws-auth configmap."
-  type        = list(string)
-
-  default = [
-    # "900980591242", # security
-    # "763606934258", # shared
-    # "523857393444", # apps-devstg
-  ]
-}
-
-variable "map_roles" {
-  description = "Additional IAM roles to add to the aws-auth configmap."
-  type = list(object({
-    rolearn  = string
-    username = string
-    groups   = list(string)
-  }))
-
-  default = [
-    #
-    # Jenkins will assume this role in order to be able to destroy the cluster
-    #
-    {
-      rolearn  = "arn:aws:iam::523857393444:role/DeployMaster"
-      username = "DeployMaster"
-      groups   = ["system:masters"]
-    },
-    #
-    # Allow DevOps role to become cluster admins
-    #
-    {
-      rolearn  = "arn:aws:iam::523857393444:role/DevOps"
-      username = "DevOps"
-      groups   = ["system:masters"]
-    },
-  ]
-}
-
-variable "map_users" {
-  description = "Additional IAM users to add to the aws-auth configmap. See examples/basic/variables.tf for example format."
-  type = list(object({
-    userarn  = string
-    username = string
-    groups   = list(string)
-  }))
-
-  default = [
-    # {
-    #   userarn  = "arn:aws:iam:[ACCOUNT]:user/john.doe"
-    #   username = "john.doe"
-    #   groups   = ["system:masters"]
-    # }
-  ]
 }
