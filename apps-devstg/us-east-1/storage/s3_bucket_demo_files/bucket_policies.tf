@@ -46,7 +46,7 @@ data "aws_iam_policy_document" "bucket_policy" {
       #
       # aws s3api put-object --bucket my_bucket --key example-file.txt \
       #--body ~/Documents/example-file.txt \
-      #--ssekms-key-id arn:aws:kms:us-east-1:111122223333:key/*
+      #--ssekms-key-id arn:aws:kms:us-east-1:XXXXXXXX3333:key/*
       condition {
         test     = "StringEquals"
         variable = "s3:x-amz-server-side-encryption-aws-kms-key-id"

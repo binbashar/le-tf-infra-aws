@@ -8,7 +8,13 @@ resource "helm_release" "cert_manager" {
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
   version    = "1.1.0"
-  values     = [file("chart-values/cert-manager.yaml")]
+  values = [
+    templatefile("chart-values/cert-manager.yaml",
+      {
+        roleArn = "arn:aws:iam::${var.shared_account_id}:role/cert-manager"
+      }
+    )
+  ]
 }
 
 #------------------------------------------------------------------------------

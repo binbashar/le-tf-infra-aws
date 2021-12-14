@@ -42,7 +42,7 @@ module "managed_elasticsearch_kibana" {
   domain_endpoint_options = {
     custom_endpoint_enabled         = false
     custom_endpoint                 = "es.aws.binbash.com.ar"
-    custom_endpoint_certificate_arn = "arn:aws:acm:us-east-1:111111111111:certificate/abcd1234"
+    custom_endpoint_certificate_arn = "arn:aws:acm:us-east-1:${var.shared_account_id}:certificate/abcd1234"
     enforce_https                   = true
   }
 
@@ -65,7 +65,7 @@ module "managed_elasticsearch_kibana" {
       "Action": "es:*",
       "Principal": {
         "AWS": [
-          "arn:aws:iam::763606934258:role/demoapps-aws-es-proxy"
+          "arn:aws:iam::${var.shared_account_id}:role/demoapps-aws-es-proxy"
         ]
       },
       "Resource": "arn:aws:es:${var.region}:${var.shared_account_id}:domain/${local.domain_name}/*"

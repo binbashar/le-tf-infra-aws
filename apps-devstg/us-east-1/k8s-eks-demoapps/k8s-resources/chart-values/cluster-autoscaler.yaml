@@ -22,4 +22,4 @@ autoDiscovery:
 rbac:
   serviceAccount:
     annotations:
-      eks.amazonaws.com/role-arn: arn:aws:iam::523857393444:role/demoapps-cluster-autoscaler
+      eks.amazonaws.com/role-arn: ${roleArn}

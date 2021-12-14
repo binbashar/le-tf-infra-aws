@@ -35,9 +35,11 @@ resource "helm_release" "external_dns_private" {
   chart      = "external-dns"
   version    = "4.6.0"
   values = [
-    templatefile("chart-values/external-dns-private.yaml", {
-      roleArn = "arn:aws:iam::${var.shared_account_id}:role/appsdevstg-externaldns-private"
-    })
+    templatefile("chart-values/external-dns-private.yaml",
+      {
+        roleArn = "arn:aws:iam::${var.shared_account_id}:role/appsdevstg-externaldns-private"
+      }
+    )
   ]
 }
 
@@ -52,8 +54,10 @@ resource "helm_release" "external_dns_public" {
   chart      = "external-dns"
   version    = "4.6.0"
   values = [
-    templatefile("chart-values/external-dns-public.yaml", {
-      roleArn = "arn:aws:iam::${var.shared_account_id}:role/appsdevstg-externaldns-public"
-    })
+    templatefile("chart-values/external-dns-public.yaml",
+      {
+        roleArn = "arn:aws:iam::${var.shared_account_id}:role/appsdevstg-externaldns-public"
+      }
+    )
   ]
 }

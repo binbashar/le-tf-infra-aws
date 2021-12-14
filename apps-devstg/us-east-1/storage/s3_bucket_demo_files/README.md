@@ -16,7 +16,7 @@ aws s3api put-object \
 --key demo/test-file.txt \
 --body ~/Desktop/test-file.txt \
 --server-side-encryption aws:kms \
---ssekms-key-id arn:aws:kms:us-east-1:523857393444:key/63c14fe9-c3e7-4d3d-9856-ce372cf961b7 \
+--ssekms-key-id arn:aws:kms:us-east-1:XXXXXXXX3444:key/63c14fe9-c3e7-4d3d-9856-ce372cf961b7 \
 --acl bucket-owner-full-control
 ```
 
@@ -30,7 +30,7 @@ aws s3api put-object \
 --key demo/test-file.txt \
 --body ~/Desktop/test-file.txt \
 --server-side-encryption aws:kms \
---ssekms-key-id arn:aws:kms:us-east-1:523857393444:key/63c14fe9-c3e7-4d3d-9856-ce372cf961b7 \
+--ssekms-key-id arn:aws:kms:us-east-1:XXXXXXXX3444:key/63c14fe9-c3e7-4d3d-9856-ce372cf961b7 \
 --acl bucket-owner-full-control
 ```
 
@@ -40,7 +40,7 @@ aws s3api put-object \
     "ETag": "\"fb148d1c87abbfd727fb0da4770fe45d\"",
     "ServerSideEncryption": "aws:kms",
     "VersionId": "oeMeYJhUtaggnF_rhZ24ug44VTog2i3A",
-    "SSEKMSKeyId": "arn:aws:kms:us-east-1:392609628445:key/df674901-9a54-471c-a03b-65ecab96544a"
+    "SSEKMSKeyId": "arn:aws:kms:us-east-1:XXXXXXXX8445:key/df674901-9a54-471c-a03b-65ecab96544a"
 }
 ```
 
@@ -64,7 +64,7 @@ aws s3api head-object \
     "ContentType": "binary/octet-stream",
     "ServerSideEncryption": "aws:kms",
     "Metadata": {},
-    "SSEKMSKeyId": "arn:aws:kms:us-east-1:523857393444:key/63c14fe9-c3e7-4d3d-9856-ce372cf961b7",
+    "SSEKMSKeyId": "arn:aws:kms:us-east-1:XXXXXXXX3444:key/63c14fe9-c3e7-4d3d-9856-ce372cf961b7",
     "ReplicationStatus": "COMPLETED"
 }
 
@@ -87,7 +87,7 @@ aws s3api head-object \
     "ContentType": "binary/octet-stream",
     "ServerSideEncryption": "aws:kms",
     "Metadata": {},
-    "SSEKMSKeyId": "arn:aws:kms:us-east-1:523857393444:key/63c14fe9-c3e7-4d3d-9856-ce372cf961b7",
+    "SSEKMSKeyId": "arn:aws:kms:us-east-1:XXXXXXXX3444:key/63c14fe9-c3e7-4d3d-9856-ce372cf961b7",
     "ReplicationStatus": "FAILED"
 }
 

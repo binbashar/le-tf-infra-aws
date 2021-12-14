@@ -18,11 +18,40 @@ Check out the [Binbash Leverage Reference Architecture Official Documentation](h
 
 ---
 
-## Binbash Leverage | DevOps Automation Code Library Integration
+## Getting Started
 
 In order to get the full automated potential of the
 [Binbash Leverage DevOps Automation Code Library](https://leverage.binbash.com.ar/how-it-works/code-library/code-library/)  
-you should initialize all the necessary helper **Makefiles**.
+you should follow the steps below:
+
+1. [Install](https://leverage.binbash.com.ar/first-steps/local-setup/) and use the `leverage cli`
+2. Update your [configuration files](https://leverage.binbash.com.ar/user-guide/base-configuration/repo-le-tf-infra-aws/#configuration)
+3. Review and assure you meet all the Terraform AWS pre-requisites 
+   1. AWS Credentials (Including your MFA setup)
+      1. Configure your
+          1. [Web Console](https://leverage.binbash.com.ar/first-steps/post-deployment/#get-the-temporary-password-to-access-aws-console)
+          2. [Programmatic Keys](https://leverage.binbash.com.ar/first-steps/post-deployment/#configure-the-new-credentials)
+              - Types:
+                  1. [management account creds](https://leverage.binbash.com.ar/user-guide/features/identities/credentials/#management-credentials)
+                  2. [security account creds](https://leverage.binbash.com.ar/user-guide/features/identities/credentials/#security-credentials)
+    2. [Initialize your accounts Terraform State Backend](https://leverage.binbash.com.ar/user-guide/base-workflow/repo-le-tf-infra-aws-tf-state/)
+
+4. Follow the [standard `leverage cli` workflow](https://leverage.binbash.com.ar/user-guide/base-workflow/repo-le-tf-infra/) 
+    1. Get into the folder that you need to work with (e.g. [`/security/global/base-identities`](https://github.com/binbashar/le-tf-infra-aws/tree/master/security/global/base-identities) )
+    2. Run `leverage terraform init` 
+    3. Make whatever changes you need to make
+    4. Run `leverage terraform plan` (if you only mean to preview those changes)
+    5. Run `leverage terraform apply` (if you want to review and likely apply those changes)
+    6. Repeat for any desired Reference Architecture layer 
+
+### Consideration
+
+The `backend.tfvars` will inject the profile name with the necessary permissions that Terraform will 
+use to make changes on AWS.
+* Such profile is usually one that relies on another profile to assume a role to get access to 
+  each corresponding account [( AWS IAM: users, groups, roles & policies )](https://leverage.binbash.com.ar/how-it-works/features/identities/identities/)
+* Read the following [AWS page doc](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html) 
+  to understand how to set up a profile to assume a role
 
 #### How?
 Install the `leverage` cli following its [instructions](https://github.com/binbashar/leverage)
@@ -87,12 +116,4 @@ Commands:
 ```
 
 # Release Management
-### CircleCi PR auto-release job
-
-<div align="left">
-  <img src="./%40doc/figures/circleci.png" alt="circleci" width="130"/>
-</div>
-
-- [**pipeline-job**](https://app.circleci.com/pipelines/github/binbashar/le-tf-infra-aws) (**NOTE:** Will only run after merged PR)
-- [**releases**](https://github.com/binbashar/le-tf-infra-aws/releases)
-- [**changelog**](https://github.com/binbashar/le-tf-infra-aws/blob/master/CHANGELOG.md)
+## [**Reference Architecture | Releases**](https://github.com/binbashar/le-tf-infra-aws/releases)

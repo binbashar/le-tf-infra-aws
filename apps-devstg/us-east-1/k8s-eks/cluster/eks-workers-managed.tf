@@ -73,9 +73,9 @@ module "eks" {
   # Auth: aws-iam-authenticator
   #
   manage_aws_auth = var.manage_aws_auth
-  map_roles       = var.map_roles
-  map_accounts    = var.map_accounts
-  map_users       = var.map_users
+  map_roles       = local.map_roles
+  map_accounts    = local.map_accounts
+  map_users       = local.map_users
 
   #
   # Logging: which log types should be enabled and how long they should be kept for
@@ -93,7 +93,7 @@ module "eks" {
   # Tags
   #
   tags = merge(local.tags,
-    map("k8s.io/cluster-autoscaler/enabled", "TRUE"),
-    map("k8s.io/cluster-autoscaler/${data.terraform_remote_state.eks-vpc.outputs.cluster_name}", "owned")
+    { "k8s.io/cluster-autoscaler/enabled" = "TRUE" },
+    { "k8s.io/cluster-autoscaler/${data.terraform_remote_state.eks-vpc.outputs.cluster_name}" = "owned" }
   )
 }

@@ -23,10 +23,11 @@ resource "helm_release" "cluster_autoscaling" {
   chart      = "cluster-autoscaler"
   version    = "9.4.0"
   values = [
-    templatefile("chart-values/cluster_autoscaler.yaml",
+    templatefile("chart-values/cluster-autoscaler.yaml",
       {
         aws_region   = var.region,
         cluster_name = data.terraform_remote_state.eks-demoapps-cluster.outputs.cluster_name
+        roleArn      = "arn:aws:iam::${var.appsdevstg_account_id}:role/demoapps-cluster-autoscaler"
       }
     )
   ]
