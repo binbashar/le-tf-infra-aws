@@ -108,7 +108,7 @@ resource "aws_iam_policy" "demoapps_aws_es_proxy" {
         {
             "Effect": "Allow",
             "Action": "es:*",
-            "Resource": "arn:aws:es:us-east-1:763606934258:domain/es-aws-binbash/*"
+            "Resource": "arn:aws:es:us-east-1:${var.shared_account_id}:domain/es-aws-binbash/*"
         }
     ]
 }
