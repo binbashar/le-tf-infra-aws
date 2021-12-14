@@ -1,0 +1,48 @@
+#
+# Create user accounts for each customer
+#
+module "sftp_customer_user" {
+  source = "github.com/binbashar/terraform-aws-sftp-user.git?ref=support-additional-permissions"
+
+  for_each = var.customers
+
+  sftp_server_id  = module.customer_sftp.sftp_server_id
+  ssh_public_keys = [each.value["ssh_public_key"]]
+  user_name       = each.value["username"]
+  role_name       = "${var.prefix}-sftp-${each.value["username"]}"
+
+  home_directory_bucket = {
+    id  = data.terraform_remote_state.apps-devstg-storage-s3-bucket.outputs.customers_buckets[each.value["username"]],
+    arn = data.terraform_remote_state.apps-devstg-storage-s3-bucket.outputs.customers_buckets_arn[each.value["username"]]
+  }
+  home_directory_key_prefix = ""
+
+  allowed_actions = [
+    "s3:GetObject",
+    "s3:GetObjectACL",
+    "s3:PutObject",
+    "s3:PutObjectACL",
+    "s3:DeleteObject",
+  ]
+  additional_role_statements = {
+    kms = {
+      sid    = "KmsPermissions"
+      effect = "Allow"
+      actions = [
+        "kms:Decrypt",
+        "kms:Encrypt",
+        "kms:GenerateDataKey",
+        "kms:ReEncryptTo",
+        "kms:DescribeKey",
+        "kms:ReEncryptFrom"
+      ]
+      resources = [
+        data.terraform_remote_state.keys.outputs.aws_kms_key_arn
+      ]
+    }
+  }
+
+  tags = {
+    Customer = each.value["username"]
+  }
+}
