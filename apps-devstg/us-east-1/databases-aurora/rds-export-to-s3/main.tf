@@ -27,7 +27,7 @@ module "rds_export_to_s3" {
   snapshots_bucket_arn  = module.bucket.s3_bucket_arn
 
   # The SNS topic that will receive notifications about exported snapshots events
-  notifications_topic_arn = "arn:aws:sns:us-east-1:523857393444:sns-topic-slack-notify-monitoring-sec"
+  notifications_topic_arn = "arn:aws:sns:us-east-1:${var.appsdevstg_account_id}:sns-topic-slack-notify-monitoring-sec"
 
   # A logging level which is useful for debugging
   log_level = "DEBUG"
