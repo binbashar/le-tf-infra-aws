@@ -117,3 +117,12 @@ variable "aws_ec2_instances_count" {
   description = "EC2 instance count"
   default     = "2"
 }
+
+#
+# Layer variables
+#
+variable "allowed_ips" {
+  type        = list(string)
+  description = "EC2 instance count"
+  default     = ["190.195.47.88/32"]
+}

@@ -15,7 +15,7 @@ module "security_group_ec2_vpn" {
       to_port     = 3000
       protocol    = "udp"
       description = "User-service ports"
-      cidr_blocks = "${data.terraform_remote_state.vpc.outputs.vpc_cidr_block}, ${local.whitelisted_ips}"
+      cidr_blocks = join(",", concat([data.terraform_remote_state.vpc.outputs.vpc_cidr_block], var.allowed_ips))
     },
     # SSH Access
     {
@@ -23,7 +23,7 @@ module "security_group_ec2_vpn" {
       to_port     = 22
       protocol    = "tcp"
       description = "SSH access"
-      cidr_blocks = "${data.terraform_remote_state.vpc.outputs.vpc_cidr_block}, ${local.whitelisted_ips}"
+      cidr_blocks = join(",", concat([data.terraform_remote_state.vpc.outputs.vpc_cidr_block], var.allowed_ips))
     },
   ]
   egress_rules  = ["all-all"]
