@@ -48,7 +48,7 @@ data "aws_iam_policy_document" "aws_sns_topic_policy" {
 # Set create_with_kms_key = true
 # when providing value of kms_key_arn to create required IAM policy which allows to decrypt using specified KMS key.
 module "notify_slack_monitoring_costs" {
-  source = "github.com/binbashar/terraform-aws-notify-slack.git?ref=v4.15.0"
+  source = "github.com/binbashar/terraform-aws-notify-slack.git?ref=v4.24.0"
 
   #
   # Creation Flags
@@ -66,7 +66,7 @@ module "notify_slack_monitoring_costs" {
 
   kms_key_arn          = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
   lambda_function_name = "${var.project}-${var.environment}-notify-slack-monitoring-costs"
-  lambda_description   = "Lambda function which sends notifications to Slacki from the Cost Topic"
+  lambda_description   = "Lambda function which sends notifications to Slack from the Cost Topic"
   log_events           = false
   sns_topic_name       = var.sns_topic_name_costs
 
