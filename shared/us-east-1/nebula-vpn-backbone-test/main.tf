@@ -8,18 +8,22 @@ module "security_group_ec2_vpn" {
   description = "Security group for example usage with EC2 instance"
   vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
-  ingress_cidr_blocks = [
-    data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
-  ]
-
-  ingress_rules = ["ssh-tcp"]
   ingress_with_cidr_blocks = [
+    # UDP Access
     {
       from_port   = 3000
       to_port     = 3000
       protocol    = "udp"
       description = "User-service ports"
-      cidr_blocks = data.terraform_remote_state.vpc.outputs.vpc_cidr_block
+      cidr_blocks = "${data.terraform_remote_state.vpc.outputs.vpc_cidr_block}, ${local.whitelisted_ips}"
+    },
+    # SSH Access
+    {
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      description = "SSH access"
+      cidr_blocks = "${data.terraform_remote_state.vpc.outputs.vpc_cidr_block}, ${local.whitelisted_ips}"
     },
   ]
   egress_rules  = ["all-all"]
@@ -51,15 +55,18 @@ module "ec2_vpn" {
 }
 
 #
-# Elastic IP to associate to the server endpoint
+# Create a specified number of EIPs on VPC scope
 #
 resource "aws_eip" "vpn_instance" {
   vpc   = true
   count = var.aws_ec2_instances_count
 }
 
+#
+# Elastic IP association
+#
 resource "aws_eip_association" "eip_assoc" {
   count = var.aws_ec2_instances_count
-  instance_id   = "${element(module.ec2_vpn.*.id, count.index)}"
+  instance_id   = "${element(module.ec2_vpn.id.*, count.index)}"
   allocation_id = "${element(aws_eip.vpn_instance.*.id, count.index)}"
 }
