@@ -15,7 +15,7 @@ module "security_group_ec2_vpn" {
       to_port     = 3000
       protocol    = "udp"
       description = "User-service ports"
-      cidr_blocks = join(",", concat([data.terraform_remote_state.vpc.outputs.vpc_cidr_block], var.allowed_ips))
+      cidr_blocks = join(",", concat([data.terraform_remote_state.vpc.outputs.vpc_cidr_block], var.allowed_ips_udp))
     },
     # SSH Access
     {
@@ -23,7 +23,7 @@ module "security_group_ec2_vpn" {
       to_port     = 22
       protocol    = "tcp"
       description = "SSH access"
-      cidr_blocks = join(",", concat([data.terraform_remote_state.vpc.outputs.vpc_cidr_block], var.allowed_ips))
+      cidr_blocks = join(",", concat([data.terraform_remote_state.vpc.outputs.vpc_cidr_block], var.allowed_ips_ssh))
     },
   ]
   egress_rules = ["all-all"]
@@ -36,17 +36,15 @@ module "ec2_vpn" {
   source = "github.com/binbashar/terraform-aws-ec2-instance.git?ref=v2.19.0"
 
   name           = "ec2-nebula-vpn"
-  instance_count = var.aws_ec2_instances_count
+  instance_count = var.ec2_instances_count
 
   ami                    = data.aws_ami.ubuntu_linux.id
-  instance_type          = var.aws_ec2_instance_type
+  instance_type          = var.ec2_instance_type
   key_name               = data.terraform_remote_state.security.outputs.aws_key_pair_name
-  monitoring             = true
+  monitoring             = false
   vpc_security_group_ids = [module.security_group_ec2_vpn.security_group_id]
 
   subnet_ids = [
-    data.terraform_remote_state.vpc.outputs.private_subnets[0],
-    data.terraform_remote_state.vpc.outputs.private_subnets[1],
     data.terraform_remote_state.vpc.outputs.public_subnets[0],
     data.terraform_remote_state.vpc.outputs.public_subnets[1]
   ]
@@ -59,14 +57,14 @@ module "ec2_vpn" {
 #
 resource "aws_eip" "vpn_instance" {
   vpc   = true
-  count = var.aws_ec2_instances_count
+  count = var.ec2_instances_count
 }
 
 #
 # Elastic IP association
 #
 resource "aws_eip_association" "eip_assoc" {
-  count         = var.aws_ec2_instances_count
+  count         = var.ec2_instances_count
   instance_id   = element(module.ec2_vpn.id.*, count.index)
   allocation_id = element(aws_eip.vpn_instance.*.id, count.index)
 }

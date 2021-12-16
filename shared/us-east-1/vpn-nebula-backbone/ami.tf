@@ -3,7 +3,7 @@ data "aws_ami" "ubuntu_linux" {
 
   filter {
     name   = "name"
-    values = [var.aws_ami_os_id]
+    values = [var.aws_ami_os_name]
   }
 
   filter {

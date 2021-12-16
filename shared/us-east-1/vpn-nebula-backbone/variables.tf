@@ -94,7 +94,7 @@ variable "appsprd_account_id" {
 #
 # EC2 Attributes
 #
-variable "aws_ami_os_id" {
+variable "aws_ami_os_name" {
   type        = string
   description = "AWS AMI Operating System Identificator"
   default     = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"
@@ -106,13 +106,13 @@ variable "aws_ami_os_owner" {
   default     = "099720109477"
 }
 
-variable "aws_ec2_instance_type" {
+variable "ec2_instance_type" {
   type        = string
   description = "EC2 instance type"
   default     = "t2.medium"
 }
 
-variable "aws_ec2_instances_count" {
+variable "ec2_instances_count" {
   type        = number
   description = "EC2 instance count"
   default     = "2"
@@ -121,8 +121,14 @@ variable "aws_ec2_instances_count" {
 #
 # Layer variables
 #
-variable "allowed_ips" {
+variable "allowed_ips_udp" {
   type        = list(string)
-  description = "EC2 instance count"
+  description = "List of allowed IPs to access UDP 3000"
+  default     = ["190.195.47.88/32"]
+}
+
+variable "allowed_ips_ssh" {
+  type        = list(string)
+  description = "List of allowed IPs to access SSH"
   default     = ["190.195.47.88/32"]
 }
