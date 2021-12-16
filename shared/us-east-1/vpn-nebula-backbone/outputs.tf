@@ -3,12 +3,12 @@ output "instance_count" {
   value       = module.ec2_vpn.instance_count
 }
 
-output "public_ip" {
-  description = "List of private IP addresses assigned to the instances"
+output "public_ips" {
+  description = "List of public IP addresses assigned to the instances"
   value       = module.ec2_vpn.public_ip
 }
 
-output "private_ip" {
+output "private_ips" {
   description = "List of private IP addresses assigned to the instances"
   value       = module.ec2_vpn.private_ip
 }

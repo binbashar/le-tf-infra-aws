@@ -124,11 +124,11 @@ variable "ec2_instances_count" {
 variable "allowed_ips_udp" {
   type        = list(string)
   description = "List of allowed IPs to access UDP 3000"
-  default     = ["190.195.47.88/32"]
+  default     = [""]
 }
 
 variable "allowed_ips_ssh" {
   type        = list(string)
   description = "List of allowed IPs to access SSH"
-  default     = ["190.195.47.88/32"]
+  default     = [""]
 }
