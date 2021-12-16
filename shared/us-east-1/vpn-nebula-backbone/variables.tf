@@ -100,9 +100,9 @@ variable "aws_ami_os_name" {
   default     = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"
 }
 
-variable "aws_ami_os_owner" {
+variable "aws_ami_owner" {
   type        = string
-  description = "AWS AMI Operating System Owner, eg: 099720109477 for Canonical "
+  description = "The AWS account ID of the image owner, eg: 099720109477 for Canonical "
   default     = "099720109477"
 }
 
