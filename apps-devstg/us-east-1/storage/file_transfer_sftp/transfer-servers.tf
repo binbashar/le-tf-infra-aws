@@ -2,7 +2,7 @@
 # Create an SFTP server
 #
 module "customer_sftp" {
-  source = "github.com/binbashar/terraform-aws-sftp.git?ref=vpc-endpoint-and-more"
+  source = "github.com/binbashar/terraform-aws-sftp.git?ref=v1.1.0-1"
 
   name          = "${var.project}-${var.prefix}-customer-files"
   iam_role_name = "sftp-logging-role"

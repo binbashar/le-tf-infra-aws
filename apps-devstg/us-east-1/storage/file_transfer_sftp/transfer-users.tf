@@ -2,7 +2,7 @@
 # Create user accounts for each customer
 #
 module "sftp_customer_user" {
-  source = "github.com/binbashar/terraform-aws-sftp-user.git?ref=support-additional-permissions"
+  source = "github.com/binbashar/terraform-aws-sftp-user.git?ref=v1.1.0-1"
 
   for_each = var.customers
 
