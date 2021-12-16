@@ -26,7 +26,7 @@ module "security_group_ec2_vpn" {
       cidr_blocks = join(",", concat([data.terraform_remote_state.vpc.outputs.vpc_cidr_block], var.allowed_ips))
     },
   ]
-  egress_rules  = ["all-all"]
+  egress_rules = ["all-all"]
 }
 
 #
@@ -66,7 +66,7 @@ resource "aws_eip" "vpn_instance" {
 # Elastic IP association
 #
 resource "aws_eip_association" "eip_assoc" {
-  count = var.aws_ec2_instances_count
-  instance_id   = "${element(module.ec2_vpn.id.*, count.index)}"
-  allocation_id = "${element(aws_eip.vpn_instance.*.id, count.index)}"
+  count         = var.aws_ec2_instances_count
+  instance_id   = element(module.ec2_vpn.id.*, count.index)
+  allocation_id = element(aws_eip.vpn_instance.*.id, count.index)
 }
