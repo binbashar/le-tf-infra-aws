@@ -11,14 +11,14 @@ provider "aws" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.14.11"
+  required_version = ">= 1.0.9"
 
   required_providers {
     aws = "~> 3.0"
   }
 
   backend "s3" {
-    key = "shared/nebula-vpn-backbone/terraform.tfstate"
+    key = "shared/vpn-nebula-backbone/terraform.tfstate"
   }
 }
 
