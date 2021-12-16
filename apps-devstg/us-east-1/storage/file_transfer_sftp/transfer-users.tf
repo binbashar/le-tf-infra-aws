@@ -20,8 +20,10 @@ module "sftp_customer_user" {
   allowed_actions = [
     "s3:GetObject",
     "s3:GetObjectACL",
+    "s3:GetObjectVersion",
     "s3:PutObject",
     "s3:PutObjectACL",
+    "s3:PutObjectVersion",
     "s3:DeleteObject",
   ]
   additional_role_statements = {
