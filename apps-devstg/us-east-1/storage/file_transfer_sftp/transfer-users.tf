@@ -2,7 +2,7 @@
 # Create user accounts for each customer
 #
 module "sftp_customer_user" {
-  source = "github.com/binbashar/terraform-aws-sftp-user.git?ref=support-additional-permissions"
+  source = "github.com/binbashar/terraform-aws-sftp-user.git?ref=v1.1.0-1"
 
   for_each = var.customers
 
@@ -20,8 +20,10 @@ module "sftp_customer_user" {
   allowed_actions = [
     "s3:GetObject",
     "s3:GetObjectACL",
+    "s3:GetObjectVersion",
     "s3:PutObject",
     "s3:PutObjectACL",
+    "s3:PutObjectVersion",
     "s3:DeleteObject",
   ]
   additional_role_statements = {
