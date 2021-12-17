@@ -44,7 +44,7 @@ module "ec2_vpn" {
   monitoring             = false
   vpc_security_group_ids = [module.security_group_ec2_vpn.security_group_id]
 
-  user_data             = templatefile("user_data.tftpl", {
+  user_data = templatefile("user_data.tftpl", {
     allowed_ssh_keys = var.allowed_ssh_keys
   })
 
