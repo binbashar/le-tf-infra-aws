@@ -43,7 +43,9 @@ module "ec2_vpn" {
   key_name               = data.terraform_remote_state.security.outputs.aws_key_pair_name
   monitoring             = false
   vpc_security_group_ids = [module.security_group_ec2_vpn.security_group_id]
-
+  user_data     = templatefile("user_data.tftpl", {
+    allowed_ssh_keys = var.allowed_ssh_keys
+  })
   subnet_ids = [
     data.terraform_remote_state.vpc.outputs.public_subnets[0],
     data.terraform_remote_state.vpc.outputs.public_subnets[1]

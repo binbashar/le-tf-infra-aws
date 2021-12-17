@@ -3,4 +3,5 @@ locals {
     Terraform   = "true"
     Environment = var.environment
   }
+
 }
