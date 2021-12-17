@@ -112,29 +112,30 @@ variable "ec2_instance_type" {
   default     = "t2.medium"
 }
 
+#
+# Layer variables
+#
+
 variable "ec2_instances_count" {
   type        = number
   description = "EC2 instance count"
   default     = "2"
 }
 
-#
-# Layer variables
-#
 variable "allowed_ips_udp" {
   type        = list(string)
   description = "List of allowed IPs to access UDP 3000"
-  default     = ["190.195.47.88/32"]
+  default     = [""]
 }
 
 variable "allowed_ips_ssh" {
   type        = list(string)
   description = "List of allowed IPs to access SSH"
-  default     = ["190.195.47.88/32"]
+  default     = [""]
 }
 
 variable "allowed_ssh_keys" {
   type        = list(string)
   description = "List of allowed keys to access throught SSH"
-  default     = ["ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDAE5Sv6dySC97s2Y0pdIdtTumM0yrKuEccobQwxL818lEtCIhMYTZX1aX9u9bOfIpjYzSO6HazT+9UGPI96mL45X+xZKBSvqsN/Mx1oUxGIZBIvX7CN7g5Sio+lkCOsKaxV3j/yK4JndvC5sUOIFJWUtPW+sWkpEizXGly50K7vza7XnJ6xHbJf1zNQA5S7/Dfm9fjlmD/jX38U4efHmypFUyVmE5Me6NG8naFYgN8DEURzPZklZJgAdgkSDMkqLYNQjXHE9gcs5Eud5WVtrpYy5utCp6on7EKcodD6uz4GjxWyFqbgFAkgmPpKFUnAxoTcgEm2xTp9ApSNshZnz+IfSTAEz75DWpW4CWE7Ka1Qyl1d6EilDv9gVFheuT08WbZU1I1iyB54+1vLzrArsf+CRU6UfS4Kk8u2GhKHeI64eOc6j56U92ce6zsLAqCnwnDMZUve3yT/bbBuRrDBoS2M/DufNxCZjvSH54/pIcfdlbEyHtQTFBhfT+ccxjc1k0= jose.peinado@binbash.com.ar"]
+  default     = [""]
 }
