@@ -102,7 +102,7 @@ module "tgw_inspection_route_table" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
 
-  count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? 1 : 0
+  count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network-dr", false) ? 1 : 0
 
   name = "${var.project}-${var.environment}-inspection"
 
@@ -153,7 +153,7 @@ resource "aws_ec2_transit_gateway_route" "network_firewall_default" {
 
   destination_cidr_block         = "0.0.0.0/0"
   transit_gateway_route_table_id = module.tgw-dr[0].transit_gateway_route_table_id
-  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network-dr["network-base-dr"].transit_gateway_vpc_attachment_ids["network-base"]
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network-dr["network-base-dr"].transit_gateway_vpc_attachment_ids["network-base-dr"]
 }
 
 resource "aws_ec2_transit_gateway_route_table_association" "network-inspection-association" {

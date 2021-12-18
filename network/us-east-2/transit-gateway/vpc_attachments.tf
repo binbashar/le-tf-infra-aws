@@ -38,7 +38,7 @@ module "tgw_vpc_attachments_and_subnet_routes_network-firewall-dr" {
     (each.key) = {
       vpc_id                            = each.value.outputs.vpc_id
       vpc_cidr                          = each.value.outputs.vpc_cidr_block
-      subnet_ids                        = values(each.value.outputs.inspection_subnets)
+      subnet_ids                        = values(each.value.outputs.inspection_subnets-dr)
       subnet_route_table_ids            = values(each.value.outputs.inspection_route_table_ids)
       route_to                          = null
       route_to_cidr_blocks              = null
