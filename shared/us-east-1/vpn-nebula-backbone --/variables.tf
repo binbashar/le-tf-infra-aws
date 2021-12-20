@@ -127,14 +127,14 @@ variable "ec2_instances_count" {
 variable "allowed_ips_udp" {
   type        = list(string)
   description = "List of allowed IPs to access UDP 3000"
-  default     = [""]
+  default     = ["190.195.47.88/32"]
 }
 
 # List of IPs allowed to access throught the SSH port 22
 variable "allowed_ips_ssh" {
   type        = list(string)
   description = "List of allowed IPs to access SSH"
-  default     = [""]
+  default     = ["190.195.47.88/32"]
 }
 
 # List of SSH public keys allowed to access to EC2 instances.
@@ -142,5 +142,5 @@ variable "allowed_ips_ssh" {
 variable "allowed_ssh_keys" {
   type        = list(string)
   description = "List of allowed keys to access throught SSH"
-  default     = [""]
+  default     = ["ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCxgBHFvzt0Hq9X/oQJp70vat3QMPiVb4R7/SVA8dHE/So3wF76hUDk2ZanRe1yPqjjzgQg0iUALWyscQ+8lOwzWM5ZMpjSqO637c2AjB+vWeyxxHVKzeBM/X6jWCnCMmjPNP/sb/nFrWVy5/9RoTSsRfwBO1muSlU2p6mSAAc5XA8yhuKjPdHq42oWcf/Uk5LbYxGurJe96o3rGUX9hwZHoTaXL/sx4nwfu3l96DZ0mJmdOg9YvMwgkNnjPKE1AcqxyIisakSo+tInYFwq5ySkTcWnAHqAYiUatCmFsAIlpD6vMsYqB2QDFdjFixBkkrf6DuYEf4t5HnQB+dF9qJBvtUvvJ1VsY1BNe8+oj8QRBfUmZKizrCFAeXMms8T6CyBfXDuLFIVok7UiALotZ5LYHnyXInAWYJ2EKnbLhk42tqcv2q+ddSWuwZfnKHOO3x2ukNQRSR+Z/IAQ9JAn63ylwAZFB8MLvuSVZlwIEMzuj88kZH25z+e8Nr1x+9pyCx8= jose.peinadorrrr@binbash.com.ar"]
 }

@@ -1,4 +1,4 @@
-# Nebula Backbone 
+# Nebula Backbone
 
 ## Overview
 1. Open `variables.tf`
@@ -14,8 +14,8 @@
 ssh-keygen -t rsa -C "YOUR_EMAIL" -f ~/.ssh/KEY_FILENAME
 
 Generating public/private rsa key pair.
-Enter passphrase (empty for no passphrase): 
-Enter same passphrase again: 
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
 Your identification has been saved in ~/.ssh/KEY_FILENAME.
 Your public key has been saved in ~/.ssh/KEY_FILENAME.pub.
 The key fingerprint is:
@@ -65,7 +65,7 @@ variable "allowed_ssh_keys" {
             ]
     ```
 
-# Testing 
+# Testing
 6. Grab one of the `public_ips` values and test the ssh connection:
 
 ```
@@ -93,5 +93,5 @@ Last login: Fri Dec 17 17:09:32 2021 from 190.195.47.88
 To run a command as administrator (user "root"), use "sudo <command>".
 See "man sudo_root" for details.
 
-ubuntu@ip-172-18-8-126:~$ 
+ubuntu@ip-172-18-8-126:~$
 ```
