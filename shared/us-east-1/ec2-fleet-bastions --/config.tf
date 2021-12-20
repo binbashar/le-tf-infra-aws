@@ -18,7 +18,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "shared/vpn-nebula-backbone/terraform.tfstate"
+    key = "shared/ec2-fleet-bastions/terraform.tfstate"
   }
 }
 
