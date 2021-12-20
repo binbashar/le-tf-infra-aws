@@ -116,24 +116,29 @@ variable "ec2_instance_type" {
 # Layer variables
 #
 
+# Number of instances to be launched
 variable "ec2_instances_count" {
   type        = number
   description = "EC2 instance count"
   default     = "2"
 }
 
+# List of IPs allowed to access throught the UDP port 3000
 variable "allowed_ips_udp" {
   type        = list(string)
   description = "List of allowed IPs to access UDP 3000"
   default     = [""]
 }
 
+# List of IPs allowed to access throught the SSH port 22
 variable "allowed_ips_ssh" {
   type        = list(string)
   description = "List of allowed IPs to access SSH"
   default     = [""]
 }
 
+# List of SSH public keys allowed to access to EC2 instances.
+# Each key will be added as a entry on /home/ubuntu/.ssh/authorized_keys
 variable "allowed_ssh_keys" {
   type        = list(string)
   description = "List of allowed keys to access throught SSH"
