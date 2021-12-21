@@ -33,6 +33,20 @@ terraform {
 # Data sources                #
 #=============================#
 
+# TGW
+data "terraform_remote_state" "tgw" {
+  count = var.enable_tgw ? 1 : 0
+
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-network-devops"
+    bucket  = "${var.project}-network-terraform-backend"
+    key     = "network/transit-gateway/terraform.tfstate"
+  }
+}
+
 #
 # data type from output for tools-ec2
 #
