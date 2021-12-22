@@ -26,6 +26,20 @@ terraform {
 # Data sources                #
 #=============================#
 
+# TGW
+data "terraform_remote_state" "tgw" {
+  count = var.enable_tgw ? 1 : 0
+
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-network-devops"
+    bucket  = "${var.project}-network-terraform-backend"
+    key     = "network/transit-gateway/terraform.tfstate"
+  }
+}
+
 #
 # data type from output for notifications
 #
@@ -33,6 +47,7 @@ data "terraform_remote_state" "notifications" {
   backend = "s3"
 
   config = {
+
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
@@ -89,7 +104,7 @@ data "terraform_remote_state" "apps-prd-vpcs" {
 
   for_each = {
     for k, v in local.apps-prd-vpcs :
-    k => v if !v["tgw"]
+    k => v if var.enable_tgw
   }
 
   backend = "s3"

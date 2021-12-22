@@ -161,3 +161,9 @@ variable "enable_tgw" {
   type        = bool
   default     = false
 }
+
+variable "tgw_cidrs" {
+  description = "CIDRs to be added as routes to public RT"
+  type        = list(string)
+  default     = []
+}
