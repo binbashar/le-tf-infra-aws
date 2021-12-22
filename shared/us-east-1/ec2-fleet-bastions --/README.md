@@ -9,7 +9,7 @@
     * `allowed_ssh_keys`: List of allowed keys to access throught SSH
 
 ## Creating a ssh-key to access the EC2 instances
-3. Either on a Linux or macOS computer, open a terminal and run:
+3. Open a terminal and run:
 ```
 ssh-keygen -t rsa -C "YOUR_EMAIL" -f ~/.ssh/KEY_FILENAME
 
