@@ -242,23 +242,6 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "apps-prd-rt-propagat
 #
 # Update network public RT
 #
-resource "aws_route" "apps_devstg_public_route_to_tgw" {
-
-  # For each vpc...
-  for_each = {
-    for k, v in data.terraform_remote_state.apps-devstg-dr-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg-dr", false)
-  }
-
-  # ...add a route into the network public RT
-  route_table_id         = data.terraform_remote_state.network-dr-vpcs["network-base-dr"].outputs.public_route_table_ids[0]
-  destination_cidr_block = each.value.outputs.vpc_cidr_block
-  transit_gateway_id     = module.tgw-dr[0].transit_gateway_id
-
-  depends_on = [module.tgw-dr, module.tgw_vpc_attachments_and_subnet_routes_network-dr]
-
-}
-
 resource "aws_route" "apps_prd_public_route_to_tgw" {
 
   # For each vpc...
@@ -277,25 +260,6 @@ resource "aws_route" "apps_prd_public_route_to_tgw" {
 }
 
 # Update shared public RT
-resource "aws_route" "shared_public_apps_devstg_route_to_tgw" {
-
-  # For each vpc...
-  for_each = {
-    for k, v in data.terraform_remote_state.apps-devstg-dr-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg-dr", false)
-  }
-
-  # ...add a route into the network public RT
-  route_table_id         = data.terraform_remote_state.shared-dr-vpcs["shared-base-dr"].outputs.public_route_table_ids[0]
-  destination_cidr_block = each.value.outputs.vpc_cidr_block
-  transit_gateway_id     = module.tgw-dr[0].transit_gateway_id
-
-  depends_on = [module.tgw-dr, module.tgw_vpc_attachments_and_subnet_routes_network-dr]
-
-  provider = aws.shared
-
-}
-
 resource "aws_route" "shared_public_apps_prd_route_to_tgw" {
 
   # For each vpc...
