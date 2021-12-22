@@ -128,21 +128,18 @@ locals {
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/network/terraform.tfstate"
-      tgw     = false
     }
     apps-devstg-k8s-eks = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
-      tgw     = false
     }
     apps-devstg-eks-demoapps = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
-      tgw     = false
     }
   }
 
@@ -153,7 +150,6 @@ locals {
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/k8s-eks-dr/network/terraform.tfstate"
-      tgw     = false
     }
   }
 
@@ -164,14 +160,12 @@ locals {
       profile = "${var.project}-apps-prd-devops"
       bucket  = "${var.project}-apps-prd-terraform-backend"
       key     = "apps-prd/network/terraform.tfstate"
-      tgw     = false
     }
     apps-prd-k8s-eks = {
       region  = var.region
       profile = "${var.project}-apps-prd-devops"
       bucket  = "${var.project}-apps-prd-terraform-backend"
       key     = "apps-prd/k8s-eks/network/terraform.tfstate"
-      tgw     = false
     }
   }
 
@@ -185,7 +179,6 @@ locals {
       profile = var.profile
       bucket  = "${var.project}-shared-terraform-backend"
       key     = "shared/network-dr/terraform.tfstate"
-      tgw     = false
     }
   }
 

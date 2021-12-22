@@ -6,7 +6,7 @@ module "vpc_peering_apps_devstg_dr_to_shared_dr" {
 
   for_each = {
     for k, v in local.apps-devstg-dr-vpcs :
-    k => v if !v["tgw"]
+    k => v if var.enable_tgw != true
   }
 
   providers = {

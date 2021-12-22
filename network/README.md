@@ -7,7 +7,7 @@ In case you are using AWS Transit Gateway, you need to enable the Network Firewa
 In order to enable Network Firewall using a Transit Gateway perform the following order:
 
 
-1. Enable NAT Gateway in the `network` account. Edit the `../network/us-east-1/base-network/network.auto.tfvars' file:
+1. Enable NAT Gateway in the `network` account. Edit the `../network/us-east-1/base-network/network.auto.tfvars` file:
 
 ```
 # NAT GW
@@ -38,7 +38,7 @@ enable_vpc_attach = {
 enable_network_firewall = true
 ```
 
-3 Enable the transit gateway by adding the following lines in the `../config/common.tfvars` file:
+3. Enable the transit gateway by adding the following lines in the `../config/common.tfvars` file:
 
 ```
 # Networking
@@ -50,3 +50,12 @@ enable_tgw = true
 Then apply the changes in the Transit Gateway layer.
 
 4. Finally edit the `network-firewall` layer according to your needs and apply the changes.
+
+
+# Multi Region Transit Gateways + Network Firewall
+
+In order to deploy a Transit Gateway and a Network Firewall in a secondary region follow these steps:
+
+1. In the secondary region deploy the Transit Gateway and the Network Firewall as done in the primary region.
+2. Then go to the Transit Gateway layer in the primary region to deploy the Transit Gateways peering defined in the `../network/us-east-1/base-network/tgw-peerings.tf` file. This will create a peering request to the Transit gateway in the secondary region.
+3. Go to the Transit Gateway layer in the secondary region to accept the request as defined in the `../network/us-east-2/base-network/tgw-accepters.tf` file.

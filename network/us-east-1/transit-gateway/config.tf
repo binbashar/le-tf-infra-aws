@@ -39,7 +39,7 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.14.11"
+  required_version = ">= 1.0.9"
 
   required_providers {
     aws = "~> 3.0"
@@ -68,6 +68,7 @@ data "terraform_remote_state" "tools-vpn-server" {
   }
 }
 
+# Network Firewall
 data "terraform_remote_state" "network-firewall" {
 
   backend = "s3"
@@ -78,6 +79,19 @@ data "terraform_remote_state" "network-firewall" {
     bucket  = "${var.project}-network-terraform-backend"
     key     = "network/network-firewall/terraform.tfstate"
 
+  }
+}
+
+# Transit Gateway in the secondary region
+data "terraform_remote_state" "tgw-dr" {
+
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-network-devops"
+    bucket  = "${var.project}-network-terraform-backend"
+    key     = "network/transit-gateway-dr/terraform.tfstate"
   }
 }
 
@@ -131,6 +145,55 @@ data "terraform_remote_state" "apps-devstg-vpcs" {
 data "terraform_remote_state" "apps-prd-vpcs" {
 
   for_each = local.apps-prd-vpcs
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
+  }
+}
+
+#
+# Secondary region
+#
+
+# VPC remote states for share-dr
+data "terraform_remote_state" "shared-dr-vpcs" {
+
+  for_each = local.shared-dr-vpcs
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
+  }
+}
+
+# VPC remote states for network-dr
+data "terraform_remote_state" "network-dr-vpcs" {
+
+  for_each = local.network-dr-vpcs
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
+  }
+}
+
+# VPC remote states for apps-devstg-dr
+data "terraform_remote_state" "apps-devstg-dr-vpcs" {
+
+  for_each = local.apps-devstg-dr-vpcs
 
   backend = "s3"
 

@@ -22,3 +22,8 @@ output "enable_vpc_attach" {
   description = "VPC attachments per account"
   value       = var.enable_vpc_attach
 }
+
+output "tgw_attachment_id" {
+  description = "TGW attachmenti id"
+  value       = try(aws_ec2_transit_gateway_peering_attachment.tgw-dr[0].id, null)
+}

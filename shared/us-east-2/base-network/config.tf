@@ -32,7 +32,7 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.14.11"
+  required_version = ">= 1.0.9"
 
   required_providers {
     aws = "~> 3.0"
@@ -47,6 +47,21 @@ terraform {
 # Data sources                #
 #=============================#
 
+# TGW
+data "terraform_remote_state" "tgw-dr" {
+  count = var.enable_tgw ? 1 : 0
+
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-network-devops"
+    bucket  = "${var.project}-network-terraform-backend"
+    key     = "network/transit-gateway-dr/terraform.tfstate"
+  }
+}
+
+
 data "terraform_remote_state" "tools-vpn-server" {
   backend = "s3"
 
@@ -60,6 +75,7 @@ data "terraform_remote_state" "tools-vpn-server" {
 
 # VPC remote states for network
 data "terraform_remote_state" "network-vpcs" {
+
   for_each = local.network-vpcs
 
   backend = "s3"
@@ -74,10 +90,8 @@ data "terraform_remote_state" "network-vpcs" {
 
 # VPC remote states for shared
 data "terraform_remote_state" "shared-vpcs" {
-  for_each = {
-    for k, v in local.shared-vpcs :
-    k => v if !v["tgw"]
-  }
+
+  for_each = local.shared-vpcs
 
   backend = "s3"
 
@@ -92,10 +106,7 @@ data "terraform_remote_state" "shared-vpcs" {
 # VPC remote states for apps-devstg-dr
 data "terraform_remote_state" "apps-devstg-dr-vpcs" {
 
-  for_each = {
-    for k, v in local.apps-devstg-dr-vpcs :
-    k => v if !v["tgw"]
-  }
+  for_each = local.apps-devstg-dr-vpcs
 
   backend = "s3"
 
@@ -110,10 +121,7 @@ data "terraform_remote_state" "apps-devstg-dr-vpcs" {
 # VPC remote states for apps-prd-dr
 data "terraform_remote_state" "apps-prd-dr-vpcs" {
 
-  for_each = {
-    for k, v in local.apps-prd-dr-vpcs :
-    k => v if !v["tgw"]
-  }
+  for_each = local.apps-prd-dr-vpcs
 
   backend = "s3"
 

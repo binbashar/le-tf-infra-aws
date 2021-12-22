@@ -183,7 +183,7 @@ resource "aws_organizations_policy" "tag_protection" {
         },
         "ForAnyValue:StringEquals": {
           "aws:TagKeys": [
-            "protectFromDeletion"
+            "ProtectFromDeletion"
           ]
         }
       }
