@@ -7,7 +7,7 @@ enable_private_ingress = true
 #------------------------------------------------------------------------------
 # Certificate Manager
 #------------------------------------------------------------------------------
-enable_cert_manager = true
+enable_certmanager = true
 
 #------------------------------------------------------------------------------
 # External DNS sync
@@ -18,28 +18,20 @@ enable_private_dns_sync = true
 #------------------------------------------------------------------------------
 # Secrets Management
 #------------------------------------------------------------------------------
-enable_vault = true
+enable_vault = false
 
 #------------------------------------------------------------------------------
-# Auto-scaling
+# Scaling
 #------------------------------------------------------------------------------
-enable_scaling = false
+enable_hpa_scaling         = false
+enable_vpa_scaling         = false
+enable_cluster_autoscaling = true
 
 #------------------------------------------------------------------------------
 # Monitoring
 #------------------------------------------------------------------------------
 enable_logging                 = false
 enable_prometheus_dependencies = false
-
-#------------------------------------------------------------------------------
-# Demo Apps - ArgoCD
-#------------------------------------------------------------------------------
-#enable_cicd = true
-#demoapps = {
-#  emojivoto = false
-#  gdm       = false
-#  sockshop  = true
-#}
 
 #------------------------------------------------------------------------------
 # IngressMonitorController
@@ -54,9 +46,19 @@ enable_prometheus_dependencies = false
 #------------------------------------------------------------------------------
 # Kubernetes Dashboard
 #------------------------------------------------------------------------------
-enable_kubernetes_dashboard        = true
+enable_kubernetes_dashboard        = false
 kubernetes_dashboard_ingress_class = "ingress-nginx-private"
 kubernetes_dashboard_hosts         = "kubernetes-dashboard.us-east-2.devstg.aws.binbash.com.ar"
+
+#------------------------------------------------------------------------------
+# Demo Apps - ArgoCD
+#------------------------------------------------------------------------------
+enable_cicd = true
+demoapps = {
+  emojivoto = false
+  gdm       = false
+  sockshop  = true
+}
 
 #------------------------------------------------------------------------------
 # Backups

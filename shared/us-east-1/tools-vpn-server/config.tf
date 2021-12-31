@@ -36,6 +36,17 @@ data "terraform_remote_state" "vpc" {
   }
 }
 
+data "terraform_remote_state" "vpc-dr" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/network-dr/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "dns" {
   backend = "s3"
 

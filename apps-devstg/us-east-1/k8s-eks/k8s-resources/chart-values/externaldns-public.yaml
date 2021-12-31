@@ -28,6 +28,6 @@ interval: 3m
 # Create a service account and tie it to the external-dns role
 serviceAccount:
   create: true
-  name: external-dns-public
+  name: externaldns-public
   annotations:
     eks.amazonaws.com/role-arn: ${roleArn}

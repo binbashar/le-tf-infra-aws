@@ -38,10 +38,13 @@ module "terraform-aws-basic-layout" {
       description = "Allow SSH"
     },
     {
-      from_port   = 9100, # Prometheus Node Exporter
-      to_port     = 9100,
-      protocol    = "tcp",
-      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
+      from_port = 9100, # Prometheus Node Exporter
+      to_port   = 9100,
+      protocol  = "tcp",
+      cidr_blocks = [
+        data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
+        data.terraform_remote_state.vpc-dr.outputs.vpc_cidr_block
+      ],
       description = "Allow Prometheus NodeExporter"
     },
     {

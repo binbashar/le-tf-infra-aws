@@ -69,3 +69,56 @@ resource "aws_route53_record" "dev_aws_bb" {
   }
 }
 */
+
+#
+# Create a TXT record to take ownership of the global sockshop domain
+#
+# resource "aws_route53_record" "sockshop_externaldns" {
+#   zone_id = aws_route53_zone.aws_private_hosted_zone_1.zone_id
+#   name    = "sockshopapp.devstg.aws.binbash.com.ar"
+#   type    = "TXT"
+#   records = [
+#     "heritage=external-dns,external-dns/owner=binbash,external-dns/resource=ingress/argocd/argocd-server"
+#   ]
+#   ttl = 60
+# }
+
+#
+# Create 2 records configured with a weighted policy so they balance
+# traffic to each region
+#
+# resource "aws_route53_record" "sockshop_primary" {
+#   zone_id = aws_route53_zone.aws_private_hosted_zone_1.zone_id
+#   name    = "sockshopapp.devstg.aws.binbash.com.ar"
+#   type    = "A"
+
+#   set_identifier = "us-east-1"
+
+#   alias {
+#     name                   = "**********-**********.elb.us-east-1.amazonaws.com"
+#     zone_id                = "Z26R**********"
+#     evaluate_target_health = true
+#   }
+
+#   weighted_routing_policy {
+#     weight = 127
+#   }
+# }
+
+# resource "aws_route53_record" "sockshop_secondary" {
+#   zone_id = aws_route53_zone.aws_private_hosted_zone_1.zone_id
+#   name    = "sockshopapp.devstg.aws.binbash.com.ar"
+#   type    = "A"
+
+#   set_identifier = "us-east-2"
+
+#   alias {
+#     name                   = "**********-**********.elb.us-east-2.amazonaws.com"
+#     zone_id                = "ZLMO**********"
+#     evaluate_target_health = true
+#   }
+
+#   weighted_routing_policy {
+#     weight = 127
+#   }
+# }

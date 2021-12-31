@@ -1,19 +1,17 @@
 #------------------------------------------------------------------------------
 # Cert-Manager: Automatically get Let's Encrypt certificate for your ingress.
 #------------------------------------------------------------------------------
-resource "helm_release" "cert_manager" {
-  count      = var.enable_cert_manager ? 1 : 0
-  name       = "cert-manager"
-  namespace  = kubernetes_namespace.cert_manager.id
+resource "helm_release" "certmanager" {
+  count      = var.enable_certmanager ? 1 : 0
+  name       = "certmanager"
+  namespace  = kubernetes_namespace.certmanager.id
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
   version    = "1.1.0"
   values = [
-    templatefile("chart-values/cert-manager.yaml",
-      {
-        roleArn = "arn:aws:iam::${var.shared_account_id}:role/appsdevstg-certmanager"
-      }
-    )
+    templatefile("chart-values/certmanager.yaml", {
+      roleArn = "arn:aws:iam::${var.shared_account_id}:role/appsdevstg-dr-certmanager"
+    })
   ]
 }
 
@@ -21,14 +19,14 @@ resource "helm_release" "cert_manager" {
 # Cert-Manager Cluster Issuer: Certificate issuer for Binbash domains.
 #------------------------------------------------------------------------------
 resource "helm_release" "clusterissuer_binbash" {
-  count      = var.enable_cert_manager ? 1 : 0
+  count      = var.enable_certmanager ? 1 : 0
   name       = "clusterissuer-binbash"
-  namespace  = kubernetes_namespace.cert_manager.id
+  namespace  = kubernetes_namespace.certmanager.id
   repository = "https://binbashar.github.io/helm-charts/"
   chart      = "cert-manager-clusterissuer"
   version    = "0.2.0"
   values     = [file("chart-values/clusterissuer-binbash.yaml")]
-  depends_on = [helm_release.cert_manager]
+  depends_on = [helm_release.certmanager]
 }
 
 #------------------------------------------------------------------------------
@@ -41,5 +39,9 @@ resource "helm_release" "vault" {
   repository = "https://helm.releases.hashicorp.com"
   chart      = "vault"
   version    = "0.10.0"
-  values     = [file("chart-values/vault.yaml")]
+  values = [
+    templatefile("chart-values/vault.yaml", {
+      vaultAddress = var.vault_address
+    })
+  ]
 }

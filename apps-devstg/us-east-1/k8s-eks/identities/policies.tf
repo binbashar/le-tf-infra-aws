@@ -1,9 +1,10 @@
 #
-# CertManager policy
+# CertManager policy: binbash.com.ar
 #
 resource "aws_iam_policy" "certmanager_binbash_com_ar" {
-  provider    = aws.shared
-  name        = "${local.prefix}-certmanager-binbash.com.ar"
+  provider = aws.shared
+
+  name        = "${local.environment}-certmanager-binbash.com.ar"
   description = "CertManager permissions on binbash.com.ar"
   policy      = <<EOF
 {
@@ -33,12 +34,12 @@ EOF
 }
 
 #
-# External DNS policy
+# External DNS policy: aws.binbash.com.ar
 #
 resource "aws_iam_policy" "externaldns_aws_binbash_com_ar" {
   provider    = aws.shared
-  name        = "${local.prefix}-externaldns-aws.binbash.com.ar"
-  description = "External DNS permissions on aws.binbash.com.ar"
+  name        = "${local.environment}-externaldns-aws.binbash.com.ar"
+  description = "ExternalDNS permissions on aws.binbash.com.ar"
   policy      = <<EOF
 {
     "Version": "2012-10-17",
@@ -70,7 +71,7 @@ EOF
 #
 resource "aws_iam_policy" "externaldns_binbash_com_ar" {
   provider    = aws.shared
-  name        = "${local.prefix}-externaldns-binbash.com.ar"
+  name        = "${local.environment}-externaldns-binbash.com.ar"
   description = "ExternalDNS permissions on binbash.com.ar"
   policy      = <<EOF
 {
@@ -98,11 +99,12 @@ resource "aws_iam_policy" "externaldns_binbash_com_ar" {
 EOF
 }
 
+
 #
 # Cluster Autoscaler
 #
 resource "aws_iam_policy" "cluster_autoscaler" {
-  name        = "${local.prefix}-cluster-autoscaler"
+  name        = "${local.environment}-cluster-autoscaler"
   description = "Cluster Autoscaler"
   policy      = <<EOF
 {
@@ -132,7 +134,7 @@ resource "aws_iam_policy" "cluster_autoscaler" {
             "Condition": {
                 "StringEquals": {
                     "autoscaling:ResourceTag/k8s.io/cluster-autoscaler/enabled": "true",
-                    "autoscaling:ResourceTag/kubernetes.io/cluster/${data.terraform_remote_state.apps-devstg-eks-dr-cluster.outputs.cluster_name}": "owned"
+                    "autoscaling:ResourceTag/kubernetes.io/cluster/${data.terraform_remote_state.apps-devstg-eks-cluster.outputs.cluster_name}": "owned"
                 }
             }
         }

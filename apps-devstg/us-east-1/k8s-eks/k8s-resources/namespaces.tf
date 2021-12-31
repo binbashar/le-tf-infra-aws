@@ -18,23 +18,23 @@ resource "kubernetes_namespace" "ingress_nginx" {
   }
 }
 
-resource "kubernetes_namespace" "cert_manager" {
+resource "kubernetes_namespace" "certmanager" {
   metadata {
     labels = {
       environment = var.environment
     }
 
-    name = "cert-manager"
+    name = "certmanager"
   }
 }
 
-resource "kubernetes_namespace" "external_dns" {
+resource "kubernetes_namespace" "externaldns" {
   metadata {
     labels = {
       environment = var.environment
     }
 
-    name = "external-dns"
+    name = "externaldns"
   }
 }
 
@@ -48,13 +48,13 @@ resource "kubernetes_namespace" "vault" {
   }
 }
 
-resource "kubernetes_namespace" "argo_cd" {
+resource "kubernetes_namespace" "argocd" {
   metadata {
     labels = {
       environment = var.environment
     }
 
-    name = "argo-cd"
+    name = "argocd"
   }
 }
 

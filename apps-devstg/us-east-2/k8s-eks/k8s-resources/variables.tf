@@ -131,7 +131,7 @@ variable "enable_grafana_dependencies" {
   default = false
 }
 
-variable "enable_cert_manager" {
+variable "enable_certmanager" {
   type    = bool
   default = false
 }
@@ -151,12 +151,32 @@ variable "enable_kubernetes_dashboard" {
   default = false
 }
 
-variable "enable_scaling" {
+variable "enable_hpa_scaling" {
+  type    = bool
+  default = false
+}
+
+variable "enable_vpa_scaling" {
+  type    = bool
+  default = false
+}
+
+variable "enable_cluster_autoscaling" {
   type    = bool
   default = false
 }
 
 variable "enable_gatus" {
+  type    = bool
+  default = false
+}
+
+variable "enable_logging_awses" {
+  type    = bool
+  default = false
+}
+
+variable "enable_logging_selfhosted" {
   type    = bool
   default = false
 }

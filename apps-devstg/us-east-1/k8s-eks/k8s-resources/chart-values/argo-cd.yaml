@@ -11,10 +11,10 @@ server:
       # nginx.ingress.kubernetes.io/ssl-passthrough: "true"
       nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     hosts:
-      - argocd.devstg.aws.binbash.com.ar
+      - argocd.us-east-1.devstg.aws.binbash.com.ar
     paths:
       - /
     tls:
       - secretName: argocd-server-tls
         hosts:
-          - argocd.devstg.aws.binbash.com.ar
+          - argocd.us-east-1.devstg.aws.binbash.com.ar
