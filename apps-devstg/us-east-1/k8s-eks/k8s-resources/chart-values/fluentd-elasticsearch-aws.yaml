@@ -2,7 +2,7 @@
 serviceAccount:
   create: true
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::763606934258:role/aws-es-proxy
+    eks.amazonaws.com/role-arn: ${roleArn}
 
 # AWS ElasticSearch requires using signed requests. You can configure that here:
 awsSigningSidecar:
@@ -12,7 +12,7 @@ awsSigningSidecar:
     tag: v1.1
   extraEnvs:
   - name: AWS_ROLE_ARN
-    value: "arn:aws:iam::763606934258:role/aws-es-proxy"
+    value: "${roleArn}"
   - name: AWS_WEB_IDENTITY_TOKEN_FILE
     value: "/var/run/secrets/eks.amazonaws.com/serviceaccount/token"
 

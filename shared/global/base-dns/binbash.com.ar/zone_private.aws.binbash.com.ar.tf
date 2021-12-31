@@ -87,38 +87,38 @@ resource "aws_route53_record" "dev_aws_bb" {
 # Create 2 records configured with a weighted policy so they balance
 # traffic to each region
 #
-resource "aws_route53_record" "sockshop_primary" {
-  zone_id = aws_route53_zone.aws_private_hosted_zone_1.zone_id
-  name    = "sockshopapp.devstg.aws.binbash.com.ar"
-  type    = "A"
+# resource "aws_route53_record" "sockshop_primary" {
+#   zone_id = aws_route53_zone.aws_private_hosted_zone_1.zone_id
+#   name    = "sockshopapp.devstg.aws.binbash.com.ar"
+#   type    = "A"
 
-  set_identifier = "us-east-1"
+#   set_identifier = "us-east-1"
 
-  alias {
-    name                   = "a6aa94b52d31f4ce2aaa103dfdfc8e3c-73eeb5f85a0472e1.elb.us-east-1.amazonaws.com"
-    zone_id                = "Z26RNL4JYFTOTI"
-    evaluate_target_health = true
-  }
+#   alias {
+#     name                   = "**********-**********.elb.us-east-1.amazonaws.com"
+#     zone_id                = "Z26R**********"
+#     evaluate_target_health = true
+#   }
 
-  weighted_routing_policy {
-    weight = 127
-  }
-}
+#   weighted_routing_policy {
+#     weight = 127
+#   }
+# }
 
-resource "aws_route53_record" "sockshop_secondary" {
-  zone_id = aws_route53_zone.aws_private_hosted_zone_1.zone_id
-  name    = "sockshopapp.devstg.aws.binbash.com.ar"
-  type    = "A"
+# resource "aws_route53_record" "sockshop_secondary" {
+#   zone_id = aws_route53_zone.aws_private_hosted_zone_1.zone_id
+#   name    = "sockshopapp.devstg.aws.binbash.com.ar"
+#   type    = "A"
 
-  set_identifier = "us-east-2"
+#   set_identifier = "us-east-2"
 
-  alias {
-    name                   = "a971e89eac54c4e76ae8cb347a6332c0-cbbfa3e7c4ab953f.elb.us-east-2.amazonaws.com"
-    zone_id                = "ZLMOA37VPKANP"
-    evaluate_target_health = true
-  }
+#   alias {
+#     name                   = "**********-**********.elb.us-east-2.amazonaws.com"
+#     zone_id                = "ZLMO**********"
+#     evaluate_target_health = true
+#   }
 
-  weighted_routing_policy {
-    weight = 127
-  }
-}
+#   weighted_routing_policy {
+#     weight = 127
+#   }
+# }
