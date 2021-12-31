@@ -3,4 +3,4 @@
 #
 
 # Environment Name
-environment     = "root"
+environment = "root"

@@ -128,28 +128,28 @@ locals {
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/network/terraform.tfstate"
-      tgw     = false
     }
     apps-devstg-k8s-eks = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
-      tgw     = false
     }
     apps-devstg-eks-demoapps = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
-      tgw     = false
     }
+  }
+
+  # apps-devstg-dr
+  apps-devstg-dr-vpcs = {
     apps-devstg-k8s-eks-dr = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/k8s-eks-dr/network/terraform.tfstate"
-      tgw     = false
     }
   }
 
@@ -160,19 +160,33 @@ locals {
       profile = "${var.project}-apps-prd-devops"
       bucket  = "${var.project}-apps-prd-terraform-backend"
       key     = "apps-prd/network/terraform.tfstate"
-      tgw     = false
     }
     apps-prd-k8s-eks = {
       region  = var.region
       profile = "${var.project}-apps-prd-devops"
       bucket  = "${var.project}-apps-prd-terraform-backend"
       key     = "apps-prd/k8s-eks/network/terraform.tfstate"
-      tgw     = false
+    }
+  }
+
+  # apps-prd-dr
+  apps-prd-dr-vpcs = {}
+
+  # shared-dr
+  shared-dr-vpcs = {
+    shared-dr-base = {
+      region  = var.region
+      profile = var.profile
+      bucket  = "${var.project}-shared-terraform-backend"
+      key     = "shared/network-dr/terraform.tfstate"
     }
   }
 
   datasources-vpcs = merge(
-    data.terraform_remote_state.apps-devstg-vpcs, # apps-devstg-vpcs
-    data.terraform_remote_state.apps-prd-vpcs,    # apps-prd-vpcs
+    var.enable_tgw ? data.terraform_remote_state.network-vpcs : null, # network
+    data.terraform_remote_state.apps-devstg-vpcs,                     # apps-devstg-vpcs
+    data.terraform_remote_state.apps-devstg-dr-vpcs,                  # apps-devstg-dr-vpcs
+    data.terraform_remote_state.apps-prd-vpcs,                        # apps-prd-vpcs
+    data.terraform_remote_state.apps-prd-dr-vpcs,                     # apps-prd-dr-vpcs
   )
 }

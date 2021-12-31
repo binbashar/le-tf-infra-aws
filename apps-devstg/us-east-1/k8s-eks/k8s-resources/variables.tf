@@ -103,7 +103,7 @@ variable "vault_address" {
 #=============================#
 variable "enable_private_ingress" {
   type    = bool
-  default = false
+  default = true
 }
 
 variable "enable_public_ingress" {
@@ -113,7 +113,7 @@ variable "enable_public_ingress" {
 
 variable "enable_private_dns_sync" {
   type    = bool
-  default = false
+  default = true
 }
 
 variable "enable_public_dns_sync" {
@@ -133,7 +133,7 @@ variable "enable_grafana_dependencies" {
 
 variable "enable_certmanager" {
   type    = bool
-  default = false
+  default = true
 }
 
 variable "enable_vault" {
@@ -148,7 +148,7 @@ variable "enable_cicd" {
 
 variable "enable_kubernetes_dashboard" {
   type    = bool
-  default = false
+  default = true
 }
 
 variable "enable_hpa_scaling" {

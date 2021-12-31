@@ -34,7 +34,13 @@ resource "helm_release" "external_dns_private" {
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "external-dns"
   version    = "4.6.0"
-  values     = [file("chart-values/external-dns-private.yaml")]
+  values = [
+    templatefile("chart-values/externaldns-private.yaml",
+      {
+        roleArn = "arn:aws:iam::${var.shared_account_id}:role/demoapps-external-dns-private"
+      }
+    )
+  ]
 }
 
 #------------------------------------------------------------------------------
@@ -47,5 +53,11 @@ resource "helm_release" "external_dns_public" {
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "external-dns"
   version    = "4.6.0"
-  values     = [file("chart-values/external-dns-public.yaml")]
+  values = [
+    templatefile("chart-values/externaldns-public.yaml",
+      {
+        roleArn = "arn:aws:iam::${var.shared_account_id}:role/demoapps-external-dns-public"
+      }
+    )
+  ]
 }

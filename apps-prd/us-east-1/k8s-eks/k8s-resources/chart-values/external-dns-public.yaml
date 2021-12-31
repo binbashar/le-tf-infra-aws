@@ -30,4 +30,4 @@ serviceAccount:
   create: true
   name: external-dns-public
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::763606934258:role/prd-external-dns-public
+    eks.amazonaws.com/role-arn: ${roleArn}

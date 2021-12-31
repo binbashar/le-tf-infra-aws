@@ -35,16 +35,17 @@ jobs:
             # Install terraform
             sudo apt-get install unzip curl
             curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-            wget https://releases.hashicorp.com/terraform/${TERRAFORM_VER}/terraform_${TERRAFORM_VER}_linux_amd64.zip
-            unzip terraform_${TERRAFORM_VER}_linux_amd64.zip
+            wget https://releases.hashicorp.com/terraform/${TERRAFORM_VER_REF_ARCH}/terraform_${TERRAFORM_VER_REF_ARCH}_linux_amd64.zip
+            unzip terraform_${TERRAFORM_VER_REF_ARCH}_linux_amd64.zip
             sudo mv terraform /usr/local/bin/
             terraform --version
             #
             # Install terraform-docs
-            sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-            curl -Lo ./terraform-docs https://github.com/terraform-docs/terraform-docs/releases/download/v0.10.1/terraform-docs-v0.10.1-$(uname | tr '[:upper:]' '[:lower:]')-amd64
-            chmod +x ./terraform-docs
+            curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.16.0/terraform-docs-v0.16.0-$(uname)-amd64.tar.gz
+            tar -xzf terraform-docs.tar.gz
+            chmod +x terraform-docs
             sudo mv ./terraform-docs /usr/local/bin/terraform-docs
+            terraform-docs --version
 
       - run:
           name: test-terraform-format-and-docs
@@ -74,122 +75,6 @@ jobs:
             # moving credentials to specific project folder
             cp /home/circleci/.aws/credentials /home/circleci/.aws/bb/credentials
             cp /home/circleci/.aws/config /home/circleci/.aws/bb/config
-
-      - run:
-          name: test-terraform-linting
-          command: make tflint-deep
-
-      - slack/notify:
-          event: fail
-          mentions: '@leverage-support'
-          custom: |
-            {
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "Failed Pipeline! :rotating_light::fire::bash-fire::bangbang::video-games-doom-mad::stopp:",
-                    "emoji": true
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": ":negative_squared_cross_mark: *Project*: $CIRCLE_PROJECT_REPONAME \n :negative_squared_cross_mark: *User*: $CIRCLE_USERNAME \n :negative_squared_cross_mark: *Job*: $CIRCLE_JOB in *repo* $CIRCLE_PROJECT_REPONAME \n :negative_squared_cross_mark: *Branch:* $CIRCLE_BRANCH \n :negative_squared_cross_mark: *PR:* $CIRCLE_PULL_REQUEST \n :negative_squared_cross_mark: *Last Commit:* $CIRCLE_SHA1"
-                  },
-                  "accessory": {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": ":arrow_forward: View Job in CircleCi",
-                      "emoji": true
-                    },
-                    "value": "click_me_123",
-                    "url": "$CIRCLE_BUILD_URL",
-                    "action_id": "button-action"
-                  }
-                }
-              ]
-            }
-          channel: 'tools-ci'
-      - slack/notify:
-          event: pass
-          custom: |
-            {
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "Successful Pipeline! :checkered_flag: :video-games-star: :video-games-mario-luigi-dance: :tada: :binbash::bb-leverage: :heart: :open-source:",
-                    "emoji": true
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": ":heavy_check_mark: *Project*: $CIRCLE_PROJECT_REPONAME \n :heavy_check_mark: *User*: $CIRCLE_USERNAME \n :heavy_check_mark: *Job*: $CIRCLE_JOB in *repo* $CIRCLE_PROJECT_REPONAME \n :heavy_check_mark: *Branch:* $CIRCLE_BRANCH \n :heavy_check_mark: *PR:* $CIRCLE_PULL_REQUEST \n :heavy_check_mark: *Last Commit:* $CIRCLE_SHA1"
-                  },
-                  "accessory": {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": ":arrow_forward: View Job in CircleCi",
-                      "emoji": true
-                    },
-                    "value": "click_me_123",
-                    "url": "$CIRCLE_BUILD_URL",
-                    "action_id": "button-action"
-                  }
-                }
-              ]
-            }
-          channel: 'tools-ci'
-
-  #
-  # Release
-  #
-  release-version-with-changelog:
-    machine:
-      image: ubuntu-2004:202107-01 # Ubuntu 16.04, Docker v19.03.12, Docker Compose v1.26.1
-      docker_layer_caching: false
-
-    environment:
-      VERSION_NUMBER: patch # opts: patch, minor or major.
-
-    steps:
-      - checkout
-
-      - run:
-          name: Context Info Cmds
-          command: pwd && ls -ltra && git branch
-
-      - run:
-          name: Initialize Repo Makefiles
-          command: |
-            make init-makefiles
-            git update-index --assume-unchanged "Makefile"
-
-      - run:
-          name: Release New Version
-          command: |
-            if git status | grep 'nothing to commit, working tree clean'; then
-              echo "==============================================================================================="
-              echo "release-$VERSION_NUMBER-with-changelog-circleci"
-              echo "==============================================================================================="
-              git config --global user.email "$GIT_USER_EMAIL"
-              git config --global user.name "$GIT_USER_NAME"
-              make release-$VERSION_NUMBER-with-changelog-circleci
-            else
-              echo "==============================================================================================="
-              echo "Changes in working directory pending to be pushed - please check 'git status' cmd output below "
-              echo "==============================================================================================="
-              echo "$(git status)"
-              echo "==============================================================================================="
-            fi
 
       - slack/notify:
           event: fail
@@ -282,13 +167,5 @@ workflows:
             branches:
               ignore: # only branches matching the below regex filters will run
                 - master
-      - release-version-with-changelog:
-          context: binbashar-org-global-context
-          filters:
-            branches:
-             only: # only branches matching the below regex filters will run
-               - master
       - sumologic/workflow-collector:
           context: binbashar-org-global-context
-          requires:
-            - release-version-with-changelog

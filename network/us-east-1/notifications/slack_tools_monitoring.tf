@@ -1,7 +1,7 @@
 # Encrypt the URL, storing encryption here will show it in logs and in tfstate
 # https://www.terraform.io/docs/state/sensitive-data.html
 data "aws_kms_ciphertext" "slack_url_monitoring" {
-  plaintext = local.secrets.slack_webhook_monitoring
+  plaintext = data.vault_generic_secret.slack_hook_url_monitoring.data["slack_webhook_monitoring_sec"]
   key_id    = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
 }
 
@@ -11,7 +11,7 @@ data "aws_kms_ciphertext" "slack_url_monitoring" {
 # Set create_with_kms_key = true
 # when providing value of kms_key_arn to create required IAM policy which allows to decrypt using specified KMS key.
 module "notify_slack_monitoring" {
-  source = "github.com/binbashar/terraform-aws-notify-slack.git?ref=v4.15.0"
+  source = "github.com/binbashar/terraform-aws-notify-slack.git?ref=v4.24.0"
 
   #
   # Creation Flags

@@ -19,7 +19,13 @@ resource "helm_release" "fluentd_awses" {
   repository = "https://kokuwaio.github.io/helm-charts"
   chart      = "fluentd-elasticsearch"
   version    = "11.12.0"
-  values     = [file("chart-values/fluentd-elasticsearch-aws.yaml")]
+  values = [
+    templatefile("chart-values/fluentd-elasticsearch-aws.yaml",
+      {
+        roleArn = "arn:aws:iam::${var.shared_account_id}:role/demoapps-aws-es-proxy"
+      }
+    )
+  ]
 }
 
 #------------------------------------------------------------------------------
@@ -32,5 +38,6 @@ resource "helm_release" "fluentd_selfhosted" {
   repository = "https://kokuwaio.github.io/helm-charts"
   chart      = "fluentd-elasticsearch"
   version    = "11.12.0"
-  values     = [file("chart-values/fluentd-elasticsearch-selfhosted.yaml")]
+  values = [
+  file("chart-values/fluentd-elasticsearch-selfhosted.yaml")]
 }

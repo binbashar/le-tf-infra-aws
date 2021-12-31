@@ -3,4 +3,4 @@
 #
 
 # Environment Name
-environment     = "apps-devstg"
+environment = "apps-devstg"

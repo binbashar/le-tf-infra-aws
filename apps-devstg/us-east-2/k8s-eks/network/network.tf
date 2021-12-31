@@ -2,7 +2,7 @@
 # EKS VPC
 #
 module "vpc-eks" {
-  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.7.0"
+  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.11.0"
 
   name = local.vpc_name
   cidr = local.vpc_cidr_block
@@ -31,10 +31,36 @@ module "vpc-eks" {
 }
 
 # VPC Endpoints
-module "vpc_endpoints" {
-  source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.1.0"
+locals {
+  vpc_endpoints = merge({
+    # S3
+    s3 = {
+      service      = "s3"
+      service_type = "Gateway"
+    }
+    # DynamamoDB
+    dynamodb = {
+      service      = "dynamodb"
+      service_type = "Gateway"
+    }
+    },
+    # KMS
+    { for k, v in { kms = "Interface" } :
+      k => {
+        service             = k
+        service_type        = v
+        security_group_ids  = aws_security_group.kms_vpce[0].id
+        private_dns_enabled = var.enable_kms_endpoint_private_dns
+      } if var.enable_kms_endpoint
+    }
+  )
+}
 
-  for_each = var.vpc_endpoints
+# VPC Endpoints
+module "vpc_endpoints" {
+  source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.11.0"
+
+  for_each = local.vpc_endpoints
 
   vpc_id = module.vpc-eks.vpc_id
 
@@ -47,4 +73,63 @@ module "vpc_endpoints" {
   }
 
   tags = local.tags
+}
+
+#
+# KMS VPC Endpoint: Security Group
+#
+resource "aws_security_group" "kms_vpce" {
+  count       = var.enable_kms_endpoint ? 1 : 0
+  name        = "kms_vpce"
+  description = "Allow TLS inbound traffic"
+  vpc_id      = module.vpc-eks.vpc_id
+
+  ingress {
+    description = "TLS from VPC"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [local.vpc_cidr_block]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = local.tags
+}
+
+####################
+# TGW Route tables #
+####################
+
+# Update public RT
+resource "aws_route" "public_rt_routes_to_tgw" {
+
+  # For TWG CDIR
+  for_each = {
+    for k, v in var.tgw_cidrs :
+    k => v if var.enable_tgw && length(var.tgw_cidrs) > 0
+  }
+
+  # ...add a route into the network public RT
+  route_table_id         = module.vpc-eks.public_route_table_ids[0]
+  destination_cidr_block = each.value
+  transit_gateway_id     = data.terraform_remote_state.tgw-dr[0].outputs.tgw_id
+
+}
+
+# Update private RT
+resource "aws_route" "private_rt_routes_to_tgw" {
+
+  # If TGW enable
+  count = var.enable_tgw ? 1 : 0
+
+  # ...add a route into the network private RT
+  route_table_id         = module.vpc-eks.private_route_table_ids[0]
+  destination_cidr_block = "0.0.0.0/0"
+  transit_gateway_id     = data.terraform_remote_state.tgw-dr[0].outputs.tgw_id
 }
