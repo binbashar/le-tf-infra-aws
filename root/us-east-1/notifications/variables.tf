@@ -109,6 +109,12 @@ variable "sns_topic_name_costs" {
   default     = "sns-topic-costs"
 }
 
+variable "costs_email_addresses" {
+  description = "List of mails addresses to send costs alerts"
+  type        = list(string)
+  default     = ["info@binbash.com.ar"]
+}
+
 #=============================#
 # Hashicorp Vault Vars        #
 #=============================#
