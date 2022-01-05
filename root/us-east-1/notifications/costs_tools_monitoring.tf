@@ -1,5 +1,8 @@
+#
+# SNS Topic with SMS subscriptions
+#
 module "notify_costs" {
-  source = "github.com/binbashar/terraform-aws-sns-topic.git?ref=0.19.2"
+  source = "github.com/binbashar/terraform-aws-sns-topic.git?ref=0.20.1"
 
   name = var.sns_topic_name_costs
 
@@ -13,11 +16,21 @@ module "notify_costs" {
     }
   }
 
-  # Policy
+  # Access policy document
   sns_topic_policy_json = join("", data.aws_iam_policy_document.aws_sns_topic_policy.*.json)
 
 }
 
+# Subscribing a list of email addresses to SNS topic
+resource "aws_sns_topic_subscription" "topic_email_subscription" {
+  count                   = length(var.costs_email_addresses)
+  topic_arn               = module.notify_costs.sns_topic_arn
+  endpoint_auto_confirms  = true
+  protocol                = "email"
+  endpoint                = var.costs_email_addresses[count.index]
+}
+
+# Access policy document
 data "aws_iam_policy_document" "aws_sns_topic_policy" {
 
   policy_id = "SNSTopicsPub"
@@ -26,6 +39,7 @@ data "aws_iam_policy_document" "aws_sns_topic_policy" {
       type        = "AWS"
       identifiers = ["*"]
     }
+    sid = "_default"
     effect = "Allow"
     actions = [
       "SNS:Subscribe",
@@ -38,7 +52,20 @@ data "aws_iam_policy_document" "aws_sns_topic_policy" {
       "SNS:DeleteTopic",
       "SNS:AddPermission"
     ]
-    resources = ["arn:aws:sns:${var.region}:${var.root_account_id}:${var.sns_topic_name_costs}"]
+    resources = [module.notify_costs.sns_topic_arn]
+  }
+
+  statement {
+    principals {
+      type        = "Service"
+      identifiers = ["budgets.amazonaws.com"]
+    }
+    sid = "_budgets_service_access_ID"
+    actions = [
+      "SNS:Publish",
+    ]
+    effect = "Allow"
+    resources = [module.notify_costs.sns_topic_arn]
   }
 }
 
@@ -54,7 +81,7 @@ module "notify_slack_monitoring_costs" {
   # Creation Flags
   #
   create           = true
-  create_sns_topic = true
+  create_sns_topic = false
 
   #
   # Slack Webhook URL + Channel
@@ -66,7 +93,7 @@ module "notify_slack_monitoring_costs" {
 
   kms_key_arn          = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
   lambda_function_name = "${var.project}-${var.environment}-notify-slack-monitoring-costs"
-  lambda_description   = "Lambda function which sends notifications to Slack from the Cost Topic"
+  lambda_description   = "Lambda function which sends notifications to Slack from the Costs Topic"
   log_events           = false
   sns_topic_name       = var.sns_topic_name_costs
 
