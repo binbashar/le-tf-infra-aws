@@ -23,11 +23,11 @@ module "notify_costs" {
 
 # Subscribing a list of email addresses to SNS topic
 resource "aws_sns_topic_subscription" "topic_email_subscription" {
-  count                   = length(var.costs_email_addresses)
-  topic_arn               = module.notify_costs.sns_topic_arn
-  endpoint_auto_confirms  = true
-  protocol                = "email"
-  endpoint                = var.costs_email_addresses[count.index]
+  count                  = length(var.costs_email_addresses)
+  topic_arn              = module.notify_costs.sns_topic_arn
+  endpoint_auto_confirms = true
+  protocol               = "email"
+  endpoint               = var.costs_email_addresses[count.index]
 }
 
 # Access policy document
@@ -39,7 +39,7 @@ data "aws_iam_policy_document" "aws_sns_topic_policy" {
       type        = "AWS"
       identifiers = ["*"]
     }
-    sid = "_default"
+    sid    = "_default"
     effect = "Allow"
     actions = [
       "SNS:Subscribe",
@@ -64,7 +64,7 @@ data "aws_iam_policy_document" "aws_sns_topic_policy" {
     actions = [
       "SNS:Publish",
     ]
-    effect = "Allow"
+    effect    = "Allow"
     resources = [module.notify_costs.sns_topic_arn]
   }
 }
