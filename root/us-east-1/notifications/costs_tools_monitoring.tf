@@ -16,9 +16,6 @@ module "notify_costs" {
     }
   }
 
-  # Access policy document
-  sns_topic_policy_json = join("", data.aws_iam_policy_document.aws_sns_topic_policy.*.json)
-
 }
 
 # Subscribing a list of email addresses to SNS topic
@@ -30,17 +27,36 @@ resource "aws_sns_topic_subscription" "topic_email_subscription" {
   endpoint               = var.costs_email_addresses[count.index]
 }
 
-# Access policy document
-data "aws_iam_policy_document" "aws_sns_topic_policy" {
+resource "aws_sns_topic_policy" "sns-notify-costs" {
+  arn = module.notify_costs.sns_topic_arn
 
-  policy_id = "SNSTopicsPub"
+  policy = data.aws_iam_policy_document.sns-notify-costs.json
+}
+
+# Access policy document
+data "aws_iam_policy_document" "sns-notify-costs" {
+  policy_id = "__default_policy_ID"
+
   statement {
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-    sid    = "_default"
+    actions = [
+      "SNS:Publish",
+    ]
+
     effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["budgets.amazonaws.com"]
+    }
+
+    resources = [
+      module.notify_costs.sns_topic_arn,
+    ]
+
+    sid = "_budgets_service_access_ID"
+  }
+
+  statement {
     actions = [
       "SNS:Subscribe",
       "SNS:SetTopicAttributes",
@@ -50,22 +66,30 @@ data "aws_iam_policy_document" "aws_sns_topic_policy" {
       "SNS:ListSubscriptionsByTopic",
       "SNS:GetTopicAttributes",
       "SNS:DeleteTopic",
-      "SNS:AddPermission"
+      "SNS:AddPermission",
     ]
-    resources = [module.notify_costs.sns_topic_arn]
-  }
 
-  statement {
-    principals {
-      type        = "Service"
-      identifiers = ["budgets.amazonaws.com"]
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceOwner"
+
+      values = [
+        var.root_account_id,
+      ]
     }
-    sid = "_budgets_service_access_ID"
-    actions = [
-      "SNS:Publish",
+
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    resources = [
+      module.notify_costs.sns_topic_arn,
     ]
-    effect    = "Allow"
-    resources = [module.notify_costs.sns_topic_arn]
+
+    sid = "__default_statement_ID"
   }
 }
 
