@@ -105,32 +105,29 @@ resource "aws_security_group" "kms_vpce" {
 ####################
 
 # Update public RT
-#resource "aws_route" "public_rt_routes_to_tgw" {
-#
-#  # For TWG CDIR
-#  for_each = {
-#    for k, v in var.tgw_cidrs :
-#    k => v if var.enable_tgw && length(var.tgw_cidrs) > 0
-#  }
-#
-#  # ...add a route into the network public RT
-#  route_table_id         = module.vpc-eks.public_route_table_ids[0]
-#  destination_cidr_block = each.value
-#  transit_gateway_id     = data.terraform_remote_state.tgw[0].outputs.tgw_id
-#
-#}
+resource "aws_route" "public_rt_routes_to_tgw" {
+
+  # WFor TWG CDIRs
+  for_each = {
+    for k, v in var.tgw_cidrs :
+    k => v if var.enable_tgw && length(var.tgw_cidrs) > 0
+  }
+
+  # ...add a route into the network public RT
+  route_table_id         = module.vpc-eks.public_route_table_ids[0]
+  destination_cidr_block = each.value
+  transit_gateway_id     = data.terraform_remote_state.tgw[0].outputs.tgw_id
+
+}
 
 # Update private RT
 resource "aws_route" "private_rt_routes_to_tgw" {
 
-  # For the shared VPCs
-  for_each = {
-    for k, v in data.terraform_remote_state.shared-vpcs :
-    k => v if var.enable_tgw
-  }
+  # If TGW enable
+  count = var.enable_tgw ? 1 : 0
 
   # ...add a route into the network private RT
   route_table_id         = module.vpc-eks.private_route_table_ids[0]
-  destination_cidr_block = each.value.outputs.vpc_cidr_block
+  destination_cidr_block = "0.0.0.0/0"
   transit_gateway_id     = data.terraform_remote_state.tgw[0].outputs.tgw_id
 }

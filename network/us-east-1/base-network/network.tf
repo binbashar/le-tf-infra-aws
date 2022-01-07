@@ -90,7 +90,7 @@ resource "aws_security_group" "kms_vpce" {
 # Update public RT
 resource "aws_route" "public_rt_routes_to_tgw" {
 
-  # For TWG CDIR
+  # For TWG CDIRs
   for_each = {
     for k, v in var.tgw_cidrs :
     k => v if var.enable_tgw && length(var.tgw_cidrs) > 0
@@ -106,11 +106,14 @@ resource "aws_route" "public_rt_routes_to_tgw" {
 # Update private RT
 resource "aws_route" "private_rt_routes_to_tgw" {
 
-  # If TGW enable
-  count = var.enable_tgw ? 1 : 0
+  # For TWG CDIRs
+  for_each = {
+    for k, v in var.tgw_cidrs :
+    k => v if var.enable_tgw && length(var.tgw_cidrs) > 0
+  }
 
   # ...add a route into the network private RT
   route_table_id         = module.vpc-eks.private_route_table_ids[0]
-  destination_cidr_block = "0.0.0.0/0"
+  destination_cidr_block = each.value.outputs.vpc_cidr_block
   transit_gateway_id     = data.terraform_remote_state.tgw[0].outputs.tgw_id
 }
