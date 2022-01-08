@@ -75,7 +75,7 @@ When VPC peerings are deployed you need to follow this workflow to toggle the Tr
 ## VPC Peerings -> Transit Gateway multi region
 
 1. Create the TGW for each region (and their Network Firewalls if apply) as explained before, validate that each one works.
-2. Enable the transit gateway multi-region support by setting  `tgw_multi_region = true` in the `../config/common.tfvars` file.
+2. Enable the transit gateway multi-region support by setting  `enable_tgw_multi_region = true` in the `../config/common.tfvars` file.
 3. In the main region go to the the `network/transit-gateway` layer and apply changes using leverage cli. This will create a TGW peering request to the secondary region.
 4. Go to `network/transit-gateway` layer of the secondary region and apply changes using leverage cli to accept the request.
 5. In case more TGWs are needed use the `tgw-peerings.tf` and  `tgw-peerings-acccepters.tf` files of the primary and secondary regions respectively as a template.

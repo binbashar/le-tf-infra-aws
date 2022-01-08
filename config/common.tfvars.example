@@ -46,3 +46,9 @@ vault_token = "s.XXXXXXXXXXXXXXXXXXXXXX.Apshc"
 
 # Enable TGW
 enable_tgw = false
+
+# Enable TGW multi region
+tgw_multi_region = false
+
+# CDIR blocks handled by the TGW
+tgw_cidrs = ["172.0.0.0/16", "10.0.0.0/8"]
