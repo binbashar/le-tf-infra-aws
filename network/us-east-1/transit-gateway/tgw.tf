@@ -137,6 +137,88 @@ module "tgw_inspection_route_table" {
   }
 }
 
+# apps-devstg
+module "tgw_apps_devstg_route_table" {
+
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+
+  count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false) ? 1 : 0
+
+  name = "${var.project}-${var.environment}-apps-devstg"
+
+  existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
+  create_transit_gateway                                         = false
+  create_transit_gateway_route_table                             = true
+  create_transit_gateway_vpc_attachment                          = false
+  create_transit_gateway_route_table_association_and_propagation = false
+
+  config = {
+    inspection = {
+      vpc_id                            = null
+      vpc_cidr                          = null
+      subnet_ids                        = null
+      subnet_route_table_ids            = null
+      route_to                          = null
+      route_to_cidr_blocks              = null
+      transit_gateway_vpc_attachment_id = null
+      static_routes = [
+        for v in var.tgw_cidrs :
+        {
+          blackhole              = true
+          destination_cidr_block = v
+        }
+      ]
+    }
+  }
+
+  tags = local.tags
+
+  providers = {
+    aws = aws.network
+  }
+}
+
+# apps-prd
+module "tgw_apps_prd_route_table" {
+
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+
+  count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false) ? 1 : 0
+
+  name = "${var.project}-${var.environment}-apps-prd"
+
+  existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
+  create_transit_gateway                                         = false
+  create_transit_gateway_route_table                             = true
+  create_transit_gateway_vpc_attachment                          = false
+  create_transit_gateway_route_table_association_and_propagation = false
+
+  config = {
+    inspection = {
+      vpc_id                            = null
+      vpc_cidr                          = null
+      subnet_ids                        = null
+      subnet_route_table_ids            = null
+      route_to                          = null
+      route_to_cidr_blocks              = null
+      transit_gateway_vpc_attachment_id = null
+      static_routes = [
+        for v in var.tgw_cidrs :
+        {
+          blackhole              = true
+          destination_cidr_block = v
+        }
+      ]
+    }
+  }
+
+  tags = local.tags
+
+  providers = {
+    aws = aws.network
+  }
+}
+
 #
 # Network Firewall
 #
@@ -170,7 +252,9 @@ resource "aws_ec2_transit_gateway_route_table_association" "network-base-associa
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network["network-base"].transit_gateway_vpc_attachment_ids["network-base"]
 }
 
+#
 # shared
+#
 resource "aws_ec2_transit_gateway_route_table_association" "shared-rt-associations" {
 
   for_each = {
@@ -190,93 +274,83 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "shared-rt-propagatio
 
   transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_shared[each.key].transit_gateway_vpc_attachment_ids[each.key]
-
 }
 
+#
 # apps-devstg
+#
 resource "aws_ec2_transit_gateway_route_table_association" "apps-devstg-rt-associations" {
 
   for_each = {
     for k, v in data.terraform_remote_state.apps-devstg-vpcs :
-    k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "apps-devstg", false)
+    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
   }
 
-  transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
+  transit_gateway_route_table_id = module.tgw_apps_devstg_route_table[0].transit_gateway_route_table_id
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-devstg[each.key].transit_gateway_vpc_attachment_ids[each.key]
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "apps-devstg-rt-propagations" {
   for_each = {
     for k, v in data.terraform_remote_state.apps-devstg-vpcs :
-    k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "apps-devstg", false)
+    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
   }
 
   transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-devstg[each.key].transit_gateway_vpc_attachment_ids[each.key]
-
 }
 
+resource "aws_ec2_transit_gateway_route" "apps-devstg-routes" {
+  for_each = {
+    for k, v in data.terraform_remote_state.apps-devstg-vpcs :
+    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
+  }
+
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-devstg[each.key].transit_gateway_vpc_attachment_ids[each.key]
+  transit_gateway_route_table_id = module.tgw_apps_devstg_route_table[0].transit_gateway_route_table_id
+  destination_cidr_block         = v.outputs.vpc_cidr_block
+}
+
+#
 # apps-prd
+#
 resource "aws_ec2_transit_gateway_route_table_association" "apps-prd-rt-associations" {
 
   for_each = {
     for k, v in data.terraform_remote_state.apps-prd-vpcs :
-    k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "apps-prd", false)
+    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
   }
 
-  transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
+  transit_gateway_route_table_id = module.tgw_apps_prd_route_table[0].transit_gateway_route_table_id
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-prd[each.key].transit_gateway_vpc_attachment_ids[each.key]
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "apps-prd-rt-propagations" {
   for_each = {
     for k, v in data.terraform_remote_state.apps-prd-vpcs :
-    k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "apps-prd", false)
+    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
   }
 
   transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-prd[each.key].transit_gateway_vpc_attachment_ids[each.key]
-
 }
 
-#
-# Update network public RT
-#
-resource "aws_route" "apps_devstg_public_route_to_tgw" {
 
-  # For each vpc...
-  for_each = {
-    for k, v in data.terraform_remote_state.apps-devstg-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
-  }
-
-  # ...add a route into the network public RT
-  route_table_id         = data.terraform_remote_state.network-vpcs["network-base"].outputs.public_route_table_ids[0]
-  destination_cidr_block = each.value.outputs.vpc_cidr_block
-  transit_gateway_id     = module.tgw[0].transit_gateway_id
-
-  depends_on = [module.tgw, module.tgw_vpc_attachments_and_subnet_routes_network]
-
-}
-
-resource "aws_route" "shared_public_apps_prd_route_to_tgw" {
-
-  # For each vpc...
+resource "aws_ec2_transit_gateway_route" "apps-prd-routes" {
   for_each = {
     for k, v in data.terraform_remote_state.apps-prd-vpcs :
     k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
   }
 
-  # ...add a route into the network public RT
-  route_table_id         = data.terraform_remote_state.shared-vpcs["shared-base"].outputs.public_route_table_ids[0]
-  destination_cidr_block = each.value.outputs.vpc_cidr_block
-  transit_gateway_id     = module.tgw[0].transit_gateway_id
-
-  depends_on = [module.tgw, module.tgw_vpc_attachments_and_subnet_routes_network]
-
-  provider = aws.shared
-
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-prd[each.key].transit_gateway_vpc_attachment_ids[each.key]
+  transit_gateway_route_table_id = module.tgw_apps_prd_route_table[0].transit_gateway_route_table_id
+  destination_cidr_block         = v.outputs.vpc_cidr_block
 }
+
+
+###################
+# Aditiona routes #
+##################
 
 # Update Inspection & AWS Network Firewall route tables
 data "aws_route_table" "inspection_route_table" {
