@@ -163,7 +163,7 @@ variable "enable_tgw" {
 }
 
 variable "enable_tgw_multi_region" {
-  description = "Enable Transit Gateway Support"
+  description = "Enable Transit Gateway multi region support"
   type        = bool
   default     = false
 }
