@@ -84,18 +84,6 @@ data "terraform_remote_state" "tools-vpn-server" {
   }
 }
 
-data "terraform_remote_state" "tgw" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-network-devops"
-    bucket  = "${var.project}-network-terraform-backend"
-    key     = "network/transit-gateway/terraform.tfstate"
-  }
-}
-
-
 data "terraform_remote_state" "network-firewall" {
   backend = "s3"
 
