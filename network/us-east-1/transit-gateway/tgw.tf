@@ -259,7 +259,7 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "apps-devstg-rt-propa
     k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
   }
 
-  transit_gateway_route_table_id = module.tgw_apps_devstg_route_table[0].transit_gateway_route_table_id
+  transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-devstg[each.key].transit_gateway_vpc_attachment_ids[each.key]
 }
 
@@ -274,15 +274,12 @@ resource "aws_ec2_transit_gateway_route" "apps-devstg-routes-to-shared" {
   destination_cidr_block         = each.value.outputs.vpc_cidr_block
 }
 
-resource "aws_ec2_transit_gateway_route" "apps-devstg-routes-to-network" {
-  for_each = {
-    for k, v in data.terraform_remote_state.network-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
-  }
+resource "aws_ec2_transit_gateway_route" "apps-devstg-routes-default" {
+  count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false) ? 1 : 0
 
-  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network[each.key].transit_gateway_vpc_attachment_ids[each.key]
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network["network-base"].transit_gateway_vpc_attachment_ids["network-base"]
   transit_gateway_route_table_id = module.tgw_apps_devstg_route_table[0].transit_gateway_route_table_id
-  destination_cidr_block         = each.value.outputs.vpc_cidr_block
+  destination_cidr_block         = "0.0.0.0/0"
 }
 
 # Blackholes
@@ -300,7 +297,6 @@ resource "aws_ec2_transit_gateway_route" "apps-devstg-blackholes" {
 # apps-prd
 #
 resource "aws_ec2_transit_gateway_route_table_association" "apps-prd-rt-associations" {
-
   for_each = {
     for k, v in data.terraform_remote_state.apps-prd-vpcs :
     k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
@@ -316,7 +312,7 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "apps-prd-rt-propagat
     k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
   }
 
-  transit_gateway_route_table_id = module.tgw_apps_prd_route_table[0].transit_gateway_route_table_id
+  transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_apps-prd[each.key].transit_gateway_vpc_attachment_ids[each.key]
 }
 
@@ -331,15 +327,12 @@ resource "aws_ec2_transit_gateway_route" "apps-prd-routes-to-shared" {
   destination_cidr_block         = each.value.outputs.vpc_cidr_block
 }
 
-resource "aws_ec2_transit_gateway_route" "apps-prd-routes-to-network" {
-  for_each = {
-    for k, v in data.terraform_remote_state.network-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
-  }
+resource "aws_ec2_transit_gateway_route" "apps-prd-routes-default" {
+  count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false) ? 1 : 0
 
-  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network[each.key].transit_gateway_vpc_attachment_ids[each.key]
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network["network-base"].transit_gateway_vpc_attachment_ids["network-base"]
   transit_gateway_route_table_id = module.tgw_apps_prd_route_table[0].transit_gateway_route_table_id
-  destination_cidr_block         = each.value.outputs.vpc_cidr_block
+  destination_cidr_block         = "0.0.0.0/0"
 }
 
 # Blackholes
