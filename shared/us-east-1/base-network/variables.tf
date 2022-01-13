@@ -176,6 +176,19 @@ variable "enable_kms_endpoint_private_dns" {
   default     = false
 }
 
+variable "enable_ssm_endpoints" {
+  description = "Enable SSM endpoints"
+  type        = bool
+  default     = false
+}
+
+variable "enable_ssm_endpoints_private_dns" {
+  description = "Enable SSM endpoints"
+  type        = bool
+  default     = false
+}
+
+
 variable "manage_default_network_acl" {
   description = "Manage default Network ACL"
   type        = bool
