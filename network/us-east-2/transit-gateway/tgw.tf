@@ -47,32 +47,6 @@ module "tgw-dr" {
         ]
       }
     } : {},
-    # apps-devstg-dr private
-    lookup(var.enable_vpc_attach, "apps-devstg-dr", false) ? {
-      for k, v in data.terraform_remote_state.apps-devstg-dr-vpcs : v.outputs.vpc_id => {
-        vpc_id                            = null
-        vpc_cidr                          = null
-        subnet_ids                        = null
-        subnet_route_table_ids            = null
-        route_to                          = null
-        route_to_cidr_blocks              = null
-        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_apps-devstg-dr[k].transit_gateway_vpc_attachment_ids[k]
-        static_routes                     = null
-      }
-    } : {},
-    # apps-prd-dr private
-    lookup(var.enable_vpc_attach, "apps-prd-dr", false) ? {
-      for k, v in data.terraform_remote_state.apps-prd-dr-vpcs : v.outputs.vpc_id => {
-        vpc_id                            = null
-        vpc_cidr                          = null
-        subnet_ids                        = null
-        subnet_route_table_ids            = null
-        route_to                          = null
-        route_to_cidr_blocks              = null
-        transit_gateway_vpc_attachment_id = module.tgw_vpc_attachments_and_subnet_routes_apps-prd-dr[k].transit_gateway_vpc_attachment_ids[k]
-        static_routes                     = null
-      }
-    } : {},
     # shared-dr private
     lookup(var.enable_vpc_attach, "shared-dr", false) ? {
       for k, v in data.terraform_remote_state.shared-dr-vpcs : v.outputs.vpc_id => {
@@ -96,7 +70,7 @@ module "tgw-dr" {
 }
 
 #
-# Route Table defitions
+# Route Table definitions
 #
 module "tgw_inspection_route_table" {
 
@@ -136,6 +110,78 @@ module "tgw_inspection_route_table" {
     aws = aws.network
   }
 }
+
+# apps-devstg
+module "tgw_apps_devstg_dr_route_table" {
+
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+
+  count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg-dr", false) ? 1 : 0
+
+  name = "${var.project}-${var.environment}-apps-devstg-dr"
+
+  existing_transit_gateway_id                                    = module.tgw-dr[0].transit_gateway_id
+  create_transit_gateway                                         = false
+  create_transit_gateway_route_table                             = true
+  create_transit_gateway_vpc_attachment                          = false
+  create_transit_gateway_route_table_association_and_propagation = false
+
+  config = {
+    apps-devstg = {
+      vpc_id                            = null
+      vpc_cidr                          = null
+      subnet_ids                        = null
+      subnet_route_table_ids            = null
+      route_to                          = null
+      route_to_cidr_blocks              = null
+      transit_gateway_vpc_attachment_id = null
+      static_routes                     = []
+    }
+  }
+
+  tags = local.tags
+
+  providers = {
+    aws = aws.network
+  }
+}
+
+# apps-prd
+module "tgw_apps_prd_dr_route_table" {
+
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+
+  count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd-dr", false) ? 1 : 0
+
+  name = "${var.project}-${var.environment}-apps-prd-dr"
+
+  existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
+  create_transit_gateway                                         = false
+  create_transit_gateway_route_table                             = true
+  create_transit_gateway_vpc_attachment                          = false
+  create_transit_gateway_route_table_association_and_propagation = false
+
+
+  config = {
+    apps-prd = {
+      vpc_id                            = null
+      vpc_cidr                          = null
+      subnet_ids                        = null
+      subnet_route_table_ids            = null
+      route_to                          = null
+      route_to_cidr_blocks              = null
+      transit_gateway_vpc_attachment_id = null
+      static_routes                     = []
+    }
+  }
+
+  tags = local.tags
+
+  providers = {
+    aws = aws.network
+  }
+}
+
 
 #
 # Network Firewall
