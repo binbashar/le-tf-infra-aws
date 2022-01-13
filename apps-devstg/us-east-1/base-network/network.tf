@@ -49,7 +49,7 @@ locals {
       k => {
         service             = k
         service_type        = v
-        security_group_ids  = aws_security_group.kms_vpce[0].id
+        security_group_ids  = [aws_security_group.kms_vpce[0].id]
         private_dns_enabled = var.enable_kms_endpoint_private_dns
       } if var.enable_kms_endpoint
     },

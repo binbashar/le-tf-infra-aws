@@ -1,5 +1,5 @@
 #
-# EKS VPC
+# VPC
 #
 module "vpc" {
   source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.11.0"
