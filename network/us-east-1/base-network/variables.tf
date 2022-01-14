@@ -182,6 +182,12 @@ variable "enable_kms_endpoint" {
   default     = false
 }
 
+variable "enable_kms_endpoint_private_dns" {
+  description = "Enable KMS endpoint"
+  type        = bool
+  default     = false
+}
+
 variable "manage_default_network_acl" {
   description = "Manage default Network ACL"
   type        = bool
