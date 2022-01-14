@@ -161,7 +161,6 @@ module "tgw_apps_prd_route_table" {
   create_transit_gateway_vpc_attachment                          = false
   create_transit_gateway_route_table_association_and_propagation = false
 
-
   config = {
     apps-prd = {
       vpc_id                            = null
@@ -346,10 +345,9 @@ resource "aws_ec2_transit_gateway_route" "apps-prd-blackholes" {
   transit_gateway_route_table_id = module.tgw_apps_prd_route_table[0].transit_gateway_route_table_id
 }
 
-
 ####################
 # Aditional routes #
-###################
+####################
 
 # Update Inspection & AWS Network Firewall route tables
 data "aws_route_table" "inspection_route_table" {
@@ -366,7 +364,6 @@ resource "aws_route" "inspection_to_endpoint" {
     for s in data.terraform_remote_state.network-firewall.outputs["sync_states"][0] :
     s["availability_zone"] => s["attachment"]
   } : {}
-
 
   route_table_id         = data.aws_route_table.inspection_route_table[each.key].id
   vpc_endpoint_id        = each.value[0]["endpoint_id"]

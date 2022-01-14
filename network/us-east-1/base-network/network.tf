@@ -2,7 +2,7 @@
 # Network Resources
 #
 module "vpc" {
-  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.1.0"
+  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.11.0"
 
   name = local.vpc_name
   cidr = local.vpc_cidr_block
@@ -34,10 +34,35 @@ module "vpc" {
 }
 
 # VPC Endpoints
-module "vpc_endpoints" {
-  source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.1.0"
+locals {
+  vpc_endpoints = merge({
+    # S3
+    s3 = {
+      service      = "s3"
+      service_type = "Gateway"
+    }
+    # DynamamoDB
+    dynamodb = {
+      service      = "dynamodb"
+      service_type = "Gateway"
+    }
+    },
+    # KMS
+    { for k, v in { kms = "Interface" } :
+      k => {
+        service             = k
+        service_type        = v
+        security_group_ids  = aws_security_group.kms_vpce[0].id
+        private_dns_enabled = var.enable_kms_endpoint_private_dns
+      } if var.enable_kms_endpoint
+    }
+  )
+}
 
-  for_each = var.vpc_endpoints
+module "vpc_endpoints" {
+  source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.11.0"
+
+  for_each = local.vpc_endpoints
 
   vpc_id = module.vpc.vpc_id
 
@@ -50,15 +75,13 @@ module "vpc_endpoints" {
   }
 
   tags = local.tags
-
-  depends_on = [module.vpc]
 }
 
 #
 # KMS VPC Endpoint: Security Group
 #
 resource "aws_security_group" "kms_vpce" {
-  count       = length(lookup(var.vpc_endpoints, "kms", {})) > 0 ? 1 : 0
+  count       = var.enable_kms_endpoint ? 1 : 0
   name        = "kms_vpce"
   description = "Allow TLS inbound traffic"
   vpc_id      = module.vpc.vpc_id
@@ -79,8 +102,6 @@ resource "aws_security_group" "kms_vpce" {
   }
 
   tags = local.tags
-
-  depends_on = [module.vpc]
 }
 
 ####################
