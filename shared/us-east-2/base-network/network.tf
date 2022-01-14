@@ -179,14 +179,11 @@ resource "aws_route" "public_rt_routes_to_tgw" {
 # Update private RT
 resource "aws_route" "private_rt_routes_to_tgw" {
 
-  # For TWG CDIRs
-  for_each = {
-    for k, v in var.tgw_cidrs :
-    k => v if var.enable_tgw && length(var.tgw_cidrs) > 0
-  }
+  # If TGW enable
+  count = var.enable_tgw ? 1 : 0
 
   # ...add a route into the network private RT
   route_table_id         = module.vpc.private_route_table_ids[0]
-  destination_cidr_block = each.value
+  destination_cidr_block = "0.0.0.0/0"
   transit_gateway_id     = data.terraform_remote_state.tgw-dr[0].outputs.tgw_id
 }
