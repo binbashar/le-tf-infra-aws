@@ -115,6 +115,11 @@ variable "enable_tgw_multi_region" {
   default     = false
 }
 
+variable "tgw_cidrs" {
+  description = "CIDRs to be added as routes to public RT"
+  type        = list(string)
+  default     = []
+}
 
 variable "enable_vpc_attach" {
   description = "Enable VPC attachments per account"

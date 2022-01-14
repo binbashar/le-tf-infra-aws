@@ -155,7 +155,7 @@ module "tgw_apps_prd_dr_route_table" {
 
   name = "${var.project}-${var.environment}-apps-prd-dr"
 
-  existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
+  existing_transit_gateway_id                                    = module.tgw-dr[0].transit_gateway_id
   create_transit_gateway                                         = false
   create_transit_gateway_route_table                             = true
   create_transit_gateway_vpc_attachment                          = false
@@ -270,14 +270,14 @@ resource "aws_ec2_transit_gateway_route" "apps-devstg-dr-routes-to-shared-dr" {
   }
 
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_shared-dr[each.key].transit_gateway_vpc_attachment_ids[each.key]
-  transit_gateway_route_table_id = module.tgw_apps_devstg_route_dr_table[0].transit_gateway_route_table_id
+  transit_gateway_route_table_id = module.tgw_apps_devstg_dr_route_table[0].transit_gateway_route_table_id
   destination_cidr_block         = each.value.outputs.vpc_cidr_block
 }
 
 resource "aws_ec2_transit_gateway_route" "apps-devstg-dr-routes-default" {
   count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg-dr", false) ? 1 : 0
 
-  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network["network-base-dr"].transit_gateway_vpc_attachment_ids["network-base-dr"]
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network-dr["network-base-dr"].transit_gateway_vpc_attachment_ids["network-base-dr"]
   transit_gateway_route_table_id = module.tgw_apps_devstg_dr_route_table[0].transit_gateway_route_table_id
   destination_cidr_block         = "0.0.0.0/0"
 }
@@ -331,8 +331,8 @@ resource "aws_ec2_transit_gateway_route" "apps-prd-dr-routes-to-shared-dr" {
 resource "aws_ec2_transit_gateway_route" "apps-prd-dr-routes-default" {
   count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd-dr", false) ? 1 : 0
 
-  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network["network-base-dr"].transit_gateway_vpc_attachment_ids["network-base-dr"]
-  transit_gateway_route_table_id = module.tgw_apps_prd_route_table[0].transit_gateway_route_table_id
+  transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network-dr["network-base-dr"].transit_gateway_vpc_attachment_ids["network-base-dr"]
+  transit_gateway_route_table_id = module.tgw_apps_prd_dr_route_table[0].transit_gateway_route_table_id
   destination_cidr_block         = "0.0.0.0/0"
 }
 
