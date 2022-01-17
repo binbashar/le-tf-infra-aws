@@ -125,8 +125,6 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-devstg-dr" {
       route_to               = null
       route_to_cidr_blocks = concat(
         ["0.0.0.0/0"], # twg - Add the default route to target the TGW in apps-devstg's private RTs
-        #[for v in values(data.terraform_remote_state.shared-vpcs) : v.outputs.vpc_cidr_block],  # shared - Add shared vpc cidrs to target the TGW in apps-devstg's private RTs
-        #[for v in values(data.terraform_remote_state.network-vpcs) : v.outputs.vpc_cidr_block], # network - Add network vpc cidrs to target the TGW in apps-devstg's private RTs
       )
       static_routes                     = null
       transit_gateway_vpc_attachment_id = null
@@ -170,8 +168,6 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd-dr" {
       route_to               = null
       route_to_cidr_blocks = concat(
         ["0.0.0.0/0"], # twg - Add the default route to target the TGW in apps-prd's private RTs
-        #[for v in values(data.terraform_remote_state.shared-vpcs) : v.outputs.vpc_cidr_block],  # shared - Add shared vpc cidrs to target the TGW in apps-prd's private RTs
-        #[for v in values(data.terraform_remote_state.network-vpcs) : v.outputs.vpc_cidr_block], # network - Add network vpc cidrs to target the TGW in apps-prd's private RTs
       )
       static_routes                     = null
       transit_gateway_vpc_attachment_id = null
