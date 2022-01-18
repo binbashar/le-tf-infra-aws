@@ -204,3 +204,18 @@ data "terraform_remote_state" "apps-devstg-dr-vpcs" {
     key     = lookup(each.value, "key")
   }
 }
+
+# VPC remote states for apps-prd-dr
+data "terraform_remote_state" "apps-prd-dr-vpcs" {
+
+  for_each = local.apps-prd-dr-vpcs
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
+  }
+}

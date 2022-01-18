@@ -109,7 +109,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-devstg-dr" {
 
   # apps-devstg account can access the Transit Gateway in the network account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw-dr[0].transit_gateway_id
-  existing_transit_gateway_route_table_id                        = var.enable_tgw && var.enable_network_firewall ? module.tgw_vpc_attachments_and_subnet_routes_network-firewall-dr["network-firewall-dr"].transit_gateway_route_table_id : module.tgw-dr[0].transit_gateway_route_table_id
+  existing_transit_gateway_route_table_id                        = module.tgw_apps_devstg_dr_route_table[0].transit_gateway_route_table_id
   create_transit_gateway                                         = false
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true
@@ -152,7 +152,7 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd-dr" {
 
   # apps-prd account can access the Transit Gateway in the network account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw-dr[0].transit_gateway_id
-  existing_transit_gateway_route_table_id                        = var.enable_tgw && var.enable_network_firewall ? module.tgw_inspection_route_table[0].transit_gateway_route_table_id : module.tgw-dr[0].transit_gateway_route_table_id
+  existing_transit_gateway_route_table_id                        = module.tgw_apps_prd_dr_route_table[0].transit_gateway_route_table_id
   create_transit_gateway                                         = false
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true

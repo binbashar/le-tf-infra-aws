@@ -281,6 +281,16 @@ resource "aws_ec2_transit_gateway_route" "apps-devstg-routes-default" {
   destination_cidr_block         = "0.0.0.0/0"
 }
 
+# apps-devstg ->apps-devstg-dr
+resource "aws_ec2_transit_gateway_route" "apps-devstg-to-apps-devstg-dr" {
+
+  for_each = { for k, v in local.apps-devstg-dr-vpcs : k => v if var.enable_tgw && var.enable_tgw_multi_region && lookup(var.enable_vpc_attach, "apps-devstg", false) && try(data.terraform_remote_state.tgw-dr.outputs.tgw_id != null, false) }
+
+  destination_cidr_block         = data.terraform_remote_state.apps-devstg-dr-vpcs[each.key].outputs.vpc_cidr_block
+  transit_gateway_route_table_id = module.tgw_apps_devstg_route_table[0].transit_gateway_route_table_id
+  transit_gateway_attachment_id  = try(aws_ec2_transit_gateway_peering_attachment.tgw-dr[0].id, null)
+}
+
 # Blackholes
 resource "aws_ec2_transit_gateway_route" "apps-devstg-blackholes" {
   for_each = {
@@ -332,6 +342,16 @@ resource "aws_ec2_transit_gateway_route" "apps-prd-routes-default" {
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network["network-base"].transit_gateway_vpc_attachment_ids["network-base"]
   transit_gateway_route_table_id = module.tgw_apps_prd_route_table[0].transit_gateway_route_table_id
   destination_cidr_block         = "0.0.0.0/0"
+}
+
+# apps-prd -> apps-prd-dr
+resource "aws_ec2_transit_gateway_route" "apps-prd-to-apps-prd-dr" {
+
+  for_each = { for k, v in local.apps-prd-dr-vpcs : k => v if var.enable_tgw && var.enable_tgw_multi_region && lookup(var.enable_vpc_attach, "apps-prd", false) && try(data.terraform_remote_state.tgw-dr.outputs.tgw_id != null, false) }
+
+  destination_cidr_block         = try(data.terraform_remote_state.apps-prd-dr-vpcs[each.key].outputs.vpc_cidr_block)
+  transit_gateway_route_table_id = module.tgw_apps_prd_route_table[0].transit_gateway_route_table_id
+  transit_gateway_attachment_id  = try(aws_ec2_transit_gateway_peering_attachment.tgw-dr[0].id, null)
 }
 
 # Blackholes
