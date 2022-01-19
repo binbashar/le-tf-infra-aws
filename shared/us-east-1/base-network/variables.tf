@@ -164,6 +164,17 @@ variable "vpc_enable_vpn_gateway" {
   default     = false
 }
 
+variable "vpc_enable_s3_endpoint" {
+  description = "Enable S3 endpoint"
+  type        = bool
+  default     = true
+}
+
+variable "vpc_enable_dynamodb_endpoint" {
+  description = "Enable DynamoDB endpoint"
+  type        = bool
+  default     = true
+}
 variable "enable_kms_endpoint" {
   description = "Enable KMS endpoint"
   type        = bool
@@ -175,6 +186,19 @@ variable "enable_kms_endpoint_private_dns" {
   type        = bool
   default     = false
 }
+
+variable "enable_ssm_endpoints" {
+  description = "Enable SSM endpoints"
+  type        = bool
+  default     = false
+}
+
+variable "enable_ssm_endpoints_private_dns" {
+  description = "Enable SSM endpoints"
+  type        = bool
+  default     = false
+}
+
 
 variable "manage_default_network_acl" {
   description = "Manage default Network ACL"
@@ -196,6 +220,12 @@ variable "private_dedicated_network_acl" {
 
 variable "enable_tgw" {
   description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = false
+}
+
+variable "enable_tgw_multi_region" {
+  description = "Enable Transit Gateway multi region support"
   type        = bool
   default     = false
 }

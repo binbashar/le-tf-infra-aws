@@ -107,7 +107,7 @@ locals {
   datasources-vpcs = merge(
     data.terraform_remote_state.network-vpcs, # network
     #data.terraform_remote_state.shared-vpcs,  # shared
-    #data.terraform_remote_state.apps-devstg-vpcs, # apps-devstg-vpcs
-    data.terraform_remote_state.apps-prd-vpcs, # apps-prd-vpcs
+    data.terraform_remote_state.apps-devstg-vpcs, # apps-devstg-vpcs
+    data.terraform_remote_state.apps-prd-vpcs,    # apps-prd-vpcs
   )
 }

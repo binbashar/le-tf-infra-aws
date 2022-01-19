@@ -17,9 +17,10 @@ module "vpc" {
   enable_vpn_gateway   = var.vpc_enable_vpn_gateway
 
   # Use a custom network ACL rules for private and public subnets
-  manage_default_network_acl    = false
-  public_dedicated_network_acl  = true
-  private_dedicated_network_acl = true
+
+  manage_default_network_acl    = var.manage_default_network_acl
+  public_dedicated_network_acl  = var.public_dedicated_network_acl  // use dedicated network ACL for the public subnets.
+  private_dedicated_network_acl = var.private_dedicated_network_acl // use dedicated network ACL for the private subnets.
   private_inbound_acl_rules = concat(
     local.network_acls["default_inbound"],
     local.network_acls["private_inbound"],

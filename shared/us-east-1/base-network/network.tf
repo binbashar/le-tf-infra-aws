@@ -50,7 +50,35 @@ locals {
         security_group_ids  = aws_security_group.kms_vpce[0].id
         private_dns_enabled = var.enable_kms_endpoint_private_dns
       } if var.enable_kms_endpoint
-    }
+    },
+    # SSM
+    { for k, v in { ssm = "Interface" } :
+      k => {
+        service             = k
+        service_type        = v
+        subnet_ids          = module.vpc.private_subnets
+        security_group_ids  = [aws_security_group.ssm_vpce[0].id]
+        private_dns_enabled = true
+      } if var.enable_ssm_endpoints
+    },
+    { for k, v in { ec2messages = "Interface" } :
+      k => {
+        service             = k
+        service_type        = v
+        subnet_ids          = module.vpc.private_subnets
+        security_group_ids  = [aws_security_group.ssm_vpce[0].id]
+        private_dns_enabled = true
+      } if var.enable_ssm_endpoints
+    },
+    { for k, v in { ssmmessages = "Interface" } :
+      k => {
+        service             = k
+        service_type        = v
+        subnet_ids          = module.vpc.private_subnets
+        security_group_ids  = [aws_security_group.ssm_vpce[0].id]
+        private_dns_enabled = true
+      } if var.enable_ssm_endpoints
+    },
   )
 }
 
@@ -99,6 +127,34 @@ resource "aws_security_group" "kms_vpce" {
   tags = local.tags
 }
 
+#
+# SSM VPC Endpoint: Security Group
+#
+resource "aws_security_group" "ssm_vpce" {
+  #count       = var.enable_kms_endpoint ? 1 : 0
+  count       = 1
+  name        = "ssm_vpce"
+  description = "Allow TLS inbound traffic"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    description = "TLS from VPC"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [local.vpc_cidr_block]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = local.tags
+}
+
 ####################
 # TGW Route tables #
 ####################
@@ -106,7 +162,7 @@ resource "aws_security_group" "kms_vpce" {
 # Update public RT
 resource "aws_route" "public_rt_routes_to_tgw" {
 
-  # For TWG CDIR
+  # For TWG CDIRs
   for_each = {
     for k, v in var.tgw_cidrs :
     k => v if var.enable_tgw && length(var.tgw_cidrs) > 0
@@ -130,3 +186,4 @@ resource "aws_route" "private_rt_routes_to_tgw" {
   destination_cidr_block = "0.0.0.0/0"
   transit_gateway_id     = data.terraform_remote_state.tgw[0].outputs.tgw_id
 }
+

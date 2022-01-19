@@ -49,7 +49,7 @@ locals {
       k => {
         service             = k
         service_type        = v
-        security_group_ids  = aws_security_group.kms_vpce[0].id
+        security_group_ids  = [aws_security_group.kms_vpce[0].id]
         private_dns_enabled = var.enable_kms_endpoint_private_dns
       } if var.enable_kms_endpoint
     },
@@ -164,7 +164,7 @@ resource "aws_security_group" "ssm_vpce" {
 # Update public RT
 resource "aws_route" "public_rt_routes_to_tgw" {
 
-  # For TWG CDIR
+  # For TWG CDIRs
   for_each = {
     for k, v in var.tgw_cidrs :
     k => v if var.enable_tgw && length(var.tgw_cidrs) > 0

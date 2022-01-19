@@ -9,7 +9,7 @@ module "vpn_gateways" {
 
   connect_to_transit_gateway        = true
   vpn_connection_static_routes_only = lookup(each.value, "vpn_connection_static_routes_only", false)
-  transit_gateway_id                = data.terraform_remote_state.tgw.outputs.tgw_id
+  transit_gateway_id                = data.terraform_remote_state.tgw[0].outputs.tgw_id
   customer_gateway_id               = module.vpc.this_customer_gateway[each.key].id
 
   # local & remote IPv4 CDIRs
@@ -70,7 +70,7 @@ resource "aws_ec2_transit_gateway_route" "vpn_static_routes" {
   }
 
   destination_cidr_block         = lookup(each.value, "route")
-  transit_gateway_route_table_id = var.enable_tgw && var.enable_network_firewall ? data.terraform_remote_state.tgw.outputs.tgw_inspection_route_table_id : data.terraform_remote_state.tgw.outputs.tgw_route_table_id
+  transit_gateway_route_table_id = var.enable_tgw && var.enable_network_firewall ? data.terraform_remote_state.tgw[0].outputs.tgw_inspection_route_table_id : data.terraform_remote_state.tgw[0].outputs.tgw_route_table_id
   transit_gateway_attachment_id  = module.vpn_gateways[lookup(each.value, "cgw")].vpn_connection_transit_gateway_attachment_id
 }
 
@@ -81,6 +81,6 @@ resource "aws_ec2_transit_gateway_route_table_association" "vpn-rt-associations"
     k => v if var.enable_tgw && var.vpc_enable_vpn_gateway
   }
 
-  transit_gateway_route_table_id = data.terraform_remote_state.tgw.outputs.tgw_route_table_id
+  transit_gateway_route_table_id = data.terraform_remote_state.tgw[0].outputs.tgw_route_table_id
   transit_gateway_attachment_id  = each.value.vpn_connection_transit_gateway_attachment_id
 }
