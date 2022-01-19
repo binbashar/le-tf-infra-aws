@@ -84,7 +84,7 @@ When VPC peerings are deployed you need to follow this workflow to toggle the Tr
 
 When TGWs are deployed you need to follow this workflow to toggle VPC peerings:
 
-1. Disable the transit gateway by setting  `tgw = false` in the [../config/common.tfvars](https://github.com/binbashar/le-tf-infra-aws/blob/master/config/common.tfvars.example) file.
+1. Disable the transit gateway by setting  `enable_tgw = false` in the [../config/common.tfvars](https://github.com/binbashar/le-tf-infra-aws/blob/master/config/common.tfvars.example) file.
 2. Go to the [network/transit-gateway](https://github.com/binbashar/le-tf-infra-aws/tree/master/network/us-east-1/transit-gateway) layer and apply  changes so that all TGW resources are destroyed.
 3. If  Network Firewall was enabled, set `enabled_network_firewall=false` in the`network/network-firewal/network.auto.tfvar` file and destroy the network firewall resources as well by applying the changes in that layer.
 4. For each sublayers where there is a network definition, for example `apps-devstg/base-network/`, `apps-devstg/k8s-eks-demoapps/network/` , etc, apply the changes using leverage cli to remove the routes that aimed to the TGW. These network sublayers are where the `vpc_peerings.tf` files are located, so when applying the VPC peerings will be created again. To avoid any conflict, leave [shared](https://github.com/binbashar/le-tf-infra-aws/tree/master/shared/us-east-1/base-network) as the las layer to be applied , this way routes will not collide while updating  networking resources.
