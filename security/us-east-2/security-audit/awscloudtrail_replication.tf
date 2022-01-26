@@ -1,8 +1,12 @@
 resource "aws_s3_bucket" "cloudtrail_s3_bucket-dr" {
   bucket = "${var.project}-${var.environment}-cloudtrail-org-dr"
+
+  versioning {
+    enabled = true
+  }
 }
 
-resource "aws_iam_role" "replication" {
+resource "aws_iam_role" "cloudtrail_replication_role" {
   name = "cloudtrail-replication-role"
 
   assume_role_policy = <<POLICY
@@ -22,7 +26,7 @@ resource "aws_iam_role" "replication" {
 POLICY
 }
 
-resource "aws_iam_policy" "cloudtrail-replication-policy" {
+resource "aws_iam_policy" "cloudtrail_replication_policy" {
   name = "cloudtrail-replication-policy"
 
   policy = <<POLICY
@@ -36,7 +40,6 @@ resource "aws_iam_policy" "cloudtrail-replication-policy" {
       ],
       "Effect": "Allow",
       "Resource": [
-data "terraform_remote_state" "cloudtrail" {
         "${data.terraform_remote_state.cloudtrail.outputs.bucket_arn}"
       ]
     },
@@ -70,9 +73,9 @@ resource "aws_iam_role_policy_attachment" "replication" {
   policy_arn = aws_iam_policy.cloudtrail_replication_policy.arn
 }
 
-resource "aws_s3_bucket_replication_configuration" "replication" {
-  role   = aws_iam_role.replication.arn
-  bucket = aws_s3_bucket.source.id
+resource "aws_s3_bucket_replication_configuration" "cloudtrail_replication" {
+  role   = aws_iam_role.cloudtrail_replication_role.arn
+  bucket = data.terraform_remote_state.cloudtrail.outputs.bucket_id
 
   rule {
     id     = "cloudtrail"
@@ -84,4 +87,6 @@ resource "aws_s3_bucket_replication_configuration" "replication" {
       storage_class = "STANDARD"
     }
   }
+
+  provider = aws.primary
 }

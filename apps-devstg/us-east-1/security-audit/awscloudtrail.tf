@@ -1,6 +1,6 @@
 module "cloudtrail" {
-  source                        = "github.com/binbashar/terraform-aws-cloudtrail.git?ref=0.20.1"
-  namespace                     = var.project
+  source                        = "github.com/binbashar/terraform-aws-cloudtrail.git?ref=0.21.0"
+  iamespace                     = var.project
   stage                         = var.environment
   name                          = "cloudtrail-org"
   enable_logging                = true

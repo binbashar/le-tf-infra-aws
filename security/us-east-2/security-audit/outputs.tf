@@ -8,7 +8,7 @@ output "bucket_arn" {
 
 output "bucket_domain_name" {
   description = "FQDN of bucket"
-  value       = aws_s3_bucket.cloudtrail_s3_bucket-dr.domain_name
+  value       = aws_s3_bucket.cloudtrail_s3_bucket-dr.bucket_domain_name
 }
 
 output "bucket_id" {
