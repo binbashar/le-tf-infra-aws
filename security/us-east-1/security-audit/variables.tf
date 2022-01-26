@@ -133,3 +133,21 @@ variable "alarm_suffix" {
   description = "Alarm name suffix. You can use it to separate different AWS account. Set to `null` to avoid adding a suffix."
   default     = null
 }
+
+variable "enable_tgw" {
+  description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = false
+}
+
+variable "enable_tgw_multi_region" {
+  description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = false
+}
+
+variable "tgw_cidrs" {
+  description = "CIDRs to be added as routes to public RT"
+  type        = list(string)
+  default     = []
+}

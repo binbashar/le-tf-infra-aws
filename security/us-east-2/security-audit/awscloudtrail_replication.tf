@@ -79,7 +79,6 @@ resource "aws_s3_bucket_replication_configuration" "cloudtrail_replication" {
 
   rule {
     id     = "cloudtrail"
-    prefix = "cloudtrail"
     status = "Enabled"
 
     destination {
