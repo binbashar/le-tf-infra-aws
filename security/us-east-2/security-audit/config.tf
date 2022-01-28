@@ -2,7 +2,14 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
+  region                  = var.region_secondary
+  profile                 = var.profile
+  shared_credentials_file = "~/.aws/${var.project}/config"
+}
+
+provider "aws" {
   region                  = var.region
+  alias                   = "primary"
   profile                 = var.profile
   shared_credentials_file = "~/.aws/${var.project}/config"
 }
@@ -18,7 +25,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "security/security-audit/terraform.tfstate"
+    key = "security/security-audit-dr/terraform.tfstate"
   }
 }
 
@@ -29,25 +36,15 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 #
-# data type from output for notifications
+# CloudTrail (security-audit)
 #
-data "terraform_remote_state" "notifications" {
+data "terraform_remote_state" "cloudtrail" {
   backend = "s3"
 
   config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/notifications/terraform.tfstate"
-  }
-}
-data "terraform_remote_state" "keys" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = var.profile
-    bucket  = var.bucket
-    key     = "${var.environment}/security-keys/terraform.tfstate"
+    key     = "${var.environment}/security-audit/terraform.tfstate"
   }
 }

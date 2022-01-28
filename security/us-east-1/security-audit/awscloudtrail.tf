@@ -20,6 +20,7 @@ module "cloudtrail_s3_bucket" {
   stage                  = var.environment
   name                   = "cloudtrail-org"
   lifecycle_rule_enabled = var.lifecycle_rule_enabled
+  versioning_enabled     = true
   #
   # NOTE: Had to pass null here because there seems to be an issue with the
   #       module which is trying to set tags to lifecycle policies
