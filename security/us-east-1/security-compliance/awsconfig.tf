@@ -8,7 +8,7 @@
 module "config_logs" {
   source = "github.com/binbashar/terraform-aws-logs.git?ref=v10.3.0"
 
-  s3_bucket_name          = "${var.project}-${var.environment}-awsconfig-logs"
+  s3_bucket_name          = "${var.project}-${var.environment}-awsconfig"
   default_allow           = false # Whether all services included in this module should be allowed to write to the bucket by default.
   allow_config            = true  # Allow Config service to log to bucket.
   config_logs_prefix      = "${var.project}-${var.environment}-awsconfig"
