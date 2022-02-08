@@ -13,6 +13,7 @@ module "config_logs" {
   allow_config            = true # Allow Config service to log to bucket.
   config_logs_prefix      = ""
   s3_log_bucket_retention = 90
+  enable_versioning       = true
   config_accounts = [
     var.root_account_id,
     var.security_account_id,
@@ -27,7 +28,7 @@ module "config_logs" {
 # Module instantiation
 #
 module "terraform-aws-config" {
-  source                         = "git::https://github.com/binbashar/terraform-aws-config.git?ref=feature/source_account"
+  source                         = "git::https://github.com/binbashar/terraform-aws-config.git?ref=feature/multi-account"
   config_logs_bucket             = module.config_logs.aws_logs_bucket
   config_name                    = "${var.project}-${var.environment}-awsconfig"
   config_logs_prefix             = ""
