@@ -20,7 +20,7 @@ module "config_logs" {
 #
 module "terraform-aws-config" {
   source                         = "github.com/binbashar/terraform-aws-config.git?ref=v4.3.0"
-  config_logs_bucket             = module.config_logs.aws_logs_bucket
+  config_logs_bucket             = data.terraform_remote_state.security-security-compliance.outputs.aws_logs_bucket
   config_name                    = "${var.project}-${var.environment}-awsconfig"
   config_logs_prefix             = "${var.project}-${var.environment}-awsconfig"
   config_max_execution_frequency = "TwentyFour_Hours"
