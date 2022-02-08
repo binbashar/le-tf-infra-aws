@@ -6,23 +6,31 @@
 # AWS Config Logs AES256 SSE Bucket
 #
 module "config_logs" {
-  source = "github.com/binbashar/terraform-aws-logs.git?ref=v10.3.0"
+  source = "git::https://github.com/binbashar/terraform-aws-logs.git?ref=feature/source_account"
 
   s3_bucket_name          = "${var.project}-${var.environment}-awsconfig"
-  default_allow           = false # Whether all services included in this module should be allowed to write to the bucket by default.
-  allow_config            = true  # Allow Config service to log to bucket.
-  config_logs_prefix      = "${var.project}-${var.environment}-awsconfig"
+  default_allow           = true # Whether all services included in this module should be allowed to write to the bucket by default.
+  allow_config            = true # Allow Config service to log to bucket.
+  config_logs_prefix      = ""
   s3_log_bucket_retention = 90
+  config_accounts = [
+    var.root_account_id,
+    var.security_account_id,
+    var.shared_account_id,
+    var.network_account_id,
+    var.appsdevstg_account_id,
+    var.appsprd_account_id
+  ]
 }
 
 #
 # Module instantiation
 #
 module "terraform-aws-config" {
-  source                         = "github.com/binbashar/terraform-aws-config.git?ref=v4.3.0"
+  source                         = "git::https://github.com/binbashar/terraform-aws-config.git?ref=feature/source_account"
   config_logs_bucket             = module.config_logs.aws_logs_bucket
   config_name                    = "${var.project}-${var.environment}-awsconfig"
-  config_logs_prefix             = "${var.project}-${var.environment}-awsconfig"
+  config_logs_prefix             = ""
   config_max_execution_frequency = "TwentyFour_Hours"
   config_delivery_frequency      = "Six_Hours"
 
