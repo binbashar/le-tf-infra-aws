@@ -40,7 +40,7 @@ resource "aws_iam_policy" "cloudtrail_replication_policy" {
       ],
       "Effect": "Allow",
       "Resource": [
-        "${data.terraform_remote_state.cloudtrail.outputs.bucket_arn}"
+        "${data.terraform_remote_state.cloudtrail[0].outputs.bucket_arn}"
       ]
     },
     {
@@ -51,7 +51,7 @@ resource "aws_iam_policy" "cloudtrail_replication_policy" {
       ],
       "Effect": "Allow",
       "Resource": [
-        "${data.terraform_remote_state.cloudtrail.outputs.bucket_arn}/*"
+        "${data.terraform_remote_state.cloudtrail[0].outputs.bucket_arn}/*"
       ]
     },
     {
@@ -68,14 +68,14 @@ resource "aws_iam_policy" "cloudtrail_replication_policy" {
 POLICY
 }
 
-resource "aws_iam_role_policy_attachment" "replication" {
+resource "aws_iam_role_policy_attachment" "cloudtrail_replication" {
   role       = aws_iam_role.cloudtrail_replication_role.name
   policy_arn = aws_iam_policy.cloudtrail_replication_policy.arn
 }
 
 resource "aws_s3_bucket_replication_configuration" "cloudtrail_replication" {
   role   = aws_iam_role.cloudtrail_replication_role.arn
-  bucket = data.terraform_remote_state.cloudtrail.outputs.bucket_id
+  bucket = data.terraform_remote_state.cloudtrail[0].outputs.bucket_id
 
   rule {
     id     = "cloudtrail"
