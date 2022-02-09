@@ -6,7 +6,7 @@
 # Module instantiation
 #
 module "terraform-aws-config" {
-  source                         = "github.com/binbashar/terraform-aws-config.git?ref=v4.6.0"
+  source                         = "github.com/binbashar/terraform-aws-config.git?ref=v4.6.10"
   config_logs_bucket             = data.terraform_remote_state.security-security-compliance.outputs.aws_logs_bucket
   config_name                    = "${var.project}-${var.environment}-awsconfig-dr"
   config_logs_prefix             = ""
