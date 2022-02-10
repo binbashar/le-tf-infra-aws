@@ -6,28 +6,38 @@
 # AWS Config Logs AES256 SSE Bucket
 #
 module "config_logs" {
-  source = "github.com/binbashar/terraform-aws-logs.git?ref=v10.3.0"
+  source = "github.com/binbashar/terraform-aws-logs.git?ref=v11.0.11"
 
-  s3_bucket_name          = "${var.project}-${var.environment}-awsconfig-logs"
-  default_allow           = false # Whether all services included in this module should be allowed to write to the bucket by default.
-  allow_config            = true  # Allow Config service to log to bucket.
-  config_logs_prefix      = "${var.project}-${var.environment}-awsconfig"
+  s3_bucket_name          = "${var.project}-${var.environment}-awsconfig"
+  default_allow           = true # Whether all services included in this module should be allowed to write to the bucket by default.
+  allow_config            = true # Allow Config service to log to bucket.
+  config_logs_prefix      = ""
   s3_log_bucket_retention = 90
+  enable_versioning       = true
+  config_accounts = [
+    var.root_account_id,
+    var.security_account_id,
+    var.shared_account_id,
+    var.network_account_id,
+    var.appsdevstg_account_id,
+    var.appsprd_account_id
+  ]
 }
 
 #
 # Module instantiation
 #
 module "terraform-aws-config" {
-  source                         = "github.com/binbashar/terraform-aws-config.git?ref=v4.3.0"
+  source                         = "github.com/binbashar/terraform-aws-config.git?ref=v4.6.10"
   config_logs_bucket             = module.config_logs.aws_logs_bucket
   config_name                    = "${var.project}-${var.environment}-awsconfig"
-  config_logs_prefix             = "${var.project}-${var.environment}-awsconfig"
+  config_logs_prefix             = ""
   config_max_execution_frequency = "TwentyFour_Hours"
   config_delivery_frequency      = "Six_Hours"
 
   # Aggregate data from all organization accounts on this account
-  aggregate_organization = false
+  config_aggregator_name = "${var.project}-${var.environment}-awsconfig-aggregator"
+  aggregate_organization = true
 
   # IAM Config Rules w/ password policy check
   check_root_account_mfa_enabled   = true

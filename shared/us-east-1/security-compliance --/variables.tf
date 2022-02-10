@@ -90,3 +90,32 @@ variable "appsprd_account_id" {
   type        = string
   description = "Account: Prod Modules & Libs"
 }
+
+variable "vault_address" {
+  type        = string
+  description = "Vault Address"
+}
+
+variable "vault_token" {
+  type        = string
+  description = "Vault Token"
+}
+
+variable "enable_tgw" {
+  description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = false
+}
+
+variable "enable_tgw_multi_region" {
+  description = "Enable Transit Gateway multi region support"
+  type        = bool
+  default     = false
+}
+
+variable "tgw_cidrs" {
+  description = "CIDRs to be added as routes to public RT"
+  type        = list(string)
+  default     = []
+
+}

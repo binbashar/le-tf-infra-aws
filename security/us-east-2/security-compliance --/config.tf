@@ -36,16 +36,17 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 #
-# CloudTrail (security-audit)
+# Config  (security-audit)
 #
-data "terraform_remote_state" "cloudtrail" {
-  count   = var.enable_cloudtrail_bucket_replication ? 1 : 0
+data "terraform_remote_state" "config" {
+  count   = var.enable_config_bucket_replication ? 1 : 0
   backend = "s3"
 
   config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/security-audit/terraform.tfstate"
+    key     = "${var.environment}/security-compliance/terraform.tfstate"
   }
 }
+
