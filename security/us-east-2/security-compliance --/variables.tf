@@ -155,8 +155,8 @@ variable "tgw_cidrs" {
 #===========================================#
 # Replication                               #
 #===========================================#
-variable "enable_cloudtrail_bucket_replication" {
+variable "enable_config_bucket_replication" {
   type        = bool
-  description = "Enable CloudTrail bucket replication"
+  description = "Enable Config bucket replication"
   default     = true
 }
