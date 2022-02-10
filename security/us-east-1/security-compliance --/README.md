@@ -9,7 +9,7 @@ AWSLOGS
         Config
             REGION-1
             REGION-2
-        ...
+            ...
     ACCOUNT_ID-2
         Config
             REGION-1
@@ -23,4 +23,3 @@ AWSLOGS
 AWS Config snapshots are saved in a S3 Bucket of the primary region as defined in the `/security/us-east-1/security-compliance/awsconfig.tf`. 
 
 In order to replicate the AWS Config bucket to a secondary region, apply the the /security/us-east-2(/security-compliance layer. The `awsconfig-replication.tf` file has a data source aiming to the AWS Config bucket in the primary region.
-
