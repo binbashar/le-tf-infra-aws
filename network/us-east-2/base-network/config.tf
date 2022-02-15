@@ -70,43 +70,6 @@ data "terraform_remote_state" "tgw-dr" {
   }
 }
 
-#
-# data type from output for tools-ec2
-#
-#data "terraform_remote_state" "tools-vpn-server-dr" {
-#  backend = "s3"
-#
-#  config = {
-#    region  = var.region
-#    profile = "${var.project}-shared-devops"
-#    bucket  = "${var.project}-shared-terraform-backend"
-#    key     = "shared/vpn-dr/terraform.tfstate"
-#  }
-#}
-
-#data "terraform_remote_state" "tgw-dr" {
-#  backend = "s3"
-#
-#  config = {
-#    region  = var.region
-#    profile = "${var.project}-network-devops"
-#    bucket  = "${var.project}-network-terraform-backend"
-#    key     = "network/transit-gateway-dr/terraform.tfstate"
-#  }
-#}
-
-
-#data "terraform_remote_state" "network-firewall-dr" {
-#  backend = "s3"
-#
-#  config = {
-#    region  = var.region
-#    profile = "${var.project}-network-devops"
-#    bucket  = "${var.project}-network-terraform-backend"
-#    key     = "network/network-firewall-dr/terraform.tfstate"
-#  }
-#}
-
 # VPC remote states for network-dr
 data "terraform_remote_state" "network-dr-vpcs" {
   for_each = var.enable_network_firewall ? local.network-dr-vpcs : {}
