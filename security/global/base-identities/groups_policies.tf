@@ -176,8 +176,9 @@ EOF
 
 #
 # Policy: Allow s3_tx_reporter Group (S3 Cross-Org Permissions)
+# Uncomment if you like to deploy and test /apps-devtg/storage/bucket-demo-files layer
 #
-data "aws_iam_policy_document" "s3_demo_put_object" {
+/*data "aws_iam_policy_document" "s3_demo_put_object" {
   statement {
     effect = "Allow"
     actions = [
@@ -186,11 +187,11 @@ data "aws_iam_policy_document" "s3_demo_put_object" {
     ]
     resources = [
       "${data.terraform_remote_state.apps-devstg-storage-bucket-demo-files.outputs.s3_bucket_demo_files_arn}/",
-      "${data.terraform_remote_state.apps-devstg-storage-bucket-demo-files.outputs.s3_bucket_demo_files_arn}/*"
+      "${data.terraform_remote_state.apps-devstg-storage-bucket-demo-files.outputs.s3_bucket_demo_files_arn}*//*"
     ]
   }
 
-  /*
+  *//*
   #
   # The actions in your policy do not support resource-level permissions and require you to choose All resources
   # so the users will be able to list your AWS Org Buckets which is STRONGLY DISCOURAGED!
@@ -204,7 +205,7 @@ data "aws_iam_policy_document" "s3_demo_put_object" {
       "*",
     ]
   }
-  */
+  *//*
 
   statement {
     effect = "Allow"
@@ -219,7 +220,7 @@ data "aws_iam_policy_document" "s3_demo_put_object" {
       data.terraform_remote_state.apps-devstg-keys.outputs.aws_kms_key_arn
     ]
   }
-}
+}*/
 
 #
 # Policy: Restricted access to IAM to allow self-management without exposing other users

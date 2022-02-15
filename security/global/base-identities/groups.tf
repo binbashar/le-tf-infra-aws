@@ -41,7 +41,8 @@ module "iam_group_devops" {
     module.user["exequiel.barrirero"].iam_user_name,
     module.user["jose.peinado"].iam_user_name,
     module.user["luis.gallardo"].iam_user_name,
-    module.user["marcos.pagnucco"].iam_user_name
+    module.user["marcos.pagnucco"].iam_user_name,
+    module.user["matias.rodriguez"].iam_user_name
   ]
 
   custom_group_policy_arns = [
@@ -75,6 +76,7 @@ module "iam_group_secops" {
     module.user["exequiel.barrirero"].iam_user_name,
     module.user["jose.peinado"].iam_user_name,
     module.user["luis.gallardo"].iam_user_name,
+    module.user["matias.rodriguez"].iam_user_name
   ]
 
   custom_group_policy_arns = [
@@ -99,7 +101,10 @@ module "iam_group_deploymaster" {
   ]
 }
 
-module "iam_group_s3_demo" {
+#
+# Uncomment if you like to deploy and test /apps-devtg/storage/bucket-demo-files layer
+#
+/*module "iam_group_s3_demo" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v4.7.0"
   name   = "s3_demo"
 
@@ -115,4 +120,4 @@ module "iam_group_s3_demo" {
       policy = data.aws_iam_policy_document.s3_demo_put_object.json
     },
   ]
-}
+}*/

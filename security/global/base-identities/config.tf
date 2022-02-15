@@ -33,7 +33,10 @@ data "terraform_remote_state" "apps-devstg-keys" {
   }
 }
 
-data "terraform_remote_state" "apps-devstg-storage-bucket-demo-files" {
+#
+# Uncomment if you like to deploy and test /apps-devtg/storage/bucket-demo-files layer
+#
+/*data "terraform_remote_state" "apps-devstg-storage-bucket-demo-files" {
   backend = "s3"
 
   config = {
@@ -42,4 +45,4 @@ data "terraform_remote_state" "apps-devstg-storage-bucket-demo-files" {
     bucket  = "${var.project}-apps-devstg-terraform-backend"
     key     = "apps-devstg/storage-bucket-demo-files/terraform.tfstate"
   }
-}
+}*/
