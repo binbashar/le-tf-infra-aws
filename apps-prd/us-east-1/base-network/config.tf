@@ -102,10 +102,7 @@ data "terraform_remote_state" "shared-vpcs" {
 # VPC remote states for apps-prd
 data "terraform_remote_state" "apps-prd-vpcs" {
 
-  for_each = {
-    for k, v in local.apps-prd-vpcs :
-    k => v if var.enable_tgw
-  }
+  for_each = local.apps-prd-vpcs
 
   backend = "s3"
 
