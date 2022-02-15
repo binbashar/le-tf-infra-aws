@@ -187,11 +187,11 @@ EOF
     ]
     resources = [
       "${data.terraform_remote_state.apps-devstg-storage-bucket-demo-files.outputs.s3_bucket_demo_files_arn}/",
-      "${data.terraform_remote_state.apps-devstg-storage-bucket-demo-files.outputs.s3_bucket_demo_files_arn}*//*"
+      "${data.terraform_remote_state.apps-devstg-storage-bucket-demo-files.outputs.s3_bucket_demo_files_arn}*/ /*"
     ]
   }
 
-  *//*
+  */ /*
   #
   # The actions in your policy do not support resource-level permissions and require you to choose All resources
   # so the users will be able to list your AWS Org Buckets which is STRONGLY DISCOURAGED!
@@ -205,7 +205,7 @@ EOF
       "*",
     ]
   }
-  *//*
+  */ /*
 
   statement {
     effect = "Allow"
