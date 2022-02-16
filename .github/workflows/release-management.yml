@@ -14,7 +14,7 @@ jobs:
   update_release_draft:
     runs-on: ubuntu-latest
     permissions:
-      issues: write 
+      contents: write
     steps:
       # Drafts your next Release notes
       - uses: release-drafter/release-drafter@v5
