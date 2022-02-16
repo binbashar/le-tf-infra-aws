@@ -56,7 +56,7 @@ use to make changes on AWS.
 
 ## Project context commands
 ```shell
-╭─    ~/Binbash/repos/Leverage/ref-architecture/le-tf-infra-aws/shared/base-network  on   master !2 ······························································································ ✔  at 08:52:43 
+╭─    ~/ref-architecture/le-tf-infra-aws  on   master · ✔  at 12:13:36 
 ╰─ leverage
 
 Usage: leverage [OPTIONS] COMMAND [ARGS]...
@@ -81,7 +81,7 @@ Commands:
 
 ## Layer context Terraform commands
 ```shell
-╭─    ~/B/r/L/ref-architecture/le-tf-infra-aws  on   feature/guarduty-update · ✔  at 12:13:36 
+╭─    ~/ref-architecture/le-tf-infra-aws  on   master · ✔  at 12:13:36 
 ╰─ leverage terraform
 Usage: leverage terraform [OPTIONS] COMMAND [ARGS]...
 
