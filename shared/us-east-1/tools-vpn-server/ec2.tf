@@ -56,11 +56,11 @@ module "terraform-aws-basic-layout" {
       description = "Allow Pritunl HTTP UI"
     },
     {
-      from_port   = 443, # Pritunl VPN Server UI
-      to_port     = 443,
-      protocol    = "tcp",
-      cidr_blocks = ["0.0.0.0/0"], # Public temporally accesible for new users setup (when needed)
-      #cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
+      from_port = 443, # Pritunl VPN Server UI
+      to_port   = 443,
+      protocol  = "tcp",
+      #cidr_blocks = ["0.0.0.0/0"], # Public temporally accessible for new users setup (when needed)
+      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
       description = "Allow Pritunl HTTPS UI"
     },
     {
@@ -98,7 +98,7 @@ module "terraform-aws-basic-layout" {
   #    c. rollback a. step
   #    d. re-comment this block
   #
-  /*    dns_records_public_hosted_zone = [{
+  /*  dns_records_public_hosted_zone = [{
     zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id[0],
     name    = "vpn.aws.binbash.com.ar",
     type    = "A",
