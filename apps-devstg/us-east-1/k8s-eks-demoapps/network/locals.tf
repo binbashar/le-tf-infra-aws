@@ -9,26 +9,28 @@ locals {
   # Error: : error upgrading connection: error dialing backend: dial tcp 172.17.nn.nn:10250: getsockopt: no route to host
   vpc_name = "${var.project}-${var.environment}-vpc-eks-demoapps"
 
-  # Ref: https://www.davidc.net/sites/default/subnets/subnets.html?network=172.19.16.0&mask=20&division=15.7231
-  vpc_cidr_block = "172.19.16.0/20"
+  # Ref: https://www.davidc.net/sites/default/subnets/subnets.html?network=10.1.0.0&mask=16&division=15.7231
+  vpc_cidr_block = "10.1.0.0/16"
   azs = [
     "${var.region}a",
     "${var.region}b",
     "${var.region}c",
   ]
 
-  private_subnets_cidr = ["172.19.16.0/21"]
+  private_subnets_cidr = ["10.1.0.0/17"]
   private_subnets = [
-    "172.19.16.0/23",
-    "172.19.18.0/23",
-    "172.19.20.0/23",
+    "10.1.0.0/19",
+    "10.1.32.0/19",
+    "10.1.64.0/19",
+    "10.1.96.0/19"
   ]
 
-  public_subnets_cidr = ["172.19.24.0/21"]
+  public_subnets_cidr = ["10.1.128.0/17"]
   public_subnets = [
-    "172.19.24.0/23",
-    "172.19.26.0/23",
-    "172.19.28.0/23",
+    "10.1.128.0/19",
+    "10.1.160.0/19",
+    "10.1.192.0/19",
+    "10.1.224.0/19"
   ]
 
   tags = {
@@ -70,7 +72,7 @@ locals {
     #
     default_inbound = [
       {
-        rule_number = 800 # own private subnet cidr
+        rule_number = 200 # Allow traffic from this vpc's private subnets
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535

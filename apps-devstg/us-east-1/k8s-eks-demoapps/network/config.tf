@@ -29,9 +29,9 @@ terraform {
   }
 }
 
-#=============================#
-# Data sources                #
-#=============================#
+#
+# Data sources
+#
 
 # TGW
 data "terraform_remote_state" "tgw" {
@@ -47,10 +47,6 @@ data "terraform_remote_state" "tgw" {
   }
 }
 
-
-#
-# data type from output for tools-ec2
-#
 data "terraform_remote_state" "tools-vpn-server" {
   backend = "s3"
 
