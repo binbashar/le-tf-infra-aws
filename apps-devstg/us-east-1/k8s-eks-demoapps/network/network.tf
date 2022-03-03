@@ -55,8 +55,6 @@ locals {
     }
   )
 }
-
-# VPC Endpoints
 module "vpc_endpoints" {
   source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.11.0"
 
@@ -75,7 +73,6 @@ module "vpc_endpoints" {
   tags = local.tags
 }
 
-#
 #
 # KMS VPC Endpoint: Security Group
 #
@@ -110,7 +107,7 @@ resource "aws_security_group" "kms_vpce" {
 # Update public RT
 resource "aws_route" "public_rt_routes_to_tgw" {
 
-  # For TWG CDIR
+  # For TWG CIDRs
   for_each = {
     for k, v in var.tgw_cidrs :
     k => v if var.enable_tgw && length(var.tgw_cidrs) > 0

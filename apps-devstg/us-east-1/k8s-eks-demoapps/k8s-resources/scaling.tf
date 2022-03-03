@@ -27,7 +27,7 @@ resource "helm_release" "cluster_autoscaling" {
       {
         aws_region   = var.region,
         cluster_name = data.terraform_remote_state.eks-demoapps-cluster.outputs.cluster_name
-        roleArn      = "arn:aws:iam::${var.appsdevstg_account_id}:role/demoapps-cluster-autoscaler"
+        roleArn      = "arn:aws:iam::${var.appsdevstg_account_id}:role/appsdevstg-demoapps-cluster-autoscaler"
       }
     )
   ]

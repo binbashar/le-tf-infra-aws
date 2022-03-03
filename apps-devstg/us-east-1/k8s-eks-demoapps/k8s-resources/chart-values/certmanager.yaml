@@ -7,7 +7,7 @@ global:
 
 # Be explicit about where cluster resources are meant to be found
 # e.g. ClusterIssuer and corresponding secrets
-clusterResourceNamespace: cert-manager
+clusterResourceNamespace: certmanager
 
 # Use Google's DNSs
 podDnsPolicy: "None"
@@ -23,5 +23,6 @@ securityContext:
 # We'll use a feature of EKS called IAM roles for service accounts
 serviceAccount:
   create: true
+  name: certmanager
   annotations:
     eks.amazonaws.com/role-arn: ${roleArn}

@@ -1,8 +1,109 @@
 #
+# CertManager policy: binbash.com.ar
+#
+resource "aws_iam_policy" "certmanager_binbash_com_ar" {
+  provider = aws.shared
+
+  name        = "${local.environment}-demoapps-certmanager-binbash.com.ar"
+  description = "CertManager permissions on binbash.com.ar"
+  policy      = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "route53:GetChange",
+            "Resource": "arn:aws:route53:::change/*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:ChangeResourceRecordSets",
+                "route53:ListResourceRecordSets"
+            ],
+            "Resource": "arn:aws:route53:::hostedzone/${data.terraform_remote_state.dns.outputs.aws_public_zone_id[0]}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "route53:ListHostedZonesByName",
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
+#
+# External DNS policy: aws.binbash.com.ar
+#
+resource "aws_iam_policy" "externaldns_aws_binbash_com_ar" {
+  provider    = aws.shared
+  name        = "${local.environment}-demoapps-externaldns-aws.binbash.com.ar"
+  description = "ExternalDNS permissions on aws.binbash.com.ar"
+  policy      = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:ChangeResourceRecordSets"
+            ],
+            "Resource": [
+                "arn:aws:route53:::hostedzone/${data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0]}"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:ListHostedZones",
+                "route53:ListResourceRecordSets"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
+#
+# External DNS policy: binbash.com.ar
+#
+resource "aws_iam_policy" "externaldns_binbash_com_ar" {
+  provider    = aws.shared
+  name        = "${local.environment}-demoapps-externaldns-binbash.com.ar"
+  description = "ExternalDNS permissions on binbash.com.ar"
+  policy      = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:ChangeResourceRecordSets"
+            ],
+            "Resource": [
+                "arn:aws:route53:::hostedzone/${data.terraform_remote_state.dns.outputs.aws_public_zone_id[0]}"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:ListHostedZones",
+                "route53:ListResourceRecordSets"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
+#
 # Cluster Autoscaler
 #
 resource "aws_iam_policy" "demoapps_cluster_autoscaler" {
-  name        = "demoapps-cluster-autoscaler"
+  name        = "${local.environment}-demoapps-cluster-autoscaler"
   description = "DemoApps Cluster Autoscaler"
   policy      = <<EOF
 {
