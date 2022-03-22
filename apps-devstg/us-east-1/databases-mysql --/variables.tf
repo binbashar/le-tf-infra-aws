@@ -103,3 +103,11 @@ variable "vault_token" {
   type        = string
   description = "Hashicorp vault admin token"
 }
+
+# Delete this section before commit
+# Vaule for undeclared variable
+variable "enable_tgw" {
+  description = "Enable Transit Gateway Support"
+  type        = bool
+  default     = false
+}

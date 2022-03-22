@@ -24,7 +24,8 @@ resource "aws_security_group_rule" "allow_mysql_port" {
 # Binbash Reference DB
 #
 module "bb_mysql_db" {
-  source = "github.com/binbashar/terraform-aws-rds.git?ref=v4.1.2"
+  source = "github.com/binbashar/terraform-aws-rds.git?ref=v4.2.0"
+
 
   # Instance settings
   # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_MySQL.html
@@ -37,12 +38,14 @@ module "bb_mysql_db" {
   multi_az          = true
 
   # Database credentials
-  name     = "${var.project}_${replace(var.environment, "apps-", "")}_binbash_mysql"
+  db_name  = "${var.project}_${replace(var.environment, "apps-", "")}_binbash_mysql"
   username = "administrator"
 
   # Secret from Hashicorp Vault
   password = data.vault_generic_secret.database_secrets.data["administrator_password"]
   port     = "3306"
+
+
 
   # Backup and maintenance
   backup_retention_period = 14
@@ -50,8 +53,10 @@ module "bb_mysql_db" {
   backup_window           = "00:00-02:00"
 
   # Network settings
+  create_db_subnet_group = true
   subnet_ids             = data.terraform_remote_state.vpc.outputs.private_subnets
   vpc_security_group_ids = [aws_security_group.bb_mysql_db.id]
+
 
   # Mysql versions (param/option groups)
   family               = "mysql8.0"
@@ -71,6 +76,7 @@ module "bb_mysql_db" {
 
   # Tags + Bakup tag -> True
   tags = merge(local.tags, map("Backup", "True"))
+  # tags = merge(local.tags, tomap({ Backup = "True" }))
 
   # Specifies whether any database modifications are applied immediately, or
   # during the next maintenance window
