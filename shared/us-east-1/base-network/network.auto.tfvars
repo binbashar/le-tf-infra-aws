@@ -6,4 +6,4 @@ vpc_single_nat_gateway = true
 vpc_enable_vpn_gateway = false
 
 # SSM
-enable_ssm_endpoints = true
+enable_ssm_endpoints = false

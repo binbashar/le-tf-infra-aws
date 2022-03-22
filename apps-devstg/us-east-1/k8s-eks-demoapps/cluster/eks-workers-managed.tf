@@ -1,5 +1,5 @@
 module "eks_demoapps" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v17.1.0"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v17.20.0"
 
   create_eks      = true
   cluster_name    = data.terraform_remote_state.shared-eks-demoapps-vpc.outputs.cluster_name
@@ -21,8 +21,13 @@ module "eks_demoapps" {
   cluster_create_endpoint_private_access_sg_rule = var.cluster_create_endpoint_private_access_sg_rule
   cluster_endpoint_private_access_cidrs = [
     data.terraform_remote_state.shared-vpc.outputs.vpc_cidr_block,
-    "172.25.16.0/20" # HCP Vault
+    "172.25.16.0/20" # HCP Vault HVN
   ]
+
+  #
+  # Important: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster#kubernetes_network_config
+  #
+  cluster_service_ipv4_cidr = "10.100.0.0/16"
 
   #
   # Managed Nodes Default Settings
@@ -88,7 +93,7 @@ module "eks_demoapps" {
   # Tags
   #
   tags = merge(local.tags,
-    map("k8s.io/cluster-autoscaler/enabled", "TRUE"),
-    map("k8s.io/cluster-autoscaler/${data.terraform_remote_state.shared-eks-demoapps-vpc.outputs.cluster_name}", "owned")
+    { "k8s.io/cluster-autoscaler/enabled" = "TRUE" },
+    { "k8s.io/cluster-autoscaler/${data.terraform_remote_state.shared-eks-demoapps-vpc.outputs.cluster_name}" = "owned" }
   )
 }

@@ -45,7 +45,7 @@ resource "helm_release" "gatus" {
   values     = [file("chart-values/gatus.yaml")]
   depends_on = [
     helm_release.ingress_nginx_private,
-    helm_release.cert_manager,
-    helm_release.external_dns_private
+    helm_release.certmanager,
+    helm_release.externaldns_private
   ]
 }

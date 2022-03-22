@@ -122,7 +122,7 @@ variable "vpc_vault_hvn_created" {
 variable "vpc_vault_hvn_peering_connection_id" {
   description = "Hahicorp Vault Cloud HVN VPC peering ID"
   type        = string
-  default     = "pcx-0c270c9be265da78d"
+  default     = "pcx-09537a564ae16ff09"
 }
 
 variable "vpc_vault_hvn_cird" {
