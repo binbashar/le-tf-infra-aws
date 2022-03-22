@@ -105,7 +105,7 @@ variable "vault_token" {
 }
 
 # Delete this section before commit
-# Vaule for undeclared variable
+# Vaule for undeclared variable - clear error message
 variable "enable_tgw" {
   description = "Enable Transit Gateway Support"
   type        = bool
