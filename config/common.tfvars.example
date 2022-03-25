@@ -4,7 +4,7 @@ project         = "bb"
 # Project (long name)
 project_long    = "binbash"
 
-# AWS Region for DR replicatin (required by the backend but also used for other resources)
+# AWS Region for DR replication (required by the backend but also used for other resources)
 region_secondary      = "us-east-2"
 
 # Account IDs
@@ -14,6 +14,35 @@ shared_account_id     = "333333333333"
 network_account_id    = "444444444444"
 appsdevstg_account_id = "555555555555"
 appsprd_account_id    = "666666666666"
+
+# Accounts
+accounts = {
+  root = {
+    email = "aws+root@binbash.com.ar",
+    id    = 111111111111
+  },
+  security = {
+    email = "binbash-security@binbash.com.ar",
+    id    = 222222222222
+  },
+  shared = {
+    email = "binbash-shared@binbash.com.ar",
+    id    = 333333333333
+  },
+  network = {
+    email = "binbash-network@binbash.com.ar",
+    id    = 444444444444
+  },
+  apps-devstg = {
+    email = "binbash-apps-devstg@binbash.com.ar",
+    id    = 555555555555
+  },
+  apps-prd = {
+    email = "binbash-apps-prd@binbash.com.ar",
+    id    = 666666666666
+  }
+}
+
 
 # Hashicorp Vault private API endpoint
 vault_address = "https://bb-le-shared-vault-cluster.private.vault.XXXXXX.aws.hashicorp.cloud:8200"
@@ -39,6 +68,11 @@ vault_address = "https://bb-le-shared-vault-cluster.private.vault.XXXXXX.aws.has
 #   security audit trail reasons
 #
 vault_token = "s.XXXXXXXXXXXXXXXXXXXXXX.Apshc"
+
+# AWS SSO
+sso_enabled   = true
+sso_start_url = "https://binbash.awsapps.com/start"
+sso_region    = "us-east-1"
 
 # The following values will be moved to another config file in a future release
 #
