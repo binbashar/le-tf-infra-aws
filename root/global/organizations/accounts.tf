@@ -4,7 +4,7 @@
 #
 resource "aws_organizations_account" "root" {
   name  = "binbash-root"
-  email = "info@binbash.com.ar"
+  email = "aws+root@binbash.com.ar"
 }
 
 #
@@ -12,8 +12,8 @@ resource "aws_organizations_account" "root" {
 #  permissions over the other accounts.
 #
 resource "aws_organizations_account" "security" {
-  name      = "binbash-aws-sec"
-  email     = "binbash-aws-sec@binbash.com.ar"
+  name      = "binbash-security"
+  email     = "aws+security@binbash.com.ar"
   parent_id = aws_organizations_organizational_unit.security.id
 }
 
@@ -22,8 +22,8 @@ resource "aws_organizations_account" "security" {
 #  or provide services to the other accounts.
 #
 resource "aws_organizations_account" "shared" {
-  name      = "binbash-aws-sr"
-  email     = "binbash-aws-sr@binbash.com.ar"
+  name      = "binbash-shared"
+  email     = "aws+shared@binbash.com.ar"
   parent_id = aws_organizations_organizational_unit.shared.id
 }
 
@@ -32,8 +32,8 @@ resource "aws_organizations_account" "shared" {
 #  or provide services to the other accounts.
 #
 resource "aws_organizations_account" "network" {
-  name      = "binbash-aws-net"
-  email     = "binbash-aws-net@binbash.com.ar"
+  name      = "binbash-network"
+  email     = "aws+network@binbash.com.ar"
   parent_id = aws_organizations_organizational_unit.network.id
 }
 
@@ -42,8 +42,8 @@ resource "aws_organizations_account" "network" {
 #  placed and maintained here.
 #
 resource "aws_organizations_account" "apps_devstg" {
-  name      = "binbash-aws-dev"
-  email     = "binbash-aws-dev@binbash.com.ar"
+  name      = "binbash-apps-devstg"
+  email     = "aws+apps-devstg@binbash.com.ar"
   parent_id = aws_organizations_organizational_unit.bbl_apps_devstg.id
 }
 
@@ -52,7 +52,7 @@ resource "aws_organizations_account" "apps_devstg" {
 #  maintained here.
 #
 resource "aws_organizations_account" "apps_prd" {
-  name      = "binbash-aws-prd"
-  email     = "info+binbash-aws-prd@binbash.com.ar"
+  name      = "binbash-apps-prd"
+  email     = "aws+apps-prd@binbash.com.ar"
   parent_id = aws_organizations_organizational_unit.bbl_apps_prd.id
 }
