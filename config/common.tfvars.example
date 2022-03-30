@@ -4,6 +4,9 @@ project         = "bb"
 # Project (long name)
 project_long    = "binbash"
 
+# AWS primary region
+region_primary = "us-east-1"
+
 # AWS Region for DR replication (required by the backend but also used for other resources)
 region_secondary      = "us-east-2"
 
