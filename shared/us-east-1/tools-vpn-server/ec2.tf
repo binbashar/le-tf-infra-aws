@@ -98,7 +98,7 @@ module "terraform-aws-basic-layout" {
   #    c. rollback a. step
   #    d. re-comment this block
   #
-/*  dns_records_public_hosted_zone = [{
+  /*  dns_records_public_hosted_zone = [{
     zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id[0],
     name    = "vpn.aws.binbash.com.ar",
     type    = "A",
