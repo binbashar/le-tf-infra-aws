@@ -16,6 +16,7 @@
 !*.gitkeep
 !*.editorconfig
 !*.pre-commit-config.yaml
+!*.terraform.lock.hcl
 
 # SSH keys #
 ############
