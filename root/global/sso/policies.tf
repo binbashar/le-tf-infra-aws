@@ -72,8 +72,8 @@ data "aws_iam_policy_document" "devops" {
       test     = "StringEquals"
       variable = "aws:RequestedRegion"
       values = [
-        "us-east-1",
-        "us-west-2"
+        "${var.region}",
+        "${var.region_secondary}"
       ]
     }
   }
