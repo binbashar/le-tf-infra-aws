@@ -67,6 +67,7 @@ resource "aws_iam_policy" "devops_access" {
                 "route53domains:*",
                 "route53resolver:*",
                 "s3:*",
+                "secretsmanager:*",
                 "ses:*",
                 "shield:*",
                 "sns:*",
