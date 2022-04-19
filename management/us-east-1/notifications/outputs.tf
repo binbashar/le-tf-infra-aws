@@ -97,7 +97,10 @@ output "notify_slack_monitoring_sec_lambda_function_version_monitoring_sec" {
   value       = module.notify_slack_monitoring_sec.notify_slack_lambda_function_version
 }
 
+#
+# AWS SNS - sns-topic-costs
+#
 output "sns_topic_arn_costs" {
   description = "ARN for Costs SNS topic"
-  value       = try(module.notify_costs.sns_topic[0]["arn"], null)
+  value       = module.notify_costs.sns_topic_arn
 }

@@ -49,4 +49,19 @@ data "aws_iam_policy_document" "kms" {
       values   = ["arn:aws:logs:${var.region}:${var.root_account_id}:*"]
     }
   }
+
+  statement {
+    sid    = "Enable Budgets Service"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt*",
+      "kms:GenerateDataKey*"
+    ]
+    resources = ["*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["budgets.amazonaws.com"]
+    }
+  }
 }

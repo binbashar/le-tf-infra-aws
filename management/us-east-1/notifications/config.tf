@@ -24,7 +24,7 @@ provider "vault" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.14.11"
+  required_version = ">= 1.0.9"
 
   required_providers {
     aws   = "~> 3.2"
@@ -52,10 +52,6 @@ data "terraform_remote_state" "keys" {
     bucket  = var.bucket
     key     = "${var.environment}/security-keys/terraform.tfstate"
   }
-}
-
-data "vault_generic_secret" "slack_hook_url_monitoring" {
-  path = "secrets/${var.project}/${var.environment}/notifications"
 }
 
 data "vault_generic_secret" "notifications" {

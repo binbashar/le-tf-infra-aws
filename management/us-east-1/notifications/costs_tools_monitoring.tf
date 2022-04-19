@@ -16,6 +16,7 @@ module "notify_costs" {
     }
   }
 
+  kms_master_key_id = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
 }
 
 # Subscribing a list of email addresses to SNS topic
@@ -96,6 +97,13 @@ data "aws_iam_policy_document" "sns-notify-costs" {
 #============================#
 # AWS SNS -> Lambda -> Slack #
 #============================#
+# Encrypt the URL, storing encryption here will show it in logs and in tfstate
+# https://www.terraform.io/docs/state/sensitive-data.html
+data "aws_kms_ciphertext" "slack_url_monitoring_costs" {
+  plaintext = data.vault_generic_secret.notifications.data["slack_webhook_monitoring_costs"]
+  key_id    = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
+}
+
 # Set create_with_kms_key = true
 # when providing value of kms_key_arn to create required IAM policy which allows to decrypt using specified KMS key.
 module "notify_slack_monitoring_costs" {
@@ -110,10 +118,10 @@ module "notify_slack_monitoring_costs" {
   #
   # Slack Webhook URL + Channel
   #
-  slack_channel     = "le-tools-monitoring"
-  slack_username    = "aws-binbash-org"
+  slack_channel     = "le-tools-monitoring-costs"
+  slack_username    = "leverops-aws-costs"
   slack_emoji       = ":AWS3:"
-  slack_webhook_url = data.aws_kms_ciphertext.slack_url_monitoring.ciphertext_blob
+  slack_webhook_url = data.aws_kms_ciphertext.slack_url_monitoring_costs.ciphertext_blob
 
   kms_key_arn          = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
   lambda_function_name = "${var.project}-${var.environment}-notify-slack-monitoring-costs"
