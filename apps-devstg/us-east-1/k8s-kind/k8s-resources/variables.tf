@@ -166,6 +166,11 @@ variable "enable_logging" {
   default = false
 }
 
+variable "logging_forwarder" {
+  type    = string
+  default = "fluentd"
+}
+
 variable "enable_ingressmonitorcontroller" {
   type    = bool
   default = false

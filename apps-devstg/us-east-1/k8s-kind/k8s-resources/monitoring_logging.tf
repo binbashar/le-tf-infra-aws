@@ -27,11 +27,21 @@
 #          however it was not verified to be a working solution yet
 #------------------------------------------------------------------------------
 resource "helm_release" "fluentd" {
-  count      = var.enable_logging ? 1 : 0
+  count      = var.enable_logging && var.logging_forwarder == "fluentd" ? 1 : 0
   name       = "fluentd"
   namespace  = kubernetes_namespace.monitoring.id
   repository = "https://kokuwaio.github.io/helm-charts"
   chart      = "fluentd-elasticsearch"
   version    = "11.10.0"
   values     = [file("chart-values/fluentd-elasticsearch.yaml")]
+}
+
+resource "helm_release" "fluentbit" {
+  count      = var.enable_logging && var.logging_forwarder == "fluentbit" ? 1 : 0
+  name       = "fluentbit"
+  namespace  = kubernetes_namespace.monitoring.id
+  repository = "https://fluent.github.io/helm-charts"
+  chart      = "fluent-bit"
+  version    = "0.19.23"
+  values     = [file("chart-values/fluentbit.yaml")]
 }
