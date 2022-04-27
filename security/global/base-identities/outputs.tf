@@ -89,6 +89,17 @@ output "user_matias_rodriguez_login_profile_encrypted_password" {
   sensitive   = true
 }
 
+output "user_franco_gauchat_name" {
+  description = "The user's name"
+  value       = module.user["franco.gauchat"].iam_user_name
+}
+
+output "user_franco_gauchat_login_profile_encrypted_password" {
+  description = "The encrypted password, base64 encoded"
+  value       = module.user["franco.gauchat"].iam_user_login_profile_encrypted_password
+  sensitive   = true
+}
+
 #
 # Machine / Automation Users
 #
