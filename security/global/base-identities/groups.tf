@@ -42,7 +42,8 @@ module "iam_group_devops" {
     module.user["jose.peinado"].iam_user_name,
     module.user["luis.gallardo"].iam_user_name,
     module.user["marcos.pagnucco"].iam_user_name,
-    module.user["matias.rodriguez"].iam_user_name
+    module.user["matias.rodriguez"].iam_user_name,
+    module.user["franco.gauchat"].iam_user_name,
   ]
 
   custom_group_policy_arns = [

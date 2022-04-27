@@ -12,7 +12,8 @@ locals {
     "luis.gallardo",
     "marcelo.beresvil",
     "marcos.pagnucco",
-    "matias.rodriguez"
+    "matias.rodriguez",
+    "franco.gauchat",
   ]
 
   machine_users = [
