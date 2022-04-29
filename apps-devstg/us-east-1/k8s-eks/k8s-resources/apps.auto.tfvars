@@ -46,19 +46,13 @@ enable_prometheus_dependencies = false
 #------------------------------------------------------------------------------
 # Kubernetes Dashboard
 #------------------------------------------------------------------------------
-enable_kubernetes_dashboard        = false
-kubernetes_dashboard_ingress_class = "ingress-nginx-private"
-kubernetes_dashboard_hosts         = "kubernetes-dashboard.us-east-1.devstg.aws.binbash.com.ar"
+enable_kubernetes_dashboard = false
+kubernetes_dashboard_hosts  = "kubernetes-dashboard.us-east-1.devstg.aws.binbash.com.ar"
 
 #------------------------------------------------------------------------------
-# Demo Apps - ArgoCD
+# CICD | ArgoCD
 #------------------------------------------------------------------------------
 enable_cicd = true
-demoapps = {
-  emojivoto = false
-  gdm       = false
-  sockshop  = true
-}
 
 #------------------------------------------------------------------------------
 # Backups
