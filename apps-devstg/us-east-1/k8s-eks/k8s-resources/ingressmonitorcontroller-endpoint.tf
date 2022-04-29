@@ -50,5 +50,5 @@ resource "helm_release" "emojivoto_imc_endpoint" {
       }
     )
   ]
-  depends_on = [helm_release.ingressmonitorcontroller, helm_release.emojivoto]
+  depends_on = [helm_release.ingressmonitorcontroller]
 }

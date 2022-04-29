@@ -2,26 +2,24 @@
 # Providers
 #
 provider "aws" {
-  region                  = var.region
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  region  = var.region
+  profile = var.profile
 }
 
 provider "aws" {
-  alias                   = "shared"
-  region                  = var.region
-  profile                 = "${var.project}-shared-devops"
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  alias   = "shared"
+  region  = var.region
+  profile = "${var.project}-shared-devops"
 }
 
 #
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 1.0.9"
+  required_version = "~> 1.1.3"
 
   required_providers {
-    aws = "~> 3.2"
+    aws = "~> 4.10"
   }
 
   backend "s3" {

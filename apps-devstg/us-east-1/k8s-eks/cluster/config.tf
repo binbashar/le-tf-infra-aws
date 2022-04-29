@@ -2,9 +2,8 @@
 # Providers
 #
 provider "aws" {
-  region                  = var.region
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  region  = var.region
+  profile = var.profile
 }
 
 provider "kubernetes" {
@@ -17,11 +16,11 @@ provider "kubernetes" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.12.28"
+  required_version = "~> 1.1.3"
 
   required_providers {
-    aws        = "~> 3.28"
-    kubernetes = "~> 2.0.2"
+    aws        = "~> 4.10"
+    kubernetes = "~> 2.10"
   }
 
   backend "s3" {
