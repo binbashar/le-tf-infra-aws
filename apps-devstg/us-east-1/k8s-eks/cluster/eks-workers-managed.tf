@@ -45,9 +45,10 @@ module "eks" {
   #
   node_groups = {
     main = {
-      desired_capacity = 1
-      max_capacity     = 3
-      min_capacity     = 1
+      desired_capacity = var.node_groups_desired_capacity
+      max_capacity     = var.node_groups_max_capacity
+      min_capacity     = var.node_groups_min_capacity
+      capacity_type    = var.node_groups_capacity_type
     }
   }
 
