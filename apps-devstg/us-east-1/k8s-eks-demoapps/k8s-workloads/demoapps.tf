@@ -1,45 +1,43 @@
 #------------------------------------------------------------------------------
-# Linkerd EmojiVoto Demo Application
+# linkerd emojivoto demo application
 #------------------------------------------------------------------------------
 resource "helm_release" "emojivoto" {
-  count      = var.enable_demoapps_emojivoto ? 1 : 0
+  count      = lookup(var.demoapps, "emojivoto", false) ? 1 : 0
   name       = "emojivoto"
-  namespace  = kubernetes_namespace.argocd.id
+  namespace  = "argocd"
   repository = "https://binbashar.github.io/helm-charts/"
   chart      = "argocd-application"
   version    = "0.2.0"
   values     = [file("chart-values/demoapps-emojivoto.yaml")]
-  depends_on = [helm_release.argocd]
 }
 
 #------------------------------------------------------------------------------
-# Google Microservices Demo
+# google microservices demo
 #------------------------------------------------------------------------------
 resource "helm_release" "gmd" {
-  count      = var.enable_demoapps_gmd ? 1 : 0
+  count      = lookup(var.demoapps, "gdm", false) ? 1 : 0
   name       = "gmd"
-  namespace  = kubernetes_namespace.argocd.id
+  namespace  = "argocd"
   repository = "https://binbashar.github.io/helm-charts/"
   chart      = "argocd-application"
   version    = "0.2.0"
-  values = [
-    templatefile("chart-values/demoapps-gmd.yaml", local.demoapps.gmd.templateValues)
-  ]
-  depends_on = [helm_release.argocd]
+  values     = [file("chart-values/demoapps-gmd.yaml")]
 }
 
 #------------------------------------------------------------------------------
-# Weave Sock-Shop Microservices Demo
+# weave sock-shop microservices demo
 #------------------------------------------------------------------------------
 resource "helm_release" "sockshop" {
-  count      = var.enable_demoapps_sockshop ? 1 : 0
+  count      = lookup(var.demoapps, "sockshop", false) ? 1 : 0
   name       = "sockshop"
-  namespace  = kubernetes_namespace.argocd.id
+  namespace  = "argocd"
   repository = "https://binbashar.github.io/helm-charts/"
   chart      = "argocd-application"
   version    = "0.2.0"
   values = [
-    templatefile("chart-values/demoapps-sockshop.yaml", local.demoapps.sockshop.templateValues)
+    templatefile("chart-values/demoapps-sockshop.yaml", {
+      accountid = var.shared_account_id,
+      region    = var.region
+    })
   ]
-  depends_on = [helm_release.argocd]
 }

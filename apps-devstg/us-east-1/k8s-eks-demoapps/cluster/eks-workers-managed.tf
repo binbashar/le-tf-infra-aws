@@ -1,5 +1,5 @@
 module "eks_demoapps" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v17.20.0"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v17.24.0"
 
   create_eks      = true
   cluster_name    = data.terraform_remote_state.shared-eks-demoapps-vpc.outputs.cluster_name
