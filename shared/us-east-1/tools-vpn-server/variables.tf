@@ -61,34 +61,9 @@ variable "region_secondary" {
   description = "AWS Scondary Region for HA"
 }
 
-variable "root_account_id" {
-  type        = string
-  description = "Account: Root"
-}
-
-variable "security_account_id" {
-  type        = string
-  description = "Account: Security & Users Management"
-}
-
-variable "shared_account_id" {
-  type        = string
-  description = "Account: Shared Resources"
-}
-
-variable "network_account_id" {
-  type        = string
-  description = "Account: Networking Resources"
-}
-
-variable "appsdevstg_account_id" {
-  type        = string
-  description = "Account: Dev Modules & Libs"
-}
-
-variable "appsprd_account_id" {
-  type        = string
-  description = "Account: Prod Modules & Libs"
+variable "accounts" {
+  type        = any
+  description = "Accounts IDs and Emails"
 }
 
 #=============================#
@@ -114,7 +89,7 @@ variable "name" {
 #
 variable "aws_ami_os_id" {
   description = "AWS AMI Operating System Identificator"
-  default     = "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"
+  default     = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"
 }
 
 variable "aws_ami_os_owner" {
