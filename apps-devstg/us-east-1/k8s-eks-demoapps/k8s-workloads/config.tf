@@ -33,22 +33,29 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/k8s-eks-demoapps/k8s-resources/terraform.tfstate"
+    key = "apps-devstg/k8s-eks-demoapps/k8s-workloads/terraform.tfstate"
   }
 }
 
 #
 # Data Sources
 #
+
+# Get the current Account ID
+data "aws_caller_identity" "current" {}
+
+# Get the current AWS region configured in the provider
+data "aws_region" "current" {}
+
 data "aws_eks_cluster" "cluster" {
-  name = data.terraform_remote_state.eks-demoapps-cluster.outputs.cluster_id
+  name = data.terraform_remote_state.eks-cluster-demoapps.outputs.cluster_id
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = data.terraform_remote_state.eks-demoapps-cluster.outputs.cluster_id
+  name = data.terraform_remote_state.eks-cluster-demoapps.outputs.cluster_id
 }
 
-data "terraform_remote_state" "eks-demoapps-cluster" {
+data "terraform_remote_state" "eks-cluster-demoapps" {
   backend = "s3"
 
   config = {

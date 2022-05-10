@@ -3,22 +3,13 @@ project: default
 source:
   repoURL: https://github.com/binbashar/le-demo-apps.git
   targetRevision: HEAD
-  path: google-microservices-demo/helm
-
-  helm:
-    # The value file below determines whether we use an in-cluster
-    valueFiles:
-    - ${valueFile}
+  path: google-microservices-demo/kubernetes
 
 destination:
   server: https://kubernetes.default.svc
   namespace: demo-gmd
 
 syncPolicy:
-  automated:
-    prune: true
-    selfHeal: true
-    allowEmpty: false
   syncOptions:
     - Validate=true
     - CreateNamespace=true

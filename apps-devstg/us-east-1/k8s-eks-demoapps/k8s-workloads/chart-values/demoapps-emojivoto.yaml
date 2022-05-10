@@ -1,18 +1,16 @@
+# Use default project, for real case apps you may want to create specific projects
 project: default
 
+# Source code settings
 source:
   repoURL: https://github.com/binbashar/le-demo-apps.git
-  targetRevision: master
-  path: sock-shop/helm
+  targetRevision: HEAD
+  path: emojivoto/kubernetes
 
-  helm:
-    # The value file below determines whether we use an in-cluster
-    valueFiles:
-    - ${valueFile}
-
+# Cluster destination
 destination:
   server: https://kubernetes.default.svc
-  namespace: demo-sock-shop
+  namespace: demo-emojivoto
 
 syncPolicy:
   automated:
