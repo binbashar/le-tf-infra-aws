@@ -26,41 +26,48 @@ config:
         Path /var/log/containers/*.log
         multiline.parser docker, cri
         Tag kube.*
-        Mem_Buf_Limit 5MB
+        Mem_Buf_Limit 20MB
         Skip_Long_Lines On
-
-    [INPUT]
-        Name systemd
-        Tag host.*
-        Systemd_Filter _SYSTEMD_UNIT=kubelet.service
-        Read_From_Tail On
 
   ## https://docs.fluentbit.io/manual/pipeline/filters
   filters: |
     [FILTER]
         Name kubernetes
         Match kube.*
-        Merge_Log On
+        Merge_Log Off
         Keep_Log Off
         K8S-Logging.Parser On
         K8S-Logging.Exclude On
+
+    [FILTER]
+        Name                kubernetes
+        Match               kube.guestbook.*
+        Merge_Log           On
+        Merge_Log_Key       log_processed
+        Keep_Log            Off
+        Kube_Tag_Prefix     kube.var.log.containers.
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude Off
+        Annotations         Off
+        Labels              Off    
 
   ## https://docs.fluentbit.io/manual/pipeline/outputs
   outputs: |
     [OUTPUT]
         Name es
         Match kube.*
-        Host elasticsearch-master
-        Logstash_Format On
-        Retry_Limit False
+        Host ${es-host}
+        Port ${es-port}
+        Index fluent_bit_kube
+        Buffer_Size 5M
+        Retry_Limit     False
+        Http_user         ${es-user}
+        Http_passwd       ${es-passwd}
+        tls On
+        tls.verify Off
+        Suppress_Type_Name On
+    
 
-    [OUTPUT]
-        Name es
-        Match host.*
-        Host elasticsearch-master
-        Logstash_Format On
-        Logstash_Prefix node
-        Retry_Limit False
 
   ## https://docs.fluentbit.io/manual/pipeline/parsers
   customParsers: |
@@ -70,7 +77,14 @@ config:
         Time_Keep Off
         Time_Key time
         Time_Format %Y-%m-%dT%H:%M:%S.%L
+    [PARSER]
+        Name custom 
+        Format regex
+        Regex ^(?<datetime>[^ ]*) (?<std>[^ ]*) (?<f>[^ ]*) (?<host>[^ ]*) (- -) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$    
+        Time_Key time
+        Time_Format %d/%b/%Y:%H:%M:%S %z
 
+        
   # This allows adding more files with arbitary filenames to /fluent-bit/etc by providing key/value pairs.
   # The key becomes the filename, the value becomes the file content.
   extraFiles: {}

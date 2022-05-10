@@ -198,3 +198,22 @@ variable "imc" {
   type    = any
   default = {}
 }
+
+#==================================#
+# Fluentbit config variables       #
+#==================================#
+variable "elastic_host"{
+  type    = string
+     
+}
+
+variable "elastic_port"{
+  type = string
+  
+}
+
+variable "elastic_user" {
+  type = string
+  
+}
+
