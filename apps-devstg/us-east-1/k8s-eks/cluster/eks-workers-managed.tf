@@ -36,7 +36,7 @@ module "eks" {
     # Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS
     ami_type       = "AL2_x86_64"
     disk_size      = 50
-    instance_types = ["t2.medium"]
+    instance_types = ["t2.medium", "t3.medium"]
     k8s_labels     = local.tags
   }
 
