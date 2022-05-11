@@ -4,10 +4,10 @@ Layer used to create a local Kind cluster, exclusively for local testing/develop
 
 ## Requirements
 
-- Install [**Kind**](https://kind.sigs.k8s.io/docs/user/quick-start/#installing-with-a-package-manager) 
-- Install [**kubectl**](https://kubernetes.io/docs/tasks/tools/#kubectl) (NOTE: kind does not require kubectl, but you will not be able to interact easily with the cluster without it.) 
+- Install [**Kind**](https://kind.sigs.k8s.io/docs/user/quick-start/#installing-with-a-package-manager)
+- Install [**kubectl**](https://kubernetes.io/docs/tasks/tools/#kubectl) (NOTE: kind does not require kubectl, but you will not be able to interact easily with the cluster without it.)
 
-## Instructions 
+## Instructions
 
 - Run `make create-cluster` to create the Kind cluster
 - Run `make update-tfvars`
