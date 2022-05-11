@@ -178,29 +178,3 @@ variable "manage_aws_auth" {
   default     = true
 }
 
-#
-# node groups variables
-#
-variable "node_groups_desired_capacity" {
-  description = "Desired number of workers"
-  type        = number
-  default     = 1
-}
-
-variable "node_groups_max_capacity" {
-  description = "Max number of workers"
-  type        = number
-  default     = 3
-}
-
-variable "node_groups_min_capacity" {
-  description = "Min number of workers"
-  type        = number
-  default     = 1
-}
-
-variable "node_groups_capacity_type" {
-  description = "Type of instance capacity to provision. Options are `ON_DEMAND` and `SPOT`"
-  type        = string
-  default     = "SPOT"
-}

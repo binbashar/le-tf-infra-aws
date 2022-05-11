@@ -34,21 +34,28 @@ module "eks" {
   #
   node_groups_defaults = {
     # Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS
-    ami_type       = "AL2_x86_64"
-    disk_size      = 50
-    instance_types = ["t2.medium", "t3.medium"]
-    k8s_labels     = local.tags
+    ami_type   = "AL2_x86_64"
+    disk_size  = 50
+    k8s_labels = local.tags
   }
 
   #
   # List of Managed Node Groups
   #
   node_groups = {
-    main = {
-      desired_capacity = var.node_groups_desired_capacity
-      max_capacity     = var.node_groups_max_capacity
-      min_capacity     = var.node_groups_min_capacity
-      capacity_type    = var.node_groups_capacity_type
+    on-demand = {
+      desired_capacity = 1
+      max_capacity     = 1
+      min_capacity     = 1
+      capacity_type    = "ON_DEMAND"
+      instance_types   = ["t2.medium", "t3.medium"]
+    }
+    spot = {
+      desired_capacity = 1
+      max_capacity     = 3
+      min_capacity     = 1
+      capacity_type    = "SPOT"
+      instance_types   = ["t2.medium", "t3.medium"]
     }
   }
 
