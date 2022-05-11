@@ -43,12 +43,12 @@ resource "helm_release" "fluentbit" {
   repository = "https://fluent.github.io/helm-charts"
   chart      = "fluent-bit"
   version    = "0.19.23"
-  values     = [
-      templatefile("chart-values/fluentbit.yaml", {
-        es-host   = var.elastic_host,
-        es-port   = var.elastic_port,
-        es-user   = var.elastic_user,
-        es-passwd = var.elastic_passwd
-  })
-]
+  values = [
+    templatefile("chart-values/fluentbit.yaml", {
+      es-host   = var.elastic_host,
+      es-port   = var.elastic_port,
+      es-user   = var.elastic_user,
+      es-passwd = var.elastic_passwd
+    })
+  ]
 }

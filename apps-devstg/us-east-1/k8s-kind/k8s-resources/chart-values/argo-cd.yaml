@@ -1,6 +1,6 @@
 server:
   ingress:
-    enabled: true 
+    enabled: true
     annotations:
       kubernetes.io/tls-acme: "true"
       # Associate this ingress with the following ingress controller

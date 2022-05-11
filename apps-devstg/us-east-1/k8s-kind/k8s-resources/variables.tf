@@ -202,18 +202,18 @@ variable "imc" {
 #==================================#
 # Fluentbit config variables       #
 #==================================#
-variable "elastic_host"{
-  type    = string
-     
+variable "elastic_host" {
+  type = string
+
 }
 
-variable "elastic_port"{
+variable "elastic_port" {
   type = string
-  
+
 }
 
 variable "elastic_user" {
   type = string
-  
+
 }
 
