@@ -166,6 +166,11 @@ variable "enable_logging" {
   default = false
 }
 
+variable "logging_forwarder" {
+  type    = string
+  default = "fluentd"
+}
+
 variable "enable_ingressmonitorcontroller" {
   type    = bool
   default = false
@@ -193,3 +198,22 @@ variable "imc" {
   type    = any
   default = {}
 }
+
+#==================================#
+# Fluentbit config variables       #
+#==================================#
+variable "elastic_host" {
+  type = string
+
+}
+
+variable "elastic_port" {
+  type = string
+
+}
+
+variable "elastic_user" {
+  type = string
+
+}
+
