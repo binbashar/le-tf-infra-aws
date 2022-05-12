@@ -40,7 +40,7 @@ module "eks" {
   }
 
   #
-  # List of Managed Node Groups
+  # Map for Managed Node Groups
   #
   node_groups = {
     on-demand = {
