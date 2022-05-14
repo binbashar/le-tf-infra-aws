@@ -2,9 +2,11 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  region                  = var.region
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  region  = var.region
+  profile = var.profile
+  # comment this 2 lines for aws sso enable
+  # shared_credentials_files = ["~/.aws/${var.project}/credentials"]
+  # shared_config_files      = ["~/.aws/${var.project}/config"]
 }
 
 # Here we need a different AWS provider because ACM certificates
@@ -13,10 +15,12 @@ provider "aws" {
 # binbash-shared route53 cross-account ACM dns validation update
 #
 provider "aws" {
-  region                  = var.region
-  profile                 = var.profile_shared
-  shared_credentials_file = "~/.aws/${var.project}/config"
-  alias                   = "shared-route53"
+  region  = var.region
+  profile = var.profile_shared
+  # comment this 2 lines for aws sso enable
+  # shared_credentials_files = ["~/.aws/${var.project}/credentials"]
+  # shared_config_files      = ["~/.aws/${var.project}/config"]
+  alias = "shared-route53"
 }
 
 #=============================#
@@ -26,7 +30,7 @@ terraform {
   required_version = ">= 0.14.11"
 
   required_providers {
-    aws = "~> 3.0"
+    aws = "~> 4.0"
   }
 
   backend "s3" {
