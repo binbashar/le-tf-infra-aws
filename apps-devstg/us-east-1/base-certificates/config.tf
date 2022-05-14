@@ -2,9 +2,12 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  region                  = var.region
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  region  = var.region
+  profile = var.profile
+  # comment this 2 lines for aws sso enable
+  # shared_credentials_files = ["~/.aws/${var.project}/credentials"]
+  # shared_config_files      = ["~/.aws/${var.project}/config"]
+
 }
 
 #=============================#
@@ -14,7 +17,7 @@ terraform {
   required_version = ">= 0.14.11"
 
   required_providers {
-    aws = "~> 3.27"
+    aws = "~> 4.0"
   }
 
   backend "s3" {
