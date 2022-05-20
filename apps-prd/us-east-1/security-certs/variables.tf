@@ -30,7 +30,7 @@ variable "encrypt" {
 }
 
 #
-# config/base.config
+# config/common.tfvars
 #
 #=============================#
 # Project Variables           #
@@ -50,31 +50,6 @@ variable "environment" {
   description = "Environment Name"
 }
 
-#=============================#
-# AWS SSO  Variables          #
-#=============================#
-variable "sso_role" {
-  description = "SSO Role Name"
-}
-
-variable "sso_enabled" {
-  type        = string
-  description = "Enable SSO Service"
-}
-
-variable "sso_region" {
-  type        = string
-  description = "SSO Region"
-}
-
-variable "sso_start_url" {
-  type        = string
-  description = "SSO Start Url"
-}
-
-#
-# config/extra.config
-#
 #=============================#
 # Accounts & Extra Vars       #
 #=============================#
@@ -121,6 +96,28 @@ variable "appsdevstg_account_id" {
 variable "appsprd_account_id" {
   type        = string
   description = "Account: Prod Modules & Libs"
+}
+
+#=============================#
+# AWS SSO  Variables          #
+#=============================#
+variable "sso_role" {
+  description = "SSO Role Name"
+}
+
+variable "sso_enabled" {
+  type        = string
+  description = "Enable SSO Service"
+}
+
+variable "sso_region" {
+  type        = string
+  description = "SSO Region"
+}
+
+variable "sso_start_url" {
+  type        = string
+  description = "SSO Start Url"
 }
 
 #=============================#
