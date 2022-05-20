@@ -4,7 +4,6 @@
 provider "aws" {
   region                  = var.region
   profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
 }
 
 # Here we need a different AWS provider because ACM certificates
@@ -14,8 +13,7 @@ provider "aws" {
 #
 provider "aws" {
   region                  = var.region
-  profile                 = var.profile_shared
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  profile                 = "${var.project}-shared-devops"
   alias                   = "shared-route53"
 }
 
@@ -23,10 +21,10 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.14.11"
+  required_version = "~> 1.1.3"
 
   required_providers {
-    aws = "~> 3.0"
+    aws = "~> 4.0"
   }
 
   backend "s3" {
