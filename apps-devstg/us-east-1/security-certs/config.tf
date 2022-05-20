@@ -16,7 +16,7 @@ provider "aws" {
 #
 provider "aws" {
   region  = var.region
-  profile = var.profile_shared
+  profile = "${var.project}-shared-devops"
   # comment this 2 lines for aws sso enable
   # shared_credentials_files = ["~/.aws/${var.project}/credentials"]
   # shared_config_files      = ["~/.aws/${var.project}/config"]
@@ -27,7 +27,7 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.14.11"
+  required_version = "~> 1.0"
 
   required_providers {
     aws = "~> 4.0"
