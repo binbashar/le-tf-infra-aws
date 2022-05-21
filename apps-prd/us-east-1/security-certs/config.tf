@@ -4,9 +4,6 @@
 provider "aws" {
   region  = var.region
   profile = var.profile
-  # comment this 2 lines for aws sso enable
-  # shared_credentials_files = ["~/.aws/${var.project}/credentials"]
-  # shared_config_files      = ["~/.aws/${var.project}/config"]
 }
 
 # Here we need a different AWS provider because ACM certificates
@@ -17,10 +14,7 @@ provider "aws" {
 provider "aws" {
   region  = var.region
   profile = "${var.project}-shared-devops"
-  # comment this 2 lines for aws sso enable
-  # shared_credentials_files = ["~/.aws/${var.project}/credentials"]
-  # shared_config_files      = ["~/.aws/${var.project}/config"]
-  alias = "shared-route53"
+  alias   = "shared-route53"
 }
 
 #=============================#

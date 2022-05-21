@@ -4,9 +4,6 @@
 provider "aws" {
   region  = var.region
   profile = var.profile
-  # uncomment this 2 lines for aws sso disable
-  # shared_credentials_files = ["~/.aws/${var.project}/credentials"]
-  # shared_config_files      = ["~/.aws/${var.project}/config"]
 }
 
 #=============================#
