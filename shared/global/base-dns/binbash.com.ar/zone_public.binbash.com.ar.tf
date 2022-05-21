@@ -93,20 +93,3 @@ resource "aws_route53_record" "aws_public_hosted_zone_TXT_record_google_spf" {
   records = ["v=spf1 include:_spf.google.com ~all"]
   ttl     = 300
 }
-
-resource "aws_route53_record" "acm_wildcard_devstg_aws_binbash_com_ar" {
-  for_each = {
-    for dvo in data.terraform_remote_state.vpc-apps-devstg-certificates.outputs.certificate_wildcard_devstg_aws_binbash_com_ar_domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
-    }
-  }
-
-  zone_id         = aws_route53_zone.aws_public_hosted_zone_1.id
-  allow_overwrite = true
-  name            = each.value.name
-  type            = each.value.type
-  records         = [each.value.record]
-  ttl             = 300
-}
