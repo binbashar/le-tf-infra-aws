@@ -1,5 +1,5 @@
 #
-# config/backend.config
+# apps-devstg/config/backend.config
 #
 #================================#
 # Terraform AWS Backend Settings #
@@ -56,9 +56,19 @@ variable "environment" {
 #=============================#
 # Accounts & Extra Vars       #
 #=============================#
+variable "region_primary" {
+  type        = string
+  description = "AWS Primary Region for HA"
+}
+
 variable "region_secondary" {
   type        = string
   description = "AWS Scondary Region for HA"
+}
+
+variable "accounts" {
+  type        = map(any)
+  description = "Accounts descriptions"
 }
 
 variable "root_account_id" {
@@ -104,8 +114,31 @@ variable "vault_token" {
   description = "Hashicorp vault admin token"
 }
 
-# Delete this section before commit
-# Vaule for undeclared variable - clear error message
+#=============================#
+# AWS SSO  Variables          #
+#=============================#
+variable "sso_role" {
+  description = "SSO Role Name"
+}
+
+variable "sso_enabled" {
+  type        = string
+  description = "Enable SSO Service"
+}
+
+variable "sso_region" {
+  type        = string
+  description = "SSO Region"
+}
+
+variable "sso_start_url" {
+  type        = string
+  description = "SSO Start Url"
+}
+
+#=============================#
+# Networking                  #
+#=============================#
 variable "enable_tgw" {
   description = "Enable Transit Gateway Support"
   type        = bool

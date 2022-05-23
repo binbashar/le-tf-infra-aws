@@ -2,10 +2,8 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  region                   = var.region
-  profile                  = var.profile
-  shared_credentials_files = ["~/.aws/${var.project}/credentials"]
-  shared_config_files      = ["~/.aws/${var.project}/config"]
+  region  = var.region
+  profile = var.profile
 }
 
 #=============================#
@@ -25,11 +23,11 @@ provider "vault" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.14.11"
+  required_version = "~> 1.1.3"
 
   required_providers {
     aws   = "~> 4.0"
-    vault = ">= 2.21.0"
+    vault = "~> 3.6.0"
   }
 
   backend "s3" {

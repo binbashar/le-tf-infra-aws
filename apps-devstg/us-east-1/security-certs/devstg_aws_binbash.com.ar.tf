@@ -1,8 +1,8 @@
 #
 # ACM Cert generation with DNS validation
 #
-resource "aws_acm_certificate" "aws_binbash_com_ar" {
-  domain_name       = "*.${local.domain_name}"
+resource "aws_acm_certificate" "wildcard_devstg_aws_binbash_com_ar" {
+  domain_name       = "*.devstg.${local.domain_name}"
   validation_method = "DNS"
 
   tags = local.tags
@@ -15,9 +15,9 @@ resource "aws_acm_certificate" "aws_binbash_com_ar" {
 # AWS Provider > 0.31.1 changes
 # https://github.com/hashicorp/terraform/issues/26043
 # https://github.com/hashicorp/terraform-provider-aws/issues/10098#issuecomment-663562342
-resource "aws_acm_certificate_validation" "aws_binbash_com_ar" {
-  certificate_arn         = aws_acm_certificate.aws_binbash_com_ar.arn
-  validation_record_fqdns = [for record in aws_route53_record.cert_validation_wildcard_binbash_com_ar : record.fqdn]
+resource "aws_acm_certificate_validation" "wildcard_devstg_aws_binbash_com_ar" {
+  certificate_arn         = aws_acm_certificate.wildcard_devstg_aws_binbash_com_ar.arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation_wildcard_devstg_aws_binbash_com_ar : record.fqdn]
 }
 
 # Here we need a different AWS provider because CloudFront certificates
@@ -28,11 +28,11 @@ resource "aws_acm_certificate_validation" "aws_binbash_com_ar" {
 # AWS Provider > 0.31.1 changes
 # https://github.com/hashicorp/terraform/issues/26043
 # https://github.com/hashicorp/terraform-provider-aws/issues/10098#issuecomment-663562342
-resource "aws_route53_record" "cert_validation_wildcard_binbash_com_ar" {
+resource "aws_route53_record" "cert_validation_wildcard_devstg_aws_binbash_com_ar" {
   provider = aws.shared-route53
 
   for_each = {
-    for dvo in local.domain_validation_options_aws_binbash_com_ar : dvo.domain_name => {
+    for dvo in local.domain_validation_options_wildcard_devstg_aws_binbash_com_ar : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
@@ -51,17 +51,17 @@ resource "aws_route53_record" "cert_validation_wildcard_binbash_com_ar" {
 # Avoid duplicate cert_validation records like in domain.org and *.domain.org
 locals {
 
-  domains_aws_binbash_com_ar = aws_acm_certificate.aws_binbash_com_ar.domain_validation_options
+  domains_wildcard_devstg_aws_binbash_com_ar = aws_acm_certificate.wildcard_devstg_aws_binbash_com_ar.domain_validation_options
 
   # Get domain names as a list to be able to comapre records like domain-org to *.domain.org
-  domains_names_aws_binbash_com_ar = [
-    for domain in local.domains_aws_binbash_com_ar :
+  domains_names_wildcard_devstg_aws_binbash_com_ar = [
+    for domain in local.domains_wildcard_devstg_aws_binbash_com_ar :
     domain.domain_name
   ]
 
   # Avoid domain-org alike records
-  domain_validation_options_aws_binbash_com_ar = [
-    for domain in local.domains_aws_binbash_com_ar :
-    domain if !contains(local.domains_names_aws_binbash_com_ar, "*.${domain.domain_name}")
+  domain_validation_options_wildcard_devstg_aws_binbash_com_ar = [
+    for domain in local.domains_wildcard_devstg_aws_binbash_com_ar :
+    domain if !contains(local.domains_names_wildcard_devstg_aws_binbash_com_ar, "*.devstg.${domain.domain_name}")
   ]
 }
