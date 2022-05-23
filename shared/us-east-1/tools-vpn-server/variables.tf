@@ -146,3 +146,11 @@ variable "vault_token" {
   description = "Hashicorp vault admin token"
 }
 
+#=============================#
+# SSM Var                     #
+#=============================#
+variable "enable_ssm_access" {
+  type        = bool
+  description = "If true, attaches SSM policy to instance role"
+  default     = false
+}
