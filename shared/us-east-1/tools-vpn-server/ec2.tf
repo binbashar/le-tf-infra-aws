@@ -2,7 +2,7 @@
 # EC2 Pritunl OpenVPN
 #
 module "terraform-aws-basic-layout" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.29"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.30"
   prefix = var.prefix
   name   = var.name
 
@@ -19,6 +19,7 @@ module "terraform-aws-basic-layout" {
   ebs_optimized               = var.ebs_optimized
   monitoring                  = var.monitoring
   user_data_base64            = base64encode(local.user_data)
+  enable_ssm_access           = local.enable_ssm_access
 
   root_block_device = [
     {
