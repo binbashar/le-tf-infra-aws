@@ -145,4 +145,3 @@ variable "vault_token" {
   type        = string
   description = "Hashicorp vault admin token"
 }
-

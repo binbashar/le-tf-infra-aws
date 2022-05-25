@@ -1,4 +1,5 @@
 locals {
+  enable_ssm_access = true
   tags = {
     Name               = "${var.prefix}-${var.name}"
     Terraform          = "true"
