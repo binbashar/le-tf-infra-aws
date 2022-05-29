@@ -1,4 +1,4 @@
- # The GitHub Actions docs (https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#on)
+   # The GitHub Actions docs (https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#on)
    # describe other options for 'on', 'pull_request' is a good default.
    on: [pull_request]
    env:
@@ -11,7 +11,7 @@
        runs-on: ubuntu-latest
 
        env:
-         TF_ROOT: ./
+         TF_ROOT: .
          # If you're using Terraform Cloud/Enterprise and have variables stored on there
          # you can specify the following to automatically retrieve the variables:
          #   INFRACOST_TERRAFORM_CLOUD_TOKEN: ${{ secrets.TFC_TOKEN }}
@@ -59,6 +59,9 @@
            - name: Generate Infracost diff
              run: |
                infracost diff --path=${TF_ROOT} \
+                              --terraform-var-file ../../../config/common.tfvars \
+                              --terraform-var-file ../../config/account.tfvars \
+                              --terraform-var-file ../../config/backend.tfvars \
                               --format=json \
                               --compare-to=/tmp/infracost-base.json \
                               --out-file=/tmp/infracost.json
