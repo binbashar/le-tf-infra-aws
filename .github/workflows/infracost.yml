@@ -59,6 +59,9 @@
            - name: Generate Infracost diff
              run: |
                infracost diff --path=${TF_ROOT} \
+                              --terraform-var-file ../../../config/common.tfvars \
+                              --terraform-var-file ../../config/account.tfvars \
+                              --terraform-var-file ../../config/backend.tfvars \
                               --format=json \
                               --compare-to=/tmp/infracost-base.json \
                               --out-file=/tmp/infracost.json
