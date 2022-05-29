@@ -11,7 +11,7 @@
        runs-on: ubuntu-latest
 
        env:
-         TF_ROOT: /
+         TF_ROOT: ./
          # If you're using Terraform Cloud/Enterprise and have variables stored on there
          # you can specify the following to automatically retrieve the variables:
          #   INFRACOST_TERRAFORM_CLOUD_TOKEN: ${{ secrets.TFC_TOKEN }}
