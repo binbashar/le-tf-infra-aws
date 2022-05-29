@@ -19,7 +19,6 @@ module "prometheus_grafana" {
   instance_profile            = aws_iam_instance_profile.prometheus_grafana.name
   ebs_optimized               = var.ebs_optimized
   monitoring                  = var.monitoring
-
   root_block_device = [
     {
       volume_type = "gp3"

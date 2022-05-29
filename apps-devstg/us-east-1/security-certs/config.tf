@@ -2,8 +2,8 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  region                  = var.region
-  profile                 = var.profile
+  region  = var.region
+  profile = var.profile
 }
 
 # Here we need a different AWS provider because ACM certificates
@@ -12,9 +12,9 @@ provider "aws" {
 # binbash-shared route53 cross-account ACM dns validation update
 #
 provider "aws" {
-  region                  = var.region
-  profile                 = "${var.project}-shared-devops"
-  alias                   = "shared-route53"
+  region  = var.region
+  profile = "${var.project}-shared-devops"
+  alias   = "shared-route53"
 }
 
 #=============================#

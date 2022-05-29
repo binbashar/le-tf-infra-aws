@@ -119,3 +119,7 @@ resource "aws_iam_role_policy_attachment" "prometheus_grafana_assume_role" {
   role       = aws_iam_role.prometheus_grafana.name
   policy_arn = aws_iam_policy.prometheus_grafana_assume_role.arn
 }
+resource "aws_iam_role_policy_attachment" "prometheus_grafana_ssm" {
+  role       = aws_iam_role.prometheus_grafana.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonSSMManagedInstanceCore"
+}
