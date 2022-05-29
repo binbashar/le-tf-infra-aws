@@ -2,14 +2,14 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  region                  = var.region
-  profile                 = var.profile
+  region  = var.region
+  profile = var.profile
 }
 
 provider "aws" {
-  alias                   = "security"
-  region                  = var.region
-  profile                 = "${var.project}-security-devops"
+  alias   = "security"
+  region  = var.region
+  profile = "${var.project}-security-devops"
 }
 
 #=============================#

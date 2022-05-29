@@ -41,7 +41,7 @@ Use something like this: `ssh-keygen -P "" -m PEM -f jane.doe`
 But notice how we are not using a passphrase in that command. That's why this is only for testing.
 
 ## Testing connectivity to the server
-You should expect a terraform output similar to 
+You should expect a terraform output similar to
 
 ```terraform
 server_custom_endpoint = "bb-ofs-user-sftp.binbash.com.ar"
