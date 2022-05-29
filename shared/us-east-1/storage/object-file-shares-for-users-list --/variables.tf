@@ -81,7 +81,7 @@ variable "prefix" {
 variable "usernames" {
   type        = list(string)
   description = "Users List: new users can be onboarded by adding entries to this list."
-  default     = [
+  default = [
     "jane.doe",
     "john.doe",
     #EOL#
