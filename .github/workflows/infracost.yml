@@ -12,7 +12,7 @@ jobs:
     name: Infracost
     runs-on: ubuntu-latest
     env:
-      TF_ROOT: .
+      TF_ROOT: /home/runner/work/le-tf-infra-aws/le-tf-infra-aws
 
     steps:
       # If you use private modules, add an environment variable or secret
@@ -41,7 +41,6 @@ jobs:
       # Generate Infracost JSON file as the baseline.
       - name: Generate Infracost cost estimate baseline
         run: |
-          pwd # debug cmd
           infracost breakdown --config-file=${TF_ROOT}/infracost.yml \
                               --format=json \
                               --out-file=/tmp/infracost-base.json
