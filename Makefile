@@ -21,7 +21,7 @@ init-makefiles: ## initialize makefiles
 -include ${MAKEFILES_DIR}/release-mgmt/release.mk
 -include ${MAKEFILES_DIR}/terraform1/terraform1-root-context.mk
 
-infracost-breakdown: ## Infracost breadown
+infracost-breakdown: ## Infracost breakdown
 	infracost breakdown \
 		--config-file=./infracost.yml \
 		--show-skipped
