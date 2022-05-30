@@ -1,6 +1,9 @@
 version: 0.1
 
 projects:
+  #=======================#
+  # Shared account        #
+  #=======================#
   - path: shared/global/base-dns/binbash.com.ar
     terraform_var_files:
       - "../../../../config/common.tfvars"
@@ -12,6 +15,26 @@ projects:
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
   - path: shared/us-east-1/backups
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: shared/us-east-1/base-network
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: shared/us-east-1/base-tf-backend
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+   - path: shared/us-east-1/container-registry
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+   - path: shared/us-east-1/ec2-fleet-bastions --
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
