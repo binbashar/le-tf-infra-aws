@@ -42,6 +42,7 @@ jobs:
       - name: Generate Infracost cost estimate baseline
         run: |
           pwd
+          mv ${TF_ROOT}/config/common.tfvars.example ${TF_ROOT}/config/common.tfvars
           infracost breakdown --config-file=${TF_ROOT}/infracost.yml \
                               --format=json \
                               --out-file=/tmp/infracost-base.json
@@ -53,6 +54,7 @@ jobs:
       # Generate an Infracost diff and save it to a JSON file.
       - name: Generate Infracost diff
         run: |
+          mv ${TF_ROOT}/config/common.tfvars.example ${TF_ROOT}/config/common.tfvars
           infracost diff --config-file=${TF_ROOT}/infracost.yml \
                               --format=json \
                               --compare-to=/tmp/infracost-base.json \
