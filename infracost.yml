@@ -4,32 +4,32 @@ projects:
   #=======================#
   # Shared account        #
   #=======================#
-  - path: shared/global/base-dns/binbash.com.ar
+  - path: "shared/global/base-dns/binbash.com.ar"
     terraform_var_files:
       - "../../../../config/common.tfvars"
       - "../../../config/account.tfvars"
       - "../../../config/backend.tfvars"
-  - path: shared/global/base-identities
+  - path: "shared/global/base-identities"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: shared/us-east-1/backups
+  - path: "shared/us-east-1/backups"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: shared/us-east-1/base-network
+  - path: "shared/us-east-1/base-network"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: shared/us-east-1/base-tf-backend
+  - path: "shared/us-east-1/base-tf-backend"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: shared/us-east-1/container-registry
+  - path: "shared/us-east-1/container-registry"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
@@ -49,7 +49,92 @@ projects:
       - "../../../../config/common.tfvars"
       - "../../../config/account.tfvars"
       - "../../../config/backend.tfvars"
-  - path: shared/us-east-1/tools-vpn-server
+  - path: "shared/us-east-1/notifications"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/secrets-manager --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/security-audit"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/security-base"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/security-compliance --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/security-keys"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/storage/backup-gdrive --"
+    terraform_var_files:
+      - "../../../../config/common.tfvars"
+      - "../../../config/account.tfvars"
+      - "../../../config/backend.tfvars"
+  - path: "shared/us-east-1/storage/object-file-shares-for-users-list --"
+    terraform_var_files:
+      - "../../../../config/common.tfvars"
+      - "../../../config/account.tfvars"
+      - "../../../config/backend.tfvars"
+  - path: "shared/us-east-1/storage/object-file-shares-sftp --"
+    terraform_var_files:
+      - "../../../../config/common.tfvars"
+      - "../../../config/account.tfvars"
+      - "../../../config/backend.tfvars"
+  - path: "shared/us-east-1/tools-cloud-scheduler-stop-start"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/tools-eskibana --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/tools-github-selfhosted-runners"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/tools-jenkins --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/tools-managedeskibana --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/tools-prometheus --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/tools-vault --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/tools-vpn-server"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/tools-webhooks --"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
