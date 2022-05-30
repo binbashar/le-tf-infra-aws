@@ -12,7 +12,7 @@ jobs:
     name: Infracost
     runs-on: ubuntu-latest
     env:
-      TF_ROOT: /home/runner/work/le-tf-infra-aws/le-tf-infra-aws
+      TF_ROOT: . #/home/runner/work/le-tf-infra-aws/le-tf-infra-aws
 
     steps:
       # If you use private modules, add an environment variable or secret
