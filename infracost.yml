@@ -1,0 +1,19 @@
+version: 0.1
+
+projects:
+  - path: shared/global/base-dns/binbash.com.ar
+    terraform_var_files:
+      - "../../../../config/common.tfvars"
+      - "../../../config/account.tfvars"
+      - "../../../config/backend.tfvars"
+  - path: shared/global/base-identities
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: shared/us-east-1/backups
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+

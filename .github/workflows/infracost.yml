@@ -41,10 +41,7 @@ jobs:
       # Generate Infracost JSON file as the baseline.
       - name: Generate Infracost cost estimate baseline
         run: |
-          infracost breakdown --path=${TF_ROOT} \
-                              --terraform-var-file ../../../config/common.tfvars \
-                              --terraform-var-file ../../config/account.tfvars \
-                              --terraform-var-file ../../config/backend.tfvars \
+          infracost breakdown --config-file=${TF_ROOT}/infracost.yml \
                               --format=json \
                               --out-file=/tmp/infracost-base.json
 
@@ -55,13 +52,10 @@ jobs:
       # Generate an Infracost diff and save it to a JSON file.
       - name: Generate Infracost diff
         run: |
-          infracost diff --path=${TF_ROOT} \
-                         --terraform-var-file ../../../config/common.tfvars \
-                         --terraform-var-file ../../config/account.tfvars \
-                         --terraform-var-file ../../config/backend.tfvars \
-                         --format=json \
-                         --compare-to=/tmp/infracost-base.json \
-                         --out-file=/tmp/infracost.json
+          infracost diff --config-file=${TF_ROOT}/infracost.yml \
+                              --format=json \
+                              --compare-to=/tmp/infracost-base.json \
+                              --out-file=/tmp/infracost.json
 
       # Posts a comment to the PR using the 'update' behavior.
       # This creates a single comment and updates it. The "quietest" option.
