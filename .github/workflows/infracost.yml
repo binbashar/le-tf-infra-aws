@@ -41,6 +41,7 @@ jobs:
       # Generate Infracost JSON file as the baseline.
       - name: Generate Infracost cost estimate baseline
         run: |
+          pwd
           infracost breakdown --config-file=${TF_ROOT}/infracost.yml \
                               --format=json \
                               --out-file=/tmp/infracost-base.json
