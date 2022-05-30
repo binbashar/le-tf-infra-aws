@@ -1,9 +1,12 @@
 version: 0.1
 
 projects:
-  #=======================#
-  # Shared account        #
-  #=======================#
+  #=====================================#
+  # Shared account                      #
+  #=====================================#
+  #
+  # shared/global
+  #
   - path: "shared/global/base-dns/binbash.com.ar"
     terraform_var_files:
       - "../../../../config/common.tfvars"
@@ -14,6 +17,9 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
+  #
+  # shared/us-east-1 (North Virginia)
+  #
   - path: "shared/us-east-1/backups"
     terraform_var_files:
       - "../../../config/common.tfvars"
@@ -135,6 +141,112 @@ projects:
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
   - path: "shared/us-east-1/tools-webhooks --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  #
+  # shared/us-east-2 (Ohio)
+  #
+  - path: "shared/us-east-2/base-network"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-2/container-registry"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-2/security-compliance --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-2/security-keys"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-2/tools-eskibana --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-2/tools-prometheus --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+
+  #=====================================#
+  # Security account                    #
+  #=====================================#
+  #
+  # security/global
+  #
+  - path: "security/global/base-identities"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  #
+  # security/us-east-1 (North Virginia)
+  #
+  - path: "security/us-east-1/base-tf-backend"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "security/us-east-1/firewall-manager"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "security/us-east-1/notifications"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "security/us-east-1/security-audit"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "security/us-east-1/security-base"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "security/us-east-1/security-compliance --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "security/us-east-1/security-keys"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "security/us-east-1/security-monitoring"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  #
+  # security/us-east-2 (Ohio)
+  #
+  - path: "security/us-east-2/security-audit"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "security/us-east-2/security-compliance --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "security/us-east-2/security-monitoring --"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
