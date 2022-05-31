@@ -64,9 +64,29 @@ variable "shared_account_id" {
   description = "Account: Shared Resources"
 }
 
+variable "network_account_id" {
+  type        = string
+  description = "Account: Networking Resources"
+}
+
 variable "appsdevstg_account_id" {
   type        = string
   description = "Account: Dev Modules & Libs"
+}
+
+variable "appsprd_account_id" {
+  type        = string
+  description = "Account: Prod Modules & Libs"
+}
+
+variable "vault_address" {
+  type        = string
+  description = "Vault Address"
+}
+
+variable "vault_token" {
+  type        = string
+  description = "Vault Token"
 }
 
 #=================#
