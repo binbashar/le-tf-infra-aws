@@ -1,5 +1,9 @@
+#================================#
+# Common variables               #
+#================================#
+
 #
-# Common variables
+# config/backend.config
 #
 #================================#
 # Terraform AWS Backend Settings #
