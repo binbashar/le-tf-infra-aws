@@ -31,7 +31,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/cdn-s3/terraform.tfstate"
+    key = "apps-devstg/cdn-s3-frontend/terraform.tfstate"
   }
 }
 
