@@ -18,7 +18,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "shared/webhooks-proxy/terraform.tfstate"
+    key = "shared/webhooks/terraform.tfstate"
   }
 }
 
