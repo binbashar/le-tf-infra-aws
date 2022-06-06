@@ -37,10 +37,10 @@ data "aws_iam_policy_document" "secret_policy" {
       type = "AWS"
       identifiers = [
         "arn:aws:iam::${var.shared_account_id}:role/DevOps",
-        "arn:aws:iam::${var.appsdev_account_id}:role/DevOps",
-        "arn:aws:iam::${var.appstest_account_id}:role/DevOps",
+        "arn:aws:iam::${var.appsdevstg_account_id}:role/DevOps",
+        "arn:aws:iam::${var.appsprd_account_id}:role/DevOps",
         "arn:aws:iam::${var.security_account_id}:role/DevOps",
-        "arn:aws:iam::${var.management_account_id}:role/OrganizationAccountAccessRole"
+        "arn:aws:iam::${var.root_account_id}:role/OrganizationAccountAccessRole"
       ]
 
     }
