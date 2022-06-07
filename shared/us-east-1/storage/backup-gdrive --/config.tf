@@ -18,6 +18,6 @@ terraform {
   }
 
   backend "s3" {
-    key = "shared/storage/terraform.tfstate"
+    key = "shared/storage/backup-gdrive/terraform.tfstate"
   }
 }
