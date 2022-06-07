@@ -23,7 +23,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "shared/storage/object-file-shares/terraform.tfstate"
+    key = "shared/storage/object-file-shares-for-users-list/terraform.tfstate"
   }
 }
 
