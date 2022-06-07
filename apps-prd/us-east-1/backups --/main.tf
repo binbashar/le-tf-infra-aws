@@ -10,7 +10,7 @@ module "nightly_backups" {
     {
       name                     = "rule-1"
       schedule                 = "cron(0 5 * * ? *)"
-      target_vault_name        = "default"
+      target_vault_name        = "Default"
       start_window             = 120
       completion_window        = 360
       enable_continuous_backup = true
