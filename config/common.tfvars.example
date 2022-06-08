@@ -74,7 +74,7 @@ vault_token = "s.XXXXXXXXXXXXXXXXXXXXXX.Apshc"
 
 # AWS SSO
 sso_enabled   = true
-sso_start_url = "https://binbash.awsapps.com/start"
+sso_start_url = "https://leverage.awsapps.com/start"
 sso_region    = "us-east-1"
 
 # The following values will be moved to another config file in a future release
