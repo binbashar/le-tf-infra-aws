@@ -1,5 +1,5 @@
 # NAT GW
-vpc_enable_nat_gateway = false
+vpc_enable_nat_gateway = true
 vpc_single_nat_gateway = true
 
 # VPN Gateways
