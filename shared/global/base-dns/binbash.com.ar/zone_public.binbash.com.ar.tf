@@ -59,6 +59,46 @@ resource "aws_route53_record" "pub_CNAME_www_binbash_com_ar" {
   ttl     = 300
 }
 
+resource "aws_route53_record" "pub_CNAME_sendgrid_1" {
+  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
+  name    = "url5402.binbash.com.ar"
+  records = ["sendgrid.net"]
+  type    = "CNAME"
+  ttl     = 300
+}
+
+resource "aws_route53_record" "pub_CNAME_sendgrid_2" {
+  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
+  name    = "26974810.binbash.com.ar"
+  records = ["sendgrid.net"]
+  type    = "CNAME"
+  ttl     = 300
+}
+
+resource "aws_route53_record" "pub_CNAME_sendgrid_3" {
+  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
+  name    = "em8184.binbash.com.ar"
+  records = ["u26974810.wl061.sendgrid.net"]
+  type    = "CNAME"
+  ttl     = 300
+}
+
+resource "aws_route53_record" "pub_CNAME_sendgrid_4" {
+  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
+  name    = "s1._domainkey.binbash.com.ar"
+  records = ["s1.domainkey.u26974810.wl061.sendgrid.net"]
+  type    = "CNAME"
+  ttl     = 300
+}
+
+resource "aws_route53_record" "pub_CNAME_sendgrid_5" {
+  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
+  name    = "s2._domainkey.binbash.com.ar"
+  records = ["s2.domainkey.u26974810.wl061.sendgrid.net"]
+  type    = "CNAME"
+  ttl     = 300
+}
+
 #
 # text records
 #
@@ -93,3 +133,4 @@ resource "aws_route53_record" "aws_public_hosted_zone_TXT_record_google_spf" {
   records = ["v=spf1 include:_spf.google.com ~all"]
   ttl     = 300
 }
+
