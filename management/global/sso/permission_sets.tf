@@ -21,6 +21,15 @@ module "permission_sets" {
       policy_attachments = []
     },
     {
+      name               = "SecOps",
+      description        = "Grants permissions for managing most resources focused on security except billing.",
+      relay_state        = "",
+      session_duration   = local.session_duration,
+      tags               = local.tags,
+      inline_policy      = data.aws_iam_policy_document.secops.json,
+      policy_attachments = []
+    },
+    {
       name               = "FinOps",
       description        = "Grants permissions for billing and cost management.",
       relay_state        = "",

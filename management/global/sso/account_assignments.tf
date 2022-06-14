@@ -103,36 +103,36 @@ module "account_assignments" {
     # -------------------------------------------------------------------------
     {
       account             = var.shared_account_id,
-      permission_set_arn  = module.permission_sets.permission_sets["SecurityAuditor"].arn,
-      permission_set_name = "SecurityAuditor",
+      permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
+      permission_set_name = "SecOps",
       principal_type      = "GROUP",
       principal_name      = "AWS_SecOps"
     },
     {
       account             = var.security_account_id,
-      permission_set_arn  = module.permission_sets.permission_sets["SecurityAuditor"].arn,
-      permission_set_name = "SecurityAuditor",
+      permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
+      permission_set_name = "SecOps",
       principal_type      = "GROUP",
       principal_name      = "AWS_SecOps"
     },
     {
       account             = var.network_account_id,
-      permission_set_arn  = module.permission_sets.permission_sets["SecurityAuditor"].arn,
-      permission_set_name = "SecurityAuditor",
+      permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
+      permission_set_name = "SecOps",
       principal_type      = "GROUP",
       principal_name      = "AWS_SecOps"
     },
     {
       account             = var.appsdevstg_account_id,
-      permission_set_arn  = module.permission_sets.permission_sets["SecurityAuditor"].arn,
-      permission_set_name = "SecurityAuditor",
+      permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
+      permission_set_name = "SecOps",
       principal_type      = "GROUP",
       principal_name      = "AWS_SecOps"
     },
     {
       account             = var.appsprd_account_id,
-      permission_set_arn  = module.permission_sets.permission_sets["SecurityAuditor"].arn,
-      permission_set_name = "SecurityAuditor",
+      permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
+      permission_set_name = "SecOps",
       principal_type      = "GROUP",
       principal_name      = "AWS_SecOps"
     },
