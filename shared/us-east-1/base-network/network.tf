@@ -131,8 +131,7 @@ resource "aws_security_group" "kms_vpce" {
 # SSM VPC Endpoint: Security Group
 #
 resource "aws_security_group" "ssm_vpce" {
-  #count       = var.enable_kms_endpoint ? 1 : 0
-  count       = 1
+  count       = var.enable_ssm_endpoints ? 1 : 0
   name        = "ssm_vpce"
   description = "Allow TLS inbound traffic"
   vpc_id      = module.vpc.vpc_id

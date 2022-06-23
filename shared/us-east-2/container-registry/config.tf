@@ -18,6 +18,6 @@ terraform {
   }
 
   backend "s3" {
-    key = "shared/containers-dr/terraform.tfstate"
+    key = "shared/container-registry-dr/terraform.tfstate"
   }
 }

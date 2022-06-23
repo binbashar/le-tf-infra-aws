@@ -18,7 +18,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "shared/storage/object-file-shares-sftp/terraform.tfstate"
+    key = "shared/storage/object-file-shares-sftp-transfer-service/terraform.tfstate"
   }
 }
 
