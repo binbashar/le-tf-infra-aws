@@ -1,21 +1,11 @@
-output "instance_count" {
-  description = "Number of instances to launch specified as argument to this module"
-  value       = module.ec2_ansible_fleet.instance_count
+# EC2 Multiple
+# https://github.com/binbashar/terraform-aws-ec2-instance/blob/v3.0.0/UPGRADE-3.0.md
+# https://github.com/terraform-aws-modules/terraform-aws-ec2-instance/blob/master/examples/complete/outputs.tf
+# new way of show output form multiple_instances
+# Renamed outputs:
+# :info: All outputs used to be lists, and are now singular outputs due to the removal of count
+
+output "ec2_multiple" {
+  description = "The full output of the `ec2_module` module"
+  value       = module.ec2_ansible_fleet
 }
-
-output "public_dns" {
-  description = "List of public DNS names assigned to the instances. For EC2-VPC, this is only available if you've enabled DNS hostnames for your VPC"
-  value       = module.ec2_ansible_fleet.public_dns
-}
-
-output "private_dns" {
-  description = "List of private DNS names assigned to the instances. Can only be used inside the Amazon EC2, and only available if you've enabled DNS hostnames for your VPC"
-  value       = module.ec2_ansible_fleet.private_dns
-}
-
-output "private_ip" {
-  description = "List of private IP addresses assigned to the instances"
-  value       = module.ec2_ansible_fleet.private_ip
-}
-
-
