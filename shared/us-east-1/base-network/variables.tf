@@ -1,5 +1,5 @@
 #===========================================#
-# Local variables                           #
+# Networking                                #
 #===========================================#
 variable "vpc_apps_devstg_created" {
   description = "true if Apps Dev account VPC is created for Peering purposes"
