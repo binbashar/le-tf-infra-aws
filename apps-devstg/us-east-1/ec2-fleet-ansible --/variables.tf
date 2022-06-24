@@ -1,4 +1,5 @@
 #
+<<<<<<< HEAD
 # /config/backend.tfvars
 #
 #================================#
@@ -161,6 +162,9 @@ variable "tgw_cidrs" {
 
 #
 # Module Specific Variable
+=======
+# EC2 Attributes
+>>>>>>> beaeef4dab9b90979237c381164b1d8329d4b288
 #
 #=============================#
 #  EC2 Attributes             #

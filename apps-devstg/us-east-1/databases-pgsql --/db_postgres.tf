@@ -73,7 +73,7 @@ module "bb_postgres_db" {
   create_monitoring_role = false # true if Enhanced Monitoring needed
 
   # Tags + Bakup tag -> True
-  tags = merge(local.tags, map("Backup", "True"))
+  tags = merge(local.tags, { "Backup" = "True" })
 
   # Specifies whether any database modifications are applied immediately, or
   # during the next maintenance window
