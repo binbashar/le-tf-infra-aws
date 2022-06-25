@@ -5,7 +5,7 @@ locals {
   }
 }
 
-#local when need to use for_each argument
+# local value when use for_each argument
 locals {
   multiple_instances = {
     1 = {
