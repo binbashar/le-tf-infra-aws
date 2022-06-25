@@ -1,7 +1,6 @@
 output "instance_ids" {
   description = "IDs of EC2 instances"
   value       = { for p in sort(keys(local.multiple_instances)) : p => module.ec2_ansible_fleet[p].id }
-  # value = module.ec2_ansible_fleet["1"].id
 }
 
 output "public_dns" {
