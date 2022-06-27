@@ -25,7 +25,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/storage-bucket-demo-files/terraform.tfstate"
+    key = "apps-devstg/storage/s3-bucket-demo-files/terraform.tfstate"
   }
 }
 
