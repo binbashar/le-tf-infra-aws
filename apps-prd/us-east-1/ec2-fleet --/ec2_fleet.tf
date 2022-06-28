@@ -33,7 +33,7 @@ module "ec2_fleet" {
 
   subnet_id = each.value.subnet_id
 
-
+  iam_instance_profile = var.instance_profile == null ? var.instance_profile : aws_iam_instance_profile.basic_instance[0].name
 
   tags = local.tags
 }
