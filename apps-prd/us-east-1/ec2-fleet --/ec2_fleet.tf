@@ -2,7 +2,7 @@
 # EC2 Fleet Security Group
 #
 module "security_group_ec2_fleet" {
-  source = "github.com/binbashar/terraform-aws-security-group.git?ref=v4.2.0"
+  source = "github.com/binbashar/terraform-aws-security-group.git?ref=v4.9.0"
 
   name        = "ec2-fleet"
   description = "Security group for example usage with EC2 instance"
@@ -20,10 +20,10 @@ module "security_group_ec2_fleet" {
 # EC2 Fleet for testing purposes
 #
 module "ec2_fleet" {
-  source = "github.com/binbashar/terraform-aws-ec2-instance.git?ref=v2.19.0"
+  source = "github.com/binbashar/terraform-aws-ec2-instance.git?ref=v4.0.0"
 
-  name           = "ec2-fleet"
-  instance_count = 6
+  for_each = local.multiple_instances
+  name     = "ec2-fleet-${each.key}"
 
   ami                    = data.aws_ami.ubuntu_linux.id
   instance_type          = "t2.nano"
@@ -31,14 +31,9 @@ module "ec2_fleet" {
   monitoring             = true
   vpc_security_group_ids = [module.security_group_ec2_fleet.security_group_id]
 
-  subnet_ids = [
-    data.terraform_remote_state.vpc.outputs.private_subnets[0],
-    data.terraform_remote_state.vpc.outputs.private_subnets[1],
-    data.terraform_remote_state.vpc.outputs.private_subnets[2],
-    data.terraform_remote_state.vpc.outputs.public_subnets[0],
-    data.terraform_remote_state.vpc.outputs.public_subnets[1],
-    data.terraform_remote_state.vpc.outputs.public_subnets[2]
-  ]
+  subnet_id = each.value.subnet_id
+
+  iam_instance_profile = var.instance_profile == null ? var.instance_profile : aws_iam_instance_profile.basic_instance[0].name
 
   tags = local.tags
 }
