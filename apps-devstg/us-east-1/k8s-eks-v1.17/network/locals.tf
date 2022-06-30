@@ -7,7 +7,7 @@ locals {
   # Docker runs in the 172.17.0.0/16 CIDR range in Amazon EKS clusters. We recommend that your cluster's VPC subnets do
   # not overlap this range. Otherwise, you will receive the following error:
   # Error: : error upgrading connection: error dialing backend: dial tcp 172.17.nn.nn:10250: getsockopt: no route to host
-  vpc_name       = "${var.project}-${var.environment}-vpc-eks"
+  vpc_name       = "${var.project}-${var.environment}-vpc-eks-v117-1ry"
   vpc_cidr_block = "10.0.0.0/16"
   azs = [
     "${var.region}a",
@@ -176,6 +176,13 @@ locals {
       key     = "apps-devstg/network/terraform.tfstate"
       tgw     = false
     }
+    apps-devstg-k8s-eks-v117 = {
+      region  = var.region
+      profile = "${var.project}-apps-devstg-devops"
+      bucket  = "${var.project}-apps-devstg-terraform-backend"
+      key     = "apps-devstg/k8s-eks-v1.17/network/terraform.tfstate"
+      tgw     = false
+    }
     apps-devstg-k8s-eks = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
@@ -191,5 +198,4 @@ locals {
       tgw     = false
     }
   }
-
 }

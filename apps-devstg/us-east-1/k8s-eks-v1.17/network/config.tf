@@ -72,7 +72,6 @@ data "terraform_remote_state" "network-vpcs" {
 
 # VPC remote states for shared
 data "terraform_remote_state" "shared-vpcs" {
-
   for_each = local.shared-vpcs
 
   backend = "s3"
@@ -87,8 +86,7 @@ data "terraform_remote_state" "shared-vpcs" {
 
 data "terraform_remote_state" "shared-dns" {
   backend = "s3"
-
-  config = {
+  config  = {
     region  = var.region
     profile = "${var.project}-shared-devops"
     bucket  = "${var.project}-shared-terraform-backend"
