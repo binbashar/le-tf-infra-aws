@@ -33,13 +33,13 @@ The typical use cases would be:
 - You need to set up a new cluster in a new account
 - Or you need to set up another cluster in an existing account which already has a cluster
 
-Below we'll cover the first case but we'll assume that we are creating the `prd` cluster from the code that 
+Below we'll cover the first case but we'll assume that we are creating the `prd` cluster from the code that
 defines the `devstg` cluster:
 1. First, you would copy-paste an existing EKS layer along with all its sublayers: `cp -r apps-devstg/us-east-1/k8s-eks apps-prd/us-east-1/k8s-eks`
-2. Then, you need to go through each layer, open up the `config.tf` file and replace any occurrences of `devstg` with `prd`. 
+2. Then, you need to go through each layer, open up the `config.tf` file and replace any occurrences of `devstg` with `prd`.
    1. There should be a `config.tf` in each sublayer so please make sure you cover all of them.
-   
-Now that you created the layers for the cluster you need to create a few other layers in the 
+
+Now that you created the layers for the cluster you need to create a few other layers in the
 new account that the cluster layers depend on, they are:
 3. The `security-keys` layer
     - This layer creates a KMS key that we use for encrypting EKS state.
@@ -55,18 +55,18 @@ Following the [leverage terraform workflow](https://leverage.binbash.com.ar/user
 The EKS layers need to be orchestrated in the following order:
 
 1. Network
-    1. Open the `locals.tf` file and make sure the VPC CIDR and subnets are correct. 
+    1. Open the `locals.tf` file and make sure the VPC CIDR and subnets are correct.
        1. Check the CIDR/subnets definition that were made for DevStg and Prd clusters and avoid segments overlapping.
-    2. In the same `locals.tf` file, there is a "VPC Peerings" section. 
+    2. In the same `locals.tf` file, there is a "VPC Peerings" section.
        1. Make sure it contains the right entries to match the VPC peerings that you actually need to set up.
-    3. In the `variables.tf` file you will find several variables you can use to configure multiple settings. 
-       1. For instance, if you anticipate this cluster is going to be permanent, you could set the `vpc_enable_nat_gateway` flag to `true`; 
+    3. In the `variables.tf` file you will find several variables you can use to configure multiple settings.
+       1. For instance, if you anticipate this cluster is going to be permanent, you could set the `vpc_enable_nat_gateway` flag to `true`;
        2. or if you are standing up a production cluster, you may want to set `vpc_single_nat_gateway` to `false` in order to have a NAT Gateways per availability zone.
 2. Cluster
     1. Since we’re deploying a private K8s cluster you’ll need to be **connected to the VPN**
     2. Check out the `variables.tf` file to configure the Kubernetes version or whether you want to create a cluster with a public endpoint (in most cases you don't but the possibility is there).
-    3. Open up `locals.tf` and make sure the `map_accounts`, `map_users` and `map_roles` variables define the right accounts, users and roles that will be granted permissions on the cluster. 
-    4. Then open `eks-managed-nodes.tf` to set the node groups and their attributes according to your requirements. 
+    3. Open up `locals.tf` and make sure the `map_accounts`, `map_users` and `map_roles` variables define the right accounts, users and roles that will be granted permissions on the cluster.
+    4. Then open `eks-managed-nodes.tf` to set the node groups and their attributes according to your requirements.
        1. In this file you can also configure security group rules, both for granting access to the cluster API or to the nodes.
     5. Go to this layer and run `leverage tf apply`
     6. In the output you should see the credentials you need to talk to Kubernetes API via kubectl (or other clients).
@@ -114,10 +114,10 @@ users:
 
 ```
 
-3. Identities layers 
-   1. The main files begin with the `ids_` prefix. 
-      1. They declare roles and their respective policies. 
-      2. The former are intended to be assumed by pods in your cluster through the EKS IRSA feature. 
+3. Identities layers
+   1. The main files begin with the `ids_` prefix.
+      1. They declare roles and their respective policies.
+      2. The former are intended to be assumed by pods in your cluster through the EKS IRSA feature.
    2. Go to this layer and run `leverage tf apply`
 
 #### Setup auth and test cluster connectivity
