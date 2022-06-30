@@ -1,4 +1,4 @@
-# AWS EKS Reference Layer
+# AWS EKS Reference Layer (module: terraform-aws-eks v1.17x)
 
 ## Overview
 This documentation should help you understand the different pieces that make up this
@@ -28,19 +28,48 @@ This here defines the base cluster components such as ingress controllers, certi
 ### The "k8s-workloads" layer
 This here defines the cluster workloads such as web-apps, apis, back-end microservices, etc.
 
+## Important: read this if you are copying the EKS layer to stand up a new cluster
+The typical use cases would be:
+- You need to set up a new cluster in a new account
+- Or you need to set up another cluster in an existing account which already has a cluster
+
+Below we'll cover the first case but we'll assume that we are creating the `prd` cluster from the code that 
+defines the `devstg` cluster:
+1. First, you would copy-paste an existing EKS layer along with all its sublayers: `cp -r apps-devstg/us-east-1/k8s-eks apps-prd/us-east-1/k8s-eks`
+2. Then, you need to go through each layer, open up the `config.tf` file and replace any occurrences of `devstg` with `prd`. 
+   1. There should be a `config.tf` in each sublayer so please make sure you cover all of them.
+   
+Now that you created the layers for the cluster you need to create a few other layers in the 
+new account that the cluster layers depend on, they are:
+3. The `security-keys` layer
+    - This layer creates a KMS key that we use for encrypting EKS state.
+    - The procedure to create this layer is similar to the previous steps. You need to copy the layer from the `devstg` account and adjust its files to replace occurrences of `devstg` with `prd`.
+    - Finally you need to run the Terraform Workflow (init and apply).
+4. The `security-certs` layer
+    - This layer creates the AWS Certificate Manager certificates that are used by the AWS ALBs that are created by the ALB Ingress Controller.
+    - A similar procedure to create this layer. Get this layer from `devstg`, replace references to `devstg` with `prd`, and then run init & apply.
+
 ### Current EKS Cluster Creation Workflows
 
 Following the [leverage terraform workflow](https://leverage.binbash.com.ar/user-guide/ref-architecture-aws/workflow/)
 The EKS layers need to be orchestrated in the following order:
 
 1. Network
-    1. Edit the `network.auto.tfvars`
-    2. Set the toggle to `true` to enable the creation of the NAT Gateway
-    3. Then run `leverage tf apply`
+    1. Open the `locals.tf` file and make sure the VPC CIDR and subnets are correct. 
+       1. Check the CIDR/subnets definition that were made for DevStg and Prd clusters and avoid segments overlapping.
+    2. In the same `locals.tf` file, there is a "VPC Peerings" section. 
+       1. Make sure it contains the right entries to match the VPC peerings that you actually need to set up.
+    3. In the `variables.tf` file you will find several variables you can use to configure multiple settings. 
+       1. For instance, if you anticipate this cluster is going to be permanent, you could set the `vpc_enable_nat_gateway` flag to `true`; 
+       2. or if you are standing up a production cluster, you may want to set `vpc_single_nat_gateway` to `false` in order to have a NAT Gateways per availability zone.
 2. Cluster
     1. Since we’re deploying a private K8s cluster you’ll need to be **connected to the VPN**
-    2. Go to this layer and run `leverage tf apply`
-    3. In the output you should see the credentials you need to talk to Kubernetes API via kubectl (or other clients).
+    2. Check out the `variables.tf` file to configure the Kubernetes version or whether you want to create a cluster with a public endpoint (in most cases you don't but the possibility is there).
+    3. Open up `locals.tf` and make sure the `map_accounts`, `map_users` and `map_roles` variables define the right accounts, users and roles that will be granted permissions on the cluster. 
+    4. Then open `eks-managed-nodes.tf` to set the node groups and their attributes according to your requirements. 
+       1. In this file you can also configure security group rules, both for granting access to the cluster API or to the nodes.
+    5. Go to this layer and run `leverage tf apply`
+    6. In the output you should see the credentials you need to talk to Kubernetes API via kubectl (or other clients).
 
 ```
 apps-devstg//k8s-eks-v1.17/cluster$ leverage terraform output
@@ -85,8 +114,11 @@ users:
 
 ```
 
-3. Identities
-    1. Go to this layer and run `leverage tf apply`
+3. Identities layers 
+   1. The main files begin with the `ids_` prefix. 
+      1. They declare roles and their respective policies. 
+      2. The former are intended to be assumed by pods in your cluster through the EKS IRSA feature. 
+   2. Go to this layer and run `leverage tf apply`
 
 #### Setup auth and test cluster connectivity
 1. Connecting to the K8s EKS cluster
@@ -145,3 +177,11 @@ it seems to be related to this https://github.com/kubernetes-sigs/aws-iam-authen
 basically kubectl delegates on aws-iam-authenticator  to retrieve the token it needs to talk to the k8s API but aws-iam-auth  fails to provide that in the format that is expected by kubectl , given that is using an SSO flow it’s missing the ExpiresAt field.
 
 In other words, using the old AWS IAM flow, aws-iam-auth  is able to comply because that flow does include an expiration value besides the temporary credentials; but the SSO flow doesn’t include the expiration value for the temporary credentials as such expiration exists at the SSO token level, not at temporary credentials level (which are obtained through said token)
+
+## Post-initial Orchestration
+After the initial orchestration, the typical flow could include multiple tasks. In other words, there won't be a normal flow but you some of the operations you would need to perform are:
+- Update Kubernetes versions
+- Update cluster components versions
+- Add/remove/update cluster components settings
+- Update network settings (e.g. toggle NAT Gateway, update Network ACLs, etc)
+- Update IRSA roles/policies to grant/remove/fine-tune permissions
