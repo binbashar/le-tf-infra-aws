@@ -675,6 +675,11 @@ projects:
       - "../../../../config/common.tfvars"
       - "../../../config/account.tfvars"
       - "../../../config/backend.tfvars"
+  - path: "apps-devstg/us-east-2/k8s-eks-v1.17/k8s-workloads"
+    terraform_var_files:
+      - "../../../../config/common.tfvars"
+      - "../../../config/account.tfvars"
+      - "../../../config/backend.tfvars"
   - path: "apps-devstg/us-east-2/k8s-eks-v1.17/network"
     terraform_var_files:
       - "../../../../config/common.tfvars"
