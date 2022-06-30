@@ -33,7 +33,7 @@ resource "helm_release" "externaldns_private" {
   namespace  = kubernetes_namespace.externaldns.id
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "external-dns"
-  version    = "4.6.0"
+  version    = "6.5.3"
   values = [
     templatefile("chart-values/externaldns-private.yaml", {
       roleArn = "arn:aws:iam::${var.shared_account_id}:role/appsdevstg-dr-externaldns-private"

@@ -2,30 +2,28 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  region                  = var.region
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  region  = var.region
+  profile = var.profile
 }
 
 provider "aws" {
-  alias                   = "shared"
-  region                  = var.region
-  profile                 = "${var.project}-shared-devops"
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  alias   = "shared"
+  region  = var.region
+  profile = "${var.project}-shared-devops"
 }
 
 #=============================#
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.14.11"
+  required_version = ">= 1.1.3"
 
   required_providers {
-    aws = "~> 3.27"
+    aws = "~> 4.10"
   }
 
   backend "s3" {
-    key = "apps-devstg/k8s-eks-dr/identities/terraform.tfstate"
+    key = "apps-devstg/k8s-eks-v1.17-dr/identities/terraform.tfstate"
   }
 }
 
@@ -39,7 +37,7 @@ data "terraform_remote_state" "apps-devstg-eks-dr-cluster" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/k8s-eks-dr/cluster/terraform.tfstate"
+    key     = "${var.environment}/k8s-eks-v1.17-dr/cluster/terraform.tfstate"
   }
 }
 

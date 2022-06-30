@@ -1,5 +1,5 @@
 locals {
-  cluster_name = "${var.project}-${var.environment}-eks-secondary"
+  cluster_name = "${var.project}-${var.environment}-eks-v117-2ry"
 
   vpc_name = "${var.project}-${var.environment}-vpc-eks-secondary"
   # Ref: https://www.davidc.net/sites/default/subnets/subnets.html?network=10.10.0.0&mask=16&division=15.7231
@@ -44,7 +44,6 @@ locals {
 }
 
 locals {
-
   # private inbounds
   private_inbound = flatten([
     for index, state in local.datasources-vpcs : [

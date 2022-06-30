@@ -49,5 +49,14 @@ locals {
       groups = [
       "system:masters"]
     },
+    #
+    # Allow DevOps SSO role to become cluster admins
+    #
+    {
+      rolearn  = "arn:aws:iam::${var.appsdevstg_account_id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_DevOps_5e0501636a32f9c4"
+      username = "DevOps"
+      groups = [
+      "system:masters"]
+    },
   ]
 }

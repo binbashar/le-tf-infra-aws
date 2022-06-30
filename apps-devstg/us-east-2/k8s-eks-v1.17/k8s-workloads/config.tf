@@ -2,9 +2,8 @@
 # Providers
 #
 provider "aws" {
-  region                  = var.region_secondary
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  region  = var.region
+  profile = var.profile
 }
 
 provider "kubernetes" {
@@ -25,16 +24,16 @@ provider "helm" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = ">= 0.13.6"
+  required_version = ">= 1.1.3"
 
   required_providers {
-    aws        = "~> 3.28"
-    helm       = "~> 2.1.0"
-    kubernetes = "~> 2.0.2"
+    aws        = "~> 4.10"
+    helm       = "~> 2.5"
+    kubernetes = "~> 2.10"
   }
 
   backend "s3" {
-    key = "apps-devstg/k8s-eks-dr/k8s-resources/terraform.tfstate"
+    key = "apps-devstg/k8s-eks-v1.17-dr/k8s-workloads/terraform.tfstate"
   }
 }
 
@@ -63,6 +62,6 @@ data "terraform_remote_state" "eks-cluster" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "apps-devstg/k8s-eks-dr/cluster/terraform.tfstate"
+    key     = "apps-devstg/k8s-eks-v1.17-dr/cluster/terraform.tfstate"
   }
 }
