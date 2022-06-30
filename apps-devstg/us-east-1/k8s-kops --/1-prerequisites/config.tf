@@ -1,26 +1,23 @@
 # Providers
 provider "aws" {
-  version                 = "~> 3.0"
-  region                  = var.region
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  version = "~> 3.0"
+  region  = var.region
+  profile = var.profile
 }
 
 #replica provider
 provider "aws" {
-  version                 = "~> 3.0"
-  alias                   = "region_secondary"
-  region                  = var.region_secondary
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  version = "~> 3.0"
+  alias   = "region_secondary"
+  region  = var.region_secondary
+  profile = var.profile
 }
 
 provider "aws" {
-  alias                   = "shared"
-  version                 = "~> 3.2"
-  region                  = var.region
-  profile                 = "${var.project}-shared-devops"
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  alias   = "shared"
+  version = "~> 3.2"
+  region  = var.region
+  profile = "${var.project}-shared-devops"
 }
 
 # Backend Config (partial)

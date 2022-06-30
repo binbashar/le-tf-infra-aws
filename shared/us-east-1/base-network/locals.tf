@@ -145,11 +145,11 @@ locals {
 
   # apps-devstg-dr
   apps-devstg-dr-vpcs = {
-    apps-devstg-k8s-eks-dr = {
+    apps-devstg-k8s-eks-v117-dr = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
-      key     = "apps-devstg/k8s-eks-dr/network/terraform.tfstate"
+      key     = "apps-devstg/k8s-eks-v1.17-dr/network/terraform.tfstate"
     }
   }
 

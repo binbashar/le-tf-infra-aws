@@ -2,9 +2,8 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  region                  = var.region
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  region  = var.region
+  profile = var.profile
 }
 
 provider "aws" {
