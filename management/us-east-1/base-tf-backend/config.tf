@@ -2,17 +2,15 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  alias                   = "main_region"
-  region                  = var.region
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  alias   = "main_region"
+  region  = var.region
+  profile = var.profile
 }
 
 provider "aws" {
-  alias                   = "secondary_region"
-  region                  = var.region_secondary
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  alias   = "secondary_region"
+  region  = var.region_secondary
+  profile = var.profile
 }
 
 terraform {

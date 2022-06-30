@@ -2,44 +2,38 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  region                  = var.region
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  region  = var.region
+  profile = var.profile
 }
 
 provider "aws" {
-  alias                   = "apps-devstg"
-  region                  = var.region
-  profile                 = "${var.project}-apps-devstg-devops"
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  alias   = "apps-devstg"
+  region  = var.region
+  profile = "${var.project}-apps-devstg-devops"
 }
 
 provider "aws" {
-  alias                   = "apps-devstg-dr"
-  region                  = var.region_secondary
-  profile                 = "${var.project}-apps-devstg-devops"
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  alias   = "apps-devstg-dr"
+  region  = var.region_secondary
+  profile = "${var.project}-apps-devstg-devops"
 }
 
 provider "aws" {
-  alias                   = "apps-prd"
-  region                  = var.region
-  profile                 = "${var.project}-apps-prd-devops"
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  alias   = "apps-prd"
+  region  = var.region
+  profile = "${var.project}-apps-prd-devops"
 }
 
 provider "aws" {
-  alias                   = "apps-prd-dr"
-  region                  = var.region_secondary
-  profile                 = "${var.project}-apps-prd-devops"
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  alias   = "apps-prd-dr"
+  region  = var.region_secondary
+  profile = "${var.project}-apps-prd-devops"
 }
 
 provider "aws" {
-  alias                   = "shared-dr"
-  region                  = var.region_secondary
-  profile                 = "${var.project}-shared-devops"
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  alias   = "shared-dr"
+  region  = var.region_secondary
+  profile = "${var.project}-shared-devops"
 }
 
 #=============================#

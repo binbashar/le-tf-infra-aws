@@ -1,3 +1,4 @@
+/*
 #
 # Create a VPC Peering between (Apps DevStg) EKS VPC and Shared VPC
 #
@@ -35,3 +36,4 @@ resource "aws_route" "pub_route_table_1_apps_devstg_eks_vpc_to_shared_vpc" {
   destination_cidr_block    = data.terraform_remote_state.shared-vpcs["shared-base"].outputs.vpc_cidr_block
   vpc_peering_connection_id = aws_vpc_peering_connection.apps_devstg_eks_vpc_with_shared_vpc[0].id
 }
+*/

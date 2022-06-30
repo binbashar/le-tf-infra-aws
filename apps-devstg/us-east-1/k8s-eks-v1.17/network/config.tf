@@ -23,7 +23,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/k8s-eks/network/terraform.tfstate"
+    key = "apps-devstg/k8s-eks-v1.17/network/terraform.tfstate"
   }
 }
 
