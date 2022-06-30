@@ -55,6 +55,8 @@ locals {
     }
   )
 }
+
+# VPC Endpoints
 module "vpc_endpoints" {
   source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.11.0"
 

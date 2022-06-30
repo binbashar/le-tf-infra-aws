@@ -99,7 +99,6 @@ resource "aws_iam_policy" "externaldns_binbash_com_ar" {
 EOF
 }
 
-
 #
 # Cluster Autoscaler
 #

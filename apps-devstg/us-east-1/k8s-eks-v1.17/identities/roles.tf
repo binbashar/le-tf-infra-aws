@@ -79,7 +79,6 @@ module "role_externaldns_public" {
   }
 }
 
-
 #
 # Role: Cluster Autoscaler
 #
