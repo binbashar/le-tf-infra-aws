@@ -1,5 +1,5 @@
 locals {
-  cluster_name = "${var.project}-${var.environment}-eks-primary"
+  cluster_name = "${var.project}-${var.environment}-eks-v117-1ry"
 
   # Network Local Vars
   # https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html
@@ -108,6 +108,14 @@ locals {
         to_port     = 65525
         protocol    = "udp"
         cidr_block  = "0.0.0.0/0"
+      },
+      {
+        rule_number = 940 # HCP Vault HVN vpc
+        rule_action = "allow"
+        from_port   = 0
+        to_port     = 65535
+        protocol    = "all"
+        cidr_block  = var.vpc_vault_hvn_cidr
       },
     ]
 
