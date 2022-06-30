@@ -37,7 +37,7 @@ data "terraform_remote_state" "apps-devstg-eks-cluster" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/k8s-eks/cluster/terraform.tfstate"
+    key     = "${var.environment}/k8s-eks-v1.17/cluster/terraform.tfstate"
   }
 }
 

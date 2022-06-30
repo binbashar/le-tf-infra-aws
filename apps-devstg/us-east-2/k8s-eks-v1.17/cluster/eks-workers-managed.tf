@@ -1,5 +1,5 @@
 module "eks" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v17.20.0"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v17.24.0"
 
   create_eks      = true
   cluster_name    = data.terraform_remote_state.eks-dr-vpc.outputs.cluster_name
@@ -34,20 +34,28 @@ module "eks" {
   #
   node_groups_defaults = {
     # Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS
-    ami_type       = "AL2_x86_64"
-    disk_size      = 50
-    instance_types = ["t2.medium"]
-    k8s_labels     = local.tags
+    ami_type   = "AL2_x86_64"
+    disk_size  = 50
+    k8s_labels = local.tags
   }
 
   #
   # List of Managed Node Groups
   #
   node_groups = {
-    main = {
+    on-demand = {
+      desired_capacity = 1
+      max_capacity     = 1
+      min_capacity     = 1
+      capacity_type    = "ON_DEMAND"
+      instance_types   = ["t2.medium", "t3.medium"]
+    }
+    spot = {
       desired_capacity = 1
       max_capacity     = 3
       min_capacity     = 1
+      capacity_type    = "SPOT"
+      instance_types   = ["t2.medium", "t3.medium"]
     }
   }
 
@@ -73,9 +81,9 @@ module "eks" {
   # Auth: aws-iam-authenticator
   #
   manage_aws_auth = var.manage_aws_auth
-  map_roles       = var.map_roles
-  map_accounts    = var.map_accounts
-  map_users       = var.map_users
+  map_roles       = local.map_roles
+  map_accounts    = local.map_accounts
+  map_users       = local.map_users
 
   #
   # Logging: which log types should be enabled and how long they should be kept for
@@ -93,7 +101,7 @@ module "eks" {
   # Tags
   #
   tags = merge(local.tags,
-    map("k8s.io/cluster-autoscaler/enabled", "TRUE"),
-    map("k8s.io/cluster-autoscaler/${data.terraform_remote_state.eks-dr-vpc.outputs.cluster_name}", "owned")
+    { "k8s.io/cluster-autoscaler/enabled" = "TRUE" },
+    { "k8s.io/cluster-autoscaler/${data.terraform_remote_state.eks-dr-vpc.outputs.cluster_name}" = "owned" }
   )
 }

@@ -33,12 +33,12 @@ EOF
 }
 
 #
-# External DNS policy
+# External DNS policy: aws.binbash.com.ar
 #
 resource "aws_iam_policy" "externaldns_aws_binbash_com_ar" {
   provider    = aws.shared
   name        = "${local.prefix}-externaldns-aws.binbash.com.ar"
-  description = "External DNS permissions on aws.binbash.com.ar"
+  description = "ExternalDNS permissions on aws.binbash.com.ar"
   policy      = <<EOF
 {
     "Version": "2012-10-17",

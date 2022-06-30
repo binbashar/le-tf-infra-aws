@@ -14,7 +14,7 @@ resource "aws_vpc_peering_connection_accepter" "with_vault_hvn" {
 # Update Route Tables to go through the VPC Peering Connection
 # ---
 # Both private and public subnets traffic will be routed and permitted through VPC Peerings (filtered by Private Inbound NACLs)
-# If stryctly needed private subnets must be exposed via Load Balancers (NLBs || ALBs)
+# If strictly needed private subnets must be exposed via Load Balancers (NLBs || ALBs)
 # reducing public IPs exposure whenever possible.
 # read more: https://github.com/binbashar/le-tf-infra-aws/issues/49
 #

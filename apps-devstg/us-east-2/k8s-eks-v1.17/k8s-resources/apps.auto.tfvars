@@ -54,11 +54,6 @@ kubernetes_dashboard_hosts         = "kubernetes-dashboard.us-east-2.devstg.aws.
 # Demo Apps - ArgoCD
 #------------------------------------------------------------------------------
 enable_cicd = true
-demoapps = {
-  emojivoto = false
-  gdm       = false
-  sockshop  = true
-}
 
 #------------------------------------------------------------------------------
 # Backups

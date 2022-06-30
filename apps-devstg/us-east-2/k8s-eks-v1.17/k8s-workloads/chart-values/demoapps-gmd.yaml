@@ -1,0 +1,18 @@
+project: default
+
+source:
+  repoURL: https://github.com/binbashar/le-demo-apps.git
+  targetRevision: HEAD
+  path: google-microservices-demo/kubernetes
+
+destination:
+  server: https://kubernetes.default.svc
+  namespace: demo-gmd
+
+syncPolicy:
+  syncOptions:
+    - Validate=true
+    - CreateNamespace=true
+
+finalizers:
+  - resources-finalizer.argocd.argoproj.io

@@ -2,16 +2,14 @@
 # Providers
 #
 provider "aws" {
-  region                  = var.region_secondary
-  profile                 = var.profile
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  region  = var.region_secondary
+  profile = var.profile
 }
 
 provider "aws" {
-  alias                   = "shared"
-  region                  = var.region
-  profile                 = "${var.project}-shared-devops"
-  shared_credentials_file = "~/.aws/${var.project}/config"
+  alias   = "shared"
+  region  = var.region
+  profile = "${var.project}-shared-devops"
 }
 
 #
@@ -25,7 +23,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/k8s-eks-dr/network/terraform.tfstate"
+    key = "apps-devstg/k8s-eks-v1.17-dr/network/terraform.tfstate"
   }
 }
 

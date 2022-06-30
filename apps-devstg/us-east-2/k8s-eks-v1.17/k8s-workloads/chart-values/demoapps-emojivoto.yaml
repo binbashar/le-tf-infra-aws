@@ -1,0 +1,25 @@
+# Use default project, for real case apps you may want to create specific projects
+project: default
+
+# Source code settings
+source:
+  repoURL: https://github.com/binbashar/le-demo-apps.git
+  targetRevision: HEAD
+  path: emojivoto/kubernetes
+
+# Cluster destination
+destination:
+  server: https://kubernetes.default.svc
+  namespace: demo-emojivoto
+
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
+    allowEmpty: false
+  syncOptions:
+    - Validate=true
+    - CreateNamespace=true
+
+finalizers:
+  - resources-finalizer.argocd.argoproj.io
