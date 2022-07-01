@@ -1,5 +1,5 @@
 locals {
-  cluster_name = "${var.project}-${var.environment}-eks-v117-1ry"
+  cluster_name = "${var.project}-${var.environment}-eks-1ry"
 
   # Network Local Vars
   # https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html
@@ -7,28 +7,29 @@ locals {
   # Docker runs in the 172.17.0.0/16 CIDR range in Amazon EKS clusters. We recommend that your cluster's VPC subnets do
   # not overlap this range. Otherwise, you will receive the following error:
   # Error: : error upgrading connection: error dialing backend: dial tcp 172.17.nn.nn:10250: getsockopt: no route to host
-  vpc_name       = "${var.project}-${var.environment}-vpc-eks-v117-1ry"
-  vpc_cidr_block = "10.0.0.0/16"
+  vpc_name = "${var.project}-${var.environment}-vpc-eks"
+  # Visual Subnet Calculator: https://www.davidc.net/sites/default/subnets/subnets.html?network=10.20.0.0&mask=16&division=15.7231
+  vpc_cidr_block = "10.2.0.0/16"
   azs = [
     "${var.region}a",
     "${var.region}b",
     "${var.region}c",
   ]
 
-  private_subnets_cidr = ["10.0.0.0/17"]
+  private_subnets_cidr = ["10.2.0.0/17"]
   private_subnets = [
-    "10.0.0.0/19",
-    "10.0.32.0/19",
-    "10.0.64.0/19",
-    # "10.0.96.0/19"
+    "10.2.0.0/19",
+    "10.2.32.0/19",
+    "10.2.64.0/19",
+    # "10.2.96.0/19"
   ]
 
-  public_subnets_cidr = ["10.0.128.0/17"]
+  public_subnets_cidr = ["10.2.128.0/17"]
   public_subnets = [
-    "10.0.128.0/19",
-    "10.0.160.0/19",
-    "10.0.192.0/19",
-    # "10.0.224.0/19"
+    "10.2.128.0/19",
+    "10.2.160.0/19",
+    "10.2.192.0/19",
+    # "10.2.224.0/19"
   ]
 
   tags = {

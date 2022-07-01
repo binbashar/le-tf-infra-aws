@@ -1,5 +1,5 @@
 #===========================================#
-# K8s EKS                                   #
+# K8s EKS Variables                         #
 #===========================================#
 variable "cluster_version" {
   description = "Kubernetes version to use for the EKS cluster."
