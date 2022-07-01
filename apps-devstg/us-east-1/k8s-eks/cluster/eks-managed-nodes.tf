@@ -137,11 +137,11 @@ module "cluster" {
   # Define all Managed Node Groups (MNG's)
   eks_managed_node_groups = {
     on-demand = {
-      min_size     = 1
-      max_size     = 3
-      desired_size = 1
-      capacity_type    = "ON_DEMAND"
-      instance_types   = ["t2.medium", "t3.medium"]
+      min_size       = 1
+      max_size       = 3
+      desired_size   = 1
+      capacity_type  = "ON_DEMAND"
+      instance_types = ["t2.medium", "t3.medium"]
     }
     spot = {
       desired_capacity = 1

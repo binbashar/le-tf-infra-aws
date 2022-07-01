@@ -136,7 +136,7 @@ users:
       1. They declare roles and their respective policies.
       2. The former are intended to be assumed by pods in your cluster through the EKS IRSA feature.
    2. Go to this layer and run `leverage tf apply`
-   
+
 ### K8s EKS Cluster Components and Workloads deployment
 
 1. Cluster Components (k8s-resources)
