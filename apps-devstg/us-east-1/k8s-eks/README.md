@@ -1,4 +1,4 @@
-# AWS EKS Reference Layer (module: terraform-aws-eks v1.17x)
+# AWS EKS Reference Layer
 
 ## Overview
 This documentation should help you understand the different pieces that make up this
@@ -10,7 +10,7 @@ architecture. Consider that we already have an [AWS Landing Zone](https://github
 deployed as baseline which allow us to create, extend and enable new components on its grounds.
 
 ## Code Organization
-The EKS layer (`apps-devstg/us-east-1/k8s-eks-v1.17`) is divided into sublayers which
+The EKS layer (`apps-devstg/us-east-1/k8s-eks`) is divided into sub-layers which
 have clear, specific purposes.
 
 ### The "network" layer
@@ -23,7 +23,8 @@ This is used to define the cluster attributes such as node groups and kubernetes
 This layer defines EKS IRSA roles that are later on assumed by roles running in the cluster.
 
 ### The "k8s-components" layer
-This here defines the base cluster components such as ingress controllers, certificate managers, dns managers, ci/cd components, and more.
+This here defines the base cluster components such as ingress controllers,
+certificate managers, dns managers, ci/cd components, and more.
 
 ### The "k8s-workloads" layer
 This here defines the cluster workloads such as web-apps, apis, back-end microservices, etc.
@@ -35,7 +36,7 @@ The typical use cases would be:
 
 Below we'll cover the first case but we'll assume that we are creating the `prd` cluster from the code that
 defines the `devstg` cluster:
-1. First, you would copy-paste an existing EKS layer along with all its sublayers: `cp -r apps-devstg/us-east-1/k8s-eks apps-prd/us-east-1/k8s-eks`
+1. First, you would copy-paste an existing EKS layer along with all its sub-layers: `cp -r apps-devstg/us-east-1/k8s-eks apps-prd/us-east-1/k8s-eks`
 2. Then, you need to go through each layer, open up the `config.tf` file and replace any occurrences of `devstg` with `prd`.
    1. There should be a `config.tf` in each sublayer so please make sure you cover all of them.
 
@@ -43,7 +44,8 @@ Now that you created the layers for the cluster you need to create a few other l
 new account that the cluster layers depend on, they are:
 3. The `security-keys` layer
     - This layer creates a KMS key that we use for encrypting EKS state.
-    - The procedure to create this layer is similar to the previous steps. You need to copy the layer from the `devstg` account and adjust its files to replace occurrences of `devstg` with `prd`.
+    - The procedure to create this layer is similar to the previous steps.
+      - You need to copy the layer from the `devstg` account and adjust its files to replace occurrences of `devstg` with `prd`.
     - Finally you need to run the Terraform Workflow (init and apply).
 4. The `security-certs` layer
     - This layer creates the AWS Certificate Manager certificates that are used by the AWS ALBs that are created by the ALB Ingress Controller.
@@ -71,65 +73,71 @@ The EKS layers need to be orchestrated in the following order:
     5. Go to this layer and run `leverage tf apply`
     6. In the output you should see the credentials you need to talk to Kubernetes API via kubectl (or other clients).
 
-```
-apps-devstg//k8s-eks-v1.17/cluster$ leverage terraform output
-
-...
-kubectl_config = apiVersion: v1
-preferences: {}
-kind: Config
-
-clusters:
-- cluster:
-    server: https://9E9E4XXXXXXXXXXXXXXXEFC1F00.gr7.us-east-1.eks.amazonaws.com
-    certificate-authority-data: LS0t...S0tLQo=
-  name: eks_bb-apps-devstg-eks-demoapps
-
-contexts:
-- context:
-    cluster: eks_bb-apps-devstg-eks-demoapps
-    user: eks_bb-apps-devstg-eks-demoapps
-  name: eks_bb-apps-devstg-eks-demoapps
-
-current-context: eks_bb-apps-devstg-eks-demoapps
-
-users:
-- name: eks_bb-apps-devstg-eks-demoapps
-  user:
-    exec:
-      apiVersion: client.authentication.k8s.io/v1alpha1
-      command: aws-iam-authenticator
-      args:
-        - "token"
-        - "-i"
-        - "bb-apps-devstg-eks-demoapps"
-        - --cache
-      env:
-        - name: AWS_CONFIG_FILE
-          value: $HOME/.aws/bb/config
-        - name: AWS_PROFILE
-          value: bb-apps-devstg-devops
-        - name: AWS_SHARED_CREDENTIALS_FILE
-          value: $HOME/.aws/bb/credentials
-
-```
-
 #### Setup auth and test cluster connectivity
 1. Connecting to the K8s EKS cluster
 2. Since we’re deploying a private K8s cluster you’ll need to be **connected to the VPN**
 3. install `kubetcl` in your workstation
     1. https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management
     2. https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/#install-with-homebrew-on-macos
-    3. 📒 NOTE: consider using `kubectl` version 1.22 or 1.23 (not latest)
-4. install `iam-authenticator` in your workstation
-    1. https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html
+    3. 📒 NOTE: consider using `kubectl` version 1.22-1.24 (depending on your cluster version)
+4. If working with AWS SSO approach refresh your temporary credentials
+   1. `leverage terraform init`
 5. Export AWS credentials
    1. `export AWS_SHARED_CREDENTIALS_FILE="~/.aws/bb/credentials"`
    2. `export AWS_CONFIG_FILE="~/.aws/bb/config"`
-6. `k8s-eks-v1.17/cluster` layer should generate the `kubeconfig` file in the output of the apply, or by running `leverage tf output` similar to https://github.com/binbashar/le-devops-workflows/blob/master/README.md#eks-clusters-kubeconfig-file
-    1. Edit that file to replace $HOME with the path to your home dir
-    2. Place the kubeconfig in `~/.kube/bb/apps-devstg` and then use export `KUBECONFIG=~/.kube/bb/apps-devstg` to help tools like kubectl find a way to talk to the cluster (or `KUBECONFIG=~/.kube/bb/apps-devstg get pods --all-namespaces` )
-    3. You should be now able to run kubectl  commands (https://kubernetes.io/docs/reference/kubectl/cheatsheet/)
+6. To generate `k8s-eks/cluster` layer `kubeconfig` file
+   1. `export KUBECONFIG=~/.kube/bb/config-bb-devstg-k8s-eks`
+   2. `aws eks update-kubeconfig --region us-east-1 --name bb-apps-devstg-eks-1ry --profile bb-apps-devstg-devops`
+   3. Edit `~/.kube/bb/apps-devstg/config-bb-devstg-k8s-eks` and add the proper env vars to let kubeconfig notice the AWS creds path
+   ```
+   env:
+      - name: AWS_PROFILE
+        value: bb-apps-devstg-devops
+      - name: AWS_CONFIG_FILE
+        value: /Users/exequielbarrirero/.aws/bb/config
+      - name: AWS_SHARED_CREDENTIALS_FILE
+        value: /Users/exequielbarrirero/.aws/bb/credentials
+   ```
+   4. Place the kubeconfig in `~/.kube/bb/apps-devstg` and then use export `KUBECONFIG=~/.kube/bb/apps-devstg` to help tools like kubectl find a way to talk to the cluster (or `KUBECONFIG=~/.kube/bb/apps-devstg get pods --all-namespaces` )
+   5. You should be now able to run kubectl  commands (https://kubernetes.io/docs/reference/kubectl/cheatsheet/)
+
+#### Example kubeconfig
+```
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQXXXXXXXXXXXXXXXXXXXXXXXXXXXUFBNPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    server: https://16DXXXXXXXXXXXXXXXXXXXX1C33.gr7.us-east-1.eks.amazonaws.com
+  name: arn:aws:eks:us-east-1:XXXXXXXXXXXX:cluster/bb-apps-devstg-eks-1ry
+contexts:
+- context:
+    cluster: arn:aws:eks:us-east-1:XXXXXXXXXXXX:cluster/bb-apps-devstg-eks-1ry
+    user: arn:aws:eks:us-east-1:XXXXXXXXXXXX:cluster/bb-apps-devstg-eks-1ry
+  name: arn:aws:eks:us-east-1:XXXXXXXXXXXX:cluster/bb-apps-devstg-eks-1ry
+current-context: arn:aws:eks:us-east-1:XXXXXXXXXXXX:cluster/bb-apps-devstg-eks-1ry
+kind: Config
+preferences: {}
+users:
+- name: arn:aws:eks:us-east-1:XXXXXXXXXXXX:cluster/bb-apps-devstg-eks-1ry
+  user:
+    exec:
+      apiVersion: client.authentication.k8s.io/v1alpha1
+      args:
+      - --region
+      - us-east-1
+      - eks
+      - get-token
+      - --cluster-name
+      - bb-apps-devstg-eks-1ry
+      command: aws
+      env:
+      - name: AWS_PROFILE
+        value: bb-apps-devstg-devops
+      - name: AWS_CONFIG_FILE
+        value: /Users/exequielbarrirero/.aws/bb/config
+      - name: AWS_SHARED_CREDENTIALS_FILE
+        value: /Users/exequielbarrirero/.aws/bb/credentials
+```
 
 3. Identities layers
    1. The main files begin with the `ids_` prefix.
