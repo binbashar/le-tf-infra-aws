@@ -19,7 +19,7 @@ module "terraform-aws-basic-layout" {
   ebs_optimized               = var.ebs_optimized
   monitoring                  = var.monitoring
   user_data_base64            = base64encode(local.user_data)
-  enable_ssm_access           = local.enable_ssm_access
+  enable_ssm_access           = var.enable_ssm_access
 
   root_block_device = [
     {
