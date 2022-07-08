@@ -19,7 +19,7 @@ resource "aws_iam_policy" "assume_devops_role" {
                 "sts:AssumeRole"
             ],
             "Resource": [
-                "arn:aws:iam::${var.shared_account_id}:role/DevOps",
+                "arn:aws:iam::${var.accounts.shared.id}:role/DevOps",
                 "arn:aws:iam::${var.network_account_id}:role/DevOps",
                 "arn:aws:iam::${var.accounts.security.id}:role/DevOps",
                 "arn:aws:iam::${var.appsdevstg_account_id}:role/DevOps",
@@ -48,7 +48,7 @@ resource "aws_iam_policy" "assume_secops_role" {
                 "sts:AssumeRole"
             ],
             "Resource": [
-                "arn:aws:iam::${var.shared_account_id}:role/SecOps",
+                "arn:aws:iam::${var.accounts.shared.id}:role/SecOps",
                 "arn:aws:iam::${var.network_account_id}:role/SecOps",
                 "arn:aws:iam::${var.accounts.security.id}:role/SecOps",
                 "arn:aws:iam::${var.appsdevstg_account_id}:role/SecOps",
@@ -77,7 +77,7 @@ resource "aws_iam_policy" "assume_admin_role" {
                 "sts:AssumeRole"
             ],
             "Resource": [
-                "arn:aws:iam::${var.shared_account_id}:role/Admin",
+                "arn:aws:iam::${var.accounts.shared.id}:role/Admin",
                 "arn:aws:iam::${var.network_account_id}:role/Admin",
                 "arn:aws:iam::${var.accounts.security.id}:role/Admin",
                 "arn:aws:iam::${var.appsdevstg_account_id}:role/Admin",
@@ -106,7 +106,7 @@ resource "aws_iam_policy" "assume_deploymaster_role" {
                 "sts:AssumeRole"
             ],
             "Resource": [
-                "arn:aws:iam::${var.shared_account_id}:role/DeployMaster",
+                "arn:aws:iam::${var.accounts.shared.id}:role/DeployMaster",
                 "arn:aws:iam::${var.network_account_id}:role/DeployMaster",
                 "arn:aws:iam::${var.appsdevstg_account_id}:role/DeployMaster",
                 "arn:aws:iam::${var.appsprd_account_id}:role/DeployMaster"
@@ -134,7 +134,7 @@ resource "aws_iam_policy" "assume_auditor_role" {
                 "sts:AssumeRole"
             ],
             "Resource": [
-                "arn:aws:iam::${var.shared_account_id}:role/Auditor",
+                "arn:aws:iam::${var.accounts.shared.id}:role/Auditor",
                 "arn:aws:iam::${var.network_account_id}:role/Auditor",
                 "arn:aws:iam::${var.accounts.security.id}:role/Auditor",
                 "arn:aws:iam::${var.appsdevstg_account_id}:role/Auditor",
@@ -163,7 +163,7 @@ resource "aws_iam_policy" "assume_finops_role" {
                 "sts:AssumeRole"
             ],
             "Resource": [
-                "arn:aws:iam::${var.shared_account_id}:role/FinOps",
+                "arn:aws:iam::${var.accounts.shared.id}:role/FinOps",
                 "arn:aws:iam::${var.network_account_id}:role/FinOps",
                 "arn:aws:iam::${var.appsdevstg_account_id}:role/FinOps",
                 "arn:aws:iam::${var.appsprd_account_id}:role/FinOps"

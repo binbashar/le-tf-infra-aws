@@ -9,7 +9,7 @@ locals {
   #
   map_accounts = [
     # var.accounts.security.id, # security
-    # var.shared_account_id, # shared
+    # var.accounts.shared.id, # shared
     # var.appsdevstg_account_id, # apps-devstg
   ]
 

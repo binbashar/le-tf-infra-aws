@@ -36,7 +36,7 @@ data "aws_iam_policy_document" "secret_policy" {
     principals {
       type = "AWS"
       identifiers = [
-        "arn:aws:iam::${var.shared_account_id}:role/DevOps",
+        "arn:aws:iam::${var.accounts.shared.id}:role/DevOps",
         "arn:aws:iam::${var.appsdevstg_account_id}:role/DevOps",
         "arn:aws:iam::${var.appsprd_account_id}:role/DevOps",
         "arn:aws:iam::${var.accounts.security.id}:role/DevOps",

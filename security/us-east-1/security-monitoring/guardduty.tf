@@ -19,7 +19,7 @@ module "guardduty" {
       email      = "info@binbash.com.ar"
     },
     shared = {
-      account_id = var.shared_account_id
+      account_id = var.accounts.shared.id
       email      = "binbash-aws-sr@binbash.com.ar"
     },
     network = {

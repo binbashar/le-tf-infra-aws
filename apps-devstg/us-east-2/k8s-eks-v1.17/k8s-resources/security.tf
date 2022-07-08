@@ -10,7 +10,7 @@ resource "helm_release" "certmanager" {
   version    = "1.1.0"
   values = [
     templatefile("chart-values/certmanager.yaml", {
-      roleArn = "arn:aws:iam::${var.shared_account_id}:role/appsdevstg-dr-certmanager"
+      roleArn = "arn:aws:iam::${var.accounts.shared.id}:role/appsdevstg-dr-certmanager"
     })
   ]
 }

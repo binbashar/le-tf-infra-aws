@@ -17,7 +17,7 @@ module "config_logs" {
   config_accounts = [
     var.accounts.root.id,
     var.accounts.security.id,
-    var.shared_account_id,
+    var.accounts.shared.id,
     var.network_account_id,
     var.appsdevstg_account_id,
     var.appsprd_account_id

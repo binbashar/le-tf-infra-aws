@@ -145,7 +145,7 @@ module "iam_assumable_role_grafana" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.1.0"
 
   trusted_role_arns = [
-    "arn:aws:iam::${var.shared_account_id}:root"
+    "arn:aws:iam::${var.accounts.shared.id}:root"
   ]
 
   create_role = true
