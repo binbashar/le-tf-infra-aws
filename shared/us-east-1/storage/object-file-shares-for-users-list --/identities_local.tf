@@ -9,7 +9,7 @@ module "user_roles" {
   create_role             = true
   role_name               = "${var.prefix}-role-${each.key}"
   role_requires_mfa       = false
-  trusted_role_arns       = ["arn:aws:iam::${var.security_account_id}:root"]
+  trusted_role_arns       = ["arn:aws:iam::${var.accounts.security.id}:root"]
   custom_role_policy_arns = [aws_iam_policy.user_roles_policy[each.key].arn]
 }
 

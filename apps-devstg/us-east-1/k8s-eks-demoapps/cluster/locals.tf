@@ -8,7 +8,7 @@ locals {
   # Additional AWS account numbers to add to the aws-auth configmap
   #
   map_accounts = [
-    # var.security_account_id, # security
+    # var.accounts.security.id, # security
     # var.shared_account_id, # shared
     # var.appsdevstg_account_id, # apps-devstg
   ]
@@ -17,12 +17,12 @@ locals {
   #
   map_users = [
     # {
-    #   userarn  = "arn:aws:iam:${var.security_account_id}:user/jane.doe"
+    #   userarn  = "arn:aws:iam:${var.accounts.security.id}:user/jane.doe"
     #   username = "jane.doe"
     #   groups   = ["system:masters"]
     # },
     # {
-    #   userarn  = "arn:aws:iam:${var.security_account_id}:user/john.doe"
+    #   userarn  = "arn:aws:iam:${var.accounts.security.id}:user/john.doe"
     #   username = "john.doe"
     #   groups   = ["system:masters"]
     # },

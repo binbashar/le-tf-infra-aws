@@ -16,7 +16,7 @@ module "config_logs" {
   enable_versioning       = true
   config_accounts = [
     var.accounts.root.id,
-    var.security_account_id,
+    var.accounts.security.id,
     var.shared_account_id,
     var.network_account_id,
     var.appsdevstg_account_id,

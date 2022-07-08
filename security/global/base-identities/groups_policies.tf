@@ -21,7 +21,7 @@ resource "aws_iam_policy" "assume_devops_role" {
             "Resource": [
                 "arn:aws:iam::${var.shared_account_id}:role/DevOps",
                 "arn:aws:iam::${var.network_account_id}:role/DevOps",
-                "arn:aws:iam::${var.security_account_id}:role/DevOps",
+                "arn:aws:iam::${var.accounts.security.id}:role/DevOps",
                 "arn:aws:iam::${var.appsdevstg_account_id}:role/DevOps",
                 "arn:aws:iam::${var.appsprd_account_id}:role/DevOps"
             ]
@@ -50,7 +50,7 @@ resource "aws_iam_policy" "assume_secops_role" {
             "Resource": [
                 "arn:aws:iam::${var.shared_account_id}:role/SecOps",
                 "arn:aws:iam::${var.network_account_id}:role/SecOps",
-                "arn:aws:iam::${var.security_account_id}:role/SecOps",
+                "arn:aws:iam::${var.accounts.security.id}:role/SecOps",
                 "arn:aws:iam::${var.appsdevstg_account_id}:role/SecOps",
                 "arn:aws:iam::${var.appsprd_account_id}:role/SecOps"
             ]
@@ -79,7 +79,7 @@ resource "aws_iam_policy" "assume_admin_role" {
             "Resource": [
                 "arn:aws:iam::${var.shared_account_id}:role/Admin",
                 "arn:aws:iam::${var.network_account_id}:role/Admin",
-                "arn:aws:iam::${var.security_account_id}:role/Admin",
+                "arn:aws:iam::${var.accounts.security.id}:role/Admin",
                 "arn:aws:iam::${var.appsdevstg_account_id}:role/Admin",
                 "arn:aws:iam::${var.appsprd_account_id}:role/Admin"
             ]
@@ -136,7 +136,7 @@ resource "aws_iam_policy" "assume_auditor_role" {
             "Resource": [
                 "arn:aws:iam::${var.shared_account_id}:role/Auditor",
                 "arn:aws:iam::${var.network_account_id}:role/Auditor",
-                "arn:aws:iam::${var.security_account_id}:role/Auditor",
+                "arn:aws:iam::${var.accounts.security.id}:role/Auditor",
                 "arn:aws:iam::${var.appsdevstg_account_id}:role/Auditor",
                 "arn:aws:iam::${var.appsprd_account_id}:role/Auditor"
             ]
@@ -255,9 +255,9 @@ data "aws_iam_policy_document" "restricted_iam_self_management" {
       "iam:ChangePassword"
     ]
     resources = [
-      "arn:aws:iam::${var.security_account_id}:user/*/$${aws:username}",
-      "arn:aws:iam::${var.security_account_id}:user/$${aws:username}",
-      "arn:aws:iam::${var.security_account_id}:mfa/$${aws:username}"
+      "arn:aws:iam::${var.accounts.security.id}:user/*/$${aws:username}",
+      "arn:aws:iam::${var.accounts.security.id}:user/$${aws:username}",
+      "arn:aws:iam::${var.accounts.security.id}:mfa/$${aws:username}"
     ]
   }
 
@@ -268,9 +268,9 @@ data "aws_iam_policy_document" "restricted_iam_self_management" {
       "iam:DeactivateMFADevice"
     ]
     resources = [
-      "arn:aws:iam::${var.security_account_id}:user/*/$${aws:username}",
-      "arn:aws:iam::${var.security_account_id}:user/$${aws:username}",
-      "arn:aws:iam::${var.security_account_id}:mfa/$${aws:username}"
+      "arn:aws:iam::${var.accounts.security.id}:user/*/$${aws:username}",
+      "arn:aws:iam::${var.accounts.security.id}:user/$${aws:username}",
+      "arn:aws:iam::${var.accounts.security.id}:mfa/$${aws:username}"
     ]
     condition {
       test     = "Bool"

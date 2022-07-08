@@ -20,7 +20,7 @@ module "account_assignments" {
       principal_name      = "AWS_Administrators"
     },
     {
-      account             = var.security_account_id,
+      account             = var.accounts.security.id,
       permission_set_arn  = module.permission_sets.permission_sets["Administrator"].arn,
       permission_set_name = "Administrator",
       principal_type      = "GROUP",
@@ -59,7 +59,7 @@ module "account_assignments" {
       principal_name      = "AWS_DevOps"
     },
     {
-      account             = var.security_account_id,
+      account             = var.accounts.security.id,
       permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn,
       permission_set_name = "DevOps",
       principal_type      = "GROUP",
@@ -109,7 +109,7 @@ module "account_assignments" {
       principal_name      = "AWS_SecOps"
     },
     {
-      account             = var.security_account_id,
+      account             = var.accounts.security.id,
       permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
       permission_set_name = "SecOps",
       principal_type      = "GROUP",
@@ -148,7 +148,7 @@ module "account_assignments" {
       principal_name      = "AWS_Guests"
     },
     {
-      account             = var.security_account_id,
+      account             = var.accounts.security.id,
       permission_set_arn  = module.permission_sets.permission_sets["ReadOnly"].arn,
       permission_set_name = "ReadOnly",
       principal_type      = "GROUP",

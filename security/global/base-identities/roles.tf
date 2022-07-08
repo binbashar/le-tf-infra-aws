@@ -9,7 +9,7 @@ module "iam_assumable_role_devops" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.7.0"
 
   trusted_role_arns = [
-    "arn:aws:iam::${var.security_account_id}:root"
+    "arn:aws:iam::${var.accounts.security.id}:root"
   ]
 
   create_role = true
@@ -36,7 +36,7 @@ module "iam_assumable_role_admin" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.7.0"
 
   trusted_role_arns = [
-    "arn:aws:iam::${var.security_account_id}:root"
+    "arn:aws:iam::${var.accounts.security.id}:root"
   ]
 
   create_role           = true
@@ -63,7 +63,7 @@ module "iam_assumable_role_auditor" {
 
 
   trusted_role_arns = [
-    "arn:aws:iam::${var.security_account_id}:root"
+    "arn:aws:iam::${var.accounts.security.id}:root"
   ]
 
   create_role            = true
@@ -117,7 +117,7 @@ module "iam_assumable_role_secops" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.7.0"
 
   trusted_role_arns = [
-    "arn:aws:iam::${var.security_account_id}:root"
+    "arn:aws:iam::${var.accounts.security.id}:root"
   ]
 
   create_role = true

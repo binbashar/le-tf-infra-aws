@@ -23,7 +23,7 @@ data "aws_iam_policy_document" "kms" {
 
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::${var.security_account_id}:root"]
+      identifiers = ["arn:aws:iam::${var.accounts.security.id}:root"]
     }
   }
 
@@ -47,7 +47,7 @@ data "aws_iam_policy_document" "kms" {
       test     = "StringLike"
       variable = "kms:EncryptionContext:aws:cloudtrail:arn"
       values = [
-        "arn:aws:cloudtrail:*:${var.security_account_id}:trail/*",
+        "arn:aws:cloudtrail:*:${var.accounts.security.id}:trail/*",
         "arn:aws:cloudtrail:*:${var.shared_account_id}:trail/*",
         "arn:aws:cloudtrail:*:${var.network_account_id}:trail/*",
         "arn:aws:cloudtrail:*:${var.accounts.root.id}:trail/*",
@@ -76,7 +76,7 @@ data "aws_iam_policy_document" "kms" {
     condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
-      values   = ["arn:aws:logs:${var.region}:${var.security_account_id}:*"]
+      values   = ["arn:aws:logs:${var.region}:${var.accounts.security.id}:*"]
     }
   }
 }

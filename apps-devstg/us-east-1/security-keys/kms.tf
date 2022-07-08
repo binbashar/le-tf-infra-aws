@@ -25,7 +25,7 @@ data "aws_iam_policy_document" "kms" {
       type = "AWS"
       identifiers = [
         "arn:aws:iam::${var.appsdevstg_account_id}:root",
-        "arn:aws:iam::${var.security_account_id}:user/${data.terraform_remote_state.security-identities.outputs.user_s3_demo_name}"
+        "arn:aws:iam::${var.accounts.security.id}:user/${data.terraform_remote_state.security-identities.outputs.user_s3_demo_name}"
       ]
     }
   }
