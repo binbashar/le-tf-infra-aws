@@ -66,7 +66,7 @@ data "aws_iam_policy_document" "kms" {
     condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
-      values   = ["arn:aws:logs:${var.region_secondary}:${var.appsdevstg_account_id}:*"]
+      values   = ["arn:aws:logs:${var.region_secondary}:${var.accounts.apps-devstg.id}:*"]
     }
   }
 }

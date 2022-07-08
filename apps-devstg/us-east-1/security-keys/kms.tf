@@ -24,7 +24,7 @@ data "aws_iam_policy_document" "kms" {
     principals {
       type = "AWS"
       identifiers = [
-        "arn:aws:iam::${var.appsdevstg_account_id}:root",
+        "arn:aws:iam::${var.accounts.apps-devstg.id}:root",
         "arn:aws:iam::${var.accounts.security.id}:user/${data.terraform_remote_state.security-identities.outputs.user_s3_demo_name}"
       ]
     }
@@ -67,7 +67,7 @@ data "aws_iam_policy_document" "kms" {
     condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
-      values   = ["arn:aws:logs:${var.region}:${var.appsdevstg_account_id}:*"]
+      values   = ["arn:aws:logs:${var.region}:${var.accounts.apps-devstg.id}:*"]
     }
   }
 }
