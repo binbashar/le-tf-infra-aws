@@ -20,7 +20,7 @@ module "config_logs" {
     var.accounts.shared.id,
     var.accounts.network.id,
     var.accounts.apps-devstg.id,
-    var.appsprd_account_id
+    var.accounts.apps-prd.id
   ]
 }
 

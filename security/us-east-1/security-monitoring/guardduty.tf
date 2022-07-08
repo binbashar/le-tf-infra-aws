@@ -31,7 +31,7 @@ module "guardduty" {
       email      = "binbash-aws-dev@binbash.com.ar"
     },
     appsprd = {
-      account_id = var.appsprd_account_id
+      account_id = var.accounts.apps-prd.id
       email      = "info+binbash-aws-prd@binbash.com.ar"
     }
   }
