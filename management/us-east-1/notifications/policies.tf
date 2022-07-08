@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "sns-topic-policy" {
       variable = "AWS:SourceOwner"
 
       values = [
-        var.root_account_id,
+        var.accounts.root.id,
       ]
     }
 

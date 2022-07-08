@@ -50,7 +50,7 @@ data "aws_iam_policy_document" "kms" {
         "arn:aws:cloudtrail:*:${var.security_account_id}:trail/*",
         "arn:aws:cloudtrail:*:${var.shared_account_id}:trail/*",
         "arn:aws:cloudtrail:*:${var.network_account_id}:trail/*",
-        "arn:aws:cloudtrail:*:${var.root_account_id}:trail/*",
+        "arn:aws:cloudtrail:*:${var.accounts.root.id}:trail/*",
         "arn:aws:cloudtrail:*:${var.appsdevstg_account_id}:trail/*",
         "arn:aws:cloudtrail:*:${var.appsprd_account_id}:trail/*"
       ]

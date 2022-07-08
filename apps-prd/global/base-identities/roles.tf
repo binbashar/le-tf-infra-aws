@@ -117,7 +117,7 @@ module "iam_assumable_role_oaar" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.1.0"
 
   trusted_role_arns = [
-    "arn:aws:iam::${var.root_account_id}:root"
+    "arn:aws:iam::${var.accounts.root.id}:root"
   ]
 
   create_role           = true
