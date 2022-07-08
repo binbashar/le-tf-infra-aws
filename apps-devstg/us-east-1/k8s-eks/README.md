@@ -42,6 +42,7 @@ defines the `devstg` cluster:
 
 Now that you created the layers for the cluster you need to create a few other layers in the
 new account that the cluster layers depend on, they are:
+
 3. The `security-keys` layer
     - This layer creates a KMS key that we use for encrypting EKS state.
     - The procedure to create this layer is similar to the previous steps.
@@ -158,33 +159,7 @@ users:
 To access the Kubernetes resources using `kubectl` take into account that you need **connect
 to the VPN** since all our implementations are via private endpoints (private VPC subnets).
 
-### Connecting to ArgoCD
-  1. Since we’re deploying a private K8s cluster you’ll need to be connected to the VPN
-  2. From your web browser access to https://argocd.us-east-1.devstg.aws.binbash.com.ar/
-  3. Considering the current `4.5.7` version we are using the default password it's stored in a secret.
-    1. To obtain it, use this command: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`  
-  4. As Username, the default user is **admin**.
-  5. You'll see the [EmojiVoto demo app](https://github.com/binbashar/le-demo-apps/tree/master/emojivoto/argocd) deployed and accessible at https://emojivoto.devstg.aws.binbash.com.ar/
 
-**CONSIDERATION**
-When running kubectl commands you could expect to get the following warning
-
-`/apps-devstg/us-east-1/k8s-eks/cluster$ kubectl get pods -n argocd -l app.kubernetes.io/name=argocd-server -o name | cut -d'/' -f 2`
-
-```
-Cache file /home/user/.kube/cache/aws-iam-authenticator/credentials.yaml does not exist.
-No cached credential available.  Refreshing...
-Unable to cache credential: ProviderNotExpirer: provider SharedConfigCredentials: /home/user/.aws/bb/credentials does not support ExpiresAt()
-```
-
-about aws-iam-authenticator  `not finding an “expiresat” entry in this file /home/user/.aws/bb/credentials`
-
-**UPDATE on the kubectl/aws-iam-authenticator warning:**
-
-it seems to be related to this https://github.com/kubernetes-sigs/aws-iam-authenticator/issues/219
-basically kubectl delegates on aws-iam-authenticator  to retrieve the token it needs to talk to the k8s API but aws-iam-auth  fails to provide that in the format that is expected by kubectl , given that is using an SSO flow it’s missing the ExpiresAt field.
-
-In other words, using the old AWS IAM flow, aws-iam-auth  is able to comply because that flow does include an expiration value besides the temporary credentials; but the SSO flow doesn’t include the expiration value for the temporary credentials as such expiration exists at the SSO token level, not at temporary credentials level (which are obtained through said token)
 
 ## Post-initial Orchestration
 After the initial orchestration, the typical flow could include multiple tasks. In other words, there won't be a normal flow but you some of the operations you would need to perform are:
