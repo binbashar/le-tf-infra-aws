@@ -107,7 +107,7 @@ resource "aws_iam_policy" "prometheus_grafana_dr_assume_role" {
             "Resource": [
                 "arn:aws:iam::${var.appsdevstg_account_id}:role/Grafana",
                 "arn:aws:iam::${var.appsprd_account_id}:role/Grafana",
-                "arn:aws:iam::${var.network_account_id}:role/Grafana"
+                "arn:aws:iam::${var.accounts.network.id}:role/Grafana"
             ]
         }
     ]

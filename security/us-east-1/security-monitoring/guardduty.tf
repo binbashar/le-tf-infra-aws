@@ -23,7 +23,7 @@ module "guardduty" {
       email      = "binbash-aws-sr@binbash.com.ar"
     },
     network = {
-      account_id = var.network_account_id
+      account_id = var.accounts.network.id
       email      = "binbash-aws-net@binbash.com.ar"
     },
     appsdevstg = {

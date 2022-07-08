@@ -24,7 +24,7 @@ data "aws_iam_policy_document" "kms" {
     principals {
       type = "AWS"
       identifiers = [
-        "arn:aws:iam::${var.network_account_id}:root"
+        "arn:aws:iam::${var.accounts.network.id}:root"
       ]
     }
   }

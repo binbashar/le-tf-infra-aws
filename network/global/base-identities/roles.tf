@@ -118,7 +118,7 @@ module "iam_assumable_role_deploy_master" {
 
   trusted_role_arns = [
     "arn:aws:iam::${var.accounts.security.id}:root",
-    "arn:aws:iam::${var.network_account_id}:root"
+    "arn:aws:iam::${var.accounts.network.id}:root"
   ]
 
   create_role = true
