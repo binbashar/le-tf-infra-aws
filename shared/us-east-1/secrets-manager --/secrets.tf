@@ -40,7 +40,7 @@ data "aws_iam_policy_document" "secret_policy" {
         "arn:aws:iam::${var.accounts.apps-devstg.id}:role/DevOps",
         "arn:aws:iam::${var.accounts.apps-prd.id}:role/DevOps",
         "arn:aws:iam::${var.accounts.security.id}:role/DevOps",
-        "arn:aws:iam::${var.accounts.root.id}:role/OrganizationAccountAccessRole"
+        "arn:aws:iam::${var.accounts.management.id}:role/OrganizationAccountAccessRole"
       ]
 
     }
