@@ -11,7 +11,7 @@ resource "helm_release" "certmanager" {
   values = [
     templatefile("chart-values/certmanager.yaml",
       {
-        roleArn = "arn:aws:iam::${var.shared_account_id}:role/appsdevstg-demoapps-certmanager"
+        roleArn = "arn:aws:iam::${var.accounts.shared.id}:role/appsdevstg-demoapps-certmanager"
       }
     )
   ]

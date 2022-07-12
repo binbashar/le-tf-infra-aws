@@ -40,7 +40,7 @@ module "aws_cost_mgmt_budget_notif_75" {
   time_unit              = var.time_unit
   time_period_start      = var.time_period_start
   notification_threshold = var.notification_threshold_75
-  aws_sns_account_id     = var.root_account_id
+  aws_sns_account_id     = var.accounts.management.id
   create_sns_topic       = false
   sns_topic_arns         = [data.terraform_remote_state.notifications.outputs.sns_topic_arn_costs]
 }
@@ -55,7 +55,7 @@ module "aws_cost_mgmt_budget_notif_100" {
   time_unit              = var.time_unit
   time_period_start      = var.time_period_start
   notification_threshold = var.notification_threshold_100
-  aws_sns_account_id     = var.root_account_id
+  aws_sns_account_id     = var.accounts.management.id
   create_sns_topic       = false
   sns_topic_arns         = [data.terraform_remote_state.notifications.outputs.sns_topic_arn_costs]
 }

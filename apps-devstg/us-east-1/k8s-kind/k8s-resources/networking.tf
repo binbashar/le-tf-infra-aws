@@ -37,7 +37,7 @@ resource "helm_release" "external_dns_private" {
   values = [
     templatefile("chart-values/externaldns-private.yaml",
       {
-        roleArn = "arn:aws:iam::${var.shared_account_id}:role/demoapps-external-dns-private"
+        roleArn = "arn:aws:iam::${var.accounts.shared.id}:role/demoapps-external-dns-private"
       }
     )
   ]
@@ -56,7 +56,7 @@ resource "helm_release" "external_dns_public" {
   values = [
     templatefile("chart-values/externaldns-public.yaml",
       {
-        roleArn = "arn:aws:iam::${var.shared_account_id}:role/demoapps-external-dns-public"
+        roleArn = "arn:aws:iam::${var.accounts.shared.id}:role/demoapps-external-dns-public"
       }
     )
   ]

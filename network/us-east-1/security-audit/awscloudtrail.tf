@@ -71,7 +71,7 @@ data "aws_iam_policy_document" "cloudtrail_role_policy" {
     actions = ["logs:CreateLogStream"]
 
     resources = [
-      "arn:aws:logs:${var.region}:${var.network_account_id}:log-group:${aws_cloudwatch_log_group.cloudtrail.name}:log-stream:*",
+      "arn:aws:logs:${var.region}:${var.accounts.network.id}:log-group:${aws_cloudwatch_log_group.cloudtrail.name}:log-stream:*",
     ]
   }
 
@@ -80,7 +80,7 @@ data "aws_iam_policy_document" "cloudtrail_role_policy" {
     actions = ["logs:PutLogEvents"]
 
     resources = [
-      "arn:aws:logs:${var.region}:${var.network_account_id}:log-group:${aws_cloudwatch_log_group.cloudtrail.name}:log-stream:*",
+      "arn:aws:logs:${var.region}:${var.accounts.network.id}:log-group:${aws_cloudwatch_log_group.cloudtrail.name}:log-stream:*",
     ]
   }
 }

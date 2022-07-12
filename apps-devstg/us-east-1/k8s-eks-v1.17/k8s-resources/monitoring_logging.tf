@@ -21,7 +21,7 @@ resource "helm_release" "fluentd_awses" {
   version    = "11.12.0"
   values = [
     templatefile("chart-values/fluentd-elasticsearch-aws.yaml", {
-      roleArn = "arn:aws:iam::${var.shared_account_id}:role/aws-es-proxy"
+      roleArn = "arn:aws:iam::${var.accounts.shared.id}:role/aws-es-proxy"
     })
   ]
 }
