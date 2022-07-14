@@ -148,18 +148,35 @@ users:
 
 ### K8s EKS Cluster Components and Workloads deployment
 
-1. Cluster Components (k8s-resources)
-    1. Go to this layer and run `leverage tf apply`
-    2. You can use the `apps.auto.tfvars` file to configure which components get installed
+1. Cluster Components (`k8s-components`)
+    1. Go to this layer and run `leverage tf init` & then `leverage tf apply`
+    2. You can use the `terraform.tfvars` file to configure which components get installed
     3. Important: For private repo integrations after ArgoCD was successfully installed you will need to create this secret object in the cluster. Before creating the secret you need to update it to add the private SSH key that will grant ArgoCD permission to read the repository where the application definition files can be located. Note that this manual step is only a workaround that could be automated to simplify the orchestration.
-2. Workloads (k8s-workloads)
-    1. Go to this layer and run `leverage tf apply`
+2. Workloads (`k8s-workloads`)
+    1. Go to this layer and run `leverage tf init` & then `leverage tf apply`
 
 ## Accessing the EKS Kubernetes resources (connectivity)
 To access the Kubernetes resources using `kubectl` take into account that you need **connect
 to the VPN** since all our implementations are via private endpoints (private VPC subnets).
 
-
+### Connecting to ArgoCD
+  1. Since we’re deploying a private K8s cluster you’ll need to be connected to the VPN
+  2. From your web browser access to [https://argocd.devstg.aws.binbash.com.ar/](https://argocd.devstg.aws.binbash.com.ar/)
+  3. Considering we are setting the initial [Bcrypt](https://pypi.org/project/bcrypt/) hashed admin password at [/k8-components/cicd-argo.tf](./k8s-components/cicd-argo.tf) definition.
+     1. We pass the bcrypt password hash here`argocdServerAdminPassword = "$2b$12$xAsDJ6xtGby4MKHRbIEwSOrI5z14BUv20vY1d0VLN7Dqq/AC5ZUyG"`
+     2. Based on the official [argocd repo readme](https://github.com/argoproj/argo-cd/blob/master/docs/faq.md#i-forgot-the-admin-password-how-do-i-reset-it) we'll describe below how to generate this password
+        1. `$ pip install bcrypt`
+        2. ```
+           ╰─ python3
+           Python 3.9.12 (main, Mar 26 2022, 15:51:15)
+           >>> import bcrypt
+           >>> passwd = b'argocd.serverAdminPassword'
+           >>> hashed = bcrypt.hashpw(passwd, salt)
+           >>> print(hashed)
+           b'$2b$12$qwsPLT8MGNPM3GzBPCpqR.ginpexU6QXVhKqarq.dTyMPK8LQU9ZG'
+           ```
+  4. As Username, the default user is **admin**.
+  5. You'll see the [EmojiVoto demo app](https://github.com/binbashar/le-demo-apps/tree/master/emojivoto/argocd) deployed and accessible at [https://emojivoto.devstg.aws.binbash.com.ar](https://emojivoto.devstg.aws.binbash.com.ar/)
 
 ## Post-initial Orchestration
 After the initial orchestration, the typical flow could include multiple tasks. In other words, there won't be a normal flow but you some of the operations you would need to perform are:
@@ -168,3 +185,10 @@ After the initial orchestration, the typical flow could include multiple tasks. 
 - Add/remove/update cluster components settings
 - Update network settings (e.g. toggle NAT Gateway, update Network ACLs, etc)
 - Update IRSA roles/policies to grant/remove/fine-tune permissions
+
+## TODO
+- Look for TODO comments in this layer stack code in oder to find
+  potential improvements that need to be addressed
+- :warning: Please consider that only the current `terraform.tfvars` services
+  set to `true` at the `k8s-components` and `k8s-workloads` layers are the only ones
+  that have been fully tested

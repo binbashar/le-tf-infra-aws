@@ -62,14 +62,25 @@ data "terraform_remote_state" "vpc-apps-devstg" {
   }
 }
 
-data "terraform_remote_state" "dns-apps-devstg-kops" {
+data "terraform_remote_state" "vpc-apps-devstg-eks" {
   backend = "s3"
 
   config = {
     region  = var.region
     profile = "${var.project}-apps-devstg-devops"
     bucket  = "${var.project}-apps-devstg-terraform-backend"
-    key     = "apps-devstg/k8s-kops/prerequisites/terraform.tfstate"
+    key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "dns-apps-devstg-eks-v117" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-apps-devstg-devops"
+    bucket  = "${var.project}-apps-devstg-terraform-backend"
+    key     = "apps-devstg/k8s-eks-v1.17/network/terraform.tfstate"
   }
 }
 
@@ -84,16 +95,7 @@ data "terraform_remote_state" "vpc-apps-devstg-eks-demoapps" {
   }
 }
 
-data "terraform_remote_state" "vpc-apps-devstg-eks" {
-  backend = "s3"
 
-  config = {
-    region  = var.region
-    profile = "${var.project}-apps-devstg-devops"
-    bucket  = "${var.project}-apps-devstg-terraform-backend"
-    key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
-  }
-}
 
 data "terraform_remote_state" "vpc-apps-devstg-eks-dr" {
   backend = "s3"
@@ -136,16 +138,5 @@ data "terraform_remote_state" "vpc-apps-prd" {
     profile = "${var.project}-apps-prd-devops"
     bucket  = "${var.project}-apps-prd-terraform-backend"
     key     = "apps-prd/network/terraform.tfstate"
-  }
-}
-
-data "terraform_remote_state" "vpc-apps-prd-eks" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-apps-prd-devops"
-    bucket  = "${var.project}-apps-prd-terraform-backend"
-    key     = "apps-prd/k8s-eks/network/terraform.tfstate"
   }
 }
