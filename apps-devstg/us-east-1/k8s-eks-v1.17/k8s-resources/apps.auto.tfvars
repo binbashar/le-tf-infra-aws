@@ -2,7 +2,7 @@
 # Ingress
 #------------------------------------------------------------------------------
 enable_private_ingress = true
-#enable_public_ingress  = true
+enable_public_ingress  = false
 
 #------------------------------------------------------------------------------
 # Certificate Manager
@@ -13,7 +13,7 @@ enable_certmanager = true
 # External DNS sync
 #------------------------------------------------------------------------------
 enable_private_dns_sync = true
-#enable_public_dns_sync  = true
+enable_public_dns_sync  = false
 
 #------------------------------------------------------------------------------
 # Secrets Management
@@ -36,12 +36,17 @@ enable_prometheus_dependencies = false
 #------------------------------------------------------------------------------
 # IngressMonitorController
 #------------------------------------------------------------------------------
-#enable_ingressmonitorcontroller = true
-#imc = {
-#  uptimerobot_apikey        = "APIKEY"
-#  uptimerobot_alertcontacts = "uptimerobot_alertcontacts"
-#  emojivoto_endpoint        = false
-#}
+enable_ingressmonitorcontroller = false
+imc = {
+  uptimerobot_apikey        = "APIKEY"
+  uptimerobot_alertcontacts = "uptimerobot_alertcontacts"
+  emojivoto_endpoint        = false
+}
+
+#------------------------------------------------------------------------------
+# CICD | ArgoCD
+#------------------------------------------------------------------------------
+enable_cicd = true
 
 #------------------------------------------------------------------------------
 # Kubernetes Dashboard
@@ -51,24 +56,19 @@ kubernetes_dashboard_ingress_class = "ingress-nginx-private"
 kubernetes_dashboard_hosts         = "kubernetes-dashboard.us-east-1.devstg.aws.binbash.com.ar"
 
 #------------------------------------------------------------------------------
-# CICD | ArgoCD
-#------------------------------------------------------------------------------
-enable_cicd = true
-
-#------------------------------------------------------------------------------
 # Backups
 #------------------------------------------------------------------------------
-#enable_backups = true
-#schedules = {
-#  cluster-backup = {
-#    target   = "all-cluster"
-#    schedule = "0 * * * *"
-#    ttl      = "24h"
-#  }
-#  argo-backup = {
-#    target             = "argcd"
-#    schedule           = "0 0/6 * * *"
-#    ttl                = "24h"
-#    includedNamespaces = ["argo-cd"]
-#  }
-#}
+enable_backups = false
+schedules = {
+  cluster-backup = {
+    target   = "all-cluster"
+    schedule = "0 * * * *"
+    ttl      = "24h"
+  }
+  argo-backup = {
+    target             = "argcd"
+    schedule           = "0 0/6 * * *"
+    ttl                = "24h"
+    includedNamespaces = ["argo-cd"]
+  }
+}
