@@ -36,7 +36,7 @@ Run the following command to generate a kubeconfig file for this project:
 export AWS_CONFIG_FILE=~/.aws/${var.project}/config
 export AWS_SHARED_CREDENTIALS_FILE=~/.aws/${var.project}/credentials
 export KUBECONFIG=~/.kube/${var.project}/${var.environment}
-aws eks update-kubeconfig --name ${data.terraform_remote_state.eks-vpc.outputs.cluster_name} --profile ${var.profile}
+aws eks update-kubeconfig --region ${var.region} --name ${data.terraform_remote_state.eks-vpc.outputs.cluster_name} --profile ${var.profile}
 ```
 CMD
 }
