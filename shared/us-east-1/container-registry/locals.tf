@@ -10,61 +10,61 @@ locals {
     weaveworksdemos_user = {
       create            = true
       name              = "weaveworksdemos/user"
-      read_permissions  = ["arn:aws:iam::${var.appsdevstg_account_id}:root"]
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
       write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
     weaveworksdemos_userdb = {
       create            = true
       name              = "weaveworksdemos/user-db"
-      read_permissions  = ["arn:aws:iam::${var.appsdevstg_account_id}:root"]
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
       write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
     weaveworksdemos_shipping = {
       create            = true
       name              = "weaveworksdemos/shipping"
-      read_permissions  = ["arn:aws:iam::${var.appsdevstg_account_id}:root"]
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
       write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
     weaveworksdemos_queuemaster = {
       create            = true
       name              = "weaveworksdemos/queue-master"
-      read_permissions  = ["arn:aws:iam::${var.appsdevstg_account_id}:root"]
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
       write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
     weaveworksdemos_payment = {
       create            = true
       name              = "weaveworksdemos/payment"
-      read_permissions  = ["arn:aws:iam::${var.appsdevstg_account_id}:root"]
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
       write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
     weaveworksdemos_orders = {
       create            = true
       name              = "weaveworksdemos/orders"
-      read_permissions  = ["arn:aws:iam::${var.appsdevstg_account_id}:root"]
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
       write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
     weaveworksdemos_frontend = {
       create            = true
       name              = "weaveworksdemos/front-end"
-      read_permissions  = ["arn:aws:iam::${var.appsdevstg_account_id}:root"]
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
       write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
     weaveworksdemos_catalogue = {
       create            = true
       name              = "weaveworksdemos/catalogue"
-      read_permissions  = ["arn:aws:iam::${var.appsdevstg_account_id}:root"]
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
       write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
     weaveworksdemos_cataloguedb = {
       create            = true
       name              = "weaveworksdemos/catalogue-db"
-      read_permissions  = ["arn:aws:iam::${var.appsdevstg_account_id}:root"]
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
       write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
     weaveworksdemos_carts = {
       create            = true
       name              = "weaveworksdemos/carts"
-      read_permissions  = ["arn:aws:iam::${var.appsdevstg_account_id}:root"]
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
       write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
   }

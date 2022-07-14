@@ -64,3 +64,9 @@ variable "tag_approved_ami_value" {
   description = "Set the specific tag ApprovedAMI ('true' | 'false') that identifies aws-config compliant AMIs"
   default     = "true"
 }
+
+variable "enable_ssm_access" {
+  type        = bool
+  description = "If true, attaches SSM policy to instance role"
+  default     = true
+}

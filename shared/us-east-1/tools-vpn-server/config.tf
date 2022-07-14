@@ -17,7 +17,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "shared/vpn/terraform.tfstate"
+    key = "shared/vpn-server/terraform.tfstate"
   }
 }
 

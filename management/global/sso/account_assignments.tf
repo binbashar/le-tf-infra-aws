@@ -6,42 +6,42 @@ module "account_assignments" {
     # AWS_Administrators Permissions
     # -------------------------------------------------------------------------
     {
-      account             = var.root_account_id,
+      account             = var.accounts.management.id,
       permission_set_arn  = module.permission_sets.permission_sets["Administrator"].arn,
       permission_set_name = "Administrator",
       principal_type      = "GROUP",
       principal_name      = "AWS_Administrators"
     },
     {
-      account             = var.shared_account_id,
+      account             = var.accounts.shared.id,
       permission_set_arn  = module.permission_sets.permission_sets["Administrator"].arn,
       permission_set_name = "Administrator",
       principal_type      = "GROUP",
       principal_name      = "AWS_Administrators"
     },
     {
-      account             = var.security_account_id,
+      account             = var.accounts.security.id,
       permission_set_arn  = module.permission_sets.permission_sets["Administrator"].arn,
       permission_set_name = "Administrator",
       principal_type      = "GROUP",
       principal_name      = "AWS_Administrators"
     },
     {
-      account             = var.network_account_id,
+      account             = var.accounts.network.id,
       permission_set_arn  = module.permission_sets.permission_sets["Administrator"].arn,
       permission_set_name = "Administrator",
       principal_type      = "GROUP",
       principal_name      = "AWS_Administrators"
     },
     {
-      account             = var.appsdevstg_account_id,
+      account             = var.accounts.apps-devstg.id,
       permission_set_arn  = module.permission_sets.permission_sets["Administrator"].arn,
       permission_set_name = "Administrator",
       principal_type      = "GROUP",
       principal_name      = "AWS_Administrators"
     },
     {
-      account             = var.appsprd_account_id,
+      account             = var.accounts.apps-prd.id,
       permission_set_arn  = module.permission_sets.permission_sets["Administrator"].arn,
       permission_set_name = "Administrator",
       principal_type      = "GROUP",
@@ -52,35 +52,35 @@ module "account_assignments" {
     # AWS_DevOps Permissions
     # -------------------------------------------------------------------------
     {
-      account             = var.shared_account_id,
+      account             = var.accounts.shared.id,
       permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn,
       permission_set_name = "DevOps",
       principal_type      = "GROUP",
       principal_name      = "AWS_DevOps"
     },
     {
-      account             = var.security_account_id,
+      account             = var.accounts.security.id,
       permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn,
       permission_set_name = "DevOps",
       principal_type      = "GROUP",
       principal_name      = "AWS_DevOps"
     },
     {
-      account             = var.network_account_id,
+      account             = var.accounts.network.id,
       permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn,
       permission_set_name = "DevOps",
       principal_type      = "GROUP",
       principal_name      = "AWS_DevOps"
     },
     {
-      account             = var.appsdevstg_account_id,
+      account             = var.accounts.apps-devstg.id,
       permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn,
       permission_set_name = "DevOps",
       principal_type      = "GROUP",
       principal_name      = "AWS_DevOps"
     },
     {
-      account             = var.appsprd_account_id,
+      account             = var.accounts.apps-prd.id,
       permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn,
       permission_set_name = "DevOps",
       principal_type      = "GROUP",
@@ -91,7 +91,7 @@ module "account_assignments" {
     # AWS_FinOps Permissions
     # -------------------------------------------------------------------------
     {
-      account             = var.root_account_id,
+      account             = var.accounts.management.id,
       permission_set_arn  = module.permission_sets.permission_sets["FinOps"].arn,
       permission_set_name = "FinOps",
       principal_type      = "GROUP",
@@ -102,35 +102,35 @@ module "account_assignments" {
     # AWS_SecOps Permissions
     # -------------------------------------------------------------------------
     {
-      account             = var.shared_account_id,
+      account             = var.accounts.shared.id,
       permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
       permission_set_name = "SecOps",
       principal_type      = "GROUP",
       principal_name      = "AWS_SecOps"
     },
     {
-      account             = var.security_account_id,
+      account             = var.accounts.security.id,
       permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
       permission_set_name = "SecOps",
       principal_type      = "GROUP",
       principal_name      = "AWS_SecOps"
     },
     {
-      account             = var.network_account_id,
+      account             = var.accounts.network.id,
       permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
       permission_set_name = "SecOps",
       principal_type      = "GROUP",
       principal_name      = "AWS_SecOps"
     },
     {
-      account             = var.appsdevstg_account_id,
+      account             = var.accounts.apps-devstg.id,
       permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
       permission_set_name = "SecOps",
       principal_type      = "GROUP",
       principal_name      = "AWS_SecOps"
     },
     {
-      account             = var.appsprd_account_id,
+      account             = var.accounts.apps-prd.id,
       permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
       permission_set_name = "SecOps",
       principal_type      = "GROUP",
@@ -141,35 +141,35 @@ module "account_assignments" {
     # AWS_Guests Permissions
     # -------------------------------------------------------------------------
     {
-      account             = var.shared_account_id,
+      account             = var.accounts.shared.id,
       permission_set_arn  = module.permission_sets.permission_sets["ReadOnly"].arn,
       permission_set_name = "ReadOnly",
       principal_type      = "GROUP",
       principal_name      = "AWS_Guests"
     },
     {
-      account             = var.security_account_id,
+      account             = var.accounts.security.id,
       permission_set_arn  = module.permission_sets.permission_sets["ReadOnly"].arn,
       permission_set_name = "ReadOnly",
       principal_type      = "GROUP",
       principal_name      = "AWS_Guests"
     },
     {
-      account             = var.network_account_id,
+      account             = var.accounts.network.id,
       permission_set_arn  = module.permission_sets.permission_sets["ReadOnly"].arn,
       permission_set_name = "ReadOnly",
       principal_type      = "GROUP",
       principal_name      = "AWS_Guests"
     },
     {
-      account             = var.appsdevstg_account_id,
+      account             = var.accounts.apps-devstg.id,
       permission_set_arn  = module.permission_sets.permission_sets["ReadOnly"].arn,
       permission_set_name = "ReadOnly",
       principal_type      = "GROUP",
       principal_name      = "AWS_Guests"
     },
     {
-      account             = var.appsprd_account_id,
+      account             = var.accounts.apps-prd.id,
       permission_set_arn  = module.permission_sets.permission_sets["ReadOnly"].arn,
       permission_set_name = "ReadOnly",
       principal_type      = "GROUP",

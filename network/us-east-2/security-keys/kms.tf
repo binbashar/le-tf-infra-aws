@@ -24,7 +24,7 @@ data "aws_iam_policy_document" "kms" {
     principals {
       type = "AWS"
       identifiers = [
-        "arn:aws:iam::${var.network_account_id}:root"
+        "arn:aws:iam::${var.accounts.network.id}:root"
       ]
     }
   }
@@ -66,7 +66,7 @@ data "aws_iam_policy_document" "kms" {
     condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
-      values   = ["arn:aws:logs:${var.region_secondary}:${var.appsdevstg_account_id}:*"]
+      values   = ["arn:aws:logs:${var.region_secondary}:${var.accounts.apps-devstg.id}:*"]
     }
   }
 }
