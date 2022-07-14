@@ -24,12 +24,12 @@ resource "helm_release" "velero" {
 #------------------------------------------------------------------------------
 # Buckets
 resource "aws_s3_bucket" "velero_s3" {
-  count      = var.enable_backups ? 1 : 0
+  count  = var.enable_backups ? 1 : 0
   bucket = "le-${var.environment}-velero"
 }
 
 resource "aws_s3_bucket_versioning" "velero_s3_versioning" {
-  count      = var.enable_backups ? 1 : 0
+  count  = var.enable_backups ? 1 : 0
   bucket = aws_s3_bucket.velero_s3[0].id
   versioning_configuration {
     status = "Enabled"
@@ -37,7 +37,7 @@ resource "aws_s3_bucket_versioning" "velero_s3_versioning" {
 }
 
 resource "aws_s3_bucket_acl" "velero_s3_acl" {
-  count      = var.enable_backups ? 1 : 0
+  count  = var.enable_backups ? 1 : 0
   bucket = aws_s3_bucket.velero_s3[0].id
   acl    = "private"
 }

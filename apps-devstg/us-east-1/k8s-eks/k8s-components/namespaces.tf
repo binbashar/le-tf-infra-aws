@@ -1,5 +1,5 @@
 resource "kubernetes_namespace" "monitoring_metrics" {
-  count      = var.enable_prometheus_dependencies || var.enable_prometheus_dependencies || var.enable_cluster_autoscaling || var.enable_hpa_scaling || var.enable_vpa_scaling ? 1 : 0
+  count = var.enable_prometheus_dependencies || var.enable_prometheus_dependencies || var.enable_cluster_autoscaling || var.enable_hpa_scaling || var.enable_vpa_scaling ? 1 : 0
 
   metadata {
     labels = local.labels
@@ -8,7 +8,7 @@ resource "kubernetes_namespace" "monitoring_metrics" {
 }
 
 resource "kubernetes_namespace" "monitoring_logging" {
-  count      = var.enable_logging || var.enable_logging_k8s_event_logger || var.enable_logging_awses || var.enable_logging_selfhosted ? 1 : 0
+  count = var.enable_logging || var.enable_logging_k8s_event_logger || var.enable_logging_awses || var.enable_logging_selfhosted ? 1 : 0
 
   metadata {
     labels = local.labels
@@ -17,7 +17,7 @@ resource "kubernetes_namespace" "monitoring_logging" {
 }
 
 resource "kubernetes_namespace" "monitoring_tools" {
-  count      = var.enable_kubernetes_dashboard || var.enable_vpa_scaling ? 1 : 0
+  count = var.enable_kubernetes_dashboard || var.enable_vpa_scaling ? 1 : 0
 
   metadata {
     labels = local.labels
