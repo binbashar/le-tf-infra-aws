@@ -21,16 +21,6 @@ variable "enable_public_dns_sync" {
   default = false
 }
 
-variable "enable_prometheus_dependencies" {
-  type    = bool
-  default = false
-}
-
-variable "enable_grafana_dependencies" {
-  type    = bool
-  default = false
-}
-
 variable "enable_certmanager" {
   type    = bool
   default = true
@@ -44,11 +34,6 @@ variable "enable_vault" {
 variable "enable_cicd" {
   type    = bool
   default = false
-}
-
-variable "enable_kubernetes_dashboard" {
-  type    = bool
-  default = true
 }
 
 variable "enable_hpa_scaling" {
@@ -89,6 +74,21 @@ variable "enable_logging" {
 variable "enable_ingressmonitorcontroller" {
   type    = bool
   default = false
+}
+
+variable "enable_prometheus_dependencies" {
+  type    = bool
+  default = false
+}
+
+variable "enable_grafana_dependencies" {
+  type    = bool
+  default = false
+}
+
+variable "enable_kubernetes_dashboard" {
+  type    = bool
+  default = true
 }
 
 variable "kubernetes_dashboard_ingress_class" {
