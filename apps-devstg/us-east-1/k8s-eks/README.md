@@ -163,7 +163,7 @@ to the VPN** since all our implementations are via private endpoints (private VP
   2. From your web browser access to [https://argocd.devstg.aws.binbash.com.ar/](https://argocd.devstg.aws.binbash.com.ar/)
   3. Considering we are setting the initial [Bcrypt](https://pypi.org/project/bcrypt/) hashed admin password at [/k8-components/cicd-argo.tf](./k8s-components/cicd-argo.tf) definition.
      1. We pass the bcrypt password hash here`argocdServerAdminPassword = "$2b$12$xAsDJ6xtGby4MKHRbIEwSOrI5z14BUv20vY1d0VLN7Dqq/AC5ZUyG"`
-     2. Based on the official [argocd repo readme](https://github.com/argoproj/argo-cd/blob/master/docs/faq.md#i-forgot-the-admin-password-how-do-i-reset-it) we'll describe below how to generate this password 
+     2. Based on the official [argocd repo readme](https://github.com/argoproj/argo-cd/blob/master/docs/faq.md#i-forgot-the-admin-password-how-do-i-reset-it) we'll describe below how to generate this password
         1. `$ pip install bcrypt`
         2. ```
            ╰─ python3
@@ -186,8 +186,8 @@ After the initial orchestration, the typical flow could include multiple tasks. 
 - Update IRSA roles/policies to grant/remove/fine-tune permissions
 
 ## TODO
-- Look for TODO comments in this layer stack code in oder to find 
+- Look for TODO comments in this layer stack code in oder to find
   potential improvements that need to be addressed
-- :warning: Please consider that only the current `terraform.tfvars` services 
+- :warning: Please consider that only the current `terraform.tfvars` services
   set to `true` at the `k8s-components` and `k8s-workloads` layers are the only ones
   that have been fully tested
