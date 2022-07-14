@@ -38,7 +38,7 @@ resource "helm_release" "sockshop" {
   version    = "0.2.0"
   values = [
     templatefile("chart-values/demoapps-sockshop.yaml", {
-      accountid = var.shared_account_id,
+      accountid = var.accounts.shared.id,
       region    = var.region_secondary
     })
   ]

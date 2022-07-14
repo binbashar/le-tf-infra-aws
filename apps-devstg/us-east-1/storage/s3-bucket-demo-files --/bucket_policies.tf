@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "bucket_policy" {
 
       principals {
         type        = "AWS"
-        identifiers = ["arn:aws:iam::${var.security_account_id}:user/${statement.value["user"]}"]
+        identifiers = ["arn:aws:iam::${var.accounts.security.id}:user/${statement.value["user"]}"]
       }
 
       actions = [
@@ -64,7 +64,7 @@ data "aws_iam_policy_document" "bucket_policy" {
 
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::${var.appsdevstg_account_id}:role/DevOps"]
+      identifiers = ["arn:aws:iam::${var.accounts.apps-devstg.id}:role/DevOps"]
     }
 
     actions = [

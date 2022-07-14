@@ -1,5 +1,4 @@
 locals {
-  enable_ssm_access = true
   tags = {
     Name               = "${var.prefix}-${var.name}"
     Terraform          = "true"
@@ -9,11 +8,11 @@ locals {
     Backup             = "True"
   }
 
-  user_data = <<EOF
-#!/bin/bash
-echo "Hello Terraform! -> Installing pre-req packages here!"
-apt-get update
-apt-get install -y vim
-echo "DONE"
-EOF
+  user_data = <<-EOF
+  #!/bin/bash
+  echo "Hello Terraform! -> Installing pre-req packages here!"
+  apt-get update
+  apt-get install -y vim
+  echo "DONE"
+  EOF
 }

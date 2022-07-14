@@ -10,17 +10,9 @@ region_primary = "us-east-1"
 # AWS Region for DR replication (required by the backend but also used for other resources)
 region_secondary      = "us-east-2"
 
-# Account IDs
-root_account_id       = "111111111111"
-security_account_id   = "222222222222"
-shared_account_id     = "333333333333"
-network_account_id    = "444444444444"
-appsdevstg_account_id = "555555555555"
-appsprd_account_id    = "666666666666"
-
 # Accounts
 accounts = {
-  root = {
+  management = {
     email = "aws+root@binbash.com.ar",
     id    = 111111111111
   },

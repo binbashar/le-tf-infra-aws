@@ -9,5 +9,5 @@ module "guardduty" {
 
   guarduty_enabled                     = true
   guarduty_s3_protection_enabled       = true
-  guardduty_delegated_admin_account_id = var.security_account_id
+  guardduty_delegated_admin_account_id = var.accounts.security.id
 }

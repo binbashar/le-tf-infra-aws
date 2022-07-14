@@ -46,7 +46,7 @@ module "fms" {
       resource_type_list          = ["AWS::ElasticLoadBalancingV2::LoadBalancer", "AWS::ApiGateway::Stage"]
       resource_type               = null
       resource_tags               = { "firewallManager" = "true" }
-      include_account_ids         = { accounts = [var.network_account_id, var.security_account_id] }
+      include_account_ids         = { accounts = [var.accounts.network.id, var.accounts.security.id] }
       exclude_account_ids         = {}
       logging_configuration       = null
 
@@ -84,7 +84,7 @@ module "fms" {
       remediation_enabled         = true # Must be set to `true`
       resource_type_list          = ["AWS::EC2::VPC"]
       resource_tags               = null
-      include_account_ids         = { accounts = [var.network_account_id] }
+      include_account_ids         = { accounts = [var.accounts.network.id] }
       exclude_account_ids         = {}
 
       policy_data = {
@@ -110,7 +110,7 @@ module "fms" {
   #    remediation_enabled         = true
   #    resource_type_list          = ["AWS::ElasticLoadBalancingV2::LoadBalancer"]
   #    resource_tags               = null
-  #    include_account_ids         = { accounts = [var.network_account_id] }
+  #    include_account_ids         = { accounts = [var.accounts.network.id] }
   #    exclude_account_ids         = {}
   #  }
   #]
@@ -125,7 +125,7 @@ module "fms" {
       remediation_enabled         = true
       resource_type               = "AWS::EC2::VPC"
       resource_tags               = null
-      include_account_ids         = { accounts = [var.network_account_id] }
+      include_account_ids         = { accounts = [var.accounts.network.id] }
       exclude_account_ids         = {}
       logging_configuration       = null
       policy_data = {
@@ -159,7 +159,7 @@ module "fms_cloudfront" {
       remediation_enabled         = false
       resource_type               = "AWS::CloudFront::Distribution"
       resource_tags               = null
-      include_account_ids         = { accounts = [var.network_account_id] }
+      include_account_ids         = { accounts = [var.accounts.network.id] }
       exclude_account_ids         = {}
       logging_configuration       = null
 
