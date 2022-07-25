@@ -1,9 +1,7 @@
-output "binbash_com_ar_arn" {
-  description = "The ARN of the certificate"
-  value       = aws_acm_certificate.binbash_com_ar.arn
-}
-
-output "aws_binbash_com_ar_arn" {
-  description = "The ARN of the certificate"
-  value       = aws_acm_certificate.aws_binbash_com_ar.arn
+#
+# Certificate: *.aws.binbash.com.ar
+#
+output "certificate_arn" {
+  description = "The certificate ARN"
+  value       = aws_acm_certificate.main.arn
 }
