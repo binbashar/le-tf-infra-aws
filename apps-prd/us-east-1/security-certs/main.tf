@@ -29,7 +29,7 @@ resource "aws_route53_record" "main" {
 # "This resource represents a successful validation of an ACM certificate in
 # concert with other resources."
 resource "aws_acm_certificate_validation" "main" {
-  certificate_arn         = aws_acm_certificate.main.arn
+  certificate_arn = aws_acm_certificate.main.arn
   validation_record_fqdns = [
     for record in aws_route53_record.main : record.fqdn
   ]
