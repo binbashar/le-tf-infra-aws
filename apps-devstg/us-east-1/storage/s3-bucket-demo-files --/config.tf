@@ -7,19 +7,20 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias   = "secondary_region"
-  region  = var.region_secondary
-  profile = var.profile
+  alias                   = "secondary_region"
+  region                  = var.region_secondary
+  profile                 = var.profile
+  shared_credentials_file = "~/.aws/bb/config"
 }
 
 #=============================#
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = "~> 1.1.3"
+  required_version = ">= 1.0.9"
 
   required_providers {
-    aws = "~> 4.10"
+    aws = "~> 3.2"
   }
 
   backend "s3" {
@@ -65,3 +66,4 @@ data "terraform_remote_state" "security-identities" {
     key     = "security/identities/terraform.tfstate"
   }
 }
+
