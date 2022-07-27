@@ -1,0 +1,59 @@
+name: Leverage CLI Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      leverage_branch:
+        description: "Reference to current Leverage branch to test"
+        required: true
+        type: string
+
+jobs:
+  test_leverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout base branch
+        uses: actions/checkout@v3
+
+      - name: Clone Leverage
+        run: |
+          printf "[INFO] Cloning Leverage CLI's repo"
+          git clone git@github.com:binbashar/leverage.git
+
+      - name: Build Leverage CLI
+        run: |
+          printf "[INFO] Building Leverage CLI"
+          git checkout ${{ inputs.leverage_branch }}
+          make build
+          pip install -e .
+        working-directory: ./leverage
+
+      - name: Set up credentials
+        run: |
+          printf "[INFO] Setting up credentials"
+          mkdir -p  ~/.aws/bb
+          cat << EOF > ~/.aws/bb/credentials
+          [bb-apps-devstg-deploymaster]
+          aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          EOF
+
+      - name: Test Reference Architecture
+        run: |
+          printf "[INFO] Initializing layer"
+          leverage tf init
+
+          printf "[INFO] Generating plan"
+          leverage tf plan
+
+          printf "[INFO] Applying changes"
+          leverage tf apply -auto-approve
+
+          printf "[INFO] Checking if all changes were applied"
+          leverage tf plan -detailed-exitcode
+          [[ $? -eq 2 ]] && printf "[WARN] There are still remaining changes"
+          [[ $? -eq 0 ]] && printf "[INFO] Apply checks out"
+
+          printf "[INFO] Destroying all generated created resources"
+          leverage tf destroy -auto-approve
+        working-directory: ./apps-devstg/global/cli-test-layer
