@@ -41,6 +41,8 @@ data "aws_iam_policy_document" "devops" {
       "lambda:*",
       "lightsail:*",
       "logs:*",
+      "network-firewall:*",
+      "networkmanager:*",
       "ram:*",
       "rds:*",
       "redshift:*",
