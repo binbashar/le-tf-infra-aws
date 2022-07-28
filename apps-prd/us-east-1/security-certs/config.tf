@@ -14,7 +14,7 @@ provider "aws" {
 provider "aws" {
   region  = var.region
   profile = "${var.project}-shared-devops"
-  alias   = "shared-route53"
+  alias   = "shared"
 }
 
 #=============================#
@@ -39,7 +39,7 @@ terraform {
 #
 # data type from output for dns
 #
-data "terraform_remote_state" "dns-shared" {
+data "terraform_remote_state" "shared-dns" {
   backend = "s3"
 
   config = {
