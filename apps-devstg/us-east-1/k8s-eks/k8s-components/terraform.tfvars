@@ -24,6 +24,7 @@ enable_public_dns_sync  = false
 # Secrets Management
 #------------------------------------------------------------------------------
 enable_vault = false
+enable_external_secrets = true
 
 #------------------------------------------------------------------------------
 # Scaling

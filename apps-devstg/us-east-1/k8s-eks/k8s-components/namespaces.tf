@@ -70,6 +70,15 @@ resource "kubernetes_namespace" "vault" {
   }
 }
 
+resource "kubernetes_namespace" "external-secrets" {
+  count = var.enable_external_secrets ? 1 : 0
+
+  metadata {
+    labels = local.labels
+    name   = "external-secrets"
+  }
+}
+
 resource "kubernetes_namespace" "argocd" {
   count = var.enable_cicd ? 1 : 0
 
