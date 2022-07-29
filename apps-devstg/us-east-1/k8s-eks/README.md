@@ -171,6 +171,7 @@ to the VPN** since all our implementations are via private endpoints (private VP
            Python 3.9.12 (main, Mar 26 2022, 15:51:15)
            >>> import bcrypt
            >>> passwd = b'argocd.serverAdminPassword'
+           >>> salt = bcrypt.gensalt()
            >>> hashed = bcrypt.hashpw(passwd, salt)
            >>> print(hashed)
            b'$2b$12$qwsPLT8MGNPM3GzBPCpqR.ginpexU6QXVhKqarq.dTyMPK8LQU9ZG'
