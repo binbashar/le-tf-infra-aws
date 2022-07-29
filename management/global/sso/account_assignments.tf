@@ -6,7 +6,7 @@ module "account_assignments" {
     # AWS_Administrators Permissions
     # -------------------------------------------------------------------------
     {
-      account             = var.accounts.management.id,
+      account             = var.accounts.root.id,
       permission_set_arn  = module.permission_sets.permission_sets["Administrator"].arn,
       permission_set_name = "Administrator",
       principal_type      = "GROUP",
@@ -91,7 +91,7 @@ module "account_assignments" {
     # AWS_FinOps Permissions
     # -------------------------------------------------------------------------
     {
-      account             = var.accounts.management.id,
+      account             = var.accounts.root.id,
       permission_set_arn  = module.permission_sets.permission_sets["FinOps"].arn,
       permission_set_name = "FinOps",
       principal_type      = "GROUP",

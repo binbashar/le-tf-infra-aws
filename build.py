@@ -24,9 +24,3 @@ def decrypt():
 def encrypt():
     '''Encrypt secrets.dec.tf file.'''
     os.system("ansible-vault encrypt --output secrets.enc secrets.dec.tf && rm -rf secrets.dec.tf")
-
-@task(_checkdir)
-def validate_layout():
-    '''Validate the layout convention of this Terraform layer.'''
-    return os.system("../../../@bin/scripts/validate-terraform-layout.sh")
-
