@@ -58,7 +58,7 @@ module "wafv2_regional_alb" {
     },
     {
       name     = "SQLiRulesByAWS"
-      priority = "2"
+      priority = "3"
 
       override_action = "count"
 
