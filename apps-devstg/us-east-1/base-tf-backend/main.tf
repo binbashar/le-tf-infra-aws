@@ -20,7 +20,6 @@ module "terraform_backend" {
   enforce_ssl_requests          = true
   ignore_public_acls            = true
 
-
   #
   # Replication
   #
