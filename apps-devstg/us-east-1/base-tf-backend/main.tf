@@ -1,5 +1,5 @@
 module "terraform_backend" {
-  source = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.15"
+  source = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.18"
 
   #
   # Bucket Name
@@ -18,6 +18,8 @@ module "terraform_backend" {
   restrict_public_buckets       = true
   enable_server_side_encryption = var.encrypt
   enforce_ssl_requests          = true
+  ignore_public_acls            = true
+
 
   #
   # Replication
