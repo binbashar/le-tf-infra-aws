@@ -214,7 +214,7 @@ module "iam_assumable_role_oaar" {
 }
 
 #
-# Assumable Role: AWSServiceRoleForOrganizations
+# Assumable Role: AWSServiceRoleForTrustedadvisor
 #
 module "iam_assumable_role_service_trustedadvisor" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.23.0"
