@@ -13,7 +13,7 @@ terraform {
   required_version = ">= 0.14.11"
 
   required_providers {
-    aws = "~> 3.2"
+    aws = ">= 4.9"
   }
 
   backend "s3" {
@@ -64,7 +64,7 @@ data "terraform_remote_state" "tools-vpn-server" {
     region  = var.region
     profile = "${var.project}-shared-devops"
     bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/vpn/terraform.tfstate"
+    key     = "shared/vpn-server/terraform.tfstate"
   }
 }
 

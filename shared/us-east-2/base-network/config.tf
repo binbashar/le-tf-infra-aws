@@ -31,7 +31,7 @@ terraform {
   required_version = ">= 1.0.9"
 
   required_providers {
-    aws = "~> 3.0"
+    aws = ">= 4.9"
   }
 
   backend "s3" {
@@ -65,7 +65,7 @@ data "terraform_remote_state" "tools-vpn-server" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/vpn/terraform.tfstate"
+    key     = "${var.environment}/vpn-server/terraform.tfstate"
   }
 }
 
