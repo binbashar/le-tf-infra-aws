@@ -28,7 +28,7 @@ module "terraform_backend" {
   tags = local.tags
 
   providers = {
-    aws.main_region      = aws.main_region
-    aws.secondary_region = aws.secondary_region
+    aws.primary   = aws.main_region
+    aws.secondary = aws.secondary_region
   }
 }
