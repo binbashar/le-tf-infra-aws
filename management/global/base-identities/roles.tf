@@ -23,3 +23,75 @@ module "iam_assumable_role_oaar" {
 
   tags = local.tags
 }
+
+#
+# Assumable Role: AWSServiceRoleForOrganizations
+#
+module "iam_assumable_role_service_organizations" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.23.0"
+
+  trusted_role_services = [
+    "organizations.amazonaws.com"
+  ]
+
+  create_role      = true
+  role_name        = "AWSServiceRoleForOrganizations"
+  role_description = "Service-linked role used by AWS Organizations to enable integration of other AWS services with Organizations."
+  role_path        = "/aws-service-role/organizations.amazonaws.com/"
+
+  role_requires_mfa = false
+
+  custom_role_policy_arns = [
+    "arn:aws:iam::aws:policy/aws-service-role/AWSOrganizationsServiceTrustPolicy"
+  ]
+
+  tags = local.tags
+}
+
+#
+# Assumable Role: AWSServiceRoleForSupport
+#
+module "iam_assumable_role_service_support" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.23.0"
+
+  trusted_role_services = [
+    "support.amazonaws.com"
+  ]
+
+  create_role      = true
+  role_name        = "AWSServiceRoleForSupport"
+  role_description = "Enables resource access for AWS to provide billing, administrative and support services"
+  role_path        = "/aws-service-role/support.amazonaws.com/"
+
+  role_requires_mfa = false
+
+  custom_role_policy_arns = [
+    "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
+  ]
+
+  tags = local.tags
+}
+
+#
+# Assumable Role: AWSServiceRoleForTrustedadvisor
+#
+module "iam_assumable_role_service_trustedadvisor" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.23.0"
+
+  trusted_role_services = [
+    "trustedadvisor.amazonaws.com"
+  ]
+
+  create_role      = true
+  role_name        = "AWSServiceRoleForTrustedAdvisor"
+  role_description = "Access for the AWS Trusted Advisor Service to help reduce cost, increase performance, and improve security of your AWS environment."
+  role_path        = "/aws-service-role/trustedadvisor.amazonaws.com/"
+
+  role_requires_mfa = false
+
+  custom_role_policy_arns = [
+    "arn:aws:iam::aws:policy/aws-service-role/AWSTrustedAdvisorServiceRolePolicy"
+  ]
+
+  tags = local.tags
+}
