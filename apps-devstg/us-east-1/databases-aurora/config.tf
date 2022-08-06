@@ -20,23 +20,23 @@ provider "vault" {
 }
 
 provider "mysql" {
-  endpoint = module.demoapps.this_rds_cluster_endpoint
-  username = module.demoapps.this_rds_cluster_master_username
-  password = module.demoapps.this_rds_cluster_master_password
+  endpoint = module.demoapps.cluster_endpoint
+  username = module.demoapps.cluster_master_username
+  password = module.demoapps.cluster_master_password
 }
 
 #=============================#
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.14.4"
+  required_version = "~> 1.1.3"
 
   required_providers {
-    aws   = ">= 3.8"
-    vault = "~> 2.20.0"
+    aws   = "~> 4.12"
+    vault = "~> 3.8.0"
     mysql = {
       source  = "winebarrel/mysql"
-      version = "1.10.4"
+      version = "1.10.6"
     }
   }
 

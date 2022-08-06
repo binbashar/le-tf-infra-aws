@@ -1,16 +1,16 @@
 module "demoapps" {
-  source = "github.com/binbashar/terraform-aws-rds-aurora.git?ref=v3.7.0"
+  source = "github.com/binbashar/terraform-aws-rds-aurora.git?ref=v7.2.2"
 
   # General settings
   name           = "${var.project}-${var.environment}-binbash-aurora-mysql"
   engine         = "aurora-mysql"
   engine_mode    = "provisioned"
-  engine_version = "5.7.12"
+  engine_version = "5.7"
 
   # Initial database and credentials
   database_name          = "demoapps"
-  username               = "admin"
-  password               = data.vault_generic_secret.databases_aurora.data["administrator_password"]
+  master_username        = "admin"
+  master_password        = data.vault_generic_secret.databases_aurora.data["administrator_password"]
   create_random_password = false
 
   # VPC and Subnets
@@ -18,15 +18,18 @@ module "demoapps" {
   subnets = data.terraform_remote_state.vpc.outputs.private_subnets
 
   # Instance type and desired instances
-  instance_type = "db.t3.small"
-  replica_count = 1
+  instance_class = "db.t3.small"
+  instances = {
+    one = {}
+  }
+
 
   # Autoscaling settings
-  replica_scale_enabled = false
-  # replica_scale_min         = 1
-  # replica_scale_max         = 3
-  # replica_scale_cpu         = 85
-  # replica_scale_connections = 200
+  autoscaling_enabled = false
+  # autoscaling_min_capacity        = 1
+  # autoscaling_max_capacity         = 3
+  # autoscaling_target_cpu         = 85
+  # autoscaling_target_connections = 200
 
   # Storage encrypted as default
   storage_encrypted = true

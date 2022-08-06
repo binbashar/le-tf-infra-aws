@@ -1,60 +1,55 @@
 # aws_rds_cluster
-output "this_rds_cluster_id" {
+output "cluster_id" {
   description = "The ID of the cluster"
-  value       = module.demoapps.this_rds_cluster_id
+  value       = module.demoapps.cluster_id
 }
 
-output "this_rds_cluster_resource_id" {
+output "cluster_resource_id" {
   description = "The Resource ID of the cluster"
-  value       = module.demoapps.this_rds_cluster_resource_id
+  value       = module.demoapps.cluster_resource_id
 }
 
-output "this_rds_cluster_endpoint" {
+output "cluster_endpoint" {
   description = "The cluster endpoint"
-  value       = module.demoapps.this_rds_cluster_endpoint
+  value       = module.demoapps.cluster_endpoint
 }
 
-output "this_rds_cluster_reader_endpoint" {
+output "cluster_reader_endpoint" {
   description = "The cluster reader endpoint"
-  value       = module.demoapps.this_rds_cluster_reader_endpoint
+  value       = module.demoapps.cluster_reader_endpoint
 }
 
-output "this_rds_cluster_database_name" {
+output "cluster_database_name" {
   description = "Name for an automatically created database on cluster creation"
-  value       = module.demoapps.this_rds_cluster_database_name
+  value       = module.demoapps.cluster_database_name
 }
 
-output "this_rds_cluster_master_password" {
+output "cluster_master_password" {
   description = "The master password"
-  value       = module.demoapps.this_rds_cluster_master_password
+  value       = module.demoapps.cluster_master_password
   sensitive   = true
 }
 
-output "this_rds_cluster_port" {
+output "cluster_port" {
   description = "The port"
-  value       = module.demoapps.this_rds_cluster_port
+  value       = module.demoapps.cluster_port
 }
 
-output "this_rds_cluster_master_username" {
+output "cluster_master_username" {
   description = "The master username"
-  value       = module.demoapps.this_rds_cluster_master_username
+  value       = module.demoapps.cluster_master_username
+  sensitive   = true
 }
 
-# aws_rds_cluster_instance
-output "this_rds_cluster_instance_endpoints" {
-  description = "A list of all cluster instance endpoints"
-  value       = module.demoapps.this_rds_cluster_instance_endpoints
-}
-
-output "this_rds_cluster_instance_ids" {
-  description = "A list of all cluster instance ids"
-  value       = module.demoapps.this_rds_cluster_instance_ids
+output "cluster_instances" {
+  description = "contains a map of all instances created and their attributes"
+  value       = module.demoapps.cluster_instances
 }
 
 # aws_security_group
-output "this_security_group_id" {
+output "security_group_id" {
   description = "The security group ID of the cluster"
-  value       = module.demoapps.this_security_group_id
+  value       = module.demoapps.security_group_id
 }
 
 output "demoapps_sockshop_username" {
