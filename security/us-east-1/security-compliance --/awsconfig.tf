@@ -14,6 +14,7 @@ module "config_logs" {
   config_logs_prefix      = ""
   s3_log_bucket_retention = 90
   enable_versioning       = true
+  force_destroy           = true
   config_accounts = [
     var.accounts.root.id,
     var.accounts.security.id,
