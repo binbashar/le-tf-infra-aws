@@ -95,11 +95,12 @@ module "terraform-aws-basic-layout" {
   #    h. rollback steps a,b & c + make apply
   # 2.New users setup (to view profile links -> PIN reset + OTP / uri link for Pritunl Client import).
   #    a. must open port 443 (line 60)
-  #    b. share new user setup links security (eg: LastPass / Bitwarden)
-  #    c. rollback a. step
-  #    d. re-comment this block
+  #    b. must uncomment public DNS record block (lines 105-112)
+  #    c. share new user setup links security (eg: LastPass / Bitwarden)
+  #    d. rollback a. step
+  #    e. re-comment block from step b.
   #
-  /*  dns_records_public_hosted_zone = [{
+/*  dns_records_public_hosted_zone = [{
     zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id[0],
     name    = "vpn.aws.binbash.com.ar",
     type    = "A",
