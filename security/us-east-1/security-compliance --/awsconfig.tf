@@ -15,7 +15,7 @@ module "config_logs" {
   s3_log_bucket_retention = 90
   enable_versioning       = true
   config_accounts = [
-    var.accounts.management.id,
+    var.accounts.root.id,
     var.accounts.security.id,
     var.accounts.shared.id,
     var.accounts.network.id,

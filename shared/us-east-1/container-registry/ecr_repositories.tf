@@ -4,7 +4,7 @@
 module "ecr_repositories" {
   for_each = local.repository_list
 
-  source = "github.com/binbashar/terraform-aws-ecr-cross-account.git?ref=1.0.2"
+  source = "github.com/binbashar/terraform-aws-ecr-cross-account.git?ref=1.1.0"
 
   #
   # Repository name
