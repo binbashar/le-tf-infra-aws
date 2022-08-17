@@ -13,6 +13,7 @@ resource "aws_organizations_organization" "main" {
     "ram.amazonaws.com",
     "sso.amazonaws.com",
     "fms.amazonaws.com",
+    "inspector2.amazonaws.com",
   ]
 
   # Enable all feature set to enable SCPs

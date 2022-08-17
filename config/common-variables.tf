@@ -127,3 +127,12 @@ variable "tgw_cidrs" {
   type        = list(string)
   default     = []
 }
+
+#===========================================#
+# Security compliance
+#===========================================#
+variable "enable_inspector" {
+  description = "Turn inspector on/off"
+  type        = bool
+  default     = false
+}

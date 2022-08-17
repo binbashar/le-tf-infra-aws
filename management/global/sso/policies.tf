@@ -37,6 +37,7 @@ data "aws_iam_policy_document" "devops" {
       "guardduty:*",
       "health:*",
       "iam:*",
+      "inspector2:*",
       "kms:*",
       "lambda:*",
       "lightsail:*",
@@ -149,6 +150,7 @@ data "aws_iam_policy_document" "secops" {
       "guardduty:*",
       "health:*",
       "iam:*",
+      "inspector2:*",
       "kms:*",
       "lambda:*",
       "logs:*",
@@ -169,7 +171,6 @@ data "aws_iam_policy_document" "secops" {
       "waf:*",
       "waf-regional:*",
       "wafv2:*"
-
     ]
     resources = ["*"]
     condition {
