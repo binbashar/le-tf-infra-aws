@@ -7,8 +7,8 @@ module "alb_waf_example" {
   version = "2.1.0"
 
   name_prefix        = "alb-waf-example"
-  load_balancer_type = "application"
-  internal           = true
+  load_balancer_type = var.alb_waf_example.type
+  internal           = var.alb_waf_example.internal
   vpc_id             = data.terraform_remote_state.vpc.outputs.vpc_id
   subnets            = data.terraform_remote_state.vpc.outputs.private_subnets
 }

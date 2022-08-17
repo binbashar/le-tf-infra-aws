@@ -18,6 +18,8 @@ enable_wafv2_regional = true
 # #------------------------------------------------------------------------------
 alb_waf_example = {
   enabled = true
-  # Load balancer type: internet-facing or internal
-  type = "internal"
+  # Load balancer internal (true) or internet-facing (false)
+  internal = true
+  # Load balancer type: application or network
+  type = "application"
 }
