@@ -20,3 +20,17 @@ terraform {
     key = "apps-devstg/security-firewall/terraform.tfstate"
   }
 }
+
+#=============================#
+# Data sources                #
+#=============================#
+data "terraform_remote_state" "vpc" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/network/terraform.tfstate"
+  }
+}

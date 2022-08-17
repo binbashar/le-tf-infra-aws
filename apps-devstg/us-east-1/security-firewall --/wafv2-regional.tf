@@ -1,15 +1,16 @@
 #
-# Create a WAF v2 for EKS' ALB
+# Create a WAF v2 for ALB (EKS' ALB, etc...)
 #
 module "wafv2_regional_alb" {
+  count  = var.enable_wafv2_regional ? 1 : 0
   source = "github.com/binbashar/terraform-aws-waf-webaclv2.git?ref=3.8.1"
 
   name_prefix = "${var.environment}-wafv2-albs"
   scope       = "REGIONAL"
   description = "WAFv2 ACL for ALB Ingress"
 
-  # alb_arn     = module.alb.arn
-  create_alb_association = false
+  alb_arn                = var.alb_waf_example.enabled ? module.alb_waf_example[0].arn : ""
+  create_alb_association = var.alb_waf_example.enabled ? true : false
 
   allow_default_action = true
 
