@@ -2,14 +2,14 @@
 # Create a WAF v2 for ALB (EKS' ALB, etc...)
 #
 module "wafv2_regional_alb" {
-  count  = var.enable_wafv2_regional ? 1 : 0
-  source = "github.com/binbashar/terraform-aws-waf-webaclv2.git?ref=3.8.1"
+  enabled = var.enable_wafv2_regional
+  source  = "github.com/binbashar/terraform-aws-waf-webaclv2.git?ref=3.8.1"
 
   name_prefix = "${var.environment}-wafv2-albs"
   scope       = "REGIONAL"
   description = "WAFv2 ACL for ALB Ingress"
 
-  alb_arn                = var.alb_waf_example.enabled ? module.alb_waf_example[0].arn : ""
+  alb_arn                = var.alb_waf_example.enabled ? module.alb_waf_example.lb_arn : ""
   create_alb_association = var.alb_waf_example.enabled ? true : false
 
   allow_default_action = true
@@ -25,7 +25,7 @@ module "wafv2_regional_alb" {
       name     = "CommonRulesByAWS"
       priority = "1"
 
-      override_action = "count"
+      override_action = "none"
 
       visibility_config = {
         cloudwatch_metrics_enabled = false
@@ -45,7 +45,7 @@ module "wafv2_regional_alb" {
       name     = "BadInputsRulesByAWS"
       priority = "2"
 
-      override_action = "count"
+      override_action = "none"
 
       visibility_config = {
         cloudwatch_metrics_enabled = false
@@ -62,7 +62,7 @@ module "wafv2_regional_alb" {
       name     = "SQLiRulesByAWS"
       priority = "3"
 
-      override_action = "count"
+      override_action = "none"
 
       visibility_config = {
         cloudwatch_metrics_enabled = false

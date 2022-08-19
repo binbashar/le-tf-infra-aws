@@ -20,3 +20,9 @@ variable "alb_waf_example" {
   type    = any
   default = {}
 }
+
+variable "ingress_cidr_blocks" {
+  description = "List of IPv4 CIDR ranges to use on all ingress rules"
+  type        = list(string)
+  default     = []
+}

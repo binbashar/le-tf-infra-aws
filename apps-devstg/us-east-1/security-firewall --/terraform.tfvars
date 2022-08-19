@@ -23,3 +23,9 @@ alb_waf_example = {
   # Load balancer type: application or network
   type = "application"
 }
+
+# #------------------------------------------------------------------------------
+# # ALB WAF SG Config
+# #------------------------------------------------------------------------------
+#Add your Public IP to Allow Traffic Inbound ["XXX.XXX.XXX.XXX/32"]
+ingress_cidr_blocks = []
