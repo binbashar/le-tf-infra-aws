@@ -15,7 +15,7 @@ module "wafv2_regional_alb" {
   allow_default_action = true
 
   visibility_config = {
-    cloudwatch_metrics_enabled = false
+    cloudwatch_metrics_enabled = true
     metric_name                = "${var.environment}-wafv2-albs-main-metrics"
     sampled_requests_enabled   = true
   }
@@ -28,7 +28,7 @@ module "wafv2_regional_alb" {
       override_action = "none"
 
       visibility_config = {
-        cloudwatch_metrics_enabled = false
+        cloudwatch_metrics_enabled = true
         metric_name                = "CommonRulesByAWSMetric"
         sampled_requests_enabled   = true
       }
@@ -48,7 +48,7 @@ module "wafv2_regional_alb" {
       override_action = "none"
 
       visibility_config = {
-        cloudwatch_metrics_enabled = false
+        cloudwatch_metrics_enabled = true
         metric_name                = "BadInputsRulesByAWSMetric"
         sampled_requests_enabled   = false
       }
@@ -65,7 +65,7 @@ module "wafv2_regional_alb" {
       override_action = "none"
 
       visibility_config = {
-        cloudwatch_metrics_enabled = false
+        cloudwatch_metrics_enabled = true
         metric_name                = "BadInputsRulesByAWSMetric"
         sampled_requests_enabled   = false
       }
