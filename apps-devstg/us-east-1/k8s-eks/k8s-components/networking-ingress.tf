@@ -70,7 +70,7 @@ resource "kubernetes_ingress_v1" "apps" {
       # Nginx provides an endpoint for health checks
       "alb.ingress.kubernetes.io/healthcheck-path" = "/healthz"
       # Use the AWS ACM certificate we created for this
-      "alb.ingress.kubernetes.io/certificate-arn" = data.terraform_remote_state.certs.outputs.certificate_wildcard_devstg_aws_binbash_com_ar_arn
+      "alb.ingress.kubernetes.io/certificate-arn" = data.terraform_remote_state.certs.outputs.certificate_arn
       # Enable ports 80 and 443
       "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
       # Define the SSL Redirect action
