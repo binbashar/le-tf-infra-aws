@@ -50,7 +50,7 @@ module "wafv2_regional_alb" {
       visibility_config = {
         cloudwatch_metrics_enabled = true
         metric_name                = "BadInputsRulesByAWSMetric"
-        sampled_requests_enabled   = false
+        sampled_requests_enabled   = true
       }
 
       managed_rule_group_statement = {
@@ -67,7 +67,7 @@ module "wafv2_regional_alb" {
       visibility_config = {
         cloudwatch_metrics_enabled = true
         metric_name                = "BadInputsRulesByAWSMetric"
-        sampled_requests_enabled   = false
+        sampled_requests_enabled   = true
       }
 
       managed_rule_group_statement = {
