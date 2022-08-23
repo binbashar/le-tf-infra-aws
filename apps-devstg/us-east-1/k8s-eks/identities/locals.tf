@@ -12,4 +12,5 @@ locals {
   tags_externaldns_private = merge(local.tags, { Subject = "externaldns-private" })
   tags_externaldns_public  = merge(local.tags, { Subject = "externaldns-public" })
   tags_aws_lb_controller   = merge(local.tags, { Subject = "aws-lb-controller" })
+  tags_external_secrets    = merge(local.tags, { Subject = "external-secrets" })
 }
