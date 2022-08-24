@@ -22,14 +22,14 @@ module "wafv2_regional_alb" {
 
   rules = [
     {
-      name     = "CommonRulesByAWS"
+      name     = "AWSManagedRulesCommonRuleSet"
       priority = "1"
 
       override_action = "none"
 
       visibility_config = {
         cloudwatch_metrics_enabled = true
-        metric_name                = "CommonRulesByAWSMetric"
+        metric_name                = "AWSManagedRulesCommonRuleSet-Metrics"
         sampled_requests_enabled   = true
       }
 
@@ -42,14 +42,14 @@ module "wafv2_regional_alb" {
       }
     },
     {
-      name     = "BadInputsRulesByAWS"
+      name     = "AWSManagedRulesKnownBadInputsRuleSet"
       priority = "2"
 
       override_action = "none"
 
       visibility_config = {
         cloudwatch_metrics_enabled = true
-        metric_name                = "BadInputsRulesByAWSMetric"
+        metric_name                = "AWSManagedRulesKnownBadInputsRuleSet-Metrics"
         sampled_requests_enabled   = true
       }
 
@@ -59,14 +59,14 @@ module "wafv2_regional_alb" {
       }
     },
     {
-      name     = "SQLiRulesByAWS"
+      name     = "AWSManagedRulesSQLiRuleSet"
       priority = "3"
 
       override_action = "none"
 
       visibility_config = {
         cloudwatch_metrics_enabled = true
-        metric_name                = "BadInputsRulesByAWSMetric"
+        metric_name                = "AWSManagedRulesSQLiRuleSet-Metrics"
         sampled_requests_enabled   = true
       }
 
@@ -76,14 +76,14 @@ module "wafv2_regional_alb" {
       }
     },
     {
-      name     = "IpReputationListbyAWS"
+      name     = "AWSManagedRulesAmazonIpReputationList"
       priority = "4"
 
       override_action = "none"
 
       visibility_config = {
         cloudwatch_metrics_enabled = true
-        metric_name                = "IpReputationListByAWSMetric"
+        metric_name                = "AWSManagedRulesAmazonIpReputationList-Metrics"
         sampled_requests_enabled   = true
       }
 
@@ -93,14 +93,31 @@ module "wafv2_regional_alb" {
       }
     },
     {
-      name     = "BotControlByAWS"
+      name     = "AWSManagedRulesAnonymousIpList"
       priority = "5"
 
       override_action = "none"
 
       visibility_config = {
         cloudwatch_metrics_enabled = true
-        metric_name                = "AWSManagedRulesBotControlRuleSetMetric"
+        metric_name                = "AWSManagedRulesAnonymousIpList-Metrics"
+        sampled_requests_enabled   = true
+      }
+
+      managed_rule_group_statement = {
+        name        = "AWSManagedRulesAnonymousIpList"
+        vendor_name = "AWS"
+      }
+    },
+    {
+      name     = "AWSManagedRulesBotControlRuleSet"
+      priority = "6"
+
+      override_action = "none"
+
+      visibility_config = {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "AWSManagedRulesBotControlRuleSet-Metrics"
         sampled_requests_enabled   = true
       }
 
@@ -110,6 +127,7 @@ module "wafv2_regional_alb" {
       }
     },
     # Not supported from Terraform yet => https://github.com/hashicorp/terraform-provider-aws/issues/23287
+    # This RuleSet can be enabled and configured from AWS Console => https://aws.amazon.com/es/blogs/aws-spanish/como-habilitar-account-takeover-prevention-atp-para-proteger-mis-paginas-de-inicio-de-sesion/
     # {
     #   name     = "AWSManagedRulesATPRuleSetByAWS"
     #   priority = "5"
@@ -129,14 +147,14 @@ module "wafv2_regional_alb" {
     # },
     ### IP Rate Based Rule example
     {
-      name     = "IpRateLimitBasedRuleCustom"
+      name     = "CustomRulesIpRateLimitBasedRuleSet"
       priority = "7"
 
       action = "count"
 
       visibility_config = {
         cloudwatch_metrics_enabled = true
-        metric_name                = "IpRateLimitBasedRuleMetric"
+        metric_name                = "CustomRuleIpRateLimitBasedRuleSet-Metrics"
         sampled_requests_enabled   = true
       }
 
