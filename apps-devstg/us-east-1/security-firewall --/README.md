@@ -1,6 +1,6 @@
 | OWASP ID|AWS WAF Managed Rule Group | Rules Description|
 | - | :-: | - |
-| [A01:2021 - Broken Access Control] | [AWSManagedRulesCommonRuleSet] | SizeRestrictions_QUERYSTRING<br>qEC2MetaDataSSRF_QUERYARGUMENTS<br>GenericLFI_QUERYARGUMENTS<br>RestrictedExtensions_QUERYARGUMENTS<br>GenericRFI_QUERYARGUMENTS<br>CrossSiteScripting_QUERYARGUMENTS |
+| [A01:2021 - Broken Access Control] | [AWSManagedRulesCommonRuleSet] | SizeRestrictions_QUERYSTRING<br>EC2MetaDataSSRF_QUERYARGUMENTS<br>GenericLFI_QUERYARGUMENTS<br>RestrictedExtensions_QUERYARGUMENTS<br>GenericRFI_QUERYARGUMENTS<br>CrossSiteScripting_QUERYARGUMENTS |
 | [A02:2021 - Cryptographic Failures]| N/A | N/A |
 | [A03:2021 - Injection] | [AWSManagedRulesSQLiRuleSet] | SQLi_QUERYARGUMENTS<br>SQLiExtendedPatterns_QUERYARGUMENTS<br>SQLi_BODY<br>SQLiExtendedPatterns_BODY<br>SQLi_COOKIE                                                                                  |
 | [A04:2021 - Insecure Design] | N/A | N/A |
