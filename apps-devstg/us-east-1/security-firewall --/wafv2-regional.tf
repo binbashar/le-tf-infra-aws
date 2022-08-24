@@ -74,7 +74,92 @@ module "wafv2_regional_alb" {
         name        = "AWSManagedRulesSQLiRuleSet"
         vendor_name = "AWS"
       }
-    }
+    },
+    {
+      name     = "IpReputationListbyAWS"
+      priority = "4"
+
+      override_action = "none"
+
+      visibility_config = {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "nIpReputationListByAWSMetric"
+        sampled_requests_enabled   = true
+      }
+
+      managed_rule_group_statement = {
+        name        = "AWSManagedRulesAmazonIpReputationList"
+        vendor_name = "AWS"
+      }
+    },
+    {
+      name     = "BotControlByAWS"
+      priority = "5"
+
+      override_action = "none"
+
+      visibility_config = {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "AWSManagedRulesBotControlRuleSetMetric"
+        sampled_requests_enabled   = true
+      }
+
+      managed_rule_group_statement = {
+        name        = "AWSManagedRulesBotControlRuleSet"
+        vendor_name = "AWS"
+      }
+    },
+    # Not supported from Terraform yet => https://github.com/hashicorp/terraform-provider-aws/issues/23287
+    # {
+    #   name     = "AWSManagedRulesATPRuleSetByAWS"
+    #   priority = "5"
+
+    #   override_action = "none"
+
+    #   visibility_config = {
+    #     cloudwatch_metrics_enabled = true
+    #     metric_name                = "AWSManagedRulesATPRuleSet"
+    #     sampled_requests_enabled   = true
+    #   }
+
+    #   managed_rule_group_statement = {
+    #     name        = "AWSManagedRulesATPRuleSet"
+    #     vendor_name = "AWS"
+    #   }
+    # },
+    ### IP Rate Based Rule example
+    {
+      name     = "IpRateLimitBasedRuleCustom"
+      priority = "7"
+
+      action = "count"
+
+      visibility_config = {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "IpRateLimitBasedRuleMetric"
+        sampled_requests_enabled   = true
+      }
+
+      rate_based_statement = {
+        limit              = 100
+        aggregate_key_type = "IP"
+      }
+
+      # Optional scope_down_statement to refine what gets rate limited
+      # scope_down_statement = {
+      #   not_statement = { # not statement to rate limit everything except the following path
+      #     byte_match_statement = {
+      #       field_to_match = {
+      #         uri_path = "{}"
+      #       }
+      #       positional_constraint = "STARTS_WITH"
+      #       search_string         = "/path/to/match"
+      #       priority              = 0
+      #       type                  = "NONE"
+      #     }
+      #   }
+      # }
+    },
   ]
 
   tags = local.tags
