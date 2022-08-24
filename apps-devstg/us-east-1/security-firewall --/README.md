@@ -1,17 +1,15 @@
- |                                              AWS WAF Managed Rule Group                                              | OWASP ID                                              |
- | :--------------------------------------------------------------------------------------------------------------: | ----------------------------------------------------- |
- |                                          [AWSManagedRulesCommonRuleSet]                                          | [A01:2021 - Broken Access Control]                      |
- |                                                       N/A                                                        | [A02:2021 - Cryptographic Failures]                     |
- |                                           [AWSManagedRulesSQLiRuleSet]                                           | [A03:2021 - Injection]                                  |
- |                                                       N/A                                                        | [A04:2021 - Insecure Design]                            |
- |                                                       N/A                                                        | [A05:2021 - Security Misconfiguration]                  |
- |                                      [AWSManagedRulesKnownBadInputsRuleSet]                                      | [A06:2021 - Vulnerable and Outdated Components]         |
- | [AWSManagedRulesATPRuleSet] <br> [AWSManagedRulesAmazonIpReputationList] <br> [AWSManagedRulesBotControlRuleSet] | [A07:2021 - Identification and Authentication Failures] |
- |                                                       N/A                                                        | [A08:2021 - Software and Data Integrity Failures]       |
- |                                                       N/A                                                        | [A09:2021 - Security Logging and Monitoring Failures]   |
- |                                                       N/A                                                        | [A10:2021 - Server-Side Request Forgery (SSRF)]         |
-
-
+| OWASP ID|AWS WAF Managed Rule Group | Rules Description|
+| - | :-: | - |
+| [A01:2021 - Broken Access Control] | [AWSManagedRulesCommonRuleSet] | SizeRestrictions_QUERYSTRING<br>EC2MetaDataSSRF_QUERYARGUMENTS<br>GenericLFI_QUERYARGUMENTS<br>RestrictedExtensions_QUERYARGUMENTS<br>GenericRFI_QUERYARGUMENTS<br>CrossSiteScripting_QUERYARGUMENTS |
+| [A02:2021 - Cryptographic Failures]| N/A | N/A |
+| [A03:2021 - Injection] | [AWSManagedRulesSQLiRuleSet] | SQLi_QUERYARGUMENTS<br>SQLiExtendedPatterns_QUERYARGUMENTS<br>SQLi_BODY<br>SQLiExtendedPatterns_BODY<br>SQLi_COOKIE                                                                                  |
+| [A04:2021 - Insecure Design] | N/A | N/A |
+| [A05:2021 - Security Misconfiguration] | N/A | N/A |
+| [A06:2021 - Vulnerable and Outdated Components] | [AWSManagedRulesKnownBadInputsRuleSet] | ExploitablePaths_URIPATH<br>Log4JRCE_HEADER<br>Log4JRCE_QUERYSTRING<br>Log4JRCE_URI<br>Log4JRCE_BODY |
+| [A07:2021 - Identification and Authentication Failures] | [AWSManagedRulesATPRuleSet]<br>[AWSManagedRulesAmazonIpReputationList]<br>[AWSManagedRulesBotControlRuleSet] | AttributePasswordTraversal<br>AttributeUsernameTraversal<br>AttributeCompromisedCredentials<br>MissingCredential<br>VolumetricSession TokenRejected<br>AWSManagedIPReputationList<br>AWSManagedReconnaissanceList<br>CategoryAdvertising<br>CategoryArchiver<br>CategoryContentFetcher<br>CategoryHttpLibrary<br>CategoryLinkChecker<br>CategoryMiscellaneous<br>CategoryMonitoring<br>CategoryScrapingFramework<br>CategorySecurity CategorySeo<br>CategorySocialMedia<br>CategorySearchEngine<br>SignalAutomatedBrowser<br>SignalKnownBotDataCenter<br>SignalNonBrowserUserAgent |
+| [A08:2021 - Software and Data Integrity Failures] | N/A | N/A |
+| [A09:2021 - Security Logging and Monitoring Failures] | N/A | N/A |
+| [A10:2021 - Server-Side Request Forgery (SSRF)] | N/A | EC2MetaDataSSRF_BODY<br>EC2MetaDataSSRF_COOKIE<br>EC2MetaDataSSRF_URIPATH<br>EC2MetaDataSSRF_QUERYARGUMENTS |
 
 [AWSManagedRulesCommonRuleSet]: https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html
 [AWSManagedRulesSQLiRuleSet]: https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-use-case.html#aws-managed-rule-groups-use-case-sql-db  
