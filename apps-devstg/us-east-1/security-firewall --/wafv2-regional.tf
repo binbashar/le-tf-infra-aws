@@ -83,7 +83,7 @@ module "wafv2_regional_alb" {
 
       visibility_config = {
         cloudwatch_metrics_enabled = true
-        metric_name                = "nIpReputationListByAWSMetric"
+        metric_name                = "IpReputationListByAWSMetric"
         sampled_requests_enabled   = true
       }
 
