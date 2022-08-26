@@ -41,7 +41,7 @@ resource "aws_iam_policy" "external_secrets_secrets_manager" {
         "secretsmanager:ListSecretVersionIds"
       ],
       "Resource": [
-        "arn:aws:secretsmanager::${var.accounts.shared.id}:secret:${var.environment}/k8s-eks/*"
+        "arn:aws:secretsmanager::${var.accounts.apps-devstg.id}:secret:/k8s-eks/*"
       ]
     }
   ]
@@ -64,7 +64,7 @@ resource "aws_iam_policy" "external_secrets_parameter_store" {
         "ssm:GetParameter*"
       ],
       "Resource": [
-        "arn:aws:ssm::${var.accounts.shared.id}:parameter/${var.environment}/k8s-eks/*"
+        "arn:aws:ssm::${var.accounts.apps-devstg.id}:parameter/k8s-eks/*"
       ]
     }
   ]
