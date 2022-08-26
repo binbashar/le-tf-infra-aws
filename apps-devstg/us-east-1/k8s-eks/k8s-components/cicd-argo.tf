@@ -43,7 +43,7 @@ resource "helm_release" "argocd" {
 }
 
 #------------------------------------------------------------------------------
-# ArgoCD Rollouts
+# Argo Rollouts
 #------------------------------------------------------------------------------
 resource "helm_release" "argo_rollouts" {
   count      = var.enable_argo_rollouts ? 1 : 0
