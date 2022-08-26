@@ -33,4 +33,10 @@ resource "helm_release" "argocd" {
       }
     })
   ]
+
+  depends_on = [
+    helm_release.alb_ingress,
+    helm_release.ingress_nginx_private,
+    helm_release.certmanager
+  ]
 }
