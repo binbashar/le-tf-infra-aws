@@ -8,7 +8,7 @@ resource "kubernetes_namespace" "monitoring_metrics" {
 }
 
 resource "kubernetes_namespace" "monitoring_logging" {
-  count = var.enable_logging || var.enable_logging_k8s_event_logger || var.enable_logging_awses || var.enable_logging_selfhosted ? 1 : 0
+  count = var.logging.enabled ? 1 : 0
 
   metadata {
     labels = local.labels
