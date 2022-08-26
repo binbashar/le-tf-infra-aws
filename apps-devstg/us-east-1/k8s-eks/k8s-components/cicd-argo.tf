@@ -41,3 +41,23 @@ resource "helm_release" "argocd" {
     helm_release.certmanager
   ]
 }
+
+#------------------------------------------------------------------------------
+# ArgoCD Rollouts
+#------------------------------------------------------------------------------
+resource "helm_release" "argo_rollouts" {
+  count      = var.enable_argo_rollouts ? 1 : 0
+
+  name       = "argo-rollouts"
+  namespace  = kubernetes_namespace.argocd[0].id
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argo-rollouts"
+  version    = "2.19.0"
+  values = [file("chart-values/argo-rollouts.yaml")]
+
+  depends_on = [
+    helm_release.alb_ingress,
+    helm_release.ingress_nginx_private,
+    helm_release.certmanager
+  ]
+}

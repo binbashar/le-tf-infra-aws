@@ -80,7 +80,7 @@ resource "kubernetes_namespace" "external-secrets" {
 }
 
 resource "kubernetes_namespace" "argocd" {
-  count = var.enable_cicd ? 1 : 0
+  count = var.enable_cicd || var.enable_argo_rollouts ? 1 : 0
 
   metadata {
     labels = local.labels

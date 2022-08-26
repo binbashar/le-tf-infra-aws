@@ -46,6 +46,11 @@ variable "enable_cicd" {
   default = false
 }
 
+variable "enable_argo_rollouts" {
+  type    = bool
+  default = false
+}
+
 variable "enable_hpa_scaling" {
   type    = bool
   default = false
@@ -67,7 +72,7 @@ variable "enable_gatus" {
 }
 
 variable "logging" {
-  type    = map(any)
+  type    = any
   default = {}
 }
 
