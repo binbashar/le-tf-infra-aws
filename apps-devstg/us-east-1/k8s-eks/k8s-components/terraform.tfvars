@@ -40,6 +40,7 @@ enable_cluster_autoscaling = true
 logging = {
   enabled = false
   # Log forwarders/processors
+  # When logging is enabled fluent-bit is enabled also
   forwarders = [
     "fluentd-awses",
     "fluentd-selfhosted",
