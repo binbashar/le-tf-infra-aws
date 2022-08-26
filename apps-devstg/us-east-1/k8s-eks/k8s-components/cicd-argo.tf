@@ -3,11 +3,12 @@
 #------------------------------------------------------------------------------
 resource "helm_release" "argocd" {
   count      = var.enable_cicd ? 1 : 0
+
   name       = "argocd"
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
-  version    = "4.6.5"
+  version    = "5.3.3"
   values = [
     templatefile("chart-values/argo-cd.yaml", {
       argoHost     = "argocd.${local.environment}.${local.private_base_domain}"
