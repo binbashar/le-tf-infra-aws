@@ -6,7 +6,7 @@
 | [A04:2021 - Insecure Design] | N/A | N/A |
 | [A05:2021 - Security Misconfiguration] | N/A | N/A |
 | [A06:2021 - Vulnerable and Outdated Components] | [AWSManagedRulesKnownBadInputsRuleSet] | ExploitablePaths_URIPATH<br>Log4JRCE_HEADER<br>Log4JRCE_QUERYSTRING<br>Log4JRCE_URI<br>Log4JRCE_BODY |
-| [A07:2021 - Identification and Authentication Failures] | [AWSManagedRulesATPRuleSet]<br>[AWSManagedRulesAmazonIpReputationList]<br>[AWSManagedRulesBotControlRuleSet] | AttributePasswordTraversal<br>AttributeUsernameTraversal<br>AttributeCompromisedCredentials<br>MissingCredential<br>VolumetricSession TokenRejected<br>AWSManagedIPReputationList<br>AWSManagedReconnaissanceList<br>CategoryAdvertising<br>CategoryArchiver<br>CategoryContentFetcher<br>CategoryHttpLibrary<br>CategoryLinkChecker<br>CategoryMiscellaneous<br>CategoryMonitoring<br>CategoryScrapingFramework<br>CategorySecurity CategorySeo<br>CategorySocialMedia<br>CategorySearchEngine<br>SignalAutomatedBrowser<br>SignalKnownBotDataCenter<br>SignalNonBrowserUserAgent |
+| [A07:2021 - Identification and Authentication Failures] | [AWSManagedRulesAmazonIpReputationList]<br>[AWSManagedRulesBotControlRuleSet]<br>[AWSManagedRulesATPRuleSet]<br>(ATPRuleSet is not Terraform supported yet <br> See related [#Issue 23287])| AttributePasswordTraversal<br>AttributeUsernameTraversal<br>AttributeCompromisedCredentials<br>MissingCredential<br>VolumetricSession TokenRejected<br>AWSManagedIPReputationList<br>AWSManagedReconnaissanceList<br>CategoryAdvertising<br>CategoryArchiver<br>CategoryContentFetcher<br>CategoryHttpLibrary<br>CategoryLinkChecker<br>CategoryMiscellaneous<br>CategoryMonitoring<br>CategoryScrapingFramework<br>CategorySecurity CategorySeo<br>CategorySocialMedia<br>CategorySearchEngine<br>SignalAutomatedBrowser<br>SignalKnownBotDataCenter<br>SignalNonBrowserUserAgent |
 | [A08:2021 - Software and Data Integrity Failures] | N/A | N/A |
 | [A09:2021 - Security Logging and Monitoring Failures] | N/A | N/A |
 | [A10:2021 - Server-Side Request Forgery (SSRF)] | N/A | EC2MetaDataSSRF_BODY<br>EC2MetaDataSSRF_COOKIE<br>EC2MetaDataSSRF_URIPATH<br>EC2MetaDataSSRF_QUERYARGUMENTS |
@@ -28,3 +28,5 @@
 [A08:2021 - Software and Data Integrity Failures]: https://owasp.org/Top10/A08_2021-Software_and_Data_Integrity_Failures
 [A09:2021 - Security Logging and Monitoring Failures]: https://owasp.org/Top10/A09_2021-Security_Logging_and_Monitoring_Failures
 [A10:2021 - Server-Side Request Forgery (SSRF)]: https://owasp.org/Top10/A10_2021-Server-Side_Request_Forgery_%28SSRF%29
+
+[#Issue 23287]: https://github.com/hashicorp/terraform-provider-aws/issues/23287
