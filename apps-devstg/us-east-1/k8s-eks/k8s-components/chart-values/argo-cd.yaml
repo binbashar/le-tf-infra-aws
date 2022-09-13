@@ -18,9 +18,9 @@ server:
         hosts:
           - ${argoHost}
 
-extensions:
-  enable: true
+  extensions:
+    enabled: false
 
-  contents:
-    - name: argo-rollouts
-      url: https://github.com/argoproj-labs/rollout-extension/releases/download/v0.2.0/extension.tar
+    contents:
+      - name: argo-rollouts
+        url: https://github.com/argoproj-labs/rollout-extension/releases/download/v0.2.0/extension.tar

@@ -46,6 +46,11 @@ variable "enable_cicd" {
   default = false
 }
 
+variable "enable_argocd_image_updater" {
+  type    = bool
+  default = false
+}
+
 variable "enable_argo_rollouts" {
   type    = bool
   default = false

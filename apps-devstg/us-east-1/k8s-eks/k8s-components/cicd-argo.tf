@@ -43,17 +43,47 @@ resource "helm_release" "argocd" {
 }
 
 #------------------------------------------------------------------------------
+# ArgoCD Image Updater
+#------------------------------------------------------------------------------
+resource "helm_release" "argocd_image_updater" {
+  count      = var.enable_argocd_image_updater ? 1 : 0
+  name       = "argocd-image-updater"
+  namespace  = kubernetes_namespace.argocd[0].id
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argocd-image-updater"
+  version    = "0.8.0"
+  values     = [
+    templatefile("chart-values/argocd-image-updater.yaml", {
+      region           = var.region
+      argoHost         = "argocd.${local.environment}.${local.private_base_domain}",
+      gitCommitUser    = "binbash-machine-user"
+      gitCommitMail    = "leverage-aws+machine-user@binbash.com.ar"
+      repositoryApiUrl = data.terraform_remote_state.shared-container-registry.outputs.registry_url,
+      roleArn          = data.terraform_remote_state.eks-identities.outputs.argo_cd_image_updater_role_arn
+    })
+  ]
+
+  depends_on = [
+    helm_release.argocd
+  ]
+}
+
+#------------------------------------------------------------------------------
 # Argo Rollouts
 #------------------------------------------------------------------------------
 resource "helm_release" "argo_rollouts" {
-  count      = var.enable_argo_rollouts ? 1 : 0
+  count = var.enable_argo_rollouts ? 1 : 0
 
   name       = "argo-rollouts"
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-rollouts"
   version    = "2.19.0"
-  values = [file("chart-values/argo-rollouts.yaml")]
+  values = [
+    templatefile("chart-values/argo-rollouts.yaml", {
+      rolloutsHost = "rollouts.${local.environment}.${local.private_base_domain}"
+      ingressClass = local.private_ingress_class
+  })]
 
   depends_on = [
     helm_release.alb_ingress,
