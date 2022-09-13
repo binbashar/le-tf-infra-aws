@@ -52,3 +52,14 @@ data "terraform_remote_state" "shared-dns" {
     key     = "shared/dns/binbash.com.ar/terraform.tfstate"
   }
 }
+
+data "terraform_remote_state" "shared-container-registry" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
+    key     = "shared/container-registry/terraform.tfstate"
+  }
+}
