@@ -16,7 +16,7 @@ module "role_argo_cd_image_updater" {
     aws_iam_policy.argo_cd_image_updater.arn
   ]
   oidc_fully_qualified_subjects = [
-    "system:serviceaccount:argo-cd-image-updater:argo-cd-image-updater"
+    "system:serviceaccount:argocd:argocd-image-updater"
   ]
 
   tags = local.tags_argo_cd_image_updater
@@ -47,11 +47,10 @@ resource "aws_iam_policy" "argo_cd_image_updater" {
                 "ecr:ListTagsForResource",
                 "ecr:DescribeImageScanFindings"
             ],
-            "Resource": [
-              "${data.terraform_remote_state.shared-container-registry.outputs.repository_arn}/*"
-            ]
+            "Resource": "*"
         }
     ]
 }
 EOF
 }
+              # "${data.terraform_remote_state.shared-container-registry.outputs.repository_arn}/*"
