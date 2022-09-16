@@ -14,12 +14,14 @@ data:
   argocd.plaintext: "false"
 
 config:
-  gitCommitUser: "${gitCommitUser}"
-  gitCommitMail: "${gitCommitMail}"
+  gitCommitUser: ${gitCommitUser}
+  gitCommitMail: ${gitCommitMail}
+  gitCommitTemplate: |
+    ${gitCommitMessageTemplate}
   registries:
   - name: ECR
-    api_url: ${repositoryApiUrl}
-    prefix: ""
+    api_url: https://${repositoryApiUrl}
+    prefix: ${repositoryApiUrl}
     ping: yes
     insecure: no
     credentials: ext:/scripts/ecr-login.sh  #script name should match here and in authScripts 
