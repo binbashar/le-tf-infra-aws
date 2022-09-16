@@ -67,5 +67,24 @@ locals {
       read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
       write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
+    demo-apps_web = {
+      create            = true
+      name              = "demo-apps/web"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-apps_voting-svc = {
+      create            = true
+      name              = "demo-apps/voting-svc"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-apps_emoji-svc = {
+      create            = true
+      name              = "demo-apps/emoji-svc"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
   }
+
 }
