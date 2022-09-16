@@ -53,4 +53,3 @@ resource "aws_iam_policy" "argo_cd_image_updater" {
 }
 EOF
 }
-              # "${data.terraform_remote_state.shared-container-registry.outputs.repository_arn}/*"
