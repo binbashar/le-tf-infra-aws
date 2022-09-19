@@ -8,10 +8,7 @@ resource "helm_release" "emojivoto" {
   repository = "https://binbashar.github.io/helm-charts/"
   chart      = "argocd-application"
   version    = "0.2.0"
-  values     = [
-    templatefile("chart-values/demoapps-emojivoto.yaml", {
-      environment = "dev"
-    })]
+  values = [file("chart-values/demoapps-emojivoto.yaml")]
 }
 
 #------------------------------------------------------------------------------

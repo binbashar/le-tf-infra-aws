@@ -4,16 +4,13 @@ project: default
 # Source code settings
 source:
   repoURL: https://github.com/binbashar/le-demo-apps.git
-  targetRevision: feature/emojivoto-kustomize
-  path: emojivoto/environments/${environment}
-
-kustomize:
-  namePrefix: ${environment}-
+  targetRevision: head
+  path: emojivoto/kubernetes
 
 # Cluster destination
 destination:
   server: https://kubernetes.default.svc
-  namespace: ${environment}-emojivoto
+  namespace: demo-emojivoto
 
 syncPolicy:
   automated:
