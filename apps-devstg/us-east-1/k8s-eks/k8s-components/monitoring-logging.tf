@@ -2,7 +2,7 @@
 # FluentBit: capture pods logs and ship them to ElasticSearch/Kibana.
 #------------------------------------------------------------------------------
 resource "helm_release" "fluentbit" {
-  count      = var.logging.enabled ? 1 : 0
+  count = var.logging.enabled ? 1 : 0
 
   name       = "fluentbit"
   namespace  = kubernetes_namespace.monitoring_logging[0].id
@@ -36,7 +36,7 @@ resource "helm_release" "k8s_event_logger" {
 # fluentd + AWS ElasticSearch: collect cluster logs and ship them to AWS ES
 #------------------------------------------------------------------------------
 resource "helm_release" "fluentd_awses" {
-  count      = var.logging.enabled && contains(var.logging.forwarders, "fluentd-awses") ? 1 : 0
+  count = var.logging.enabled && contains(var.logging.forwarders, "fluentd-awses") ? 1 : 0
 
   name       = "fluentd-awses"
   namespace  = kubernetes_namespace.monitoring_logging[0].id
@@ -54,7 +54,7 @@ resource "helm_release" "fluentd_awses" {
 # fluentd + Self-hosted ElasticSearch: collect cluster logs and ship them to ES
 #------------------------------------------------------------------------------
 resource "helm_release" "fluentd_selfhosted" {
-  count      = var.logging.enabled && contains(var.logging.forwarders, "fluentd-selfhosted") ? 1 : 0
+  count = var.logging.enabled && contains(var.logging.forwarders, "fluentd-selfhosted") ? 1 : 0
 
   name       = "fluentd-selfhosted"
   namespace  = kubernetes_namespace.monitoring_logging[0].id
