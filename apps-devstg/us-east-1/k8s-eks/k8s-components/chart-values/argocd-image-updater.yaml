@@ -24,13 +24,13 @@ config:
     prefix: ${repositoryApiUrl}
     ping: yes
     insecure: no
-    credentials: ext:/scripts/ecr-login.sh  #script name should match here and in authScripts 
+    credentials: ext:/scripts/ecr-login.sh  #script name should match here and in authScripts
     credsexpire: 11h
 
 authScripts:
   enabled: true
-  scripts: 
-    ecr-login.sh: |   # notice script name matches above    
+  scripts:
+    ecr-login.sh: |   # notice script name matches above
       #!/bin/sh
       aws ecr --region $AWS_REGION get-authorization-token --output text --query 'authorizationData[].authorizationToken' | base64 -d
 
