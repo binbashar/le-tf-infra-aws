@@ -56,16 +56,16 @@ resource "helm_release" "argocd_image_updater" {
     templatefile("chart-values/argocd-image-updater.yaml", {
       region                   = var.region
       argoHost                 = "argocd.${local.environment}.${local.private_base_domain}",
-      repositoryApiUrl         = data.terraform_remote_state.shared-container-registry.outputs.registry_url,
+      repositoryApiUrl         = "${var.accounts.shared.id}.dkr.ecr.${var.region}.amazonaws.com",
       roleArn                  = data.terraform_remote_state.eks-identities.outputs.argo_cd_image_updater_role_arn,
       gitCommitUser            = "binbash-machine-user"
       gitCommitMail            = "leverage-aws+machine-user@binbash.com.ar"
       gitCommitMessageTemplate = <<-TMP
       Build: Image update for application '{{ .AppName }}'
 
-      {{ range .AppChanges -}}
-      Update image {{ .Image }} from '{{ .OldTag }}' to '{{ .NewTag }}'
-      {{ end -}}
+          {{ range .AppChanges -}}
+          Update image {{ .Image }} from '{{ .OldTag }}' to '{{ .NewTag }}'
+          {{ end -}}
       TMP
     })
   ]
