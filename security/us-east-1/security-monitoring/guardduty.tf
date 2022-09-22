@@ -2,15 +2,19 @@
 # GuardDuty is enabled in this account as a delegated admin
 #
 module "guardduty" {
-  source = "github.com/binbashar/terraform-aws-guardduty-multiaccount.git//modules/multiaccount-setup?ref=v0.1.0"
+  source = "github.com/binbashar/terraform-aws-guardduty-multiaccount.git//modules/multiaccount-setup?ref=v0.2.0"
 
   # Activating Guardduty & S3 protection in this account (security-account).
-  guarduty_enabled               = true
-  guarduty_s3_protection_enabled = true
+  guarduty_enabled                       = true
+  guarduty_s3_protection_enabled         = true
+  guarduty_kubernetes_protection_enabled = false
+  guarduty_malware_protection_enabled    = false
 
   # New Org Accounts will have Guardduty & S3 Protection automatically enabled
-  guardduty_organization_members_auto_enable               = true
-  guardduty_organization_members_s3_protection_auto_enable = true
+  guardduty_organization_members_auto_enable                    = true
+  guardduty_organization_members_s3_protection_auto_enable      = true
+  guardduty_organization_members_kubernetes_protection_enable   = false
+  guardduty_organization_members_malware_protection_auto_enable = false
 
   # Pre-existing Org Accounts (already members) have to be declared below
   guardduty_member_accounts = {
