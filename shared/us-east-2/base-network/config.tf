@@ -35,7 +35,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "shared/network-dr/terraform.tfstate"
+    key = "shared/network-grafana-dr/terraform.tfstate"
   }
 }
 

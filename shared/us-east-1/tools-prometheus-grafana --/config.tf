@@ -17,7 +17,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "shared/prometheus/terraform.tfstate"
+    key = "shared/prometheus-grafana/terraform.tfstate"
   }
 }
 
