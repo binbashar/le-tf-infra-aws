@@ -4,10 +4,6 @@
 module "role_external_secrets" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v5.2.0"
 
-  providers = {
-    aws = aws.shared
-  }
-
   create_role  = true
   role_name    = "${local.environment}-external-secrets"
   provider_url = replace(data.terraform_remote_state.eks-cluster.outputs.cluster_oidc_issuer_url, "https://", "")
@@ -24,7 +20,6 @@ module "role_external_secrets" {
 }
 
 resource "aws_iam_policy" "external_secrets_secrets_manager" {
-  provider    = aws.shared
   name        = "${local.environment}-external-secrets-secrets-manager"
   description = "External-secrets permissions on Secrets Manager"
   tags        = local.tags_external_secrets
@@ -41,7 +36,17 @@ resource "aws_iam_policy" "external_secrets_secrets_manager" {
         "secretsmanager:ListSecretVersionIds"
       ],
       "Resource": [
-        "arn:aws:secretsmanager::${var.accounts.shared.id}:secret:${var.environment}/k8s-eks/*"
+        "arn:aws:secretsmanager:${var.region}:${var.accounts.apps-devstg.id}:secret:/k8s-eks/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey"
+      ],
+      "Resource": [
+        "arn:aws:kms:${var.region}:${var.accounts.apps-devstg.id}:key/*"
       ]
     }
   ]
@@ -50,7 +55,6 @@ EOF
 }
 
 resource "aws_iam_policy" "external_secrets_parameter_store" {
-  provider    = aws.shared
   name        = "${local.environment}-external-secrets-parameter-store"
   description = "External-secrets permissions on Parameter Store"
   tags        = local.tags_external_secrets
@@ -64,7 +68,17 @@ resource "aws_iam_policy" "external_secrets_parameter_store" {
         "ssm:GetParameter*"
       ],
       "Resource": [
-        "arn:aws:ssm::${var.accounts.shared.id}:parameter/${var.environment}/k8s-eks/*"
+        "arn:aws:ssm:${var.region}:${var.accounts.apps-devstg.id}:parameter/k8s-eks/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey"
+      ],
+      "Resource": [
+        "arn:aws:kms:${var.region}:${var.accounts.apps-devstg.id}:key/*"
       ]
     }
   ]
