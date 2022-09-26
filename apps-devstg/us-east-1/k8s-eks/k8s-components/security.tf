@@ -68,3 +68,68 @@ resource "helm_release" "external_secrets" {
     })
   ]
 }
+
+# These resources below (cluster_secrets_manager and cluster_parameter_store) need to be commented out and applied in a second step
+# The reason behind this can be found in this issue: https://github.com/hashicorp/terraform-provider-kubernetes/issues/1367#issuecomment-1239205722
+# and the surounding discussion.
+# There are some workarounds using non-oficial providers
+
+# resource "kubernetes_manifest" "cluster_secrets_manager" {
+#   count = var.enable_external_secrets ? 1 : 0
+
+#   manifest = {
+#     "apiVersion" = "external-secrets.io/v1beta1"
+#     "kind"       = "ClusterSecretStore"
+#     "metadata" = {
+#       "name" = "cluster-secrets-manager"
+#     }
+#     "spec" = {
+#       "provider" = {
+#         "aws" = {
+#           "service" = "SecretsManager"
+#           "region"  = var.region
+#           "auth"    = {
+#             "jwt" = {
+#               "serviceAccountRef" = {
+#                 "name"      = "external-secrets",
+#                 "namespace" = "external-secrets"
+#               }
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+
+#   depends_on = [helm_release.external_secrets[0]]
+# }
+
+# resource "kubernetes_manifest" "cluster_parameter_store" {
+#   count = var.enable_external_secrets ? 1 : 0
+
+#   manifest = {
+#     "apiVersion" = "external-secrets.io/v1beta1"
+#     "kind"       = "ClusterSecretStore"
+#     "metadata" = {
+#       "name" = "cluster-parameter-store"
+#     }
+#     "spec" = {
+#       "provider" = {
+#         "aws" = {
+#           "service" = "ParameterStore"
+#           "region"  = var.region
+#           "auth"    = {
+#             "jwt" = {
+#               "serviceAccountRef" = {
+#                 "name"      = "external-secrets",
+#                 "namespace" = "external-secrets"
+#               }
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+
+#   depends_on = [helm_release.external_secrets[0]]
+# }
