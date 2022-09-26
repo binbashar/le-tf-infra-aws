@@ -4,7 +4,7 @@ project: default
 # Source code settings
 source:
   repoURL: https://github.com/binbashar/le-demo-apps.git
-  targetRevision: head
+  targetRevision: HEAD
   path: emojivoto/kubernetes
 
 # Cluster destination
