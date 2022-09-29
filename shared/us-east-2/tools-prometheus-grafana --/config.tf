@@ -2,7 +2,7 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  region  = var.region
+  region  = var.region_secondary
   profile = var.profile
 }
 
@@ -17,7 +17,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "shared/prometheus/terraform.tfstate"
+    key = "shared/prometheus-grafana-dr/terraform.tfstate"
   }
 }
 
@@ -26,6 +26,7 @@ terraform {
 #=============================#
 data "terraform_remote_state" "vpc" {
   backend = "s3"
+
   config = {
     region  = var.region
     profile = var.profile
@@ -34,8 +35,20 @@ data "terraform_remote_state" "vpc" {
   }
 }
 
+data "terraform_remote_state" "vpc-dr" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/network-dr/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "dns" {
   backend = "s3"
+
   config = {
     region  = var.region
     profile = var.profile
@@ -44,12 +57,13 @@ data "terraform_remote_state" "dns" {
   }
 }
 
-data "terraform_remote_state" "security" {
+data "terraform_remote_state" "keys-dr" {
   backend = "s3"
+
   config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/security-keys/terraform.tfstate"
+    key     = "${var.environment}/security-keys-dr/terraform.tfstate"
   }
 }
