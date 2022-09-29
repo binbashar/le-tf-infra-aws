@@ -193,3 +193,7 @@ After the initial orchestration, the typical flow could include multiple tasks. 
 - :warning: Please consider that only the current `terraform.tfvars` services
   set to `true` at the `k8s-components` and `k8s-workloads` layers are the only ones
   that have been fully tested
+- Note: Consider the implications of the different approaches to handling secrets via external secrets operator:
+  - Having a global ClusterSecretStore in the cluster which will serve secrets to multiple ExternalSecret objects living
+    in each application namespace or having dedicated SecretStores and ExternalSecrets for each application. This last
+    approach allows for better permission management but it requires more IRSA roles to manage each applications permissions
