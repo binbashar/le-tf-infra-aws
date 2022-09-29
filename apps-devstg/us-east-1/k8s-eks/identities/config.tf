@@ -41,14 +41,15 @@ data "terraform_remote_state" "eks-cluster" {
     key     = "${var.environment}/k8s-eks/cluster/terraform.tfstate"
   }
 }
-data "terraform_remote_state" "apps-qa-keys" {
+
+data "terraform_remote_state" "shared-keys" {
   backend = "s3"
 
   config = {
     region  = var.region
-    profile = var.profile
-    bucket  = var.bucket
-    key     = "${var.environment}/security-keys/terraform.tfstate"
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
+    key     = "shared/security-keys/terraform.tfstate"
   }
 }
 
