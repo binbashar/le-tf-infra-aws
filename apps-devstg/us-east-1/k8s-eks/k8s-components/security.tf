@@ -72,7 +72,7 @@ resource "helm_release" "external_secrets" {
 # These resources below (cluster_secrets_manager and cluster_parameter_store) need to be commented out and applied in a second step
 # The reason behind this can be found in this issue: https://github.com/hashicorp/terraform-provider-kubernetes/issues/1367#issuecomment-1239205722
 # and the surounding discussion.
-# There are some workarounds using non-oficial providers
+# TODO: Move onto using a raw YAML helm chart as in https://github.com/itscontained/charts/tree/master/itscontained/raw
 
 # resource "kubernetes_manifest" "cluster_secrets_manager" {
 #   count = var.enable_external_secrets ? 1 : 0
