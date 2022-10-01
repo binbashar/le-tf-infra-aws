@@ -239,3 +239,41 @@ data "aws_iam_policy_document" "backup_s3_binbash_gdrive" {
     resources = ["arn:aws:s3:::bb-shared-gdrive-backup/*"]
   }
 }
+
+resource "aws_iam_policy" "github_actions_oidc" {
+  name        = "${local.environment}-github-actions-oidc"
+  description = "Github OIDC integration for Github Actions"
+  tags        = merge(local.tags, { Name = "github-oidc-workflows" })
+  policy      = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ECRAuth",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetAuthorizationToken",
+                "ecr:DescribeRepositories"
+            ],
+            "Resource": "arn:aws:ecr:${var.region}:${var.accounts.shared.id}:repository/*"
+        },
+        {
+            "Sid": "ECRWrite",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:PutImage",
+                "ecr:InitiateLayerUpload",
+                "ecr:UploadLayerPart",
+                "ecr:CompleteLayerUpload",
+                "ecr:ListImages",
+                "ecr:DescribeImages"
+            ],
+            "Resource": "arn:aws:ecr:${var.region}:${var.accounts.shared.id}:repository/demo-google-microservices/*"
+        }
+    ]
+}
+EOF
+}
