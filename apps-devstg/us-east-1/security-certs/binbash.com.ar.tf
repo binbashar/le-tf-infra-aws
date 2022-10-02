@@ -1,7 +1,10 @@
 # Create an ACM certificate
 resource "aws_acm_certificate" "main" {
   domain_name               = "*.binbash.com.ar"
-  subject_alternative_names = ["*.${local.environment}.aws.binbash.com.ar"]
+  subject_alternative_names = [
+    "*.${local.environment}.aws.binbash.com.ar",          # EKS
+    "*.demo.${local.environment}.aws.binbash.com.ar",     # EKS DemoApps
+  ]
   validation_method         = "DNS"
   tags                      = local.tags
 }

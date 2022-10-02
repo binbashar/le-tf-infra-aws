@@ -6,40 +6,13 @@ locals {
   }
 
   # Additional AWS account numbers to add to the aws-auth configmap
-  #
-  map_accounts = [
-    # var.accounts.security.id, # security
-    # var.accounts.shared.id, # shared
-    # var.accounts.apps-devstg.id, # apps-devstg
-  ]
+  map_accounts = []
 
   # Additional IAM users to add to the aws-auth configmap. See examples/basic/variables.tf for example format
-  #
-  map_users = [
-    # {
-    #   userarn  = "arn:aws:iam:${var.accounts.security.id}:user/jane.doe"
-    #   username = "jane.doe"
-    #   groups   = ["system:masters"]
-    # },
-    # {
-    #   userarn  = "arn:aws:iam:${var.accounts.security.id}:user/john.doe"
-    #   username = "john.doe"
-    #   groups   = ["system:masters"]
-    # },
-  ]
+  map_users = []
 
   # Additional IAM roles to add to the aws-auth configmap.
-  #
   map_roles = [
-    #
-    # Github Actions Workflow will assume this role in order to be able to destroy the cluster
-    #
-    {
-      rolearn  = "arn:aws:iam::${var.accounts.apps-devstg.id}:role/DeployMaster"
-      username = "DeployMaster"
-      groups = [
-      "system:masters"]
-    },
     #
     # Allow DevOps role to become cluster admins
     #

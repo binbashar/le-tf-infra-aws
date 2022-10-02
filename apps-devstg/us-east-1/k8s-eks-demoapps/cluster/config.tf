@@ -16,7 +16,7 @@ provider "kubernetes" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = "~> 1.1.3"
+  required_version = "~> 1.1.9"
 
   required_providers {
     aws        = "~> 4.11.0"
@@ -32,14 +32,14 @@ terraform {
 # Data Sources
 #
 data "aws_eks_cluster" "cluster" {
-  name = module.eks_demoapps.cluster_id
+  name = module.cluster.cluster_id
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks_demoapps.cluster_id
+  name = module.cluster.cluster_id
 }
 
-data "terraform_remote_state" "shared-eks-demoapps-vpc" {
+data "terraform_remote_state" "cluster-vpc" {
   backend = "s3"
 
   config = {
@@ -47,6 +47,16 @@ data "terraform_remote_state" "shared-eks-demoapps-vpc" {
     profile = var.profile
     bucket  = var.bucket
     key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "keys" {
+  backend = "s3"
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "apps-devstg/security-keys/terraform.tfstate"
   }
 }
 
