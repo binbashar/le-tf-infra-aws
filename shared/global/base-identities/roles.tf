@@ -218,7 +218,8 @@ module "iam_assumable_role_service_trustedadvisor" {
 # Github OIDC Integration
 #------------------------------------------------------------------------------
 locals {
-  github_oidc_allowed_branches = "repo:binbashar/le-devops-workflows:ref:refs/heads/test-gh-oidc"
+  # Only grant permission to assume this role to this repo/branch
+  github_oidc_allowed_branches = "repo:binbashar/demo-google-microservices:ref:refs/heads/master"
 }
 
 resource "aws_iam_role" "github_actions_role" {

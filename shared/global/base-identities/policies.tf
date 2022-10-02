@@ -249,16 +249,23 @@ resource "aws_iam_policy" "github_actions_oidc" {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "ECRAuth",
+            "Sid": "AllowLogin",
             "Effect": "Allow",
             "Action": [
-                "ecr:GetAuthorizationToken",
+                "ecr:GetAuthorizationToken"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowList",
+            "Effect": "Allow",
+            "Action": [
                 "ecr:DescribeRepositories"
             ],
             "Resource": "arn:aws:ecr:${var.region}:${var.accounts.shared.id}:repository/*"
         },
         {
-            "Sid": "ECRWrite",
+            "Sid": "AllowPush",
             "Effect": "Allow",
             "Action": [
                 "ecr:GetDownloadUrlForLayer",
@@ -271,7 +278,7 @@ resource "aws_iam_policy" "github_actions_oidc" {
                 "ecr:ListImages",
                 "ecr:DescribeImages"
             ],
-            "Resource": "arn:aws:ecr:${var.region}:${var.accounts.shared.id}:repository/demo-google-microservices/*"
+            "Resource": "arn:aws:ecr:${var.region}:${var.accounts.shared.id}:repository/demo-google-microservices-*"
         }
     ]
 }
