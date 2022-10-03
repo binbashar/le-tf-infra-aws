@@ -1,6 +1,6 @@
-#
+#------------------------------------------------------------------------------
 # Providers
-#
+#------------------------------------------------------------------------------
 provider "aws" {
   region  = var.region
   profile = var.profile
@@ -20,11 +20,11 @@ provider "helm" {
   }
 }
 
-#
+#------------------------------------------------------------------------------
 # Backend Config (partial)
-#
+#------------------------------------------------------------------------------
 terraform {
-  required_version = ">= 1.1.3"
+  required_version = ">= 1.1.9"
 
   required_providers {
     aws        = "~> 4.11.0"
@@ -37,10 +37,9 @@ terraform {
   }
 }
 
-#
+##------------------------------------------------------------------------------
 # Data Sources
-#
-
+##------------------------------------------------------------------------------
 # Get the current Account ID
 data "aws_caller_identity" "current" {}
 
@@ -48,14 +47,14 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 data "aws_eks_cluster" "cluster" {
-  name = data.terraform_remote_state.eks-cluster-demoapps.outputs.cluster_id
+  name = data.terraform_remote_state.cluster.outputs.cluster_id
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = data.terraform_remote_state.eks-cluster-demoapps.outputs.cluster_id
+  name = data.terraform_remote_state.cluster.outputs.cluster_id
 }
 
-data "terraform_remote_state" "eks-cluster-demoapps" {
+data "terraform_remote_state" "cluster" {
   backend = "s3"
 
   config = {
