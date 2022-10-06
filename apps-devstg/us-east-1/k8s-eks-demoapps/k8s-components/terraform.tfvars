@@ -49,6 +49,8 @@ logging = {
 # metrics
 enable_prometheus_dependencies = false
 enable_grafana_dependencies    = false
+# datadog
+enable_datadog_agent = false
 
 #------------------------------------------------------------------------------
 # CICD | ArgoCD

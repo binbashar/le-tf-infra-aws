@@ -25,6 +25,15 @@ resource "kubernetes_namespace" "monitoring_tools" {
   }
 }
 
+resource "kubernetes_namespace" "monitoring_other" {
+  count = var.enable_datadog_agent ? 1 : 0
+
+  metadata {
+    labels = local.labels
+    name   = "monitoring-other"
+  }
+}
+
 resource "kubernetes_namespace" "ingress_nginx" {
   count = var.enable_nginx_ingress_controller ? 1 : 0
 

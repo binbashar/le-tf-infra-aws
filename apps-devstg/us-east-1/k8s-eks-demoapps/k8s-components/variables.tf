@@ -98,7 +98,7 @@ variable "enable_grafana_dependencies" {
 
 variable "enable_kubernetes_dashboard" {
   type    = bool
-  default = true
+  default = false
 }
 
 variable "kubernetes_dashboard_ingress_class" {
@@ -130,4 +130,12 @@ variable "imc" {
 variable "schedules" {
   type    = any
   default = {}
+}
+
+#==================================#
+# DataDog Agent                    #
+#==================================#
+variable "enable_datadog_agent" {
+  type    = bool
+  default = false
 }
