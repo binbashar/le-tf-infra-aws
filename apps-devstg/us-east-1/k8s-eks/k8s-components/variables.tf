@@ -36,6 +36,11 @@ variable "enable_vault" {
   default = false
 }
 
+variable "enable_external_secrets" {
+  type    = bool
+  default = false
+}
+
 variable "enable_cicd" {
   type    = bool
   default = false

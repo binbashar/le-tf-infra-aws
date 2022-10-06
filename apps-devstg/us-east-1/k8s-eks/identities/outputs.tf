@@ -22,3 +22,8 @@ output "aws_lb_controller_role_arn" {
   description = "AWS Load Balancer Controller Role ARN"
   value       = module.role_aws_lb_controller.iam_role_arn
 }
+
+output "external_secrets_role_arn" {
+  description = "External-secrets Role ARN"
+  value       = module.role_external_secrets.iam_role_arn
+}
