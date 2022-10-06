@@ -2,7 +2,8 @@
 # FluentBit: capture pods logs and ship them to ElasticSearch/Kibana.
 #------------------------------------------------------------------------------
 resource "helm_release" "fluentbit" {
-  count      = var.enable_logging ? 1 : 0
+  count = var.logging.enabled ? 1 : 0
+
   name       = "fluentbit"
   namespace  = kubernetes_namespace.monitoring_logging[0].id
   repository = "https://fluent.github.io/helm-charts"
@@ -22,7 +23,7 @@ resource "helm_release" "fluentbit" {
 # k8s-event-logger: watch cluster events and output as logs for further processing.
 #------------------------------------------------------------------------------
 resource "helm_release" "k8s_event_logger" {
-  count = var.enable_logging_k8s_event_logger ? 1 : 0
+  count = var.logging.enabled && contains(var.logging.forwarders, "k8s-event-logger") ? 1 : 0
 
   name       = "k8s-event-logger"
   namespace  = kubernetes_namespace.monitoring_logging[0].id
@@ -35,7 +36,8 @@ resource "helm_release" "k8s_event_logger" {
 # fluentd + AWS ElasticSearch: collect cluster logs and ship them to AWS ES
 #------------------------------------------------------------------------------
 resource "helm_release" "fluentd_awses" {
-  count      = var.enable_logging_awses ? 1 : 0
+  count = var.logging.enabled && contains(var.logging.forwarders, "fluentd-awses") ? 1 : 0
+
   name       = "fluentd-awses"
   namespace  = kubernetes_namespace.monitoring_logging[0].id
   repository = "https://kokuwaio.github.io/helm-charts"
@@ -52,7 +54,8 @@ resource "helm_release" "fluentd_awses" {
 # fluentd + Self-hosted ElasticSearch: collect cluster logs and ship them to ES
 #------------------------------------------------------------------------------
 resource "helm_release" "fluentd_selfhosted" {
-  count      = var.enable_logging_selfhosted ? 1 : 0
+  count = var.logging.enabled && contains(var.logging.forwarders, "fluentd-selfhosted") ? 1 : 0
+
   name       = "fluentd-selfhosted"
   namespace  = kubernetes_namespace.monitoring_logging[0].id
   repository = "https://kokuwaio.github.io/helm-charts"
