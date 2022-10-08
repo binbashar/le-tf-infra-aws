@@ -2,7 +2,7 @@
 # "Public" ExternalDNS Roles & Policies
 #
 module "role_externaldns_public" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.24.1"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v5.2.0"
 
   providers = {
     aws = aws.shared

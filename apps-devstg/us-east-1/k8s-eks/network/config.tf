@@ -52,7 +52,7 @@ data "terraform_remote_state" "tools-vpn-server" {
     region  = var.region
     profile = "${var.project}-shared-devops"
     bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/vpn/terraform.tfstate"
+    key     = "shared/vpn-server/terraform.tfstate"
   }
 }
 #

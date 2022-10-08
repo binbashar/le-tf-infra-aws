@@ -42,6 +42,17 @@ data "terraform_remote_state" "eks-cluster" {
   }
 }
 
+data "terraform_remote_state" "shared-keys" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
+    key     = "shared/security-keys/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "shared-dns" {
   backend = "s3"
 

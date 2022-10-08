@@ -1,4 +1,6 @@
-server:
+dashboard:
+  enabled: true
+
   ingress:
     enabled: true
     annotations:
@@ -10,17 +12,10 @@ server:
       # The backend (ArgoCD Server) is expecting to handle HTTPS
       nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     hosts:
-      - ${argoHost}
+      - ${rolloutsHost}
     paths:
-      - /
+      - /rollouts
     tls:
-      - secretName: argocd-server-tls
+      - secretName: argorollouts-server-tls
         hosts:
-          - ${argoHost}
-
-  extensions:
-    enabled: false
-
-    contents:
-      - name: argo-rollouts
-        url: https://github.com/argoproj-labs/rollout-extension/releases/download/v0.2.0/extension.tar
+          - ${rolloutsHost}

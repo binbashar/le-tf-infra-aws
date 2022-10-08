@@ -23,7 +23,8 @@ enable_public_dns_sync  = false
 #------------------------------------------------------------------------------
 # Secrets Management
 #------------------------------------------------------------------------------
-enable_vault = false
+enable_vault            = false
+enable_external_secrets = true
 
 #------------------------------------------------------------------------------
 # Scaling
@@ -35,11 +36,17 @@ enable_cluster_autoscaling = true
 #------------------------------------------------------------------------------
 # Monitoring
 #------------------------------------------------------------------------------
-# logging # TODO refactor this enable_loging_* vars to a map structure similar to apps_ingress {}
-enable_logging                  = false
-enable_logging_awses            = false
-enable_logging_selfhosted       = false
-enable_logging_k8s_event_logger = false
+# logging
+logging = {
+  enabled = false
+  # Log forwarders/processors
+  # When logging is enabled fluent-bit is enabled also
+  forwarders = [
+    "fluentd-awses",
+    "fluentd-selfhosted",
+    "k8s-event-logger"
+  ]
+}
 # metrics
 enable_prometheus_dependencies = false
 enable_grafana_dependencies    = false
@@ -67,7 +74,9 @@ imc = {
 #------------------------------------------------------------------------------
 # CICD | ArgoCD
 #------------------------------------------------------------------------------
-enable_cicd = true
+enable_cicd                 = true
+enable_argocd_image_updater = false
+enable_argo_rollouts        = false
 
 #------------------------------------------------------------------------------
 # Backups

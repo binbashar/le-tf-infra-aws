@@ -138,6 +138,17 @@ module "cluster" {
       type        = "egress"
       cidr_blocks = [data.terraform_remote_state.shared-vpc.outputs.vpc_cidr_block]
     },
+    #
+    # Github SSH (for ArgoCD to access repos via SSH -- until we can securely do that via HTTPS)
+    #
+    egress_github_ssh_tcp = {
+      description = "Node to Github SSH"
+      protocol    = "tcp"
+      from_port   = 22
+      to_port     = 22
+      type        = "egress"
+      cidr_blocks = ["0.0.0.0/0"]
+    },
   }
 
   # Specify the CIDR of k8s services -- Ref: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster#kubernetes_network_config
