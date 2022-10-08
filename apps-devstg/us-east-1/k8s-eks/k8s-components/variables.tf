@@ -36,7 +36,22 @@ variable "enable_vault" {
   default = false
 }
 
+variable "enable_external_secrets" {
+  type    = bool
+  default = false
+}
+
 variable "enable_cicd" {
+  type    = bool
+  default = false
+}
+
+variable "enable_argocd_image_updater" {
+  type    = bool
+  default = false
+}
+
+variable "enable_argo_rollouts" {
   type    = bool
   default = false
 }
@@ -61,24 +76,9 @@ variable "enable_gatus" {
   default = false
 }
 
-variable "enable_logging_awses" {
-  type    = bool
-  default = false
-}
-
-variable "enable_logging_selfhosted" {
-  type    = bool
-  default = false
-}
-
-variable "enable_logging_k8s_event_logger" {
-  type    = bool
-  default = false
-}
-
-variable "enable_logging" {
-  type    = bool
-  default = false
+variable "logging" {
+  type    = any
+  default = {}
 }
 
 variable "enable_ingressmonitorcontroller" {
