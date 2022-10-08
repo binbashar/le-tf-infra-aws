@@ -10,7 +10,7 @@ resource "helm_release" "datadog_agent" {
   version    = "3.1.8"
   values = [
     templatefile("chart-values/datadog.yaml", {
-      site = "[REGION].datadoghq.com"
+      site   = "[REGION].datadoghq.com"
       apiKey = "[DATADOG_API_KEY]"
     })
   ]

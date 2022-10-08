@@ -62,7 +62,7 @@ data "aws_eks_cluster_auth" "cluster" {
 
 data "terraform_remote_state" "cluster" {
   backend = "s3"
-  config  = {
+  config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
@@ -72,7 +72,7 @@ data "terraform_remote_state" "cluster" {
 
 data "terraform_remote_state" "cluster-identities" {
   backend = "s3"
-  config  = {
+  config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
@@ -82,7 +82,7 @@ data "terraform_remote_state" "cluster-identities" {
 
 data "terraform_remote_state" "certs" {
   backend = "s3"
-  config  = {
+  config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
@@ -92,7 +92,7 @@ data "terraform_remote_state" "certs" {
 
 data "terraform_remote_state" "shared-dns" {
   backend = "s3"
-  config  = {
+  config = {
     region  = var.region
     profile = "${var.project}-shared-devops"
     bucket  = "${var.project}-shared-terraform-backend"

@@ -32,7 +32,7 @@ terraform {
 #
 data "terraform_remote_state" "cluster" {
   backend = "s3"
-  config  = {
+  config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
@@ -42,7 +42,7 @@ data "terraform_remote_state" "cluster" {
 
 data "terraform_remote_state" "shared-keys" {
   backend = "s3"
-  config  = {
+  config = {
     region  = var.region
     profile = "${var.project}-shared-devops"
     bucket  = "${var.project}-shared-terraform-backend"
@@ -52,7 +52,7 @@ data "terraform_remote_state" "shared-keys" {
 
 data "terraform_remote_state" "shared-dns" {
   backend = "s3"
-  config  = {
+  config = {
     region  = var.region
     profile = "${var.project}-shared-devops"
     bucket  = "${var.project}-shared-terraform-backend"

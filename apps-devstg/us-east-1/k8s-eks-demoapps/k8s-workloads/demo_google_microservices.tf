@@ -3,13 +3,13 @@
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "google_microservices_dev" {
   field_manager {
-    name = "argo_applications"
+    name            = "argo_applications"
     force_conflicts = true
   }
   manifest = {
     "apiVersion" = "argoproj.io/v1alpha1"
     "kind"       = "Application"
-    "metadata"   = {
+    "metadata" = {
       "name"      = "google-microservices-dev"
       "namespace" = "argocd"
       "finalizers" = [

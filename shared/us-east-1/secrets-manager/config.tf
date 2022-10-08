@@ -30,7 +30,7 @@ terraform {
 #
 data "terraform_remote_state" "keys" {
   backend = "s3"
-  config  = {
+  config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
