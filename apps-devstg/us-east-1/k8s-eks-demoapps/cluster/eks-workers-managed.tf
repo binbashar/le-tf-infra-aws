@@ -159,20 +159,20 @@ module "cluster" {
 
   # Define all Managed Node Groups (MNG's)
   eks_managed_node_groups = {
-    on-demand = {
-      min_size       = 1
-      max_size       = 4
-      desired_size   = 1
-      capacity_type  = "ON_DEMAND"
-      instance_types = ["t2.medium", "t3.medium"]
-    }
-    # spot = {
-    #   desired_capacity = 1
-    #   max_capacity     = 3
-    #   min_capacity     = 1
-    #   capacity_type    = "SPOT"
-    #   instance_types   = ["t2.medium", "t3.medium"]
+    # on-demand = {
+    #   min_size       = 1
+    #   max_size       = 6
+    #   desired_size   = 1
+    #   capacity_type  = "ON_DEMAND"
+    #   instance_types = ["t2.medium", "t3.medium"]
     # }
+    spot = {
+      desired_capacity = 1
+      max_capacity     = 6
+      min_capacity     = 1
+      capacity_type    = "SPOT"
+      instance_types   = ["t2.medium", "t3.medium"]
+    }
   }
 
   # Configure which roles, users and accounts can access the k8s api

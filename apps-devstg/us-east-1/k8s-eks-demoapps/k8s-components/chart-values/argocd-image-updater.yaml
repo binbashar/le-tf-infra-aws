@@ -23,6 +23,7 @@ config:
     api_url: https://${repositoryApiUrl}
     prefix: ${repositoryApiUrl}
     ping: yes
+    default: true
     insecure: no
     credentials: ext:/scripts/ecr-login.sh  #script name should match here and in authScripts
     credsexpire: 11h

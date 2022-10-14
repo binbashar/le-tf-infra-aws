@@ -16,7 +16,7 @@ module "role_argo_cd_image_updater" {
     aws_iam_policy.argo_cd_image_updater.arn
   ]
   oidc_fully_qualified_subjects = [
-    "system:serviceaccount:argocd:argo-image-updater"
+    "system:serviceaccount:argocd:argocd-image-updater"
   ]
 
   tags = local.tags_argo_image_updater

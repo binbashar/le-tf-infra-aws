@@ -1,6 +1,20 @@
 #------------------------------------------------------------------------------
 # DemoApp: Google Microservices (DEV)
 #------------------------------------------------------------------------------
+locals {
+  gmd_image_list = [
+    "emailservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-emailservice",
+    "productcatalogservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-productcatalogservice",
+    "recommendationservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-recommendationservice",
+    "shippingservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-shippingservice",
+    "checkoutservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-checkoutservice",
+    "paymentservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-paymentservice",
+    "currencyservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-currencyservice",
+    "cartservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-cartservice",
+    "frontend=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-frontend",
+    "adservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-adservice",
+  ]
+}
 resource "kubernetes_manifest" "google_microservices_dev" {
   field_manager {
     name            = "argo_applications"
@@ -20,10 +34,7 @@ resource "kubernetes_manifest" "google_microservices_dev" {
         "env" = "dev"
       }
       "annotations" = {
-        #
-        # TODO Add the rest of the images
-        #
-        "argocd-image-updater.argoproj.io/image-list"                        = "763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-adservice"
+        "argocd-image-updater.argoproj.io/image-list"                        = join(",", local.gmd_image_list)
         "argocd-image-updater.argoproj.io/multibot-frontend.update-strategy" = "latest"
         "argocd-image-updater.argoproj.io/write-back-method"                 = "git"
         "argocd-image-updater.argoproj.io/write-back-target"                 = "kustomization"
