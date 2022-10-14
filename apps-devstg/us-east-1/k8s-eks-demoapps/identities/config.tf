@@ -1,6 +1,6 @@
-#=============================#
-# AWS Provider Settings       #
-#=============================#
+#
+# AWS Provider Settings
+#
 provider "aws" {
   region  = var.region
   profile = var.profile
@@ -12,11 +12,11 @@ provider "aws" {
   profile = "${var.project}-shared-devops"
 }
 
-#=============================#
-# Backend Config (partial)    #
-#=============================#
+#
+# Backend Config (partial)
+#
 terraform {
-  required_version = "~> 1.1.3"
+  required_version = "~> 1.1.9"
 
   required_providers {
     aws = "~> 4.11.0"
@@ -27,12 +27,11 @@ terraform {
   }
 }
 
-#=============================#
-# Data sources                #
-#=============================#
-data "terraform_remote_state" "apps-devstg-eks-demoapps-cluster" {
+#
+# Data sources
+#
+data "terraform_remote_state" "cluster" {
   backend = "s3"
-
   config = {
     region  = var.region
     profile = var.profile
@@ -41,9 +40,18 @@ data "terraform_remote_state" "apps-devstg-eks-demoapps-cluster" {
   }
 }
 
-data "terraform_remote_state" "dns" {
+data "terraform_remote_state" "shared-keys" {
   backend = "s3"
+  config = {
+    region  = var.region
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
+    key     = "shared/security-keys/terraform.tfstate"
+  }
+}
 
+data "terraform_remote_state" "shared-dns" {
+  backend = "s3"
   config = {
     region  = var.region
     profile = "${var.project}-shared-devops"

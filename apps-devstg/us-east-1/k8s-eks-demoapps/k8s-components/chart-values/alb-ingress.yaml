@@ -1,0 +1,12 @@
+# Kubernetes cluster name
+clusterName: ${clusterName}
+
+# The ingress class (we are making the default value very explicit)
+# This is NOT the load balancer type, just an ingress controller identifier
+ingressClass: ${ingressClass}
+
+# We'll use a feature of EKS called IAM roles for service accounts
+serviceAccount:
+  name: ${serviceAccountName}
+  annotations:
+    eks.amazonaws.com/role-arn: ${roleArn}

@@ -1,0 +1,18 @@
+datadog:
+  site: ${site}
+  apiKey: ${apiKey}
+
+  logs:
+    enabled: true
+    containerCollectAll: true
+
+  # => Refer to Datadog documentation to understand how to extract pod annotations as tags
+  # podAnnotationsAsTags: {}
+  #   iam.amazonaws.com/role: kube_iamrole
+  #   <KUBERNETES_ANNOTATIONS>: <DATADOG_TAG_KEY>
+
+  # => Refer to Datadog documentation to understand how to extract pod labels as tags
+  # podLabelsAsTags: {}
+  #   app: kube_app
+  #   release: helm_release
+  #   <KUBERNETES_LABEL>: <DATADOG_TAG_KEY>

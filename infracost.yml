@@ -60,7 +60,7 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: "shared/us-east-1/secrets-manager --"
+  - path: "shared/us-east-1/secrets-manager"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
@@ -582,7 +582,7 @@ projects:
       - "../../../../config/common.tfvars"
       - "../../../config/account.tfvars"
       - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-eks-demoapps/k8s-resources"
+  - path: "apps-devstg/us-east-1/k8s-eks-demoapps/k8s-components"
     terraform_var_files:
       - "../../../../config/common.tfvars"
       - "../../../config/account.tfvars"
