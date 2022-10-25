@@ -7,6 +7,10 @@ variable "compute_ssh_key_name" {
   default     = "bb-infra-deployer"
 }
 
+#
+# For instance, you could run the following command to create ED keys:
+#   ssh-keygen -t ed25519 -C "your.email@example.com"
+#
 variable "compute_ssh_public_key" {
   type        = string
   description = "EC2 ssh public key"
