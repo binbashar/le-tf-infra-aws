@@ -55,6 +55,9 @@ jobs:
 
       - name: Test Reference Architecture
         run: |
+          # These are later mounted in the container
+          mkdir ~/.ssh && touch ~/.gitconfig
+
           printf "[INFO] Initializing layer"
           leverage tf init
 
