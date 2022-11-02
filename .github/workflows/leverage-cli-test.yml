@@ -34,10 +34,10 @@ jobs:
         run: |
           printf "[INFO] Setting Leverage Toolbox version"
           TOOLBOX_VERSION=$(grep "__toolbox_version__" leverage/__init__.py | sed -E 's/__toolbox_version__ += "([0-9a-z\.\-]+)"/\1/')
-          if [[ "$$TOOLBOX_VERSION" != "" ]];
+          if [[ "$TOOLBOX_VERSION" != "" ]];
           then
-              echo "Using version $$TOOLBOX_VERSION";
-              sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='$$TOOLBOX_VERSION'/' ../build.env;
+              echo "Using version $TOOLBOX_VERSION";
+              sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='$TOOLBOX_VERSION'/' ../build.env;
           else
               echo "No version found"
           fi
