@@ -60,6 +60,7 @@ jobs:
           EOF
           cp ~/.aws/credentials ~/.aws/bb/
           cp ~/.aws/config ~/.aws/bb/
+          aws sts get-caller-identity
 
       - name: Test Reference Architecture
         run: |
