@@ -23,7 +23,8 @@ jobs:
       - name: Build Leverage CLI
         run: |
           printf "[INFO] Building Leverage CLI"
-          git checkout ${{ inputs.leverage_branch }}
+          git fetch origin ${{ inputs.leverage_branch }}:$(echo "${{ inputs.leverage_branch }}" | tr '/' '-')
+          git checkout $(echo "${{ inputs.leverage_branch }}" | tr '/' '-')
           make build
           pip install -e .
         working-directory: ./leverage
