@@ -48,7 +48,7 @@ jobs:
           printf "[INFO] Setting up credentials"
           mkdir -p  ~/.aws/bb
           cat << EOF > ~/.aws/bb/credentials
-          [bb-apps-devstg-deploymaster]
+          [bb-apps-devstg-devops]
           aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           EOF
