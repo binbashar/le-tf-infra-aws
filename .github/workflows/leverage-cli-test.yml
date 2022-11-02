@@ -17,7 +17,7 @@ jobs:
 
       - name: Clone Leverage
         run: |
-          printf "[INFO] Cloning Leverage CLI's repo"
+          printf "[INFO] Cloning Leverage CLI's repo\n"
           git clone https://github.com/binbashar/leverage.git
 
       - name: Build Leverage CLI
@@ -32,7 +32,7 @@ jobs:
 
       - name: Set Leverage Toolbox version
         run: |
-          printf "[INFO] Setting Leverage Toolbox version"
+          printf "[INFO] Setting Leverage Toolbox version\n"
           TOOLBOX_VERSION=$(grep "__toolbox_version__" leverage/__init__.py | sed -E 's/__toolbox_version__ += "([0-9a-z\.\-]+)"/\1/')
           if [[ "$TOOLBOX_VERSION" != "" ]];
           then
@@ -45,7 +45,7 @@ jobs:
 
       - name: Set up credentials
         run: |
-          printf "[INFO] Setting up credentials"
+          printf "[INFO] Setting up credentials\n"
           mkdir -p  ~/.aws/bb
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }} --profile bb-deploymaster
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --profile bb-deploymaster
@@ -63,7 +63,7 @@ jobs:
 
       - name: Configure Reference Architecture
         run: |
-          echo "[INFO] Configure Reference Architecture"
+          echo "[INFO] Configure Reference Architecture\n"
           cat << EOF >> ./config/common.tfvars
           project = "bb"
           project_long = "binbash"
@@ -81,7 +81,7 @@ jobs:
             }
           }
           EOF
-          echo "[INFO] Disable MFA"
+          echo "[INFO] Disable MFA\n"
           sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env
 
       - name: Test Reference Architecture
@@ -89,20 +89,20 @@ jobs:
           # These are later mounted in the container
           mkdir ~/.ssh && touch ~/.gitconfig
 
-          printf "[INFO] Initializing layer"
+          printf "[INFO] Initializing layer\n"
           leverage tf init
 
-          printf "[INFO] Generating plan"
+          printf "[INFO] Generating plan\n"
           leverage tf plan
 
-          printf "[INFO] Applying changes"
+          printf "[INFO] Applying changes\n"
           leverage tf apply -auto-approve
 
-          printf "[INFO] Checking if all changes were applied"
+          printf "[INFO] Checking if all changes were applied\n"
           leverage tf plan -detailed-exitcode
-          [[ $? -eq 2 ]] && printf "[WARN] There are still remaining changes"
-          [[ $? -eq 0 ]] && printf "[INFO] Apply checks out"
+          [[ $? -eq 2 ]] && printf "[WARN] There are still remaining changes\n"
+          [[ $? -eq 0 ]] && printf "[INFO] Apply checks out\n"
 
-          printf "[INFO] Destroying all generated created resources"
+          printf "[INFO] Destroying all generated created resources\n"
           leverage tf destroy -auto-approve
         working-directory: ./apps-devstg/global/cli-test-layer
