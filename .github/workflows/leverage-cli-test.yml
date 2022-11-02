@@ -53,7 +53,7 @@ jobs:
           aws configure set output json --profile bb-apps-devstg-devops
           aws configure set role_arn arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
           aws configure set source_profile bb-deploymaster --profile bb-apps-devstg-devops
-          cat << EOF > ~/.aws/bb/credentials
+          cat << EOF > ~/.aws/credentials
           [bb-deploymaster]
           aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
