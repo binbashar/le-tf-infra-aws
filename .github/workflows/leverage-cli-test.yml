@@ -46,13 +46,16 @@ jobs:
       - name: Set up credentials
         run: |
           printf "[INFO] Setting up credentials"
-          echo ${{ secrets.AWS_ACCESS_KEY_ID }} > pirulo.txt
-          echo ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }} >> pirulo.txt
           mkdir -p  ~/.aws/bb
           cat << EOF > ~/.aws/bb/credentials
           [bb-apps-devstg-devops]
           aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          EOF
+          cat << EOF > pirulo.txt
+          [bb-apps-devstg-devops]
+          aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
+          account = ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
           EOF
           cat pirulo.txt
 
