@@ -60,7 +60,24 @@ jobs:
           EOF
           cp ~/.aws/credentials ~/.aws/bb/
           cp ~/.aws/config ~/.aws/bb/
-          aws sts get-caller-identity
+
+      - name: Configure Reference Architecture
+        run: |
+          echo "[INFO] Configure Reference Architecture"
+          cat << EOF >> ./config/common.tfvars
+          project = "bb"
+          project_long = "binbash"
+          region_primary = "us-east-1"
+
+          accounts = {
+            security = {
+              id = ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+            }
+          }
+          sso_enabled = false
+          EOF
+          echo "[INFO] Disable MFA"
+          sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env
 
       - name: Test Reference Architecture
         run: |
