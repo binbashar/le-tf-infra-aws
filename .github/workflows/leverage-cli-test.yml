@@ -46,6 +46,8 @@ jobs:
       - name: Set up credentials
         run: |
           printf "[INFO] Setting up credentials"
+          echo ${{ secrets.AWS_ACCESS_KEY_ID }}
+          echo ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
           mkdir -p  ~/.aws/bb
           cat << EOF > ~/.aws/bb/credentials
           [bb-apps-devstg-devops]
