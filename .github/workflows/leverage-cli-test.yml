@@ -68,13 +68,18 @@ jobs:
           project = "bb"
           project_long = "binbash"
           region_primary = "us-east-1"
+          region_secondary = "us-east-2"
+          vault_address = "vault_trash"
+          vault_token = "vault_trash"
+          sso_region = "us-east-1"
+          sso_enabled = false
+          sso_start_url = "sso_trash"
 
           accounts = {
             security = {
               id = ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
             }
           }
-          sso_enabled = false
           EOF
           echo "[INFO] Disable MFA"
           sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env
