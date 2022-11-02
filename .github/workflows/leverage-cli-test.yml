@@ -18,7 +18,7 @@ jobs:
       - name: Clone Leverage
         run: |
           printf "[INFO] Cloning Leverage CLI's repo"
-          git clone git@github.com:binbashar/leverage.git
+          got clone https://github.com/binbashar/leverage.git
 
       - name: Build Leverage CLI
         run: |
