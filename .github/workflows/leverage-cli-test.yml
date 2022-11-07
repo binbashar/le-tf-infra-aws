@@ -23,6 +23,7 @@ jobs:
       - name: Build Leverage CLI
         run: |
           printf "[INFO] Building Leverage CLI"
+          printf "[INFO]     Pulling ref ${{ inputs.leverage_branch }}"
           git fetch origin ${{ inputs.leverage_branch }}:$(echo "${{ inputs.leverage_branch }}" | tr '/' '-')
           git checkout $(echo "${{ inputs.leverage_branch }}" | tr '/' '-')
           if ! (which pipenv 2>/dev/null); then echo 'Installing pipenv...' && pip install pipenv && pipenv --python $(which python) ; else echo 'pipenv is already installed'; fi
