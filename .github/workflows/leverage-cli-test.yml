@@ -48,8 +48,6 @@ jobs:
         run: |
           printf "[INFO] Setting up credentials\n"
           mkdir -p  ~/.aws/bb
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }} --profile bb-deploymaster
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --profile bb-deploymaster
           aws configure set region us-east-1 --profile bb-apps-devstg-devops
           aws configure set output json --profile bb-apps-devstg-devops
           aws configure set role_arn arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
