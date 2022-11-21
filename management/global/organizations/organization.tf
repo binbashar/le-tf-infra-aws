@@ -4,6 +4,7 @@
 resource "aws_organizations_organization" "main" {
   # Not needed at first, might be needed later: https://docs.aws.amazon.com/organizations/latest/APIReference/API_EnableAWSServiceAccess.html
   aws_service_access_principals = [
+    "malware-protection.guardduty.amazonaws.com",
     "guardduty.amazonaws.com",
     "access-analyzer.amazonaws.com",
     "aws-artifact-account-sync.amazonaws.com",
@@ -13,6 +14,7 @@ resource "aws_organizations_organization" "main" {
     "ram.amazonaws.com",
     "sso.amazonaws.com",
     "fms.amazonaws.com",
+    "inspector2.amazonaws.com",
   ]
 
   # Enable all feature set to enable SCPs

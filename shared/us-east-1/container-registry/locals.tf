@@ -67,5 +67,93 @@ locals {
       read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
       write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
+    demo-apps_web = {
+      create            = true
+      name              = "demo-apps/web"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-apps_voting-svc = {
+      create            = true
+      name              = "demo-apps/voting-svc"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-apps_emoji-svc = {
+      create            = true
+      name              = "demo-apps/emoji-svc"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    #
+    # Demo: Google Microservices
+    #
+    demo-google-microservices-adservice = {
+      create            = true
+      name              = "demo-google-microservices-adservice"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-google-microservices-cartservice = {
+      create            = true
+      name              = "demo-google-microservices-cartservice"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-google-microservices-checkoutservice = {
+      create            = true
+      name              = "demo-google-microservices-checkoutservice"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-google-microservices-currencyservice = {
+      create            = true
+      name              = "demo-google-microservices-currencyservice"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-google-microservices-emailservice = {
+      create            = true
+      name              = "demo-google-microservices-emailservice"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-google-microservices-frontend = {
+      create            = true
+      name              = "demo-google-microservices-frontend"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-google-microservices-paymentservice = {
+      create            = true
+      name              = "demo-google-microservices-paymentservice"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-google-microservices-productcatalogservice = {
+      create            = true
+      name              = "demo-google-microservices-productcatalogservice"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-google-microservices-recommendationservice = {
+      create            = true
+      name              = "demo-google-microservices-recommendationservice"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-google-microservices-shippingservice = {
+      create            = true
+      name              = "demo-google-microservices-shippingservice"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    demo-google-microservices-loadgenerator = {
+      create            = true
+      name              = "demo-google-microservices-loadgenerator"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
   }
+
 }

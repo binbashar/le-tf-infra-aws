@@ -73,6 +73,30 @@ module "cluster" {
       type                          = "ingress"
       source_cluster_security_group = true
     },
+    ingress_alb_ingress_metrics_tcp = {
+      description                   = "Cluster API to ALB Ingress Metrics"
+      protocol                      = "tcp"
+      from_port                     = 8080
+      to_port                       = 8080
+      type                          = "ingress"
+      source_cluster_security_group = true
+    },
+    ingress_certmanager_metrics_tcp = {
+      description                   = "Cluster API to CertManager Metrics"
+      protocol                      = "tcp"
+      from_port                     = 9402
+      to_port                       = 9402
+      type                          = "ingress"
+      source_cluster_security_group = true
+    },
+    ingress_node_exporter_metrics_tcp = {
+      description                   = "Cluster API to Node Exporter Metrics"
+      protocol                      = "tcp"
+      from_port                     = 9100
+      to_port                       = 9100
+      type                          = "ingress"
+      source_cluster_security_group = true
+    },
     #
     # DNS communication with the Internet
     #
@@ -113,6 +137,17 @@ module "cluster" {
       to_port     = 443
       type        = "egress"
       cidr_blocks = [data.terraform_remote_state.shared-vpc.outputs.vpc_cidr_block]
+    },
+    #
+    # Github SSH (for ArgoCD to access repos via SSH -- until we can securely do that via HTTPS)
+    #
+    egress_github_ssh_tcp = {
+      description = "Node to Github SSH"
+      protocol    = "tcp"
+      from_port   = 22
+      to_port     = 22
+      type        = "egress"
+      cidr_blocks = ["0.0.0.0/0"]
     },
   }
 

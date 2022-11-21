@@ -22,4 +22,13 @@ AWSLOGS
 
 AWS Config snapshots are saved in a S3 Bucket of the primary region as defined in the `/security/us-east-1/security-compliance/awsconfig.tf`.
 
-In order to replicate the AWS Config bucket to a secondary region, apply the the /security/us-east-2(/security-compliance layer. The `awsconfig-replication.tf` file has a data source aiming to the AWS Config bucket in the primary region.
+In order to replicate the AWS Config bucket to a secondary region, apply the [/security/us-east-2/security-compliance](/security/us-east-2/security-compliance) layer. The `awsconfig-replication.tf` file has a data source aiming to the AWS Config bucket in the primary region.
+
+
+# AWS inspector
+
+Steps to enable inspector:  
+* Switch boolean to true in the global config file ([/config/common.tfvars](/config)) that you create for your project.
+* Delegate administration to security account by running `leverage terraform apply` in management security-compliance layer ([/management/us-east-1/security-compliance](/management/us-east-1/security-compliance)). You'd need to do this in every region you want to enable inspector.
+* Enable inspector in the security account by running `leverage terraform apply` in the security-compliance layer for that account, also per region ([/security/us-east-1/security-compliance](/security/us-east-1/security-compliance%20--)):
+  * Add inspector account members as needed in `locals.tf` file (create if doesn't exist), which inspector is going to enabled and start monitoring.

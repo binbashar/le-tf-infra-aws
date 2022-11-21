@@ -1,0 +1,107 @@
+name: Leverage CLI Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      leverage_branch:
+        description: "Reference to current Leverage branch to test"
+        required: true
+        type: string
+
+jobs:
+  test_leverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout base branch
+        uses: actions/checkout@v3
+
+      - name: Clone Leverage
+        run: |
+          printf "[INFO] Cloning Leverage CLI's repo\n"
+          git clone https://github.com/binbashar/leverage.git
+
+      - name: Build Leverage CLI
+        run: |
+          printf "[INFO] Building Leverage CLI\n"
+          printf "[INFO]     Pulling ref ${{ inputs.leverage_branch }}\n"
+          git fetch origin ${{ inputs.leverage_branch }}:$(echo "${{ inputs.leverage_branch }}" | tr '/' '-')
+          git checkout $(echo "${{ inputs.leverage_branch }}" | tr '/' '-')
+          if ! (which pipenv 2>/dev/null); then echo 'Installing pipenv...' && pip install pipenv && pipenv --python $(which python) ; else echo 'pipenv is already installed'; fi
+          make build
+          pip install -e .
+        working-directory: ./leverage
+
+      - name: Set Leverage Toolbox version
+        run: |
+          printf "[INFO] Setting Leverage Toolbox version\n"
+          TOOLBOX_VERSION=$(grep "__toolbox_version__" leverage/__init__.py | sed -E 's/__toolbox_version__ += "([0-9a-z\.\-]+)"/\1/')
+          if [[ "$TOOLBOX_VERSION" != "" ]];
+          then
+              echo "Using version $TOOLBOX_VERSION";
+              sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='$TOOLBOX_VERSION'/' ../build.env;
+          else
+              echo "No version found"
+          fi
+        working-directory: ./leverage
+
+      - name: Set up credentials
+        run: |
+          printf "[INFO] Setting up credentials\n"
+          mkdir -p  ~/.aws/bb
+          aws configure set region us-east-1 --profile bb-apps-devstg-devops
+          aws configure set output json --profile bb-apps-devstg-devops
+          aws configure set role_arn arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
+          aws configure set source_profile bb-deploymaster --profile bb-apps-devstg-devops
+          cat << EOF > ~/.aws/credentials
+          [bb-deploymaster]
+          aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          EOF
+          cp ~/.aws/credentials ~/.aws/bb/
+          cp ~/.aws/config ~/.aws/bb/
+
+      - name: Configure Reference Architecture
+        run: |
+          echo "[INFO] Configure Reference Architecture\n"
+          cat << EOF >> ./config/common.tfvars
+          project = "bb"
+          project_long = "binbash"
+          region_primary = "us-east-1"
+          region_secondary = "us-east-2"
+          vault_address = "vault_trash"
+          vault_token = "vault_trash"
+          sso_region = "us-east-1"
+          sso_enabled = false
+          sso_start_url = "sso_trash"
+
+          accounts = {
+            security = {
+              id = ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+            }
+          }
+          EOF
+          echo "[INFO] Disable MFA\n"
+          sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env
+
+      - name: Test Reference Architecture
+        run: |
+          # These are later mounted in the container
+          mkdir ~/.ssh && touch ~/.gitconfig
+
+          printf "[INFO] Initializing layer\n"
+          leverage tf init
+
+          printf "[INFO] Generating plan\n"
+          leverage tf plan
+
+          printf "[INFO] Applying changes\n"
+          leverage tf apply -auto-approve
+
+          printf "[INFO] Checking if all changes were applied\n"
+          leverage tf plan -detailed-exitcode
+          [[ $? -eq 2 ]] && printf "[WARN] There are still remaining changes\n"
+          [[ $? -eq 0 ]] && printf "[INFO] Apply checks out\n"
+
+          printf "[INFO] Destroying all generated created resources\n"
+          leverage tf destroy -auto-approve
+        working-directory: ./apps-devstg/global/cli-test-layer
