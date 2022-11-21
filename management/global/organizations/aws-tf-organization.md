@@ -9,14 +9,14 @@
 ### Add/remove AWS accounts
 1. Go to `management/global/organizations`.
 2. Edit `locals.tf` to add/remove accounts from the local `accounts` variable.
-3. Finally, run the [Terraform workflow](#terraform-workflow) to apply the actual changes.
+3. Finally, run the [Terraform workflow](https://leverage.binbash.com.ar/user-guide/ref-architecture-aws/workflow/) to apply the actual changes.
 4. Add the new account to `config/common.tfvars`.
 5. From here, you may very likely want to create the initial directory structure for this new account *as explained right below*.
 
 ### Add/remove/update AWS Organization Service Control Policies
 1. Go to `management/global/organizations`.
 2. Edit the `policies_scp.tf` file to add/remove/update Service Control Policies.
-3. Finally, run the [Terraform workflow](#terraform-workflow) to initialize and apply this layer.
+3. Finally, run the [Terraform workflow](https://leverage.binbash.com.ar/user-guide/ref-architecture-aws/workflow/) to initialize and apply this layer.
 
 ### Add/remove AWS IAM user accounts
 For instance, to remove a user from the security account you would need to make the following steps:
@@ -25,7 +25,7 @@ For instance, to remove a user from the security account you would need to make 
 3. Also remove it from the corresponding groups in `groups.tf` file.
 4. Remove output references from `outputs.tf` file.
 5. Delete the corresponding GPG key from the `keys` subdirectory.
-6. Finally, run the [Terraform workflow](#terraform-workflow) to initialize and apply this layer.
+6. Finally, run the [Terraform workflow](https://leverage.binbash.com.ar/user-guide/ref-architecture-aws/workflow/) to initialize and apply this layer.
 
 And to remove a user from the security account you can follow the same steps but should instead go to this directory: `management/global/base-identities`
 
@@ -59,7 +59,7 @@ As an example, we will set up the `apps-prd` account by using the `apps-devstg` 
         key = "apps-devstg/tf-backend/terraform.tfstate"
         }
         ```
-    3. Now run the [Terraform workflow](#terraform-workflow) to initialize and
+    3. Now run the [Terraform workflow](https://leverage.binbash.com.ar/user-guide/ref-architecture-aws/workflow/) to initialize and
        apply this layer.  (You may need to pass the `--skip-validation` flag to
        `leverage tf init`.)
     4. Open the `config.tf` file again and un-comment the block you commented before but first make sure you replace any occurrences of `devstg` with `prd`
