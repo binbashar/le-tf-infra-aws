@@ -146,5 +146,45 @@ module "wafv2_regional_alb" {
     },
   ]
 
+  # Logging
+  create_logging_configuration = true
+  log_destination_configs      = [aws_cloudwatch_log_group.waf_logs.arn]
+  logging_filter = {
+    default_behavior = "DROP"
+
+    filter = [
+      # Keep logs for blocked requests
+      {
+        behavior    = "KEEP"
+        requirement = "MEETS_ANY"
+        condition = [
+          {
+            action_condition = {
+              action = "BLOCK"
+            }
+          },
+        ]
+      },
+      # Keep logs for counted requests
+      {
+        behavior    = "KEEP"
+        requirement = "MEETS_ANY"
+        condition = [
+          {
+            action_condition = {
+              action = "COUNT"
+            }
+          },
+        ]
+      },
+    ]
+  }
+
   tags = local.tags
+}
+
+resource "aws_cloudwatch_log_group" "waf_logs" {
+  name              = "aws-waf-logs-wafv2-apps"
+  retention_in_days = 7
+  tags              = local.tags
 }
