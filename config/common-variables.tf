@@ -13,6 +13,11 @@ variable "region" {
   description = "AWS Region"
 }
 
+variable "region_primary" {
+  type        = string
+  description = "AWS Region"
+}
+
 variable "profile" {
   type        = string
   description = "AWS Profile (required by the backend but also used for other resources)"

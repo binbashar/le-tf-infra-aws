@@ -1,5 +1,5 @@
 module "kms_key_dr" {
-  source = "github.com/binbashar/terraform-aws-kms-key.git?ref=0.10.0"
+  source = "github.com/binbashar/terraform-aws-kms-key.git?ref=0.12.1"
 
   enabled                 = true
   namespace               = var.project
