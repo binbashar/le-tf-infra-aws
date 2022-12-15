@@ -10,7 +10,7 @@ variable "metric_namespace" {
 variable "create_dashboard" {
   type        = bool
   description = "When true a dashboard that displays the statistics as a line graph will be created in CloudWatch"
-  default     = true
+  default     = false
 }
 
 variable "metrics" {

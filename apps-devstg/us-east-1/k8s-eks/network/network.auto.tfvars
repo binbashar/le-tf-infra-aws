@@ -1,1 +1,1 @@
-vpc_enable_nat_gateway = true
+vpc_enable_nat_gateway = false
