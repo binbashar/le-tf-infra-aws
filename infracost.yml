@@ -547,6 +547,31 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
+  - path: "apps-devstg/us-east-1/k8s-eks/cluster"
+    terraform_var_files:
+      - "../../../../config/common.tfvars"
+      - "../../../config/account.tfvars"
+      - "../../../config/backend.tfvars"
+  - path: "apps-devstg/us-east-1/k8s-eks/identities"
+    terraform_var_files:
+      - "../../../../config/common.tfvars"
+      - "../../../config/account.tfvars"
+      - "../../../config/backend.tfvars"
+  - path: "apps-devstg/us-east-1/k8s-eks/k8s-components"
+    terraform_var_files:
+      - "../../../../config/common.tfvars"
+      - "../../../config/account.tfvars"
+      - "../../../config/backend.tfvars"
+  - path: "apps-devstg/us-east-1/k8s-eks/k8s-workloads"
+    terraform_var_files:
+      - "../../../../config/common.tfvars"
+      - "../../../config/account.tfvars"
+      - "../../../config/backend.tfvars"
+  - path: "apps-devstg/us-east-1/k8s-eks/network"
+    terraform_var_files:
+      - "../../../../config/common.tfvars"
+      - "../../../config/account.tfvars"
+      - "../../../config/backend.tfvars"
   - path: "apps-devstg/us-east-1/k8s-eks-v1.17/cluster"
     terraform_var_files:
       - "../../../../config/common.tfvars"
