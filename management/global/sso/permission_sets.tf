@@ -64,6 +64,15 @@ module "permission_sets" {
       tags               = local.tags,
       inline_policy      = data.aws_iam_policy_document.github_automation.json,
       policy_attachments = []
-    }
+    },
+    {
+      name               = "MarketplaceSeller",
+      description        = "Grants marketplace access to manage service/product offers.",
+      relay_state        = "",
+      session_duration   = local.session_duration,
+      tags               = local.tags,
+      inline_policy      = "",
+      policy_attachments = ["arn:aws:iam::aws:policy/AWSMarketplaceSellerFullAccess"]
+    },
   ]
 }
