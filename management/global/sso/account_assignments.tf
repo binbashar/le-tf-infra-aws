@@ -174,6 +174,18 @@ module "account_assignments" {
       permission_set_name = "ReadOnly",
       principal_type      = "GROUP",
       principal_name      = "AWS_Guests"
+    }
+    ,
+    # -------------------------------------------------------------------------
+    # AWS_Marketplace Permissions
+    # -------------------------------------------------------------------------
+
+    {
+      account             = var.accounts.root.id,
+      permission_set_arn  = module.permission_sets.permission_sets["MarketplaceSeller"].arn,
+      permission_set_name = "MarketplaceSeller",
+      principal_type      = "GROUP",
+      principal_name      = "AWS_MarketplaceSeller"
     },
   ]
 }
