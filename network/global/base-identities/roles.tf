@@ -6,7 +6,7 @@
 # Assumable Role Cross-Account: DevOps
 #
 module "iam_assumable_role_devops" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.1.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.accounts.security.id}:root"
@@ -33,7 +33,7 @@ module "iam_assumable_role_devops" {
 # Assumable Role Cross-Account: SecOps
 #
 module "iam_assumable_role_secops" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.1.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.accounts.security.id}:root"
@@ -60,7 +60,7 @@ module "iam_assumable_role_secops" {
 # Assumable Role Cross-Account: Auditor Role
 #
 module "iam_assumable_role_auditor" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.1.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.accounts.security.id}:root"
@@ -88,7 +88,7 @@ module "iam_assumable_role_auditor" {
 # Assumable Role Cross-Account: DeployMaster
 #
 module "iam_assumable_role_deploy_master" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.1.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.accounts.security.id}:root",
@@ -116,7 +116,7 @@ module "iam_assumable_role_deploy_master" {
 # Assumable Role Cross-Account: Grafana
 #
 module "iam_assumable_role_grafana" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.1.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.accounts.shared.id}:root"
@@ -143,7 +143,7 @@ module "iam_assumable_role_grafana" {
 # Assumable Role: AWSServiceRoleForOrganizations
 #
 module "iam_assumable_role_service_organizations" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.23.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
 
   trusted_role_services = [
     "organizations.amazonaws.com"
@@ -167,7 +167,7 @@ module "iam_assumable_role_service_organizations" {
 # Assumable Role: AWSServiceRoleForSupport
 #
 module "iam_assumable_role_service_support" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.23.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
 
   trusted_role_services = [
     "support.amazonaws.com"
@@ -191,7 +191,7 @@ module "iam_assumable_role_service_support" {
 # Assumable Role Cross-Account: OrganizationAccountAccessRole
 #
 module "iam_assumable_role_oaar" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.1.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.accounts.root.id}:root"
@@ -217,7 +217,7 @@ module "iam_assumable_role_oaar" {
 # Assumable Role: AWSServiceRoleForTrustedadvisor
 #
 module "iam_assumable_role_service_trustedadvisor" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.23.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
 
   trusted_role_services = [
     "trustedadvisor.amazonaws.com"

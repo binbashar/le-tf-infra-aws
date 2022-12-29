@@ -2,7 +2,7 @@
 # AWS IAM Users
 #
 module "user" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v4.7.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v5.9.2"
 
   for_each = toset(local.users)
 
