@@ -1,7 +1,7 @@
 #
 # VPC Peering:  apps-prd base VPC => eks clusters VPC
 module "vpc_peering_apps_prd_to_eks_clusters" {
-  source = "github.com/binbashar/terraform-aws-vpc-peering.git?ref=v4.1.0"
+  source = "github.com/binbashar/terraform-aws-vpc-peering.git?ref=v5.0.0"
 
   for_each = {
     for k, v in local.apps-prd-vpcs :
