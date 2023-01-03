@@ -4,7 +4,7 @@
 1. Go to `management/global/organizations`.
 2. Edit `organization.tf` to enable/disable Organization features
 3. Or edit the `policies_scp.tf` file to add/remove/update Service Control Policies.
-4. Finally, run the Terraform workflow to apply the actual changes.
+4. Finally, run the Terraform workflow to actually apply the changes
 
 ### Add/remove AWS accounts
 1. Go to `management/global/organizations`.
