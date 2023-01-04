@@ -72,7 +72,7 @@ metrics = [
     metric_name       = "ConsoleSignInWithoutMfaCount"
     metric_value      = "1"
     alarm_description = "Alarms when a user logs into the console without MFA."
-    filter_pattern    = "{ ($.eventName = \"ConsoleLogin\") && ($.additionalEventData.MFAUsed != \"Yes\") }"
+    filter_pattern    = "{ ($.eventName = \"ConsoleLogin\") && ($.additionalEventData.MFAUsed != \"Yes\")  && $.userIdentity.arn != \"*AWSReservedSSO*\" }"
   },
   {
     metric_name       = "RootAccountUsageCount"
