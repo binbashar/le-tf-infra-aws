@@ -15,7 +15,7 @@ module "iam_group_admins" {
   ]
 
   custom_group_policy_arns = [
-    "arn:aws:iam::aws:policy/AdministratorAccess",
+    aws_iam_policy.assume_oaar_role.arn
   ]
 }
 
