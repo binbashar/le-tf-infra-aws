@@ -8,7 +8,7 @@ on:
         description: "Leverage CLI version to test"
         required: false
         type: string
-        default: 1.9.0-rc4
+        default: 1.9.0rc4
       leverage_repo:
         description: "Whether to use pypi.org or test.pypi.org"
         required: false
@@ -24,7 +24,7 @@ jobs:
   test_leverage:
     runs-on: ubuntu-latest
     env:
-      LEVERAGE_VERSION: 1.9.0-rc4
+      LEVERAGE_VERSION: 1.9.0rc4
       LEVERAGE_REPO: test.pypi.org
       LEVERAGE_TOOLBOX_VERSION: 1.2.7-0.0.6
     steps:
