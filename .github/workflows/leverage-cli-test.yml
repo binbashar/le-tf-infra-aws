@@ -3,10 +3,21 @@ name: Leverage CLI Test
 on:
   workflow_dispatch:
     inputs:
-      leverage_branch:
-        description: "Reference to current Leverage branch to test"
-        required: true
+      leverage_version:
+        description: "Leverage CLI version to test"
+        required: false
         type: string
+        default: 1.9.0-rc4
+      leverage_repo:
+        description: "Whether to use pypi.org or test.pypi.org"
+        required: false
+        type: string
+        default: "test.pypi.org"
+      leverage_toolbox_version:
+        description: "Leverage Toolbox version to test"
+        required: false
+        type: string
+        default: 1.2.7-0.0.6
 
 jobs:
   test_leverage:
@@ -15,34 +26,14 @@ jobs:
       - name: Checkout base branch
         uses: actions/checkout@v3
 
-      - name: Clone Leverage
+      - name: Installing Leverage CLI
         run: |
-          printf "[INFO] Cloning Leverage CLI's repo\n"
-          git clone https://github.com/binbashar/leverage.git
-
-      - name: Build Leverage CLI
-        run: |
-          printf "[INFO] Building Leverage CLI\n"
-          printf "[INFO]     Pulling ref ${{ inputs.leverage_branch }}\n"
-          git fetch origin ${{ inputs.leverage_branch }}:$(echo "${{ inputs.leverage_branch }}" | tr '/' '-')
-          git checkout $(echo "${{ inputs.leverage_branch }}" | tr '/' '-')
-          if ! (which pipenv 2>/dev/null); then echo 'Installing pipenv...' && pip install pipenv && pipenv --python $(which python) ; else echo 'pipenv is already installed'; fi
-          make build
-          pip install -e .
-        working-directory: ./leverage
+          printf "[INFO] Installing Leverage CLI\n"
+          pip install install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
 
       - name: Set Leverage Toolbox version
         run: |
-          printf "[INFO] Setting Leverage Toolbox version\n"
-          TOOLBOX_VERSION=$(grep "__toolbox_version__" leverage/__init__.py | sed -E 's/__toolbox_version__ += "([0-9a-z\.\-]+)"/\1/')
-          if [[ "$TOOLBOX_VERSION" != "" ]];
-          then
-              echo "Using version $TOOLBOX_VERSION";
-              sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='$TOOLBOX_VERSION'/' ../build.env;
-          else
-              echo "No version found"
-          fi
-        working-directory: ./leverage
+          sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${{ inputs.leverage_toolbox_version}}/' ../build.env;
 
       - name: Set up credentials
         run: |
