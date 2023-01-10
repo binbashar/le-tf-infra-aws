@@ -24,9 +24,9 @@ jobs:
   test_leverage:
     runs-on: ubuntu-latest
     env:
-      LEVERAGE_VERSION: ${{ [[ -z "inputs.leverage_version" ]] && "1.9.0-rc4" || inputs.leverage_version }}
-      LEVERAGE_REPO: ${{ [[ -z "inputs.leverage_repo" ]] && "test.pypi.org" || inputs.leverage_repo }}
-      LEVERAGE_TOOLBOX_VERSION: ${{ [[ -z "inputs.leverage_toolbox_version" ]] && "1.2.7-0.0.6" || inputs.leverage_toolbox_version }}
+      LEVERAGE_VERSION: ${{ if eq(inputs.leverage_version, '') }}"1.9.0-rc4"{{ else }}${{ inputs.leverage_version}}${{endif}}
+      LEVERAGE_REPO: ${{ if eq(inputs.leverage_repo, '') }}"test.pypi.org"{{ else }}${{ inputs.leverage_repo}}${{endif}}
+      LEVERAGE_TOOLBOX_VERSION: ${{ if eq(inputs.leverage_toolbox_version, '') }}"1.2.7-0.0.6"{{ else }}${{ inputs.leverage_toolbox_version }}${{endif}}
     steps:
       - name: Checkout base branch
         uses: actions/checkout@v3
