@@ -23,6 +23,10 @@ on:
 jobs:
   test_leverage:
     runs-on: ubuntu-latest
+    env:
+      LEVERAGE_VERSION: ${{ [[ -z "inputs.leverage_version" ]] && "1.9.0-rc4" || inputs.leverage_version }}
+      LEVERAGE_REPO: ${{ [[ -z "inputs.leverage_repo" ]] && "test.pypi.org" || inputs.leverage_repo }}
+      LEVERAGE_TOOLBOX_VERSION: ${{ [[ -z "inputs.leverage_toolbox_version" ]] && "1.2.7-0.0.6" || inputs.leverage_toolbox_version }}
     steps:
       - name: Checkout base branch
         uses: actions/checkout@v3
@@ -30,11 +34,11 @@ jobs:
       - name: Installing Leverage CLI
         run: |
           printf "[INFO] Installing Leverage CLI\n"
-          pip install install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
+          pip install install -i https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}
 
       - name: Set Leverage Toolbox version
         run: |
-          sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${{ inputs.leverage_toolbox_version}}/' ../build.env;
+          sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${LEVERAGE_TOOLBOX_VERSION}/' ../build.env;
 
       - name: Set up credentials
         run: |
