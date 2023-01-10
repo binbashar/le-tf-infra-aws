@@ -34,11 +34,22 @@ jobs:
       - name: Installing Leverage CLI
         run: |
           printf "[INFO] Installing Leverage CLI\n"
-          pip install install -i https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}
+          if [[  "${{ inputs.leverage_version }}" == "" ]] || [[  "${{ inputs.leverage_repo }}" == "" ]];
+          then
+              pip install install -i https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}
+          else
+              pip install install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
+          fi
 
       - name: Set Leverage Toolbox version
         run: |
-          sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${LEVERAGE_TOOLBOX_VERSION}/' ../build.env;
+          printf "[INFO] Setting Leverage Toolbox version\n"
+          if [[  "${{ inputs.leverage_toolbox_version }}" == "" ]];
+          then
+            sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${LEVERAGE_TOOLBOX_VERSION}'/' ../build.env;
+          else
+            sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${{ inputs.leverage_toolbox_version }}'/' ../build.env;
+          fi
 
       - name: Set up credentials
         run: |
