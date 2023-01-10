@@ -36,8 +36,10 @@ jobs:
           printf "[INFO] Installing Leverage CLI\n"
           if [[  "${{ inputs.leverage_version }}" == "" ]] || [[  "${{ inputs.leverage_repo }}" == "" ]];
           then
+              echo "Installing https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}"
               pip install install -i https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}
           else
+              echo "Installing https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}"
               pip install install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
           fi
 
@@ -46,8 +48,10 @@ jobs:
           printf "[INFO] Setting Leverage Toolbox version\n"
           if [[  "${{ inputs.leverage_toolbox_version }}" == "" ]];
           then
+            echo "Using Toolbox ${LEVERAGE_TOOLBOX_VERSION} version"
             sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${LEVERAGE_TOOLBOX_VERSION}'/' ../build.env;
           else
+            echo "Using Toolbox ${{ inputs.leverage_toolbox_version }} version"
             sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${{ inputs.leverage_toolbox_version }}'/' ../build.env;
           fi
 
