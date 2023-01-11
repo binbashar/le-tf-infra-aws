@@ -53,10 +53,10 @@ jobs:
           if [[  "${{ inputs.leverage_toolbox_version }}" == "" ]];
           then
             echo "Using Toolbox ${LEVERAGE_TOOLBOX_VERSION} version"
-            sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${LEVERAGE_TOOLBOX_VERSION}'/' ../build.env;
+            sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${LEVERAGE_TOOLBOX_VERSION}'/' build.env;
           else
             echo "Using Toolbox ${{ inputs.leverage_toolbox_version }} version"
-            sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${{ inputs.leverage_toolbox_version }}'/' ../build.env;
+            sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${{ inputs.leverage_toolbox_version }}'/' build.env;
           fi
 
       - name: Set up credentials
