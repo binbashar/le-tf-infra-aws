@@ -114,25 +114,22 @@ jobs:
 
       - name: Test Reference Architecture
         run: |
-          python -m pipenv --version
-          cd ./apps-devstg/global/cli-test-layer
-
           # These are later mounted in the container
           mkdir ~/.ssh && touch ~/.gitconfig
 
           printf "[INFO] Initializing layer\n"
-          python -m pipenv run leverage tf init
+          python -m pipenv run bash -c "cd ./apps-devstg/global/cli-test-layer && leverage tf init"
 
           printf "[INFO] Generating plan\n"
-          python -m pipenv run leverage tf plan
+          python -m pipenv run bash -c "cd ./apps-devstg/global/cli-test-layer && leverage tf plan"
 
           printf "[INFO] Applying changes\n"
-          python -m pipenv run leverage tf apply -auto-approve
+          python -m pipenv run bash -c "cd ./apps-devstg/global/cli-test-layer && leverage tf apply -auto-approve"
 
           printf "[INFO] Checking if all changes were applied\n"
-          python -m pipenv run leverage tf plan -detailed-exitcode
+          python -m pipenv run bash -c "cd ./apps-devstg/global/cli-test-layer && leverage tf plan -detailed-exitcode"
           [[ $? -eq 2 ]] && printf "[WARN] There are still remaining changes\n"
           [[ $? -eq 0 ]] && printf "[INFO] Apply checks out\n"
 
           printf "[INFO] Destroying all generated created resources\n"
-          python -m pipenv run leverage tf destroy -auto-approve
+          python -m pipenv run bash -c "cd ./apps-devstg/global/cli-test-layer && leverage tf destroy -auto-approve"
