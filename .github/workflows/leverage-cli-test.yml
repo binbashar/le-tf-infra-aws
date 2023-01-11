@@ -8,7 +8,7 @@ on:
         description: "Leverage CLI version to test"
         required: false
         type: string
-        default: 1.9.0rc4
+        default: 1.9.0-rc4
       leverage_repo:
         description: "Whether to use pypi.org or test.pypi.org"
         required: false
@@ -24,7 +24,7 @@ jobs:
   test_leverage:
     runs-on: ubuntu-latest
     env:
-      LEVERAGE_VERSION: 1.9.0rc4
+      LEVERAGE_VERSION: 1.9.0-rc4
       LEVERAGE_REPO: test.pypi.org
       LEVERAGE_TOOLBOX_VERSION: 1.2.7-0.0.6
     steps:
@@ -34,13 +34,16 @@ jobs:
       - name: Installing Leverage CLI
         run: |
           printf "[INFO] Installing Leverage CLI\n"
+          # this is a temporary workaround since packages at test.pypi.org are not
+          # installing dependencies
+          # This HAS TO BE REMOVED as soon as the test packages start installing them
           if [[  "${{ inputs.leverage_version }}" == "" ]] || [[  "${{ inputs.leverage_repo }}" == "" ]];
           then
               echo "Installing https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}"
-              pip install install -i https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}
+              pip install -i https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}
           else
               echo "Installing https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}"
-              pip install install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
+              pip install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
           fi
 
       - name: Set Leverage Toolbox version
