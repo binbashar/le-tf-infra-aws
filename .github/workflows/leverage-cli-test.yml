@@ -37,7 +37,7 @@ jobs:
           # this is a temporary workaround since packages at test.pypi.org are not
           # installing dependencies
           # This HAS TO BE REMOVED as soon as the test packages start installing them
-          pip install leverage && pip uninstall leverage
+          pip install leverage && pip uninstall leverage -y
           if [[  "${{ inputs.leverage_version }}" == "" ]] || [[  "${{ inputs.leverage_repo }}" == "" ]];
           then
               echo "Installing https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}"
