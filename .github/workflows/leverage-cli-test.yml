@@ -34,6 +34,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+          cache: "pipenv"
 
       - name: install_dependencies
         run: |
@@ -49,9 +50,6 @@ jobs:
       - name: Installing Leverage CLI
         run: |
           printf "[INFO] Installing Leverage CLI\n"
-          # this is a temporary workaround since packages at test.pypi.org are not
-          # installing dependencies
-          # This HAS TO BE REMOVED as soon as the test packages start installing them
           if [[  "${{ inputs.leverage_version }}" == "" ]] || [[  "${{ inputs.leverage_repo }}" == "" ]];
           then
               echo "Installing https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}"
@@ -60,6 +58,7 @@ jobs:
               echo "Installing https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}"
               python -m pipenv install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
           fi
+        working-directory: ./apps-devstg/global/cli-test-layer
 
       - name: Set Leverage Toolbox version
         run: |
@@ -118,18 +117,19 @@ jobs:
           mkdir ~/.ssh && touch ~/.gitconfig
 
           printf "[INFO] Initializing layer\n"
-          python -m pipenv run bash -c "cd ./apps-devstg/global/cli-test-layer && leverage tf init"
+          python -m pipenv run leverage tf init
 
           printf "[INFO] Generating plan\n"
-          python -m pipenv run bash -c "cd ./apps-devstg/global/cli-test-layer && leverage tf plan"
+          python -m pipenv run leverage tf plan
 
           printf "[INFO] Applying changes\n"
-          python -m pipenv run bash -c "cd ./apps-devstg/global/cli-test-layer && leverage tf apply -auto-approve"
+          python -m pipenv run leverage tf apply -auto-approve
 
           printf "[INFO] Checking if all changes were applied\n"
-          python -m pipenv run bash -c "cd ./apps-devstg/global/cli-test-layer && leverage tf plan -detailed-exitcode"
+          python -m pipenv run leverage tf plan -detailed-exitcode
           [[ $? -eq 2 ]] && printf "[WARN] There are still remaining changes\n"
           [[ $? -eq 0 ]] && printf "[INFO] Apply checks out\n"
 
           printf "[INFO] Destroying all generated created resources\n"
-          python -m pipenv run bash -c "cd ./apps-devstg/global/cli-test-layer && leverage tf destroy -auto-approve"
+          python -m pipenv run leverage tf destroy -auto-approve
+        working-directory: ./apps-devstg/global/cli-test-layer
