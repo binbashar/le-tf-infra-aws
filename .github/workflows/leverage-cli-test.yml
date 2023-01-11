@@ -114,6 +114,7 @@ jobs:
 
       - name: Test Reference Architecture
         run: |
+          python -m pipenv --version
           cd ./apps-devstg/global/cli-test-layer
 
           # These are later mounted in the container
