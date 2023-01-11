@@ -40,6 +40,12 @@ jobs:
           pip3 install --user --upgrade pipenv
         shell: bash
 
+      - id: cache-pipenv
+        uses: actions/cache@v1
+        with:
+          path: ~/.local/share/virtualenvs
+          key: ${{ runner.os }}-pipenv-cache
+
       - name: Installing Leverage CLI
         run: |
           printf "[INFO] Installing Leverage CLI\n"
