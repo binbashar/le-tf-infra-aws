@@ -108,6 +108,8 @@ jobs:
 
       - name: Test Reference Architecture
         run: |
+          cd ./apps-devstg/global/cli-test-layer
+
           # These are later mounted in the container
           mkdir ~/.ssh && touch ~/.gitconfig
 
@@ -127,4 +129,3 @@ jobs:
 
           printf "[INFO] Destroying all generated created resources\n"
           python -m pipenv run leverage tf destroy -auto-approve
-        working-directory: ./apps-devstg/global/cli-test-layer
