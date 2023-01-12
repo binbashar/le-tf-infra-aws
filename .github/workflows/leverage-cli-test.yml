@@ -90,7 +90,7 @@ jobs:
       - name: Configure Reference Architecture
         run: |
           echo "[INFO] Configure Reference Architecture\n"
-          cat << EOF >> ./config/common.tfvars
+          cat << EOF > ./config/common.tfvars
           project = "bb"
           project_long = "binbash"
           region_primary = "us-east-1"
