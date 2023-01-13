@@ -8,12 +8,12 @@ on:
         description: "Leverage CLI version to test"
         required: false
         type: string
-        default: 1.9.0-rc4
+        default: 1.9.0
       leverage_repo:
         description: "Whether to use pypi.org or test.pypi.org"
         required: false
         type: string
-        default: "test.pypi.org"
+        default: "pypi.org"
       leverage_toolbox_version:
         description: "Leverage Toolbox version to test"
         required: false
@@ -24,8 +24,8 @@ jobs:
   test_leverage:
     runs-on: ubuntu-latest
     env:
-      LEVERAGE_VERSION: 1.9.0-rc4
-      LEVERAGE_REPO: test.pypi.org
+      LEVERAGE_VERSION: 1.9.0
+      LEVERAGE_REPO: pypi.org
       LEVERAGE_TOOLBOX_VERSION: 1.2.7-0.1.0
     steps:
       - name: Checkout base branch
@@ -44,7 +44,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /home/runner/.local/share/virtualenvs
-          key: ${{ runner.os }}-pipenv-cache
+          key: ${{ runner.os }}-pipenv-${{ github.run_id }}
 
       - name: Installing Leverage CLI
         run: |
