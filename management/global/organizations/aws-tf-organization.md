@@ -34,8 +34,7 @@ As an example, we will set up the `apps-prd` account by using the `apps-devstg` 
 1. Ensure you are at the root of this repository
 2. Create the initial directory structure for the new account:
     ```
-    mkdir -p apps-prd/global
-    mkdir -p apps-prd/us-east-1
+    mkdir -p apps-prd/{global,us-east-1}
     ```
 3. Set up the config files:
     1. Create a config files for this account: `cp -r apps-devstg/config apps-prd/config`
@@ -72,7 +71,7 @@ As an example, we will set up the `apps-prd` account by using the `apps-devstg` 
     4. Import the OAAR role: `leverage terraform import module.iam_assumable_role_oaar.aws_iam_role.this OrganizationAccountAccessRole`
     5. Now run `leverage tf apply`
 
-7. It's time for add a `security-base`  
+7. It's time for add a `security-base`:  
     1. Create this layer from an existing one: `cp -r apps-devstg/us-east-1/security-base apps-prd/us-east-1/security-base`
     2. Go to the `apps-prd/us-east-1/security-base` directory and open the `config.tf` file. Replace any occurrences of `devstg` with `prd`
     3. Now run `leverage tf init`
