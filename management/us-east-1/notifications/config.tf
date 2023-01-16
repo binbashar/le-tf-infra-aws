@@ -23,11 +23,11 @@ provider "vault" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 1.0.9"
+  required_version = "~> 1.2.7"
 
   required_providers {
-    aws   = "~> 3.2"
-    vault = "~> 2.18.0"
+    aws   = "~> 4.10"
+    vault = "~> 3.6.0"
   }
 
   backend "s3" {
