@@ -36,3 +36,16 @@ resource "helm_release" "metrics_server" {
   version    = "5.8.4"
   values     = [file("chart-values/metrics-server.yaml")]
 }
+
+#------------------------------------------------------------------------------
+# Prometheus Stack
+#------------------------------------------------------------------------------
+resource "helm_release" "kube_prometheus_stack" {
+  count      = var.enable_prometheus_stack ? 1 : 0
+  name       = "kube-prometheus-stack"
+  namespace  = kubernetes_namespace.prometheus[0].id
+  repository = "https://prometheus-community.github.io/helm-charts"
+  chart      = "kube-prometheus-stack"
+  version    = "43.2.1"
+  values     = [file("chart-values/kube-prometheus-stack.yaml")]
+}
