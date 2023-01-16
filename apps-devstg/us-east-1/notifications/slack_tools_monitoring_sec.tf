@@ -27,7 +27,6 @@ module "notify_slack_monitoring_sec" {
   slack_username    = "aws-binbash-org"
   slack_emoji       = ":AWS3:"
   slack_webhook_url = aws_kms_ciphertext.slack_url_monitoring_sec.ciphertext_blob
-  # slack_webhook_url = data.aws_kms_ciphertext.slack_url_monitoring_sec.ciphertext_blob
 
   kms_key_arn          = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
   lambda_function_name = "${var.project}-${var.environment}-notify-slack-monitoring-sec"
