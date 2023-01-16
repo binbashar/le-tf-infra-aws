@@ -1,48 +1,75 @@
 name: Leverage CLI Test
 
 on:
+  pull_request:
   workflow_dispatch:
     inputs:
-      leverage_branch:
-        description: "Reference to current Leverage branch to test"
-        required: true
+      leverage_version:
+        description: "Leverage CLI version to test"
+        required: false
         type: string
+        default: 1.9.1
+      leverage_repo:
+        description: "Whether to use pypi.org or test.pypi.org"
+        required: false
+        type: string
+        default: "pypi.org"
+      leverage_toolbox_version:
+        description: "Leverage Toolbox version to test"
+        required: false
+        type: string
+        default: 1.2.7-0.1.0
 
 jobs:
   test_leverage:
     runs-on: ubuntu-latest
+    env:
+      LEVERAGE_VERSION: 1.9.1
+      LEVERAGE_REPO: pypi.org
+      LEVERAGE_TOOLBOX_VERSION: 1.2.7-0.1.0
     steps:
       - name: Checkout base branch
         uses: actions/checkout@v3
 
-      - name: Clone Leverage
-        run: |
-          printf "[INFO] Cloning Leverage CLI's repo\n"
-          git clone https://github.com/binbashar/leverage.git
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-      - name: Build Leverage CLI
+      - name: install_dependencies
         run: |
-          printf "[INFO] Building Leverage CLI\n"
-          printf "[INFO]     Pulling ref ${{ inputs.leverage_branch }}\n"
-          git fetch origin ${{ inputs.leverage_branch }}:$(echo "${{ inputs.leverage_branch }}" | tr '/' '-')
-          git checkout $(echo "${{ inputs.leverage_branch }}" | tr '/' '-')
-          if ! (which pipenv 2>/dev/null); then echo 'Installing pipenv...' && pip install pipenv && pipenv --python $(which python) ; else echo 'pipenv is already installed'; fi
-          make build
-          pip install -e .
-        working-directory: ./leverage
+          pip3 install --user --upgrade pipenv
+        shell: bash
+
+      - id: cache-pipenv
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/.local/share/virtualenvs
+          key: ${{ runner.os }}-pipenv-${{ github.run_id }}
+
+      - name: Installing Leverage CLI
+        run: |
+          printf "[INFO] Installing Leverage CLI\n"
+          if [[  "${{ inputs.leverage_version }}" == "" ]] || [[  "${{ inputs.leverage_repo }}" == "" ]];
+          then
+              echo "Installing https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}"
+              python -m pipenv install -i https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}
+          else
+              echo "Installing https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}"
+              python -m pipenv install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
+          fi
+        working-directory: ./apps-devstg/global/cli-test-layer
 
       - name: Set Leverage Toolbox version
         run: |
           printf "[INFO] Setting Leverage Toolbox version\n"
-          TOOLBOX_VERSION=$(grep "__toolbox_version__" leverage/__init__.py | sed -E 's/__toolbox_version__ += "([0-9a-z\.\-]+)"/\1/')
-          if [[ "$TOOLBOX_VERSION" != "" ]];
+          if [[  "${{ inputs.leverage_toolbox_version }}" == "" ]];
           then
-              echo "Using version $TOOLBOX_VERSION";
-              sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='$TOOLBOX_VERSION'/' ../build.env;
+            echo "Using Toolbox ${LEVERAGE_TOOLBOX_VERSION} version"
+            sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${LEVERAGE_TOOLBOX_VERSION}'/' build.env;
           else
-              echo "No version found"
+            echo "Using Toolbox ${{ inputs.leverage_toolbox_version }} version"
+            sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${{ inputs.leverage_toolbox_version }}'/' build.env;
           fi
-        working-directory: ./leverage
 
       - name: Set up credentials
         run: |
@@ -63,7 +90,7 @@ jobs:
       - name: Configure Reference Architecture
         run: |
           echo "[INFO] Configure Reference Architecture\n"
-          cat << EOF >> ./config/common.tfvars
+          cat << EOF > ./config/common.tfvars
           project = "bb"
           project_long = "binbash"
           region_primary = "us-east-1"
@@ -89,19 +116,19 @@ jobs:
           mkdir ~/.ssh && touch ~/.gitconfig
 
           printf "[INFO] Initializing layer\n"
-          leverage tf init
+          python -m pipenv run leverage tf init
 
           printf "[INFO] Generating plan\n"
-          leverage tf plan
+          python -m pipenv run leverage tf plan
 
           printf "[INFO] Applying changes\n"
-          leverage tf apply -auto-approve
+          python -m pipenv run leverage tf apply -auto-approve
 
           printf "[INFO] Checking if all changes were applied\n"
-          leverage tf plan -detailed-exitcode
+          python -m pipenv run leverage tf plan -detailed-exitcode
           [[ $? -eq 2 ]] && printf "[WARN] There are still remaining changes\n"
           [[ $? -eq 0 ]] && printf "[INFO] Apply checks out\n"
 
           printf "[INFO] Destroying all generated created resources\n"
-          leverage tf destroy -auto-approve
+          python -m pipenv run leverage tf destroy -auto-approve
         working-directory: ./apps-devstg/global/cli-test-layer
