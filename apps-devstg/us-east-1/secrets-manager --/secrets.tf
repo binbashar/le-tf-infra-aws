@@ -19,6 +19,21 @@ module "secrets" {
       kms_key_id = data.terraform_remote_state.keys.outputs.aws_kms_key_id,
       # https://github.com/binbashar/terraform-aws-secrets-manager#secrets-rotation
       # rotation_lambda_arn     = "arn:aws:lambda:us-east-1:xxxxxxxxxxxx:function:lambda-rotate-secret"
+    },
+    "/pgsql/administrator" = {
+      description             = "Apps-devstg Postgres database administrator"
+      recovery_window_in_days = 7
+      secret_key_value = {
+        # engine   = data.terraform_remote_state.apps-devstg-pgsql.outputs.cluster_engine, #@
+        # host     = data.terraform_remote_state.apps-devstg-pgsql.outputs.cluster_endpoint,   #@
+        username = "administrator",
+        password = "alreadyRotatedPassword",
+        # dbname   = data.terraform_remote_state.apps-devstg-pgsql.outputs.cluster_database_name, #@
+        # port     = data.terraform_remote_state.apps-devstg-pgsql.outputs.cluster_port  #@
+      }
+      kms_key_id = data.terraform_remote_state.keys.outputs.aws_kms_key_id,
+      # https://github.com/binbashar/terraform-aws-secrets-manager#secrets-rotation
+      # rotation_lambda_arn     = "arn:aws:lambda:us-east-1:xxxxxxxxxxxx:function:lambda-rotate-secret"
     }
   }
 
