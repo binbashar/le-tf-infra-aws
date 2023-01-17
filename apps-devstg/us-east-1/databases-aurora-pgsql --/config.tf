@@ -21,7 +21,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/database-aurora-pgsql/terraform.tfstate"
+    key = "apps-devstg/databases-aurora-pgsql/terraform.tfstate"
   }
 }
 
