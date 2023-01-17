@@ -23,11 +23,14 @@ provider "vault" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 0.14.11"
+  required_version = ">= 1.1.3"
 
   required_providers {
-    aws   = "~> 3.8"
-    vault = ">= 2.21.0"
+    aws = "~> 4.10"
+    postgresql = {
+      source  = "cyrilgdn/postgresql"
+      version = "1.17.1"
+    }
   }
 
   backend "s3" {
@@ -38,6 +41,17 @@ terraform {
 #=============================#
 # Data sources                #
 #=============================#
+data "terraform_remote_state" "secrets" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/secrets-manager/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "vpc" {
   backend = "s3"
 
@@ -58,8 +72,4 @@ data "terraform_remote_state" "vpc-shared" {
     bucket  = "${var.project}-shared-terraform-backend"
     key     = "shared/network/terraform.tfstate"
   }
-}
-
-data "vault_generic_secret" "database_secrets" {
-  path = "secrets/${var.project}/${var.environment}/databases-pgsql"
 }
