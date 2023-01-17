@@ -4,8 +4,8 @@ locals {
   engine      = "aurora-postgresql"
 
   tags = {
-    Name               = local.name
-    Terraform          = "true"
-    Environment        = var.environment
+    Name        = local.name
+    Terraform   = "true"
+    Environment = var.environment
   }
 }
