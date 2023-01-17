@@ -86,6 +86,11 @@ variable "enable_ingressmonitorcontroller" {
   default = false
 }
 
+variable "enable_prometheus_stack" {
+  type    = bool
+  default = false
+}
+
 variable "enable_prometheus_dependencies" {
   type    = bool
   default = false
