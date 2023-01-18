@@ -1,4 +1,15 @@
 #
+# NOTE: Before deploying make sure the required secret is created via apps-devstg/us-east-1/secrets-manager layer
+#
+
+#
+# DB Administrator secret
+#
+data "aws_secretsmanager_secret_version" "administrator" {
+  secret_id = data.terraform_remote_state.secrets.outputs.secret_ids["/pgsql/administrator"]
+}
+
+#
 # DB Security Group
 #
 resource "aws_security_group" "bb_postgres_db" {
@@ -24,13 +35,13 @@ resource "aws_security_group_rule" "allow_postgresql_port" {
 # Binbash Reference DB
 #
 module "bb_postgres_db" {
-  source = "github.com/binbashar/terraform-aws-rds.git?ref=v3.3.0"
+  source = "github.com/binbashar/terraform-aws-rds.git?ref=v5.2.0"
 
   # Instance settings
   # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html
   identifier        = "${var.project}-${var.environment}-binbash-postgres"
   engine            = "postgres"
-  engine_version    = "11.5"
+  engine_version    = "14.5"
   instance_class    = "db.m5.large"
   allocated_storage = 100
   storage_encrypted = true
@@ -38,13 +49,8 @@ module "bb_postgres_db" {
 
   # Database credentials
   name     = "${var.project}_${replace(var.environment, "apps-", "")}_binbash_postgres"
-  username = "administrator"
-
-  ## Secret from secrets.enc
-  #password = local.secrets.database_admin_password
-
-  ## Secret from Hashicorp Vault
-  password = data.vault_generic_secret.database_secrets.data["administrator_password"]
+  username = jsondecode(data.aws_secretsmanager_secret_version.administrator.secret_string)["username"]
+  password = jsondecode(data.aws_secretsmanager_secret_version.administrator.secret_string)["password"]
   port     = "5432"
 
   # Backup and maintenance
@@ -57,8 +63,8 @@ module "bb_postgres_db" {
   vpc_security_group_ids = [aws_security_group.bb_postgres_db.id]
 
   # Postgres versions (param/option groups)
-  family               = "postgres11"
-  major_engine_version = "11"
+  family               = "postgres14"
+  major_engine_version = "14"
 
   # Do not automatically upgrade
   auto_minor_version_upgrade = false

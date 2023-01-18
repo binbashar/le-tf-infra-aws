@@ -1,22 +1,9 @@
-#
-# Providers
-#
+#=============================#
+# AWS Provider Settings       #
+#=============================#
 provider "aws" {
   region  = var.region
   profile = var.profile
-}
-
-#=============================#
-# Vault Provider Settings     #
-#=============================#
-provider "vault" {
-  address = var.vault_address
-
-  /*
-  Vault token that will be used by Terraform to authenticate.
- admin token from https://portal.cloud.hashicorp.com/.
- */
-  token = var.vault_token
 }
 
 #=============================#
@@ -34,7 +21,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/databases-pgsql/terraform.tfstate"
+    key = "apps-devstg/databases-aurora-pgsql/terraform.tfstate"
   }
 }
 
@@ -63,7 +50,7 @@ data "terraform_remote_state" "vpc" {
   }
 }
 
-data "terraform_remote_state" "vpc-shared" {
+data "terraform_remote_state" "shared-vpc" {
   backend = "s3"
 
   config = {
