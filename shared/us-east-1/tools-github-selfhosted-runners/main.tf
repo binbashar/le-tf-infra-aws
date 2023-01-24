@@ -54,9 +54,9 @@ module "github_selfhosted_runners" {
 
   # Set the block device name for Ubuntu root device
   block_device_mappings = [{
-    device_name = "/dev/sda1"
-    volume_type = "gp3"
-    volume_size = 20
+    device_name           = "/dev/sda1"
+    volume_type           = "gp3"
+    volume_size           = 20
     delete_on_termination = true
     encrypted             = false
     iops                  = null
@@ -66,7 +66,7 @@ module "github_selfhosted_runners" {
   }]
 
   # KMS key for encrypting environment variables passed to Lambda
-  kms_key_arn     = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
+  kms_key_arn = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
 
   # Uncommet idle config to have idle runners from 9 to 5 in time zone Amsterdam
   # idle_config = [{
