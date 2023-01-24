@@ -1,22 +1,28 @@
 #!/bin/bash -x
 exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
 
+set +x
+
+%{ if enable_debug_logging }
+set -x
+%{ endif }
+
 ${pre_install}
 
 # Install AWS CLI
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
     awscli \
-    jq \
-    curl \
-    wget \
-    git \
-    uidmap \
     build-essential \
-    unzip
+    curl \
+    git \
+    iptables \
+    jq \
+    uidmap \
+    unzip \
+    wget
 
-USER_NAME=runners
-useradd -m -s /bin/bash $USER_NAME
+USER_NAME=ubuntu
 USER_ID=$(id -ru $USER_NAME)
 
 echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
@@ -46,7 +52,7 @@ WantedBy=default.target
 
 EOF
 
-echo export XDG_RUNTIME_DIR=/run/user/$USER_ID >>/home/$USER_NAME/.profile
+echo export XDG_RUNTIME_DIR=/run/user/$USER_ID >>/home/$USER_NAME/.bashrc
 
 systemctl daemon-reload
 systemctl enable user@UID.service
@@ -54,20 +60,22 @@ systemctl start user@UID.service
 
 curl -fsSL https://get.docker.com/rootless >>/opt/rootless.sh && chmod 755 /opt/rootless.sh
 su -l $USER_NAME -c /opt/rootless.sh
-echo export DOCKER_HOST=unix:///run/user/$USER_ID/docker.sock >>/home/$USER_NAME/.profile
-echo export PATH=/home/$USER_NAME/bin:$PATH >>/home/$USER_NAME/.profile
+echo export DOCKER_HOST=unix:///run/user/$USER_ID/docker.sock >>/home/$USER_NAME/.bashrc
+echo export PATH=/home/$USER_NAME/bin:$PATH >>/home/$USER_NAME/.bashrc
 
 # Run docker service by default
 loginctl enable-linger $USER_NAME
 su -l $USER_NAME -c "systemctl --user enable docker"
 
-${install_config_runner}
+${install_runner}
 
 # config runner for rootless docker
-cd /home/$USER_NAME/actions-runner/
+cd /opt/actions-runner/
 echo DOCKER_HOST=unix:///run/user/$USER_ID/docker.sock >>.env
 echo PATH=/home/$USER_NAME/bin:$PATH >>.env
 
 ${post_install}
 
-./svc.sh start
+cd /opt/actions-runner
+
+${start_runner}

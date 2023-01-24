@@ -2,7 +2,7 @@
 # Ref: https://github.com/philips-labs/terraform-aws-github-runner#overview
 #
 module "github_selfhosted_runners" {
-  source = "github.com/binbashar/terraform-aws-github-runner?ref=v0.13.0"
+  source = "github.com/binbashar/terraform-aws-github-runner?ref=v1.18.2"
 
   # VPC settings
   aws_region = var.region
@@ -10,7 +10,7 @@ module "github_selfhosted_runners" {
   subnet_ids = data.terraform_remote_state.vpc.outputs.private_subnets
 
   # For naming, prefix and tagging purposes
-  environment = "github-runners"
+  prefix = "github-runners"
 
   # Github App credentials
   github_app = {
@@ -36,13 +36,15 @@ module "github_selfhosted_runners" {
   runners_maximum_count = 10
 
   # Instance size
-  instance_type = "t3.medium"
+  instance_types = ["t3.medium"]
 
   # Enable access to the runners via SSM (useful for troubleshooting)
   enable_ssm_on_runners = true
 
   # Instance bootstrapping script
   userdata_template = "./templates/user-data.sh"
+
+  runner_run_as = "ubuntu"
 
   # Use custom AMI
   ami_owners = ["099720109477"] # Canonical
@@ -51,15 +53,20 @@ module "github_selfhosted_runners" {
   }
 
   # Set the block device name for Ubuntu root device
-  block_device_mappings = {
+  block_device_mappings = [{
     device_name = "/dev/sda1"
-    volume_type = "gp2"
+    volume_type = "gp3"
     volume_size = 20
-  }
+    delete_on_termination = true
+    encrypted             = false
+    iops                  = null
+    throughput            = null
+    kms_key_id            = null
+    snapshot_id           = null
+  }]
 
   # KMS key for encrypting environment variables passed to Lambda
-  manage_kms_key = false
-  kms_key_id     = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+  kms_key_arn     = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
 
   # Uncommet idle config to have idle runners from 9 to 5 in time zone Amsterdam
   # idle_config = [{

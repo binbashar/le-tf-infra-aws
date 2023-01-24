@@ -26,7 +26,7 @@ terraform {
   required_version = ">= 0.14.11"
 
   required_providers {
-    aws   = "~> 3.2"
+    aws   = "~> 4.0"
     vault = "~> 2.18.0"
   }
 
