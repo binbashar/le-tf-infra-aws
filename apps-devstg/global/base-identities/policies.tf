@@ -166,7 +166,8 @@ resource "aws_iam_policy" "deploy_master_access" {
                 "vpc:*",
                 "waf:*",
                 "wafv2:*",
-                "waf-regional:*"
+                "waf-regional:*",
+                "kms:*"
             ],
             "Resource": [
                 "*"
