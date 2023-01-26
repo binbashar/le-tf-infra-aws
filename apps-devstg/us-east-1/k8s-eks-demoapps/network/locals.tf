@@ -1,5 +1,5 @@
 locals {
-  cluster_name = "${var.project}-${var.environment}-eks-demoapps"
+  cluster_name = "${var.project}-${var.environment}-eks-demoapps-gm"
 
   # Network Local Vars
   # https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html
@@ -7,7 +7,7 @@ locals {
   # Docker runs in the 172.17.0.0/16 CIDR range in Amazon EKS clusters. We recommend that your cluster's VPC subnets do
   # not overlap this range. Otherwise, you will receive the following error:
   # Error: : error upgrading connection: error dialing backend: dial tcp 172.17.nn.nn:10250: getsockopt: no route to host
-  vpc_name = "${var.project}-${var.environment}-vpc-eks-demoapps"
+  vpc_name = "${var.project}-${var.environment}-vpc-eks-demoapps-gm"
 
   # Ref: https://www.davidc.net/sites/default/subnets/subnets.html?network=10.1.0.0&mask=16&division=15.7231
   vpc_cidr_block = "10.1.0.0/16"
