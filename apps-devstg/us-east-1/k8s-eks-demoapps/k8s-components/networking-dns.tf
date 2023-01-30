@@ -8,6 +8,7 @@ resource "helm_release" "externaldns_private" {
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "external-dns"
   version    = "6.4.4"
+  verify = false
   values = [
     templatefile("chart-values/externaldns.yaml", {
       filteredDomain     = local.private_base_domain
@@ -31,6 +32,7 @@ resource "helm_release" "externaldns_public" {
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "external-dns"
   version    = "6.4.4"
+  verify = false
   values = [
     templatefile("chart-values/externaldns.yaml", {
       filteredDomain     = local.public_base_domain
