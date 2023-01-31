@@ -1,14 +1,28 @@
 #------------------------------------------------------------------------------
+# This is a workaround since Terraform and Helm provider are having (reported)
+# issues with Bitnami
+#------------------------------------------------------------------------------
+resource "null_resource" "download" {
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+  provisioner "local-exec" {
+    command = "curl -o external-dns-6.4.4.tgz -L https://charts.bitnami.com/bitnami/external-dns-6.4.4.tgz"
+  }
+}
+#------------------------------------------------------------------------------
 # External DNS (Private): Sync ingresses hosts with your DNS server.
 #------------------------------------------------------------------------------
 resource "helm_release" "externaldns_private" {
   count      = var.enable_private_dns_sync ? 1 : 0
+
+  depends_on = [null_resource.download]
+
   name       = "externaldns-private"
   namespace  = kubernetes_namespace.externaldns[0].id
-  repository = "https://charts.bitnami.com/bitnami"
-  chart      = "external-dns"
+  #repository = "https://charts.bitnami.com/bitnami"
+  chart      = "./external-dns-6.4.4.tgz"
   version    = "6.4.4"
-  verify = false
   values = [
     templatefile("chart-values/externaldns.yaml", {
       filteredDomain     = local.private_base_domain
@@ -27,12 +41,14 @@ resource "helm_release" "externaldns_private" {
 #------------------------------------------------------------------------------
 resource "helm_release" "externaldns_public" {
   count      = var.enable_public_dns_sync ? 1 : 0
+
+  depends_on = [null_resource.download]
+
   name       = "externaldns-public"
   namespace  = kubernetes_namespace.externaldns[0].id
-  repository = "https://charts.bitnami.com/bitnami"
-  chart      = "external-dns"
+  #repository = "https://charts.bitnami.com/bitnami"
+  chart      = "./external-dns-6.4.4.tgz"
   version    = "6.4.4"
-  verify = false
   values = [
     templatefile("chart-values/externaldns.yaml", {
       filteredDomain     = local.public_base_domain
