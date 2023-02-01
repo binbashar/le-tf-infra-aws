@@ -176,6 +176,7 @@ module "cluster" {
   }
 
   # Configure which roles, users and accounts can access the k8s api
+  create_aws_auth_configmap = var.create_aws_auth
   manage_aws_auth_configmap = var.manage_aws_auth
   aws_auth_roles            = local.map_roles
   aws_auth_users            = local.map_users
