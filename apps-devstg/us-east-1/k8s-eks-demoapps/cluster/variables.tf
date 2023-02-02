@@ -41,5 +41,5 @@ variable "manage_aws_auth" {
 
 variable "create_aws_auth" {
   description = "Whether to create the aws-auth configmap."
-  default     = true
+  default     = false
 }
