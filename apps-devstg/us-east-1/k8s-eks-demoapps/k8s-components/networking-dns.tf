@@ -14,15 +14,15 @@ resource "null_resource" "download" {
 # External DNS (Private): Sync ingresses hosts with your DNS server.
 #------------------------------------------------------------------------------
 resource "helm_release" "externaldns_private" {
-  count      = var.enable_private_dns_sync ? 1 : 0
+  count = var.enable_private_dns_sync ? 1 : 0
 
   depends_on = [null_resource.download]
 
-  name       = "externaldns-private"
-  namespace  = kubernetes_namespace.externaldns[0].id
+  name      = "externaldns-private"
+  namespace = kubernetes_namespace.externaldns[0].id
   #repository = "https://charts.bitnami.com/bitnami"
-  chart      = "./external-dns-6.4.4.tgz"
-  version    = "6.4.4"
+  chart   = "./external-dns-6.4.4.tgz"
+  version = "6.4.4"
   values = [
     templatefile("chart-values/externaldns.yaml", {
       filteredDomain     = local.private_base_domain
@@ -40,15 +40,15 @@ resource "helm_release" "externaldns_private" {
 # External DNS (Public): Sync ingresses hosts with your DNS server.
 #------------------------------------------------------------------------------
 resource "helm_release" "externaldns_public" {
-  count      = var.enable_public_dns_sync ? 1 : 0
+  count = var.enable_public_dns_sync ? 1 : 0
 
   depends_on = [null_resource.download]
 
-  name       = "externaldns-public"
-  namespace  = kubernetes_namespace.externaldns[0].id
+  name      = "externaldns-public"
+  namespace = kubernetes_namespace.externaldns[0].id
   #repository = "https://charts.bitnami.com/bitnami"
-  chart      = "./external-dns-6.4.4.tgz"
-  version    = "6.4.4"
+  chart   = "./external-dns-6.4.4.tgz"
+  version = "6.4.4"
   values = [
     templatefile("chart-values/externaldns.yaml", {
       filteredDomain     = local.public_base_domain
