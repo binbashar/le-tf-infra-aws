@@ -38,3 +38,8 @@ variable "manage_aws_auth" {
   description = "Whether to apply the aws-auth configmap file."
   default     = true
 }
+
+variable "create_aws_auth" {
+  description = "Whether to create the aws-auth configmap."
+  default     = false
+}

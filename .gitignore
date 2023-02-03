@@ -123,3 +123,6 @@ Thumbs.db
 #
 tests/vendor/
 tests/Gopkg.*
+
+.terraform.lock.hcl
+*.tgz
