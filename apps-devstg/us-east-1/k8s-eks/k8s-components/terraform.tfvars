@@ -83,6 +83,10 @@ argocd = {
 }
 argo_rollouts = {
   enabled = false
+
+  dashboard = {
+    enabled = false
+  }
 }
 
 #------------------------------------------------------------------------------

@@ -88,6 +88,7 @@ resource "helm_release" "argo_rollouts" {
   version    = "2.19.0"
   values = [
     templatefile("chart-values/argo-rollouts.yaml", {
+      enableDashboard = var.argo_rollouts.dashboard.enabled
       rolloutsHost    = "rollouts.${local.environment}.${local.private_base_domain}"
       ingressClass    = local.private_ingress_class
   })]
