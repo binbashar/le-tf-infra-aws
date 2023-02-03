@@ -41,19 +41,14 @@ variable "enable_external_secrets" {
   default = false
 }
 
-variable "enable_cicd" {
-  type    = bool
-  default = false
+variable "argocd" {
+  type    = map(any)
+  default = {}
 }
 
-variable "enable_argocd_image_updater" {
-  type    = bool
-  default = false
-}
-
-variable "enable_argo_rollouts" {
-  type    = bool
-  default = false
+variable "argo_rollouts" {
+  type    = map(any)
+  default = {}
 }
 
 variable "enable_hpa_scaling" {

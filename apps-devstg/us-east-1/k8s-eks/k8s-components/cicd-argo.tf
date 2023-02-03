@@ -2,7 +2,7 @@
 # ArgoCD: GitOps + CD
 #------------------------------------------------------------------------------
 resource "helm_release" "argocd" {
-  count = var.enable_cicd ? 1 : 0
+  count = var.argocd.enabled ? 1 : 0
 
   name       = "argocd"
   namespace  = kubernetes_namespace.argocd[0].id
@@ -11,8 +11,8 @@ resource "helm_release" "argocd" {
   version    = "5.4.3"
   values = [
     templatefile("chart-values/argo-cd.yaml", {
-      argoHost     = "argocd.${local.environment}.${local.private_base_domain}"
-      ingressClass = local.private_ingress_class
+      argoHost          = "argocd.${local.environment}.${local.private_base_domain}"
+      ingressClass      = local.private_ingress_class
     }),
     # We are using a different approach here because it is very tricky to render
     # properly the multi-line sshPrivateKey using 'templatefile' function
@@ -46,7 +46,7 @@ resource "helm_release" "argocd" {
 # ArgoCD Image Updater
 #------------------------------------------------------------------------------
 resource "helm_release" "argocd_image_updater" {
-  count      = var.enable_argocd_image_updater ? 1 : 0
+  count      = var.argocd.image_updater.enabled ? 1 : 0
   name       = "argocd-image-updater"
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
@@ -79,7 +79,7 @@ resource "helm_release" "argocd_image_updater" {
 # Argo Rollouts
 #------------------------------------------------------------------------------
 resource "helm_release" "argo_rollouts" {
-  count = var.enable_argo_rollouts ? 1 : 0
+  count = var.argo_rollouts.enabled ? 1 : 0
 
   name       = "argo-rollouts"
   namespace  = kubernetes_namespace.argocd[0].id
@@ -88,8 +88,8 @@ resource "helm_release" "argo_rollouts" {
   version    = "2.19.0"
   values = [
     templatefile("chart-values/argo-rollouts.yaml", {
-      rolloutsHost = "rollouts.${local.environment}.${local.private_base_domain}"
-      ingressClass = local.private_ingress_class
+      rolloutsHost    = "rollouts.${local.environment}.${local.private_base_domain}"
+      ingressClass    = local.private_ingress_class
   })]
 
   depends_on = [
