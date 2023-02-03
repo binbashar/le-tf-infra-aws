@@ -77,6 +77,8 @@ imc = {
 argocd = {
   enabled = true
 
+  enableWebTerminal = true
+
   image_updater = {
     enabled = false
   }

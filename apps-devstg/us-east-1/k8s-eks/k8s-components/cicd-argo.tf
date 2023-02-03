@@ -8,9 +8,10 @@ resource "helm_release" "argocd" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
-  version    = "5.4.3"
+  version    = "5.8.3"
   values = [
     templatefile("chart-values/argo-cd.yaml", {
+      enableWebTerminal = var.argocd.enableWebTerminal
       argoHost          = "argocd.${local.environment}.${local.private_base_domain}"
       ingressClass      = local.private_ingress_class
     }),
