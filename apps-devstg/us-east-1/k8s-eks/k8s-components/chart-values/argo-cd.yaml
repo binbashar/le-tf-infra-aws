@@ -1,3 +1,7 @@
+configs:
+  cm:
+    exec.enabled: "${enableWebTerminal}"
+
 server:
   ingress:
     enabled: true

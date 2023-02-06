@@ -1,5 +1,5 @@
 dashboard:
-  enabled: true
+  enabled: ${enableDashboard}
 
   ingress:
     enabled: true

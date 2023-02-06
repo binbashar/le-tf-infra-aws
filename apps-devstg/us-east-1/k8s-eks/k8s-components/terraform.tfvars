@@ -74,9 +74,22 @@ imc = {
 #------------------------------------------------------------------------------
 # CICD | ArgoCD
 #------------------------------------------------------------------------------
-enable_cicd                 = true
-enable_argocd_image_updater = false
-enable_argo_rollouts        = false
+argocd = {
+  enabled = true
+
+  enableWebTerminal = true
+
+  image_updater = {
+    enabled = false
+  }
+}
+argo_rollouts = {
+  enabled = false
+
+  dashboard = {
+    enabled = false
+  }
+}
 
 #------------------------------------------------------------------------------
 # Backups

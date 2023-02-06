@@ -99,7 +99,7 @@ resource "helm_release" "cluster_secrets_manager" {
   depends_on = [helm_release.external_secrets[0]]
 }
 
-resource "kubernetes_manifest" "cluster_parameter_store" {
+resource "helm_release" "cluster_parameter_store" {
   count = var.enable_external_secrets ? 1 : 0
 
   name       = "cluster-parameter-store"
@@ -109,20 +109,20 @@ resource "kubernetes_manifest" "cluster_parameter_store" {
   values = [
     <<-EOF
     resources:
-      apiVersion: external-secrets.io/v1beta1
-      kind: ClusterSecretStore
-      metadata:
-        name: cluster-parameter-store
-      spec:
-        provider:
-          aws:
-            service: ParameterStore
-            region: ${var.region}
-            auth:
-              jwt:
-                serviceAccountRef:
-                  name: external-secrets
-                  namespace: external-secrets
+      - apiVersion: external-secrets.io/v1beta1
+        kind: ClusterSecretStore
+        metadata:
+          name: cluster-parameter-store
+        spec:
+          provider:
+            aws:
+              service: ParameterStore
+              region: ${var.region}
+              auth:
+                jwt:
+                  serviceAccountRef:
+                    name: external-secrets
+                    namespace: external-secrets
     EOF
   ]
 
