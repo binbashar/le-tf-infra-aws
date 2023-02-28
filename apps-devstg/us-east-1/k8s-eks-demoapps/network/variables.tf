@@ -66,3 +66,9 @@ variable "enable_kms_endpoint_private_dns" {
   type        = bool
   default     = false
 }
+
+variable "enable_vpc_flow_logs" {
+  description = "Enable EKS VPC flow logs"
+  type        = bool
+  default     = false
+}

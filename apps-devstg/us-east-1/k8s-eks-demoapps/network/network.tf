@@ -131,3 +131,16 @@ resource "aws_route" "private_rt_routes_to_tgw" {
   destination_cidr_block = "0.0.0.0/0"
   transit_gateway_id     = data.terraform_remote_state.tgw[0].outputs.tgw_id
 }
+
+# VPC flow logs
+module "vpc_flow_logs" {
+  source = "github.com/binbashar/terraform-aws-vpc-flowlogs.git?ref=v1.0.17"
+
+  # enable
+  count = var.enable_vpc_flow_logs ? 1 : 0
+
+  vpc_id             = module.vpc-eks.vpc_id
+  bucket_name_prefix = local.vpc_name
+  tags               = local.tags
+  enable_versioning  = true
+}
