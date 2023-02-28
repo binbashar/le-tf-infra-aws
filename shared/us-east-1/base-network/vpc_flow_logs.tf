@@ -1,5 +1,5 @@
 module "vpc_flow_logs" {
-  source = "github.com/binbashar/terraform-aws-vpc-flowlogs.git?ref=v1.0.16"
+  source = "github.com/binbashar/terraform-aws-vpc-flowlogs.git?ref=v1.0.17"
 
   vpc_id             = module.vpc.vpc_id
   bucket_name_prefix = "${var.project}-${var.environment}"
