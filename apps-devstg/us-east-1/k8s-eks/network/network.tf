@@ -142,7 +142,7 @@ module "vpc_flow_logs" {
   count = var.enable_vpc_flow_logs ? 1 : 0
 
   vpc_id             = module.vpc-eks.vpc_id
-  bucket_name_prefix = "${var.project}-${var.environment}-eks"
+  bucket_name_prefix = local.vpc_name
   tags               = local.tags
   enable_versioning  = true
 }
