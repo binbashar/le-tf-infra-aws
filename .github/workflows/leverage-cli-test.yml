@@ -18,7 +18,7 @@ on:
         description: "Leverage Toolbox version to test"
         required: false
         type: string
-        default: 1.2.7-0.1.0
+        default: 1.2.7-0.1.6
 
 jobs:
   test_leverage:
@@ -26,7 +26,7 @@ jobs:
     env:
       LEVERAGE_VERSION: 1.9.1
       LEVERAGE_REPO: pypi.org
-      LEVERAGE_TOOLBOX_VERSION: 1.2.7-0.1.0
+      LEVERAGE_TOOLBOX_VERSION: 1.2.7-0.1.6
     steps:
       - name: Checkout base branch
         uses: actions/checkout@v3
