@@ -49,11 +49,11 @@ module "permission_sets" {
       session_duration                    = local.default_session_duration
       tags                                = local.tags
       inline_policy                       = ""
-      policy_attachments                  = [
+      customer_managed_policy_attachments = []
+      policy_attachments = [
         "arn:aws:iam::aws:policy/SecurityAudit",
         "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"
       ]
-      customer_managed_policy_attachments = []
     },
     {
       name                                = "ReadOnly"
