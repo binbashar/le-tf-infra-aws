@@ -92,6 +92,7 @@ module "terraform-aws-basic-layout" {
   #    e. connect to the VPN and ssh to the Pritunl EC2
   #    f. run '$sudo pritunl reset-ssl-cert'
   #    g. force SSL cert update (manually via UI or via API call)
+  #       in the case of using the UI, set the "Lets Encrypt Domain" field with the vpn domain and click on save
   #    h. rollback steps a,b & c + make apply
   # 2.New users setup (to view profile links -> PIN reset + OTP / uri link for Pritunl Client import).
   #    a. must open port 443 (line 60)
