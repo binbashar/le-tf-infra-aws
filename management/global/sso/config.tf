@@ -10,13 +10,18 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 1.0.9"
+  required_version = "~> 1.2"
 
   required_providers {
-    aws = "~> 3.27"
+    aws = "~> 4.40"
   }
 
   backend "s3" {
     key = "root/sso/terraform.tfstate"
   }
 }
+
+#------------------------------------------------------------------------------
+# Data Sources
+#------------------------------------------------------------------------------
+data "aws_ssoadmin_instances" "main" {}
