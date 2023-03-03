@@ -1,8 +1,11 @@
+#------------------------------------------------------------------------------
+# DevOps
+#------------------------------------------------------------------------------
 data "aws_iam_policy_document" "devops" {
-
   statement {
     sid = "MultiServiceFullAccessCustom"
     actions = [
+      "access-analyzer:*",
       "acm:*",
       "athena:*",
       "autoscaling:*",
@@ -38,6 +41,7 @@ data "aws_iam_policy_document" "devops" {
       "health:*",
       "iam:*",
       "inspector2:*",
+      "kafka:*",
       "kms:*",
       "lambda:*",
       "lightsail:*",
@@ -54,7 +58,6 @@ data "aws_iam_policy_document" "devops" {
       "route53resolver:*",
       "s3:*",
       "ses:*",
-      "secretsmanager:*",
       "shield:*",
       "sns:*",
       "sqs:*",
@@ -77,7 +80,8 @@ data "aws_iam_policy_document" "devops" {
       variable = "aws:RequestedRegion"
       values = [
         "${var.region}",
-        "${var.region_secondary}"
+        "${var.region_secondary}",
+        "us-east-1", # The original region is needed to have IAM working
       ]
     }
   }
@@ -99,7 +103,8 @@ data "aws_iam_policy_document" "devops" {
         "*.micro",
         "*.small",
         "*.medium",
-        "*.large"
+        "*.large",
+        "*.xlarge"
       ]
     }
   }
@@ -125,6 +130,9 @@ data "aws_iam_policy_document" "devops" {
   }
 }
 
+#------------------------------------------------------------------------------
+# SecOps
+#------------------------------------------------------------------------------
 data "aws_iam_policy_document" "secops" {
 
   statement {
@@ -227,6 +235,9 @@ data "aws_iam_policy_document" "secops" {
   }
 }
 
+#------------------------------------------------------------------------------
+# Github Automation
+#------------------------------------------------------------------------------
 data "aws_iam_policy_document" "github_automation" {
   statement {
     sid = "NATGatewayManager"
