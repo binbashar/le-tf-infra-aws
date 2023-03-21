@@ -30,33 +30,6 @@ module "iam_assumable_role_devops" {
 }
 
 #
-# Assumable Role Cross-Account: SecOps
-#
-module "iam_assumable_role_secops" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
-
-  trusted_role_arns = [
-    "arn:aws:iam::${var.accounts.security.id}:root"
-  ]
-
-  create_role = true
-  role_name   = "SecOps"
-  role_path   = "/"
-
-  #
-  # MFA setup
-  #
-  role_requires_mfa    = true
-  mfa_age              = 43200 # Maximum CLI/API session duration in seconds between 3600 and 43200
-  max_session_duration = 3600  # Max age of valid MFA (in seconds) for roles which require MFA
-  custom_role_policy_arns = [
-    aws_iam_policy.secops_access.arn
-  ]
-
-  tags = local.tags
-}
-
-#
 # Assumable Role Cross-Account: Auditor Role
 #
 module "iam_assumable_role_auditor" {

@@ -32,35 +32,6 @@ EOF
 }
 
 #
-# Policy: Assume SecOps Role (Cross-Org Accounts)
-#
-resource "aws_iam_policy" "assume_secops_role" {
-  name        = "assume_secops_role"
-  description = "Allow assume SecOps role in member accounts"
-
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "sts:AssumeRole"
-            ],
-            "Resource": [
-                "arn:aws:iam::${var.accounts.shared.id}:role/SecOps",
-                "arn:aws:iam::${var.accounts.network.id}:role/SecOps",
-                "arn:aws:iam::${var.accounts.security.id}:role/SecOps",
-                "arn:aws:iam::${var.accounts.apps-devstg.id}:role/SecOps",
-                "arn:aws:iam::${var.accounts.apps-prd.id}:role/SecOps"
-            ]
-        }
-    ]
-}
-EOF
-}
-
-#
 # Policy: Assume Admin Role (Cross-Org Accounts)
 #
 resource "aws_iam_policy" "assume_admin_role" {
