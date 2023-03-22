@@ -24,18 +24,17 @@ resource "aws_security_group_rule" "allow_mysql_port" {
 # Binbash Reference DB
 #
 module "bb_mysql_db" {
-  source = "github.com/binbashar/terraform-aws-rds.git?ref=v4.2.0"
-
+  source = "github.com/binbashar/terraform-aws-rds.git?ref=v5.6.0"
 
   # Instance settings
   # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_MySQL.html
   identifier        = "${var.project}-${var.environment}-binbash-mysql"
   engine            = "mysql"
-  engine_version    = "8.0.21"
-  instance_class    = "db.m5.large"
+  engine_version    = "8.0.28"
+  instance_class    = "db.m6g.large"
   allocated_storage = 100
   storage_encrypted = true
-  multi_az          = true
+  multi_az          = false
 
   # Database credentials
   db_name  = "${var.project}_${replace(var.environment, "apps-", "")}_binbash_mysql"
@@ -44,8 +43,6 @@ module "bb_mysql_db" {
   # Secret from Hashicorp Vault
   password = data.vault_generic_secret.database_secrets.data["administrator_password"]
   port     = "3306"
-
-
 
   # Backup and maintenance
   backup_retention_period = 14
@@ -79,7 +76,7 @@ module "bb_mysql_db" {
 
   # Specifies whether any database modifications are applied immediately, or
   # during the next maintenance window
-  apply_immediately = false
+  apply_immediately = true
 
   # Database Deletion Protection
   deletion_protection = false
