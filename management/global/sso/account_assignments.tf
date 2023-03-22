@@ -144,45 +144,6 @@ module "account_assignments" {
     },
 
     # -------------------------------------------------------------------------
-    # SecOps Permissions
-    # -------------------------------------------------------------------------
-    {
-      account             = var.accounts.shared.id
-      permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn
-      permission_set_name = "SecOps"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["secops"].name
-    },
-    {
-      account             = var.accounts.security.id
-      permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn
-      permission_set_name = "SecOps"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["secops"].name
-    },
-    {
-      account             = var.accounts.network.id,
-      permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
-      permission_set_name = "SecOps",
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["secops"].name
-    },
-    {
-      account             = var.accounts.apps-devstg.id,
-      permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
-      permission_set_name = "SecOps",
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["secops"].name
-    },
-    {
-      account             = var.accounts.apps-prd.id,
-      permission_set_arn  = module.permission_sets.permission_sets["SecOps"].arn,
-      permission_set_name = "SecOps",
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["secops"].name
-    },
-
-    # -------------------------------------------------------------------------
     # ReadOnly Permissions
     # -------------------------------------------------------------------------
     {

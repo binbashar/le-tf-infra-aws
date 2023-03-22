@@ -6,4 +6,4 @@
 environment = "security"
 
 # SSO
-sso_role = "SecOps"
+sso_role = "DevOps"

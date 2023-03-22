@@ -33,16 +33,6 @@ module "permission_sets" {
       customer_managed_policy_attachments = []
     },
     {
-      name                                = "SecOps"
-      description                         = "Grants permissions for managing most resources focused on security except billing."
-      relay_state                         = local.default_relay_state
-      session_duration                    = local.default_session_duration
-      tags                                = local.tags
-      inline_policy                       = data.aws_iam_policy_document.secops.json
-      policy_attachments                  = []
-      customer_managed_policy_attachments = []
-    },
-    {
       name                                = "SecurityAuditor"
       description                         = "Provides access for security auditing."
       relay_state                         = local.default_relay_state
