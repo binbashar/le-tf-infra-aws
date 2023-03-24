@@ -59,3 +59,9 @@ enable_datadog_agent = false
 enable_cicd                 = true
 enable_argocd_image_updater = true
 enable_argo_rollouts        = false
+
+
+#------------------------------------------------------------------------------
+# FinOps | Cost Optimizations Tools
+#------------------------------------------------------------------------------
+enable_cost_optimization_tools = false

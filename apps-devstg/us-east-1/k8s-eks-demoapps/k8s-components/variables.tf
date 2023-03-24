@@ -144,3 +144,8 @@ variable "enable_datadog_agent" {
   type    = bool
   default = false
 }
+
+variable "enable_cost_optimization_tools" {
+  type    = bool
+  default = true
+}
