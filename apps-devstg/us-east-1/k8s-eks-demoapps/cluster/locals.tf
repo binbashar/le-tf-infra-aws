@@ -22,10 +22,9 @@ locals {
       groups = ["system:masters"]
     },
     {
-      rolearn  = "arn:aws:iam::${var.accounts.apps-devstg.id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_DevOps_2b78d1d8a7818ab3"
+      rolearn  = "arn:aws:iam::${var.accounts.apps-devstg.id}:role/AWSReservedSSO_DevOps_2b78d1d8a7818ab3"
       username = "DevOps"
       groups = ["system:masters"]
     },
-
   ]
 }
