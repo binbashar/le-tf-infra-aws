@@ -23,6 +23,7 @@ data "aws_iam_policy_document" "secrets_policy" {
       type = "AWS"
       identifiers = [
         "arn:aws:iam::${var.accounts.shared.id}:role/DevOps",
+        "arn:aws:iam::${var.accounts.shared.id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_DevOps_40ba147128d7f4be",
       ]
     }
   }

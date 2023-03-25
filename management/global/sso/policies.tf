@@ -58,6 +58,7 @@ data "aws_iam_policy_document" "devops" {
       "route53resolver:*",
       "s3:*",
       "ses:*",
+      "secretsmanager:*",
       "shield:*",
       "sns:*",
       "sqs:*",
