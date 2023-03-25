@@ -145,7 +145,7 @@ variable "enable_datadog_agent" {
   default = false
 }
 
-variable "enable_cost_optimization_tools" {
-  type    = bool
-  default = true
+variable "cost_optimization" {
+  type    = any
+  default = {}
 }
