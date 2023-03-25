@@ -57,7 +57,7 @@ variable "enable_argo_rollouts" {
 }
 
 variable "scaling" {
-  type    = any
+  type = any
   default = {
     # Pods
     hpa = false
@@ -144,7 +144,7 @@ variable "enable_datadog_agent" {
 }
 
 variable "cost_optimization" {
-  type    = any
+  type = any
   default = {
     kube_resource_report = false
     cost_analyzer        = false
