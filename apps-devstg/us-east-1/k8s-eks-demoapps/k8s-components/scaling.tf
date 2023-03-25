@@ -2,7 +2,7 @@
 # Vertical Pod Autoscaler: automatic pod vertical autoscaling.
 #------------------------------------------------------------------------------
 resource "helm_release" "vpa" {
-  count      = var.enable_vpa_scaling ? 1 : 0
+  count      = var.scaling.vpa ? 1 : 0
   name       = "vpa"
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://charts.fairwinds.com/stable"
@@ -16,7 +16,7 @@ resource "helm_release" "vpa" {
 # Cluster Autoscaler: automatic cluster nodes autoscaling.
 #------------------------------------------------------------------------------
 resource "helm_release" "cluster_autoscaling" {
-  count      = var.enable_cluster_autoscaling ? 1 : 0
+  count      = var.scaling.cluster_autoscaler ? 1 : 0
   name       = "autoscaler"
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://kubernetes.github.io/autoscaler"

@@ -56,19 +56,17 @@ variable "enable_argo_rollouts" {
   default = false
 }
 
-variable "enable_hpa_scaling" {
-  type    = bool
-  default = false
-}
+variable "scaling" {
+  type    = any
+  default = {
+    # Pods
+    hpa = false
+    vpa = false
 
-variable "enable_vpa_scaling" {
-  type    = bool
-  default = false
-}
-
-variable "enable_cluster_autoscaling" {
-  type    = bool
-  default = false
+    # Cluster/Nodes
+    cluster_autoscaler = true
+    karpenter          = false
+  }
 }
 
 variable "enable_gatus" {
@@ -147,5 +145,8 @@ variable "enable_datadog_agent" {
 
 variable "cost_optimization" {
   type    = any
-  default = {}
+  default = {
+    kube_resource_report = false
+    cost_analyzer        = false
+  }
 }

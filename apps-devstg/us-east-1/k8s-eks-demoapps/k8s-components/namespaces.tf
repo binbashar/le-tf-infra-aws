@@ -1,5 +1,5 @@
 resource "kubernetes_namespace" "monitoring_metrics" {
-  count = var.enable_prometheus_dependencies || var.enable_prometheus_dependencies || var.enable_cluster_autoscaling || var.enable_hpa_scaling || var.enable_vpa_scaling ? 1 : 0
+  count = var.enable_prometheus_dependencies || var.enable_prometheus_dependencies || var.scaling.cluster_autoscaler || var.scaling.vpa ? 1 : 0
 
   metadata {
     labels = local.labels
@@ -17,7 +17,7 @@ resource "kubernetes_namespace" "monitoring_logging" {
 }
 
 resource "kubernetes_namespace" "monitoring_tools" {
-  count = var.enable_kubernetes_dashboard || var.enable_vpa_scaling || var.cost_optimization.kube_resource_report || var.cost_optimization.cost_analyzer ? 1 : 0
+  count = var.enable_kubernetes_dashboard || var.scaling.vpa || var.cost_optimization.kube_resource_report || var.cost_optimization.cost_analyzer ? 1 : 0
 
   metadata {
     labels = local.labels
