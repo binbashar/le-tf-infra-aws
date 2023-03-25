@@ -64,7 +64,7 @@ variable "scaling" {
     vpa = false
 
     # Cluster/Nodes
-    cluster_autoscaler = true
+    cluster_autoscaler = false
     karpenter          = false
   }
 }
