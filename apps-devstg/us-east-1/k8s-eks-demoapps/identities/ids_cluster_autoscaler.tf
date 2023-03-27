@@ -12,7 +12,7 @@ module "role_cluster_autoscaler" {
     aws_iam_policy.cluster_autoscaler.arn
   ]
   oidc_fully_qualified_subjects = [
-    "system:serviceaccount:monitoring-metrics:autoscaler-aws-cluster-autoscaler"
+    "system:serviceaccount:scaling:autoscaler-aws-cluster-autoscaler"
   ]
 
   tags = local.tags_cluster_autoscaler

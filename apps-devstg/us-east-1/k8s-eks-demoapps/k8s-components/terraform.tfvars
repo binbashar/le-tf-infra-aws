@@ -28,9 +28,12 @@ enable_external_secrets = false
 #------------------------------------------------------------------------------
 # Scaling
 #------------------------------------------------------------------------------
-enable_hpa_scaling         = false
-enable_vpa_scaling         = false
-enable_cluster_autoscaling = true
+scaling = {
+  hpa                = false
+  vpa                = false
+  cluster_autoscaler = true
+  karpenter          = false
+}
 
 #------------------------------------------------------------------------------
 # Monitoring
