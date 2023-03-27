@@ -41,7 +41,7 @@ resource "helm_release" "metrics_server" {
 # Prometheus Stack
 #------------------------------------------------------------------------------
 resource "helm_release" "kube_prometheus_stack" {
-  count      = var.enable_prometheus_stack ? 1 : 0
+  count      = var.enable_prometheus_stack && !var.cost_optimization.cost_analyzer ? 1 : 0
   name       = "kube-prometheus-stack"
   namespace  = kubernetes_namespace.prometheus[0].id
   repository = "https://prometheus-community.github.io/helm-charts"

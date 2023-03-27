@@ -17,7 +17,7 @@ resource "kubernetes_namespace" "monitoring_logging" {
 }
 
 resource "kubernetes_namespace" "monitoring_tools" {
-  count = var.enable_kubernetes_dashboard || var.enable_vpa_scaling ? 1 : 0
+  count = var.enable_kubernetes_dashboard || var.enable_vpa_scaling || var.cost_optimization.kube_resource_report || var.cost_optimization.cost_analyzer ? 1 : 0
 
   metadata {
     labels = local.labels
