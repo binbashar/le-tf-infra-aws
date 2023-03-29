@@ -111,6 +111,12 @@ variable "enable_backups" {
   default = false
 }
 
+variable "enable_eks_alb_logging" {
+  description = "Turn EKS ALB logging on"
+  type        = bool
+  default     = false
+}
+
 #==================================#
 # Ingress Monitor Controller (IMC) #
 #==================================#

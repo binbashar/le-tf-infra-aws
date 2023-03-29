@@ -136,9 +136,3 @@ variable "enable_inspector" {
   type        = bool
   default     = false
 }
-
-variable "eks_alb_logging" {
-  description = "Turn EKS ALB logging on"
-  type        = bool
-  default     = false
-}

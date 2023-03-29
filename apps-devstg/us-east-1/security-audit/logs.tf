@@ -1,6 +1,5 @@
 module "s3_bucket_alb_logs" {
   source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.7.0"
-  count = var.eks_alb_logging ? 1 : 0
 
   bucket = "${var.project}-${var.environment}-alb-logs"
   acl    = "log-delivery-write"

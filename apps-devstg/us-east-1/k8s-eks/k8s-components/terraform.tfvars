@@ -8,6 +8,7 @@ apps_ingress = {
   # Load balancer type: internet-facing or internal
   type = "internal"
 }
+enable_eks_alb_logging = true
 
 #------------------------------------------------------------------------------
 # Certificate Manager
