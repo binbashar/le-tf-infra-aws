@@ -138,10 +138,6 @@ locals {
       name        = "FinOps"
       description = "Provides access to billing and cost management."
     }
-    secops = {
-      name        = "SecOps"
-      description = "Provides access to security-related resources."
-    }
     securityauditor = {
       name        = "SecurityAuditor"
       description = "Provides access for security auditing."

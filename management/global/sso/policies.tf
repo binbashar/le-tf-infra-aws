@@ -58,6 +58,7 @@ data "aws_iam_policy_document" "devops" {
       "route53resolver:*",
       "s3:*",
       "ses:*",
+      "secretsmanager:*",
       "shield:*",
       "sns:*",
       "sqs:*",
@@ -105,111 +106,6 @@ data "aws_iam_policy_document" "devops" {
         "*.medium",
         "*.large",
         "*.xlarge"
-      ]
-    }
-  }
-
-  statement {
-    sid = "RdsFullAccessCustomSize"
-    actions = [
-      "rds:CreateDBInstance",
-      "rds:CreateDBCluster"
-    ]
-    effect    = "Deny"
-    resources = ["arn:aws:rds:*:*:db:*"]
-    condition {
-      test     = "ForAnyValue:StringNotLike"
-      variable = "rds:DatabaseClass"
-      values = [
-        "*.micro",
-        "*.small",
-        "*.medium",
-        "*.large"
-      ]
-    }
-  }
-}
-
-#------------------------------------------------------------------------------
-# SecOps
-#------------------------------------------------------------------------------
-data "aws_iam_policy_document" "secops" {
-
-  statement {
-    sid = "MultiServiceFullAccessCustom"
-    actions = [
-      "access-analyzer:*",
-      "acm:*",
-      "apigateway:*",
-      "appsync:*",
-      "aws-portal:*",
-      "backup:*",
-      "backup-storage:*",
-      "ce:*",
-      "cloudformation:*",
-      "cloudtrail:*",
-      "cloudwatch:*",
-      "config:*",
-      "dlm:*",
-      "dynamodb:*",
-      "ec2:*",
-      "elasticloadbalancing:*",
-      "events:*",
-      "fms:*",
-      "guardduty:*",
-      "health:*",
-      "iam:*",
-      "inspector2:*",
-      "kms:*",
-      "lambda:*",
-      "logs:*",
-      "network-firewall:*",
-      "networkmanager:*",
-      "organizations:Describe*",
-      "organizations:List*",
-      "route53:*",
-      "route53domains:*",
-      "route53resolver:*",
-      "s3:*",
-      "sns:*",
-      "ssm:*",
-      "support:*",
-      "tag:*",
-      "trustedadvisor:*",
-      "vpc:*",
-      "waf:*",
-      "waf-regional:*",
-      "wafv2:*"
-    ]
-    resources = ["*"]
-    condition {
-      test     = "StringEquals"
-      variable = "aws:RequestedRegion"
-      values = [
-        "${var.region}",
-        "${var.region_secondary}"
-      ]
-    }
-  }
-
-  statement {
-    sid = "Ec2RunInstanceCustomSize"
-    actions = [
-      "ec2:RunInstances"
-    ]
-    effect = "Deny"
-    resources = [
-      "arn:aws:ec2:*:*:instance/*"
-    ]
-    condition {
-      test     = "ForAnyValue:StringNotLike"
-      variable = "ec2:InstanceType"
-      values = [
-        "*.nano",
-        "*.micro",
-        "*.small",
-        "*.medium",
-        "*.large"
       ]
     }
   }

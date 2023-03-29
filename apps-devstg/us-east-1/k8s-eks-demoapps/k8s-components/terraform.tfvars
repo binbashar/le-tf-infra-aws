@@ -59,3 +59,12 @@ enable_datadog_agent = false
 enable_cicd                 = true
 enable_argocd_image_updater = true
 enable_argo_rollouts        = false
+
+
+#------------------------------------------------------------------------------
+# FinOps | Cost Optimizations Tools
+#------------------------------------------------------------------------------
+cost_optimization = {
+  kube_resource_report = false
+  cost_analyzer        = false
+}

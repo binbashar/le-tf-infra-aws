@@ -150,3 +150,8 @@ variable "enable_datadog_agent" {
   type    = bool
   default = false
 }
+
+variable "cost_optimization" {
+  type    = any
+  default = {}
+}
