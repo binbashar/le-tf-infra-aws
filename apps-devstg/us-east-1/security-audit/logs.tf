@@ -11,8 +11,8 @@ module "s3_bucket_alb_logs" {
   # Allow deletion of non-empty bucket
   force_destroy = true
 
-  attach_elb_log_delivery_policy = true  # Required for ALB logs
-  attach_lb_log_delivery_policy  = true  # Required for ALB/NLB logs
+  attach_elb_log_delivery_policy = true # Required for ALB logs
+  attach_lb_log_delivery_policy  = true # Required for ALB/NLB logs
 
   # S3 bucket-level Public Access Block configuration
   block_public_acls       = true
