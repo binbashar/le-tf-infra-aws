@@ -82,6 +82,8 @@ resource "kubernetes_ingress_v1" "apps" {
       # Filter traffic by IP addresses
       # NOTE: this is highly recommended when using an internet-facing ALB
       "alb.ingress.kubernetes.io/inbound-cidrs" = "0.0.0.0/0"
+      # ALB access logs
+      "alb.ingress.kubernetes.io/load-balancer-attributes" = "access_logs.s3.enabled=${var.enable_eks_alb_logging},access_logs.s3.bucket=${var.project}-${var.environment}-alb-logs,access_logs.s3.prefix=eks-cluster-demoapps-ingress"
     }
   }
 
