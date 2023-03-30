@@ -20,6 +20,6 @@ variable "metrics" {
 }
 
 variable "create_alb_logs_bucket" {
-  type        = bool
-  default     = false
+  type    = bool
+  default = false
 }
