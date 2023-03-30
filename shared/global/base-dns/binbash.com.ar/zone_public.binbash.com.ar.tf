@@ -130,7 +130,6 @@ resource "aws_route53_record" "aws_public_hosted_zone_TXT_record_google_spf" {
   zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
   name    = "binbash.com.ar"
   type    = "TXT"
-  records = ["v=spf1 include:_spf.google.com ~all"]
+  records = ["v=spf1 include:_spf.google.com ~all", "google-site-verification=LaYgwNHSBPq2LZnpW91PQVbpCcUtVKicSPgRablVl1w"]
   ttl     = 300
 }
-
