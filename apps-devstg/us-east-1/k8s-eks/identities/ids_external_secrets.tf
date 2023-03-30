@@ -51,7 +51,7 @@ resource "aws_iam_policy" "external_secrets_secrets_manager" {
         "kms:DescribeKey"
       ],
       "Resource": [
-        "${data.terraform_remote_state.shared.outputs.aws_kms_key_arn}"
+        "${data.terraform_remote_state.shared-keys.outputs.aws_kms_key_arn}"
       ]
     }
   ]
@@ -85,7 +85,7 @@ resource "aws_iam_policy" "external_secrets_parameter_store" {
         "kms:DescribeKey"
       ],
       "Resource": [
-        "${data.terraform_remote_state.shared.outputs.aws_kms_key_arn}"
+        "${data.terraform_remote_state.shared-keys.outputs.aws_kms_key_arn}"
       ]
     }
   ]

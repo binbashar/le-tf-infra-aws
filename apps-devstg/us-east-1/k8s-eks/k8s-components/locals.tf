@@ -45,4 +45,5 @@ locals {
   alb_ingress_to_nginx_ingress_tags_list = [
     for k, v in local.alb_ingress_to_nginx_ingress_tags_map : "${k}=${v}"
   ]
+  eks_alb_logging_prefix = var.eks_alb_logging_prefix != "" ? var.eks_alb_logging_prefix : data.terraform_remote_state.eks-cluster.outputs.cluster_name
 }

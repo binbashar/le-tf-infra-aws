@@ -18,3 +18,8 @@ variable "metrics" {
   description = "Metrics definitions"
   default     = {}
 }
+
+variable "create_alb_logs_bucket" {
+  type        = bool
+  default     = false
+}

@@ -117,6 +117,12 @@ variable "enable_eks_alb_logging" {
   default     = false
 }
 
+variable "eks_alb_logging_prefix" {
+  description = "Turn EKS ALB logging on"
+  type        = string
+  default     = ""
+}
+
 #==================================#
 # Ingress Monitor Controller (IMC) #
 #==================================#
