@@ -6,13 +6,13 @@ locals {
 # RDS Export To S3 functions
 # -----------------------------------------------------------------------------
 module "rds_export_to_s3" {
-  source = "git@github.com:awasilyev/terraform-aws-rds-export-to-s3.git?ref=non_cluster"
+  source = "git@github.com:binbashar/terraform-aws-rds-export-to-s3.git?ref=non_cluster"
 
   # Set a prefix for naming resources
   #prefix = "binbashar"
 
   # Which RDS snapshots should be exported?
-  database_names = "${var.project}_${replace(var.environment, "apps-", "")}_binbash_mysql"
+  database_names = "${var.project}-${replace(var.environment, "apps-", "")}-binbash-mysql"
 
   # Which bucket will store the exported snapshots?
   snapshots_bucket_name = module.bucket.s3_bucket_id
@@ -28,7 +28,7 @@ module "rds_export_to_s3" {
   create_customer_kms_key = false
 
   # Provide CMK if 'create_customer_kms_key = false'
-  customer_kms_key_arn = "arn:aws:kms:us-east-1:523857393444:key/b7a1d584-29cf-4f21-a69f-57ca8eaa1c77"
+  #customer_kms_key_arn = "arn:aws:kms:us-east-1:523857393444:key/b7a1d584-29cf-4f21-a69f-57ca8eaa1c77"
 
   # SNS topic for export monitor notifications
   create_notifications_topic = true
