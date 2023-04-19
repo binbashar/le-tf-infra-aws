@@ -2,7 +2,7 @@ module "secrets" {
   source = "github.com/binbashar/terraform-aws-secrets-manager.git?ref=0.7.0"
 
   secrets = {
-    "/repositories/k8s-eks-demoapps" = {
+    "/apps-devstg/us-east-1/k8s-eks-demoapps" = {
       description             = "Repository: Google Microservices DemoApp - Deploy Key"
       recovery_window_in_days = 7
       secret_string           = "PLACEHOLDER"
@@ -25,7 +25,7 @@ data "aws_iam_policy_document" "secret_policy" {
       type = "AWS"
       identifiers = [
         "arn:aws:iam::${var.accounts.apps-devstg.id}:role/DevOps",
-        # "arn:aws:iam::${var.accounts.management.id}:role/OrganizationAccountAccessRole"
+        "arn:aws:iam::${var.accounts.root.id}:role/OrganizationAccountAccessRole"
       ]
 
     }
