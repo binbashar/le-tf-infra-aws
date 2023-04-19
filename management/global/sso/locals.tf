@@ -120,6 +120,15 @@ locals {
         "devops",
       ]
     }
+    "martin.galeano" = {
+      first_name = "Martin"
+      last_name  = "Galeano"
+      email      = "martin.galeano@binbash.com.ar"
+      groups = [
+        "administrators",
+        "devops",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
