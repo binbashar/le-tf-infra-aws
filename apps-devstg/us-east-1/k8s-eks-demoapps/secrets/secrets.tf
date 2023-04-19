@@ -2,8 +2,8 @@ module "secrets" {
   source = "github.com/binbashar/terraform-aws-secrets-manager.git?ref=0.7.0"
 
   secrets = {
-    "/apps-devstg/us-east-1/k8s-eks-demoapps" = {
-      description             = "Repository: Google Microservices DemoApp - Deploy Key"
+    "/k8s-eks-demoapps/test-secrets" = {
+      description             = "DemoApps SecretManager Test Secret"
       recovery_window_in_days = 7
       secret_string           = "PLACEHOLDER"
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
