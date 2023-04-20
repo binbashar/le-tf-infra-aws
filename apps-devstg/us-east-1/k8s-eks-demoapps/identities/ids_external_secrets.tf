@@ -36,7 +36,7 @@ resource "aws_iam_policy" "external_secrets_secrets_manager" {
         "secretsmanager:ListSecretVersionIds"
       ],
       "Resource": [
-        "arn:aws:secretsmanager:${var.region}:${var.accounts.apps-devstg.id}:secret:/k8s-eks-demoapps/test-secrets"
+        "arn:aws:secretsmanager:${var.region}:${var.accounts.apps-devstg.id}:secret:/k8s-eks-demoapps/test-secrets*"
       ]
     },
     {
@@ -79,7 +79,7 @@ resource "aws_iam_policy" "external_secrets_parameter_store" {
         "kms:DescribeKey"
       ],
       "Resource": [
-        "${data.terraform_remote_state.apps-devsgt-keys.outputs.aws_kms_key_arn}"
+        "${data.terraform_remote_state.security-keys.outputs.aws_kms_key_arn}"
       ]
     }
   ]
