@@ -167,5 +167,5 @@ workflows:
             branches:
               ignore: # only branches matching the below regex filters will run
                 - master
-      - sumologic/workflow-collector:
-          context: binbashar-org-global-context
+ #     - sumologic/workflow-collector:
+ #         context: binbashar-org-global-context
