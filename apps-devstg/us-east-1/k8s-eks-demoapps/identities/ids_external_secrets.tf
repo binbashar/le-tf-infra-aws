@@ -69,7 +69,7 @@ resource "aws_iam_policy" "external_secrets_parameter_store" {
         "ssm:GetParameter*"
       ],
       "Resource": [
-        "arn:aws:ssm:${var.region}:${var.accounts.apps-devstg.id}:parameter/k8s-eks-demoapps/test-secrets"
+        "arn:aws:ssm:${var.region}:${var.accounts.shared.id}:parameter/k8s-eks/*"
       ]
     },
     {
@@ -79,7 +79,7 @@ resource "aws_iam_policy" "external_secrets_parameter_store" {
         "kms:DescribeKey"
       ],
       "Resource": [
-        "${data.terraform_remote_state.security-keys.outputs.aws_kms_key_arn}"
+        "${data.terraform_remote_state.shared-keys.outputs.aws_kms_key_arn}"
       ]
     }
   ]
