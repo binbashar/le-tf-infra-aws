@@ -7,11 +7,11 @@ AWS Organizations Multi-Account baseline layout.
 ## Leverage Documentation
 
 - **How it works**
-    - [AWS Organizations](https://leverage.binbash.com.ar/user-guide/organization/organization/)
+    - [AWS Organizations](https://leverage.binbash.com.ar/how-it-works/features/organization/organization/)
 - **User guide**
-    1. [Configurations](https://leverage.binbash.com.ar/user-guide/base-configuration/repo-le-tf-infra-aws/)
-    2. [Workflow](https://leverage.binbash.com.ar/user-guide/base-workflow/repo-le-tf-infra-aws/)
-    3. [Organizations](https://leverage.binbash.com.ar/user-guide/organization/organization/)
+    1. [Configurations](https://leverage.binbash.com.ar/user-guide/ref-architecture-aws/configs/)
+    2. [Workflow](https://leverage.binbash.com.ar/user-guide/ref-architecture-aws/workflow/)
+    3. [Organizations](https://leverage.binbash.com.ar/user-guide/features/organization/organization-init/)
 
 ---
 
