@@ -129,6 +129,15 @@ locals {
         "devops",
       ]
     }
+    "axel.meinel" = {
+      first_name = "Axel"
+      last_name  = "Meinel"
+      email      = "axel.meinel@binbash.com.ar"
+      groups = [
+        "administrators",
+        "devops",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
