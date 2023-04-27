@@ -70,14 +70,3 @@ data "terraform_remote_state" "shared-dns" {
     key     = "shared/dns/binbash.com.ar/terraform.tfstate"
   }
 }
-
-# data "terraform_remote_state" "security-keys" {
-#   backend = "s3"
-
-#   config = {
-#     region  = var.region
-#     profile = "${var.project}-security-devops"
-#     bucket  = "${var.project}-security-terraform-backend"
-#     key     = "security/security-keys/terraform.tfstate"
-#   }
-# }
