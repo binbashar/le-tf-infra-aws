@@ -71,13 +71,13 @@ data "terraform_remote_state" "shared-dns" {
   }
 }
 
-data "terraform_remote_state" "security-keys" {
-  backend = "s3"
+# data "terraform_remote_state" "security-keys" {
+#   backend = "s3"
 
-  config = {
-    region  = var.region
-    profile = var.profile
-    bucket  = var.bucket
-    key     = "security/security-keys/terraform.tfstate"
-  }
-}
+#   config = {
+#     region  = var.region
+#     profile = "${var.project}-security-devops"
+#     bucket  = "${var.project}-security-terraform-backend"
+#     key     = "security/security-keys/terraform.tfstate"
+#   }
+# }
