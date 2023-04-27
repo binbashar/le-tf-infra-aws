@@ -83,7 +83,7 @@ resource "helm_release" "cluster_secrets_manager" {
   depends_on = [helm_release.external_secrets[0]]
 }
 
-# These resources below (cluster_secrets_manager and cluster_parameter_store) need to be commented out and applied in a second step
+# These resources below (cluster_parameter_store) need to be commented out and applied in a second step
 # The reason behind this can be found in this issue: https://github.com/hashicorp/terraform-provider-kubernetes/issues/1367#issuecomment-1239205722
 # and the surounding discussion.
 # TODO: Move onto using a raw YAML helm chart as in https://github.com/itscontained/charts/tree/master/itscontained/raw
