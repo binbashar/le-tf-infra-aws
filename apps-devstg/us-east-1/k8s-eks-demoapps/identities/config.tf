@@ -40,7 +40,7 @@ data "terraform_remote_state" "cluster" {
   }
 }
 
-data "terraform_remote_state" "apps-devsgt-keys" {
+data "terraform_remote_state" "keys" {
   backend = "s3"
 
   config = {

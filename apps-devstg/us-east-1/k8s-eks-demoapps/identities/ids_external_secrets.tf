@@ -46,7 +46,7 @@ resource "aws_iam_policy" "external_secrets_secrets_manager" {
         "kms:DescribeKey"
       ],
       "Resource": [
-        "${data.terraform_remote_state.apps-devsgt-keys.outputs.aws_kms_key_arn}"
+        "${data.terraform_remote_state.keys.outputs.aws_kms_key_arn}"
       ]
     }
   ]
