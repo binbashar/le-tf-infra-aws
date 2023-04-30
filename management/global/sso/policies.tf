@@ -44,6 +44,7 @@ data "aws_iam_policy_document" "devops" {
       "kafka:*",
       "kms:*",
       "lambda:*",
+      "license-manager:*",
       "lightsail:*",
       "logs:*",
       "network-firewall:*",
