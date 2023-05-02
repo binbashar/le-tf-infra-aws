@@ -176,7 +176,7 @@ module "vpc_peering_security_to_shared" {
 
   for_each = {
     for k, v in local.security-vpcs :
-      k => v if var.enable_tgw != true
+    k => v if var.enable_tgw != true
   }
 
   providers = {

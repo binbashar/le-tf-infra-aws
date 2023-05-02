@@ -25,9 +25,9 @@ EOF
 
 data "aws_iam_policy_document" "wazuh" {
   statement {
-    sid      = "ReadCloudTrailBucket"
-    effect   = "Allow"
-    actions  = [
+    sid    = "ReadCloudTrailBucket"
+    effect = "Allow"
+    actions = [
       "s3:GetObject",
       "s3:ListBucket",
     ]
@@ -38,9 +38,9 @@ data "aws_iam_policy_document" "wazuh" {
   }
 
   statement {
-    sid      = "UseKmsDefaultKey"
-    effect   = "Allow"
-    actions  = [
+    sid    = "UseKmsDefaultKey"
+    effect = "Allow"
+    actions = [
       "kms:GenerateDataKey*",
       "kms:Decrypt*",
     ]
