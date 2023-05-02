@@ -45,7 +45,7 @@ data "aws_iam_policy_document" "wazuh" {
       "kms:Decrypt*",
     ]
     resources = [
-      "arn:aws:kms:${var.region}:${var.accounts.security.id}:key/caa38156-f88b-4cb2-9a4e-0a2ebfe4a2bf"
+      data.terraform_remote_state.keys.outputs.aws_kms_key_arn,
     ]
   }
 }
