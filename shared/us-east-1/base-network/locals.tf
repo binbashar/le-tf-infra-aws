@@ -182,11 +182,22 @@ locals {
     }
   }
 
+  # security
+  security-vpcs = {
+    security-base = {
+      region  = var.region
+      profile = "${var.project}-security-devops"
+      bucket  = "${var.project}-security-terraform-backend"
+      key     = "security/network/terraform.tfstate"
+    }
+  }
+
   datasources-vpcs = merge(
     var.enable_tgw ? data.terraform_remote_state.network-vpcs : null, # network
     data.terraform_remote_state.apps-devstg-vpcs,                     # apps-devstg-vpcs
     data.terraform_remote_state.apps-devstg-dr-vpcs,                  # apps-devstg-dr-vpcs
     data.terraform_remote_state.apps-prd-vpcs,                        # apps-prd-vpcs
     data.terraform_remote_state.apps-prd-dr-vpcs,                     # apps-prd-dr-vpcs
+    data.terraform_remote_state.security-vpcs,                        # security-vpcs
   )
 }

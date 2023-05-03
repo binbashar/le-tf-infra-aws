@@ -79,4 +79,24 @@ data "aws_iam_policy_document" "kms" {
       values   = ["arn:aws:logs:${var.region}:${var.accounts.security.id}:*"]
     }
   }
+
+  # statement {
+  #   sid    = "Allow Wazuh to decrypt CloudTrail bucket objects"
+  #   effect = "Allow"
+  #   actions = [
+  #     "kms:Decrypt*",
+  #     "kms:GenerateDataKey*",
+  #   ]
+  #   resources = ["*"]
+
+  #   principals {
+  #     type        = "AWS"
+  #     identifiers = ["arn:aws:iam::${var.accounts.security.id}:role/Wazuh"]
+  #   }
+  #   condition {
+  #     test     = "ArnLike"
+  #     variable = "kms:EncryptionContext:aws:s3:arn"
+  #     values   = ["arn:aws:s3:::bb-security-cloudtrail-org"]
+  #   }
+  # }
 }
