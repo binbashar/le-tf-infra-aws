@@ -1,41 +1,15 @@
 #
-# Security Organizational Unit Policies
+# Organizational Units' Policies
 #
-resource "aws_organizations_policy_attachment" "security" {
-  policy_id = aws_organizations_policy.default.id
-  target_id = aws_organizations_organizational_unit.security.id
-}
+resource "aws_organizations_policy_attachment" "policy_attachments" {
+  for_each = local.organizational_units
 
-#
-# Shared Organizational Unit Policies
-#
-resource "aws_organizations_policy_attachment" "shared" {
-  policy_id = aws_organizations_policy.standard.id
-  target_id = aws_organizations_organizational_unit.shared.id
-}
+  policy_id = each.value.policy.id
+  target_id = aws_organizations_organizational_unit.units[each.key].id
 
-#
-# Networks Organizational Unit Policies
-#
-resource "aws_organizations_policy_attachment" "network" {
-  policy_id = aws_organizations_policy.default.id
-  target_id = aws_organizations_organizational_unit.network.id
-}
-
-#
-# Project Organizational Unit Policies (should cover devstg)
-#
-resource "aws_organizations_policy_attachment" "apps_devstg" {
-  policy_id = aws_organizations_policy.standard.id
-  target_id = aws_organizations_organizational_unit.bbl_apps_devstg.id
-}
-
-#
-# Project Organizational Unit Policies (should cover prd)
-#
-resource "aws_organizations_policy_attachment" "apps_prd" {
-  policy_id = aws_organizations_policy.standard.id
-  target_id = aws_organizations_organizational_unit.bbl_apps_prd.id
+  depends_on = [
+    aws_organizations_organizational_unit.units
+  ]
 }
 
 #
@@ -44,14 +18,14 @@ resource "aws_organizations_policy_attachment" "apps_prd" {
 resource "aws_organizations_policy_attachment" "delete_protection" {
 
   for_each = { for v in [
-    aws_organizations_organizational_unit.network,
-    aws_organizations_organizational_unit.bbl_apps_devstg,
-    aws_organizations_organizational_unit.bbl_apps_prd,
-    aws_organizations_organizational_unit.shared,
-  ] : v.id => v.id }
+    "network",
+    "bbl_apps_devstg",
+    "bbl_apps_prd",
+    "shared",
+    ] : v => v}
 
   policy_id = aws_organizations_policy.delete_protection.id
-  target_id = each.key
+  target_id = aws_organizations_organizational_unit.units[each.value].id
 }
 
 #
@@ -60,12 +34,12 @@ resource "aws_organizations_policy_attachment" "delete_protection" {
 resource "aws_organizations_policy_attachment" "tag_protection" {
 
   for_each = { for v in [
-    aws_organizations_organizational_unit.network,
-    aws_organizations_organizational_unit.bbl_apps_devstg,
-    aws_organizations_organizational_unit.bbl_apps_prd,
-    aws_organizations_organizational_unit.shared,
-  ] : v.id => v.id }
+    "network",
+    "bbl_apps_devstg",
+    "bbl_apps_prd",
+    "shared",
+    ] : v => v}
 
   policy_id = aws_organizations_policy.tag_protection.id
-  target_id = each.key
+  target_id = aws_organizations_organizational_unit.units[each.value].id
 }
