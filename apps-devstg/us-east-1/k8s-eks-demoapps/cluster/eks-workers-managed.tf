@@ -190,6 +190,24 @@ module "cluster" {
   ]
   cloudwatch_log_group_retention_in_days = var.cluster_log_retention_in_days
 
+  # EKS Add-ons
+  cluster_addons = {
+    coredns = {
+      addon_version = "v1.8.7-eksbuild.4"
+    }
+    kube-proxy = {
+      addon_version = "v1.22.17-eksbuild.2"
+    }
+    vpc-cni = {
+      addon_version = "v1.12.6-eksbuild.2"
+      service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_vpc_cni
+    }
+    aws-ebs-csi-driver = {
+      addon_version = "v1.18.0-eksbuild.1"
+      service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_ebs_csi
+    }
+  }
+
   # Define tags (notice we are appending here tags required by the cluster autoscaler)
   tags = merge(local.tags,
     { "k8s.io/cluster-autoscaler/enabled" = "TRUE" },

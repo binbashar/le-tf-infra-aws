@@ -32,3 +32,13 @@ output "argo_cd_image_updater_role_arn" {
   description = "Argo CD Image Updater Role ARN"
   value       = module.role_argo_cd_image_updater.iam_role_arn
 }
+
+output "eks_addons_vpc_cni" {
+  description = "EKS Add-ons VPC CNI Role ARN"
+  value       = module.role_eks_addons_vpc_cni.iam_role_arn
+}
+
+output "eks_addons_ebs_csi" {
+  description = "EKS Add-ons EBS CSI Role ARN"
+  value       = module.role_eks_addons_ebs_csi.iam_role_arn
+}
