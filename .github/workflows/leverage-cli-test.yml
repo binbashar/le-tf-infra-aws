@@ -37,8 +37,12 @@ jobs:
 
       - name: install_dependencies
         run: |
-          pip3 install --user --upgrade pipenv && \
-          pip3 list | egrep 'request|urllib' && \
+          pip3 install --user --upgrade pipenv
+        shell: bash
+
+      - name: patch_dependencies
+        run: |
+          pip3 list | grep -e 'request' -e 'urllib' && \
           pip3 install requests==2.29.0 --force-reinstall
         shell: bash
 
