@@ -151,10 +151,12 @@ module "cluster" {
   # Define Managed Nodes Groups (MNG's) default settings
   eks_managed_node_group_defaults = {
     # Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS
-    ami_type       = "AL2_x86_64"
-    disk_size      = 50
-    instance_types = ["t2.medium"]
-    k8s_labels     = local.tags
+    ami_type                   = "AL2_x86_64"
+    disk_size                  = 50
+    instance_types             = ["t2.medium"]
+    k8s_labels                 = local.tags
+    # Not be necessary when using VPC CNI add-on + IRSA
+    iam_role_attach_cni_policy = false
   }
 
   # Define all Managed Node Groups (MNG's)
@@ -193,17 +195,21 @@ module "cluster" {
   # EKS Add-ons
   cluster_addons = {
     coredns = {
-      addon_version = "v1.8.7-eksbuild.4"
+      addon_version     = "v1.8.7-eksbuild.4"
+      resolve_conflicts = "OVERWRITE"
     }
     kube-proxy = {
-      addon_version = "v1.22.17-eksbuild.2"
+      addon_version     = "v1.22.17-eksbuild.2"
+      resolve_conflicts = "OVERWRITE"
     }
     vpc-cni = {
-      addon_version = "v1.12.6-eksbuild.2"
+      addon_version            = "v1.12.6-eksbuild.2"
+      resolve_conflicts        = "OVERWRITE"
       service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_vpc_cni
     }
     aws-ebs-csi-driver = {
-      addon_version = "v1.18.0-eksbuild.1"
+      addon_version            = "v1.18.0-eksbuild.1"
+      resolve_conflicts        = "OVERWRITE"
       service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_ebs_csi
     }
   }
