@@ -23,7 +23,7 @@ resource "kubernetes_manifest" "google_microservices_dev" {
     "spec.source.helm.version",
   ]
   field_manager {
-    name            = "argo_applications"
+    name = "argo_applications"
     # force field manager conflicts to be overridden
     force_conflicts = true
   }
