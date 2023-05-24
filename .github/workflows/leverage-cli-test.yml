@@ -42,7 +42,7 @@ jobs:
 
       - name: patch_dependencies
         run: |
-          pip3 list | grep -e 'request' -e 'urllib' && \
+          pip3 list | grep -e 'request' -e 'urllib'
           pip3 install requests==2.29.0 --force-reinstall
         shell: bash
 
