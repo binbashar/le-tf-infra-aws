@@ -40,11 +40,6 @@ jobs:
           pip3 install --user --upgrade pipenv
         shell: bash
 
-      - name: patch_dependencies
-        run: |
-          pip3 install requests==2.29.0 --force-reinstall
-        shell: bash
-
       - id: cache-pipenv
         uses: actions/cache@v3
         with:
@@ -62,6 +57,11 @@ jobs:
               echo "Installing https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}"
               python -m pipenv install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
           fi
+        working-directory: ./apps-devstg/global/cli-test-layer
+
+      - name: patch_dependencies
+        run: |
+          python -m pipenv install requests==2.29.0 --force-reinstall
         working-directory: ./apps-devstg/global/cli-test-layer
 
       - name: Set Leverage Toolbox version
