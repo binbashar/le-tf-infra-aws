@@ -37,9 +37,9 @@ jobs:
 
       - name: install_dependencies
         run: |
-          pip3 install --user --upgrade pipenv
-          pip list | egrep 'request|urllib'
-          pip install requests==2.29.0 --force-reinstall
+          pip3 install --user --upgrade pipenv && \
+          pip3 list | egrep 'request|urllib' && \
+          pip3 install requests==2.29.0 --force-reinstall
         shell: bash
 
       - id: cache-pipenv
