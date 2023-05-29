@@ -50,6 +50,17 @@ data "terraform_remote_state" "cluster-vpc" {
   }
 }
 
+data "terraform_remote_state" "cluster-identities" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "apps-devstg/k8s-eks-demoapps/identities/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "keys" {
   backend = "s3"
   config = {
