@@ -46,7 +46,11 @@ config:
         HTTP_Passwd        ${es_password}
         tls                On
         tls.verify         On
+        Suppress_Type_Name On
         Index              kube_devstg
+        logstash_format    On
+        logstash_prefix    kube_devstg
+        time_key           @timestamp
         Buffer_Size        4M
         Retry_Limit        False
         Suppress_Type_Name On
