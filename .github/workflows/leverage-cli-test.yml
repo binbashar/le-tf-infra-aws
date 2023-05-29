@@ -24,7 +24,7 @@ jobs:
   test_leverage:
     runs-on: ubuntu-latest
     env:
-      LEVERAGE_VERSION: 1.9.1
+      LEVERAGE_VERSION: 1.10.0
       LEVERAGE_REPO: pypi.org
       LEVERAGE_TOOLBOX_VERSION: 1.2.7-0.1.6
     steps:
@@ -57,6 +57,11 @@ jobs:
               echo "Installing https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}"
               python -m pipenv install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
           fi
+        working-directory: ./apps-devstg/global/cli-test-layer
+
+      - name: patch_dependencies
+        run: |
+          python -m pipenv install requests==2.29.0
         working-directory: ./apps-devstg/global/cli-test-layer
 
       - name: Set Leverage Toolbox version
