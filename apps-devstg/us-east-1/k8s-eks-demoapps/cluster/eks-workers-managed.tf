@@ -155,6 +155,8 @@ module "cluster" {
     disk_size      = 50
     instance_types = ["t2.medium"]
     k8s_labels     = local.tags
+    # Not be necessary when using VPC CNI add-on + IRSA
+    iam_role_attach_cni_policy = false
   }
 
   # Define all Managed Node Groups (MNG's)
@@ -189,6 +191,28 @@ module "cluster" {
     # "authenticator",
   ]
   cloudwatch_log_group_retention_in_days = var.cluster_log_retention_in_days
+
+  # EKS Add-ons
+  cluster_addons = {
+    coredns = {
+      addon_version     = "v1.8.7-eksbuild.4"
+      resolve_conflicts = "OVERWRITE"
+    }
+    kube-proxy = {
+      addon_version     = "v1.22.17-eksbuild.2"
+      resolve_conflicts = "OVERWRITE"
+    }
+    vpc-cni = {
+      addon_version            = "v1.12.6-eksbuild.2"
+      resolve_conflicts        = "OVERWRITE"
+      service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_vpc_cni
+    }
+    aws-ebs-csi-driver = {
+      addon_version            = "v1.18.0-eksbuild.1"
+      resolve_conflicts        = "OVERWRITE"
+      service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_ebs_csi
+    }
+  }
 
   # Define tags (notice we are appending here tags required by the cluster autoscaler)
   tags = merge(local.tags,
