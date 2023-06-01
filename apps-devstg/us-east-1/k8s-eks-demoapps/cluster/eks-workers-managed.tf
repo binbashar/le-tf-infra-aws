@@ -171,11 +171,11 @@ module "cluster" {
     #   instance_types = ["t3.medium"]
     # }
     spot = {
-      desired_size = 1
-      max_size     = 6
-      min_size     = 1
-      capacity_type    = "SPOT"
-      instance_types   = ["t3.medium"]
+      desired_size   = 1
+      max_size       = 6
+      min_size       = 1
+      capacity_type  = "SPOT"
+      instance_types = ["t3.medium"]
     }
   }
 
