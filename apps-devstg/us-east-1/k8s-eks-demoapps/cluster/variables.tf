@@ -43,3 +43,9 @@ variable "create_aws_auth" {
   description = "Whether to create the aws-auth configmap."
   default     = false
 }
+
+# WARNING: make sure you read the note about add-ons in the "locals.tf" file
+variable "use_managed_addons" {
+  description = "Whether to use EKS managed add-ons."
+  default     = false
+}

@@ -155,8 +155,10 @@ module "cluster" {
     disk_size      = 50
     instance_types = ["t2.medium"]
     k8s_labels     = local.tags
-    # Not be necessary when using VPC CNI add-on + IRSA
-    iam_role_attach_cni_policy = false
+    # IMPORTANT: setting this to true is only necessary during the initial bootstrap
+    # of the cluster, otherwise the built-in VPC CNI won't start. Then, after you get
+    # the VPC CNI add-on installed, you can set this to false.
+    iam_role_attach_cni_policy = true
   }
 
   # Define all Managed Node Groups (MNG's)
@@ -169,11 +171,11 @@ module "cluster" {
     #   instance_types = ["t3.medium"]
     # }
     spot = {
-      desired_capacity = 1
-      max_capacity     = 6
-      min_capacity     = 1
-      capacity_type    = "SPOT"
-      instance_types   = ["t3.medium"]
+      desired_size   = 1
+      max_size       = 6
+      min_size       = 1
+      capacity_type  = "SPOT"
+      instance_types = ["t3.medium"]
     }
   }
 
@@ -192,27 +194,8 @@ module "cluster" {
   ]
   cloudwatch_log_group_retention_in_days = var.cluster_log_retention_in_days
 
-  # EKS Add-ons
-  cluster_addons = {
-    coredns = {
-      addon_version     = "v1.8.7-eksbuild.4"
-      resolve_conflicts = "OVERWRITE"
-    }
-    kube-proxy = {
-      addon_version     = "v1.22.17-eksbuild.2"
-      resolve_conflicts = "OVERWRITE"
-    }
-    vpc-cni = {
-      addon_version            = "v1.12.6-eksbuild.2"
-      resolve_conflicts        = "OVERWRITE"
-      service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_vpc_cni
-    }
-    aws-ebs-csi-driver = {
-      addon_version            = "v1.18.0-eksbuild.1"
-      resolve_conflicts        = "OVERWRITE"
-      service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_ebs_csi
-    }
-  }
+  # EKS Managed Add-ons
+  cluster_addons = local.addons_enabled
 
   # Define tags (notice we are appending here tags required by the cluster autoscaler)
   tags = merge(local.tags,
