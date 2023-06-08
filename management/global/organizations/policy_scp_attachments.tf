@@ -22,7 +22,7 @@ resource "aws_organizations_policy_attachment" "delete_protection" {
     "bbl_apps_devstg",
     "bbl_apps_prd",
     "shared",
-    ] : v => v}
+  ] : v => v }
 
   policy_id = aws_organizations_policy.delete_protection.id
   target_id = aws_organizations_organizational_unit.units[each.value].id
@@ -38,7 +38,7 @@ resource "aws_organizations_policy_attachment" "tag_protection" {
     "bbl_apps_devstg",
     "bbl_apps_prd",
     "shared",
-    ] : v => v}
+  ] : v => v }
 
   policy_id = aws_organizations_policy.tag_protection.id
   target_id = aws_organizations_organizational_unit.units[each.value].id
