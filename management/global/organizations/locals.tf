@@ -69,7 +69,7 @@ locals {
     # Project DevStg: services and resources related to development/stage are
     #  placed and maintained here.
     #
-    apps_devstg = {
+    apps-devstg = {
       email     = "aws+apps-devstg@binbash.com.ar",
       parent_ou = "bbl_apps_devstg"
     },
@@ -77,7 +77,7 @@ locals {
     # Project Prd: services and resources related to production are placed and
     #  maintained here.
     #
-    apps_prd = {
+    apps-prd = {
       email     = "aws+apps-prd@binbash.com.ar",
       parent_ou = "bbl_apps_prd"
     }

@@ -185,8 +185,8 @@ resource "aws_organizations_policy" "tag_protection" {
           "aws:PrincipalArn": [
             "arn:aws:iam::${aws_organizations_account.accounts["shared"].id}:role/DevOps",
             "arn:aws:iam::${aws_organizations_account.accounts["network"].id}:role/DevOps",
-            "arn:aws:iam::${aws_organizations_account.accounts["apps_devstg"].id}:role/DevOps",
-            "arn:aws:iam::${aws_organizations_account.accounts["apps_prd"].id}:role/DevOps"
+            "arn:aws:iam::${aws_organizations_account.accounts["apps-devstg"].id}:role/DevOps",
+            "arn:aws:iam::${aws_organizations_account.accounts["apps-prd"].id}:role/DevOps"
           ]
         },
         "ForAnyValue:StringEquals": {
