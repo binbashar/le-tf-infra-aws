@@ -11,20 +11,21 @@ locals {
 # RDS Export To S3
 # -----------------------------------------------------------------------------
 module "rds_export_to_s3" {
-  source = "github.com/binbashar/terraform-aws-rds-export-to-s3.git?ref=v0.3.0"
+  source = "github.com/binbashar/terraform-aws-rds-export-to-s3.git?ref=v0.4.0"
 
   # Set a prefix for naming resources
   prefix = "aurora-mysql"
 
+  create_customer_kms_key = true
+
   # The database name whose RDS snapshots will be exported to S3
-  database_name = data.terraform_remote_state.databases-aurora.outputs.this_rds_cluster_id
+  database_names = data.terraform_remote_state.databases-aurora.outputs.cluster_database_name
 
   # The RDS snapshots events that should be included: RDS Aurora (RDS-EVENT-0169) or RDS non-Aurora (RDS-EVENT-0091)
-  rds_event_id = "RDS-EVENT-0169"
+  rds_event_ids = "RDS-EVENT-0169, RDS-EVENT-0075"
 
   # The S3 bucket that will store the exported snapshots
   snapshots_bucket_name = module.bucket.s3_bucket_id
-  snapshots_bucket_arn  = module.bucket.s3_bucket_arn
 
   # The SNS topic that will receive notifications about exported snapshots events
   notifications_topic_arn = "arn:aws:sns:us-east-1:${var.accounts.apps-devstg.id}:sns-topic-slack-notify-monitoring-sec"
