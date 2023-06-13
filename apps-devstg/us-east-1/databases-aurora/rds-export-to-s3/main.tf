@@ -21,7 +21,7 @@ module "rds_export_to_s3" {
   # The database name whose RDS snapshots will be exported to S3
   database_names = data.terraform_remote_state.databases-aurora.outputs.cluster_database_name
 
-  # The RDS snapshots events that should be included: RDS Aurora (RDS-EVENT-0169) or RDS non-Aurora (RDS-EVENT-0091)
+  # The RDS snapshots events that should be included: RDS Aurora Automated cluster snapshot (RDS-EVENT-0169) and/or Manual cluster snapshot (RDS-EVENT-0075)
   rds_event_ids = "RDS-EVENT-0169, RDS-EVENT-0075"
 
   # The S3 bucket that will store the exported snapshots
