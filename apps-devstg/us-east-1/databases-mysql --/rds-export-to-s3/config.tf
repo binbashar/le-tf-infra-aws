@@ -24,7 +24,7 @@ terraform {
 # -------------------------------------
 # Data Resources
 # -------------------------------------
-data "terraform_remote_state" "databases-aurora" {
+data "terraform_remote_state" "databases-mysql" {
   backend = "s3"
 
   config = {
