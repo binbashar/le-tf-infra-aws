@@ -26,3 +26,20 @@ resource "aws_organizations_organization" "main" {
     "BACKUP_POLICY"
   ]
 }
+
+#
+# Delegate administration of access analyzer to security account
+#
+resource "aws_organizations_delegated_administrator" "access_analyzer_administrator" {
+  account_id        = aws_organizations_account.accounts["security"].id
+  service_principal = "access-analyzer.amazonaws.com"
+
+  depends_on = [
+    aws_organizations_organization.main,
+    aws_organizations_account.accounts["security"]
+  ]
+}
+
+resource "aws_iam_service_linked_role" "access_analyzer" {
+  aws_service_name = "access-analyzer.amazonaws.com"
+}

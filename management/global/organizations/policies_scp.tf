@@ -38,6 +38,10 @@ resource "aws_organizations_policy" "default" {
   }
 }
 JSON
+
+  depends_on = [
+    aws_organizations_organization.main
+  ]
 }
 
 #
@@ -102,6 +106,10 @@ resource "aws_organizations_policy" "standard" {
   }
 }
 JSON
+
+  depends_on = [
+    aws_organizations_organization.main
+  ]
 }
 
 #
@@ -175,10 +183,10 @@ resource "aws_organizations_policy" "tag_protection" {
       "Condition": {
         "StringNotEquals": {
           "aws:PrincipalArn": [
-            "arn:aws:iam::${aws_organizations_account.shared.id}:role/DevOps",
-            "arn:aws:iam::${aws_organizations_account.network.id}:role/DevOps",
-            "arn:aws:iam::${aws_organizations_account.apps_devstg.id}:role/DevOps",
-            "arn:aws:iam::${aws_organizations_account.apps_prd.id}:role/DevOps"
+            "arn:aws:iam::${aws_organizations_account.accounts["shared"].id}:role/DevOps",
+            "arn:aws:iam::${aws_organizations_account.accounts["network"].id}:role/DevOps",
+            "arn:aws:iam::${aws_organizations_account.accounts["apps-devstg"].id}:role/DevOps",
+            "arn:aws:iam::${aws_organizations_account.accounts["apps-prd"].id}:role/DevOps"
           ]
         },
         "ForAnyValue:StringEquals": {
