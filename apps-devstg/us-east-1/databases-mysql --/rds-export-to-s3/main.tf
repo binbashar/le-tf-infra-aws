@@ -14,15 +14,15 @@ module "rds_export_to_s3" {
   source = "github.com/binbashar/terraform-aws-rds-export-to-s3.git?ref=v0.4.0"
 
   # Set a prefix for naming resources
-  prefix = "aurora-mysql"
+  prefix = "mysql"
 
   create_customer_kms_key = true
 
   # The database name whose RDS snapshots will be exported to S3
-  database_names = data.terraform_remote_state.databases-aurora.outputs.cluster_database_name
+  database_names = data.terraform_remote_state.databases-mysql.outputs.bb_reference_db_id
 
-  # The RDS snapshots events that should be included: RDS Aurora Automated cluster snapshot (RDS-EVENT-0169) and/or Manual cluster snapshot (RDS-EVENT-0075)
-  rds_event_ids = "RDS-EVENT-0169, RDS-EVENT-0075"
+  # The RDS snapshots events that should be included: RDS Automated cluster snapshot (RDS-EVENT-0091) and/or Manual cluster snapshot (RDS-EVENT-0042)
+  rds_event_ids = "RDS-EVENT-0091"
 
   # The S3 bucket that will store the exported snapshots
   snapshots_bucket_name = module.bucket.s3_bucket_id
