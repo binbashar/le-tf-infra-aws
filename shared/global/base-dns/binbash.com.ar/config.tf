@@ -2,6 +2,12 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
+  region = var.region
+  profile = var.profile
+}
+
+provider "aws" {
+  alias   = "main_region"
   region  = var.region
   profile = var.profile
 }
@@ -48,6 +54,17 @@ data "terraform_remote_state" "vpc-shared" {
     profile = var.profile
     bucket  = var.bucket
     key     = "${var.environment}/network/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "dns-shared-leverage-binbash-com-ar" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/dns/leverage.binbash.com.ar/terraform.tfstate"
   }
 }
 

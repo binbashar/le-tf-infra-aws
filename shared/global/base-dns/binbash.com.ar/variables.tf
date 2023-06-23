@@ -29,12 +29,12 @@ variable "aws_public_hosted_zone_1_text_record_2" {
 variable "aws_public_hosted_zone_1_text_record_3_name" {
   type        = string
   description = "AWS Route53 public hosted zone TXT type record"
-  default     = "_github-challenge-binbashar.binbash.com.ar."
+  default     = "_github-pages-challenge-binbashar.binbash.com.ar."
 }
 variable "aws_public_hosted_zone_1_text_record_3" {
   type        = string
   description = "AWS Route53 public hosted zone TXT type record"
-  default     = "86e25ec336"
+  default     = "a54386956bc953c619c6a2c83e5bbd"
 }
 
 # MailChimp
