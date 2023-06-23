@@ -13,7 +13,7 @@ module "domain-redirect-binbash_com_ar-to-binbash_co" {
   source                  = "github.com/binbashar/terraform-aws-domain-redirect?ref=v1.0.0"
   source_hosted_zone_name = "leverage.binbash.com.ar"
   target_url              = "leverage.binbash.co"
-  providers               = {
+  providers = {
     aws.us-east-1 = aws.main_region
   }
 }
