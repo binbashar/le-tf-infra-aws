@@ -17,14 +17,3 @@ module "domain-redirect-binbash_com_ar-to-binbash_co" {
     aws.us-east-1 = aws.main_region
   }
 }
-
-#
-# CNAME records
-#
-/*resource "aws_route53_record" "pub_CNAME_leverage_binbash_com_ar" {
-  zone_id = aws_route53_zone.public.id
-  name    = "leverage.binbash.com.ar"
-  records = ["binbashar.github.io"]
-  type    = "CNAME"
-  ttl     = 300
-}*/
