@@ -37,6 +37,24 @@ resource "aws_route53_record" "CNAME_leverage_binbash_co" {
 }
 
 #
+# MX records
+#
+resource "aws_route53_record" "MX_gmail_binbash_co" {
+  zone_id = aws_route53_zone.public.id
+  name    = "binbash.co"
+  type    = "MX"
+  ttl     = 300
+
+  records = [
+    "1 ASPMX.L.GOOGLE.COM.",
+    "5 ALT1.ASPMX.L.GOOGLE.COM.",
+    "5 ALT2.ASPMX.L.GOOGLE.COM.",
+    "10 ALT3.ASPMX.L.GOOGLE.COM.",
+    "10 ALT4.ASPMX.L.GOOGLE.COM.",
+  ]
+}
+
+#
 # TXT records
 #
 resource "aws_route53_record" "TXT_github_binbash_co" {
@@ -44,5 +62,16 @@ resource "aws_route53_record" "TXT_github_binbash_co" {
   name    = "_github-pages-challenge-binbashar.binbash.co"
   type    = "TXT"
   records = ["04280fb64e272af382fab1aa4a2174"]
+  ttl     = 300
+}
+
+#
+# TXT records
+#
+resource "aws_route53_record" "TXT_google_domain_verification" {
+  zone_id = aws_route53_zone.public.id
+  name    = "binbash.co"
+  type    = "TXT"
+  records = ["google-site-verification=7-ckJxbKpPRrcQ-foy3UIkImTGlp60MUtDgzfudJZmM"]
   ttl     = 300
 }
