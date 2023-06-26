@@ -12,6 +12,23 @@ resource "aws_route53_zone" "aws_public_hosted_zone_1" {
 }
 
 #
+# NS Records
+# Record in the binbash.com.ar hosted zone that contains the name servers of the leverage.binbash.com.ar hosted zone.
+#
+resource "aws_route53_record" "ns_record_leverage_binbash_com_ar" {
+  type    = "NS"
+  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
+  name    = "leverage"
+  ttl     = "86400"
+  records = [
+    data.terraform_remote_state.dns-shared-leverage-binbash-com-ar.outputs.public_zone_domain_ns_records[0],
+    data.terraform_remote_state.dns-shared-leverage-binbash-com-ar.outputs.public_zone_domain_ns_records[1],
+    data.terraform_remote_state.dns-shared-leverage-binbash-com-ar.outputs.public_zone_domain_ns_records[2],
+    data.terraform_remote_state.dns-shared-leverage-binbash-com-ar.outputs.public_zone_domain_ns_records[3]
+  ]
+}
+
+#
 # MX records
 #
 resource "aws_route53_record" "aws_public_hosted_zone_1_mx_records" {
@@ -30,27 +47,20 @@ resource "aws_route53_record" "aws_public_hosted_zone_1_mx_records" {
 }
 
 #
-# A records
+# Redirect binbash.com.ar to binbash.co
 #
-resource "aws_route53_record" "pub_A_binbash_com_ar" {
-  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
-  name    = "binbash.com.ar"
-  records = ["23.236.62.147"]
-  type    = "A"
-  ttl     = 300
+module "domain-redirect-binbash_com_ar-to-binbash_co" {
+  source                  = "github.com/binbashar/terraform-aws-domain-redirect?ref=v1.0.0"
+  source_hosted_zone_name = "binbash.com.ar"
+  target_url              = "binbash.co"
+  providers = {
+    aws.us-east-1 = aws.main_region
+  }
 }
 
 #
 # CNAME records
 #
-resource "aws_route53_record" "pub_CNAME_leverage_binbash_com_ar" {
-  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
-  name    = "leverage.binbash.com.ar"
-  records = ["binbashar.github.io"]
-  type    = "CNAME"
-  ttl     = 300
-}
-
 resource "aws_route53_record" "pub_CNAME_www_binbash_com_ar" {
   zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
   name    = "www.binbash.com.ar"
@@ -100,7 +110,7 @@ resource "aws_route53_record" "pub_CNAME_sendgrid_5" {
 }
 
 #
-# text records
+# TXT records
 #
 resource "aws_route53_record" "aws_public_hosted_zone_1_TXT_record_2" {
   zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
