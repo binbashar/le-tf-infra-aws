@@ -55,3 +55,51 @@ resource "aws_iam_role_policy_attachment" "policy" {
     policy_arn = aws_iam_policy.lambda.arn
 
 }
+
+# ##########################################################
+# DEPLOYMASTER ACCESS
+#
+# This is done for granting access to change this lambda
+# to the DeployMaster role.
+# In the context of "binbash Leverage" this role is used
+# for deploying stuff to accounts.
+# Role arn is like: arn:aws:iam::123456789:role/DeployMaster
+
+data "aws_iam_role" "deploymaster" {
+  name = "DeployMaster"
+}
+
+resource "aws_iam_policy" "deploymaster" {
+
+    name   = "bb-lambda-policy-deploymaster"
+    policy = data.aws_iam_policy_document.lambda_policy_document_deploymaster.json
+}
+
+
+data "aws_iam_policy_document" "lambda_policy_document_deploymaster" {
+
+
+    # ###########################################
+    statement {
+        sid       = "AllowLAMBDA"
+        effect    = "Allow"
+        resources = [
+            aws_lambda_function.func.arn
+        ]
+
+        actions = [
+          "lambda:UpdateFunctionCode",
+        ]
+    }
+
+
+
+}
+
+
+resource "aws_iam_role_policy_attachment" "policy_deploymaster" {
+
+    role       = data.aws_iam_role.deploymaster.name
+    policy_arn = aws_iam_policy.deploymaster.arn
+
+}

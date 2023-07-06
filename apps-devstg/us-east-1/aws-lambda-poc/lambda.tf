@@ -19,7 +19,7 @@ resource "aws_lambda_function" "func" {
     handler       = "lambda_function.lambda_handler"
     runtime       = "python3.10"
     memory_size   = 256
-    timeout       = 600
+    timeout       = 30
 
     s3_bucket = aws_s3_bucket.lambda.bucket
     s3_key    = "bb-lambda-test-test"
