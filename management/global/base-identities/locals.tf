@@ -7,6 +7,7 @@ locals {
   users = [
     "angelo.fenoglio",
     "diego.ojeda",
+    "emiliano.brest",
     "exequiel.barrirero",
     "jose.peinado",
     "luis.gallardo",
