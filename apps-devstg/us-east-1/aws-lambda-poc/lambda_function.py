@@ -2,5 +2,5 @@
 
 def lambda_handler(event, context):
     return {
-        'message' : 'Welcome from BinBash!'
+        'message' : 'Welcome from binbash!'
     }
