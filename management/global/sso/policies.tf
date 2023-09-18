@@ -53,7 +53,7 @@ data "aws_iam_policy_document" "devops" {
       "ram:*",
       "rds:*",
       "redshift:*",
-      "resource-explorer:*",  
+      "resource-explorer:*",
       "resource-explorer-2:*",
       "resource-groups:*",
       "route53:*",
