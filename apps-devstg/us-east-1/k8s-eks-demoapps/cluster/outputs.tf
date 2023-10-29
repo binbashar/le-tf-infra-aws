@@ -18,7 +18,7 @@ output "cluster_endpoint" {
 
 output "cluster_version" {
   description = "Kubernetes version."
-  value       = module.cluster.cluster_endpoint
+  value       = module.cluster.cluster_version
 }
 
 output "cluster_oidc_issuer_url" {
