@@ -43,7 +43,7 @@ resource "helm_release" "uptime_kuma" {
   repository = "https://helm.irsigler.cloud"
   chart      = "uptime-kuma"
   version    = "2.14.2"
-  values     = [
+  values = [
     <<-EOT
       ingress:
         enabled: true
