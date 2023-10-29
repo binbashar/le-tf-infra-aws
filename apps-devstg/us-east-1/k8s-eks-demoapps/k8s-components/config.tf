@@ -30,10 +30,10 @@ provider "helm" {
 # Backend Config (partial)
 #------------------------------------------------------------------------------
 terraform {
-  required_version = ">= 1.1.9"
+  required_version = ">= 1.2"
 
   required_providers {
-    aws        = "~> 4.10"
+    aws        = "~> 5.0"
     helm       = "~> 2.5"
     kubernetes = "~> 2.10"
   }
