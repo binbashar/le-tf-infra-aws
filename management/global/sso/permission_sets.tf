@@ -16,7 +16,7 @@ module "permission_sets" {
       name                                = "DevOps"
       description                         = "Provides full access to many AWS services and resources except billing."
       relay_state                         = local.default_relay_state
-      session_duration                    = local.default_session_duration
+      session_duration                    = "PT2H"
       tags                                = local.tags
       inline_policy                       = data.aws_iam_policy_document.devops.json
       policy_attachments                  = []

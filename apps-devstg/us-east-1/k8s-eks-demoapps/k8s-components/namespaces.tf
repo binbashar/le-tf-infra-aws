@@ -26,7 +26,7 @@ resource "kubernetes_namespace" "monitoring_tools" {
 }
 
 resource "kubernetes_namespace" "monitoring_other" {
-  count = var.enable_datadog_agent ? 1 : 0
+  count = var.enable_datadog_agent || var.enable_uptime_kuma ? 1 : 0
 
   metadata {
     labels = local.labels

@@ -55,7 +55,7 @@ EOF
 }
 
 resource "aws_iam_policy" "external_secrets_parameter_store" {
-  name        = "${local.environment}-external-secrets-parameter-store"
+  name        = "${local.environment}-${local.prefix}-external-secrets-parameter-store"
   description = "External-secrets permissions on Parameter Store"
   tags        = local.tags_external_secrets
   policy      = <<EOF

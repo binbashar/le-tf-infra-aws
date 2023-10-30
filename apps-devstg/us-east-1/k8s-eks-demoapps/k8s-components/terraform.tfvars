@@ -68,3 +68,8 @@ cost_optimization = {
   kube_resource_report = false
   cost_analyzer        = false
 }
+
+#------------------------------------------------------------------------------
+# Uptime Kuma
+#------------------------------------------------------------------------------
+enable_uptime_kuma = false

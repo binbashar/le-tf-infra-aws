@@ -161,3 +161,11 @@ variable "cost_optimization" {
   type    = any
   default = {}
 }
+
+#==================================#
+# Uptime Kuma                      #
+#==================================#
+variable "enable_uptime_kuma" {
+  type    = bool
+  default = false
+}
