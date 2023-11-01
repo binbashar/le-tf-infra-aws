@@ -56,8 +56,8 @@ resource "helm_release" "cluster_overprovisioner" {
   repository = "https://charts.deliveryhero.io/"
   chart      = "cluster-overprovisioner"
   version    = "0.7.11"
-  values     = [
-  <<EOF
+  values = [
+    <<EOF
     deployments:
       - name: default
         replicaCount: 2
@@ -89,8 +89,8 @@ resource "helm_release" "cluster_proportional_autoscaler" {
   repository = "https://kubernetes-sigs.github.io/cluster-proportional-autoscaler"
   chart      = "cluster-proportional-autoscaler"
   version    = "1.1.0"
-  values     = [
-  <<EOF
+  values = [
+    <<EOF
     options:
       namespace: ${kubernetes_namespace.scaling[0].id}
       target: deployment/cluster-overprovisioner-default
