@@ -71,6 +71,11 @@ variable "enable_cluster_autoscaling" {
   default = false
 }
 
+variable "enable_cluster_overprovisioning" {
+  type    = bool
+  default = false
+}
+
 variable "enable_gatus" {
   type    = bool
   default = false

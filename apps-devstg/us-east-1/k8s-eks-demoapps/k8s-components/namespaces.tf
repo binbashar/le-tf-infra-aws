@@ -127,3 +127,12 @@ resource "kubernetes_namespace" "prometheus" {
     name   = "prometheus"
   }
 }
+
+resource "kubernetes_namespace" "scaling" {
+  count = var.enable_cluster_overprovisioning ? 1 : 0
+
+  metadata {
+    labels = local.labels
+    name   = "scaling"
+  }
+}
