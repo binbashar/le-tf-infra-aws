@@ -21,6 +21,11 @@ output "cluster_oidc_issuer_url" {
   value       = module.cluster.cluster_oidc_issuer_url
 }
 
+output "cluster_oidc_provider_arn" {
+  description = "EKS OpenID Connect identity provider ARN."
+  value       = module.cluster.oidc_provider_arn
+}
+
 output "cluster_primary_security_group_id" {
   description = "Security group ids attached to the cluster control plane."
   value       = module.cluster.cluster_primary_security_group_id
