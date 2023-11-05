@@ -174,3 +174,11 @@ variable "enable_uptime_kuma" {
   type    = bool
   default = false
 }
+
+#==================================#
+# KWatch                           #
+#==================================#
+variable "enable_kwatch" {
+  type    = bool
+  default = false
+}

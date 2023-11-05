@@ -31,7 +31,7 @@ enable_external_secrets = true
 enable_hpa_scaling              = false
 enable_vpa_scaling              = false
 enable_cluster_autoscaling      = true
-enable_cluster_overprovisioning = true
+enable_cluster_overprovisioning = false
 
 #------------------------------------------------------------------------------
 # Monitoring
@@ -48,11 +48,12 @@ logging = {
   ]
 }
 # metrics
-enable_prometheus_stack        = true
+enable_prometheus_stack        = false
 enable_prometheus_dependencies = false
 enable_grafana_dependencies    = false
 # datadog
-enable_datadog_agent = false
+enable_datadog_agent           = false
+enable_kwatch                  = false
 
 #------------------------------------------------------------------------------
 # CICD | ArgoCD

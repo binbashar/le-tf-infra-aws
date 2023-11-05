@@ -34,6 +34,15 @@ resource "kubernetes_namespace" "monitoring_other" {
   }
 }
 
+resource "kubernetes_namespace" "monitoring_alerts" {
+  count = var.enable_kwatch ? 1 : 0
+
+  metadata {
+    labels = local.labels
+    name   = "monitoring-alerts"
+  }
+}
+
 resource "kubernetes_namespace" "ingress_nginx" {
   count = var.enable_nginx_ingress_controller ? 1 : 0
 
