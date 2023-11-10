@@ -32,3 +32,13 @@ output "argo_cd_image_updater_role_arn" {
   description = "ArgoCD Image Updater Role ARN"
   value       = module.role_argo_cd_image_updater.iam_role_arn
 }
+
+output "grafana_role_arn" {
+  description = "Grafana Role ARN"
+  value       = module.role_grafana.iam_role_arn
+}
+
+output "fluent_bit_role_arn" {
+  description = "Fluent-bit Role ARN"
+  value       = module.role_fluent_bit.iam_role_arn
+}
