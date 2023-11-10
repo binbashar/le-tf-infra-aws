@@ -8,6 +8,12 @@ module "secrets" {
       secret_string           = "INITIAL_VALUE"
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
     },
+    "/notifications/argocd" = {
+      description             = "Slack App Oauth token for ArgoCD notifications"
+      recovery_window_in_days = 7
+      secret_string           = "INITIAL_VALUE"
+      kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+    },
   }
 
   tags = local.tags
