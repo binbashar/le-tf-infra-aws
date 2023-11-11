@@ -64,7 +64,7 @@ module "cluster" {
   cluster_service_ipv4_cidr = "10.100.0.0/16"
 
   # Encrypt selected k8s resources with this account's KMS CMK
-  create_kms_key            = false
+  create_kms_key = false
   cluster_encryption_config = {
     provider_key_arn = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
     resources        = ["secrets"]

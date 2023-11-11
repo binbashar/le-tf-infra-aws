@@ -92,7 +92,7 @@ variable "enable_ingressmonitorcontroller" {
 }
 
 variable "kube_prometheus_stack" {
-  type    = map(any)
+  type = map(any)
   default = {
     enabled = false
   }

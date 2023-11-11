@@ -61,7 +61,7 @@ locals {
   # Tools Node Group: Selectors and Tolerations
   #------------------------------------------------------------------------------
   tools_nodeSelector = jsonencode({ stack = "tools" })
-  tools_tolerations  = jsonencode([
+  tools_tolerations = jsonencode([
     {
       key      = "stack",
       operator = "Equal",

@@ -47,7 +47,7 @@ resource "helm_release" "kube_prometheus_stack" {
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "kube-prometheus-stack"
   version    = "52.1.0"
-  values     = [templatefile("chart-values/kube-prometheus-stack.yaml",
+  values = [templatefile("chart-values/kube-prometheus-stack.yaml",
     {
       private_ingress_class = local.private_ingress_class
       platform              = local.platform
