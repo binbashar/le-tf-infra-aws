@@ -76,6 +76,11 @@ variable "logging" {
   default = {}
 }
 
+variable "metrics" {
+  type    = any
+  default = {}
+}
+
 variable "enable_ingressmonitorcontroller" {
   type    = bool
   default = false

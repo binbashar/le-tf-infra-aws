@@ -1,0 +1,164 @@
+# ---------------------------------------------------------------------------------------------
+# Disable KubeControllerManagerDown and KubeSchedulerDown since they are not necessary on EKS
+# Disable WatchDog until we decide what to do with it
+# ---------------------------------------------------------------------------------------------
+defaultRules:
+  rules:
+    kubeControllerManager: false
+    kubeSchedulerAlerting: false
+
+  disabled:
+    Watchdog: true
+    KubeControllerManagerDown: true
+    KubeSchedulerDown: true
+    InfoInhibitor: true
+
+kubeControllerManager:
+  enabled: false
+
+kubeScheduler:
+  enabled: false
+# ---------------------------------------------------------------------------------------------
+
+alertmanager:
+  enabled: true
+
+  config:
+    global:
+      slack_api_url: ${alertmanagerSlackWebhook}
+    route:
+      group_by:
+        - namespace
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 1h
+      receiver: 'slack-notifications'
+      routes:
+      - receiver: 'slack-notifications'
+        continue: true
+    receivers:
+    - name: 'slack-notifications'
+      slack_configs:
+      - channel: '#${alertmanagerSlackChannel}'
+        send_resolved: true
+        text: '{{ template "slack.alert.text" }}'
+  
+  templateFiles:
+    alert.tmpl: |-
+      {{ define "slack.alert.text" }}
+      {{ range .Alerts }}
+      *Alert:* {{ .Annotations.summary }} - `{{ .Labels.severity }}` \n
+        *Environment:* {{ .Labels.cluster }} \n
+        *Description:* {{ .Annotations.description }} \n
+        *Graph:* <{{ .GeneratorURL }}|:chart_with_upwards_trend:> - *Runbook:* <{{ .Annotations.runbook }}|:documentation:> \n
+        *Details:* \n {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}` \n
+        {{ end }}
+      {{ end }}
+      {{ end }}
+
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/tls-acme: 'true'
+      kubernetes.io/ingress.class: ${ingressClass}
+      cert-manager.io/cluster-issuer: clusterissuer-arta-cert-manager-clusterissuer
+    hosts:
+      - ${alertmanagerHost}
+    path: /
+    tls:
+      - secretName: alertmananager-tls
+        hosts:
+          - ${alertmanagerHost}
+  
+  alertmanagerSpec:
+    nodeSelector: ${nodeSelector}
+    tolerations: ${tolerations}
+
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp2
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 2Gi
+
+grafana:
+  enabled: true
+
+  adminUser: ${grafanaUser}
+  adminPassword: ${grafanaPassword}
+
+  serviceAccount:
+    name: grafana
+    annotations:
+      eks.amazonaws.com/role-arn: ${grafanaRoleArn}
+
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/tls-acme: 'true'
+      kubernetes.io/ingress.class: ${ingressClass}
+      cert-manager.io/cluster-issuer: clusterissuer-arta-cert-manager-clusterissuer
+    hosts:
+      - ${grafanaHost}
+    path: /
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - ${grafanaHost}
+  
+  nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClassName: gp2
+
+  # additionalDataSources:
+  #   - name: CloudWatch
+  #     type: cloudwatch
+  #     jsonData:
+  #       authType: default
+  #       defaultRegion: us-east-1
+
+kube-state-metrics:
+  nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
+prometheusOperator:
+  admissionWebHooks:
+    patch:
+        nodeSelector: ${nodeSelector}
+        tolerations: ${tolerations}
+  nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
+prometheus:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/tls-acme: 'true'
+      kubernetes.io/ingress.class: ${ingressClass}
+      cert-manager.io/cluster-issuer: clusterissuer-arta-cert-manager-clusterissuer
+    hosts:
+      - ${prometheusHost}
+    path: /
+    tls:
+      - secretName: prometheus-tls
+        hosts:
+          - ${prometheusHost}
+
+  prometheusSpec:
+    nodeSelector: ${nodeSelector}
+    tolerations: ${tolerations}
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp2
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi

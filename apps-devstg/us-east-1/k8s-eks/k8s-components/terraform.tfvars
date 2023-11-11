@@ -48,6 +48,11 @@ logging = {
   ]
 }
 # metrics
+metrics = {
+  prometheus_stack = {
+    enabled = true
+  }
+}
 enable_prometheus_dependencies = false
 enable_grafana_dependencies    = false
 # tools
