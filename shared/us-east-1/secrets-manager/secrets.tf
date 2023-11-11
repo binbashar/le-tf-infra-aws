@@ -14,6 +14,18 @@ module "secrets" {
       secret_string           = "INITIAL_VALUE"
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
     },
+    "/notifications/alertmanager" = {
+      description             = "Slack webhook for Alertmanager notifications"
+      recovery_window_in_days = 7
+      secret_string           = "INITIAL_VALUE"
+      kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+    },
+    "/grafana/administrator" = {
+      description             = "Credentials for Grafana administrator user"
+      recovery_window_in_days = 7
+      secret_string           = "INITIAL_VALUE"
+      kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+    },
   }
 
   tags = local.tags
