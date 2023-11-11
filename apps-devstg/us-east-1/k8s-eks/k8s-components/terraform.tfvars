@@ -77,7 +77,8 @@ imc = {
 argocd = {
   enabled = true
 
-  enableWebTerminal = true
+  enableWebTerminal         = true
+  slackNotificationsChannel = "le-tools-monitoring"
 
   image_updater = {
     enabled = false
