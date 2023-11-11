@@ -42,12 +42,12 @@ variable "enable_external_secrets" {
 }
 
 variable "argocd" {
-  type    = map(any)
+  type    = any
   default = {}
 }
 
 variable "argo_rollouts" {
-  type    = map(any)
+  type    = any
   default = {}
 }
 

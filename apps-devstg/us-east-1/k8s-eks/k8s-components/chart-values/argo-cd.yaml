@@ -2,7 +2,22 @@ configs:
   cm:
     exec.enabled: "${enableWebTerminal}"
 
+controller:
+  nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
+dex:
+  nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
+redis:
+  nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
 server:
+  nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
   ingress:
     enabled: true
     annotations:
