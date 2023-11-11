@@ -129,7 +129,7 @@ resource "kubernetes_namespace" "velero" {
 }
 
 resource "kubernetes_namespace" "prometheus" {
-  count = var.enable_prometheus_stack ? 1 : 0
+  count = var.kube_prometheus_stack.enabled ? 1 : 0
 
   metadata {
     labels = local.labels

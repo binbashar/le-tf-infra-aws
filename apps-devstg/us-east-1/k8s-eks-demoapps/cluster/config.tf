@@ -31,6 +31,14 @@ terraform {
 #
 # Data Sources
 #
+
+#
+# NOTE: if you find issue with this resource while trying to stand up a cluster
+#       then try commenting this block and the above kubernetes provider block.
+# NOTE: if you get an error with the creation of aws-auth configmap, try 
+#       running the apply command again; or, if the resource already exists,
+#       then try removing it from the Terraform state and then run apply.
+#
 data "aws_eks_cluster" "cluster" {
   name = module.cluster.cluster_name
 }

@@ -56,4 +56,17 @@ locals {
     for k, v in local.alb_ingress_to_nginx_ingress_tags_map : "${k}=${v}"
   ]
   eks_alb_logging_prefix = var.eks_alb_logging_prefix != "" ? var.eks_alb_logging_prefix : data.terraform_remote_state.cluster.outputs.cluster_name
+
+  #------------------------------------------------------------------------------
+  # Tools Node Group: Selectors and Tolerations
+  #------------------------------------------------------------------------------
+  tools_nodeSelector = jsonencode({ stack = "tools" })
+  tools_tolerations  = jsonencode([
+    {
+      key      = "stack",
+      operator = "Equal",
+      value    = "tools",
+      effect   = "NoSchedule"
+    }
+  ])
 }
