@@ -47,5 +47,6 @@ variable "create_aws_auth" {
 # WARNING: make sure you read the note about add-ons in the "locals.tf" file
 variable "use_managed_addons" {
   description = "Whether to use EKS managed add-ons."
+  type        = bool
   default     = false
 }

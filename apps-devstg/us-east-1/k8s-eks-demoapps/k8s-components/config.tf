@@ -30,12 +30,12 @@ provider "helm" {
 # Backend Config (partial)
 #------------------------------------------------------------------------------
 terraform {
-  required_version = ">= 1.1.9"
+  required_version = "~> 1.2"
 
   required_providers {
-    aws        = "~> 4.10"
-    helm       = "~> 2.5"
-    kubernetes = "~> 2.10"
+    aws        = "~> 5.24"
+    helm       = "~> 2.11"
+    kubernetes = "~> 2.23"
   }
 
   backend "s3" {
@@ -53,11 +53,11 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 data "aws_eks_cluster" "cluster" {
-  name = data.terraform_remote_state.cluster.outputs.cluster_id
+  name = data.terraform_remote_state.cluster.outputs.cluster_name
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = data.terraform_remote_state.cluster.outputs.cluster_id
+  name = data.terraform_remote_state.cluster.outputs.cluster_name
 }
 
 data "terraform_remote_state" "cluster" {

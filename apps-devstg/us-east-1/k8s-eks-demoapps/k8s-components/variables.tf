@@ -71,6 +71,11 @@ variable "enable_cluster_autoscaling" {
   default = false
 }
 
+variable "enable_cluster_overprovisioning" {
+  type    = bool
+  default = false
+}
+
 variable "enable_gatus" {
   type    = bool
   default = false
@@ -86,9 +91,11 @@ variable "enable_ingressmonitorcontroller" {
   default = false
 }
 
-variable "enable_prometheus_stack" {
-  type    = bool
-  default = false
+variable "kube_prometheus_stack" {
+  type = map(any)
+  default = {
+    enabled = false
+  }
 }
 
 variable "enable_prometheus_dependencies" {
@@ -160,4 +167,20 @@ variable "enable_datadog_agent" {
 variable "cost_optimization" {
   type    = any
   default = {}
+}
+
+#==================================#
+# Uptime Kuma                      #
+#==================================#
+variable "enable_uptime_kuma" {
+  type    = bool
+  default = false
+}
+
+#==================================#
+# KWatch                           #
+#==================================#
+variable "enable_kwatch" {
+  type    = bool
+  default = false
 }

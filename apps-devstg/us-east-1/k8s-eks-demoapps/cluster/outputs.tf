@@ -16,9 +16,19 @@ output "cluster_endpoint" {
   value       = module.cluster.cluster_endpoint
 }
 
+output "cluster_version" {
+  description = "Kubernetes version."
+  value       = module.cluster.cluster_version
+}
+
 output "cluster_oidc_issuer_url" {
   description = "EKS OpenID Connect Issuer URL."
   value       = module.cluster.cluster_oidc_issuer_url
+}
+
+output "cluster_oidc_provider_arn" {
+  description = "EKS OpenID Connect Provider ARN."
+  value       = module.cluster.oidc_provider_arn
 }
 
 output "cluster_primary_security_group_id" {

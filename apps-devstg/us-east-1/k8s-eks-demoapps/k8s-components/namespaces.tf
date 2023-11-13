@@ -26,11 +26,20 @@ resource "kubernetes_namespace" "monitoring_tools" {
 }
 
 resource "kubernetes_namespace" "monitoring_other" {
-  count = var.enable_datadog_agent ? 1 : 0
+  count = var.enable_datadog_agent || var.enable_uptime_kuma ? 1 : 0
 
   metadata {
     labels = local.labels
     name   = "monitoring-other"
+  }
+}
+
+resource "kubernetes_namespace" "monitoring_alerts" {
+  count = var.enable_kwatch ? 1 : 0
+
+  metadata {
+    labels = local.labels
+    name   = "monitoring-alerts"
   }
 }
 
@@ -120,10 +129,19 @@ resource "kubernetes_namespace" "velero" {
 }
 
 resource "kubernetes_namespace" "prometheus" {
-  count = var.enable_prometheus_stack ? 1 : 0
+  count = var.kube_prometheus_stack.enabled ? 1 : 0
 
   metadata {
     labels = local.labels
     name   = "prometheus"
+  }
+}
+
+resource "kubernetes_namespace" "scaling" {
+  count = var.enable_cluster_overprovisioning ? 1 : 0
+
+  metadata {
+    labels = local.labels
+    name   = "scaling"
   }
 }

@@ -28,14 +28,14 @@ enable_external_secrets = true
 #------------------------------------------------------------------------------
 # Scaling
 #------------------------------------------------------------------------------
-enable_hpa_scaling         = false
-enable_vpa_scaling         = false
-enable_cluster_autoscaling = true
+enable_hpa_scaling              = false
+enable_vpa_scaling              = false
+enable_cluster_autoscaling      = true
+enable_cluster_overprovisioning = false
 
 #------------------------------------------------------------------------------
-# Monitoring
+# Monitoring: Logging
 #------------------------------------------------------------------------------
-# logging
 logging = {
   enabled = false
   # Log forwarders/processors
@@ -46,12 +46,28 @@ logging = {
     "k8s-event-logger"
   ]
 }
-# metrics
-enable_prometheus_stack        = true
+
+#------------------------------------------------------------------------------
+# Monitoring: Metrics
+#------------------------------------------------------------------------------
+# KubePrometheusStack
+kube_prometheus_stack = {
+  enabled = false
+}
+# (External) Prometheus dependencies
 enable_prometheus_dependencies = false
 enable_grafana_dependencies    = false
-# datadog
+
+#------------------------------------------------------------------------------
+# Monitoring: Datadog (logs, metrics, and more)
+#------------------------------------------------------------------------------
 enable_datadog_agent = false
+
+#------------------------------------------------------------------------------
+# Monitoring: Alerts
+#------------------------------------------------------------------------------
+# KWatch
+enable_kwatch = false
 
 #------------------------------------------------------------------------------
 # CICD | ArgoCD
@@ -68,3 +84,8 @@ cost_optimization = {
   kube_resource_report = false
   cost_analyzer        = false
 }
+
+#------------------------------------------------------------------------------
+# Uptime Kuma
+#------------------------------------------------------------------------------
+enable_uptime_kuma = false

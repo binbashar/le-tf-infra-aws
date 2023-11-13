@@ -38,14 +38,22 @@ resource "helm_release" "metrics_server" {
 }
 
 #------------------------------------------------------------------------------
-# Prometheus Stack
+# Prometheus Stack: (in-cluster) Prometheus, Grafana, and AlertManager.
 #------------------------------------------------------------------------------
 resource "helm_release" "kube_prometheus_stack" {
-  count      = var.enable_prometheus_stack && !var.cost_optimization.cost_analyzer ? 1 : 0
+  count      = var.kube_prometheus_stack.enabled && !var.cost_optimization.cost_analyzer ? 1 : 0
   name       = "kube-prometheus-stack"
   namespace  = kubernetes_namespace.prometheus[0].id
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "kube-prometheus-stack"
-  version    = "43.2.1"
-  values     = [file("chart-values/kube-prometheus-stack.yaml")]
+  version    = "52.1.0"
+  values = [templatefile("chart-values/kube-prometheus-stack.yaml",
+    {
+      private_ingress_class = local.private_ingress_class
+      platform              = local.platform
+      private_base_domain   = local.private_base_domain
+      nodeSelector          = local.tools_nodeSelector
+      tolerations           = local.tools_tolerations
+    })
+  ]
 }

@@ -9,7 +9,7 @@
 # a group (or user) that is referenced by a permission set.
 #
 module "account_assignments" {
-  source = "github.com/binbashar/terraform-aws-sso.git//modules/account-assignments?ref=0.7.1"
+  source = "github.com/binbashar/terraform-aws-sso.git//modules/account-assignments?ref=1.1.1"
 
   account_assignments = [
     # -------------------------------------------------------------------------

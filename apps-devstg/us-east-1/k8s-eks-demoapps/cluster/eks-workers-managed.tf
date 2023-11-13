@@ -1,5 +1,5 @@
 module "cluster" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v18.30.0"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v19.19.0"
 
   create          = true
   cluster_name    = data.terraform_remote_state.cluster-vpc.outputs.cluster_name
@@ -54,85 +54,6 @@ module "cluster" {
       type        = "egress"
       self        = true
     },
-    #
-    # Admission controller rules
-    #
-    ingress_nginx_ingress_admission_controller_webhook_tcp = {
-      description                   = "Cluster API to Nginx Ingress Admission Controller Webhook"
-      protocol                      = "tcp"
-      from_port                     = 8443
-      to_port                       = 8443
-      type                          = "ingress"
-      source_cluster_security_group = true
-    },
-    ingress_alb_ingress_admission_controller_webhook_tcp = {
-      description                   = "Cluster API to ALB Ingress Admission Controller Webhook"
-      protocol                      = "tcp"
-      from_port                     = 9443
-      to_port                       = 9443
-      type                          = "ingress"
-      source_cluster_security_group = true
-    },
-    #
-    # DNS communication with the Internet
-    #
-    # TODO We may want to harden this either by restricting this rule or
-    #      via centralized outbound traffic control (e.g. a Firewall appliance,
-    #      Route 53 DNS Resolver Firewall)
-    #
-    egress_public_dns_tcp = {
-      description = "Node to public DNS servers"
-      protocol    = "tcp"
-      from_port   = 53
-      to_port     = 53
-      type        = "egress"
-      cidr_blocks = ["0.0.0.0/0"]
-    },
-    egress_public_dns_udp = {
-      description = "Node to public DNS servers"
-      protocol    = "udp"
-      from_port   = 53
-      to_port     = 53
-      type        = "egress"
-      cidr_blocks = ["0.0.0.0/0"]
-    },
-    #
-    # Access to resources in EKS VPC
-    #
-    egress_eks_private_subnets_tcp = {
-      description = "Node to EKS Private Subnets"
-      protocol    = "tcp"
-      from_port   = 1024
-      to_port     = 65535
-      type        = "egress"
-      cidr_blocks = [data.terraform_remote_state.cluster-vpc.outputs.private_subnets_cidr[0]]
-    },
-    #
-    # Access to resources in Shared VPC
-    #
-    # TODO This is another outbound rule that could be tightened
-    #
-    egress_shared_vpc_all = {
-      description = "Node to HTTPS endpoints on Shared VPC"
-      protocol    = "tcp"
-      from_port   = 443
-      to_port     = 443
-      type        = "egress"
-      cidr_blocks = [data.terraform_remote_state.shared-vpc.outputs.vpc_cidr_block]
-    },
-    #
-    # Github SSH (for ArgoCD to access repos via SSH
-    #
-    # TODO Have ArgoCD connect to Github via HTTPS
-    #
-    egress_github_ssh_tcp = {
-      description = "Node to Github SSH"
-      protocol    = "tcp"
-      from_port   = 22
-      to_port     = 22
-      type        = "egress"
-      cidr_blocks = ["0.0.0.0/0"]
-    },
   }
 
   #
@@ -143,10 +64,11 @@ module "cluster" {
   cluster_service_ipv4_cidr = "10.100.0.0/16"
 
   # Encrypt selected k8s resources with this account's KMS CMK
-  cluster_encryption_config = [{
+  create_kms_key = false
+  cluster_encryption_config = {
     provider_key_arn = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
     resources        = ["secrets"]
-  }]
+  }
 
   # Define Managed Nodes Groups (MNG's) default settings
   eks_managed_node_group_defaults = {
@@ -163,20 +85,67 @@ module "cluster" {
 
   # Define all Managed Node Groups (MNG's)
   eks_managed_node_groups = {
-    # on-demand = {
+    # ---------------------------------------------------------------
+    # Standard, On-demand, single node group across all AZs
+    # ---------------------------------------------------------------
+    # standard_ondemand = {
     #   min_size       = 1
     #   max_size       = 6
     #   desired_size   = 1
     #   capacity_type  = "ON_DEMAND"
     #   instance_types = ["t3.medium"]
     # }
-    spot = {
+
+    # ---------------------------------------------------------------
+    # Standard, On-demand, one node group per AZs (HA)
+    # ---------------------------------------------------------------
+    # standard_ondemand_a = {
+    #   min_size       = 1
+    #   max_size       = 6
+    #   desired_size   = 1
+    #   capacity_type  = "ON_DEMAND"
+    #   instance_types = ["t3.medium"]
+    #   subnet_ids   = [data.terraform_remote_state.eks-vpc.outputs.private_subnets[0]]
+    # }
+    # standard_ondemand_b = {
+    #   min_size       = 1
+    #   max_size       = 6
+    #   desired_size   = 1
+    #   capacity_type  = "ON_DEMAND"
+    #   instance_types = ["t3.medium"]
+    #   subnet_ids   = [data.terraform_remote_state.eks-vpc.outputs.private_subnets[1]]
+    # }
+
+    # ---------------------------------------------------------------
+    # Standard, Spot, single node group across all AZs
+    # ---------------------------------------------------------------
+    standard_spot = {
       desired_size   = 1
       max_size       = 6
       min_size       = 1
       capacity_type  = "SPOT"
-      instance_types = ["t3.medium"]
+      instance_types = ["t3.medium", "t3a.medium"]
+      labels         = merge(local.tags, { "stack" = "standard" })
     }
+
+    # ---------------------------------------------------------------
+    # Tools, Spot, single node group across all AZs
+    # ---------------------------------------------------------------
+    # tools_spot = {
+    #   desired_size   = 1
+    #   max_size       = 6
+    #   min_size       = 1
+    #   capacity_type  = "SPOT"
+    #   instance_types = ["t3.medium", "t3a.medium"]
+    #   labels         = merge(local.tags, { "stack" = "tools" })
+    #   taints         = {
+    #     tools = {
+    #       key    = "stack"
+    #       value  = "tools"
+    #       effect = "NO_SCHEDULE"
+    #     }
+    #   }
+    # }
   }
 
   # Configure which roles, users and accounts can access the k8s api
