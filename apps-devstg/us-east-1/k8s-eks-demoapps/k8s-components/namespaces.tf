@@ -34,6 +34,15 @@ resource "kubernetes_namespace" "monitoring_other" {
   }
 }
 
+resource "kubernetes_namespace" "monitoring_alerts" {
+  count = var.enable_kwatch ? 1 : 0
+
+  metadata {
+    labels = local.labels
+    name   = "monitoring-alerts"
+  }
+}
+
 resource "kubernetes_namespace" "ingress_nginx" {
   count = var.enable_nginx_ingress_controller ? 1 : 0
 
@@ -120,7 +129,7 @@ resource "kubernetes_namespace" "velero" {
 }
 
 resource "kubernetes_namespace" "prometheus" {
-  count = var.enable_prometheus_stack ? 1 : 0
+  count = var.kube_prometheus_stack.enabled ? 1 : 0
 
   metadata {
     labels = local.labels

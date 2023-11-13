@@ -91,9 +91,11 @@ variable "enable_ingressmonitorcontroller" {
   default = false
 }
 
-variable "enable_prometheus_stack" {
-  type    = bool
-  default = false
+variable "kube_prometheus_stack" {
+  type = map(any)
+  default = {
+    enabled = false
+  }
 }
 
 variable "enable_prometheus_dependencies" {
@@ -171,6 +173,14 @@ variable "cost_optimization" {
 # Uptime Kuma                      #
 #==================================#
 variable "enable_uptime_kuma" {
+  type    = bool
+  default = false
+}
+
+#==================================#
+# KWatch                           #
+#==================================#
+variable "enable_kwatch" {
   type    = bool
   default = false
 }

@@ -19,5 +19,10 @@ controller:
       # Add resource tags
       service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "${tags}"
 
+  # If using DaemonSets, make sure its pods are scheduled in nodes that use taints
+  tolerations:
+  - effect: NoSchedule
+    operator: Exists
+
 defaultBackend:
   enabled: true
