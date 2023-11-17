@@ -40,10 +40,10 @@ locals {
         "devops",
       ]
     }
-    "mariano.dimodugno" = {
-      first_name = "Mariano"
-      last_name  = "Di Modugno"
-      email      = "mariano.dimodugno@binbash.com.ar"
+    "cecilio.prado" = {
+      first_name = "Cecilio"
+      last_name  = "Prado"
+      email      = "cecilio.prado@binbash.com.ar"
       groups = [
         "administrators",
         "devops",
