@@ -14,10 +14,10 @@ module "example_efs_file_system" {
   source = "github.com/terraform-aws-modules/terraform-aws-efs.git?ref=v1.3.1"
 
   # General specs
-  name           = "eks-example"
+  name             = "eks-example"
   performance_mode = "generalPurpose"
   throughput_mode  = "bursting"
-  
+
   # Use encrypted if necessary
   # encrypted      = true
   # kms_key_arn    = "arn:aws:kms:eu-west-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
@@ -25,9 +25,9 @@ module "example_efs_file_system" {
   # Define mount targets
   mount_targets = {
     for idx, subnet_id in data.terraform_remote_state.cluster-vpc.outputs.private_subnets :
-      idx => {
-        "subnet_id" = subnet_id
-      }
+    idx => {
+      "subnet_id" = subnet_id
+    }
   }
 
   # Create security group and rules
