@@ -31,7 +31,7 @@ def encrypt():
     os.system("ansible-vault encrypt --output secrets.enc secrets.dec.tf && rm -rf secrets.dec.tf")
 
 @task(_checkdir)
-def layer_dependency(summary='False'):
+def layer_dependency(summary='False',quiet='False'):
     """Check layer dependency from the current layers"""
     try:
         remote_states = _layer_dependency(path.get_working_path())
@@ -45,17 +45,17 @@ def layer_dependency(summary='False'):
         remote_states = deps
 
     try:
-        print("Note layer dependency is calculated using remote states.\nNevertheless, other sort of dependencies could exist without this kind of resources,\ne.g. if you relay on some resource created in a different layer and not referenced here.")
+        if quiet == 'False': print("Note layer dependency is calculated using remote states.\nNevertheless, other sort of dependencies could exist without this kind of resources,\ne.g. if you relay on some resource created in a different layer and not referenced here.")
         if len(remote_states) > 1:
           if len(remote_states) > 2:
-            print('Found these remote states:')
+            if quiet == 'False': print('Found these remote states:')
           else:
-            print('Found this remote state:')
+            if quiet == 'False': print('Found this remote state:')
           print(json.dumps(remote_states, indent=1))
         elif type(remote_states) == dict:
           print(json.dumps(remote_states, indent=1))
         else:
-          print('No dependency detected.')
+          if quiet == 'False': print('No dependency detected.')
     except Exception as e:
         print('Error processing deps:',e)
 
