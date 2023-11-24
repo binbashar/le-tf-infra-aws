@@ -1,3 +1,7 @@
+import hcl2
+import json
+import glob
+import re
 # Hack to be able to import local modules
 import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
@@ -5,10 +9,6 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from leverage import task
 from leverage import path
 
-import hcl2
-import json
-import glob
-import re
 
 @task()
 def _checkdir():
