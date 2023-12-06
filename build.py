@@ -2,12 +2,14 @@ import hcl2
 import json
 import glob
 import re
+from pathlib import Path
 # Hack to be able to import local modules
 import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 # Import leverage libraries
 from leverage import task
 from leverage import path
+from leverage import conf
 
 
 @task()
@@ -57,6 +59,8 @@ def layer_dependency(summary='False',quiet='False'):
 
 def _layer_dependency(directory):
 
+    config_tfvars = _load_tfvars()
+
     config_files = ['config.tf']
     config_file_contents = []
 
@@ -101,7 +105,13 @@ def _layer_dependency(directory):
                 this_tfstate = d[this_key][this_name]['config']['key'].split('/')
                 account = this_tfstate[0]
                 layer = '/'.join(this_tfstate[1:-1])
-                remote_states[this_name] = {'remote_state_name': this_name, 'account': account, 'layer': layer, 'key': d[this_key][this_name]['config']['key'], 'usage': {'used': False, 'files': []}}
+                key_to_show = d[this_key][this_name]['config']['key']
+                var_regex = '(\$\{|)var\.([a-zA-Z_\-0-9]+)(\}|)'
+                if match_object := re.search(var_regex, key_to_show):
+                    if match_object.group(2) in config_tfvars:
+                        print('found', match_object.group(2))
+                        key_to_show = re.sub(var_regex, config_tfvars[match_object.group(2)], key_to_show)
+                remote_states[this_name] = {'remote_state_name': this_name, 'account': account, 'layer': layer, 'key': key_to_show, 'key_raw': d[this_key][this_name]['config']['key'], 'usage': {'used': False, 'files': []}}
 
       # #########################################
       # Where data is being used
@@ -118,3 +128,11 @@ def _layer_dependency(directory):
                           remote_states[match_object.group(1)]['usage']['files'].append(this_file)
 
     return remote_states
+
+def _load_tfvars():
+    cur_dir = Path(path.get_working_path())
+    acc_congig_dir = Path(path.get_account_config_path())
+    rel_acc_config_dir = os.path.relpath(acc_congig_dir, start=cur_dir)
+    config = conf.load(config_filename=f"{rel_acc_config_dir}/account.tfvars") | conf.load(config_filename=f"{rel_acc_config_dir}/backend.tfvars")
+
+    return config
