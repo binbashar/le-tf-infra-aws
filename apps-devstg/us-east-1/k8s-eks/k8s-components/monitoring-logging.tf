@@ -16,6 +16,27 @@ resource "helm_release" "fluentbit" {
       es_user     = "elastic.user",    # TODO pass secret via AWS Screts Manager
       es_password = "elastic.password" # TODO pass secret via AWS Screts Manager
     })
+    # templatefile("chart-values/fluentbit.yaml", {
+    #   opensearch_host = "opensearch.endpoint",
+    #   opensearch_port = 443,
+    #   region          = var.region,
+    #   role_arn        = data.terraform_remote_state.eks-identities.outputs.fluent_bit_role_arn,
+    #   tolerations     = jsonencode([
+    #     {
+    #       key      = "stack",
+    #       operator = "Equal",
+    #       value    = "monitoring",
+    #       effect   = "NoSchedule"
+    #     },
+    #     {
+    #       key      = "stack",
+    #       operator = "Equal",
+    #       value    = "argocd",
+    #       effect   = "NoSchedule"
+    #     }
+    #   ]),
+    #   opensearch_index_suffix = local.environment
+    # })
   ]
 }
 

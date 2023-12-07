@@ -6,6 +6,12 @@ provider "aws" {
   profile = var.profile
 }
 
+provider "aws" {
+  alias   = "shared"
+  region  = var.region
+  profile = "${var.project}-shared-devops"
+}
+
 provider "kubernetes" {
   host                   = data.aws_eks_cluster.cluster.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
