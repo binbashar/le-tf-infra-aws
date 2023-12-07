@@ -61,7 +61,7 @@ notifications:
     service.slack: |
       token: $slack-token
       username: ArgoCD-${env}
-      icon: https://raw.githubusercontent.com/argoproj/argo-cd/master/docs/assets/logo.pngdd
+      icon: https://raw.githubusercontent.com/argoproj/argo-cd/master/docs/assets/logo.png
 
   subscriptions:
     - recipients:
