@@ -23,7 +23,7 @@ module "role_fluent_bit" {
 }
 
 # Update policy with the correct resource ARN
-resource "aws_iam_policy" "fluent_bit" {
+resource "aws_iam_policy" "fluent_bit" { # TODO: This is too permisive of a policy, we should try to restrict it
   provider    = aws.shared
   name        = "${local.environment}-fluent-bit"
   description = "Fluent Bit"
