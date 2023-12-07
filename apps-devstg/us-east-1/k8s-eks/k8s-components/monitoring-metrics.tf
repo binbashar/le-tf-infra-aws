@@ -70,10 +70,10 @@ resource "helm_release" "kube_prometheus_stack" {
     templatefile("chart-values/kube-prometheus-stack.yaml", {
       ingressClass             = local.private_ingress_class,
       alertmanagerSlackWebhook = jsondecode(data.aws_secretsmanager_secret_version.alertmanager_slack_webhook[0].secret_string)["webhook"],
-      alertmanagerSlackChannel = jsondecode(data.aws_secretsmanager_secret_version.alertmanager_slack_webhook[0].secret_string)["channel"],,
+      alertmanagerSlackChannel = jsondecode(data.aws_secretsmanager_secret_version.alertmanager_slack_webhook[0].secret_string)["channel"],
       alertmanagerHost         = "alertmanager.${local.environment}.${local.private_base_domain}",
       grafanaUser              = jsondecode(data.aws_secretsmanager_secret_version.grafana[0].secret_string)["username"],
-      grafanaPassword          = jsondecode(data.aws_secretsmanager_secret_version.grafana[0].secret_string)["password"],,
+      grafanaPassword          = jsondecode(data.aws_secretsmanager_secret_version.grafana[0].secret_string)["password"],
       grafanaHost              = "grafana.${local.environment}.${local.private_base_domain}",
       grafanaRoleArn           = data.terraform_remote_state.eks-identities.outputs.grafana_role_arn,
       prometheusHost           = "prometheus.${local.environment}.${local.private_base_domain}",
