@@ -49,7 +49,6 @@ notifications:
   enabled: true
 
   argocdUrl: ${argoHost}
-
   nodeSelector: ${nodeSelector}
   tolerations: ${tolerations}
 
@@ -62,6 +61,7 @@ notifications:
     service.slack: |
       token: $slack-token
       username: ArgoCD-${env}
+      icon: https://raw.githubusercontent.com/argoproj/argo-cd/master/docs/assets/logo.pngdd
 
   subscriptions:
     - recipients:
