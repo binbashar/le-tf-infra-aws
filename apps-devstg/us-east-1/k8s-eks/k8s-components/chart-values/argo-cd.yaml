@@ -49,7 +49,7 @@ notifications:
   enabled: true
 
   argocdUrl: ${argoHost}
-  
+
   nodeSelector: ${nodeSelector}
   tolerations: ${tolerations}
 

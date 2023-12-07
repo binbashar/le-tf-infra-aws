@@ -42,7 +42,7 @@ alertmanager:
       - channel: '#${alertmanagerSlackChannel}'
         send_resolved: true
         text: '{{ template "slack.alert.text" }}'
-  
+
   templateFiles:
     alert.tmpl: |-
       {{ define "slack.alert.text" }}
@@ -69,7 +69,7 @@ alertmanager:
       - secretName: alertmananager-tls
         hosts:
           - ${alertmanagerHost}
-  
+
   alertmanagerSpec:
     nodeSelector: ${nodeSelector}
     tolerations: ${tolerations}
@@ -107,7 +107,7 @@ grafana:
       - secretName: grafana-tls
         hosts:
           - ${grafanaHost}
-  
+
   nodeSelector: ${nodeSelector}
   tolerations: ${tolerations}
 
