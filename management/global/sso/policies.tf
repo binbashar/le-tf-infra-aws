@@ -32,6 +32,7 @@ data "aws_iam_policy_document" "devops" {
       "ecr:*",
       "ecr-public:*",
       "ecs:*",
+      "elasticfilesystem:*",
       "eks:*",
       "elasticbeanstalk:*",
       "elasticloadbalancing:*",
