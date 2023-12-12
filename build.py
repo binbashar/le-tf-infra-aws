@@ -118,7 +118,6 @@ def _layer_dependency(directory):
               if not 'data' in data.keys():
                   continue
               for d in data['data']:
-                  #print('--#',d)
                   this_key = list(d.keys())[0]
                   if not this_key == remote_state_resource_name:
                       continue
@@ -145,7 +144,6 @@ def _layer_dependency(directory):
                       else:
                           if type(for_each_object) == dict:
                               for for_each_key in for_each_object:
-                                  print('processing',for_each_key, 'for', this_name)
                                   key_override = None
                                   if match_key := re.search(each_regex,d[this_key][this_name]['config']['key']):
                                       if match_key.group(2) in for_each_object[for_each_key]:
@@ -153,7 +151,6 @@ def _layer_dependency(directory):
                                   elif match_key := re.search(lookup_regex,d[this_key][this_name]['config']['key']):
                                       if match_key.group(3) in for_each_object[for_each_key]:
                                           key_override = for_each_object[for_each_key][match_key.group(3)]
-                                  print('key_override is',key_override)
 
                                   remote_states[f"{this_name}[{for_each_key}]"] = _extract_data_from_remote_state(d, this_key, this_name, config_tfvars, config_locals, name_suffix=f"[{for_each_key}]", key_override=key_override)
                                   if this_name in remote_state_lines.keys():
@@ -165,7 +162,6 @@ def _layer_dependency(directory):
                       if this_name in remote_state_lines.keys():
                           remote_states[this_name]['usage']['files'] = remote_state_lines[this_name]
                           remote_states[this_name]['usage']['used'] = True
-        #print(json.dumps(remote_states,indent=1))
 
     return remote_states
 
