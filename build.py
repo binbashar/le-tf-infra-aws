@@ -49,7 +49,7 @@ def layer_dependency(summary='False',quiet='False'):
         remote_states = deps
 
     try:
-        if quiet == 'False': print("Note layer dependency is calculated using remote states.\nNevertheless, other sort of dependencies could exist without this kind of resources,\ne.g. if you relay on some resource created in a different layer and not referenced here.")
+        if quiet == 'False': print("Note layer dependency is calculated using remote states.\nNevertheless, other sort of dependencies could exist without this kind of resources,\ne.g. if you rely on some resource created in a different layer and not referenced here.")
         if len(remote_states) > 0:
             print(json.dumps(remote_states, indent=1))
         else:
