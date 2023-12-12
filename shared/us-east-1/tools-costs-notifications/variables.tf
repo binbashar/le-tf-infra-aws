@@ -5,7 +5,7 @@
 variable "schedule_expression" {
   description = "Schedule expressions using cron"
   type        = string
-  default     = "cron(0 0 1 * ? *)"  # Run on the first day of the month
+  default     = "cron(0 0 1 * ? *)" # Run on the first day of the month
 }
 
 variable "sender_email" {
@@ -19,7 +19,7 @@ variable "sender_email" {
 variable "recipient_emails" {
   description = "Recipient Email Addresses"
   type        = list(string)
-  default     = [
+  default = [
     "jose.peinado@binbash.com.ar"
   ]
 }

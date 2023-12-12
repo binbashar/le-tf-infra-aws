@@ -1,6 +1,6 @@
 resource "aws_cloudwatch_event_rule" "monthly_services_usage_scheduler" {
-  description = "To Trigger Lambda Function on scheduled time"
-  name = "MontlyServicesUsageScheduler"
+  description         = "To Trigger Lambda Function on scheduled time"
+  name                = "MontlyServicesUsageScheduler"
   schedule_expression = var.schedule_expression
 }
 

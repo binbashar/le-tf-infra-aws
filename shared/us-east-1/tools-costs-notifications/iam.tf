@@ -5,7 +5,7 @@ resource "aws_iam_role" "monthly_services_usage_lambda_role" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid = "LambdaSSMAssume"
+        Sid    = "LambdaSSMAssume"
         Effect = "Allow"
         Principal = {
           Service = [
@@ -32,14 +32,14 @@ resource "aws_iam_policy" "monthly_services_usage_lambda_role_policy" {
           "logs:CreateLogGroup"
         ]
         Resource = "*"
-        Effect = "Allow"
+        Effect   = "Allow"
       },
       {
         Action = [
           "ses:*"
         ]
         Resource = "*"
-        Effect = "Allow"
+        Effect   = "Allow"
       },
       {
         Action = [

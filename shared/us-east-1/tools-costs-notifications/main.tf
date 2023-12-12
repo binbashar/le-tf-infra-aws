@@ -19,10 +19,10 @@ resource "aws_lambda_function" "monthly_services_usage" {
 
   environment {
     variables = {
-      ACCOUNTS = jsonencode(var.accounts)
-      SENDER = var.sender_email
-      RECIPIENT = join(",", var.recipient_emails)
-      TAGS_JSON = jsonencode(var.cost_allocation_tags)
+      ACCOUNTS        = jsonencode(var.accounts)
+      SENDER          = var.sender_email
+      RECIPIENT       = join(",", var.recipient_emails)
+      TAGS_JSON       = jsonencode(var.cost_allocation_tags)
       EXCLUDE_CREDITS = var.exclude_aws_credits
     }
   }
