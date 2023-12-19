@@ -26,10 +26,12 @@ module "ec2_ansible_fleet" {
   for_each = local.multiple_instances
   name     = "ec2-ansible-fleet-${each.key}"
 
+  create_spot_instance = lookup(each.value, "create_spot_instance", true)
+
   ami                    = lookup(each.value, "ami", data.aws_ami.ubuntu_linux.id)
   instance_type          = lookup(each.value, "instance_type", "t3.micro")
   key_name               = lookup(each.value, "key_name", null)
-  monitoring             = true
+  monitoring             = lookup(each.value, "monitoring", true)
   vpc_security_group_ids = [module.security_group_ec2_fleet.security_group_id]
 
   subnet_id = each.value.subnet_id
