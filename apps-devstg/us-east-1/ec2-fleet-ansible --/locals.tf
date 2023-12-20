@@ -12,8 +12,7 @@ locals {
   instances_defaults = {
       instance_type    = "t3a.medium"
       ami              = data.aws_ami.ubuntu_linux.id
-      #key_name         = data.terraform_remote_state.security.outputs.aws_key_pair_name
-      key_name         = aws_key_pair.devops.key_name
+      key_name         = data.terraform_remote_state.security.outputs.aws_key_pair_name
       # root ebs device
       root_volume_size = 30
       root_volume_type = "gp3"
