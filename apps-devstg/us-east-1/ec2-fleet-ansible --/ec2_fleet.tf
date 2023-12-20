@@ -26,12 +26,12 @@ module "ec2_ansible_fleet" {
   for_each = local.multiple_instances
   name     = "ec2-ansible-fleet-${each.key}"
 
-  create_spot_instance = lookup(each.value, "create_spot_instance", true)
+  create_spot_instance = lookup(each.value, "create_spot_instance", local.instances_defaults.create_spot_instance)
 
-  ami                    = lookup(each.value, "ami", data.aws_ami.ubuntu_linux.id)
-  instance_type          = lookup(each.value, "instance_type", "t3.micro")
-  key_name               = lookup(each.value, "key_name", null)
-  monitoring             = lookup(each.value, "monitoring", true)
+  ami                    = lookup(each.value, "ami", local.instances_defaults.ami)
+  instance_type          = lookup(each.value, "instance_type", local.instances_defaults.instance_type)
+  key_name               = lookup(each.value, "key_name", local.instances_defaults.key_name)
+  monitoring             = lookup(each.value, "monitoring", local.instances_defaults.monitoring)
   vpc_security_group_ids = [module.security_group_ec2_fleet.security_group_id]
 
   subnet_id = each.value.subnet_id
@@ -40,8 +40,8 @@ module "ec2_ansible_fleet" {
 
   root_block_device = [
     {
-    volume_size = lookup(each.value, "root_volume_size", 30)
-    volume_type = lookup(each.value, "root_volume_type", "gp3")
+    volume_size = lookup(each.value, "root_volume_size", local.instances_defaults.root_volume_size)
+    volume_type = lookup(each.value, "root_volume_type", local.instances_defaults.root_volume_type)
   }
   ]
 
