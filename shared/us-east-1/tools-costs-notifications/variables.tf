@@ -42,3 +42,10 @@ variable "exclude_aws_credits" {
   type        = bool
   default     = true
 }
+
+# variable to force a starting date # e.g. 2023-08-30
+variable "force_start_date" {
+  description = "variable to force a starting date # e.g. 2023-08-30"
+  type        = string
+  default     = ""
+}

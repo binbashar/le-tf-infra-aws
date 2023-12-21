@@ -6,7 +6,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from decimal import Decimal
 
-
 # Initialize AWS STS client to assume roles in other accounts
 sts = boto3.client('sts')
 
@@ -16,7 +15,10 @@ ACCOUNTS_JSON = os.environ.get('ACCOUNTS', '{}')
 ACCOUNTS = json.loads(ACCOUNTS_JSON)
 SENDER = os.environ.get('SENDER')
 RECIPIENTS = os.environ.get('RECIPIENT').split(',')
+if FORCE_DATE := os.environ.get("FORCE_DATE"):
+    FORCE_DATE = datetime.strptime(FORCE_DATE, "%Y-%m-%d")  # e.g. 2023-08-30
 EXCLUDE_CREDITS = os.environ.get('EXCLUDE_CREDITS')
+REGION = os.environ.get('REGION', 'us-east-1')
 
 
 # Function to assume role in another account and create an AWS Cost Explorer client
@@ -36,56 +38,7 @@ def create_ce_client(account_id):
     return temp_session.client('ce')
 
 # Function to fetch AWS Cost Explorer data
-def get_cost_data(ce_client, account_id, start_date_str, end_date_str):
-    filters = {
-        'Dimensions': {
-            'Key': 'LINKED_ACCOUNT',
-            'Values': [account_id]
-        }
-    }
-    
-    # Check if EXCLUDE_CREDITS is set to 'true' in the environment variables
-    if EXCLUDE_CREDITS:
-        # Exclude credits by adding a filter to the query
-        filters_credits = {
-            "Not":
-            {
-                'Dimensions':{
-                    'Key': 'RECORD_TYPE',
-                    'Values':['Credit','Refund']
-                }
-            }
-        }
-        
-        # Combine the filter expressions using 'And' operator
-        filters = {
-            'And': [filters, filters_credits]
-        }
-    
-
-    # Get cost and usage data
-    response = ce_client.get_cost_and_usage(
-        TimePeriod={
-            'Start': start_date_str,
-            'End': end_date_str
-        },
-        Granularity='MONTHLY',
-        Metrics=['UnblendedCost'],
-        Filter=filters,
-        GroupBy=[
-            {
-                'Type': 'DIMENSION',
-                'Key': 'SERVICE'
-            }
-        ]
-    )
-
-    costs_dict = {group['Metrics']['UnblendedCost']['Amount'] for group in response['ResultsByTime'][0]['Groups']}
-    return response['ResultsByTime'][0]['Groups']
-
-# Function to fetch costs associated with a specific tag
-def get_tag_cost(ce_client, account_id, tag_key, tag_value, start_date_str, end_date_str):
-    # Create separate filter expressions for Dimensions and Tags
+def get_cost_data(ce_client, account_id, start_date_str, end_date_str, tag_key=None, tag_value=None):
     dimensions_filter = {
         'Dimensions': {
             'Key': 'LINKED_ACCOUNT',
@@ -93,39 +46,35 @@ def get_tag_cost(ce_client, account_id, tag_key, tag_value, start_date_str, end_
         }
     }
 
-    tags_filter = {
-        'Tags': {
-            'Key': tag_key,
-            'Values': [tag_value],
-            'MatchOptions': ['EQUALS']
+    if tag_key and tag_value:
+        tags_filter = {
+            'Tags': {
+                'Key': tag_key,
+                'Values': [tag_value],
+                'MatchOptions': ['EQUALS']
+            }
         }
-    }
-
-    # Combine the filter expressions using 'And' operator
-    combined_filter = {
-        'And': [dimensions_filter, tags_filter]
-    }
+        combined_filter = {
+            'And': [dimensions_filter, tags_filter]
+        }
+    else:
+        combined_filter = dimensions_filter
 
     # Check if EXCLUDE_CREDITS is set to 'True' in the environment variables
     if EXCLUDE_CREDITS:
-        # Exclude credits by adding a filter to the query
         filters_credits = {
-            "Not":
-            {
-                'Dimensions':{
+            "Not": {
+                'Dimensions': {
                     'Key': 'RECORD_TYPE',
-                    'Values':['Credit','Refund']
+                    'Values': ['Credit', 'Refund']
                 }
             }
         }
-        
-        # Combine the filter expressions using 'And' operator
         combined_filter = {
             'And': [combined_filter, filters_credits]
         }
-        
 
-    # Get cost data for the specific tag and group by service
+    # Get cost and usage data
     response = ce_client.get_cost_and_usage(
         TimePeriod={
             'Start': start_date_str,
@@ -141,8 +90,12 @@ def get_tag_cost(ce_client, account_id, tag_key, tag_value, start_date_str, end_
             }
         ]
     )
-    
+
     return response['ResultsByTime'][0]['Groups']
+
+# Function to fetch costs associated with a specific tag
+def get_tag_cost(ce_client, account_id, tag_key, tag_value, start_date_str, end_date_str):
+    return get_cost_data(ce_client, account_id, start_date_str, end_date_str, tag_key, tag_value)
 
 # Function to calculate cost variation percentage
 def calculate_variation(prev_cost, current_cost):
@@ -194,7 +147,7 @@ def generate_html_table(account_name, cost_data, ce_client, start_date_str, end_
         prev_month_cost = prev_cost_data_dict.get(service, Decimal(0)).quantize(Decimal('0.00'))  # Round to 2 decimals
 
         variation_percent = calculate_variation(prev_month_cost, current_cost)
-        variation_color = 'green' if variation_percent > 0 else 'red'
+        variation_color = 'red' if variation_percent > 0 else 'green'
 
         # Initialize the row with service name, current cost, previous month cost, and variation
         row = [f'<td>{service}</td>',
@@ -220,7 +173,7 @@ def generate_html_table(account_name, cost_data, ce_client, start_date_str, end_
 
 
     variation_percent_month_to_month = calculate_variation(total_prev_month_cost, total_cost)
-    variation_color_month_to_month = 'green' if variation_percent_month_to_month > 0 else 'red'
+    variation_color_month_to_month = 'red' if variation_percent_month_to_month > 0 else 'green'
     variation_total = f'<td style="text-align:right; color:{variation_color_month_to_month};">{variation_percent_month_to_month:.2f}%</td>'
     
     # Add total columns for each tag, ensuring alignment
@@ -241,7 +194,7 @@ def generate_html_table(account_name, cost_data, ce_client, start_date_str, end_
 
     # Function to send an email using Amazon SES
 def send_email(subject, body, recipient):
-    ses = boto3.client('ses', region_name='us-east-1')
+    ses = boto3.client('ses', region_name=REGION)
 
     ses.send_email(
         Source=SENDER,
@@ -258,13 +211,14 @@ def lambda_handler(event, context):
     # Parse the JSON string for tags
     tags_json = os.environ.get('TAGS_JSON', '{}')
     tags = json.loads(tags_json)
-
+    
     # Don't allow more than 3 tags
     if len(tags) > 3:
         return {
             'statusCode': 400,
             'body': 'Only up to 3 tags are allowed.'
         }
+    
     
     if not isinstance(tags, dict):
         # Handle the case where TAGS_JSON is not a valid dictionary
@@ -281,7 +235,7 @@ def lambda_handler(event, context):
     ######################
 
     # Calculate the start and end dates for the past month (e.g., August)
-    current_date = datetime.now()
+    current_date = FORCE_DATE or datetime.now()
     end_date = current_date.replace(day=1) - timedelta(days=1)
     start_date = end_date.replace(day=1)
     start_date_str = start_date.strftime("%Y-%m-%d")

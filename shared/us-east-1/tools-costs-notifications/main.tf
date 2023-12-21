@@ -24,6 +24,8 @@ resource "aws_lambda_function" "monthly_services_usage" {
       RECIPIENT       = join(",", var.recipient_emails)
       TAGS_JSON       = jsonencode(var.cost_allocation_tags)
       EXCLUDE_CREDITS = var.exclude_aws_credits
+      FORCE_DATE      = var.force_start_date
+      REGION          = var.region
     }
   }
 
