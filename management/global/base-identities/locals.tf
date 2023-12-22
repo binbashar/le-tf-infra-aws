@@ -12,6 +12,7 @@ locals {
     "jose.peinado",
     "luis.gallardo",
     "marcelo.beresvil",
-    "marcos.pagnucco"
+    "marcos.pagnucco",
+    "matias.rodriguez"
   ]
 }
