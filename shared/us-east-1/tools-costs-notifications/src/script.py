@@ -93,9 +93,6 @@ def get_cost_data(ce_client, account_id, start_date_str, end_date_str, tag_key=N
 
     return response['ResultsByTime'][0]['Groups']
 
-# Function to fetch costs associated with a specific tag
-def get_tag_cost(ce_client, account_id, tag_key, tag_value, start_date_str, end_date_str):
-    return get_cost_data(ce_client, account_id, start_date_str, end_date_str, tag_key, tag_value)
 
 # Function to calculate cost variation percentage
 def calculate_variation(prev_cost, current_cost):
@@ -157,7 +154,7 @@ def generate_html_table(account_name, cost_data, ce_client, start_date_str, end_
         
         # Add cost columns for each tag, or an empty cell if the tag doesn't exist for this service
         for tag_key, tag_value in tags.items():
-            tag_cost = get_tag_cost(ce_client, ACCOUNTS[account_name]['id'], tag_key, tag_value, start_date_str, end_date_str)
+            tag_cost = get_tag_cost(ce_client, ACCOUNTS[account_name]['id'], start_date_str, end_date_str, tag_key, tag_value)
             tag_cost_amount = sum(Decimal(group['Metrics']['UnblendedCost']['Amount']) for group in tag_cost)
             row.append(f'<td style="text-align:right;">${tag_cost_amount:.2f}</td>')
             total_tag_costs[tag_key] += tag_cost_amount
@@ -257,7 +254,7 @@ def lambda_handler(event, context):
         ce_client = create_ce_client(account_info['id'])
         # Loop through each tag and fetch cost data
         for tag_key, tag_value in tags.items():
-            tag_cost_data = get_tag_cost(ce_client, account_info['id'], tag_key, tag_value, start_date_str, end_date_str)
+            tag_cost_data = get_tag_cost(ce_client, account_info['id'], start_date_str, end_date_str, tag_key, tag_value)
             tag_cost = sum(Decimal(group['Metrics']['UnblendedCost']['Amount']) for group in tag_cost_data)
             tag_costs[account_name] = tag_cost
 
