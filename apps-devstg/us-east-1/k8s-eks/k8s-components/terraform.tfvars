@@ -48,6 +48,11 @@ logging = {
   ]
 }
 # metrics
+metrics = {
+  prometheus_stack = {
+    enabled = true
+  }
+}
 enable_prometheus_dependencies = false
 enable_grafana_dependencies    = false
 # tools
@@ -77,7 +82,8 @@ imc = {
 argocd = {
   enabled = true
 
-  enableWebTerminal = true
+  enableWebTerminal         = true
+  slackNotificationsChannel = "le-tools-monitoring"
 
   image_updater = {
     enabled = false

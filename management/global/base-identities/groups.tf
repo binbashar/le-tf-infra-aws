@@ -11,6 +11,7 @@ module "iam_group_admins" {
     module.user["exequiel.barrirero"].iam_user_name,
     module.user["jose.peinado"].iam_user_name,
     module.user["luis.gallardo"].iam_user_name,
+    module.user["matias.rodriguez"].iam_user_name,
   ]
 
   custom_group_policy_arns = [

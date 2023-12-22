@@ -1,6 +1,12 @@
 #------------------------------------------------------------------------------
 # ArgoCD: GitOps + CD
 #------------------------------------------------------------------------------
+data "aws_secretsmanager_secret_version" "argocd_slack_app_oauth_token" {
+  count     = var.argocd.enabled ? 1 : 0
+  provider  = aws.shared
+  secret_id = "/notifications/argocd"
+}
+
 resource "helm_release" "argocd" {
   count = var.argocd.enabled ? 1 : 0
 
@@ -11,9 +17,21 @@ resource "helm_release" "argocd" {
   version    = "5.8.3"
   values = [
     templatefile("chart-values/argo-cd.yaml", {
-      enableWebTerminal = var.argocd.enableWebTerminal
-      argoHost          = "argocd.${local.environment}.${local.private_base_domain}"
-      ingressClass      = local.private_ingress_class
+      argoHost                   = "argocd.${local.environment}.${local.private_base_domain}",
+      env                        = local.environment,
+      ingressClass               = local.private_ingress_class,
+      enableWebTerminal          = var.argocd.enableWebTerminal,
+      slackNotificationsAppToken = jsondecode(data.aws_secretsmanager_secret_version.argocd_slack_app_oauth_token[0].secret_string)["token"],
+      slackNotificationsChannel  = var.argocd.slackNotificationsChannel,
+      nodeSelector               = jsonencode({ stack = "argocd" }),
+      tolerations = jsonencode([
+        {
+          key      = "stack",
+          operator = "Equal",
+          value    = "argocd",
+          effect   = "NoSchedule"
+        }
+      ])
     }),
     # We are using a different approach here because it is very tricky to render
     # properly the multi-line sshPrivateKey using 'templatefile' function

@@ -268,3 +268,31 @@ module "iam_assumable_role_service_trustedadvisor" {
 
   tags = local.tags
 }
+
+#
+# Assumable Role: Costs Explorer access
+#
+module "iam_assumable_role_lambda_costs_explorer_access" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.3.3"
+
+  trusted_role_arns = [
+    "arn:aws:iam::${var.accounts.shared.id}:root",
+    "arn:aws:iam::${var.accounts.shared.id}:role/monthly-services-usage-lambdarole"
+  ]
+
+  create_role = true
+  role_name   = "LambdaCostsExplorerAccess"
+  role_path   = "/"
+
+  #
+  # MFA setup
+  #
+  role_requires_mfa    = false
+  mfa_age              = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
+  max_session_duration = 10800 # Max age of the session (in seconds) when assuming roles
+  custom_role_policy_arns = [
+    aws_iam_policy.lambda_costs_explorer_access.arn,
+  ]
+
+  tags = local.tags
+}

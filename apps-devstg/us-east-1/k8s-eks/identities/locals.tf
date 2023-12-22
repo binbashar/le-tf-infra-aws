@@ -15,4 +15,6 @@ locals {
   tags_aws_lb_controller     = merge(local.tags, { Subject = "aws-lb-controller" })
   tags_external_secrets      = merge(local.tags, { Subject = "external-secrets" })
   tags_argo_cd_image_updater = merge(local.tags, { Subject = "argo-cd-image-updater" })
+  tags_grafana               = merge(local.tags, { Subject = "grafana" })
+  tags_fluent_bit            = merge(local.tags, { Subject = "fluent-bit" })
 }

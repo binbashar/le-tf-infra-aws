@@ -1,5 +1,5 @@
 resource "kubernetes_namespace" "monitoring_metrics" {
-  count = var.enable_prometheus_dependencies || var.enable_prometheus_dependencies || var.enable_cluster_autoscaling || var.enable_hpa_scaling || var.enable_vpa_scaling ? 1 : 0
+  count = var.metrics.prometheus_stack.enabled || var.enable_prometheus_dependencies || var.enable_prometheus_dependencies || var.enable_cluster_autoscaling || var.enable_hpa_scaling || var.enable_vpa_scaling ? 1 : 0
 
   metadata {
     labels = local.labels

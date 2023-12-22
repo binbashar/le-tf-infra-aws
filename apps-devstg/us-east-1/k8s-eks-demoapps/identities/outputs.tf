@@ -42,3 +42,8 @@ output "eks_addons_ebs_csi" {
   description = "EKS Add-ons EBS CSI Role ARN"
   value       = module.role_eks_addons_ebs_csi.iam_role_arn
 }
+
+output "eks_addons_efs_csi" {
+  description = "EKS Add-ons EFS CSI Role ARN"
+  value       = module.role_eks_addons_efs_csi.iam_role_arn
+}
