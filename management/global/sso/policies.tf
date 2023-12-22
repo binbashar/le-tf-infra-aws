@@ -50,6 +50,7 @@ data "aws_iam_policy_document" "devops" {
       "logs:*",
       "network-firewall:*",
       "networkmanager:*",
+      "q:*",
       "ram:*",
       "rds:*",
       "redshift:*",
