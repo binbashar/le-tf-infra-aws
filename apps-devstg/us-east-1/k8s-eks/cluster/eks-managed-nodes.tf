@@ -1,5 +1,5 @@
 module "cluster" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v18.24.1"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v18.30.0"
 
   create          = true
   cluster_name    = data.terraform_remote_state.eks-vpc.outputs.cluster_name
@@ -171,19 +171,53 @@ module "cluster" {
 
   # Define all Managed Node Groups (MNG's)
   eks_managed_node_groups = {
-    on-demand = {
-      min_size       = 1
-      max_size       = 3
-      desired_size   = 1
-      capacity_type  = "ON_DEMAND"
-      instance_types = ["t2.medium", "t3.medium"]
-    }
+    # on-demand = {
+    #   min_size       = 1
+    #   max_size       = 3
+    #   desired_size   = 1
+    #   capacity_type  = "ON_DEMAND"
+    #   instance_types = ["t2.medium", "t3.medium"]
+    # }
     spot = {
       desired_capacity = 1
-      max_capacity     = 3
+      max_capacity     = 2
       min_capacity     = 1
       capacity_type    = "SPOT"
       instance_types   = ["t2.medium", "t3.medium"]
+    }
+    # MNG for CI/CD resources, mainly ArgoCD
+    argocd = {
+      desired_size   = 1
+      max_size       = 2
+      min_size       = 1
+      capacity_type  = "SPOT"
+      instance_types = ["t3.medium"]
+
+      labels = merge(local.tags, { "stack" = "argocd" })
+      taints = {
+        dedicated_argocd = {
+          key    = "stack"
+          value  = "argocd"
+          effect = "NO_SCHEDULE"
+        }
+      }
+    }
+    # MNG for monitoring resources, mainly Prometheus and Grafana
+    monitoring = {
+      desired_size   = 1
+      max_size       = 2
+      min_size       = 1
+      capacity_type  = "SPOT"
+      instance_types = ["t3.medium"]
+
+      labels = merge(local.tags, { "stack" = "monitoring" })
+      taints = {
+        dedicated_monitoring = {
+          key    = "stack"
+          value  = "monitoring"
+          effect = "NO_SCHEDULE"
+        }
+      }
     }
   }
 
