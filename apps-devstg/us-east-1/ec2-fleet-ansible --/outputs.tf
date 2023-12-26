@@ -22,3 +22,8 @@ output "tags_all" {
   description = "Tags assigned to the instances"
   value       = { for p in sort(keys(local.multiple_instances)) : p => module.ec2_ansible_fleet[p].tags_all }
 }
+
+output "public_ip" {
+  description = "List of public IP addresses assigned to the instances"
+  value       = { for p in sort(keys(local.multiple_instances)) : p => module.ec2_ansible_fleet[p].public_ip }
+}
