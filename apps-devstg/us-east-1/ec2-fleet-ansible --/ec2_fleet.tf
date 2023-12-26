@@ -40,9 +40,9 @@ module "ec2_ansible_fleet" {
 
   root_block_device = [
     {
-    volume_size = lookup(each.value, "root_volume_size", local.instances_defaults.root_volume_size)
-    volume_type = lookup(each.value, "root_volume_type", local.instances_defaults.root_volume_type)
-  }
+      volume_size = lookup(each.value, "root_volume_size", local.instances_defaults.root_volume_size)
+      volume_type = lookup(each.value, "root_volume_type", local.instances_defaults.root_volume_type)
+    }
   ]
 
   tags = local.tags
