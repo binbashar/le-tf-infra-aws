@@ -25,7 +25,7 @@ variable "recipient_emails" {
 }
 
 # JSON encoded list of cost allocation tags (Max 3)
-# For example: 
+# For example:
 # default     = {
 #     "cost-center" = "machine-learning",
 #     "environment" = "production"

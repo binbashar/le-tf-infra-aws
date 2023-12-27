@@ -9,7 +9,7 @@ The AWS Cost Summary Report Script with Terraform is a comprehensive solution fo
 - **Name**: `monthly-services-usage-lambdarole`
 - **Description**: IAM role for the Lambda function responsible for generating cost reports.
 - **Assume Role Policy**: Allows Lambda to assume this role.
-  
+
 ### `aws_iam_policy` - `monthly_services_usage_lambda_role_policy`
 
 - **Name**: `MonthlyServicesUsageLambdaRolePolicy`
