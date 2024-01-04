@@ -20,7 +20,10 @@ variable "recipient_emails" {
   description = "Recipient Email Addresses"
   type        = list(string)
   default = [
-    "jose.peinado@binbash.com.ar"
+    "exequiel.barrirero@binbash.com.ar",
+    "info@binbash.com.ar",
+    "jose.peinado@binbash.com.ar",
+    "marcelo.beresvil@binbash.com.ar"
   ]
 }
 
