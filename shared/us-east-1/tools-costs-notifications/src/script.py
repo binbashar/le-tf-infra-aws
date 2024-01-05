@@ -151,7 +151,7 @@ def generate_html_table(account_name, cost_data, ce_client, start_date_str, end_
                f'<td style="text-align:right;">${current_cost:.2f}</td>',
                f'<td style="text-align:right;">${prev_month_cost:.2f}</td>',
                f'<td style="text-align:right; color:{variation_color};">{variation_percent:.2f}%</td>']
-        
+
         # Add cost columns for each tag, or an empty cell if the tag doesn't exist for this service
         for tag_key, tag_value in tags.items():
             tag_cost = get_tag_cost(ce_client, ACCOUNTS[account_name]['id'], start_date_str, end_date_str, tag_key, tag_value)
@@ -172,13 +172,13 @@ def generate_html_table(account_name, cost_data, ce_client, start_date_str, end_
     variation_percent_month_to_month = calculate_variation(total_prev_month_cost, total_cost)
     variation_color_month_to_month = 'red' if variation_percent_month_to_month > 0 else 'green'
     variation_total = f'<td style="text-align:right; color:{variation_color_month_to_month};">{variation_percent_month_to_month:.2f}%</td>'
-    
+
     # Add total columns for each tag, ensuring alignment
     total_row = [f'<td><b>Total</b></td>',
                  f'<td style="text-align:right;"><b>${total_cost:.2f}</b></td>',
                  f'<td style="text-align:right;"><b>${total_prev_month_cost:.2f}</b></td>',
                  variation_total]
-                 
+
     # Add total tag costs to the total row
     for tag_key, tag_value in tags.items():
         total_row.append(f'<td style="text-align:right;"><b>${total_tag_costs[tag_key]:.2f}</b></td>')
@@ -204,19 +204,19 @@ def send_email(subject, body, recipient):
 
 def lambda_handler(event, context):
     aggregated_html_tables = []
-    
+
     # Parse the JSON string for tags
     tags_json = os.environ.get('TAGS_JSON', '{}')
     tags = json.loads(tags_json)
-    
+
     # Don't allow more than 3 tags
     if len(tags) > 3:
         return {
             'statusCode': 400,
             'body': 'Only up to 3 tags are allowed.'
         }
-    
-    
+
+
     if not isinstance(tags, dict):
         # Handle the case where TAGS_JSON is not a valid dictionary
         return {
@@ -225,9 +225,9 @@ def lambda_handler(event, context):
         }
 
     ########################
-    # IMPORTANT: 
-    # The start date is inclusive, but the end date is exclusive. 
-    # For example, if start is 2023-01-01 and end is 2023-05-01, 
+    # IMPORTANT:
+    # The start date is inclusive, but the end date is exclusive.
+    # For example, if start is 2023-01-01 and end is 2023-05-01,
     # then the cost and usage data is retrieved from 2023-01-01 up to and including 2023-04-30 but not including 2023-05-01.
     ######################
 
@@ -236,9 +236,9 @@ def lambda_handler(event, context):
     end_date = current_date.replace(day=1) - timedelta(days=1)
     start_date = end_date.replace(day=1)
     start_date_str = start_date.strftime("%Y-%m-%d")
-    end_date += timedelta(days=1)  # Increment the end date by one day 
+    end_date += timedelta(days=1)  # Increment the end date by one day
     end_date_str = end_date.strftime("%Y-%m-%d")
-    
+
     # Calculate the start and end dates for the month before the past month (e.g., July)
     prev_end_date = start_date - timedelta(days=1)
     prev_start_date = prev_end_date.replace(day=1)
@@ -246,7 +246,7 @@ def lambda_handler(event, context):
     prev_end_date += timedelta(days=1)  # Increment the end date by one day
     prev_end_date_str = prev_end_date.strftime("%Y-%m-%d")
 
-    
+
     # Fetch the cost associated the given tags for the entire previous month
     # for each AWS account before entering the loop
     tag_costs = {}
@@ -261,14 +261,14 @@ def lambda_handler(event, context):
     # Enter the loop for each AWS account and service
     for account_name, account_info in ACCOUNTS.items():
         ce_client = create_ce_client(account_info['id'])
-        
+
         # Check if the account_name exists in tag_costs
         if account_name in tag_costs:
             prev_cost = tag_costs[account_name]
         else:
             # Handle the case where tag_costs doesn't contain the key
             prev_cost = Decimal(0)
-        
+
         cost_data = get_cost_data(ce_client, account_info['id'], start_date_str, end_date_str)
         cost_data.sort(key=lambda x: Decimal(x['Metrics']['UnblendedCost']['Amount']), reverse=True)
 
