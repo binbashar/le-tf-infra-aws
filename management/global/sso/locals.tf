@@ -8,7 +8,7 @@ locals {
       first_name = "Diego"
       last_name  = "Ojeda"
       email      = "diego.ojeda@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -17,7 +17,7 @@ locals {
       first_name = "Exequiel"
       last_name  = "Barrirero"
       email      = "exequiel.barrirero@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -26,7 +26,7 @@ locals {
       first_name = "Marcos"
       last_name  = "Pagnucco"
       email      = "marcos.pagnucco@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -35,7 +35,7 @@ locals {
       first_name = "Franco"
       last_name  = "Gauchat"
       email      = "franco.gauchat@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -44,7 +44,7 @@ locals {
       first_name = "Cecilio"
       last_name  = "Prado"
       email      = "cecilio.prado@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -53,7 +53,7 @@ locals {
       first_name = "Francisco"
       last_name  = "Rivera"
       email      = "francisco.rivera@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -62,7 +62,7 @@ locals {
       first_name = "Emiliano"
       last_name  = "Brest"
       email      = "emiliano.brest@binbash.com.ar"
-      groups     = [
+      groups = [
         "marketplaceseller",
       ]
     }
@@ -70,7 +70,7 @@ locals {
       first_name = "Juan"
       last_name  = "de la Camara"
       email      = "juan.delacamara@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -79,7 +79,7 @@ locals {
       first_name = "Angelo"
       last_name  = "Fenoglio"
       email      = "angelo.fenoglio@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -88,7 +88,7 @@ locals {
       first_name = "Jose"
       last_name  = "Peinado"
       email      = "jose.peinado@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -97,7 +97,7 @@ locals {
       first_name = "Luis"
       last_name  = "Gallardo"
       email      = "luis.gallardo@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -106,7 +106,7 @@ locals {
       first_name = "Ezequiel"
       last_name  = "Godoy"
       email      = "ezequiel.godoy@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -115,7 +115,7 @@ locals {
       first_name = "Matias"
       last_name  = "Rodriguez"
       email      = "matias.rodriguez@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -124,7 +124,7 @@ locals {
       first_name = "Martin"
       last_name  = "Galeano"
       email      = "martin.galeano@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -133,7 +133,7 @@ locals {
       first_name = "Axel"
       last_name  = "Meinel"
       email      = "axel.meinel@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -142,7 +142,7 @@ locals {
       first_name = "Alejandro"
       last_name  = "Creta"
       email      = "alejandro.creta@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -151,7 +151,7 @@ locals {
       first_name = "Marcos"
       last_name  = "Acosta"
       email      = "marcos.acosta@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
@@ -160,13 +160,13 @@ locals {
       first_name = "Ignacio"
       last_name  = "Gaitan"
       email      = "ignacio.gaitan@binbash.com.ar"
-      groups     = [
+      groups = [
         "administrators",
         "devops",
       ]
     }
   }
-  
+
   #----------------------------------------------------------------------------
   # Define the groups here
   #----------------------------------------------------------------------------
