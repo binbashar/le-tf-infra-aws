@@ -261,7 +261,6 @@ def _load_locals_aux(data):
     else:
         return data
 
-
 def _load_hclfile(hcl_files, hook_process_data=None):
     """
     Load values from defined hcl files
