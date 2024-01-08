@@ -252,15 +252,6 @@ def _load_locals():
 
     return _load_hclfile(files,_load_locals_aux)
 
-    #for this_file in files:
-    #    with open(this_file, 'r') as f:
-    #        raw_values = hcl2.load(f)
-    #        if 'locals' in raw_values:
-    #            values = dict(ChainMap(*raw_values['locals']))
-    #        locals_file_contents = dict(ChainMap(*[locals_file_contents,values]))
-
-    #return locals_file_contents
-
 def _load_locals_aux(data):
     """
     Load local terraform values from all *tf files - aux funct
