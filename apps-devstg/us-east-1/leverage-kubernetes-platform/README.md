@@ -31,18 +31,19 @@ This here defines the base cluster components such as ingress controllers, certi
 ### The "k8s-workloads" layer
 This here defines the cluster workloads such as web-apps, apis, back-end microservices, etc.
 
-## Important: read this if you are copying the EKS layer to stand up a new cluster
+## Important: read this if you are copying the LKP layer to stand up a new platform
 The typical use cases would be:
-- You need to set up a new cluster in a new account
-- Or you need to set up another cluster in an existing account which already has a cluster
+- You need to set up a new platform in a new account
+- Or you need to set up another platform in an existing account which already has a platform
 
-Below we'll cover the first case but we'll assume that we are creating the `prd` cluster from the code that
-defines the `devstg` cluster:
-1. First, you would copy-paste an existing EKS layer along with all its sublayers: `cp -r apps-devstg/us-east-1/k8s-eks apps-prd/us-east-1/k8s-eks`
+Below we'll cover the first case but we'll assume that we are creating the `prd` platform from the code that
+defines the `devstg` one:
+1. First, you would copy-paste an existing LKP layer along with all its sublayers: `cp -r apps-devstg/us-east-1/leverage-kubernetes-platform apps-prd/us-east-1/leverage-kubernetes-platform`
 2. Then, you need to go through each layer, open up the `config.tf` file and replace any occurrences of `devstg` with `prd`.
    1. There should be a `config.tf` in each sublayer so please make sure you cover all of them.
+   2. Note you can use something like this from the layer directory: `find . -name '*.tf' -exec sed 's/devstg/prd/' -i {} \;`
 
-Now that you created the layers for the cluster you need to create a few other layers in the
+Now that you created the layers for the platform you need to create a few other layers in the
 new account that the cluster layers depend on, they are:
 3. The `security-keys` layer
     - This layer creates a KMS key that we use for encrypting EKS state.
@@ -52,10 +53,10 @@ new account that the cluster layers depend on, they are:
     - This layer creates the AWS Certificate Manager certificates that are used by the AWS ALBs that are created by the ALB Ingress Controller.
     - A similar procedure to create this layer. Get this layer from `devstg`, replace references to `devstg` with `prd`, and then run init & apply.
 
-### Current EKS Cluster Creation Workflows
+### Current LKP Creation Workflows
 
 Following the [leverage terraform workflow](https://leverage.binbash.com.ar/user-guide/ref-architecture-aws/workflow/)
-The EKS layers need to be orchestrated in the following order:
+The LKP layers need to be orchestrated in the following order:
 
 1. Network
     1. Open the `locals.tf` file and make sure the VPC CIDR and subnets are correct.
