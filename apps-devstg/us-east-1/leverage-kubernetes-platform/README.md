@@ -45,6 +45,7 @@ defines the `devstg` one:
 
 Now that you created the layers for the platform you need to create a few other layers in the
 new account that the cluster layers depend on, they are:
+
 3. The `security-keys` layer
     - This layer creates a KMS key that we use for encrypting EKS state.
     - The procedure to create this layer is similar to the previous steps. You need to copy the layer from the `devstg` account and adjust its files to replace occurrences of `devstg` with `prd`.
