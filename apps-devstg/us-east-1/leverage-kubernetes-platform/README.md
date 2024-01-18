@@ -77,48 +77,48 @@ The LKP layers need to be orchestrated in the following order:
     5. **Apply the layer**: `leverage tf apply`
     6. In the output you should see the credentials you need to talk to Kubernetes API via kubectl (or other clients).
 
-```
-apps-devstg//k8s-eks-v1.17/cluster$ leverage terraform output
-
-...
-kubectl_config = apiVersion: v1
-preferences: {}
-kind: Config
-
-clusters:
-- cluster:
-    server: https://9E9E4XXXXXXXXXXXXXXXEFC1F00.gr7.us-east-1.eks.amazonaws.com
-    certificate-authority-data: LS0t...S0tLQo=
-  name: eks_bb-apps-devstg-eks-demoapps
-
-contexts:
-- context:
-    cluster: eks_bb-apps-devstg-eks-demoapps
-    user: eks_bb-apps-devstg-eks-demoapps
-  name: eks_bb-apps-devstg-eks-demoapps
-
-current-context: eks_bb-apps-devstg-eks-demoapps
-
-users:
-- name: eks_bb-apps-devstg-eks-demoapps
-  user:
-    exec:
-      apiVersion: client.authentication.k8s.io/v1alpha1
-      command: aws-iam-authenticator
-      args:
-        - "token"
-        - "-i"
-        - "bb-apps-devstg-eks-demoapps"
-        - --cache
-      env:
-        - name: AWS_CONFIG_FILE
-          value: $HOME/.aws/bb/config
-        - name: AWS_PROFILE
-          value: bb-apps-devstg-devops
-        - name: AWS_SHARED_CREDENTIALS_FILE
-          value: $HOME/.aws/bb/credentials
-
-```
+        ```shell
+        apps-devstg//k8s-eks-v1.17/cluster$ leverage terraform output
+        
+        ...
+        kubectl_config = apiVersion: v1
+        preferences: {}
+        kind: Config
+        
+        clusters:
+        - cluster:
+            server: https://9E9E4XXXXXXXXXXXXXXXEFC1F00.gr7.us-east-1.eks.amazonaws.com
+            certificate-authority-data: LS0t...S0tLQo=
+          name: eks_bb-apps-devstg-eks-demoapps
+        
+        contexts:
+        - context:
+            cluster: eks_bb-apps-devstg-eks-demoapps
+            user: eks_bb-apps-devstg-eks-demoapps
+          name: eks_bb-apps-devstg-eks-demoapps
+        
+        current-context: eks_bb-apps-devstg-eks-demoapps
+        
+        users:
+        - name: eks_bb-apps-devstg-eks-demoapps
+          user:
+            exec:
+              apiVersion: client.authentication.k8s.io/v1alpha1
+              command: aws-iam-authenticator
+              args:
+                - "token"
+                - "-i"
+                - "bb-apps-devstg-eks-demoapps"
+                - --cache
+              env:
+                - name: AWS_CONFIG_FILE
+                  value: $HOME/.aws/bb/config
+                - name: AWS_PROFILE
+                  value: bb-apps-devstg-devops
+                - name: AWS_SHARED_CREDENTIALS_FILE
+                  value: $HOME/.aws/bb/credentials
+        
+        ```
 
     7. Note you can also use the [binbash Leverage kubectl command](https://leverage.binbash.co/user-guide/leverage-cli/reference/kubectl/) to access the cluster (you need to connect to the VPN first) or connect manually as follows:
         1. Connecting to the K8s EKS cluster
