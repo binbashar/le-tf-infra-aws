@@ -67,13 +67,14 @@ The LKP layers need to be orchestrated in the following order:
     3. In the `variables.tf` file you will find several variables you can use to configure multiple settings.
        1. For instance, if you anticipate this cluster is going to be permanent, you could set the `vpc_enable_nat_gateway` flag to `true`;
        2. or if you are standing up a production cluster, you may want to set `vpc_single_nat_gateway` to `false` in order to have a NAT Gateways per availability zone.
+    4. **Apply the layer**: `leverage tf apply`
 2. Cluster
     1. Since we’re deploying a private K8s cluster you’ll need to be **connected to the VPN**
     2. Check out the `variables.tf` file to configure the Kubernetes version or whether you want to create a cluster with a public endpoint (in most cases you don't but the possibility is there).
     3. Open up `locals.tf` and make sure the `map_accounts`, `map_users` and `map_roles` variables define the right accounts, users and roles that will be granted permissions on the cluster.
     4. Then open `eks-managed-nodes.tf` to set the node groups and their attributes according to your requirements.
        1. In this file you can also configure security group rules, both for granting access to the cluster API or to the nodes.
-    5. Go to this layer and run `leverage tf apply`
+    5. **Apply the layer**: `leverage tf apply`
     6. In the output you should see the credentials you need to talk to Kubernetes API via kubectl (or other clients).
 
 ```
@@ -119,28 +120,28 @@ users:
 
 ```
 
-#### Setup auth and test cluster connectivity
-1. Connecting to the K8s EKS cluster
-2. Since we’re deploying a private K8s cluster you’ll need to be **connected to the VPN**
-3. install `kubetcl` in your workstation
-    1. https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management
-    2. https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/#install-with-homebrew-on-macos
-    3. 📒 NOTE: consider using `kubectl` version 1.22 or 1.23 (not latest)
-4. install `iam-authenticator` in your workstation
-    1. https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html
-5. Export AWS credentials
-   1. `export AWS_SHARED_CREDENTIALS_FILE="~/.aws/bb/credentials"`
-   2. `export AWS_CONFIG_FILE="~/.aws/bb/config"`
-6. `k8s-eks-v1.17/cluster` layer should generate the `kubeconfig` file in the output of the apply, or by running `leverage tf output` similar to https://github.com/binbashar/le-devops-workflows/blob/master/README.md#eks-clusters-kubeconfig-file
-    1. Edit that file to replace $HOME with the path to your home dir
-    2. Place the kubeconfig in `~/.kube/bb/apps-devstg` and then use export `KUBECONFIG=~/.kube/bb/apps-devstg` to help tools like kubectl find a way to talk to the cluster (or `KUBECONFIG=~/.kube/bb/apps-devstg get pods --all-namespaces` )
-    3. You should be now able to run kubectl  commands (https://kubernetes.io/docs/reference/kubectl/cheatsheet/)
-
+    7. Note you can also use the [binbash Leverage kubectl command](https://leverage.binbash.co/user-guide/leverage-cli/reference/kubectl/) to access the cluster (you need to connect to the VPN first) or connect manually as follows:
+        1. Connecting to the K8s EKS cluster
+        2. Since we’re deploying a private K8s cluster you’ll need to be **connected to the VPN**
+        3. install `kubetcl` in your workstation
+            1. https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management
+            2. https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/#install-with-homebrew-on-macos
+            3. 📒 NOTE: consider using `kubectl` version 1.28 or 1.29 (not latest, in any case check the cluster version first)
+        4. install `iam-authenticator` in your workstation
+            1. https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html
+        5. Export AWS credentials
+           1. `export AWS_SHARED_CREDENTIALS_FILE="~/.aws/bb/credentials"`
+           2. `export AWS_CONFIG_FILE="~/.aws/bb/config"`
+        6. `leverage-kubernetes-platform/cluster` layer should generate the `kubeconfig` file in the output of the apply, or by running `leverage tf output` similar to https://github.com/binbashar/le-devops-workflows/blob/master/README.md#eks-clusters-kubeconfig-file
+            1. Edit that file to replace $HOME with the path to your home dir
+            2. Place the kubeconfig in `~/.kube/bb/apps-devstg` and then use export `KUBECONFIG=~/.kube/bb/apps-devstg` to help tools like kubectl find a way to talk to the cluster (or `KUBECONFIG=~/.kube/bb/apps-devstg get pods --all-namespaces` )
+            3. You should be now able to run kubectl  commands (https://kubernetes.io/docs/reference/kubectl/cheatsheet/)
+        
 3. Identities layers
    1. The main files begin with the `ids_` prefix.
       1. They declare roles and their respective policies.
       2. The former are intended to be assumed by pods in your cluster through the EKS IRSA feature.
-   2. Go to this layer and run `leverage tf apply`
+   2. **Apply the layer**: `leverage tf apply`
 
 ### K8s EKS Cluster Components and Workloads deployment
 
