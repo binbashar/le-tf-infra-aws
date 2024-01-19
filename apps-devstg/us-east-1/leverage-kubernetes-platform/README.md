@@ -57,10 +57,24 @@ new account that the cluster layers depend on, they are:
     - This layer creates the AWS Certificate Manager certificates that are used by the AWS ALBs that are created by the ALB Ingress Controller.
     - A similar procedure to create this layer. Get this layer from `devstg`, replace references to `devstg` with `prd`, and then run init & apply.
 
-### Current LKP Creation Workflows
+### Create the LKP
+
+The basic flow is:
+
+- Base EKS
+  - apply network
+  - create the peering to `shared`
+  - apply cluster
+  - apply identities
+  - apply addons
+- Stuff on top of EKS
+  - apply components
+  - apply workloads
 
 Following the [leverage terraform workflow](https://leverage.binbash.com.ar/user-guide/ref-architecture-aws/workflow/)
 The LKP layers need to be orchestrated in the following order:
+
+#### The base
 
 1. Network
     1. Open the `locals.tf` file and make sure the VPC CIDR and subnets are correct.
@@ -71,6 +85,8 @@ The LKP layers need to be orchestrated in the following order:
        1. For instance, if you anticipate this cluster is going to be permanent, you could set the `vpc_enable_nat_gateway` flag to `true`;
        2. or if you are standing up a production cluster, you may want to set `vpc_single_nat_gateway` to `false` in order to have a NAT Gateways per availability zone.
     4. **Apply the layer**: `leverage tf apply`
+    5. For this network to be accessible from VPN, we need to peer it with `shared` networks, to do this see step 5 under ["Create Network layer" title in this document](https://leverage.binbash.co/try-leverage/add-aws-accounts/#create-the-network-layer).
+
 2. Cluster
     1. Since we’re deploying a private K8s cluster you’ll need to be **connected to the VPN**
     2. Check out the `variables.tf` file to configure the Kubernetes version or whether you want to create a cluster with a public endpoint (in most cases you don't but the possibility is there).
@@ -152,15 +168,16 @@ The LKP layers need to be orchestrated in the following order:
        1. Note some Addons relies on identities created in the Identities layer, so if you add or remove Addons maybe you need to add or remove identities.
    3. **Apply the layer**: `leverage tf apply`
 
-### LKP's K8s EKS Cluster Components and Workloads deployment
+#### LKP's K8s EKS Cluster Components and Workloads deployment
 
 1. Cluster Components (k8s-resources)
-    1. Go to this layer and run `leverage tf apply`
-    2. You can use the `apps.auto.tfvars` file to configure which components get installed
-    3. Important: For private repo integrations after ArgoCD was successfully installed you will need to create this secret object in the cluster. Before creating the secret you need to update it to add the private SSH key that will grant ArgoCD permission to read the repository where the application definition files can be located. Note that this manual step is only a workaround that could be automated to simplify the orchestration.
+    1. Note that LKP has a set of default components, anyway you can use the `apps.auto.tfvars` file to configure which components get installed
+    2. Important: For private repo integrations after ArgoCD was successfully installed you will need to create this secret object in the cluster. Before creating the secret you need to update it to add the private SSH key that will grant ArgoCD permission to read the repository where the application definition files can be located. Note that this manual step is only a workaround that could be automated to simplify the orchestration.
+    3. **Apply the layer**: `leverage tf apply`
+    
 
 2. Workloads (k8s-workloads)
-    1. Go to this layer and run `leverage tf apply`
+    1. **Apply the layer**: `leverage tf apply`
 
 ## Accessing the EKS Kubernetes resources (connectivity)
 To access the Kubernetes resources using `kubectl` take into account that you need **connect
