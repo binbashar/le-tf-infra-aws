@@ -42,29 +42,29 @@ locals {
   #   3. Enable the "use_managed_addons" variable and apply this layer again
   # ---------------------------------------------------------------------------
   addons_available = {
-    coredns = {
-      addon_version     = "v1.8.7-eksbuild.4"
-      resolve_conflicts = "OVERWRITE"
-    }
-    kube-proxy = {
-      addon_version     = "v1.22.17-eksbuild.2"
-      resolve_conflicts = "OVERWRITE"
-    }
-    vpc-cni = {
-      addon_version            = "v1.13.4-eksbuild.1"
-      resolve_conflicts        = "OVERWRITE"
-      service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_vpc_cni
-    }
-    aws-ebs-csi-driver = {
-      addon_version            = "v1.18.0-eksbuild.1"
-      resolve_conflicts        = "OVERWRITE"
-      service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_ebs_csi
-    }
-    aws-efs-csi-driver = {
-      addon_version            = "v1.7.1-eksbuild.1"
-      resolve_conflicts        = "OVERWRITE"
-      service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_efs_csi
-    }
+  #  coredns = {
+  #    addon_version     = "v1.8.7-eksbuild.4"
+  #    resolve_conflicts = "OVERWRITE"
+  #  }
+  #  kube-proxy = {
+  #    addon_version     = "v1.22.17-eksbuild.2"
+  #    resolve_conflicts = "OVERWRITE"
+  #  }
+  #  vpc-cni = {
+  #    addon_version            = "v1.13.4-eksbuild.1"
+  #    resolve_conflicts        = "OVERWRITE"
+  #    service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_vpc_cni
+  #  }
+  #  aws-ebs-csi-driver = {
+  #    addon_version            = "v1.18.0-eksbuild.1"
+  #    resolve_conflicts        = "OVERWRITE"
+  #    service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_ebs_csi
+  #  }
+  #  aws-efs-csi-driver = {
+  #    addon_version            = "v1.7.1-eksbuild.1"
+  #    resolve_conflicts        = "OVERWRITE"
+  #    service_account_role_arn = data.terraform_remote_state.cluster-identities.outputs.eks_addons_efs_csi
+  #  }
   }
   addons_enabled = var.use_managed_addons ? local.addons_available : {}
 }

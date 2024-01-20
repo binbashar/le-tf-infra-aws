@@ -10,7 +10,7 @@ locals {
   vpc_name = "${var.project}-${var.environment}-vpc-eks-lkp"
 
   # Ref: https://www.davidc.net/sites/default/subnets/subnets.html?network=10.1.0.0&mask=16&division=15.7231
-  vpc_cidr_block = "10.2.0.0/16"
+  vpc_cidr_block = "10.3.0.0/16"
   azs = [
     "${var.region}a",
     "${var.region}b",
@@ -18,20 +18,20 @@ locals {
     # "${var.region}d",
   ]
 
-  private_subnets_cidr = ["10.2.0.0/17"]
+  private_subnets_cidr = ["10.3.0.0/17"]
   private_subnets = [
-    "10.2.0.0/19",
-    "10.2.32.0/19",
-    #"10.2.64.0/19",
-    # "10.1.96.0/19"
+    "10.3.0.0/19",
+    "10.3.32.0/19",
+    #"10.3.64.0/19",
+    # "10.3.96.0/19"
   ]
 
-  public_subnets_cidr = ["10.2.128.0/17"]
+  public_subnets_cidr = ["10.3.128.0/17"]
   public_subnets = [
-    "10.2.128.0/19",
-    "10.2.160.0/19",
-    #"10.2.192.0/19",
-    # "10.1.224.0/19"
+    "10.3.128.0/19",
+    "10.3.160.0/19",
+    #"10.3.192.0/19",
+    # "10.3.224.0/19"
   ]
 
   tags = {
@@ -165,27 +165,27 @@ locals {
 
   # apps-devstg
   apps-devstg-vpcs = {
-    apps-devstg-base = {
-      region  = var.region
-      profile = "${var.project}-apps-devstg-devops"
-      bucket  = "${var.project}-apps-devstg-terraform-backend"
-      key     = "apps-devstg/network/terraform.tfstate"
-      tgw     = false
-    }
-    apps-devstg-k8s-eks = {
-      region  = var.region
-      profile = "${var.project}-apps-devstg-devops"
-      bucket  = "${var.project}-apps-devstg-terraform-backend"
-      key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
-      tgw     = false
-    }
-    apps-devstg-k8s-eks-lkp = {
-      region  = var.region
-      profile = "${var.project}-apps-devstg-devops"
-      bucket  = "${var.project}-apps-devstg-terraform-backend"
-      key     = "apps-devstg/k8s-eks-lkp/network/terraform.tfstate"
-      tgw     = false
-    }
+    #apps-devstg-base = {
+    #  region  = var.region
+    #  profile = "${var.project}-apps-devstg-devops"
+    #  bucket  = "${var.project}-apps-devstg-terraform-backend"
+    #  key     = "apps-devstg/network/terraform.tfstate"
+    #  tgw     = false
+    #}
+    #apps-devstg-k8s-eks = {
+    #  region  = var.region
+    #  profile = "${var.project}-apps-devstg-devops"
+    #  bucket  = "${var.project}-apps-devstg-terraform-backend"
+    #  key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
+    #  tgw     = false
+    #}
+    #apps-devstg-k8s-eks-lkp = {
+    #  region  = var.region
+    #  profile = "${var.project}-apps-devstg-devops"
+    #  bucket  = "${var.project}-apps-devstg-terraform-backend"
+    #  key     = "apps-devstg/k8s-eks-lkp/network/terraform.tfstate"
+    #  tgw     = false
+    #}
   }
 
 }

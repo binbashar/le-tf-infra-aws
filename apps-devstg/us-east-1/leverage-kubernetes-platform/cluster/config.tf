@@ -6,11 +6,11 @@ provider "aws" {
   profile = var.profile
 }
 
-provider "kubernetes" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-}
+#provider "kubernetes" {
+#  host                   = data.aws_eks_cluster.cluster.endpoint
+#  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
+#  token                  = data.aws_eks_cluster_auth.cluster.token
+#}
 
 #
 # Backend Config (partial)
@@ -39,13 +39,15 @@ terraform {
 #       running the apply command again; or, if the resource already exists,
 #       then try removing it from the Terraform state and then run apply.
 #
-data "aws_eks_cluster" "cluster" {
-  name = module.cluster.cluster_name
-}
-
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.cluster.cluster_name
-}
+#data "aws_eks_cluster" "cluster" {
+#  name = module.cluster.cluster_name
+#  depends_on = [module.cluster]
+#}
+#
+#data "aws_eks_cluster_auth" "cluster" {
+#  name = module.cluster.cluster_name
+#  depends_on = [module.cluster]
+#}
 
 data "terraform_remote_state" "cluster-vpc" {
   backend = "s3"
@@ -57,15 +59,15 @@ data "terraform_remote_state" "cluster-vpc" {
   }
 }
 
-data "terraform_remote_state" "cluster-identities" {
-  backend = "s3"
-  config = {
-    region  = var.region
-    profile = var.profile
-    bucket  = var.bucket
-    key     = "apps-devstg/leverage-kubernetes-platform/identities/terraform.tfstate"
-  }
-}
+#data "terraform_remote_state" "cluster-identities" {
+#  backend = "s3"
+#  config = {
+#    region  = var.region
+#    profile = var.profile
+#    bucket  = var.bucket
+#    key     = "apps-devstg/leverage-kubernetes-platform/identities/terraform.tfstate"
+#  }
+#}
 
 data "terraform_remote_state" "keys" {
   backend = "s3"
