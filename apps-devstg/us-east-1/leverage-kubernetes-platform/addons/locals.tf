@@ -11,7 +11,7 @@ locals {
       resolve_conflicts = "OVERWRITE"
     }
     kube-proxy = {
-      addon_version     = "v1.28.4-minimal-eksbuild.4"
+      addon_version     = "v1.28.4-eksbuild.4"
       resolve_conflicts = "OVERWRITE"
     }
     vpc-cni = {

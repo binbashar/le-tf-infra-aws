@@ -97,6 +97,10 @@ variable "kube_prometheus_stack" {
     enabled = false
   }
 }
+variable "enable_prometheus_stack" {
+  type    = bool
+  default = false
+}
 
 variable "enable_prometheus_dependencies" {
   type    = bool

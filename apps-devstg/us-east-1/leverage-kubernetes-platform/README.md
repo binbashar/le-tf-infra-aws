@@ -63,7 +63,9 @@ The basic flow is:
 
 - Base EKS
   - apply network
-  - create the peering to `shared`
+    - it can be applied with peering to `shared` (peering config will be stored in this layer)
+    - or you can create this peering from `shared` account (peering config will be stored in `shared/<region>/base-network` layer)
+  - add the VPC CIDR to your VPN server (e.g. Pritunl)
   - apply cluster
   - apply identities
   - apply addons
@@ -84,8 +86,10 @@ The LKP layers need to be orchestrated in the following order:
     3. In the `variables.tf` file you will find several variables you can use to configure multiple settings.
        1. For instance, if you anticipate this cluster is going to be permanent, you could set the `vpc_enable_nat_gateway` flag to `true`;
        2. or if you are standing up a production cluster, you may want to set `vpc_single_nat_gateway` to `false` in order to have a NAT Gateways per availability zone.
+       3. Also, if you want to create the VPC peerings from here, just set `create_peering_to_shared` to `true`
     4. **Apply the layer**: `leverage tf apply`
-    5. For this network to be accessible from VPN, we need to peer it with `shared` networks, to do this see step 5 under ["Create Network layer" title in this document](https://leverage.binbash.co/try-leverage/add-aws-accounts/#create-the-network-layer).
+    5. If in step 3 you've set `create_peering_to_shared` to `false`, then for this network to be accessible from VPN, we need to peer it with `shared` networks, to do this see step 5 under ["Create Network layer" title in this document](https://leverage.binbash.co/try-leverage/add-aws-accounts/#create-the-network-layer).
+    6. Add your VPC CIDR to the VPN Server
 
 2. Cluster
     1. Since we’re deploying a private K8s cluster you’ll need to be **connected to the VPN**

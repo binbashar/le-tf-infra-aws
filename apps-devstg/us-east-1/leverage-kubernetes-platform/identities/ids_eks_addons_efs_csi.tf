@@ -5,7 +5,7 @@ module "role_eks_addons_efs_csi" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-role-for-service-accounts-eks?ref=v5.32.0"
 
   create_role           = true
-  role_name             = "efs-csi"
+  role_name             = "${local.environment}-${local.prefix}-eks-addons-efs-csi"
   attach_efs_csi_policy = true
 
   oidc_providers = {

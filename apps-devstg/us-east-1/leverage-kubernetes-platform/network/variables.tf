@@ -72,3 +72,12 @@ variable "enable_vpc_flow_logs" {
   type        = bool
   default     = false
 }
+
+#===========================================#
+# Create VPC to Shared here
+#===========================================#
+variable "create_peering_to_shared" {
+  description = "Create the VPC peering to Shared from here"
+  type        = bool
+  default     = true
+}

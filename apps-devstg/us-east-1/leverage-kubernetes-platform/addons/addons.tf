@@ -21,7 +21,7 @@ resource "aws_eks_addon" "this" {
     delete = try(each.value.timeouts.delete, var.cluster_addons_timeouts.delete, null)
   }
 
-  tags = var.tags
+  tags = local.tags
 }
 
 resource "aws_eks_addon" "before_compute" {
@@ -43,7 +43,7 @@ resource "aws_eks_addon" "before_compute" {
     delete = try(each.value.timeouts.delete, var.cluster_addons_timeouts.delete, null)
   }
 
-  tags = var.tags
+  tags = local.tags
 }
 
 data "aws_eks_addon_version" "this" {
