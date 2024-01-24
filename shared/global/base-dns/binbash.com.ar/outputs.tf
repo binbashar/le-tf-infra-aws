@@ -1,6 +1,6 @@
 output "aws_public_zone_id" {
   description = "ID public DNS aws zone"
-  value       = [aws_route53_zone.aws_public_hosted_zone_1.id]
+  value       = aws_route53_zone.aws_public_hosted_zone_1.id
 }
 
 output "aws_public_zone_domain_name" {
