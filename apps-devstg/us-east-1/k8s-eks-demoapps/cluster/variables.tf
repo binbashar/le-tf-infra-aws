@@ -4,7 +4,7 @@
 variable "cluster_version" {
   description = "Kubernetes version to use for the EKS cluster."
   type        = string
-  default     = "1.23"
+  default     = "1.28"
 }
 
 #
@@ -36,7 +36,7 @@ variable "cluster_log_retention_in_days" {
 
 variable "manage_aws_auth" {
   description = "Whether to apply the aws-auth configmap file."
-  default     = true
+  default     = false
 }
 
 variable "create_aws_auth" {

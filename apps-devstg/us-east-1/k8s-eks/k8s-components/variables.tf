@@ -143,3 +143,12 @@ variable "schedules" {
   type    = any
   default = {}
 }
+
+
+#==================================#
+# enable_prometheus_stack
+#==================================#
+variable "enable_prometheus_stack" {
+  type    = bool
+  default = false
+}

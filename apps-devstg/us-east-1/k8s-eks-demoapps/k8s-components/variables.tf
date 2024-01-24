@@ -184,3 +184,11 @@ variable "enable_kwatch" {
   type    = bool
   default = false
 }
+
+#==================================#
+# enable_prometheus_stack
+#==================================#
+variable "enable_prometheus_stack" {
+  type    = bool
+  default = false
+}
