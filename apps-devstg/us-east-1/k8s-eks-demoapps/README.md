@@ -2,7 +2,7 @@
 
 ## Overview
 This documentation should help you understand the different pieces that make up this
-EKS Cluster. 
+EKS Cluster.
 With such understanding you should be able to create your copies of this
 layer that are modified to serve other goals, such as having a platform per environment.
 
@@ -101,26 +101,26 @@ The EKS CLUSTER layers need to be orchestrated in the following order:
 
         ```shell
         apps-devstg//k8s-eks-v1.17/cluster$ leverage terraform output
-        
+
         ...
         kubectl_config = apiVersion: v1
         preferences: {}
         kind: Config
-        
+
         clusters:
         - cluster:
             server: https://9E9E4XXXXXXXXXXXXXXXEFC1F00.gr7.us-east-1.eks.amazonaws.com
             certificate-authority-data: LS0t...S0tLQo=
           name: eks_bb-apps-devstg-eks-demoapps
-        
+
         contexts:
         - context:
             cluster: eks_bb-apps-devstg-eks-demoapps
             user: eks_bb-apps-devstg-eks-demoapps
           name: eks_bb-apps-devstg-eks-demoapps
-        
+
         current-context: eks_bb-apps-devstg-eks-demoapps
-        
+
         users:
         - name: eks_bb-apps-devstg-eks-demoapps
           user:
@@ -139,7 +139,7 @@ The EKS CLUSTER layers need to be orchestrated in the following order:
                   value: bb-apps-devstg-devops
                 - name: AWS_SHARED_CREDENTIALS_FILE
                   value: $HOME/.aws/bb/credentials
-        
+
         ```
 
     7. Note you can use the [binbash Leverage kubectl command](https://leverage.binbash.co/user-guide/leverage-cli/reference/kubectl/) to access the cluster (you need to connect to the VPN first) or connect manually as follows:
@@ -158,7 +158,7 @@ The EKS CLUSTER layers need to be orchestrated in the following order:
             1. Edit that file to replace $HOME with the path to your home dir
             2. Place the kubeconfig in `~/.kube/bb/apps-devstg` and then use export `KUBECONFIG=~/.kube/bb/apps-devstg` to help tools like kubectl find a way to talk to the cluster (or `KUBECONFIG=~/.kube/bb/apps-devstg get pods --all-namespaces` )
             3. You should be now able to run kubectl  commands (https://kubernetes.io/docs/reference/kubectl/cheatsheet/)
-        
+
 3. Identities layers
    1. The main files begin with the `ids_` prefix.
       1. They declare roles and their respective policies.
@@ -177,7 +177,7 @@ The EKS CLUSTER layers need to be orchestrated in the following order:
     1. Note that EKS CLUSTER has a set of default components, anyway you can use the `apps.auto.tfvars` file to configure which components get installed
     2. Important: For private repo integrations after ArgoCD was successfully installed you will need to create this secret object in the cluster. Before creating the secret you need to update it to add the private SSH key that will grant ArgoCD permission to read the repository where the application definition files can be located. Note that this manual step is only a workaround that could be automated to simplify the orchestration.
     3. **Apply the layer**: `leverage tf apply`
-    
+
 
 2. Workloads (k8s-workloads)
     1. **Apply the layer**: `leverage tf apply`
