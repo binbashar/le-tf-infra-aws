@@ -84,6 +84,7 @@ The EKS CLUSTER layers need to be orchestrated in the following order:
        1. Make sure it contains the right entries to match the VPC peerings that you actually need to set up.
     3. In the `variables.tf` file you will find several variables you can use to configure multiple settings.
        1. For instance, if you anticipate this cluster is going to be permanent, you could set the `vpc_enable_nat_gateway` flag to `true`;
+         1. Note this value has to be `true` when installing the cluster, otherwise the nodes won´t be created
        2. or if you are standing up a production cluster, you may want to set `vpc_single_nat_gateway` to `false` in order to have a NAT Gateways per availability zone.
     4. **Apply the layer**: `leverage tf apply`
     5. For this network to be accessible from VPN, we need to peer it with `shared` networks, to do this see step 5 under ["Create Network layer" title in this document](https://leverage.binbash.co/try-leverage/add-aws-accounts/#create-the-network-layer).
