@@ -165,6 +165,14 @@ locals {
         "devops",
       ]
     }
+    "caetano.prates" = {
+      first_name = "Caetano"
+      last_name  = "Prates"
+      email      = "caetano.prates@binbash.com.ar"
+      groups = [
+        "marketplaceseller",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------

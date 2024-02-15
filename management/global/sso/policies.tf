@@ -26,6 +26,7 @@ data "aws_iam_policy_document" "devops" {
       "compute-optimizer:*",
       "datasync:*",
       "dlm:*",
+      "ds:*",
       "dynamodb:*",
       "ec2:*",
       "ec2-instance-connect:*",
@@ -80,6 +81,8 @@ data "aws_iam_policy_document" "devops" {
       "waf:*",
       "wafv2:*",
       "waf-regional:*",
+      "workspaces:*",
+      "workspaces-web:*",
       "wellarchitected:*"
     ]
     resources = ["*"]

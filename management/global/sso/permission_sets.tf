@@ -72,7 +72,10 @@ module "permission_sets" {
       session_duration                    = local.default_session_duration
       tags                                = local.tags
       inline_policy                       = ""
-      policy_attachments                  = ["arn:aws:iam::aws:policy/AWSMarketplaceSellerFullAccess"]
+      policy_attachments                  = [
+        "arn:aws:iam::aws:policy/AWSMarketplaceSellerFullAccess",
+        "arn:aws:iam::aws:policy/WellArchitectedConsoleFullAccess"
+      ]
       customer_managed_policy_attachments = []
     },
   ]

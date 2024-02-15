@@ -178,5 +178,12 @@ module "account_assignments" {
       principal_name      = local.groups["marketplaceseller"].name
       account             = var.accounts.root.id
     },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["MarketplaceSeller"].arn
+      permission_set_name = "MarketplaceSeller"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["marketplaceseller"].name
+      account             = var.accounts.shared.id
+    },
   ]
 }
