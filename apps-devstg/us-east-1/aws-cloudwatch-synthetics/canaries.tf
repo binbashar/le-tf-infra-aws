@@ -13,10 +13,10 @@ module "target-canary" {
   repository          = "https://github.com/binbashar/terraform-aws-cloudwatch-synthetics"
 
   # what networks it has to work in?
-  #subnet_ids                = data.terraform_remote_state.local-vpcs.outputs.private_subnets
-  #security_group_ids        = [resource.aws_security_group.target-canary-sg.id]
+  subnet_ids                = data.terraform_remote_state.local-vpcs.outputs.private_subnets
+  security_group_ids        = [aws_security_group.target-canary-sg.id]
 
   tags = local.tags
 
-  depends_on = [module.target_canary_s3_bucket]
+  depends_on = [module.target_canary_s3_bucket, aws_security_group.target-canary-sg]
 }
