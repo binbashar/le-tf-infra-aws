@@ -8,7 +8,7 @@ module "target-canary" {
   schedule_expression = "rate(5 minutes)"
   s3_artifact_bucket  = module.target_canary_s3_bucket.s3_bucket_id # must pre-exist
   alarm_email         = null                                        # an email or null value
-  endpoints           = { "target-group" = { url = "http://costenginetool.basemates.co/" } }
+  endpoints           = { "target-group" = { url = "http://www.binbash.co/" } }
   managedby           = "managedby@binbash.co"
   repository          = "https://github.com/binbashar/terraform-aws-cloudwatch-synthetics"
 
