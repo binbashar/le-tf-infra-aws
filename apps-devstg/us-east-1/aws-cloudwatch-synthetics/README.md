@@ -10,7 +10,7 @@ More documentation [here](https://docs.aws.amazon.com/AmazonSynthetics/latest/AP
 
 ## Dependencies
 
-This module uses a fork of [this module](https://github.com/clouddrove/terraform-aws-cloudwatch-synthetics) hosted on `binbashar` space to add a few modifications.
+This module uses a fork of [this module](https://github.com/clouddrove/terraform-aws-cloudwatch-synthetics) hosted in `binbashar` space to add a few modifications.
 
 ## Notifications
 
