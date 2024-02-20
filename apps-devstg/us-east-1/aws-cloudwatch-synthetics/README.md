@@ -64,3 +64,19 @@ synthetics:*
 
 *(or something more specific if you want to narrow the permission set)*
 
+## Known issues
+
+If a canary in a private subnet is created, and then it is moved out from that subnet, e.g. you created the private canary, then comment out these lines:
+
+``` json
+  #subnet_ids                = data.terraform_remote_state.local-vpcs.outputs.private_subnets
+  #security_group_ids        = [aws_security_group.target-canary-sg.id]
+```
+
+...and re apply.
+
+In this case there is a chance the ENIs the canary took in first place in the private subnet remain attached even if they are not being used.
+
+E.g., if you want to destroy this infra the ENIs can not be detached even if the Lambda does not exist anymore.
+
+In this case, wait for 24hs, AWS should recognize the unused ENIs and will detach them automagically.
