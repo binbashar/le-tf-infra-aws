@@ -38,3 +38,14 @@ data "terraform_remote_state" "local-vpcs" {
   }
 }
 
+
+data "terraform_remote_state" "notifications" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/notifications/terraform.tfstate"
+  }
+}

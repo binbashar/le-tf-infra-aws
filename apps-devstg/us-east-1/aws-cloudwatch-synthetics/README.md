@@ -20,9 +20,11 @@ As per the `binbash Leverage` needs, this email can be set to null, so later the
 
 ### Setting `notifications` layer
 
-Add the remote state for the `synthetics` layer.
+#### To use the topic created in the `synthetics` layer
 
-``` json
+In the `notifications` layer add the remote state for the `synthetics` layer.
+
+``` hcl
 data "terraform_remote_state" "aws-cloudwatch-synthetics" {
   backend = "s3"
 
@@ -37,28 +39,59 @@ data "terraform_remote_state" "aws-cloudwatch-synthetics" {
 
 Extract the topic name:
 
-``` json
+``` hcl
   arn_array = split(":", data.terraform_remote_state.aws-cloudwatch-synthetics.outputs.topic_target_canary)
   topic_name = local.arn_array[length(local.arn_array) - 1]
 ```
 
 Set the topic to not be created:
 
-``` json
+``` hcl
   create_sns_topic = false
 ```
 
 And set the topic name from the `synthetics` layer:
 
-``` json
+``` hcl
   sns_topic_name       = local.topic_name
 ```
+
+#### To use the topic created in the `notifications` layer
+
+In the `synthetics` layer add the remote state for the `notifications` layer.
+
+``` hcl
+data "terraform_remote_state" "notifications" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/notifications/terraform.tfstate"
+  }
+}
+```
+
+In `canaries.tf` file add (or set to `false`) this line:
+
+``` hcl
+  create_topic       = false
+```
+
+And set the topic name from the remote state:
+
+``` hcl
+  existent_topic_arn = data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring
+```
+
+
 
 ## IAM permission
 
 Note if you are using the default `binbash Leverage` configuration, and you are using *DevOps* profile with SSO, maybe you'll have to add this permission to your *DevOps* policy:
 
-``` json
+``` hcl
 synthetics:*
 ```
 
@@ -68,7 +101,7 @@ synthetics:*
 
 If a canary in a private subnet is created, and then it is moved out from that subnet, e.g. you created the private canary, then comment out these lines:
 
-``` json
+``` hcl
   #subnet_ids                = data.terraform_remote_state.local-vpcs.outputs.private_subnets
   #security_group_ids        = [aws_security_group.target-canary-sg.id]
 ```
