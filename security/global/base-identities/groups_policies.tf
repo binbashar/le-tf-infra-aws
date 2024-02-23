@@ -78,6 +78,7 @@ resource "aws_iam_policy" "assume_deploymaster_role" {
             ],
             "Resource": [
                 "arn:aws:iam::${var.accounts.shared.id}:role/DeployMaster",
+                "arn:aws:iam::${var.accounts.security.id}:role/DeployMaster",
                 "arn:aws:iam::${var.accounts.network.id}:role/DeployMaster",
                 "arn:aws:iam::${var.accounts.apps-devstg.id}:role/DeployMaster",
                 "arn:aws:iam::${var.accounts.apps-prd.id}:role/DeployMaster"
