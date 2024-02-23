@@ -36,7 +36,7 @@ variable "cluster_log_retention_in_days" {
 
 variable "manage_aws_auth" {
   description = "Whether to apply the aws-auth configmap file."
-  default     = false
+  default     = true
 }
 
 variable "create_aws_auth" {

@@ -42,7 +42,7 @@ resource "aws_iam_policy" "certmanager_binbash_com_ar" {
                 "route53:ChangeResourceRecordSets",
                 "route53:ListResourceRecordSets"
             ],
-            "Resource": "arn:aws:route53:::hostedzone/${data.terraform_remote_state.shared-dns.outputs.aws_public_zone_id[0]}"
+            "Resource": "arn:aws:route53:::hostedzone/${data.terraform_remote_state.shared-dns.outputs.aws_public_zone_id}"
         },
         {
             "Effect": "Allow",
