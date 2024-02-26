@@ -3,7 +3,6 @@
 ################################################################################
 
 resource "aws_eks_addon" "this" {
-  # Not supported on outposts
   for_each = { for k, v in local.addons_available : k => v }
 
   cluster_name = data.terraform_remote_state.cluster.outputs.cluster_name
