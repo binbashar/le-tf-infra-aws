@@ -14,7 +14,7 @@ resource "helm_release" "externaldns_private" {
   values = [
     templatefile("chart-values/externaldns.yaml", {
       filteredDomain     = local.private_base_domain
-      filteredZoneId     = data.terraform_remote_state.shared-dns.outputs.aws_internal_zone_id[0]
+      filteredZoneId     = data.terraform_remote_state.shared-dns.outputs.aws_internal_zone_id
       txtOwnerId         = "${local.environment}-eks-demo-prv"
       annotationFilter   = "kubernetes.io/ingress.class=${local.private_ingress_class}"
       zoneType           = "private"
@@ -38,7 +38,7 @@ resource "helm_release" "externaldns_public" {
   values = [
     templatefile("chart-values/externaldns.yaml", {
       filteredDomain     = local.public_base_domain
-      filteredZoneId     = data.terraform_remote_state.shared-dns.outputs.aws_public_zone_id[0]
+      filteredZoneId     = data.terraform_remote_state.shared-dns.outputs.aws_public_zone_id
       txtOwnerId         = "${local.environment}-eks-demo-pub"
       annotationFilter   = "kubernetes.io/ingress.class=${local.public_ingress_class}"
       zoneType           = "public"
