@@ -182,8 +182,8 @@ module "cluster-aws-auth" {
   manage_aws_auth_configmap = var.manage_aws_auth
   create_aws_auth_configmap = var.create_aws_auth
 
-  aws_auth_roles = local.map_roles
-  aws_auth_users = local.map_users
+  aws_auth_roles    = local.map_roles
+  aws_auth_users    = local.map_users
   aws_auth_accounts = local.map_accounts
 
   depends_on = [module.cluster]
