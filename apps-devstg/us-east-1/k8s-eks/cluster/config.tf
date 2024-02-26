@@ -32,13 +32,11 @@ terraform {
 # Data Sources
 #
 data "aws_eks_cluster" "cluster" {
-  name       = module.cluster.cluster_id
-  depends_on = [module.cluster]
+  name = module.cluster.cluster_id
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name       = module.cluster.cluster_id
-  depends_on = [module.cluster]
+  name = module.cluster.cluster_id
 }
 
 data "terraform_remote_state" "eks-vpc" {
