@@ -48,7 +48,7 @@ vault_address = "https://bb-le-shared-vault-cluster.private.vault.XXXXXX.aws.has
 # 1st exec: admin token from https://portal.cloud.hashicorp.com/.
 # Following execs:
 #   1- Generate GitHub personal access token: https://github.com/settings/tokens
-#   2- Click "Generate new token"
+#   2- Click “Generate new token“
 #   3- Choose one permission that is required: read:org
 #
 #  Get vault token from your GH one
