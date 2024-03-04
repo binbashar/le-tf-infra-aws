@@ -12,7 +12,6 @@ module "target-canary" {
   repository          = "https://github.com/binbashar/terraform-aws-cloudwatch-synthetics"
 
   create_topic = false
-  #existent_topic_arn = "arn:aws:sns:us-east-1:523857393444:sns-topic-slack-notify-monitoring"
   existent_topic_arn = data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring
 
   # what networks it has to work in?
