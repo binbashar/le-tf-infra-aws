@@ -50,7 +50,7 @@ resource "aws_sns_topic_policy" "default" {
 }
 
 data "aws_iam_policy_document" "sns-topic-policy" {
-  count  = var.add_budget_service_permission == true ? 1 : 0
+  count = var.add_budget_service_permission == true ? 1 : 0
 
   policy_id = "publish_to_topic_policy"
 
