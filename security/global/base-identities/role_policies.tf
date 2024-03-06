@@ -163,3 +163,63 @@ data "aws_iam_policy_document" "lambda_costs_explorer_access" {
     ]
   }
 }
+
+#
+# Customer Managed Policy: DeployMaster
+#
+resource "aws_iam_policy" "deploy_master_access" {
+  name        = "deploy_master_access"
+  description = "Services enabled for DeployMaster role"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "athena:*",
+                "budgets:*",
+                "cloudfront:*",
+                "cloudtrail:*",
+                "cloudwatch:*",
+                "config:*",
+                "ecr:*",
+                "elasticloadbalancing:*",
+                "iam:*",
+                "dynamodb:*",
+                "ec2:*",
+                "ecr:*",
+                "glue:*",
+                "iam:*",
+                "logs:*",
+                "route53:*",
+                "route53domains:*",
+                "s3:*",
+                "sns:*",
+                "ssm:*",
+                "sqs:*",
+                "vpc:*",
+                "waf:*",
+                "wafv2:*",
+                "waf-regional:*",
+                "kms:*",
+                "secretsmanager:GetSecretValue"
+            ],
+            "Resource": [
+                "*"
+            ],
+            "Condition": {
+                "StringEquals": {
+                    "aws:RequestedRegion": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-2"
+                    ]
+                }
+            }
+        }
+    ]
+}
+EOF
+}

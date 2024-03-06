@@ -6,6 +6,7 @@ provider "aws" {
   profile = var.profile
 }
 
+
 provider "kubernetes" {
   host                   = data.aws_eks_cluster.cluster.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
@@ -16,10 +17,10 @@ provider "kubernetes" {
 # Backend Config (partial)
 #
 terraform {
-  required_version = "~> 1.2"
+  required_version = "~> 1.3"
 
   required_providers {
-    aws        = "~> 5.24"
+    aws        = "~> 5.34"
     kubernetes = "~> 2.23"
   }
 
@@ -32,20 +33,18 @@ terraform {
 # Data Sources
 #
 
-#
-# NOTE: if you find issue with this resource while trying to stand up a cluster
-#       then try commenting this block and the above kubernetes provider block.
-# NOTE: if you get an error with the creation of aws-auth configmap, try
-#       running the apply command again; or, if the resource already exists,
-#       then try removing it from the Terraform state and then run apply.
-#
 data "aws_eks_cluster" "cluster" {
   name = module.cluster.cluster_name
+
+  depends_on = [module.cluster]
 }
 
 data "aws_eks_cluster_auth" "cluster" {
   name = module.cluster.cluster_name
+
+  depends_on = [module.cluster]
 }
+
 
 data "terraform_remote_state" "cluster-vpc" {
   backend = "s3"
