@@ -7,7 +7,7 @@
 # Stop
 #
 module "schedule_ec2_stop_daily_midnight" {
-  source = "github.com/binbashar/terraform-aws-lambda-scheduler-stop-start?ref=3.1.3"
+  source = "github.com/binbashar/terraform-aws-lambda-scheduler-stop-start?ref=3.5.1_0"
   name   = "${var.project}-${var.environment}-schedule-stop-ec2"
 
   # Define the aws cloudwatch event rule schedule expression,
@@ -36,14 +36,18 @@ module "schedule_ec2_stop_daily_midnight" {
 # Start
 #
 module "schedule_ec2_start_daily_morning" {
-  source = "github.com/binbashar/terraform-aws-lambda-scheduler-stop-start?ref=3.1.3"
+  source = "github.com/binbashar/terraform-aws-lambda-scheduler-stop-start?ref=3.5.1_0"
   name   = "${var.project}-${var.environment}-schedule-start-ec2"
 
   # Define the aws cloudwatch event rule schedule expression,
   # eg1: monday to friday at 22hs cron(0 22 ? * MON-FRI *)
   # eg2: once a week every friday at 00hs cron(0 00 ? * FRI *)
   # eg3: everyday at 00hs cron(0 00 * * ? *)
-  cloudwatch_schedule_expression = "cron(0 9 * * ? *)"
+  # none: do not create a schedule (e.g. http endpoints enabled)
+  cloudwatch_schedule_expression = "none"
+
+  # Create an http endpoint to trigger lambda
+  http_trigger = true
 
   # Define schedule action to apply on resources
   schedule_action = "start"
