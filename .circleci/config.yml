@@ -6,7 +6,7 @@ jobs:
   #
   test-static-code-and-linting:
     machine: # https://circleci.com/docs/2.0/configuration-reference/#available-machine-images
-      image: ubuntu-2004:202107-01 # Ubuntu 16.04, Docker v19.03.12, Docker Compose v1.26.1
+      image: default # Updated latest based on https://discuss.circleci.com/t/linux-image-deprecations-and-eol-for-2024/50177
 
       # This job has been blocked because Docker Layer Caching is not available on your plan.
       # Should upgrade if necessary.

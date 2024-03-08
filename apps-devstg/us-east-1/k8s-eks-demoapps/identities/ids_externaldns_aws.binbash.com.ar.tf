@@ -37,7 +37,7 @@ resource "aws_iam_policy" "externaldns_public_binbash_com_ar" {
                 "route53:ChangeResourceRecordSets"
             ],
             "Resource": [
-                "arn:aws:route53:::hostedzone/${data.terraform_remote_state.shared-dns.outputs.aws_public_zone_id[0]}"
+                "arn:aws:route53:::hostedzone/${data.terraform_remote_state.shared-dns.outputs.aws_public_zone_id}"
             ]
         },
         {
@@ -92,7 +92,7 @@ resource "aws_iam_policy" "externaldns_private_aws_binbash_com_ar" {
                 "route53:ChangeResourceRecordSets"
             ],
             "Resource": [
-                "arn:aws:route53:::hostedzone/${data.terraform_remote_state.shared-dns.outputs.aws_internal_zone_id[0]}"
+                "arn:aws:route53:::hostedzone/${data.terraform_remote_state.shared-dns.outputs.aws_internal_zone_id}"
             ]
         },
         {

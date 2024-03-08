@@ -138,6 +138,41 @@ locals {
         "devops",
       ]
     }
+    "alejandro.creta" = {
+      first_name = "Alejandro"
+      last_name  = "Creta"
+      email      = "alejandro.creta@binbash.com.ar"
+      groups = [
+        "administrators",
+        "devops",
+      ]
+    }
+    "marcos.acosta" = {
+      first_name = "Marcos"
+      last_name  = "Acosta"
+      email      = "marcos.acosta@binbash.com.ar"
+      groups = [
+        "administrators",
+        "devops",
+      ]
+    }
+    "ignacio.gaitan" = {
+      first_name = "Ignacio"
+      last_name  = "Gaitan"
+      email      = "ignacio.gaitan@binbash.com.ar"
+      groups = [
+        "administrators",
+        "devops",
+      ]
+    }
+    "caetano.prates" = {
+      first_name = "Caetano"
+      last_name  = "Prates"
+      email      = "caetano.prates@binbash.com.ar"
+      groups = [
+        "marketplaceseller",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
