@@ -129,12 +129,6 @@ locals {
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/network/terraform.tfstate"
     }
-    apps-devstg-k8s-eks-v117 = {
-      region  = var.region
-      profile = "${var.project}-apps-devstg-devops"
-      bucket  = "${var.project}-apps-devstg-terraform-backend"
-      key     = "apps-devstg/k8s-eks-v1.17/network/terraform.tfstate"
-    }
     apps-devstg-k8s-eks = {
       region  = var.region
       profile = "${var.project}-apps-devstg-devops"
@@ -150,14 +144,7 @@ locals {
   }
 
   # apps-devstg-dr
-  apps-devstg-dr-vpcs = {
-    apps-devstg-k8s-eks-v117-dr = {
-      region  = var.region
-      profile = "${var.project}-apps-devstg-devops"
-      bucket  = "${var.project}-apps-devstg-terraform-backend"
-      key     = "apps-devstg/k8s-eks-v1.17-dr/network/terraform.tfstate"
-    }
-  }
+  apps-devstg-dr-vpcs = {}
 
   # apps-prd
   apps-prd-vpcs = {
