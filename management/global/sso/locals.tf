@@ -173,6 +173,24 @@ locals {
         "marketplaceseller",
       ]
     }
+    "osvaldo.demo" = {
+      first_name = "Osvaldo"
+      last_name  = "Demo"
+      email      = "osvaldo.demo@binbash.com.ar"
+      groups = [
+        "administrators",
+        "devops",
+      ]
+    }
+     "matias.sorozabal" = {
+      first_name = "Matias"
+      last_name  = "Sorozabal"
+      email      = "matias.sorozabal@binbash.com.ar"
+      groups = [
+        "administrators",
+        "devops",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
