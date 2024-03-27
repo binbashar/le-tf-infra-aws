@@ -2,7 +2,7 @@
 # https://www.terraform.io/docs/state/sensitive-data.html
 
 resource "aws_kms_ciphertext" "slack_url_monitoring_sec" {
-  plaintext = data.vault_generic_secret.slack_hook_url_monitoring.data["slack_webhook_monitoring_sec"]
+  plaintext = data.sops_file.secrets.data["slack_webhook_monitoring_sec"]
   key_id    = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
 }
 

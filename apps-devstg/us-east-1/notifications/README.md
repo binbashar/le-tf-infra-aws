@@ -26,17 +26,18 @@ kms_key_arn = "${aws_kms_key.this.arn}"
 create_with_kms_key = true
 ```
 
-### Consideration
+### SOPS file
 
-In order to get the necessary `secrets.dec.tf` file referenced at `plaintext = local.secrets.slack_webhook_monitoring`
-please execute `make decrypt` in this same path
+You need to store your URLs in `secrets.enc.yaml`, note this is an encrypted version of a yaml file with the corresponding URLs.
 
-```
-╭─delivery at delivery-ops in ~/Binbash/repos/Flex/devops-tf-infra/shared/notifications on master✔ 20-10-21 - 9:27:51
-╰─⠠⠵ make decrypt
-ansible-vault decrypt --output secrets.dec.tf secrets.enc
-Vault password:
-Decryption successful
+You should be able to do something like (after creating the `secrets.yaml` file):
+
+``` shell
+export AWS_PROFILE=yourprofile
+sops --encrypt --kms arn:aws:kms:region:account:key/key-id secrets.yaml > secrets.enc.yaml
 ```
 
+Note the key must be the same used later in the tf files.
+
+You can use the `leverage` shell mounting sops, more info [here](https://leverage.binbash.co/user-guide/leverage-cli/reference/shell/).
 
