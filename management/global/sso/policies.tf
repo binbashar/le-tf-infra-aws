@@ -65,6 +65,7 @@ data "aws_iam_policy_document" "devops" {
       "route53domains:*",
       "route53resolver:*",
       "s3:*",
+      "sagemaker:*",
       "ses:*",
       "secretsmanager:*",
       "securityhub:*",

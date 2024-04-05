@@ -99,6 +99,13 @@ module "account_assignments" {
       principal_name      = local.groups["devops"].name
       account             = var.accounts.network.id
     },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn
+      permission_set_name = "DevOps"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["devops"].name
+      account             = var.accounts.data-science.id
+    },
 
     # -------------------------------------------------------------------------
     # FinOps Permissions
