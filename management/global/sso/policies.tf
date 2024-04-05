@@ -53,6 +53,7 @@ data "aws_iam_policy_document" "devops" {
       "logs:*",
       "network-firewall:*",
       "networkmanager:*",
+      "pipes:*",
       "q:*",
       "ram:*",
       "rds:*",
@@ -66,13 +67,15 @@ data "aws_iam_policy_document" "devops" {
       "s3:*",
       "ses:*",
       "secretsmanager:*",
+      "securityhub:*",
+      "servicediscovery:*",
       "shield:*",
       "sns:*",
       "sqs:*",
       "ssm:*",
       "sts:*",
       "support:*",
-      "servicediscovery:*",
+      "synthetics:*",
       "tag:*",
       "transfer:*",
       "trustedadvisor:*",
@@ -153,5 +156,69 @@ data "aws_iam_policy_document" "github_automation" {
       "ec2:DeleteNatGateway",
     ]
     resources = ["*"]
+  }
+}
+
+#------------------------------------------------------------------------------
+# Data Scientist
+#------------------------------------------------------------------------------
+data "aws_iam_policy_document" "data_scientist" {
+  statement {
+    sid = "Default"
+    actions = [
+      "athena:*",
+      "autoscaling:*",
+      "aws-portal:*",
+      "ce:*",
+      "cloudformation:*",
+      "cloudwatch:*",
+      "config:*",
+      "dynamodb:*",
+      "ec2:*",
+      "ecr:*",
+      "ecr-public:*",
+      "ecs:*",
+      "eks:*",
+      "elasticloadbalancing:*",
+      "elasticfilesystem:*",
+      "es:*",
+      "events:*",
+      "glue:*",
+      "health:*",
+      "iam:*",
+      "kms:*",
+      "lambda:*",
+      "logs:*",
+      "pipes:*",
+      "q:*",
+      "ram:*",
+      "rds:*",
+      "redshift:*",
+      "resource-explorer:*",
+      "resource-explorer-2:*",
+      "resource-groups:*",
+      "route53:*",
+      "route53domains:*",
+      "route53resolver:*",
+      "s3:*",
+      "secretsmanager:*",
+      "sns:*",
+      "sqs:*",
+      "ssm:*",
+      "sts:*",
+      "support:*",
+      "tag:*",
+      "vpc:*",
+    ]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestedRegion"
+      values = [
+        "${var.region}",
+        "${var.region_secondary}",
+        "us-east-1", # The original region is needed to have IAM working
+      ]
+    }
   }
 }

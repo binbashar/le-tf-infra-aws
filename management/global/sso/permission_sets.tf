@@ -66,16 +66,26 @@ module "permission_sets" {
       customer_managed_policy_attachments = []
     },
     {
-      name             = "MarketplaceSeller"
-      description      = "Grants marketplace access to manage service/product offers."
-      relay_state      = local.default_relay_state
-      session_duration = local.default_session_duration
-      tags             = local.tags
-      inline_policy    = ""
+      name               = "MarketplaceSeller"
+      description        = "Grants marketplace access to manage service/product offers."
+      relay_state        = local.default_relay_state
+      session_duration   = local.default_session_duration
+      tags               = local.tags
+      inline_policy      = ""
       policy_attachments = [
         "arn:aws:iam::aws:policy/AWSMarketplaceSellerFullAccess",
         "arn:aws:iam::aws:policy/WellArchitectedConsoleFullAccess"
       ]
+      customer_managed_policy_attachments = []
+    },
+    {
+      name                                = "DataScientist"
+      description                         = "Provides access to AWS services that have to do with Data Science and MLOps."
+      relay_state                         = local.default_relay_state
+      session_duration                    = "PT2H"
+      tags                                = local.tags
+      inline_policy                       = data.aws_iam_policy_document.data_scientist.json
+      policy_attachments                  = []
       customer_managed_policy_attachments = []
     },
   ]
