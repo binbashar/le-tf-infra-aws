@@ -66,12 +66,12 @@ module "permission_sets" {
       customer_managed_policy_attachments = []
     },
     {
-      name               = "MarketplaceSeller"
-      description        = "Grants marketplace access to manage service/product offers."
-      relay_state        = local.default_relay_state
-      session_duration   = local.default_session_duration
-      tags               = local.tags
-      inline_policy      = ""
+      name             = "MarketplaceSeller"
+      description      = "Grants marketplace access to manage service/product offers."
+      relay_state      = local.default_relay_state
+      session_duration = local.default_session_duration
+      tags             = local.tags
+      inline_policy    = ""
       policy_attachments = [
         "arn:aws:iam::aws:policy/AWSMarketplaceSellerFullAccess",
         "arn:aws:iam::aws:policy/WellArchitectedConsoleFullAccess"
