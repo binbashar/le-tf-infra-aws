@@ -201,6 +201,7 @@ data "aws_iam_policy_document" "data_scientist" {
       "route53domains:*",
       "route53resolver:*",
       "s3:*",
+      "sagemaker:*",
       "secretsmanager:*",
       "sns:*",
       "sqs:*",
