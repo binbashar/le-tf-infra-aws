@@ -1,5 +1,5 @@
 module "terraform_backend" {
-  source = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.20"
+  source = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.28"
 
   #
   # Bucket Name
@@ -24,6 +24,12 @@ module "terraform_backend" {
   # Replication
   #
   bucket_replication_enabled = true
+
+  notifications_sns             = false
+  bucket_lifecycle_enabled      = false
+  billing_mode                  = "PROVISIONED"
+  enable_point_in_time_recovery = false
+  create_kms_key                = false # USE SSE-S3
 
   tags = local.tags
 
