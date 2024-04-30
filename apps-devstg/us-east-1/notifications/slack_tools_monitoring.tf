@@ -56,25 +56,6 @@ data "aws_iam_policy_document" "sns-topic-policy" {
 
   statement {
     actions = [
-      "SNS:Publish",
-    ]
-
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["budgets.amazonaws.com"]
-    }
-
-    resources = [
-      module.notify_slack_monitoring.slack_topic_arn
-    ]
-
-    sid = "_budgets_service_access_ID"
-  }
-
-  statement {
-    actions = [
       "SNS:Subscribe",
       "SNS:SetTopicAttributes",
       "SNS:RemovePermission",
