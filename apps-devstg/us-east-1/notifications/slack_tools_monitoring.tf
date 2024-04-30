@@ -2,7 +2,7 @@
 # https://www.terraform.io/docs/state/sensitive-data.html
 
 resource "aws_kms_ciphertext" "slack_url_monitoring" {
-  plaintext = data.vault_generic_secret.slack_hook_url_monitoring.data["slack_webhook_monitoring"]
+  plaintext = data.sops_file.secrets.data["slack_webhook_monitoring"]
   key_id    = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
 }
 
@@ -37,4 +37,56 @@ module "notify_slack_monitoring" {
   sns_topic_name       = var.sns_topic_name_monitoring
 
   cloudwatch_log_group_kms_key_id = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
+}
+
+# ##################################################################################
+# permisssions for budget->sns topic publication
+data "aws_caller_identity" "current" {}
+
+resource "aws_sns_topic_policy" "default" {
+  count  = var.add_budget_service_permission == true ? 1 : 0
+  arn    = module.notify_slack_monitoring.slack_topic_arn
+  policy = data.aws_iam_policy_document.sns-topic-policy[0].json
+}
+
+data "aws_iam_policy_document" "sns-topic-policy" {
+  count = var.add_budget_service_permission == true ? 1 : 0
+
+  policy_id = "publish_to_topic_policy"
+
+  statement {
+    actions = [
+      "SNS:Subscribe",
+      "SNS:SetTopicAttributes",
+      "SNS:RemovePermission",
+      "SNS:Receive",
+      "SNS:Publish",
+      "SNS:ListSubscriptionsByTopic",
+      "SNS:GetTopicAttributes",
+      "SNS:DeleteTopic",
+      "SNS:AddPermission",
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceOwner"
+
+      values = [
+        data.aws_caller_identity.current.account_id
+      ]
+    }
+
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    resources = [
+      module.notify_slack_monitoring.slack_topic_arn
+    ]
+
+    sid = "__default_statement_ID"
+  }
 }
