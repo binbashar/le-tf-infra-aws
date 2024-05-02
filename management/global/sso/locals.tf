@@ -182,30 +182,29 @@ locals {
         "devops",
       ]
     }
-<<<<<<< HEAD
-     "matias.sorozabal" = {
-=======
     "matias.sorozabal" = {
->>>>>>> master
       first_name = "Matias"
       last_name  = "Sorozabal"
       email      = "matias.sorozabal@binbash.com.ar"
       groups = [
-<<<<<<< HEAD
-        "administrators",
-        "devops",
+        "datascientists",
       ]
     }
-      "juan.delatorre" = {
+    "ignacio.gomez" = {
+      first_name = "Ignacio"
+      last_name  = "Gomez"
+      email      = "ignacio.gomez@binbash.com.ar"
+      groups = [
+        "datascientists",
+      ]
+    }
+    "juan.delatorre" = {
       first_name = "Juan"
       last_name  = "De la Torre"
       email      = "juan.delatorre@binbash.com.ar"
       groups = [
         "administrators",
         "devops",
-=======
-        "datascientists",
->>>>>>> master
       ]
     }
   }

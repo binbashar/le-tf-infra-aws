@@ -68,13 +68,11 @@ data "aws_iam_policy_document" "devops" {
       "route53resolver:*",
       "s3:*",
       "sagemaker:*",
+      "scheduler:*",
       "ses:*",
       "secretsmanager:*",
       "securityhub:*",
-<<<<<<< HEAD
-=======
       "servicediscovery:*",
->>>>>>> master
       "shield:*",
       "synthetics:*",
       "sns:*",
