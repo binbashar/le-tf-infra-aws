@@ -182,11 +182,16 @@ locals {
         "devops",
       ]
     }
+<<<<<<< HEAD
      "matias.sorozabal" = {
+=======
+    "matias.sorozabal" = {
+>>>>>>> master
       first_name = "Matias"
       last_name  = "Sorozabal"
       email      = "matias.sorozabal@binbash.com.ar"
       groups = [
+<<<<<<< HEAD
         "administrators",
         "devops",
       ]
@@ -198,6 +203,9 @@ locals {
       groups = [
         "administrators",
         "devops",
+=======
+        "datascientists",
+>>>>>>> master
       ]
     }
   }
@@ -229,6 +237,10 @@ locals {
     marketplaceseller = {
       name        = "MarketplaceSeller"
       description = "Provides access to the AWS MaketPlace Seller."
+    }
+    datascientists = {
+      name        = "DataScientists"
+      description = "Provides access to the Data Science related services."
     }
   }
 
