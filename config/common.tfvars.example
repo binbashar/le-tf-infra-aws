@@ -36,6 +36,10 @@ accounts = {
     email = "binbash-apps-prd@binbash.com.ar",
     id    = 666666666666
   }
+  data-science = {
+    email = "binbash-data-science@binbash.com.ar",
+    id    = 666666666666
+  }
 }
 
 

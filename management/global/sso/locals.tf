@@ -173,6 +173,23 @@ locals {
         "marketplaceseller",
       ]
     }
+    "osvaldo.demo" = {
+      first_name = "Osvaldo"
+      last_name  = "Demo"
+      email      = "osvaldo.demo@binbash.com.ar"
+      groups = [
+        "administrators",
+        "devops",
+      ]
+    }
+    "matias.sorozabal" = {
+      first_name = "Matias"
+      last_name  = "Sorozabal"
+      email      = "matias.sorozabal@binbash.com.ar"
+      groups = [
+        "datascientists",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
@@ -202,6 +219,10 @@ locals {
     marketplaceseller = {
       name        = "MarketplaceSeller"
       description = "Provides access to the AWS MaketPlace Seller."
+    }
+    datascientists = {
+      name        = "DataScientists"
+      description = "Provides access to the Data Science related services."
     }
   }
 

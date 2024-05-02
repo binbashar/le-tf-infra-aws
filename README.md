@@ -20,7 +20,7 @@ In order to get the full automated potential of the
 [Binbash Leverage DevOps Automation Code Library](https://leverage.binbash.com.ar/how-it-works/code-library/code-library/)  
 you should follow the steps below:
 
-1. [Install](https://leverage.binbash.com.ar/first-steps/local-setup/) and use the `leverage cli`
+1. [Install](https://leverage.binbash.co/user-guide/leverage-cli/installation/) and use the `leverage cli`
 2. Update your [configuration files](https://leverage.binbash.com.ar/user-guide/ref-architecture-aws/configs/)
 3. Review and assure you meet all the Terraform AWS pre-requisites
    1. AWS Credentials (Including your MFA setup)

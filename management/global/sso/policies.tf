@@ -17,6 +17,7 @@ data "aws_iam_policy_document" "devops" {
       "aws-marketplace:*",
       "backup:*",
       "backup-storage:*",
+      "bedrock:*",
       "ce:*",
       "cloudformation:*",
       "cloudfront:*",
@@ -53,7 +54,9 @@ data "aws_iam_policy_document" "devops" {
       "logs:*",
       "network-firewall:*",
       "networkmanager:*",
+      "pipes:*",
       "q:*",
+      "quicksight:*",
       "ram:*",
       "rds:*",
       "redshift:*",
@@ -64,15 +67,19 @@ data "aws_iam_policy_document" "devops" {
       "route53domains:*",
       "route53resolver:*",
       "s3:*",
+      "sagemaker:*",
       "ses:*",
       "secretsmanager:*",
+      "securityhub:*",
+      "servicediscovery:*",
       "shield:*",
       "sns:*",
       "sqs:*",
       "ssm:*",
+      "states:*",
       "sts:*",
       "support:*",
-      "servicediscovery:*",
+      "synthetics:*",
       "tag:*",
       "transfer:*",
       "trustedadvisor:*",
@@ -153,5 +160,74 @@ data "aws_iam_policy_document" "github_automation" {
       "ec2:DeleteNatGateway",
     ]
     resources = ["*"]
+  }
+}
+
+#------------------------------------------------------------------------------
+# Data Scientist
+#------------------------------------------------------------------------------
+data "aws_iam_policy_document" "data_scientist" {
+  statement {
+    sid = "Default"
+    actions = [
+      "athena:*",
+      "autoscaling:*",
+      "aws-portal:*",
+      "bedrock:*",
+      "ce:*",
+      "cloudformation:*",
+      "cloudwatch:*",
+      "config:*",
+      "dynamodb:*",
+      "ec2:*",
+      "ecr:*",
+      "ecr-public:*",
+      "ecs:*",
+      "eks:*",
+      "elasticloadbalancing:*",
+      "elasticfilesystem:*",
+      "es:*",
+      "events:*",
+      "glue:*",
+      "health:*",
+      "iam:*",
+      "kms:*",
+      "lambda:*",
+      "logs:*",
+      "aws-marketplace:*",
+      "pipes:*",
+      "q:*",
+      "quicksight:*",
+      "ram:*",
+      "rds:*",
+      "redshift:*",
+      "resource-explorer:*",
+      "resource-explorer-2:*",
+      "resource-groups:*",
+      "route53:*",
+      "route53domains:*",
+      "route53resolver:*",
+      "s3:*",
+      "sagemaker:*",
+      "secretsmanager:*",
+      "sns:*",
+      "sqs:*",
+      "ssm:*",
+      "states:*",
+      "sts:*",
+      "support:*",
+      "tag:*",
+      "vpc:*",
+    ]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestedRegion"
+      values = [
+        "${var.region}",
+        "${var.region_secondary}",
+        "us-east-1", # The original region is needed to have IAM working
+      ]
+    }
   }
 }

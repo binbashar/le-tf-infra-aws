@@ -30,6 +30,12 @@ locals {
     bbl_apps_prd = {
       policy = aws_organizations_policy.standard
     }
+    #
+    # Data Science: Organizational Unit Policies
+    #
+    bbl_data_science = {
+      policy = aws_organizations_policy.standard
+    }
   }
 
   root_account = {
@@ -80,6 +86,13 @@ locals {
     apps-prd = {
       email     = "aws+apps-prd@binbash.com.ar",
       parent_ou = "bbl_apps_prd"
+    }
+    #
+    # DataScience: data science workloads, MLOps, and such.
+    #
+    data-science = {
+      email     = "aws+data-science@binbash.com.ar",
+      parent_ou = "bbl_data_science"
     }
   }
 }
