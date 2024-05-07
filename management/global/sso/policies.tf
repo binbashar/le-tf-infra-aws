@@ -73,6 +73,7 @@ data "aws_iam_policy_document" "devops" {
       "secretsmanager:*",
       "securityhub:*",
       "servicediscovery:*",
+      "scheduler:*",
       "shield:*",
       "synthetics:*",
       "sns:*",
