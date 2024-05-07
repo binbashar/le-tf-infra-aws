@@ -190,6 +190,23 @@ locals {
         "datascientists",
       ]
     }
+    "ignacio.gomez" = {
+      first_name = "Ignacio"
+      last_name  = "Gomez"
+      email      = "ignacio.gomez@binbash.com.ar"
+      groups = [
+        "datascientists",
+      ]
+    }
+    "juan.delatorre" = {
+      first_name = "Juan"
+      last_name  = "De la Torre"
+      email      = "juan.delatorre@binbash.com.ar"
+      groups = [
+        "administrators",
+        "devops",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
