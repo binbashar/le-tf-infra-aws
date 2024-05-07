@@ -74,7 +74,7 @@ module "terraform-aws-basic-layout" {
   ]
 
   dns_records_internal_hosted_zone = [{
-    zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
+    zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id,
     name    = "vpn.aws.binbash.com.ar",
     type    = "A",
     ttl     = 300
