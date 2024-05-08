@@ -6,6 +6,12 @@ provider "aws" {
   profile = var.profile
 }
 
+provider "aws" {
+  region  = var.region
+  profile = "${var.project}-shared-devops"
+  alias   = "shared"
+}
+
 #=============================#
 # Backend Config (partial)    #
 #=============================#
@@ -13,11 +19,11 @@ terraform {
   required_version = "~> 1.2"
 
   required_providers {
-    aws = "~> 4.31"
+    aws   = "~> 4.10"
   }
 
   backend "s3" {
-    key = "shared/secrets-manager/terraform.tfstate"
+    key = "data-science/notifications/terraform.tfstate"
   }
 }
 
@@ -26,7 +32,7 @@ terraform {
 #=============================#
 data "terraform_remote_state" "keys" {
   backend = "s3"
-  config = {
+  config  = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket

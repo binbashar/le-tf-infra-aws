@@ -23,23 +23,7 @@ data "aws_iam_policy_document" "kms" {
 
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::${var.accounts.shared.id}:root"]
-    }
-  }
-
-  statement {
-    sid       = "Grant read-only to other accounts that use the key with Secrets Manager"
-    effect    = "Allow"
-    actions   = [
-      "kms:Decrypt*",
-      "kms:Describe*"
-    ]
-    resources = ["*"]
-    principals {
-      type = "AWS"
-      identifiers = [
-        "arn:aws:iam::${var.accounts.data-science.id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_DevOps_a1627cef3f7399d3",
-      ]
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.id}:root"]
     }
   }
 
@@ -62,7 +46,7 @@ data "aws_iam_policy_document" "kms" {
     condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
-      values   = ["arn:aws:logs:${var.region}:${var.accounts.shared.id}:*"]
+      values   = ["arn:aws:logs:${var.region}:${data.aws_caller_identity.current.id}:*"]
     }
   }
 }
