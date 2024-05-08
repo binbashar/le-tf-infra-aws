@@ -28,9 +28,9 @@ data "aws_iam_policy_document" "kms" {
   }
 
   statement {
-    sid       = "Grant read-only to other accounts that use the key with Secrets Manager"
-    effect    = "Allow"
-    actions   = [
+    sid    = "Grant read-only to other accounts that use the key with Secrets Manager"
+    effect = "Allow"
+    actions = [
       "kms:Decrypt*",
       "kms:Describe*"
     ]
