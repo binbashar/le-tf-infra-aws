@@ -207,6 +207,14 @@ locals {
         "devops",
       ]
     }
+    "marcelo.beresvil" = {
+      first_name = "Marcelo"
+      last_name  = "Beresvil"
+      email      = "marcelo.beresvil@binbash.com.ar"
+      groups = [
+        "marketplaceseller",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
