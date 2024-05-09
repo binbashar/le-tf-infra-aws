@@ -13,10 +13,10 @@ terraform {
   required_version = "~> 1.2"
 
   required_providers {
-    aws = "~> 4.10"
+    aws = "~> 5.0"
   }
 
   backend "s3" {
-    key = "shared/security-keys/terraform.tfstate"
+    key = "data-science/security-base/terraform.tfstate"
   }
 }
