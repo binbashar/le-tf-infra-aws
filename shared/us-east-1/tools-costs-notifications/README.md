@@ -113,7 +113,7 @@ Before using this script, you need to set up the following:
 
 | :point_up: Note   |
 |:---------------|
-| If you have SES in place but you've created a new identity (email remitent) VERIFY it in the [AWS SES Console](https://us-east-1.console.aws.amazon.com/ses/home?region=us-east-1#/identities)! |
+| If you have SES in place but you've created a new identity (email sender and/or receiver/s) VERIFY it in the [AWS SES Console](https://us-east-1.console.aws.amazon.com/ses/home?region=us-east-1#/identities)! |
 
 ## How it Works
 
