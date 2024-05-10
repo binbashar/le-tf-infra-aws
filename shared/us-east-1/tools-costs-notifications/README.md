@@ -111,8 +111,9 @@ Before using this script, you need to set up the following:
 
 3. **Amazon SES Configuration**: Ensure that your AWS environment has Amazon SES configured with the appropriate permissions to send emails.
 
-| :point_up:    | If you have SES in place but you've created a new identity (email remitent) VERIFY it in the [AWS SES Console](https://us-east-1.console.aws.amazon.com/ses/home?region=us-east-1#/identities)! |
-|---------------|:------------------------|
+| :point_up:    |
+|:---------------|
+| If you have SES in place but you've created a new identity (email remitent) VERIFY it in the [AWS SES Console](https://us-east-1.console.aws.amazon.com/ses/home?region=us-east-1#/identities)! |
 
 ## How it Works
 
