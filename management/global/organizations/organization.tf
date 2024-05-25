@@ -28,18 +28,19 @@ resource "aws_organizations_organization" "main" {
 }
 
 #
-# Delegate administration of access analyzer to security account
+# Delegate administration of resources to security account
 #
-resource "aws_organizations_delegated_administrator" "access_analyzer_administrator" {
+resource "aws_organizations_delegated_administrator" "delegated_administrator" {
+  for_each          = toset(local.delegated_services)
   account_id        = aws_organizations_account.accounts["security"].id
-  service_principal = "access-analyzer.amazonaws.com"
+  service_principal = each.key
 
   depends_on = [
     aws_organizations_organization.main,
-    aws_organizations_account.accounts["security"]
   ]
 }
 
-resource "aws_iam_service_linked_role" "access_analyzer" {
-  aws_service_name = "access-analyzer.amazonaws.com"
+resource "aws_iam_service_linked_role" "linked_roles" {
+  for_each         = toset(local.delegated_services)
+  aws_service_name = each.key
 }
