@@ -6,7 +6,7 @@
 # Module instantiation
 #
 module "terraform-aws-config" {
-  source                         = "github.com/binbashar/terraform-aws-config.git?ref=v4.6.10"
+  source                         = "github.com/binbashar/terraform-aws-config.git?ref=v8.1.0"
   config_logs_bucket             = data.terraform_remote_state.security-security-compliance.outputs.aws_logs_bucket
   config_name                    = "${var.project}-${var.environment}-awsconfig"
   config_logs_prefix             = ""
@@ -49,7 +49,6 @@ module "terraform-aws-config" {
 
   # EC2 & VPC Config Rules
   check_eip_attached           = true
-  check_instances_in_vpc       = true
   check_ec2_volume_inuse_check = true
   check_ec2_encrypted_volumes  = true
 

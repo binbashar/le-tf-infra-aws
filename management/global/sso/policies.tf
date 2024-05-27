@@ -149,6 +149,16 @@ data "aws_iam_policy_document" "devops" {
       ]
     }
   }
+
+  statement {
+    sid = "ConfigOrganizationWide"
+    actions = [
+      "organizations:ListDelegatedAdministrators"
+    ]
+    effect    = "Allow"
+    resources = ["*"]
+
+  }
 }
 
 #------------------------------------------------------------------------------
