@@ -1,6 +1,6 @@
 # AWS Security Hub
 
-### Enable the security standards that Security Hub has designated as default: 
+### Enable the security standards that Security Hub has designated as default:
 ### AWS Foundational Security Best Practices v1.0.0 and CIS AWS Foundations Benchmark v1.2.0
 
 # For Single account use this:
