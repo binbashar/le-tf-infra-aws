@@ -17,7 +17,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "security/security-hub/terraform.tfstate"
+    key = "root/security-hub/terraform.tfstate"
   }
 }
 
