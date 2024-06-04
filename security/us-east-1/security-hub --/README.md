@@ -8,7 +8,7 @@ This layer is valid for multi-account setups within an AWS Organization.
 
 ## For single AWS Account
 
-See [here](../../../management/us-east-1/security-hub%20--/README.md) the note on AWS Single Account.
+See [here](../../../management/us-east-1/security-hub%20--/README.md#for-single-account) the note on AWS Single Account.
 
 ## For AWS Organizatons
 
