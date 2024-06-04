@@ -14,4 +14,4 @@ See [here](../../../management/us-east-1/security-hub%20--/README.md#for-single-
 
 Apply first [this layer](../../../management/us-east-1/security-hub%20--) to delegate Security Hub management.
 
-Then, apply this layer.
+Then, apply this layer to the delegated account.
