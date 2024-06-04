@@ -17,7 +17,7 @@ resource "aws_securityhub_account" "default" {
 ```
 
 
-## For Multi account with organization
+## For AWS Organizations
 
 When running Organizations, follow these steps:
 
