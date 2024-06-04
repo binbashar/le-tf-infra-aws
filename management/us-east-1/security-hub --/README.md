@@ -1,9 +1,12 @@
 # AWS Security Hub
 
-### Enable the security standards that Security Hub has designated as default:
-### AWS Foundational Security Best Practices v1.0.0 and CIS AWS Foundations Benchmark v1.2.0
+Enable [AWS Security Hub](https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html) with the security standards designated as default:
+- AWS Foundational Security Best Practices v1.0.0
+- CIS AWS Foundations Benchmark v1.2.0
 
-# For Single account use this:
+## For Single account
+
+If you are running a single AWS account, use this in such account:
 
 ```hcl
 resource "aws_securityhub_account" "default" {
@@ -14,7 +17,11 @@ resource "aws_securityhub_account" "default" {
 ```
 
 
-# Multi account with organization, use this:
+## Multi account with organization
+
+When running Organizations, follow these steps:
+
+1. Delegate the Security Hug management to an account other than `management`.
 
 ```hcl
 resource "aws_securityhub_organization_admin_account" "main" {
@@ -22,9 +29,12 @@ resource "aws_securityhub_organization_admin_account" "main" {
 }
 ```
 
+2. Then apply [this layer](../../../security/us-east-1/security-hub\ --/) to the chosen account.
+
 Note: It is recommended that the delegated account not be the `management` account. It is advised to use the `security` account as the delegated admin account.
 
-# Full Destroy:
+## Full Destroy
+
 If you want to disable Security Hub and you run  `leverage terraform destroy`, you might notice that Security Hub is still active and collecting findings from all accounts within your organization. To fully disable Security Hub, follow these steps:
 
 1- Add the following blocks to your Terraform configuration:
@@ -41,6 +51,8 @@ resource "aws_securityhub_account" "security" {
   enable_default_standards = false
 }
 ```
+
+(Note this assumes you are using `security` account for Security Hub, change it as per your needs)
 
 2- Import the Security Hub account resource with the following command::
 

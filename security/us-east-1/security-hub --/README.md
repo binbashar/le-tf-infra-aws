@@ -1,24 +1,17 @@
 # AWS Security Hub
 
-### Enable the security standards that Security Hub has designated as default:
-### AWS Foundational Security Best Practices v1.0.0 and CIS AWS Foundations Benchmark v1.2.0
-#### This layer is only necessary for multi-account setups within an organization.
-#### Before running this layer, you must first execute the 'security-hub' layer in the management account.
+Enable [AWS Security Hub](https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html) with the security standards designated as default:
+- AWS Foundational Security Best Practices v1.0.0
+- CIS AWS Foundations Benchmark v1.2.0
 
-```hcl
-resource "aws_securityhub_organization_admin_account" "main" {
-  admin_account_id = var.accounts.security.id
-}
-resource "aws_securityhub_finding_aggregator" "main" {
-  linking_mode = "ALL_REGIONS"
-  depends_on = [aws_securityhub_organization_admin_account.main]
-}
-resource "aws_securityhub_organization_configuration" "main" {
-  auto_enable           = true
-  auto_enable_standards = "DEFALT"
-  organization_configuration {
-    configuration_type = "CENTRAL"
-  }
-  depends_on = [aws_securityhub_finding_aggregator.main]
-}
-```
+This layer is valid for multi-account setups within an AWS Organization.
+
+## For single AWS Account
+
+See [here](../../../management/us-east-1/security-hub\ --/README.md) the note on AWS Single Account.
+
+## For AWS Organizatons
+
+Apply first [this layer](../../../management/us-east-1/security-hub\) to delegate Security Hub management.
+
+Then, apply this layer.
