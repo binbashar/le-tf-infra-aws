@@ -29,7 +29,7 @@ resource "aws_securityhub_organization_admin_account" "main" {
 }
 ```
 
-2. Then apply [this layer](../../../security/us-east-1/security-hub\ --/) to the chosen account.
+2. Then apply [this layer]("../../../security/us-east-1/security-hub --/") to the chosen account.
 
 Note: It is recommended that the delegated account not be the `management` account. It is advised to use the `security` account as the delegated admin account.
 
