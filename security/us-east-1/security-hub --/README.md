@@ -2,8 +2,8 @@
 
 ### Enable the security standards that Security Hub has designated as default:
 ### AWS Foundational Security Best Practices v1.0.0 and CIS AWS Foundations Benchmark v1.2.0
-### This layer is only necessary for multi-account setups within an organization.
-### Before running this layer, you must first execute the 'security-hub' layer in the management account.
+## This layer is only necessary for multi-account setups within an organization.
+## Before running this layer, you must first execute the 'security-hub' layer in the management account.
 
 ```hcl
 resource "aws_securityhub_organization_admin_account" "main" {
