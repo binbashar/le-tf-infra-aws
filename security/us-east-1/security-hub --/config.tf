@@ -10,14 +10,15 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = "~> 1.3"
+  required_version = "~> 1.2"
 
   required_providers {
-    aws = "~> 4.10"
+    aws = "~> 5.41"
   }
 
   backend "s3" {
-    key = "root/security-hub/terraform.tfstate"
+    key = "security/security-hub/terraform.tfstate"
   }
 }
 
+data "aws_organizations_organization" "this" {}
