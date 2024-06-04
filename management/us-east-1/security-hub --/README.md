@@ -21,7 +21,7 @@ resource "aws_securityhub_account" "default" {
 
 When running Organizations, follow these steps:
 
-1. Delegate the Security Hug management to an account other than `management`.
+1. Delegate the Security Hub management to an account other than `management`.
 
 ```hcl
 resource "aws_securityhub_organization_admin_account" "main" {
