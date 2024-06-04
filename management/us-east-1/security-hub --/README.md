@@ -17,7 +17,7 @@ resource "aws_securityhub_account" "default" {
 ```
 
 
-## Multi account with organization
+## For Multi account with organization
 
 When running Organizations, follow these steps:
 
