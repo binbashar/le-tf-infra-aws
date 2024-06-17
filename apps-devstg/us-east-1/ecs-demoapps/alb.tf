@@ -103,21 +103,22 @@ module "apps_devstg_alb_ecs_demoapps" {
 
   }
 
-  target_groups = { for target_name, container_values in local.target_groups :
+  target_groups = { for target_name, target_values in local.target_groups :
     # Target groups named as the associated container
     target_name => {
-      name        = "ecs-${target_name}"
-      protocol    = "HTTP"
-      port        = container_values.port
-      target_type = "ip"
+      name             = "ecs-${target_name}"
+      protocol         = "HTTP"
+      protocol_version = try(target_values.protocol_version, "HTTP1")
+      port             = target_values.port
+      target_type      = "ip"
 
       health_check = {
         interval            = 30
-        port                = container_values.port
+        port                = target_values.port
         healthy_threshold   = 2
         unhealthy_threshold = 10
         protocol            = "HTTP"
-        matchoe             = "200-404"
+        matcher             = try(target_values.health_check.matcher, null)
       }
       # ECS handles the attachment
       create_attachment = false

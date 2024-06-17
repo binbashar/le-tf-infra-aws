@@ -84,14 +84,19 @@ locals {
       web = {
         subdomain = "emojivoto.ecs"
         port      = 8080
+        health_check = {
+          matcher = "200-404"
+        }
       }
       voting-api = {
-        subdomain = "emojivoto-voting.ecs"
-        port      = 8081
+        subdomain        = "emojivoto-voting.ecs"
+        port             = 8081
+        protocol_version = "GRPC"
       }
       emoji-api = {
-        subdomain = "emojivoto-emoji.ecs"
-        port      = 8082
+        subdomain        = "emojivoto-emoji.ecs"
+        port             = 8082
+        protocol_version = "GRPC"
       }
     }
   }

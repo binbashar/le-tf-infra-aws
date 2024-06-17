@@ -75,6 +75,15 @@ module "apps_devstg_ecs_cluster" {
       # Service IAM Roles and policies
       task_exec_iam_role_name = "${service_name}-ecr-exec"
 
+      # Target group assignment
+      load_balancer = { for container_name, container_values in local.routing[service_name] :
+        container_name => {
+          target_group_arn = module.apps_devstg_alb_ecs_demoapps.target_groups[container_name].arn
+          container_name   = container_name
+          container_port   = container_values.port
+        }
+      }
+
       # Networking
       subnet_ids = data.terraform_remote_state.vpc.outputs.private_subnets
       security_group_rules = merge(
@@ -97,15 +106,6 @@ module "apps_devstg_ecs_cluster" {
           }
         }
       )
-
-      # Target group assignment
-      load_balancer = { for container_name, container_values in local.routing[service_name] :
-        container_name => {
-          target_group_arn = module.apps_devstg_alb_ecs_demoapps.target_groups[container_name].arn
-          container_name   = container_name
-          container_port   = container_values.port
-        }
-      }
     }
   }
 
