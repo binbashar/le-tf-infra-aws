@@ -74,6 +74,15 @@ locals {
           environment = {
             WEB_HOST = "localhost:${local.routing.emojivoto.web.port}"
           }
+
+          entrypoint = ["emojivoto-vote-bot"]
+
+          dependencies = [{
+            containerName = "web"
+            condition     = "START"
+          }]
+
+          essential = false
         }
       }
     }

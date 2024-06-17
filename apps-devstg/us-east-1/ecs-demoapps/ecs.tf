@@ -67,6 +67,15 @@ module "apps_devstg_ecs_cluster" {
               protocol      = "tcp"
             }
           ]
+
+          # Entrypoint
+          entrypoint = try(container_values.entrypoint, [])
+
+          # Dependencies
+          dependencies =  try(container_values.dependencies, [])
+
+          # Is the container essential
+          essential = try(container_values.essential, true)
         }
       }
 
