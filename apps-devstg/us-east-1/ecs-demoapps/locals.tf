@@ -18,8 +18,8 @@ locals {
 
           environment = {
             WEB_PORT       = local.routing.emojivoto.web.port
-            EMOJISVC_HOST  = "${local.routing.emojivoto.emoji-api.subdomain}.${local.base_domain}"
-            VOTINGSVC_HOST = "${local.routing.emojivoto.voting-api.subdomain}.${local.base_domain}"
+            EMOJISVC_HOST  = "localhost:${local.routing.emojivoto.emoji-api.port}"
+            VOTINGSVC_HOST = "localhost:${local.routing.emojivoto.voting-api.port}"
             INDEX_BUNDLE   = "dist/index_bundle.js"
           }
 
@@ -72,7 +72,7 @@ locals {
           memory = 2048
 
           environment = {
-            WEB_HOST = "${local.routing.emojivoto.web.subdomain}.${local.base_domain}"
+            WEB_HOST = "localhost:${local.routing.emojivoto.web.port}"
           }
         }
       }
