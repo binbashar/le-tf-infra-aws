@@ -72,7 +72,7 @@ module "apps_devstg_ecs_cluster" {
           entrypoint = try(container_values.entrypoint, [])
 
           # Dependencies
-          dependencies =  try(container_values.dependencies, [])
+          dependencies = try(container_values.dependencies, [])
 
           # Is the container essential
           essential = try(container_values.essential, true)
