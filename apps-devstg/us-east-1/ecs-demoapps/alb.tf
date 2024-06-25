@@ -139,7 +139,7 @@ resource "aws_route53_record" "apps_devstg_demoapps_emojivoto" {
   for_each = local.routing.emojivoto
 
   zone_id = data.terraform_remote_state.shared-dns.outputs.aws_internal_zone_id
-  name    = each.value.subdomain
+  name    = "${each.value.subdomain}.${local.environment}"
   type    = "A"
 
   alias {
