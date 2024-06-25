@@ -2,7 +2,7 @@
 locals {
   environment = replace(var.environment, "apps-", "")
   name        = "${var.project}-${local.environment}-demoapps"
-  base_domain = "${local.environment}.data.terraform_remote_state.shared-dns.outputs.aws_internal_zone_domain_name"
+  base_domain = "${local.environment}.${data.terraform_remote_state.shared-dns.outputs.aws_internal_zone_domain_name}"
 
   services = {
     emojivoto = {
