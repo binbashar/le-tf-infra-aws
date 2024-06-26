@@ -41,7 +41,7 @@ resource "helm_release" "gatus" {
   namespace  = kubernetes_namespace.gatus[0].id
   repository = "https://minicloudlabs.github.io/helm-charts"
   chart      = "gatus"
-  version    = "1.1.1"
+  version    = "1.1.4"
   values     = [file("chart-values/gatus.yaml")]
   depends_on = [
     helm_release.ingress_nginx_private,
