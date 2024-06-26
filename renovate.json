@@ -2,5 +2,33 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
-  ]
+  ],
+  "packageRules": [
+    {
+      "managers": ["terraform"],
+      "matchPackageNames": [
+        "terraform",
+        "hashicorp/terraform",
+        "hashicorp/aws",
+        "hashicorp/kubernetes",
+        "hashicorp/helm",
+        "hashicorp/vault"
+      ],
+      "enabled": true,
+      "automerge": false
+    },
+    {
+      "matchDatasources": ["terraform-provider"],
+      "enabled": true,
+      "automerge": false
+    },
+    {
+      "matchDatasources": ["terraform-module"],
+      "enabled": true,
+      "automerge": false
+    }
+  ],
+  "terraform": {
+    "enabled": true
+  }
 }
