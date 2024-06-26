@@ -6,7 +6,7 @@ resource "helm_release" "ingressmonitorcontroller-endpoint" {
   name       = "ingress-monitor-controller-endpoint"
   repository = "https://binbashar.github.io/helm-charts/"
   chart      = "ingress-monitor-controller-endpoint"
-  version    = "0.1.0"
+  version    = "0.1.1"
   values     = [file("chart-values/ingress-monitor-controller-endpoint.yaml")]
   depends_on = [helm_release.ingressmonitorcontroller]
 }
