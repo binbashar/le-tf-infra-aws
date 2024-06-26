@@ -2,7 +2,7 @@
 # EC2 HashiCorp Vault
 #
 module "vault_instance" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.23"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.34"
   prefix = var.prefix
   name   = var.name
 
