@@ -6,6 +6,17 @@ data "aws_secretsmanager_secret_version" "demo_google_microservices_deploy_key" 
   secret_id = "/repositories/demo-google-microservices/deploy_key"
 }
 
+
+# argocd_admin_password
+data "aws_secretsmanager_secret" "argocd_admin_password" {
+  name = "/k8s-eks-demoapps/argocdserveradminpassword"
+}
+
+# Get the latest secret version
+data "aws_secretsmanager_secret_version" "argocd_admin_password" {
+  secret_id = data.aws_secretsmanager_secret.argocd_admin_password.id
+}
+
 resource "helm_release" "argocd" {
   count = var.enable_cicd ? 1 : 0
 
@@ -24,8 +35,8 @@ resource "helm_release" "argocd" {
     yamlencode({
       configs = {
         secret = {
-          # TODO Get this from Secrets Manager
-          argocdServerAdminPassword = "$2b$12$RrGivbnGu1F3Kxyt4tkLy.agL3H0K7lufq94MELnVQ5dtgIflrVmq"
+          # Get argocd admin password from AWS Secrets Manager
+          argocdServerAdminPassword = data.aws_secretsmanager_secret_version.argocd_admin_password.secret_string
         }
         repositories = {
           demo-google-microservices = {
