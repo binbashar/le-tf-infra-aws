@@ -1,0 +1,36 @@
+# When enabled, prints DNS record changes rather than actually performing them
+dryRun: false
+# K8s resources type to be observed for new DNS entries by ExternalDNS
+sources:
+  - traefik-proxy
+# DNS provider where the DNS records will be created
+provider: aws
+# Limit possible target zones by domain suffixes (optional)
+domainFilters:
+  - ${filteredDomain}
+# Limit possible target zones by zone id (optional)
+zoneIdFilters:
+  - ${filteredZoneId}
+# Modify how DNS records are synchronized between sources and providers (options: sync, upsert-only)
+policy: sync
+# Registry Type. Available types are: txt, noop
+## ref: https://github.com/kubernetes-sigs/external-dns/blob/master/docs/proposal/registry.md
+registry: txt
+# TXT Registry Identifier
+txtOwnerId: ${txtOwnerId}
+# Filter sources managed by external-dns via annotation using label selector semantics (optional)
+#annotationFilter: ${annotationFilter}
+
+# Adjust the interval for DNS updates
+interval: 3m
+
+# AWS settings
+aws:
+  zoneType: ${zoneType}
+
+# Create a service account and tie it to the external-dns role
+#serviceAccount:
+#  create: true
+#  name: ${serviceAccountName}
+#  annotations:
+#    eks.amazonaws.com/role-arn: ${roleArn}

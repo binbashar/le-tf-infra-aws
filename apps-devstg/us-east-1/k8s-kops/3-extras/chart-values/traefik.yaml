@@ -1,0 +1,54 @@
+service:
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+experimental:
+  plugins:
+    subfilter:
+      moduleName: github.com/DirtyCajunRice/subfilter
+      version: v0.5.0
+certResolvers:
+  letsencryptresolver:
+    # for challenge options cf. https://doc.traefik.io/traefik/https/acme/
+    email: letsencrypt+costenginetool@binbash.co
+    #dnsChallenge:
+    #  # also add the provider's required configuration under env
+    #  # or expand then from secrets/configmaps with envfrom
+    #  # cf. https://doc.traefik.io/traefik/https/acme/#providers
+    #  provider: digitalocean
+    #  # add futher options for the dns challenge as needed
+    #  # cf. https://doc.traefik.io/traefik/https/acme/#dnschallenge
+    #  delayBeforeCheck: 30
+    #  resolvers:
+    #    - 1.1.1.1
+    #    - 8.8.8.8
+    tlsChallenge: true
+    httpChallenge:
+      entryPoint: "web"
+    # It has to match the path with a persistent volume
+    storage: "/certs/costenginetool.binbash.co.json"
+persistence:
+  enabled: true
+  name: certs
+  #  existingClaim: ""
+  accessMode: ReadWriteOnce
+  size: 128Mi
+  # storageClass: ""
+  # volumeName: ""
+  path: /certs
+  annotations: {}
+  # -- Only mount a subpath of the Volume into the pod
+  # subPath: ""
+deployment:
+  initContainers:
+    # The "volume-permissions" init container is required if you run into permission issues.
+    # Related issue: https://github.com/traefik/traefik-helm-chart/issues/396
+    - name: volume-permissions
+      image: busybox:latest
+      command: ["sh", "-c", "touch /certs/costenginetool.binbash.co.json; chown 65532 /certs/costenginetool.binbash.co.json; chmod -v 600 /certs/costenginetool.binbash.co.json"]
+      securityContext:
+        runAsNonRoot: false
+        runAsGroup: 0
+        runAsUser: 0
+      volumeMounts:
+        - name: certs
+          mountPath: /certs
