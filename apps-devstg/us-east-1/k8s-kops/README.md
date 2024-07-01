@@ -86,6 +86,37 @@ Apply it as usual:
 leverage tf apply
 ```
 
+#### Note on VPCs
+
+In the `config.tf` file you'll find:
+
+``` hcl
+data "terraform_remote_state" "vpc" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/ca-central-1/kops-network/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "vpc-shared" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
+    key     = "shared/us-east-1/network/terraform.tfstate"
+  }
+}
+```
+
+These are the remote states for the "vpc", the vpc in which the cluster will be created, and the "vpc-shared", the vpc in wich the VPN Server is working, so we can accept connections from there.
+
+
 #### Note on Karpenter
 
 To use Karpeneter you need to create a service linked role so spot can be used.
