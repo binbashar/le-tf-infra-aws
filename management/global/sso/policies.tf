@@ -149,6 +149,22 @@ data "aws_iam_policy_document" "devops" {
       ]
     }
   }
+
+  statement {
+    sid = "OrganizationWide"
+    actions = [
+      "organizations:ListDelegatedAdministrators",
+      "organizations:ListAccounts",
+      "organizations:DescribeOrganization",
+      "organizations:ListAWSServiceAccessForOrganization",
+      "organizations:ListRoots",
+      "organizations:ListAccountsForParent",
+      "organizations:ListOrganizationalUnitsForParent"
+    ]
+    effect    = "Allow"
+    resources = ["*"]
+
+  }
 }
 
 #------------------------------------------------------------------------------

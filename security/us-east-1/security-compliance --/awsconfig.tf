@@ -6,14 +6,14 @@
 # AWS Config Logs AES256 SSE Bucket
 #
 module "config_logs" {
-  source = "github.com/binbashar/terraform-aws-logs.git?ref=v11.0.11"
+  source = "github.com/binbashar/terraform-aws-logs.git?ref=v16.2.0"
 
   s3_bucket_name          = "${var.project}-${var.environment}-awsconfig"
   default_allow           = true # Whether all services included in this module should be allowed to write to the bucket by default.
   allow_config            = true # Allow Config service to log to bucket.
   config_logs_prefix      = ""
   s3_log_bucket_retention = 90
-  enable_versioning       = true
+  versioning_status       = "Enabled"
   force_destroy           = true
   config_accounts = [
     var.accounts.root.id,
@@ -29,7 +29,7 @@ module "config_logs" {
 # Module instantiation
 #
 module "terraform-aws-config" {
-  source                         = "github.com/binbashar/terraform-aws-config.git?ref=v4.6.10"
+  source                         = "github.com/binbashar/terraform-aws-config.git?ref=v8.1.0"
   config_logs_bucket             = module.config_logs.aws_logs_bucket
   config_name                    = "${var.project}-${var.environment}-awsconfig"
   config_logs_prefix             = ""
@@ -73,7 +73,6 @@ module "terraform-aws-config" {
 
   # EC2 & VPC Config Rules
   check_eip_attached           = true
-  check_instances_in_vpc       = true
   check_ec2_volume_inuse_check = true
   check_ec2_encrypted_volumes  = true
 
