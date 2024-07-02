@@ -1,6 +1,6 @@
 # Providers
 provider "aws" {
-  region  = var.canada_region_primary
+  region  = var.region_primary
   profile = var.profile
 }
 
