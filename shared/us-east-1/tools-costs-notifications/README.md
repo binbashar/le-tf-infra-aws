@@ -111,6 +111,10 @@ Before using this script, you need to set up the following:
 
 3. **Amazon SES Configuration**: Ensure that your AWS environment has Amazon SES configured with the appropriate permissions to send emails.
 
+| :point_up: Note   |
+|:---------------|
+| If you have SES in place but you've created a new identity (email sender and/or receiver/s) VERIFY it in the [AWS SES Console](https://us-east-1.console.aws.amazon.com/ses/home?region=us-east-1#/identities)! (this is for `us-east-1`, change the region as per your own settings) |
+
 ## How it Works
 
 1. The script calculates the start and end dates for the past month and the month before that.
