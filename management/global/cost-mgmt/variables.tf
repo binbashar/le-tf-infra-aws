@@ -6,12 +6,12 @@
 #
 variable "monthly_billing_threshold_50" {
   description = "Monthly billing threshold in dollars"
-  default     = "62.5"
+  default     = "375.0"
 }
 
 variable "monthly_billing_threshold_100" {
   description = "Monthly billing threshold in dollars"
-  default     = "125.0"
+  default     = "750.0"
 }
 
 variable "currency" {
