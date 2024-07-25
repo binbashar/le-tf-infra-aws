@@ -205,6 +205,15 @@ locals {
         "devops",
       ]
     }
+     "rene.montilva" = {
+      first_name = "Rene"
+      last_name  = "Montilva"
+      email      = "rene.montilva@binbash.com.ar"
+      groups = [
+        "administrators",
+        "devops",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
