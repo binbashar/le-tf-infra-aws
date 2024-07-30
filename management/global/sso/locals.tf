@@ -36,16 +36,6 @@ locals {
       last_name  = "Gauchat"
       email      = "franco.gauchat@binbash.com.ar"
       groups = [
-        "administrators",
-        "devops",
-      ]
-    }
-    "cecilio.prado" = {
-      first_name = "Cecilio"
-      last_name  = "Prado"
-      email      = "cecilio.prado@binbash.com.ar"
-      groups = [
-        "administrators",
         "devops",
       ]
     }
@@ -54,7 +44,6 @@ locals {
       last_name  = "Rivera"
       email      = "francisco.rivera@binbash.com.ar"
       groups = [
-        "administrators",
         "devops",
       ]
     }
@@ -71,7 +60,6 @@ locals {
       last_name  = "de la Camara"
       email      = "juan.delacamara@binbash.com.ar"
       groups = [
-        "administrators",
         "devops",
       ]
     }
@@ -80,7 +68,6 @@ locals {
       last_name  = "Fenoglio"
       email      = "angelo.fenoglio@binbash.com.ar"
       groups = [
-        "administrators",
         "devops",
       ]
     }
@@ -89,7 +76,6 @@ locals {
       last_name  = "Peinado"
       email      = "jose.peinado@binbash.com.ar"
       groups = [
-        "administrators",
         "devops",
       ]
     }
@@ -98,7 +84,6 @@ locals {
       last_name  = "Gallardo"
       email      = "luis.gallardo@binbash.com.ar"
       groups = [
-        "administrators",
         "devops",
       ]
     }
@@ -107,7 +92,6 @@ locals {
       last_name  = "Godoy"
       email      = "ezequiel.godoy@binbash.com.ar"
       groups = [
-        "administrators",
         "devops",
       ]
     }
@@ -125,7 +109,6 @@ locals {
       last_name  = "Galeano"
       email      = "martin.galeano@binbash.com.ar"
       groups = [
-        "administrators",
         "devops",
       ]
     }
@@ -134,7 +117,6 @@ locals {
       last_name  = "Creta"
       email      = "alejandro.creta@binbash.com.ar"
       groups = [
-        "administrators",
         "devops",
       ]
     }
@@ -143,8 +125,6 @@ locals {
       last_name  = "Acosta"
       email      = "marcos.acosta@binbash.com.ar"
       groups = [
-        "administrators",
-        "devops",
       ]
     }
     "caetano.prates" = {
@@ -160,7 +140,6 @@ locals {
       last_name  = "Demo"
       email      = "osvaldo.demo@binbash.com.ar"
       groups = [
-        "administrators",
         "devops",
       ]
     }
@@ -185,7 +164,6 @@ locals {
       last_name  = "De la Torre"
       email      = "juan.delatorre@binbash.com.ar"
       groups = [
-        "administrators",
         "devops",
       ]
     }
@@ -201,6 +179,14 @@ locals {
       first_name = "Lucas"
       last_name  = "Coronel"
       email      = "lucas.coronel@binbash.com.ar"
+      groups = [
+        "devops",
+      ]
+    }
+     "rene.montilva" = {
+      first_name = "Rene"
+      last_name  = "Montilva"
+      email      = "rene.montilva@binbash.com.ar"
       groups = [
         "devops",
       ]
