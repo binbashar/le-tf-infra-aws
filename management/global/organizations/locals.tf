@@ -95,4 +95,10 @@ locals {
       parent_ou = "bbl_data_science"
     }
   }
+
+  ## Delegated services to Security Account
+  delegated_services = [
+    "access-analyzer.amazonaws.com",
+    "config.amazonaws.com"
+  ]
 }

@@ -129,15 +129,6 @@ locals {
         "devops",
       ]
     }
-    "axel.meinel" = {
-      first_name = "Axel"
-      last_name  = "Meinel"
-      email      = "axel.meinel@binbash.com.ar"
-      groups = [
-        "administrators",
-        "devops",
-      ]
-    }
     "alejandro.creta" = {
       first_name = "Alejandro"
       last_name  = "Creta"
@@ -151,15 +142,6 @@ locals {
       first_name = "Marcos"
       last_name  = "Acosta"
       email      = "marcos.acosta@binbash.com.ar"
-      groups = [
-        "administrators",
-        "devops",
-      ]
-    }
-    "ignacio.gaitan" = {
-      first_name = "Ignacio"
-      last_name  = "Gaitan"
-      email      = "ignacio.gaitan@binbash.com.ar"
       groups = [
         "administrators",
         "devops",
@@ -202,6 +184,31 @@ locals {
       first_name = "Juan"
       last_name  = "De la Torre"
       email      = "juan.delatorre@binbash.com.ar"
+      groups = [
+        "administrators",
+        "devops",
+      ]
+    }
+    "marcelo.beresvil" = {
+      first_name = "Marcelo"
+      last_name  = "Beresvil"
+      email      = "marcelo.beresvil@binbash.com.ar"
+      groups = [
+        "marketplaceseller",
+      ]
+    }
+     "lucas.coronel" = {
+      first_name = "Lucas"
+      last_name  = "Coronel"
+      email      = "lucas.coronel@binbash.com.ar"
+      groups = [
+        "devops",
+      ]
+    }
+     "rene.montilva" = {
+      first_name = "Rene"
+      last_name  = "Montilva"
+      email      = "rene.montilva@binbash.com.ar"
       groups = [
         "administrators",
         "devops",

@@ -23,6 +23,8 @@ data "aws_iam_policy_document" "devops" {
       "cloudfront:*",
       "cloudtrail:*",
       "cloudwatch:*",
+      "cognito-idp:*",
+      "cognito-identity:*",
       "config:*",
       "compute-optimizer:*",
       "datasync:*",
@@ -41,6 +43,7 @@ data "aws_iam_policy_document" "devops" {
       "elasticfilesystem:*",
       "es:*",
       "events:*",
+      "execute-api:*",
       "glue:*",
       "guardduty:*",
       "health:*",
@@ -73,6 +76,7 @@ data "aws_iam_policy_document" "devops" {
       "secretsmanager:*",
       "securityhub:*",
       "servicediscovery:*",
+      "scheduler:*",
       "shield:*",
       "synthetics:*",
       "sns:*",
@@ -147,6 +151,22 @@ data "aws_iam_policy_document" "devops" {
         "*.large"
       ]
     }
+  }
+
+  statement {
+    sid = "OrganizationWide"
+    actions = [
+      "organizations:ListDelegatedAdministrators",
+      "organizations:ListAccounts",
+      "organizations:DescribeOrganization",
+      "organizations:ListAWSServiceAccessForOrganization",
+      "organizations:ListRoots",
+      "organizations:ListAccountsForParent",
+      "organizations:ListOrganizationalUnitsForParent"
+    ]
+    effect    = "Allow"
+    resources = ["*"]
+
   }
 }
 

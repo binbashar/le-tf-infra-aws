@@ -32,8 +32,8 @@ resource "helm_release" "gatus" {
   count      = var.enable_gatus ? 1 : 0
   name       = "gatus"
   namespace  = kubernetes_namespace.gatus.id
-  repository = "https://avakarev.github.io/gatus-chart"
+  repository = "https://minicloudlabs.github.io/helm-charts"
   chart      = "gatus"
-  version    = "1.1.1"
+  version    = "1.1.4"
   values     = [file("chart-values/gatus.yaml")]
 }

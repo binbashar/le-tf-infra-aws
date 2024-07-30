@@ -1,0 +1,101 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "automerge": false,
+      "description": "Disable automerge and enable Renovate for specific Terraform packages",
+      "enabled": true,
+      "managers": [
+        "terraform"
+      ],
+      "matchPackageNames": [
+        "terraform",
+        "hashicorp/terraform",
+        "hashicorp/aws",
+        "hashicorp/kubernetes",
+        "hashicorp/helm",
+        "hashicorp/vault"
+      ]
+    },
+    {
+      "automerge": false,
+      "description": "Disable automerge and enable Renovate for Terraform providers",
+      "enabled": true,
+      "matchDatasources": [
+        "terraform-provider"
+      ]
+    },
+    {
+      "automerge": false,
+      "description": "Disable automerge and enable Renovate for Terraform modules",
+      "enabled": true,
+      "matchDatasources": [
+        "terraform-module"
+      ]
+    },
+    {
+      "automerge": true,
+      "description": "Enable automerge for patch updates without requiring CI/CD checks",
+      "enabled": true,
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "requiredStatusChecks": []
+    },
+    {
+      "automerge": false,
+      "description": "Disable automerge for minor and major updates",
+      "enabled": true,
+      "matchUpdateTypes": [
+        "minor",
+        "major"
+      ]
+    },
+    {
+      "allowedVersions": "~> 1.3.5",
+      "description": "Pin Terraform version to ~> 1.3.5",
+      "enabled": true,
+      "matchPackageNames": [
+        "terraform"
+      ]
+    },
+    {
+      "allowedVersions": "~> 4.10",
+      "description": "Pin AWS provider version to ~> 4.10",
+      "enabled": true,
+      "matchPackageNames": [
+        "hashicorp/aws"
+      ]
+    },
+    {
+      "allowedVersions": "~> 2.10",
+      "description": "Pin Kubernetes provider version to ~> 2.10",
+      "enabled": true,
+      "matchPackageNames": [
+        "hashicorp/kubernetes"
+      ]
+    },
+    {
+      "allowedVersions": "~> 2.5",
+      "description": "Pin Helm provider version to ~> 2.5",
+      "enabled": true,
+      "matchPackageNames": [
+        "hashicorp/helm"
+      ]
+    },
+    {
+      "allowedVersions": "~> 3.6",
+      "description": "Pin Vault provider version to ~> 3.6",
+      "enabled": true,
+      "matchPackageNames": [
+        "hashicorp/vault"
+      ]
+    }
+  ],
+  "terraform": {
+    "enabled": true
+  }
+}

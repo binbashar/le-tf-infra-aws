@@ -14,14 +14,25 @@ module "secrets" {
       secret_string           = "INITIAL_VALUE"
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
     },
-    "/notifications/alertmanager" = {
-      description             = "Slack webhook for Alertmanager notifications"
-      recovery_window_in_days = 7
-      secret_string           = "INITIAL_VALUE"
-      kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
-    },
-    "/grafana/administrator" = {
-      description             = "Credentials for Grafana administrator user"
+    # "/notifications/alertmanager" = {
+    #   description             = "Slack webhook for Alertmanager notifications"
+    #   recovery_window_in_days = 7
+    #   secret_string           = "INITIAL_VALUE"
+    #   kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+    # },
+    # "/grafana/administrator" = {
+    #   description             = "Credentials for Grafana administrator user"
+    #   recovery_window_in_days = 7
+    #   secret_string           = "INITIAL_VALUE"
+    #   kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+    # },
+
+    #
+    # This secret was created based on the centralized secrets approach and the naming conventions
+    # defined here: https://binbash.atlassian.net/wiki/spaces/BDPS/pages/2425978910/Secrets+Management+Conventions
+    #
+    "/devops/notifications/slack/security" = {
+      description             = "Slack Webhook for the security notifications"
       recovery_window_in_days = 7
       secret_string           = "INITIAL_VALUE"
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
@@ -41,7 +52,7 @@ data "aws_iam_policy_document" "secrets_policy" {
       type = "AWS"
       identifiers = [
         "arn:aws:iam::${var.accounts.shared.id}:role/DevOps",
-        "arn:aws:iam::${var.accounts.shared.id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_DevOps_40ba147128d7f4be",
+        "arn:aws:iam::${var.accounts.data-science.id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_DevOps_a1627cef3f7399d3",
       ]
     }
   }

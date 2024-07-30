@@ -28,6 +28,22 @@ data "aws_iam_policy_document" "kms" {
   }
 
   statement {
+    sid    = "Grant read-only to other accounts that use the key with Secrets Manager"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt*",
+      "kms:Describe*"
+    ]
+    resources = ["*"]
+    principals {
+      type = "AWS"
+      identifiers = [
+        "arn:aws:iam::${var.accounts.data-science.id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_DevOps_a1627cef3f7399d3",
+      ]
+    }
+  }
+
+  statement {
     sid    = "Enable CloudWatch Logs Service"
     effect = "Allow"
     actions = [
