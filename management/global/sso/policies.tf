@@ -253,3 +253,13 @@ data "aws_iam_policy_document" "data_scientist" {
     }
   }
 }
+
+data "aws_iam_policy_document" "marketplaceseller" {
+  statement {
+    sid = "FullSupportAccess"
+    actions = [
+      "support:*",
+    ]
+    resources = ["*"]
+  }
+}
