@@ -106,6 +106,7 @@ data "aws_iam_policy_document" "devops" {
         "${var.region}",
         "${var.region_secondary}",
         "us-east-1", # The original region is needed to have IAM working
+        "us-west-2",
       ]
     }
   }
@@ -249,6 +250,7 @@ data "aws_iam_policy_document" "data_scientist" {
         "${var.region}",
         "${var.region_secondary}",
         "us-east-1", # The original region is needed to have IAM working
+        "us-west-2", # Requested by Mati in order to have access to more Bedrock models
       ]
     }
   }
