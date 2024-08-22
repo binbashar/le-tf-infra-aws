@@ -54,31 +54,3 @@ output "private_route_table_ids" {
   description = "List of IDs of private route tables"
   value       = module.vpc.private_route_table_ids
 }
-
-# output "security_group_arns" {
-#   description = "List of security group ARNs"
-#   value       = zipmap(
-#     [
-#       aws_security_group.https.name,
-#       aws_security_group.egress_only.name,
-#     ],
-#     [
-#       aws_security_group.https.arn,
-#       aws_security_group.egress_only.arn,
-#     ]
-#   )
-# }
-
-# output "security_group_ids" {
-#   description = "List of security group IDs"
-#   value       = zipmap(
-#     [
-#       aws_security_group.https.name,
-#       aws_security_group.egress_only.name,
-#     ],
-#     [
-#       aws_security_group.https.id,
-#       aws_security_group.egress_only.id,
-#     ]
-#   )
-# }
