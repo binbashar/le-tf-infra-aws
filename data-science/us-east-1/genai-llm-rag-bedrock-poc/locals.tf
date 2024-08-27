@@ -11,8 +11,8 @@ locals {
       image                     = "905418344519.dkr.ecr.us-east-1.amazonaws.com/bb-data-science-genai-llm-rag-bedrock-poc-b2chat:latest"
       enable_cloudwatch_logging = false
       readonlyRootFilesystem    = false
-      cpu = 1024
-      memory = 2048
+      cpu = 512
+      memory = 1024
       port_mappings = [
         {
           "containerPort" : 8080,
