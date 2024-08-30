@@ -10,9 +10,9 @@ locals {
     b2chat = {
       image                     = "905418344519.dkr.ecr.us-east-1.amazonaws.com/bb-data-science-genai-llm-rag-bedrock-poc-b2chat:latest"
       enable_cloudwatch_logging = false
-      readonlyRootFilesystem    = false
-      cpu = 512
-      memory = 1024
+      readonly_root_filesystem  = false
+      cpu                       = 512
+      memory                    = 1024
       port_mappings = [
         {
           "containerPort" : 8080,
@@ -24,12 +24,16 @@ locals {
         {
           "name" : "AWS_DEFAULT_REGION"
           "value" : "us-east-1"
+        },
+        {
+          "name" : "USER"
+          "value" : "b2chat"
         }
       ]
       secrets = [
         {
           "name" : "PWD"
-          "valueFrom" : "${module.secrets.secret_arns["/data-science/genai-llm-rag-bedrock-poc"]}:PWD_B2CHAT"
+          "valueFrom" : "${module.secrets.secret_arns["/data-science/genai-llm-rag-poc"]}:PWD_B2CHAT::"
         }
       ]
     }
