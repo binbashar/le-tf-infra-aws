@@ -247,6 +247,14 @@ locals {
         "devops",
       ]
     }
+    "juan.vera" = {
+      first_name = "Juan Manuel"
+      last_name  = "Vera"
+      email      = "juan.vera@binbash.com.ar"
+      groups = [
+        "devops",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
