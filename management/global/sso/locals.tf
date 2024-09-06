@@ -234,7 +234,7 @@ locals {
     "ariel.jalil" = {
       first_name = "Ariel"
       last_name  = "Jalil"
-      email      = "ariel.jalil@binbash.com.ar", 
+      email      = "ariel.jalil@binbash.com.ar",
       groups = [
         "devops",
       ]
