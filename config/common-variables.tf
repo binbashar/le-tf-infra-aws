@@ -72,7 +72,12 @@ variable "region_secondary" {
 
 variable "accounts" {
   type        = map(any)
-  description = "Accounts descriptions"
+  description = "Accounts Information"
+}
+
+variable "external_accounts" {
+  type        = map(any)
+  description = "External Accounts Information"
 }
 
 #=============================#
