@@ -78,6 +78,7 @@ variable "accounts" {
 variable "external_accounts" {
   type        = map(any)
   description = "External Accounts Information"
+  default     = {}
 }
 
 #=============================#
