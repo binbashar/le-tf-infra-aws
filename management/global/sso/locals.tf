@@ -255,6 +255,22 @@ locals {
         "devops",
       ]
     }
+    "dario.villavicencio" = {
+      first_name = "Dario"
+      last_name  = "Villacencio"
+      email      = "dario.villavicencio@binbash.com.ar"
+      groups = [
+        "devops",
+      ]
+    }
+    "nicolas.ferreira" = {
+      first_name = "Nicolas"
+      last_name  = "Ferreira"
+      email      = "nicolas.ferreira@binbash.com.ar"
+      groups = [
+        "datascientists",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
