@@ -257,7 +257,7 @@ locals {
     }
     "dario.villavicencio" = {
       first_name = "Dario"
-      last_name  = "Villacencio"
+      last_name  = "Villavicencio"
       email      = "dario.villavicencio@binbash.com.ar"
       groups = [
         "devops",
