@@ -231,6 +231,46 @@ locals {
         "devops",
       ]
     }
+    "ariel.jalil" = {
+      first_name = "Ariel"
+      last_name  = "Jalil"
+      email      = "ariel.jalil@binbash.com.ar",
+      groups = [
+        "devops",
+      ]
+    }
+    "federico.losso" = {
+      first_name = "Federico"
+      last_name  = "Losso"
+      email      = "federico.losso@binbash.com.ar"
+      groups = [
+        "devops",
+      ]
+    }
+    "juan.vera" = {
+      first_name = "Juan Manuel"
+      last_name  = "Vera"
+      email      = "juan.vera@binbash.com.ar"
+      groups = [
+        "devops",
+      ]
+    }
+    "dario.villavicencio" = {
+      first_name = "Dario"
+      last_name  = "Villavicencio"
+      email      = "dario.villavicencio@binbash.com.ar"
+      groups = [
+        "devops",
+      ]
+    }
+    "nicolas.ferreira" = {
+      first_name = "Nicolas"
+      last_name  = "Ferreira"
+      email      = "nicolas.ferreira@binbash.com.ar"
+      groups = [
+        "datascientists",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
