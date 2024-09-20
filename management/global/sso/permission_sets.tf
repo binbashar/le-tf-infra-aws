@@ -75,6 +75,7 @@ module "permission_sets" {
       policy_attachments = [
         "arn:aws:iam::aws:policy/AWSMarketplaceSellerFullAccess",
         "arn:aws:iam::aws:policy/WellArchitectedConsoleFullAccess",
+        "arn:aws:iam::aws:policy/job-function/Billing",
       ]
       customer_managed_policy_attachments = []
     },
