@@ -1,0 +1,205 @@
+name: "Security Keys Layer: Unit Tests"
+on:
+ pull_request:
+   branches:
+     - master 
+   paths:
+    - apps-devstg/us-east-1/security-keys/**
+    - apps-devstg/us-east-2/security-keys/**
+    - apps-prd/us-east-1/security-keys/**
+    - data-science/us-east-1/security-keys/**
+    - management/us-east-1/security-keys/**
+    - network/us-east-1/security-keys/**
+    - network/us-eat-2/security-keys/**
+    - security/us-east-1/security-keys/**
+    - shared/us-east-1/security-keys/**
+    - shared/us-east-2/security-keys/**
+
+jobs:
+  apps-devstg:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+         filters: |
+           us-east-1:
+             - 'apps-devstg/us-east-1/security-keys/**'
+           us-east-2:
+              - 'apps-devstg/us-east-2/security-keys/**'
+      - name: Terraform Init on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: apps-devstg/us-east-1/security-keys
+        run: terraform init
+      - name: Run Unit Test on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: apps-devstg/us-east-1/security-keys
+        run: |
+          terraform test
+      - name: Terraform Init on us-east-2
+        if: steps.filter.outputs.us-east-2 == 'true'
+        working-directory: apps-devstg/us-east-2/security-keys
+        run: terraform init
+      - name: Run Unit Test on us-east-2
+        if: steps.filter.outputs.us-east-2 == 'true'
+        working-directory: apps-devstg/us-east-2/security-keys
+        run: |
+          terraform test
+  apps-prd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+         filters: |
+           us-east-1:
+             - 'apps-prd/us-east-1/security-keys/**'
+      - name: Terraform Init on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: apps-prd/us-east-1/security-keys
+        run: terraform init
+      - name: Run Unit Test on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: apps-prd/us-east-1/security-keys
+        run: |
+          terraform test
+  data-science:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+         filters: |
+           us-east-1:
+             - 'data-science/us-east-1/security-keys/**'
+      - name: Terraform Init on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: data-science/us-east-1/security-keys
+        run: terraform init
+      - name: Run Unit Test on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: data-science/us-east-1/security-keys
+        run: |
+          terraform test
+  management:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+         filters: |
+           us-east-1:
+             - 'management/us-east-1/security-keys/**'
+      - name: Terraform Init on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: management/us-east-1/security-keys
+        run: terraform init
+      - name: Run Unit Test on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: management/us-east-1/security-keys
+        run: |
+          terraform test
+  network:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+         filters: |
+           us-east-1:
+             - 'network/us-east-1/security-keys/**'
+           us-east-2:
+              - 'network/us-east-2/security-keys/**'
+      - name: Terraform Init on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: network/us-east-1/security-keys
+        run: terraform init
+      - name: Run Unit Test on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: network/us-east-1/security-keys
+        run: |
+          terraform test
+      - name: Terraform Init on us-east-2
+        if: steps.filter.outputs.us-east-2 == 'true'
+        working-directory: network/us-east-2/security-keys
+        run: terraform init
+      - name: Run Unit Test on us-east-2
+        if: steps.filter.outputs.us-east-2 == 'true'
+        working-directory: network/us-east-2/security-keys
+        run: |
+          terraform test
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+         filters: |
+           us-east-1:
+             - 'security/us-east-1/security-keys/**'
+      - name: Terraform Init on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: security/us-east-1/security-keys
+        run: terraform init
+      - name: Run Unit Test on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: security/us-east-1/security-keys
+        run: |
+          terraform test
+  shared:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+         filters: |
+           us-east-1:
+             - 'shared/us-east-1/security-keys/**'
+           us-east-2:
+              - 'shared/us-east-2/security-keys/**'
+      - name: Terraform Init on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: shared/us-east-1/security-keys
+        run: terraform init
+      - name: Run Unit Test on us-east-1
+        if: steps.filter.outputs.us-east-1 == 'true'
+        working-directory: shared/us-east-1/security-keys
+        run: |
+          terraform test
+      - name: Terraform Init on us-east-2
+        if: steps.filter.outputs.us-east-2 == 'true'
+        working-directory: shared/us-east-2/security-keys
+        run: terraform init
+      - name: Run Unit Test on us-east-2
+        if: steps.filter.outputs.us-east-2 == 'true'
+        working-directory: shared/us-east-2/security-keys
+        run: |
+          terraform test
