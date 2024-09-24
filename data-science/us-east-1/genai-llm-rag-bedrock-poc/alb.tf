@@ -1,15 +1,16 @@
 module "alb" {
   source = "github.com/binbashar/terraform-aws-alb.git?ref=v9.9.0"
 
-  name = "${var.project}-${var.environment}-genai-llm-poc"
+  name = "${var.project}-${var.environment}-genai-llm"
 
   internal = false
 
   load_balancer_type = "application"
 
-  vpc_id                = data.terraform_remote_state.vpc.outputs.vpc_id
-  subnets               = data.terraform_remote_state.vpc.outputs.public_subnets
-  create_security_group = true
+  vpc_id                     = data.terraform_remote_state.vpc.outputs.vpc_id
+  subnets                    = data.terraform_remote_state.vpc.outputs.public_subnets
+  create_security_group      = true
+  enable_deletion_protection = false
 
   # # Security Group
   security_group_ingress_rules = merge(

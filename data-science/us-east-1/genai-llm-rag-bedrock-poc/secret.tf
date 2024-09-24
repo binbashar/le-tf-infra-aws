@@ -5,8 +5,8 @@ module "secrets" {
   unmanaged = true
 
   secrets = {
-    "/data-science/genai-llm-rag-poc" = {
-      recovery_window_in_days = 7
+    "/data-science/genai-llm-rag-demo" = {
+      recovery_window_in_days = 0
       secret_key_value        = {} # values are stored via AWS Console
     }
   }
