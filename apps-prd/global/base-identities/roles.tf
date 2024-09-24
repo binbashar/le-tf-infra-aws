@@ -237,3 +237,30 @@ module "iam_assumable_role_lambda_costs_explorer_access" {
 
   tags = local.tags
 }
+
+#
+# Drata Auditor (Compliance Provider)
+#
+module "iam_assumable_role_drata_auditor" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.3.3"
+
+  trusted_role_arns = [
+    "arn:aws:iam::${var.external_accounts.drata.aws_account_id}:root"
+  ]
+
+  role_sts_externalid = [
+    var.external_accounts.drata.aws_external_id
+  ]
+
+  create_role      = true
+  role_name        = "DrataAutopilotRole"
+  role_description = "Cross-account read-only access for Drata Autopilot"
+  role_path        = "/"
+
+  role_requires_mfa = false
+  custom_role_policy_arns = [
+    "arn:aws:iam::aws:policy/SecurityAudit"
+  ]
+
+  tags = local.tags
+}

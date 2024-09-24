@@ -42,10 +42,23 @@ accounts = {
   }
 }
 
+# External Accounts Integration
+external_accounts = {
+  drata = {
+    aws_account_id  = ""
+    aws_external_id = ""
+  }
+  scale = {
+    aws_account_id  = ""
+    aws_external_id = ""
+  }
+}
+
 # AWS SSO
 sso_enabled   = true
 sso_start_url = "https://leverage.awsapps.com/start"
 sso_region    = "us-east-1"
+
 
 # The following values will be moved to another config file in a future release
 #
