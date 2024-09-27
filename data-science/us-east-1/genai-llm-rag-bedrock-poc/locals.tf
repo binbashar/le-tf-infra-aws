@@ -1,14 +1,14 @@
 locals {
 
-  name = "${var.project}-${var.environment}-genai-llm-rag-bedrock-poc"
+  name = "${var.project}-${var.environment}-genai-llm-rag-bedrock"
   tags = {
     Terraform   = "true"
     Environment = var.environment
   }
 
   container_definitions = {
-    b2chat = {
-      image                     = "905418344519.dkr.ecr.us-east-1.amazonaws.com/bb-data-science-genai-llm-rag-bedrock-poc-b2chat:latest"
+    demo = {
+      image                     = "905418344519.dkr.ecr.us-east-1.amazonaws.com/bb-data-science-genai-llm-rag-bedrock-demo:latest"
       enable_cloudwatch_logging = false
       readonly_root_filesystem  = false
       cpu                       = 512
@@ -23,17 +23,17 @@ locals {
       environment = [
         {
           "name" : "AWS_DEFAULT_REGION"
-          "value" : "us-east-1"
+          "value" : "us-west-2"
         },
         {
           "name" : "USER"
-          "value" : "b2chat"
+          "value" : "demo"
         }
       ]
       secrets = [
         {
           "name" : "PWD"
-          "valueFrom" : "${module.secrets.secret_arns["/data-science/genai-llm-rag-poc"]}:PWD_B2CHAT::"
+          "valueFrom" : "${module.secrets.secret_arns["/data-science/genai-llm-rag-demo"]}:PWD_demo::"
         }
       ]
     }
