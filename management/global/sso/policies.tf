@@ -105,8 +105,8 @@ data "aws_iam_policy_document" "devops" {
       values = [
         "${var.region}",
         "${var.region_secondary}",
-        "us-east-1", # The original region is needed to have IAM working
-        "us-west-2",
+        "us-east-1",
+        "us-west-2",# The original region is needed to have IAM working
       ]
     }
   }
