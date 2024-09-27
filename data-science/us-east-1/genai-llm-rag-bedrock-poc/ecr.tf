@@ -6,7 +6,7 @@ module "ecr_repositories" {
   # Repository name
   #
   create          = true
-  repository_name = "${local.name}-b2chat"
+  repository_name = "${local.name}-demo"
 
   repository_image_tag_mutability = "MUTABLE"
 

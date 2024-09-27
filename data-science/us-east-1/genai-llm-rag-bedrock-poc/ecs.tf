@@ -48,7 +48,7 @@ module "ecs_service" {
   load_balancer = {
     service = {
       target_group_arn = module.alb.target_groups["default"].arn
-      container_name   = "b2chat"
+      container_name   = "demo"
       container_port   = 8080
     }
   }
