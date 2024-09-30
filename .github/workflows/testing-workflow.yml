@@ -1,0 +1,124 @@
+name: Testing Workflow
+
+on:
+  workflow_call:
+    inputs:
+      localstack_version:
+        description: 'Localstack version'
+        required: true
+        type: string
+        default: '3.7.2'
+      iac_platform:
+        description: 'IaC platform name (terraform, tofu)'
+        required: true
+        type: string
+        default: 'terraform'
+      iac_version:
+        description: 'IaC version'
+        required: true
+        type: string
+        default: '1.6.0'
+      aws_profile:
+        description: 'AWS profile for localstack'
+        required: true
+        type: string
+      aws_region:
+        description: 'AWS region for localstack'
+        required: false
+        type: string
+        default: 'us-east-1'
+      required_state_file:
+        description: 'If a terraform state file is required for testing'
+        required: true
+        type: boolean
+        default: false
+      state_file_test_path:
+        description: 'Path to the terraform state file in the tests folder'
+        required: false
+        type: string
+      bucket_name:
+        description: 'Name of the S3 bucket to store the terraform state file'
+        required: false
+        type: string
+      bucket_folder:
+        description: 'Folder in the S3 bucket to store the terraform state file'
+        required: false
+        type: string
+      aws_profile_required_state_file:
+        description: 'AWS profile of data terraform state for getting value of another layer'
+        required: false
+        type: string
+      working_directory:
+        description: 'Working directory for the terraform code'
+        required: true
+        type: string
+jobs:
+  testing:
+    runs-on: ubuntu-latest
+    env:
+      TF_CMD: ${{ inputs.iac_platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check tests folder
+        id: check-tests
+        working-directory: ${{ inputs.working_directory }}
+        run: |
+          if [  -d tests ]; then
+            echo "hasTests=true" >> $GITHUB_OUTPUT
+          else
+            echo "hasTests=false" >> $GITHUB_OUTPUT
+          fi
+      - if: ${{ steps.check-tests.outputs.hasTests == 'true' && inputs.iac_platform == 'terraform' }}
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ inputs.iac_version }}
+      - if: ${{ steps.check-tests.outputs.hasTests == 'true' && inputs.iac_platform == 'tofu' }}
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: ${{ inputs.iac_version }}
+      - name: Install tflocal
+        if: steps.check-tests.outputs.hasTests == 'true'
+        run: |
+          pip install terraform-local
+      - uses: LocalStack/setup-localstack@v0.2.3
+        if: steps.check-tests.outputs.hasTests == 'true'
+        with:
+          image-tag: ${{ inputs.localstack_version }}
+          install-awslocal: true
+      - name: Configure AWS Credentials for Localstack
+        if: steps.check-tests.outputs.hasTests == 'true'
+        run: |
+          awslocal configure set aws_access_key_id fake --profile ${{ inputs.aws_profile }}
+          awslocal configure set aws_secret_access_key fake --profile ${{ inputs.aws_profile }}
+          awslocal configure set region ${{ inputs.aws_region }} --profile ${{ inputs.aws_profile }}
+          awslocal configure set endpoint_url http://localhost:4566 --profile ${{ inputs.aws_profile }}
+      - name: Configure AWS Credentials for Required State File
+        if: ${{ inputs.required_state_file && steps.check-tests.outputs.hasTests == 'true' }}
+        run: |
+          awslocal configure set aws_access_key_id fake --profile ${{ inputs.aws_profile_required_state_file }}
+          awslocal configure set aws_secret_access_key fake --profile ${{ inputs.aws_profile_required_state_file }}
+          awslocal configure set region ${{ inputs.aws_region }} --profile ${{ inputs.aws_profile_required_state_file }}
+          awslocal configure set endpoint_url http://localhost:4566 --profile ${{ inputs.aws_profile_required_state_file }}
+      - name: Create S3 Buckets
+        if: ${{ inputs.required_state_file && steps.check-tests.outputs.hasTests == 'true' }}
+        run: |
+          awslocal s3 mb s3://${{ inputs.bucket_name }} --region ${{ inputs.aws_region }}
+      - name: Copy Terraform State File for testing to S3 Bucket
+        if: ${{ inputs.required_state_file && steps.check-tests.outputs.hasTests == 'true' }}
+        run: |
+          awslocal s3 cp ${{ inputs.working_directory }}/${{ inputs.state_file_test_path}} s3://${{ inputs.bucket_name }}/${{inputs.bucket_folder }}/terraform.tfstate
+      - name: Terraform Init
+        if: steps.check-tests.outputs.hasTests == 'true'
+        working-directory: ${{ inputs.working_directory }}
+        run: tflocal init -upgrade
+      - name: Run Test
+        if: steps.check-tests.outputs.hasTests == 'true'
+        working-directory: ${{ inputs.working_directory }}
+        env:
+          AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
+          AWS_ACCESS_KEY_ID: fake
+          AWS_SECRET_ACCESS_KEY: fake
+          AWS_ENDPOINT_URL: http://localhost:4566
+        run: |
+          cp ../../../config/common.tfvars.example ../../../config/common.tfvars
+          tflocal test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars
