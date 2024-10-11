@@ -9,14 +9,14 @@ provider "aws" {
 provider "mysql" {
   endpoint = module.demoapps.cluster_endpoint
   username = module.demoapps.cluster_master_username
-  password = module.demoapps.cluster_master_password
+  password = jsondecode(data.aws_secretsmanager_secret_version.administrator.secret_string)["password"]
 }
 
 #=============================#
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = "~> 1.5"
+  required_version = "~> 1.3"
 
   required_providers {
     aws   = "~> 4.12"
@@ -45,14 +45,14 @@ data "terraform_remote_state" "vpc" {
   }
 }
 
-data "terraform_remote_state" "eks_vpc_demoapps" {
+data "terraform_remote_state" "secrets" {
   backend = "s3"
 
   config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/k8s-eks-demoapps/network/terraform.tfstate"
+    key     = "${var.environment}/secrets-manager/terraform.tfstate"
   }
 }
 
@@ -65,15 +65,4 @@ data "terraform_remote_state" "shared_vpc" {
     bucket  = "${var.project}-shared-terraform-backend"
     key     = "shared/network/terraform.tfstate"
   }
-}
-
-#
-# Note: for the sake of simplicity we are storing the db admin credentials
-#       under the same path of a demoapp. In other words, demoapps will use
-#       use admin credentials for talking to the db. Later on, we will have
-#       to store admin credentials under a separate path and create separate,
-#       more restrictied credentials for demoapps.
-#
-data "vault_generic_secret" "databases_aurora" {
-  path = "secrets/${var.project}/${var.environment}/databases-aurora"
 }

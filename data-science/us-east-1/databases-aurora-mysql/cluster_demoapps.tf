@@ -1,3 +1,14 @@
+#
+# NOTE: Before deploying make sure the required secret is created via apps-devstg/us-east-1/secrets-manager layer
+#
+
+#
+# DB Administrator secret
+#
+data "aws_secretsmanager_secret_version" "administrator" {
+  secret_id = data.terraform_remote_state.secrets.outputs.secret_ids["/aurora-mysql/administrator"]
+}
+
 module "demoapps" {
   source = "github.com/binbashar/terraform-aws-rds-aurora.git?ref=v7.2.2"
 
@@ -10,7 +21,7 @@ module "demoapps" {
   # Initial database and credentials
   database_name          = "demoapps"
   master_username        = "admin"
-  master_password        = data.vault_generic_secret.databases_aurora.data["administrator_password"]
+  master_password        = jsondecode(data.aws_secretsmanager_secret_version.administrator.secret_string)["password"]
   create_random_password = false
 
   # VPC and Subnets
@@ -58,7 +69,7 @@ module "demoapps" {
   # Security group settings
   create_security_group = true
   allowed_cidr_blocks = [
-    data.terraform_remote_state.eks_vpc_demoapps.outputs.vpc_cidr_block,
+    "0.0.0.0/0",
     data.terraform_remote_state.shared_vpc.outputs.vpc_cidr_block
   ]
 
