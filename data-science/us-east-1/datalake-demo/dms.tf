@@ -1,6 +1,5 @@
 module "database_migration_service" {
-  # source  = "terraform-aws-modules/dms/aws" # UPDATE SOURCE
-  version = "~> 2.0"
+  source = "github.com/binbashar/terraform-aws-dms?ref=v2.3.0"
 
   # Subnet group
   repl_subnet_group_name        = "example"
