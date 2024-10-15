@@ -52,16 +52,16 @@ module "terraform-aws-basic-layout" {
       from_port = 80, # Pritunl VPN Server Letsencrypt http challenge
       to_port   = 80,
       protocol  = "tcp",
-      cidr_blocks = ["0.0.0.0/0"], # Renew LetsEncrypt private url cert (every 90 days)
-      # cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
+      #cidr_blocks = ["0.0.0.0/0"], # Renew LetsEncrypt private url cert (every 90 days)
+      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
       description = "Allow Pritunl HTTP UI"
     },
     {
       from_port = 443, # Pritunl VPN Server UI
       to_port   = 443,
       protocol  = "tcp",
-      cidr_blocks = ["0.0.0.0/0"], # Public temporally accessible for new users setup (when needed)
-      # cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
+      # cidr_blocks = ["0.0.0.0/0"], # Public temporally accessible for new users setup (when needed)
+      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
       description = "Allow Pritunl HTTPS UI"
     },
     {
