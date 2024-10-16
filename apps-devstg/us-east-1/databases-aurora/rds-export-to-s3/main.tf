@@ -11,7 +11,7 @@ locals {
 # RDS Export To S3
 # -----------------------------------------------------------------------------
 module "rds_export_to_s3" {
-  source = "github.com/binbashar/terraform-aws-rds-export-to-s3.git?ref=v0.4.0"
+  source = "github.com/binbashar/terraform-aws-rds-export-to-s3.git?ref=v0.4.3"
 
   # Set a prefix for naming resources
   prefix = "aurora-mysql"
