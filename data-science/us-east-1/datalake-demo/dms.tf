@@ -6,7 +6,7 @@ module "database_migration_service" {
   repl_subnet_group_description = "DMS Subnet group"
   repl_subnet_group_subnet_ids  = ["subnet-1fe3d837", "subnet-129d66ab", "subnet-1211eef5"]
 
-  # Instance
+  # DMS Instance
   repl_instance_allocated_storage            = 64
   repl_instance_auto_minor_version_upgrade   = true
   repl_instance_allow_major_version_upgrade  = true
@@ -20,9 +20,9 @@ module "database_migration_service" {
   repl_instance_vpc_security_group_ids       = ["sg-12345678"]
 
   endpoints = {
-    source = {
+    source_apps_devstg_aurora_pgsql = {
       database_name               = "example"
-      endpoint_id                 = "example-source"
+      endpoint_id                 = "example-source-aurora-pgslq"
       endpoint_type               = "source"
       engine_name                 = "aurora-postgresql"
       extra_connection_attributes = "heartbeatFrequency=1;"
@@ -34,17 +34,35 @@ module "database_migration_service" {
       tags                        = { EndpointType = "source" }
     }
 
-    destination = {
-      database_name = "example"
-      endpoint_id   = "example-destination"
-      endpoint_type = "target"
-      engine_name   = "aurora"
-      username      = "mysqlUser"
-      password      = "passwordsDoNotNeedToMatch789?"
-      port          = 3306
-      server_name   = "dms-ex-dest.cluster-abcdefghijkl.us-east-1.rds.amazonaws.com"
-      ssl_mode      = "none"
-      tags          = { EndpointType = "destination" }
+    source_data_science_aurora_mysql = {
+      database_name               = "example"
+      endpoint_id                 = "example-source-aurora-mysql"
+      endpoint_type               = "source"
+      engine_name                 = "aurora-mysql"
+      extra_connection_attributes = "heartbeatFrequency=1;"
+      username                    = "mysqlUser"
+      password                    = "passwordsDoNotNeedToMatch789?"
+      port                        = 3306
+      server_name                 = "dms-ex-src.cluster-abcdefghijkl.us-east-1.rds.amazonaws.com"
+      ssl_mode                    = "none"
+      tags                        = { EndpointType = "source" }
+    }
+  }
+
+  # S3 Endpoints
+  s3_endpoints = {
+    s3-destination = {
+      endpoint_id   = "${local.name}-s3-destination"
+      endpoint_type = "destination"
+      engine_name   = "s3"
+      bucket_folder               = "destinationdata"
+      bucket_name                 = module.s3_bucket_datalake.s3_bucket_id
+      data_format                 = "parquet"
+      ssl_mode                    = "none"
+      encryption_mode             = "SSE_S3"
+      extra_connection_attributes = ""
+      external_table_definition   = file("configs/s3_table_definition.json")
+      tags                        = { EndpointType = "s3-source" }
     }
   }
 
