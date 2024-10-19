@@ -21,7 +21,7 @@ data "aws_nat_gateways" "natgtw" {
 # Apps-DevStg ECS Demoapps Cluster
 #
 module "apps_devstg_ecs_cluster" {
-  source = "github.com/binbashar/terraform-aws-ecs.git?ref=v5.11.1"
+  source = "github.com/binbashar/terraform-aws-ecs.git?ref=v5.11.4"
 
   cluster_name = "${local.name}-cluster"
 
