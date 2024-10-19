@@ -2,7 +2,7 @@
 # Webhooks Proxy EC2 resources (instance, volumes, security groups, etc)
 #
 module "ec2_webhooks_proxy" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.23"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.34"
   prefix = var.prefix
   name   = var.name
 
