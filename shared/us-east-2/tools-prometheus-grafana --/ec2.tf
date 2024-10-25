@@ -2,7 +2,7 @@
 # Prometheus & Grafana: EC2 resources (instance, volumes, security groups, etc)
 #
 module "prometheus_grafana" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout?ref=v0.3.27"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout?ref=v0.3.34"
   prefix = var.prefix
   name   = var.name
 

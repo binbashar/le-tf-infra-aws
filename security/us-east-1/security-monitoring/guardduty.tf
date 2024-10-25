@@ -2,7 +2,7 @@
 # GuardDuty is enabled in this account as a delegated admin
 #
 module "guardduty" {
-  source = "github.com/binbashar/terraform-aws-guardduty-multiaccount.git//modules/multiaccount-setup?ref=v0.2.0"
+  source = "github.com/binbashar/terraform-aws-guardduty-multiaccount.git//modules/multiaccount-setup?ref=v0.2.1"
 
   # Activating Guardduty & S3 protection in this account (security-account).
   guarduty_enabled                       = true

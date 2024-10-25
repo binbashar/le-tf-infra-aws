@@ -105,8 +105,12 @@ data "aws_iam_policy_document" "devops" {
       values = [
         "${var.region}",
         "${var.region_secondary}",
+<<<<<<< HEAD
         "us-east-1", # The original region is needed to have IAM working
         "us-west-2",
+=======
+        "us-west-2" # The original region is needed to have IAM working
+>>>>>>> master
       ]
     }
   }
@@ -247,9 +251,8 @@ data "aws_iam_policy_document" "data_scientist" {
       test     = "StringEquals"
       variable = "aws:RequestedRegion"
       values = [
-        "${var.region}",
+        "${var.region}", # The original region is needed to have IAM working
         "${var.region_secondary}",
-        "us-east-1", # The original region is needed to have IAM working
         "us-west-2", # Requested by Mati in order to have access to more Bedrock models
       ]
     }

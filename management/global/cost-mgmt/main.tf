@@ -3,7 +3,7 @@
 #
 # Billing = U$S50
 module "aws_cost_mgmt_billing_alert_50" {
-  source = "github.com/binbashar/terraform-aws-cost-billing-alarm.git?ref=v1.0.14"
+  source = "github.com/binbashar/terraform-aws-cost-billing-alarm.git?ref=v1.0.17"
 
   aws_env                   = "${var.project}-${var.environment}-50"
   monthly_billing_threshold = var.monthly_billing_threshold_50
@@ -16,7 +16,7 @@ module "aws_cost_mgmt_billing_alert_50" {
 
 # Billing = U$S100
 module "aws_cost_mgmt_billing_alert_100" {
-  source = "github.com/binbashar/terraform-aws-cost-billing-alarm.git?ref=v1.0.14"
+  source = "github.com/binbashar/terraform-aws-cost-billing-alarm.git?ref=v1.0.17"
 
   aws_env                   = "${var.project}-${var.environment}-100"
   monthly_billing_threshold = var.monthly_billing_threshold_100
@@ -32,7 +32,7 @@ module "aws_cost_mgmt_billing_alert_100" {
 #
 # Budget = U$S100 at 75%
 module "aws_cost_mgmt_budget_notif_75" {
-  source = "github.com/binbashar/terraform-aws-cost-budget.git?ref=v1.0.12"
+  source = "github.com/binbashar/terraform-aws-cost-budget.git?ref=v1.0.15"
 
   aws_env                = "${var.environment}-75-percent"
   currency               = var.currency
@@ -47,7 +47,7 @@ module "aws_cost_mgmt_budget_notif_75" {
 
 # Budget = U$S100 at 100%
 module "aws_cost_mgmt_budget_notif_100" {
-  source = "github.com/binbashar/terraform-aws-cost-budget.git?ref=v1.0.12"
+  source = "github.com/binbashar/terraform-aws-cost-budget.git?ref=v1.0.15"
 
   aws_env                = "${var.environment}-100-percent"
   currency               = var.currency

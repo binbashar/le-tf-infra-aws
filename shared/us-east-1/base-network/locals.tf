@@ -85,18 +85,18 @@ locals {
         cidr_block  = "0.0.0.0/0"
       },
       {
-        rule_number = 930 # Fltering known TCP ports (0-1024)
+        rule_number = 930 # Filtering known TCP ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
-        to_port     = 65525
+        to_port     = 65535
         protocol    = "tcp"
         cidr_block  = "0.0.0.0/0"
       },
       {
-        rule_number = 940 # Fltering known UDP ports (0-1024)
+        rule_number = 940 # Filtering known UDP ports (0-1024)
         rule_action = "allow"
         from_port   = 1024
-        to_port     = 65525
+        to_port     = 65535
         protocol    = "udp"
         cidr_block  = "0.0.0.0/0"
       },
