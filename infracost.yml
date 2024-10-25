@@ -730,3 +730,16 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
+
+  #=====================================#
+  # Data-science account                #
+  #=====================================#
+
+  #
+  # data-science/us-east-1 (North Virginia)
+  #
+  - path: "data-science/us-east-1/databases-aurora-mysql --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
