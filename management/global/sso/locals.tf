@@ -269,6 +269,7 @@ locals {
       email      = "nicolas.ferreira@binbash.com.ar"
       groups = [
         "datascientists",
+        "devops",
       ]
     }
   }
