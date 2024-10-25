@@ -272,7 +272,7 @@ module "iam_assumable_role_north_cloud_access" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.3.3"
 
   trusted_role_arns = [
-    "arn:aws:iam::480850768557:root" # Specify the AWS account ID where the trusted account resides
+    "arn:aws:iam::${var.external_accounts.north_cloud.aws_account_id}:root"
   ]
 
   create_role = true

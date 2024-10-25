@@ -52,6 +52,9 @@ external_accounts = {
     aws_account_id  = ""
     aws_external_id = ""
   }
+  north_cloud = {
+    aws_account_id  = ""
+  }
 }
 
 # AWS SSO
