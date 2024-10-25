@@ -15,6 +15,8 @@ resource "aws_organizations_organization" "main" {
     "sso.amazonaws.com",
     "fms.amazonaws.com",
     "inspector2.amazonaws.com",
+    "cost-optimization-hub.bcm.amazonaws.com",
+    "securityhub.amazonaws.com",
   ]
 
   # Enable all feature set to enable SCPs
@@ -43,4 +45,8 @@ resource "aws_organizations_delegated_administrator" "delegated_administrator" {
 resource "aws_iam_service_linked_role" "linked_roles" {
   for_each         = toset(local.delegated_services)
   aws_service_name = each.key
+}
+
+resource "aws_cloudtrail_organization_delegated_admin_account" "main" {
+  account_id = aws_organizations_account.accounts["security"].id
 }

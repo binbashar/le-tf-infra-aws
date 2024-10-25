@@ -1,39 +1,26 @@
-# module "cloudtrail" {
-#   source                        = "github.com/binbashar/terraform-aws-cloudtrail.git?ref=0.20.1"
-#   namespace                     = var.project
-#   stage                         = var.environment
-#   name                          = "cloudtrail-org"
-#   enable_logging                = true
-#   enable_log_file_validation    = true
-#   include_global_service_events = true
-#   is_multi_region_trail         = true
-#   s3_bucket_name                = module.cloudtrail_s3_bucket.bucket_id
-#   # cloud_watch_logs_group_arn    = "${aws_cloudwatch_log_group.cloudtrail.arn}:*"
-#   # cloud_watch_logs_role_arn     = aws_iam_role.cloudtrail_cloudwatch_events.arn
-#   kms_key_arn                   = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
-#   #is_organization_trail        = true
-# }
+module "cloudtrail" {
+  source                        = "github.com/binbashar/terraform-aws-cloudtrail.git?ref=0.24.0"
+
+  name                          = "${var.project}-${var.environment}-cloudtrail-org"
+  include_global_service_events = true
+  is_multi_region_trail         = true
+  is_organization_trail         = true
+  enable_logging                = true
+  enable_log_file_validation    = true
+  s3_bucket_name                = module.cloudtrail_s3_bucket.bucket_id
+  kms_key_arn                   = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
+  # cloud_watch_logs_group_arn    = "${aws_cloudwatch_log_group.cloudtrail.arn}:*"
+  # cloud_watch_logs_role_arn     = aws_iam_role.cloudtrail_cloudwatch_events.arn
+}
 
 module "cloudtrail_s3_bucket" {
   source                 = "github.com/binbashar/terraform-aws-cloudtrail-s3-bucket.git?ref=0.26.4"
-  namespace              = var.project
-  stage                  = var.environment
-  name                   = "cloudtrail-org"
+  name                   = "${var.project}-${var.environment}-cloudtrail-org"
   lifecycle_rule_enabled = var.lifecycle_rule_enabled
   versioning_enabled     = true
-  #
-  # NOTE: Had to pass null here because there seems to be an issue with the
-  #       module which is trying to set tags to lifecycle policies
-  #
-  lifecycle_tags = null
-
-  #
-  # NOTE: this actually isn't supported by the module. The issue is reported
-  # here: https://github.com/cloudposse/terraform-aws-cloudtrail-s3-bucket/issues/19
-  #
-  # policy          = data.aws_iam_policy_document.cloudtrail_s3_bucket.json
-  acl             = "private"
-  expiration_days = 120
+  acl                    = "private"
+  expiration_days        = 120
+  tags                   = local.tags
 }
 
 # module "cloudtrail_api_alarms" {

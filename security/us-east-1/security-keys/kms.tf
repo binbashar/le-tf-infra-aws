@@ -16,7 +16,7 @@ module "kms_key" {
 
 data "aws_iam_policy_document" "kms" {
   statement {
-    sid       = "Enable IAM User Permissions"
+    sid       = "Grant full access to the owner account"
     effect    = "Allow"
     actions   = ["kms:*"]
     resources = ["*"]
@@ -28,7 +28,7 @@ data "aws_iam_policy_document" "kms" {
   }
 
   statement {
-    sid    = "Enable CloudTrail Service"
+    sid    = "Grant usage permissions to CloudTrail"
     effect = "Allow"
     actions = [
       "kms:GenerateDataKey*",
@@ -47,12 +47,7 @@ data "aws_iam_policy_document" "kms" {
       test     = "StringLike"
       variable = "kms:EncryptionContext:aws:cloudtrail:arn"
       values = [
-        "arn:aws:cloudtrail:*:${var.accounts.security.id}:trail/*",
-        "arn:aws:cloudtrail:*:${var.accounts.shared.id}:trail/*",
-        "arn:aws:cloudtrail:*:${var.accounts.network.id}:trail/*",
-        "arn:aws:cloudtrail:*:${var.accounts.root.id}:trail/*",
-        "arn:aws:cloudtrail:*:${var.accounts.apps-devstg.id}:trail/*",
-        "arn:aws:cloudtrail:*:${var.accounts.apps-prd.id}:trail/*"
+        "arn:aws:cloudtrail:*:*:trail/${var.project}-${var.environment}-cloudtrail-org"
       ]
     }
   }
