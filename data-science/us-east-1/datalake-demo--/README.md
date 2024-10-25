@@ -59,12 +59,10 @@ engineers and analysts to derive insights directly from S3.
 - **QuickSight**: Amazon QuickSight is integrated for visualization and dashboarding, enabling stakeholders
 to easily interpret data.
 - **Notification and Monitoring Services**:
-  - **Amazon CloudWatch Logs** and **Amazon CloudTrail** for auditing, monitoring, and logging.
+  - **Amazon CloudWatch Logs** for auditing and logging.
   - **Amazon SNS** for notifications integrated with **Slack** to notify about important events, 
   such as ETL failures or data ingestion issues.
-  - **Budgets**: Cost monitoring and budget alerts are implemented to ensure the project remains
-within financial targets.
-
+ 
 ## Terraform Infrastructure as Code Implementation
 
 The implementation of this Data Lake architecture follows the Infrastructure as Code (IaC) paradigm
@@ -99,6 +97,8 @@ failures or other anomalies.
 - **Real-Time Data Support:** Add support for real-time data processing using the following options
   - Kinesis Data Analytics
   - StarRocks
+
+![binbash-logo](../../../@doc/figures/binbash-data-lake-realtime.png "binbash")
 
 ## Contributing
 

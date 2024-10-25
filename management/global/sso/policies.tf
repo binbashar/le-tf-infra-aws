@@ -105,13 +105,8 @@ data "aws_iam_policy_document" "devops" {
       values = [
         "${var.region}",
         "${var.region_secondary}",
-<<<<<<< HEAD
-        "us-east-1",
-        "us-west-2",# The original region is needed to have IAM working
-=======
         "us-east-1", # The original region is needed to have IAM working
         "us-west-2",
->>>>>>> 86a86803a4c16b45f268f677561a04d993bea958
       ]
     }
   }
@@ -261,8 +256,6 @@ data "aws_iam_policy_document" "data_scientist" {
     }
   }
 }
-<<<<<<< HEAD
-=======
 
 data "aws_iam_policy_document" "marketplaceseller" {
   statement {
@@ -273,4 +266,3 @@ data "aws_iam_policy_document" "marketplaceseller" {
     resources = ["*"]
   }
 }
->>>>>>> 86a86803a4c16b45f268f677561a04d993bea958

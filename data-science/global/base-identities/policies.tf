@@ -21,9 +21,14 @@ resource "aws_iam_policy" "devops_access" {
             "Effect": "Allow",
             "Action": [
                 "acm:*",
+                "athena:*",
                 "autoscaling:*",
+                "appconfig:*",
                 "application-autoscaling:*",
+                "apprunner:*",
+                "apigateway:*",
                 "aws-portal:*",
+                "aws-marketplace:*",
                 "backup:*",
                 "backup-storage:*",
                 "ce:*",
@@ -31,41 +36,52 @@ resource "aws_iam_policy" "devops_access" {
                 "cloudfront:*",
                 "cloudtrail:*",
                 "cloudwatch:*",
-                "compute-optimizer:*",
                 "config:*",
+                "compute-optimizer:*",
+                "datasync:*",
                 "dlm:*",
                 "dynamodb:*",
                 "ec2:*",
                 "ecr:*",
+                "ecr-public:*",
                 "ecs:*",
                 "eks:*",
+                "elasticbeanstalk:*",
                 "elasticloadbalancing:*",
+                "es:*",
                 "events:*",
+                "glue:*",
                 "guardduty:*",
                 "health:*",
                 "iam:*",
                 "kms:*",
                 "lambda:*",
+                "lightsail:*",
                 "logs:*",
                 "ram:*",
                 "rds:*",
                 "redshift:*",
+                "resource-explorer:*",
+                "resource-groups:*",
                 "route53:*",
                 "route53domains:*",
                 "route53resolver:*",
                 "s3:*",
+                "secretsmanager:*",
                 "ses:*",
                 "shield:*",
                 "sns:*",
                 "sqs:*",
                 "ssm:*",
+                "sts:*",
                 "support:*",
                 "tag:*",
                 "trustedadvisor:*",
                 "vpc:*",
                 "waf:*",
                 "wafv2:*",
-                "waf-regional:*"
+                "waf-regional:*",
+                "wellarchitected:*"
             ],
             "Resource": [
                 "*"
@@ -139,6 +155,7 @@ resource "aws_iam_policy" "deploy_master_access" {
         {
             "Effect": "Allow",
             "Action": [
+                "athena:*",
                 "budgets:*",
                 "cloudfront:*",
                 "cloudtrail:*",
@@ -150,6 +167,7 @@ resource "aws_iam_policy" "deploy_master_access" {
                 "dynamodb:*",
                 "ec2:*",
                 "ecr:*",
+                "glue:*",
                 "iam:*",
                 "logs:*",
                 "route53:*",
@@ -161,7 +179,9 @@ resource "aws_iam_policy" "deploy_master_access" {
                 "vpc:*",
                 "waf:*",
                 "wafv2:*",
-                "waf-regional:*"
+                "waf-regional:*",
+                "kms:*",
+                "secretsmanager:GetSecretValue"
             ],
             "Resource": [
                 "*"
@@ -182,44 +202,85 @@ EOF
 }
 
 #
-# Customer Managed Policy: Grafana
+# Customer Managed Policy: FinOps Role Access + Group (backup-s3 Group)
 #
-resource "aws_iam_policy" "grafana_permissions" {
-  name        = "grafana_permissions"
-  description = "Grafana Permissions"
+resource "aws_iam_policy" "s3_put_gdrive_to_s3_backup" {
+  name   = "AllowS3PutBackup"
+  path   = "/"
+  policy = data.aws_iam_policy_document.backup_s3_binbash_gdrive.json
+}
 
-  policy = <<EOF
+data "aws_iam_policy_document" "backup_s3_binbash_gdrive" {
+  statement {
+    sid    = "ListAllMyBuckets"
+    effect = "Allow"
+    actions = [
+      "s3:ListAllMyBuckets",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "ListBucket"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = ["arn:aws:s3:::bb-shared-gdrive-backup"]
+  }
+
+  statement {
+    sid    = "PutDeleteBucketObjetc"
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:PutObjectAcl",
+      "s3:GetObject",
+      "s3:DeleteObject"
+    ]
+    resources = ["arn:aws:s3:::bb-shared-gdrive-backup/*"]
+  }
+}
+
+resource "aws_iam_policy" "github_actions_oidc" {
+  name        = "${local.environment}-github-actions-oidc"
+  description = "Github OIDC integration for Github Actions"
+  tags        = merge(local.tags, { Name = "github-oidc-workflows" })
+  policy      = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "GrafanaReadCloudWatchMetrics",
+            "Sid": "AllowLogin",
             "Effect": "Allow",
             "Action": [
-                "cloudwatch:DescribeAlarmsForMetric",
-                "cloudwatch:DescribeAlarmHistory",
-                "cloudwatch:DescribeAlarms",
-                "cloudwatch:ListMetrics",
-                "cloudwatch:GetMetricStatistics",
-                "cloudwatch:GetMetricData"
+                "ecr:GetAuthorizationToken"
             ],
             "Resource": "*"
         },
         {
-            "Sid": "GrafanaReadEC2InstancesTagsAndRegions",
+            "Sid": "AllowList",
             "Effect": "Allow",
             "Action": [
-                "ec2:DescribeTags",
-                "ec2:DescribeInstances",
-                "ec2:DescribeRegions"
+                "ecr:DescribeRepositories"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws:ecr:${var.region}:${var.accounts.shared.id}:repository/*"
         },
         {
-            "Sid": "GrafanaReadResourcesTags",
-            "Effect" : "Allow",
-            "Action" : "tag:GetResources",
-            "Resource" : "*"
+            "Sid": "AllowPush",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:PutImage",
+                "ecr:InitiateLayerUpload",
+                "ecr:UploadLayerPart",
+                "ecr:CompleteLayerUpload",
+                "ecr:ListImages",
+                "ecr:DescribeImages"
+            ],
+            "Resource": "arn:aws:ecr:${var.region}:${var.accounts.shared.id}:repository/demo-google-microservices-*"
         }
     ]
 }
@@ -275,47 +336,4 @@ data "aws_iam_policy_document" "lambda_costs_explorer_access" {
       "*"
     ]
   }
-}
-
-resource "aws_iam_policy" "north_cloud_tool_access" {
-	name        = "NorthCostAndUsageReadOnlyPolicy"
-	description = "Read-only policy for North Inc. cost and usage"
-
-	policy = jsonencode ({
-		Version = "2012-10-17"
-		Statement = 	[
-		{
-			Sid    = "NorthCostAndUsageReadOnlyPolicyID"
-			Effect = "Allow"
-			Action = 	[
-			"ce:Get*",
-			"ce:Describe*",
-			"ce:List*",
-			"ce:Start*",
-			"account:GetAccountInformation",
-			"billing:Get*",
-			"payments:List*",
-			"payments:Get*",
-			"tax:List*",
-			"tax:Get*",
-			"consolidatedbilling:Get*",
-			"consolidatedbilling:List*",
-			"invoicing:List*",
-			"invoicing:Get*",
-			"cur:Get*",
-			"cur:Validate*",
-			"freetier:Get*",
-			"ec2:DescribeCapacity*",
-			"ec2:DescribeReservedInstances*",
-			"ec2:DescribeSpot*",
-			"rds:DescribeReserved*",
-			"rds:DescribeDBRecommendations",
-			"rds:DescribeAccountAttributes",
-			"ecs:DescribeCapacityProviders",
-			"es:DescribeReserved*"
-			]
-			Resource = "*"
-			}
-		]
-	})
 }
