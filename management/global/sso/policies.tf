@@ -129,8 +129,7 @@ data "aws_iam_policy_document" "devops" {
         "*.small",
         "*.medium",
         "*.large",
-        "*.xlarge",
-        "*.metal"
+        "*.xlarge"
       ]
     }
   }
