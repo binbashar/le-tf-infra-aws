@@ -42,6 +42,13 @@ provider "aws" {
   profile = "${var.project}-security-devops"
 }
 
+provider "aws" {
+  alias   = "data-science"
+  region  = var.region
+  profile = "${var.project}-data-science-devops"
+}
+
+
 #=============================#
 # Backend Config (partial)    #
 #=============================#
@@ -182,6 +189,21 @@ data "terraform_remote_state" "shared-dr-vpcs" {
 data "terraform_remote_state" "security-vpcs" {
 
   for_each = local.security-vpcs
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(each.value, "region")
+    profile = lookup(each.value, "profile")
+    bucket  = lookup(each.value, "bucket")
+    key     = lookup(each.value, "key")
+  }
+}
+
+# VPC remote states for security
+data "terraform_remote_state" "data-science-vpcs" {
+
+  for_each = local.data-science-vpcs
 
   backend = "s3"
 

@@ -4,50 +4,50 @@
 module "s3_bucket_datalake" {
   source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.2.1"
 
-  bucket        = local.bucket_name
+  bucket        = "${local.name}-bucket"
   acl           = "private"
   force_destroy = true
 
   attach_policy = true
-  policy        = data.aws_iam_policy_document.bucket_policy.json
+  #policy        = data.aws_iam_policy_document.bucket_policy.json
 
-  replication_configuration = {
-    role = aws_iam_role.replication.arn
+  # replication_configuration = {
+  #   role = aws_iam_role.replication.arn
 
-    rules = [
-      {
-        id     = "ReplicationRule"
-        status = "Enabled"
+  #   rules = [
+  #     {
+  #       id     = "ReplicationRule"
+  #       status = "Enabled"
 
-        delete_marker_replication = false
+  #       delete_marker_replication = false
 
-        source_selection_criteria = {
-          sse_kms_encrypted_objects = {
-            enabled = true
-          }
-        }
+  #       source_selection_criteria = {
+  #         sse_kms_encrypted_objects = {
+  #           enabled = true
+  #         }
+  #       }
 
-        destination = {
-          bucket             = "arn:aws:s3:::${local.bucket_name_replica}"
-          storage_class      = "STANDARD"
-          replica_kms_key_id = data.terraform_remote_state.keys-dr.outputs.aws_kms_key_arn
-          account_id         = data.aws_caller_identity.current.account_id
-          access_control_translation = {
-            owner = "Destination"
-          }
-        }
-      }
-    ]
-  }
+  #       destination = {
+  #         bucket             = "arn:aws:s3:::${local.bucket_name_replica}"
+  #         storage_class      = "STANDARD"
+  #         replica_kms_key_id = data.terraform_remote_state.keys-dr.outputs.aws_kms_key_arn
+  #         account_id         = data.aws_caller_identity.current.account_id
+  #         access_control_translation = {
+  #           owner = "Destination"
+  #         }
+  #       }
+  #     }
+  #   ]
+  # }
 
   versioning = {
     enabled = true
   }
 
-  logging = {
-    target_bucket = module.log_bucket_demo_files.s3_bucket_id
-    target_prefix = "logs/"
-  }
+  # logging = {
+  #   target_bucket = module.log_bucket_demo_files.s3_bucket_id
+  #   target_prefix = "logs/"
+  # }
 
   server_side_encryption_configuration = {
     rule = {
