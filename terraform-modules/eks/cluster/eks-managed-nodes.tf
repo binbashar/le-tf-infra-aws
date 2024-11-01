@@ -193,7 +193,7 @@ module "cluster" {
   }
 
   # Specify the CIDR of k8s services -- Ref: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster#kubernetes_network_config
-  cluster_service_ipv4_cidr = "10.100.0.0/16"
+  cluster_service_ipv4_cidr = var.pod_cidr
 
   # Encrypt selected k8s resources with this account's KMS CMK
   cluster_encryption_config = {

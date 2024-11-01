@@ -32,4 +32,6 @@ module "eks" {
   additional_node_groups = local.additional_node_groups
 
   tags = local.tags
+
+  pod_cidr = "10.100.0.0/16"
 }

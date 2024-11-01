@@ -187,3 +187,9 @@ variable "additional_node_groups" {
   type        = map
   default     = {}
 }
+
+variable "pod_cidr" {
+  description = "The CIDR the cluster will use to assign IPs to pods"
+  type        = string
+  default     = "10.100.0.0/16"
+}
