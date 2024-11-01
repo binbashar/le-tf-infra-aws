@@ -13,7 +13,7 @@ locals {
     # Allow DevOps role to become cluster admins
     #
     {
-      rolearn  = "arn:aws:iam::${var.accounts.shared.id}:role/DevOps"
+      rolearn  = "arn:aws:iam::${var.accounts.apps-devstg.id}:role/DevOps"
       username = "DevOps"
       groups   = ["system:masters"]
     },
@@ -29,7 +29,7 @@ locals {
     # Allow Developer role access for specific Namespaces (Role/RoleBinding)
     #
     {
-      rolearn  = "arn:aws:iam::${var.accounts.shared.id}:role/Developer"
+      rolearn  = "arn:aws:iam::${var.accounts.apps-devstg.id}:role/Developer"
       username = "Developer"
       groups   = ["system:authenticated"]
     },
