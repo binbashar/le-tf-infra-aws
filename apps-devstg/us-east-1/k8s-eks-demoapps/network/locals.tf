@@ -3,7 +3,7 @@ locals {
   #================================#
   # Naming                         #
   #================================#
-  name_suffix = "eks-training"
+  name_suffix = "eks-demoapps"
 
   cluster_name = "${var.project}-${var.environment}-${local.name_suffix}"
 
