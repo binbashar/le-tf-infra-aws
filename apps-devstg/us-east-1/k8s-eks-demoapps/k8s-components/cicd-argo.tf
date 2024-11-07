@@ -24,7 +24,7 @@ resource "helm_release" "argocd" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
-  version    = "5.4.3"
+  version    = "5.7.0"
   values = [
     templatefile("chart-values/argo-cd.yaml", {
       argoHost     = "argocd.${local.platform}.${local.private_base_domain}"
@@ -67,7 +67,7 @@ resource "helm_release" "argocd_image_updater" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argocd-image-updater"
-  version    = "0.8.0"
+  version    = "0.11.1"
   values = [
     templatefile("chart-values/argocd-image-updater.yaml", {
       region                   = var.region
@@ -101,7 +101,7 @@ resource "helm_release" "argo_rollouts" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-rollouts"
-  version    = "2.19.0"
+  version    = "2.37.0"
   values = [
     templatefile("chart-values/argo-rollouts.yaml", {
       rolloutsHost = "rollouts.${local.platform}.${local.private_base_domain}"
