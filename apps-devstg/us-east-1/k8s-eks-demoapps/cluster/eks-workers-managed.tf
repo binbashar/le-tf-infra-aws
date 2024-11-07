@@ -1,5 +1,5 @@
 module "cluster" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v20.2.1"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v20.28.0"
 
   create          = true
   cluster_name    = data.terraform_remote_state.cluster-vpc.outputs.cluster_name
@@ -148,6 +148,22 @@ module "cluster" {
     #     }
     #   }
     # }
+    # argocd = {
+    #   desired_size   = 1
+    #   max_size       = 2
+    #   min_size       = 1
+    #   capacity_type  = "SPOT"
+    #   instance_types = ["t3.medium"]
+
+    #   labels = merge(local.tags, { "stack" = "argocd" })
+    #   taints = {
+    #     dedicated_argocd = {
+    #       key    = "stack"
+    #       value  = "argocd"
+    #       effect = "NO_SCHEDULE"
+    #     }
+    #   }
+    # }
   }
 
   # Configure which roles, users and accounts can access the k8s api
@@ -175,16 +191,16 @@ module "cluster" {
   )
 }
 
-module "cluster-aws-auth" {
-  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
-  version = "~> 20.0"
+# module "cluster-aws-auth" {
+#   source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
+#   version = "~> 20.0"
 
-  manage_aws_auth_configmap = var.manage_aws_auth
-  create_aws_auth_configmap = var.create_aws_auth
+#   manage_aws_auth_configmap = var.manage_aws_auth
+#   create_aws_auth_configmap = var.create_aws_auth
 
-  aws_auth_roles    = local.map_roles
-  aws_auth_users    = local.map_users
-  aws_auth_accounts = local.map_accounts
+#   aws_auth_roles    = local.map_roles
+#   aws_auth_users    = local.map_users
+#   aws_auth_accounts = local.map_accounts
 
-  depends_on = [module.cluster]
-}
+#   depends_on = [module.cluster]
+# }
