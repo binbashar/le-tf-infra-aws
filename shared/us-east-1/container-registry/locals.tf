@@ -154,6 +154,27 @@ locals {
       read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
       write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
+    #
+    # Demo: emojivoto
+    #
+    emojivoto-emoji-svc = {
+      create            = true
+      name              = "emojivoto-emoji-svc"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    emojivoto-voting-svc = {
+      create            = true
+      name              = "emojivoto-voting-svc"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    emojivoto-web = {
+      create            = true
+      name              = "emojivoto-web"
+      read_permissions  = ["arn:aws:iam::${var.accounts.apps-devstg.id}:root"]
+      write_permissions = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
   }
 
 }
