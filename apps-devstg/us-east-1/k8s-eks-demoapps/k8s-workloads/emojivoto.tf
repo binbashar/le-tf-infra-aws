@@ -20,11 +20,13 @@ resource "kubernetes_manifest" "demo-emojivoto" {
         "env" = "devstg"
       }
       "annotations" = {
-        "argocd-image-updater.argoproj.io/image-list"                        = join(",", local.image_list)
-        "argocd-image-updater.argoproj.io/allow-tags"                        = "regexp:^[0-9]*-[a-z0-9]{7}$"
-        "argocd-image-updater.argoproj.io/multibot-frontend.update-strategy" = "latest"
-        "argocd-image-updater.argoproj.io/write-back-method"                 = "git"
-        "argocd-image-updater.argoproj.io/write-back-target"                 = "kustomization"
+        "argocd-image-updater.argoproj.io/image-list"                           = join(",", local.image_list)
+        "argocd-image-updater.argoproj.io/allow-tags"                           = "regexp:^[0-9]*-[a-z0-9]{7}$"
+        "argocd-image-updater.argoproj.io/emojivoto-emoji-svc.update-strategy"  = "latest"
+        "argocd-image-updater.argoproj.io/emojivoto-voting-svc.update-strategy" = "latest"
+        "argocd-image-updater.argoproj.io/emojivoto-web.update-strategy"        = "latest"
+        "argocd-image-updater.argoproj.io/write-back-method"                    = "git"
+        "argocd-image-updater.argoproj.io/write-back-target"                    = "kustomization"
       }
     }
 
