@@ -6,6 +6,10 @@ data "aws_secretsmanager_secret_version" "demo_google_microservices_deploy_key" 
   secret_id = "/repositories/demo-google-microservices/deploy_key"
 }
 
+data "aws_secretsmanager_secret_version" "le_demo_deploy_key" {
+  provider  = aws.shared
+  secret_id = "/repositories/le-demo-apps/deploy_key"
+}
 
 # argocd_admin_password
 data "aws_secretsmanager_secret" "argocd_admin_password" {
@@ -45,6 +49,13 @@ resource "helm_release" "argocd" {
             sshPrivateKey = data.aws_secretsmanager_secret_version.demo_google_microservices_deploy_key.secret_string
             type          = "git"
             url           = "git@github.com:binbashar/demo-google-microservices.git"
+          }
+          le-demo-apps = {
+            name          = "le-demo-apps"
+            project       = "default"
+            sshPrivateKey = data.aws_secretsmanager_secret_version.le_demo_deploy_key.secret_string
+            type          = "git"
+            url           = "git@github.com:binbashar/le-demo-apps.git"
           }
         }
       }
