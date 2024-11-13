@@ -32,8 +32,8 @@ enable_hpa_scaling              = false
 enable_vpa_scaling              = false
 enable_cluster_autoscaling      = true
 enable_cluster_overprovisioning = false
-enable_keda                = true
-enable_keda_http_add_on    = true
+enable_keda                     = true
+enable_keda_http_add_on         = true
 
 #------------------------------------------------------------------------------
 # Monitoring: Logging
