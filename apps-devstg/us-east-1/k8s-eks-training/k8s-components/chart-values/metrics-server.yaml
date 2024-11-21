@@ -1,0 +1,8 @@
+# Disable Kubernetes CA validation in Kind
+extraArgs:
+  - --kubelet-insecure-tls=true
+  # kubelet-preferred-address-types: InternalIP
+
+# Create the API service under "v1beta1.metrics.k8s.io"
+apiService:
+  create: true

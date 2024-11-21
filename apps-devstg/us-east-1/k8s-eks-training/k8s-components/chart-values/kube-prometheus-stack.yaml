@@ -1,0 +1,125 @@
+# -------------------------------------------------------------------------------------------
+# AlertManager
+# -------------------------------------------------------------------------------------------
+alertmanager:
+  # TODO Enable and create a working reference
+  enabled: false
+
+  #nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
+# -------------------------------------------------------------------------------------------
+# Grafana
+# -------------------------------------------------------------------------------------------
+grafana:
+  enabled: true
+
+  adminUser: admin
+  # TODO Pass this as a secret
+  adminPassword: admin123456
+
+  #nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/tls-acme: 'true'
+      kubernetes.io/ingress.class: ${private_ingress_class}
+      cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
+    hosts:
+      - grafana.${platform}.${private_base_domain}
+    path: /
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.${platform}.${private_base_domain}
+
+# -------------------------------------------------------------------------------------------
+# NodeExporter
+# -------------------------------------------------------------------------------------------
+nodeExporter:
+  enabled: true
+
+# -------------------------------------------------------------------------------------------
+# KubeStateMetrics
+# -------------------------------------------------------------------------------------------
+kubeStateMetrics:
+  enabled: true
+
+kube-state-metrics:
+  #nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
+# -------------------------------------------------------------------------------------------
+# Prometheus
+# -------------------------------------------------------------------------------------------
+prometheus:
+  enabled: true
+
+  prometheusSpec:
+    #nodeSelector: ${nodeSelector}
+    tolerations: ${tolerations}
+
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/tls-acme: 'true'
+      kubernetes.io/ingress.class: ${private_ingress_class}
+      cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
+    hosts:
+      - prometheus.${platform}.${private_base_domain}
+    path: /
+    tls:
+      - secretName: prometheus-tls
+        hosts:
+          - prometheus.${platform}.${private_base_domain}
+
+  # additionalServiceMonitors:
+  # - name: my-app
+  #   selector:
+  #     matchLabels:
+  #       argocd.argoproj.io/instance: my-app
+  #   namespaceSelector:
+  #     matchNames:
+  #     - my-app
+  #   endpoints:
+  #     - port: http
+  #       path: /internal/metrics
+  #       scheme: http
+  #       interval: 30s
+
+# -------------------------------------------------------------------------------------------
+# Prometheus Operator
+# -------------------------------------------------------------------------------------------
+prometheusOperator:
+  enabled: true
+  admissionWebHooks:
+    patch:
+      #nodeSelector: ${nodeSelector}
+      tolerations: ${tolerations}
+  #nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
+
+# -------------------------------------------------------------------------------------------
+# Disable KubeControllerManagerDown and KubeSchedulerDown since they aren't necessary on EKS.
+# Disable WatchDog until we can integrate it with PagerDuty or similar.
+# -------------------------------------------------------------------------------------------
+defaultRules:
+  rules:
+    kubeControllerManager: false
+    kubeSchedulerAlerting: false
+
+  disabled:
+    Watchdog: true
+    KubeControllerManagerDown: true
+    KubeSchedulerDown: true
+    KubeletTooManyPods: true
+    InfoInhibitor: true
+
+kubeControllerManager:
+  enabled: false
+
+kubeScheduler:
+  enabled: false
