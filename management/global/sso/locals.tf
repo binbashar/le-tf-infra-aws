@@ -275,6 +275,15 @@ locals {
         "datascientists",
       ]
     }
+    "agustin.rodriguez" = {
+      first_name = "Agustin"
+      last_name  = "Rodriguez"
+      email      = "agustin.rodriguez@binbash.com.ar"
+      groups = [
+        "administrators",
+        "devops",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
