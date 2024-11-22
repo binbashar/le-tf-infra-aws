@@ -30,6 +30,7 @@ data "aws_iam_policy_document" "devops" {
       "compute-optimizer:*",
       "datasync:*",
       "dlm:*",
+      "dms:*",
       "ds:*",
       "dynamodb:*",
       "ec2:*",
