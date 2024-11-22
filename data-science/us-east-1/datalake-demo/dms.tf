@@ -72,8 +72,8 @@ module "database_migration_service" {
       migration_type            = "cdc"
       replication_task_settings = file("config/task_settings.json")
       table_mappings            = file("config/table_mappings.json")
-      source_endpoint_key       = "source"
-      target_endpoint_key       = "destination"
+      source_endpoint_key       = "source_data_science_aurora_mysql"
+      target_endpoint_key       = "s3-destination"
       tags                      = local.tags
     }
   }

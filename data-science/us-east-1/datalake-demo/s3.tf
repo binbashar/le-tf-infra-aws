@@ -5,10 +5,10 @@ module "s3_bucket_datalake" {
   source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.2.1"
 
   bucket        = "${local.name}-bucket"
-  acl           = "private"
+  acl           = null
   force_destroy = true
 
-  attach_policy = true
+  attach_policy = false
   #policy        = data.aws_iam_policy_document.bucket_policy.json
 
   # replication_configuration = {

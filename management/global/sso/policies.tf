@@ -13,6 +13,7 @@ data "aws_iam_policy_document" "devops" {
       "application-autoscaling:*",
       "apprunner:*",
       "apigateway:*",
+      "aoss:*",
       "aws-portal:*",
       "aws-marketplace:*",
       "backup:*",
@@ -29,6 +30,7 @@ data "aws_iam_policy_document" "devops" {
       "compute-optimizer:*",
       "datasync:*",
       "dlm:*",
+      "dms:*",
       "ds:*",
       "dynamodb:*",
       "ec2:*",
@@ -105,6 +107,7 @@ data "aws_iam_policy_document" "devops" {
       values = [
         "${var.region}", # The original region is needed to have IAM working
         "${var.region_secondary}",
+        "us-east-1",
         "us-west-2" # The original region is needed to have IAM working
       ]
     }
