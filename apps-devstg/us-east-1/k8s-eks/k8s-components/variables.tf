@@ -143,3 +143,15 @@ variable "schedules" {
   type    = any
   default = {}
 }
+
+#==================================#
+# enable_keda and keda http add on
+#==================================#
+variable "enable_keda" {
+  type    = bool
+  default = false
+}
+variable "enable_keda_http_add_on" {
+  type    = bool
+  default = false
+}
