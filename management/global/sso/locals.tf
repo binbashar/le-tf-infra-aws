@@ -284,6 +284,14 @@ locals {
         "devops",
       ]
     }
+    "carlos.paez" = {
+      first_name = "Carlos"
+      last_name  = "Paez"
+      email      = "carlos.paez@binbash.com.ar"
+      groups = [
+        "devops",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
