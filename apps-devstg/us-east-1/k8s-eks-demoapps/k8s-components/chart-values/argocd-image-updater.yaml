@@ -21,7 +21,6 @@ config:
   # Whether to use plain text connection (http) instead of TLS (https)
   argocd.plaintext: "false"
 
-config:
   gitCommitUser: ${gitCommitUser}
   gitCommitMail: ${gitCommitMail}
   gitCommitTemplate: |
@@ -48,3 +47,6 @@ serviceAccount:
   annotations:
     eks.amazonaws.com/role-arn: ${roleArn}
   name: "argocd-image-updater"
+
+nodeSelector: ${nodeSelector}
+tolerations: ${tolerations}

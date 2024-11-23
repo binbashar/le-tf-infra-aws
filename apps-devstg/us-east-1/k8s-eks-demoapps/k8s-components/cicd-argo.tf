@@ -28,11 +28,14 @@ resource "helm_release" "argocd" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
-  version    = "5.7.0"
+  version    = "7.7.5"
   values = [
     templatefile("chart-values/argo-cd.yaml", {
-      argoHost     = "argocd.${local.platform}.${local.private_base_domain}"
-      ingressClass = local.private_ingress_class
+      argoHost          = "argocd.${local.platform}.${local.private_base_domain}"
+      ingressClass      = local.private_ingress_class,
+      enableWebTerminal = var.argocd.enableWebTerminal,
+      nodeSelector      = local.tools_nodeSelector,
+      tolerations       = local.tools_tolerations
     }),
     # We are using a different approach here because it is very tricky to render
     # properly the multi-line sshPrivateKey using 'templatefile' function
@@ -78,13 +81,15 @@ resource "helm_release" "argocd_image_updater" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argocd-image-updater"
-  version    = "0.11.1"
+  version    = "0.11.2"
   values = [
     templatefile("chart-values/argocd-image-updater.yaml", {
       region                   = var.region
       argoHost                 = "argocd.${local.platform}.${local.private_base_domain}",
       repositoryApiUrl         = "${var.accounts.shared.id}.dkr.ecr.${var.region}.amazonaws.com",
       roleArn                  = data.terraform_remote_state.cluster-identities.outputs.argo_cd_image_updater_role_arn,
+      nodeSelector             = local.tools_nodeSelector,
+      tolerations              = local.tools_tolerations,
       gitCommitUser            = "binbash-machine-user"
       gitCommitMail            = "leverage-aws+machine-user@binbash.com.ar"
       gitCommitMessageTemplate = <<-TMP
@@ -112,12 +117,16 @@ resource "helm_release" "argo_rollouts" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-rollouts"
-  version    = "2.37.0"
+  version    = "2.38.0"
   values = [
     templatefile("chart-values/argo-rollouts.yaml", {
-      rolloutsHost = "rollouts.${local.platform}.${local.private_base_domain}"
-      ingressClass = local.private_ingress_class
-  })]
+      enableDashboard = var.argocd.rollouts.dashboard.enabled,
+      rolloutsHost    = "rollouts.${local.platform}.${local.private_base_domain}",
+      ingressClass    = local.private_ingress_class,
+      nodeSelector    = local.tools_nodeSelector,
+      tolerations     = local.tools_tolerations
+    })
+  ]
 
   depends_on = [
     helm_release.alb_ingress,

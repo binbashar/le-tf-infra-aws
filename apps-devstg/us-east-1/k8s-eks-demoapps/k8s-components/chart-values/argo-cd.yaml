@@ -1,13 +1,22 @@
 # ---------------------------------------------------------
-# ArgoCD Repo Server
+# Global shared configs
 # ---------------------------------------------------------
 global:
   domain: ${argoHost}
 
+  nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
+# ---------------------------------------------------------
+# ArgoCD configs
+# ---------------------------------------------------------
 configs:
   cm:
     exec.enabled: "${enableWebTerminal}"
 
+# ---------------------------------------------------------
+# Repository Server
+# ---------------------------------------------------------
 repoServer:
   env:
   # Increase the default timeout applied when the repo-server executes config management tools
@@ -15,6 +24,9 @@ repoServer:
   - name: ARGOCD_EXEC_TIMEOUT
     value: 3m0s
 
+# ---------------------------------------------------------
+# Server
+# ---------------------------------------------------------
 server:
   ingress:
     enabled: true
