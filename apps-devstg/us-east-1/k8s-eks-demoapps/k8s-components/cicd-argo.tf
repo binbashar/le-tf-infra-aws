@@ -6,22 +6,25 @@ data "aws_secretsmanager_secret_version" "argocd_admin_password" {
 }
 
 data "aws_secretsmanager_secret_version" "demo_google_microservices_deploy_key" {
+  count     = var.argocd.enabled ? 1 : 0
   provider  = aws.shared
   secret_id = "/repositories/demo-google-microservices/deploy_key"
 }
 
 data "aws_secretsmanager_secret_version" "le_demo_deploy_key" {
+  count     = var.argocd.enabled ? 1 : 0
   provider  = aws.shared
   secret_id = "/repositories/le-demo-apps/deploy_key"
 }
 
 data "aws_secretsmanager_secret_version" "argocd_slack_notification_app_oauth" {
+  count     = var.argocd.enabled && var.argocd.enableNotifications ? 1 : 0
   provider  = aws.shared
   secret_id = "/notifications/devstg/argocd"
 }
 
 resource "helm_release" "argocd" {
-  count = var.enable_cicd ? 1 : 0
+  count = var.argocd.enabled ? 1 : 0
 
   name       = "argocd"
   namespace  = kubernetes_namespace.argocd[0].id
@@ -78,7 +81,7 @@ resource "helm_release" "argocd" {
 # ArgoCD Image Updater
 #------------------------------------------------------------------------------
 resource "helm_release" "argocd_image_updater" {
-  count      = var.enable_argocd_image_updater ? 1 : 0
+  count      = var.argocd.image_updater.enabled ? 1 : 0
   name       = "argocd-image-updater"
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
@@ -113,7 +116,7 @@ resource "helm_release" "argocd_image_updater" {
 # Argo Rollouts
 #------------------------------------------------------------------------------
 resource "helm_release" "argo_rollouts" {
-  count = var.enable_argo_rollouts ? 1 : 0
+  count = var.argocd.rollouts.enabled ? 1 : 0
 
   name       = "argo-rollouts"
   namespace  = kubernetes_namespace.argocd[0].id

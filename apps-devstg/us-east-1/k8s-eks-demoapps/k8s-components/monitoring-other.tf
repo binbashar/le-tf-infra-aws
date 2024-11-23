@@ -2,7 +2,7 @@
 # Datadog Agent
 #------------------------------------------------------------------------------
 resource "helm_release" "datadog_agent" {
-  count      = var.enable_datadog_agent ? 1 : 0
+  count      = var.datadog_agent.enabled ? 1 : 0
   name       = "datadog"
   namespace  = kubernetes_namespace.monitoring_other[0].id
   repository = "https://helm.datadoghq.com"
@@ -37,7 +37,7 @@ resource "helm_release" "datadog_agent" {
 # - Back up the volume used by Kuma and define/rehearse the restore procedure.
 #------------------------------------------------------------------------------
 resource "helm_release" "uptime_kuma" {
-  count      = var.enable_uptime_kuma ? 1 : 0
+  count      = var.uptime_kuma.enabled ? 1 : 0
   name       = "uptime-kuma"
   namespace  = kubernetes_namespace.monitoring_other[0].id
   repository = "https://helm.irsigler.cloud"

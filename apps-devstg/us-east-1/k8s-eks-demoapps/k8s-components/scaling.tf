@@ -2,7 +2,7 @@
 # Vertical Pod Autoscaler: automatic pod vertical autoscaling.
 #------------------------------------------------------------------------------
 resource "helm_release" "vpa" {
-  count      = var.enable_vpa_scaling ? 1 : 0
+  count      = var.scaling.vpa.enabled ? 1 : 0
   name       = "vpa"
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://charts.fairwinds.com/stable"
@@ -16,7 +16,7 @@ resource "helm_release" "vpa" {
 # Cluster Autoscaler: automatic cluster nodes autoscaling.
 #------------------------------------------------------------------------------
 resource "helm_release" "cluster_autoscaling" {
-  count      = var.enable_cluster_autoscaling ? 1 : 0
+  count      = var.scaling.cluster_autoscaling.enabled ? 1 : 0
   name       = "autoscaler"
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://kubernetes.github.io/autoscaler"
@@ -50,7 +50,7 @@ resource "helm_release" "cluster_autoscaling" {
 # Another option is to start with one replica and then use the proportional
 # autoscaler to control the minimum number of replicas there.
 resource "helm_release" "cluster_overprovisioner" {
-  count      = var.enable_cluster_overprovisioning ? 1 : 0
+  count      = var.scaling.cluster_overprovisioning.enabled ? 1 : 0
   name       = "cluster-overprovisioner"
   namespace  = kubernetes_namespace.scaling[0].id
   repository = "https://charts.deliveryhero.io/"
@@ -83,7 +83,7 @@ EOF
 #    targets must, as mush as possible, be assigned to a new node.
 #  - Also, don't forget about using proper values for the min and max settings.
 resource "helm_release" "cluster_proportional_autoscaler" {
-  count      = var.enable_cluster_overprovisioning ? 1 : 0
+  count      = var.scaling.cluster_overprovisioning.enabled ? 1 : 0
   name       = "cluster-proportional-autoscaler"
   namespace  = kubernetes_namespace.scaling[0].id
   repository = "https://kubernetes-sigs.github.io/cluster-proportional-autoscaler"

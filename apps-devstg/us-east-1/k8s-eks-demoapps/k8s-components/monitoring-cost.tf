@@ -28,7 +28,7 @@ resource "helm_release" "kube_resource_report" {
 #   `http://localhost:9090
 #------------------------------------------------------------------------------
 resource "helm_release" "cost_analyzer" {
-  count      = var.cost_optimization.cost_analyzer && !var.enable_prometheus_stack ? 1 : 0
+  count      = var.cost_optimization.cost_analyzer && !var.prometheus.kube_stack.enabled ? 1 : 0
   name       = "cost-analyzer"
   namespace  = kubernetes_namespace.monitoring_tools[0].id
   repository = "https://kubecost.github.io/cost-analyzer/"
