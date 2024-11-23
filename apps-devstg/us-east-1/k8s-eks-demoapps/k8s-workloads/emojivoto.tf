@@ -38,7 +38,7 @@ resource "kubernetes_manifest" "demo-emojivoto" {
       "project" = "default"
       "source" = {
         "repoURL"        = "git@github.com:binbashar/le-demo-apps.git"
-        "targetRevision" = "feat/add-emojivoto-kustomize-definitions"
+        "targetRevision" = "HEAD"
         "path"           = "emojivoto/kustomize/overlays/devstg"
       }
       "syncPolicy" = {
