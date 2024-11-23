@@ -8,7 +8,7 @@ locals {
 
   container_definitions = {
     demo = {
-      image                     = "905418344519.dkr.ecr.us-east-1.amazonaws.com/bb-data-science-genai-llm-rag-bedrock-demo:v1"
+      image                     = "905418344519.dkr.ecr.us-east-1.amazonaws.com/bb-data-science-genai-llm-rag-bedrock-demo:latest"
       enable_cloudwatch_logging = false
       readonly_root_filesystem  = false
       cpu                       = 512
