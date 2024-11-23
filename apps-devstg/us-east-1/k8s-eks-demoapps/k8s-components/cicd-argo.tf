@@ -1,6 +1,10 @@
 #------------------------------------------------------------------------------
 # ArgoCD: GitOps + CD
 #------------------------------------------------------------------------------
+data "aws_secretsmanager_secret_version" "argocd_admin_password" {
+  secret_id = "/k8s-eks-demoapps/argocdserveradminpassword"
+}
+
 data "aws_secretsmanager_secret_version" "demo_google_microservices_deploy_key" {
   provider  = aws.shared
   secret_id = "/repositories/demo-google-microservices/deploy_key"
@@ -11,14 +15,9 @@ data "aws_secretsmanager_secret_version" "le_demo_deploy_key" {
   secret_id = "/repositories/le-demo-apps/deploy_key"
 }
 
-# argocd_admin_password
-data "aws_secretsmanager_secret" "argocd_admin_password" {
-  name = "/k8s-eks-demoapps/argocdserveradminpassword"
-}
-
-# Get the latest secret version
-data "aws_secretsmanager_secret_version" "argocd_admin_password" {
-  secret_id = data.aws_secretsmanager_secret.argocd_admin_password.id
+data "aws_secretsmanager_secret_version" "argocd_slack_notification_app_oauth" {
+  provider  = aws.shared
+  secret_id = "/notifications/devstg/argocd"
 }
 
 resource "helm_release" "argocd" {
@@ -31,11 +30,14 @@ resource "helm_release" "argocd" {
   version    = "7.7.5"
   values = [
     templatefile("chart-values/argo-cd.yaml", {
-      argoHost          = "argocd.${local.platform}.${local.private_base_domain}"
-      ingressClass      = local.private_ingress_class,
-      enableWebTerminal = var.argocd.enableWebTerminal,
-      nodeSelector      = local.tools_nodeSelector,
-      tolerations       = local.tools_tolerations
+      argoHost                   = "argocd.${local.platform}.${local.private_base_domain}"
+      ingressClass               = local.private_ingress_class,
+      enableWebTerminal          = var.argocd.enableWebTerminal,
+      enableNotifications        = var.argocd.enableNotifications,
+      slackNotificationsAppToken = jsondecode(data.aws_secretsmanager_secret_version.argocd_slack_notifications_app_oauth[0].secret_string)["token"],
+      slackNotificationsChannel  = local.argocd_slack_notifications_channel,
+      nodeSelector               = local.tools_nodeSelector,
+      tolerations                = local.tools_tolerations
     }),
     # We are using a different approach here because it is very tricky to render
     # properly the multi-line sshPrivateKey using 'templatefile' function

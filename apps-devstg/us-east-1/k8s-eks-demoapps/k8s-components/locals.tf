@@ -58,6 +58,11 @@ locals {
   eks_alb_logging_prefix = var.eks_alb_logging_prefix != "" ? var.eks_alb_logging_prefix : data.terraform_remote_state.cluster.outputs.cluster_name
 
   #------------------------------------------------------------------------------
+  # Argo Settings
+  #------------------------------------------------------------------------------
+  argocd_slack_notifications_channel = "le-tools-monitoring"
+
+  #------------------------------------------------------------------------------
   # Tools Node Group: Selectors and Tolerations
   #------------------------------------------------------------------------------
   tools_nodeSelector = jsonencode({ stack = "tools" })
