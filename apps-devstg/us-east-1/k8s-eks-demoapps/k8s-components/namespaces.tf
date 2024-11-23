@@ -79,15 +79,6 @@ resource "kubernetes_namespace" "externaldns" {
   }
 }
 
-resource "kubernetes_namespace" "vault" {
-  count = var.enable_vault ? 1 : 0
-
-  metadata {
-    labels = local.labels
-    name   = "vault"
-  }
-}
-
 resource "kubernetes_namespace" "external-secrets" {
   count = var.enable_external_secrets ? 1 : 0
 
@@ -103,28 +94,6 @@ resource "kubernetes_namespace" "argocd" {
   metadata {
     labels = local.labels
     name   = "argocd"
-  }
-}
-
-resource "kubernetes_namespace" "gatus" {
-  count = var.enable_gatus ? 1 : 0
-
-  metadata {
-    labels = {
-      environment                        = var.environment
-      "goldilocks.fairwinds.com/enabled" = "true"
-    }
-
-    name = "gatus"
-  }
-}
-
-resource "kubernetes_namespace" "velero" {
-  count = var.enable_backups ? 1 : 0
-
-  metadata {
-    labels = local.labels
-    name   = "velero"
   }
 }
 
