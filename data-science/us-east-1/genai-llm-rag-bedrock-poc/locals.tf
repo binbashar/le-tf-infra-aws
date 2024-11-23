@@ -8,7 +8,7 @@ locals {
 
   container_definitions = {
     demo = {
-      image                     = "905418344519.dkr.ecr.us-east-1.amazonaws.com/bb-data-science-genai-llm-rag-bedrock-demo:latest"
+      image                     = "905418344519.dkr.ecr.us-east-1.amazonaws.com/bb-data-science-genai-llm-rag-bedrock-demo:v1"
       enable_cloudwatch_logging = false
       readonly_root_filesystem  = false
       cpu                       = 512
@@ -33,7 +33,7 @@ locals {
       secrets = [
         {
           "name" : "PWD"
-          "valueFrom" : "${module.secrets.secret_arns["/data-science/genai-llm-rag-demo"]}:PWD_demo::"
+          "valueFrom" : "${module.secrets.secret_arns["demo"]}:PWD_DEMO::"
         }
       ]
     }
