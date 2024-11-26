@@ -2,7 +2,15 @@ extraEnv:
   - name: AWS_REGION
     value: ${region}
 
-data:
+volumeMounts:
+  - mountPath: /app/.aws
+    name: creds
+
+volumes:
+  - name: creds
+    emptyDir: {}
+
+config:
   applications_api: argocd
   # The address of Argo CD API endpoint - defaults to argocd-server.argocd
   argocd.server_addr: ${argoHost}
