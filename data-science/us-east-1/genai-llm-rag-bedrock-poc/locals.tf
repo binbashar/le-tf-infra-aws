@@ -33,7 +33,7 @@ locals {
       secrets = [
         {
           "name" : "PWD"
-          "valueFrom" : "${module.secrets.secret_arns["/data-science/genai-llm-rag-demo"]}:PWD_demo::"
+          "valueFrom" : "${module.secrets.secret_arns["demo"]}:PWD_DEMO::"
         }
       ]
     }
