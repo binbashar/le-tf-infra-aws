@@ -219,36 +219,39 @@ module "iam_assumable_role_service_trustedadvisor" {
 #------------------------------------------------------------------------------
 locals {
   # Only grant permission to assume this role to this repo/branch
-  github_oidc_allowed_branches = "repo:binbashar/demo-google-microservices:ref:refs/heads/master"
+  github_oidc_allowed_branches = [
+    "repo:binbashar/demo-google-microservices:ref:refs/heads/master",
+    "repo:binbashar/le-emojivoto:ref:refs/heads/master",
+  ]
 }
 
 resource "aws_iam_role" "github_actions_role" {
   name               = "${local.environment}-github-actions-oidc"
   description        = "Github OIDC integration for Github Actions"
   tags               = merge(local.tags, { Name = "github-oidc-workflows" })
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "GithubActionsAssumeRoleWithIdp",
-      "Effect": "Allow",
-      "Action": [
-        "sts:AssumeRoleWithWebIdentity"
-      ],
-      "Principal": {
-        "Federated": "${aws_iam_openid_connect_provider.aws_github_oidc.arn}"
-      },
-      "Condition": {
-        "StringEquals": {
-          "token.actions.githubusercontent.com:sub": "${local.github_oidc_allowed_branches}",
-          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid    = "GithubActionsAssumeRoleWithIdp",
+        Effect = "Allow",
+        Action = [
+          "sts:AssumeRoleWithWebIdentity"
+        ],
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.aws_github_oidc.arn
+        },
+        Condition = {
+          StringLike = {
+            "token.actions.githubusercontent.com:sub" = local.github_oidc_allowed_branches,
+          },
+          StringEquals = {
+            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+          }
         }
       }
-    }
-  ]
-}
-EOF
+    ]
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "github_actions_oidc" {

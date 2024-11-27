@@ -6,6 +6,10 @@ data "aws_secretsmanager_secret_version" "demo_google_microservices_deploy_key" 
   secret_id = "/repositories/demo-google-microservices/deploy_key"
 }
 
+data "aws_secretsmanager_secret_version" "le_demo_deploy_key" {
+  provider  = aws.shared
+  secret_id = "/repositories/le-demo-apps/deploy_key"
+}
 
 # argocd_admin_password
 data "aws_secretsmanager_secret" "argocd_admin_password" {
@@ -24,7 +28,7 @@ resource "helm_release" "argocd" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
-  version    = "5.4.3"
+  version    = "5.7.0"
   values = [
     templatefile("chart-values/argo-cd.yaml", {
       argoHost     = "argocd.${local.platform}.${local.private_base_domain}"
@@ -45,6 +49,13 @@ resource "helm_release" "argocd" {
             sshPrivateKey = data.aws_secretsmanager_secret_version.demo_google_microservices_deploy_key.secret_string
             type          = "git"
             url           = "git@github.com:binbashar/demo-google-microservices.git"
+          }
+          le-demo-apps = {
+            name          = "le-demo-apps"
+            project       = "default"
+            sshPrivateKey = data.aws_secretsmanager_secret_version.le_demo_deploy_key.secret_string
+            type          = "git"
+            url           = "git@github.com:binbashar/le-demo-apps.git"
           }
         }
       }
@@ -67,7 +78,7 @@ resource "helm_release" "argocd_image_updater" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argocd-image-updater"
-  version    = "0.8.0"
+  version    = "0.11.1"
   values = [
     templatefile("chart-values/argocd-image-updater.yaml", {
       region                   = var.region
@@ -101,7 +112,7 @@ resource "helm_release" "argo_rollouts" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-rollouts"
-  version    = "2.19.0"
+  version    = "2.37.0"
   values = [
     templatefile("chart-values/argo-rollouts.yaml", {
       rolloutsHost = "rollouts.${local.platform}.${local.private_base_domain}"
