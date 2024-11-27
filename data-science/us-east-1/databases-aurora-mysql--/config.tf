@@ -7,7 +7,7 @@ provider "aws" {
 }
 
 provider "mysql" {
-  endpoint = "172.19.1.158" #module.demoapps.cluster_endpoint
+  endpoint = module.demoapps.cluster_endpoint
   username = module.demoapps.cluster_master_username
   password = jsondecode(data.aws_secretsmanager_secret_version.administrator.secret_string)["password"]
 }
