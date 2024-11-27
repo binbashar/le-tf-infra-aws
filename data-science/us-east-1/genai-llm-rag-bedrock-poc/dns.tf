@@ -1,4 +1,4 @@
-resource "aws_route53_record" "priv_app_aws" {
+resource "aws_route53_record" "demo_dns" {
   provider = aws.shared-route53
   zone_id  = data.terraform_remote_state.shared-dns.outputs.public_zone_id
   name     = "demo-genai.binbash.co"
