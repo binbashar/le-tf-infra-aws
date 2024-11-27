@@ -24,5 +24,5 @@ resource "mysql_grant" "sockshop" {
   user       = mysql_user.sockshop.user
   host       = mysql_user.sockshop.host
   database   = mysql_database.sockshop.name
-  privileges = ["SELECT", "INSERT", "UPDATE", "DELETE", "CREATE", "REFERENCES", "DROP"]
+  privileges = ["SELECT", "INSERT", "UPDATE", "DELETE", "CREATE", "REFERENCES", "DROP", "REPLICATION SLAVE", "REPLICATION CLIENT" ]
 }

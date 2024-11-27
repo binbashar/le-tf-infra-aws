@@ -13,6 +13,7 @@ data "aws_iam_policy_document" "devops" {
       "application-autoscaling:*",
       "apprunner:*",
       "apigateway:*",
+      "aoss:*",
       "athena:*",
       "aws-portal:*",
       "aws-marketplace:*",

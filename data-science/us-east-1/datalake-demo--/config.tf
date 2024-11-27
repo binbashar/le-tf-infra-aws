@@ -49,3 +49,24 @@ data "terraform_remote_state" "secrets" {
     key     = "${var.environment}/secrets-manager/terraform.tfstate"
   }
 }
+
+data "terraform_remote_state" "aurora_mysql" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/databases-aurora-mysql/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "keys" {
+  backend = "s3"
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/security-keys/terraform.tfstate"
+  }
+}
