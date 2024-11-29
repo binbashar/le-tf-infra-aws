@@ -300,6 +300,14 @@ locals {
         "datascientists",
       ]
     }
+    "favio.tolosa" = {
+      first_name = "Favio"
+      last_name  = "Tolosa"
+      email      = "favio.tolosa@binbash.com.ar"
+      groups = [
+        "devops",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
