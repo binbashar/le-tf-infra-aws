@@ -1,5 +1,5 @@
 module "terraform_backend" {
-  source = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.20"
+  source = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.28"
 
   #
   # Bucket Name
