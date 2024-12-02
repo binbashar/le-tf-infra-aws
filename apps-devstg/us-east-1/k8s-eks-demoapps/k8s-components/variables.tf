@@ -1,196 +1,181 @@
 #=============================#
 # Layer Flags                 #
 #=============================#
-variable "enable_nginx_ingress_controller" {
-  type    = bool
-  default = false
+variable "ingress" {
+  type = object({
+    alb_controller   = map(any)
+    nginx_controller = map(any)
+    apps_ingress = object({
+      enabled = bool
+      type    = string
+      logging = object({
+        enabled = bool
+        prefix  = string
+      })
+    })
+  })
+  default = {
+    alb_controller = {
+      enabled = true
+    }
+
+    nginx_controller = {
+      enabled = true
+    }
+
+    apps_ingress = {
+      enabled = false
+
+      type = "internal"
+
+      logging = {
+        enabled = false
+        prefix  = ""
+      }
+    }
+  }
 }
 
-variable "enable_alb_ingress_controller" {
-  type    = bool
-  default = false
+variable "certmanager" {
+  type = map(any)
+  default = {
+    enabled = true
+  }
 }
 
-variable "apps_ingress" {
-  type    = any
-  default = {}
+variable "dns_sync" {
+  type = map(any)
+  default = {
+    private = {
+      enabled = true
+    }
+
+    public = {
+      enabled = false
+    }
+  }
 }
 
-variable "enable_private_dns_sync" {
-  type    = bool
-  default = false
+variable "external_secrets" {
+  type = map(any)
+  default = {
+    enabled = true
+  }
 }
 
-variable "enable_public_dns_sync" {
-  type    = bool
-  default = false
-}
+variable "scaling" {
+  type = map(any)
+  default = {
+    hpa = {
+      enabled = false
+    }
 
-variable "enable_certmanager" {
-  type    = bool
-  default = false
-}
+    vpa = {
+      enabled = false
+    }
 
-variable "enable_vault" {
-  type    = bool
-  default = false
-}
+    cluster_autoscaling = {
+      enabled = false
+    }
 
-variable "enable_external_secrets" {
-  type    = bool
-  default = false
-}
-
-variable "enable_cicd" {
-  type    = bool
-  default = false
-}
-
-variable "enable_argocd_image_updater" {
-  type    = bool
-  default = false
-}
-
-variable "enable_argo_rollouts" {
-  type    = bool
-  default = false
-}
-
-variable "enable_hpa_scaling" {
-  type    = bool
-  default = false
-}
-
-variable "enable_vpa_scaling" {
-  type    = bool
-  default = false
-}
-
-variable "enable_cluster_autoscaling" {
-  type    = bool
-  default = false
-}
-
-variable "enable_cluster_overprovisioning" {
-  type    = bool
-  default = false
-}
-
-variable "enable_gatus" {
-  type    = bool
-  default = false
+    cluster_overprovisionning = {
+      enabled = false
+    }
+  }
 }
 
 variable "logging" {
-  type    = any
-  default = {}
+  type = object({
+    enabled    = bool,
+    forwarders = list(string)
+  })
+  default = {
+    enabled = false
+
+    forwarders = []
+  }
 }
 
-variable "enable_ingressmonitorcontroller" {
-  type    = bool
-  default = false
+variable "prometheus" {
+  type = object({
+    kube_stack = map(any)
+    external   = map(any)
+  })
+  default = {
+    kube_stack = {
+      enabled = true
+    }
+
+    external = {
+      dependencies = {
+        enabled = false
+      }
+
+      grafana_dependencies = {
+        enabled = false
+      }
+    }
+  }
 }
 
-variable "kube_prometheus_stack" {
+variable "datadog_agent" {
   type = map(any)
   default = {
     enabled = false
   }
 }
 
-variable "enable_prometheus_dependencies" {
-  type    = bool
-  default = false
+variable "kwatch" {
+  type = map(any)
+  default = {
+    enabled = false
+  }
 }
 
-variable "enable_grafana_dependencies" {
-  type    = bool
-  default = false
+variable "uptime_kuma" {
+  type = map(any)
+  default = {
+    enabled = false
+  }
 }
 
-variable "enable_kubernetes_dashboard" {
-  type    = bool
-  default = false
-}
+variable "argocd" {
+  type = object({
+    enabled             = bool
+    enableWebTerminal   = bool
+    enableNotifications = bool
+    image_updater       = map(any)
+    rollouts = object({
+      enabled   = bool
+      dashboard = map(any)
+    })
+  })
+  default = {
+    enabled = true
 
-variable "kubernetes_dashboard_ingress_class" {
-  type    = string
-  default = "private-apps"
-}
+    enableWebTerminal    = true
+    enabledNotifications = false
 
-variable "kubernetes_dashboard_hosts" {
-  type    = string
-  default = "kubernetes-dashboard.devstg.aws.binbash.com.ar"
-}
+    image_updater = {
+      enabled = false
+    }
 
-variable "enable_backups" {
-  type    = bool
-  default = false
-}
+    rollouts = {
+      enabled = false
 
-variable "enable_eks_alb_logging" {
-  description = "Turn EKS ALB logging on"
-  type        = bool
-  default     = false
-}
-
-variable "eks_alb_logging_prefix" {
-  description = "Turn EKS ALB logging on"
-  type        = string
-  default     = ""
-}
-
-#==================================#
-# Ingress Monitor Controller (IMC) #
-#==================================#
-variable "imc" {
-  type    = any
-  default = {}
-}
-
-#==================================#
-# Backups                          #
-#==================================#
-variable "schedules" {
-  type    = any
-  default = {}
-}
-
-#==================================#
-# DataDog Agent                    #
-#==================================#
-variable "enable_datadog_agent" {
-  type    = bool
-  default = false
+      dashboard = {
+        enabled = false
+      }
+    }
+  }
 }
 
 variable "cost_optimization" {
-  type    = any
-  default = {}
-}
-
-#==================================#
-# Uptime Kuma                      #
-#==================================#
-variable "enable_uptime_kuma" {
-  type    = bool
-  default = false
-}
-
-#==================================#
-# KWatch                           #
-#==================================#
-variable "enable_kwatch" {
-  type    = bool
-  default = false
-}
-
-#==================================#
-# enable_prometheus_stack
-#==================================#
-variable "enable_prometheus_stack" {
-  type    = bool
-  default = false
+  type = map(any)
+  default = {
+    kube_resource_report = false
+    cost_analyzer        = false
+  }
 }
 
 #==================================#

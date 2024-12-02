@@ -2,7 +2,7 @@
 # Cert-Manager: Automatically get Let's Encrypt certificate for your ingress.
 #------------------------------------------------------------------------------
 resource "helm_release" "certmanager" {
-  count      = var.enable_certmanager ? 1 : 0
+  count      = var.certmanager.enabled ? 1 : 0
   name       = "certmanager"
   namespace  = kubernetes_namespace.certmanager[0].id
   repository = "https://charts.jetstack.io"
@@ -19,7 +19,7 @@ resource "helm_release" "certmanager" {
 # Cert-Manager Cluster Issuer: Certificate issuer for Binbash domains.
 #------------------------------------------------------------------------------
 resource "helm_release" "clusterissuer_binbash" {
-  count      = var.enable_certmanager ? 1 : 0
+  count      = var.certmanager.enabled ? 1 : 0
   name       = "clusterissuer-binbash"
   namespace  = kubernetes_namespace.certmanager[0].id
   repository = "https://binbashar.github.io/helm-charts/"
@@ -39,7 +39,7 @@ resource "helm_release" "clusterissuer_binbash" {
 # External Secrets Operator: Automated 3rd party Service secrets injection.
 #------------------------------------------------------------------------------
 resource "helm_release" "external_secrets" {
-  count      = var.enable_external_secrets ? 1 : 0
+  count      = var.external_secrets.enabled ? 1 : 0
   name       = "external-secrets"
   namespace  = kubernetes_namespace.external-secrets[0].id
   repository = "https://charts.external-secrets.io"
@@ -53,7 +53,7 @@ resource "helm_release" "external_secrets" {
 }
 
 resource "helm_release" "cluster_secrets_manager" {
-  count = var.enable_external_secrets ? 1 : 0
+  count = var.external_secrets.enabled ? 1 : 0
 
   name       = "cluster-secrets-manager"
   namespace  = kubernetes_namespace.external-secrets[0].id
@@ -85,12 +85,12 @@ resource "helm_release" "cluster_secrets_manager" {
 
 # These resources below (cluster_parameter_store) need to be commented out and applied in a second step
 # The reason behind this can be found in this issue: https://github.com/hashicorp/terraform-provider-kubernetes/issues/1367#issuecomment-1239205722
-# and the surounding discussion.
+# and the surrounding discussion.
 # TODO: Move onto using a raw YAML helm chart as in https://github.com/itscontained/charts/tree/master/itscontained/raw
 
 
 # resource "kubernetes_manifest" "cluster_parameter_store" {
-#   count = var.enable_external_secrets ? 1 : 0
+#   count = var.external_secrets.enabled ? 1 : 0
 
 #   manifest = {
 #     "apiVersion" = "external-secrets.io/v1beta1"

@@ -100,7 +100,7 @@ The EKS CLUSTER layers need to be orchestrated in the following order:
     6. In the output you should see the credentials you need to talk to Kubernetes API via kubectl (or other clients).
 
         ```shell
-        apps-devstg//k8s-eks-v1.17/cluster$ leverage terraform output
+        apps-devstg//k8s-eks-demoapps/cluster$ leverage terraform output
 
         ...
         kubectl_config = apiVersion: v1
