@@ -24,6 +24,7 @@ module "terraform_backend" {
   # Replication
   #
   bucket_replication_enabled = true
+  bucket_replication_name_suffix = "bucket-replication-module"
 
   notifications_sns             = false
   bucket_lifecycle_enabled      = false
