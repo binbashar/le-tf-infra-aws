@@ -3,7 +3,6 @@
 #=============================#
 # Add default aws provider configuration
 provider "aws" {
-  alias   = "main_region"
   region  = var.region
   profile = var.profile
 }

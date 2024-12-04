@@ -292,6 +292,22 @@ locals {
         "devops",
       ]
     }
+    "alex.delossantos" = {
+      first_name = "Alex"
+      last_name  = "DelosSantos"
+      email      = "alex.delossantos@binbash.com.ar"
+      groups = [
+        "datascientists",
+      ]
+    }
+    "favio.tolosa" = {
+      first_name = "Favio"
+      last_name  = "Tolosa"
+      email      = "favio.tolosa@binbash.com.ar"
+      groups = [
+        "devops",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
