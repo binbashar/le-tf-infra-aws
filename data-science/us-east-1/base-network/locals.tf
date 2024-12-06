@@ -78,4 +78,13 @@ locals {
     #
     private_inbound = local.private_inbound
   }
+  apps-devstg-vpcs = {
+    apps-devstg-base = {
+      region  = var.region
+      profile = "${var.project}-apps-devstg-devops"
+      bucket  = "${var.project}-apps-devstg-terraform-backend"
+      key     = "apps-devstg/network/terraform.tfstate"
+      }  
+  }
+  
 }
