@@ -109,3 +109,12 @@ resource "kubernetes_namespace" "velero" {
     name   = "velero"
   }
 }
+
+resource "kubernetes_namespace" "keda" {
+  count = var.enable_keda ? 1 : 0
+
+  metadata {
+    labels = local.labels
+    name   = "keda"
+  }
+}

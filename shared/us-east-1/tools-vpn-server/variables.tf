@@ -21,7 +21,7 @@ variable "name" {
 #
 variable "aws_ami_os_id" {
   description = "AWS AMI Operating System Identificator"
-  default     = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"
+  default     = "ubuntu/images/hvm-ssd/ubuntu-lunar-23.04-amd64-server-*"
 }
 
 variable "aws_ami_os_owner" {

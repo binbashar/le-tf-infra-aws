@@ -280,7 +280,10 @@ resource "aws_iam_policy" "github_actions_oidc" {
                 "ecr:ListImages",
                 "ecr:DescribeImages"
             ],
-            "Resource": "arn:aws:ecr:${var.region}:${var.accounts.shared.id}:repository/demo-google-microservices-*"
+            "Resource": [
+                "arn:aws:ecr:${var.region}:${var.accounts.shared.id}:repository/demo-google-microservices-*",
+                "arn:aws:ecr:${var.region}:${var.accounts.shared.id}:repository/emojivoto-*"
+            ]
         }
     ]
 }

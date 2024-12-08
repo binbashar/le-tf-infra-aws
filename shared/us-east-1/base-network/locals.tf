@@ -179,6 +179,16 @@ locals {
     }
   }
 
+    # data-science
+  data-science-vpcs = {
+    data-science-base = {
+      region  = var.region
+      profile = "${var.project}-data-science-devops"
+      bucket  = "${var.project}-data-science-terraform-backend"
+      key     = "data-science/network/terraform.tfstate"
+    }
+  }
+
   datasources-vpcs = merge(
     var.enable_tgw ? data.terraform_remote_state.network-vpcs : null, # network
     data.terraform_remote_state.apps-devstg-vpcs,                     # apps-devstg-vpcs
@@ -186,5 +196,6 @@ locals {
     data.terraform_remote_state.apps-prd-vpcs,                        # apps-prd-vpcs
     data.terraform_remote_state.apps-prd-dr-vpcs,                     # apps-prd-dr-vpcs
     data.terraform_remote_state.security-vpcs,                        # security-vpcs
+    data.terraform_remote_state.data-science-vpcs,                    # data-science-vpcs
   )
 }

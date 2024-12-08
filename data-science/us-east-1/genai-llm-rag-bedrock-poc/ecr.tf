@@ -5,8 +5,9 @@ module "ecr_repositories" {
   #
   # Repository name
   #
-  create          = true
-  repository_name = "${local.name}-demo"
+  create                  = true
+  repository_name         = "${local.name}-demo"
+  repository_force_delete = true
 
   repository_image_tag_mutability = "MUTABLE"
 

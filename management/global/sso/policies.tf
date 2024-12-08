@@ -7,12 +7,14 @@ data "aws_iam_policy_document" "devops" {
     actions = [
       "access-analyzer:*",
       "acm:*",
-      "athena:*",
+      "aoss:*",
       "autoscaling:*",
       "appconfig:*",
       "application-autoscaling:*",
       "apprunner:*",
       "apigateway:*",
+      "aoss:*",
+      "athena:*",
       "aws-portal:*",
       "aws-marketplace:*",
       "backup:*",
@@ -29,6 +31,7 @@ data "aws_iam_policy_document" "devops" {
       "compute-optimizer:*",
       "datasync:*",
       "dlm:*",
+      "dms:*",
       "ds:*",
       "dynamodb:*",
       "ec2:*",
@@ -103,9 +106,10 @@ data "aws_iam_policy_document" "devops" {
       test     = "StringEquals"
       variable = "aws:RequestedRegion"
       values = [
-        "${var.region}", # The original region is needed to have IAM working
+        "${var.region}",
         "${var.region_secondary}",
-        "us-west-2" # The original region is needed to have IAM working
+        "us-east-1", # The original region is needed to have IAM working
+        "us-west-2"
       ]
     }
   }
@@ -246,9 +250,10 @@ data "aws_iam_policy_document" "data_scientist" {
       test     = "StringEquals"
       variable = "aws:RequestedRegion"
       values = [
-        "${var.region}", # The original region is needed to have IAM working
+        "${var.region}",
         "${var.region_secondary}",
-        "us-west-2", # Requested by Mati in order to have access to more Bedrock models
+        "us-east-1", # The original region is needed to have IAM working
+        "us-west-2", # Requested by MLOps team in order to have access to more Bedrock models
       ]
     }
   }

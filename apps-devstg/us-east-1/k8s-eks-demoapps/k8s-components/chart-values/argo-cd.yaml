@@ -1,6 +1,13 @@
 # ---------------------------------------------------------
 # ArgoCD Repo Server
 # ---------------------------------------------------------
+global:
+  domain: ${argoHost}
+
+configs:
+  cm:
+    exec.enabled: "${enableWebTerminal}"
+
 repoServer:
   env:
   # Increase the default timeout applied when the repo-server executes config management tools
@@ -19,18 +26,7 @@ server:
       cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
       # The backend (ArgoCD Server) is expecting to handle HTTPS
       nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-    hosts:
-      - ${argoHost}
-    paths:
-      - /
-    tls:
-      - secretName: argocd-server-tls
-        hosts:
-          - ${argoHost}
-
-  # Enable shell access
-  config:
-    exec.enabled: "true"
+    tls: true 
 
   extensions:
     enabled: false

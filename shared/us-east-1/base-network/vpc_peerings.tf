@@ -201,3 +201,37 @@ module "vpc_peering_security_to_shared" {
     "PeeringAccepter"  = "shared"
   })
 }
+
+#
+# VPC Peering:  data-science VPC <=> Shared VPC
+#
+module "vpc_peering_data-science_to_shared" {
+  source = "github.com/binbashar/terraform-aws-vpc-peering.git?ref=v5.0.0"
+
+  for_each = {
+    for k, v in local.data-science-vpcs :
+    k => v if var.enable_tgw != true
+  }
+
+  providers = {
+    aws.this = aws
+    aws.peer = aws.data-science
+  }
+
+  this_vpc_id = module.vpc.vpc_id
+  peer_vpc_id = data.terraform_remote_state.data-science-vpcs[each.key].outputs.vpc_id
+
+  this_rts_ids = concat(module.vpc.private_route_table_ids, module.vpc.public_route_table_ids)
+  peer_rts_ids = concat(
+    data.terraform_remote_state.data-science-vpcs[each.key].outputs.public_route_table_ids,
+    data.terraform_remote_state.data-science-vpcs[each.key].outputs.private_route_table_ids
+  )
+
+  auto_accept_peering = true
+
+  tags = merge(local.tags, {
+    "Name"             = "${each.key}-to-shared",
+    "PeeringRequester" = each.key,
+    "PeeringAccepter"  = "shared"
+  })
+}

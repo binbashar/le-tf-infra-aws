@@ -2,7 +2,7 @@
 # EC2 Pritunl OpenVPN
 #
 module "terraform-aws-basic-layout" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.34"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.35"
   prefix = var.prefix
   name   = var.name
 
@@ -52,21 +52,25 @@ module "terraform-aws-basic-layout" {
       from_port = 80, # Pritunl VPN Server Letsencrypt http challenge
       to_port   = 80,
       protocol  = "tcp",
-      #cidr_blocks = ["0.0.0.0/0"], # Renew LetsEncrypt private url cert (every 90 days)
-      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
+      cidr_blocks = [
+        data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
+        # "0.0.0.0/0",    # Renew LetsEncrypt private url cert (every 90 days)
+      ],
       description = "Allow Pritunl HTTP UI"
     },
     {
       from_port = 443, # Pritunl VPN Server UI
       to_port   = 443,
       protocol  = "tcp",
-      #cidr_blocks = ["0.0.0.0/0"], # Public temporally accessible for new users setup (when needed)
-      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
+      cidr_blocks = [
+         data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
+        #"0.0.0.0/0",    # Public temporally accessible for new users setup (when needed)
+      ],
       description = "Allow Pritunl HTTPS UI"
     },
     {
       from_port   = 15255, # Pritunl VPN Server public UDP service ports -> pritunl.server.admin org
-      to_port     = 15257, # Pritunl VPN Server public UDP service ports -> pritunl.server.devops org
+      to_port     = 15256, # Pritunl VPN Server public UDP service ports -> pritunl.server.devops org
       protocol    = "udp",
       cidr_blocks = ["0.0.0.0/0"],
       description = "Allow Pritunl Service"
@@ -102,7 +106,7 @@ module "terraform-aws-basic-layout" {
   #    e. re-comment block from step b.
   #
   /*  dns_records_public_hosted_zone = [{
-    zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id[0],
+    zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id,
     name    = "vpn.aws.binbash.com.ar",
     type    = "A",
     ttl     = 300

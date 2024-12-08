@@ -32,3 +32,35 @@ resource "helm_release" "cluster_autoscaling" {
     )
   ]
 }
+
+
+#------------------------------------------------------------------------------
+# KEDA: autoscaling k8s pods
+#------------------------------------------------------------------------------
+#
+# Kubernetes, a powerful container orchestration platform, revolutionized the way
+# applications are deployed and managed. However, scaling applications to meet
+# fluctuating workloads can be a complex task. KEDA, a Kubernetes-based
+# Event-Driven Autoscaler, provides a simple yet effective solution to
+# automatically scale Kubernetes Pods based on various metrics, including
+# resource utilization, custom metrics, and external events.
+#------------------------------------------------------------------------------
+resource "helm_release" "keda" {
+  count      = var.enable_keda ? 1 : 0
+  name       = "keda"
+  namespace  = kubernetes_namespace.keda[0].id
+  repository = "https://kedacore.github.io/charts"
+  chart      = "keda"
+  version    = "2.15.0"
+  values = []
+}
+
+resource "helm_release" "keda_http_add_on" {
+  count      = var.enable_keda && var.enable_keda_http_add_on ? 1 : 0
+  name       = "http-add-on"
+  namespace  = kubernetes_namespace.keda[0].id
+  repository = "https://kedacore.github.io/charts"
+  chart      = "keda-add-ons-http"
+  version    = "0.8.0"
+  values = []
+}

@@ -1,5 +1,5 @@
 module "cluster" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v20.2.1"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v20.28.0"
 
   create          = true
   cluster_name    = data.terraform_remote_state.cluster-vpc.outputs.cluster_name
@@ -144,6 +144,22 @@ module "cluster" {
     #     tools = {
     #       key    = "stack"
     #       value  = "tools"
+    #       effect = "NO_SCHEDULE"
+    #     }
+    #   }
+    # }
+    # argocd = {
+    #   desired_size   = 1
+    #   max_size       = 2
+    #   min_size       = 1
+    #   capacity_type  = "SPOT"
+    #   instance_types = ["t3.medium"]
+
+    #   labels = merge(local.tags, { "stack" = "argocd" })
+    #   taints = {
+    #     dedicated_argocd = {
+    #       key    = "stack"
+    #       value  = "argocd"
     #       effect = "NO_SCHEDULE"
     #     }
     #   }
