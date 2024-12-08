@@ -188,3 +188,14 @@ module "cluster-aws-auth" {
 
   depends_on = [module.cluster]
 }
+
+resource "local_file" "metadata" {
+  content  = <<EOT
+type: k8s-eks-cluster
+data:
+  region: ${var.region}
+  cluster_name: ${module.cluster.cluster_name}
+  profile: ${var.profile}
+EOT
+  filename = "${path.module}/cluster.yaml"
+}
