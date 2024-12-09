@@ -3,7 +3,7 @@
 #===============#
 module "waf_global_cloudfront" {
   count  = var.enable_wafv1_global ? 1 : 0
-  source = "github.com/binbashar/terraform-aws-waf-owasp.git//modules/waf-global?ref=v1.0.14"
+  source = "github.com/binbashar/terraform-aws-waf-owasp.git//modules/waf-global?ref=v1.0.20"
 
   # Just a prefix to add some level of organization
   waf_prefix = "${var.environment}-cloudfronts"
