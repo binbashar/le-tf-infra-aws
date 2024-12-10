@@ -28,7 +28,7 @@ resource "helm_release" "argocd" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
-  version    = "5.7.0"
+  version    = "5.55.0"
   values = [
     templatefile("chart-values/argo-cd.yaml", {
       argoHost     = "argocd.${local.platform}.${local.private_base_domain}"
