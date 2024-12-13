@@ -54,7 +54,7 @@ module "ec2_jenkins_master" {
   ]
 
   dns_records_internal_hosted_zone = [{
-    zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
+    zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id,
     name    = "jenkins.aws.binbash.com.ar",
     type    = "A",
     ttl     = 300
