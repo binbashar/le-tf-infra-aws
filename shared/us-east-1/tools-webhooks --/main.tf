@@ -46,14 +46,14 @@ module "ec2_webhooks_proxy" {
   ]
 
   dns_records_internal_hosted_zone = [{
-    zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
+    zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id,
     name    = "webhooks.aws.binbash.com.ar",
     type    = "A",
     ttl     = 3600
   }]
 
   dns_records_public_hosted_zone = [{
-    zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id[0],
+    zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id,
     name    = "webhooks.binbash.com.ar",
     type    = "A",
     ttl     = 3600
