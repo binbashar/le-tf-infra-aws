@@ -50,7 +50,7 @@ resource "aws_iam_policy" "elasticsearch_kibana_dr" {
       ],
       "Effect": "Allow",
       "Resource": [
-        "arn:aws:route53:::hostedzone/${data.terraform_remote_state.dns.outputs.aws_public_zone_id[0]}"
+        "arn:aws:route53:::hostedzone/${data.terraform_remote_state.dns.outputs.aws_public_zone_id}"
       ]
     }
   ]
