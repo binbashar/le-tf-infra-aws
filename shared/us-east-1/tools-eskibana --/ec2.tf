@@ -2,7 +2,7 @@
 # ElasticSearch & Kibana: EC2 resources (instance, volumes, security groups, etc)
 #
 module "ec2_elasticsearch_kibana" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout?ref=v0.3.34"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout?ref=v0.3.35"
   prefix = var.prefix
   name   = var.name
 
