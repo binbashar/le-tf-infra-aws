@@ -15,7 +15,7 @@ module "waf_regional_alb" {
   admin_remote_ipset = []
 
   # Pass the list of ALB ARNs that the WAF ACL will be connected to
-  alb_arn = []
+  resource_arn = []
 
   # By default seted to COUNT for testing in order to avoid service affection; when ready, set it to BLOCK
   rule_size_restriction_action_type = "COUNT"
