@@ -3,7 +3,7 @@
 #===============#
 module "waf_regional_alb" {
   count  = var.enable_wafv1_regional ? 1 : 0
-  source = "github.com/binbashar/terraform-aws-waf-owasp.git//modules/waf-regional?ref=v1.0.14"
+  source = "github.com/binbashar/terraform-aws-waf-owasp.git//modules/waf-regional?ref=v1.0.20"
 
   # Just a prefix to add some level of organization
   waf_prefix = "${var.environment}-wafv1-albs"
