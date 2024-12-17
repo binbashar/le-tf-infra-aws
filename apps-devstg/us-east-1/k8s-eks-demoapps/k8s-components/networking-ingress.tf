@@ -2,7 +2,7 @@
 # AWS Load Balancer (Ingress) Controller: Route outside traffic to the cluster.
 #------------------------------------------------------------------------------
 resource "helm_release" "alb_ingress" {
-  count      = var.enable_alb_ingress_controller ? 1 : 0
+  count      = var.ingress.alb_controller.enabled ? 1 : 0
   name       = "alb-ingress"
   namespace  = kubernetes_namespace.alb_ingress[0].id
   repository = "https://aws.github.io/eks-charts"
@@ -22,7 +22,7 @@ resource "helm_release" "alb_ingress" {
 # Nginx Ingress (Private): Route inside traffic to services in the cluster.
 #------------------------------------------------------------------------------
 resource "helm_release" "ingress_nginx_private" {
-  count      = var.enable_nginx_ingress_controller ? 1 : 0
+  count      = var.ingress.nginx_controller.enabled ? 1 : 0
   name       = "ingress-nginx-private"
   namespace  = kubernetes_namespace.ingress_nginx[0].id
   repository = "https://kubernetes.github.io/ingress-nginx"
@@ -54,7 +54,7 @@ resource "helm_release" "ingress_nginx_private" {
 #
 #------------------------------------------------------------------------------
 resource "kubernetes_ingress_v1" "apps" {
-  count                  = var.apps_ingress.enabled ? 1 : 0
+  count                  = var.ingress.apps_ingress.enabled ? 1 : 0
   wait_for_load_balancer = true
 
   metadata {
@@ -64,7 +64,7 @@ resource "kubernetes_ingress_v1" "apps" {
       # This is used by the ALB Ingress
       "kubernetes.io/ingress.class" = "${local.public_ingress_class}"
       # Load balancer type: internet-facing or internal
-      "alb.ingress.kubernetes.io/scheme" = var.apps_ingress.type
+      "alb.ingress.kubernetes.io/scheme" = var.ingress.apps_ingress.type
       # Group this LB under a custom group so it's not shared with other groups
       "alb.ingress.kubernetes.io/group.name" = "apps"
       # Nginx provides an endpoint for health checks
@@ -83,7 +83,7 @@ resource "kubernetes_ingress_v1" "apps" {
       # NOTE: this is highly recommended when using an internet-facing ALB
       "alb.ingress.kubernetes.io/inbound-cidrs" = "0.0.0.0/0"
       # ALB access logs
-      "alb.ingress.kubernetes.io/load-balancer-attributes" = "access_logs.s3.enabled=${var.enable_eks_alb_logging},access_logs.s3.bucket=${var.project}-${var.environment}-alb-logs,access_logs.s3.prefix=${local.eks_alb_logging_prefix}"
+      "alb.ingress.kubernetes.io/load-balancer-attributes" = "access_logs.s3.enabled=${var.ingress.apps_ingress.logging.enabled},access_logs.s3.bucket=${var.project}-${var.environment}-alb-logs,access_logs.s3.prefix=${local.eks_alb_logging_prefix}"
     }
   }
 
