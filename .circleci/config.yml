@@ -110,7 +110,7 @@ jobs:
                 }
               ]
             }
-          channel: 'tools-ci'
+          channel: 'le-tools-ci'
       - slack/notify:
           event: pass
           custom: |
@@ -144,7 +144,7 @@ jobs:
                 }
               ]
             }
-          channel: 'tools-ci'
+          channel: 'le-tools-ci'
 
 #
 # CircleCI orbs are open-source, shareable packages of parameterizable reusable
