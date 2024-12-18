@@ -26,7 +26,7 @@ resource "helm_release" "clusterissuer_binbash" {
   namespace  = kubernetes_namespace.cert_manager.id
   repository = "https://binbashar.github.io/helm-charts/"
   chart      = "cert-manager-clusterissuer"
-  version    = "0.2.0"
+  version    = "0.3.0"
   values     = [file("chart-values/clusterissuer-binbash.yaml")]
   depends_on = [helm_release.cert_manager]
 }
