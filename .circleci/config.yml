@@ -151,7 +151,6 @@ jobs:
 # configuration elements, including jobs, commands, and executors.
 #
 orbs:
-  sumologic: circleci/sumologic@1.3.0
   slack: circleci/slack@4.1.1
 
 #
