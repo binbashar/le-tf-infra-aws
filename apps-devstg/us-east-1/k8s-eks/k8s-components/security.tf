@@ -7,7 +7,7 @@ resource "helm_release" "certmanager" {
   namespace  = kubernetes_namespace.certmanager[0].id
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
-  version    = "1.8.0"
+  version    = "v1.16.2"
   values = [
     templatefile("chart-values/certmanager.yaml", {
       roleArn = data.terraform_remote_state.eks-identities.outputs.certmanager_role_arn
