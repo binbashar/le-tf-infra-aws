@@ -151,7 +151,7 @@ jobs:
 # configuration elements, including jobs, commands, and executors.
 #
 orbs:
-  slack: circleci/slack@4.1.1
+  slack: circleci/slack@4.15.0
 
 #
 # Jobs workflow
