@@ -1,5 +1,5 @@
 module "fms" {
-  source = "github.com/binbashar/terraform-aws-firewall-manager.git?ref=0.2.10"
+  source = "github.com/binbashar/terraform-aws-firewall-manager.git?ref=0.4.0"
 
   # Disable association of the FMS administrator account from the module
   admin_account_enabled = false
