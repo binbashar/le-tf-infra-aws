@@ -27,8 +27,5 @@ terraform {
     helm       = "~> 2.1.0"
     kubernetes = "~> 2.0.2"
   }
-
-  backend "s3" {
-    key = "apps-devstg/k8s-kind/k8s-resources/terraform.tfstate"
-  }
+  
 }
