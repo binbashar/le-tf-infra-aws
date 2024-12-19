@@ -27,4 +27,5 @@ terraform {
     helm       = "~> 2.1.0"
     kubernetes = "~> 2.0.2"
   }
+  
 }
