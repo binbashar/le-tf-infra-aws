@@ -2,7 +2,7 @@
 # Webhooks Proxy EC2 resources (instance, volumes, security groups, etc)
 #
 module "ec2_webhooks_proxy" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.34"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.35"
   prefix = var.prefix
   name   = var.name
 
@@ -46,14 +46,14 @@ module "ec2_webhooks_proxy" {
   ]
 
   dns_records_internal_hosted_zone = [{
-    zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
+    zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id,
     name    = "webhooks.aws.binbash.com.ar",
     type    = "A",
     ttl     = 3600
   }]
 
   dns_records_public_hosted_zone = [{
-    zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id[0],
+    zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id,
     name    = "webhooks.binbash.com.ar",
     type    = "A",
     ttl     = 3600

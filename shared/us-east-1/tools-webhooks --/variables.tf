@@ -21,7 +21,7 @@ variable "name" {
 #
 variable "aws_ami_os_id" {
   description = "AWS AMI Operating System Identificator"
-  default     = "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20201026"
+  default     = "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"
 }
 
 variable "aws_ami_os_owner" {

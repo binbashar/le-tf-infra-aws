@@ -2,7 +2,7 @@
 # Jenkins Master: EC2 resources (instance, volumes, security groups, etc)
 #
 module "ec2_jenkins_master" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.34"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout.git?ref=v0.3.35"
   prefix = var.prefix
   name   = var.name
 
@@ -54,7 +54,7 @@ module "ec2_jenkins_master" {
   ]
 
   dns_records_internal_hosted_zone = [{
-    zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
+    zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id,
     name    = "jenkins.aws.binbash.com.ar",
     type    = "A",
     ttl     = 300

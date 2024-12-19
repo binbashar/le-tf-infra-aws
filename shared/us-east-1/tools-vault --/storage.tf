@@ -2,7 +2,7 @@
 # Vault Backend: S3 bucket
 #
 module "vault_backend" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v1.18.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v1.20.0"
 
   bucket        = local.bucket_name
   acl           = "private"
@@ -63,7 +63,7 @@ module "vault_backend" {
 # Vault Bucket Replica
 #
 module "vault_backend_replica" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v1.18.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v1.20.0"
 
   providers = {
     aws = aws.replica

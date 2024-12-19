@@ -2,7 +2,7 @@
 # Prometheus & Grafana: EC2 resources (instance, volumes, security groups, etc)
 #
 module "prometheus_grafana" {
-  source = "github.com/binbashar/terraform-aws-ec2-basic-layout?ref=v0.3.34"
+  source = "github.com/binbashar/terraform-aws-ec2-basic-layout?ref=v0.3.35"
   prefix = var.prefix
   name   = var.name
 
@@ -74,13 +74,13 @@ module "prometheus_grafana" {
 
   dns_records_internal_hosted_zone = [
     {
-      zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
+      zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id,
       name    = "prometheus.${var.region_secondary}.aws.binbash.com.ar",
       type    = "A",
       ttl     = 3600
     },
     {
-      zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id[0],
+      zone_id = data.terraform_remote_state.dns.outputs.aws_internal_zone_id,
       name    = "grafana.${var.region_secondary}.aws.binbash.com.ar",
       type    = "A",
       ttl     = 3600
