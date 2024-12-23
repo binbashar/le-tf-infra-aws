@@ -5,9 +5,12 @@ on:
       - master
 
 jobs:
+
   call-testing-workflow:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
       - name: Call Testing Workflow
         uses: ./.github/workflows/testing-workflow.yml 
         with:
