@@ -112,7 +112,7 @@ resource "helm_release" "argo_rollouts" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-rollouts"
-  version    = "2.37.0"
+  version    = "2.38.0"
   values = [
     templatefile("chart-values/argo-rollouts.yaml", {
       rolloutsHost = "rollouts.${local.platform}.${local.private_base_domain}"
