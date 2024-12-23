@@ -4,31 +4,39 @@ on:
   workflow_call:
     inputs:
       localstack_version:
+        description: 'Localstack version'
         required: true
         type: string
         default: '3.7.2'
       required_state_file:
+        description: 'If a terraform state file is required for testing'
         required: true
         type: boolean
         default: false
       state_file_test_path:
+        description: 'Path to the terraform state file for testing'
         required: false
         type: string
       bucket_name:
+        description: 'Name of the S3 bucket to store the terraform state file'
         required: false
         type: string
       bucket_folder:
+        description: 'Folder in the S3 bucket to store the terraform state file'
         required: false
         type: string
       terraform_version:
+        description: 'Terraform version'
         required: true
         type: string
         default: '1.7.0'
       aws_profile:
+        description: 'AWS profile for localstack'
         required: false
         type: string
         default: 'bb-security-devops'
-      woring_directory:
+      working_directory:
+        description: 'Working directory for the terraform code'
         required: true
         type: string
 jobs:

@@ -7,18 +7,14 @@ on:
 jobs:
 
   call-testing-workflow:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-      - name: Call Testing Workflow
-        uses: ./.github/workflows/testing-workflow.yml 
-        with:
-          working_directory: 'apps-devstg/us-east-1/security-keys'
-          localstack_version: '3.7.2'
-          required_state_file: true
-          state_file_test_path: 'tests/terraform.tfstate'
-          bucket_name: 'security'
-          bucket_folder: 'identities'
-          terraform_version: '1.7.0'
-          aws_profile: 'bb-security-devops'
+    name: Call Testing Workflow
+    uses: ./.github/workflows/testing-workflow.yml 
+    with:
+      working_directory: 'apps-devstg/us-east-1/security-keys'
+      localstack_version: '3.7.2'
+      required_state_file: true
+      state_file_test_path: 'tests/terraform.tfstate'
+      bucket_name: 'security'
+      bucket_folder: 'identities'
+      terraform_version: '1.7.0'
+      aws_profile: 'bb-security-devops'
