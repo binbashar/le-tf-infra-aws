@@ -1,0 +1,82 @@
+name: Testing Workflow
+
+on:
+  workflow_call:
+    inputs:
+      localstack_version:
+        description: 'Localstack version'
+        required: true
+        type: string
+        default: '3.7.2'
+      required_state_file:
+        description: 'If a terraform state file is required for testing'
+        required: true
+        type: boolean
+        default: false
+      state_file_test_path:
+        description: 'Path to the terraform state file for testing'
+        required: false
+        type: string
+      bucket_name:
+        description: 'Name of the S3 bucket to store the terraform state file'
+        required: false
+        type: string
+      bucket_folder:
+        description: 'Folder in the S3 bucket to store the terraform state file'
+        required: false
+        type: string
+      terraform_version:
+        description: 'Terraform version'
+        required: true
+        type: string
+        default: '1.7.0'
+      aws_profile:
+        description: 'AWS profile for localstack'
+        required: false
+        type: string
+        default: 'bb-security-devops'
+      working_directory:
+        description: 'Working directory for the terraform code'
+        required: true
+        type: string
+jobs:
+  testing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ inputs.terraform_version }}
+      - name: Install tflocal
+        run: |
+          pip install terraform-local
+      - uses: LocalStack/setup-localstack@v0.2.3
+        with:
+          image-tag: ${{ inputs.localstack_version }}
+          install-awslocal: true
+      - name: Configure AWS Credentials
+        run: |
+          awslocal configure set aws_access_key_id fake --profile ${{ inputs.aws_profile }}
+          awslocal configure set aws_secret_access_key fake --profile ${{ inputs.aws_profile }}
+          awslocal configure set region us-east-1 --profile ${{ inputs.aws_profile }}
+          awslocal configure set endpoint_url http://localhost:4566 --profile ${{ inputs.aws_profile }}
+      - name: Create S3 Buckets
+        if: ${{ inputs.required_state_file }}
+        run: |
+          awslocal s3 mb s3://${{ inputs.bucket_name }} --region us-east-1
+      - name: Copy Terraform State File for testing to S3 Bucket
+        if: ${{ inputs.required_state_file }}
+        run: |
+          awslocal s3 cp ${{ inputs.working_directory }}/${{ inputs.state_file_test_path}} s3://${{ inputs.bucket_name }}/${{inputs.bucket_folder }}/terraform.tfstate
+      - name: Terraform Init
+        working-directory: ${{ inputs.working_directory }}
+        run: tflocal init
+      - name: Run Test
+        working-directory: ${{ inputs.working_directory }}
+        env:
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: fake
+          AWS_SECRET_ACCESS_KEY: fake
+        run: |
+          cp ../../../config/common.tfvars.example ../../../config/common.tfvars
+          tflocal test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars 

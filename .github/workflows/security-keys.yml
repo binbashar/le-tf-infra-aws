@@ -1,0 +1,35 @@
+name: "Security Keys Layer: Unit Tests"
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  testing-security-keys:
+    strategy:
+      fail-fast: false
+      matrix:
+        accounts: [
+          apps-devstg/us-east-1/security-keys,
+          apps-devstg/us-west-2/security-keys,
+          apps-prd/us-east-1/security-keys,
+          data-science/us-east-1/security-keys,
+          management/us-east-1/security-keys,
+          network/us-east-1/security-keys,
+          network/us-west-2/security-keys,
+          security/us-east-1/security-keys,
+          shared/us-east-1/security-keys,
+          shared/us-west-2/security-keys,
+          ]
+
+    name: security-keys-layer
+    uses: ./.github/workflows/testing-workflow.yml 
+    with:
+      working_directory: ${{ matrix.accounts }}
+      localstack_version: '3.7.2'
+      required_state_file: true
+      state_file_test_path: 'tests/terraform.tfstate.template'
+      bucket_name: 'security'
+      bucket_folder: 'identities'
+      terraform_version: '1.7.0'
+      aws_profile: 'bb-security-devops'
