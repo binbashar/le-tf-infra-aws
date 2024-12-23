@@ -67,12 +67,12 @@ jobs:
       - name: Copy Terraform State File for testing to S3 Bucket
         if: ${{ inputs.required_state_file }}
         run: |
-          awslocal s3 cp ${{ inputs.state_file_test_path}} s3://${{ inputs.bucket_name }}/${{inputs.bucket_folder }}/terraform.tfstate
+          awslocal s3 cp ${{ inputs.working_directory }}/${{ inputs.state_file_test_path}} s3://${{ inputs.bucket_name }}/${{inputs.bucket_folder }}/terraform.tfstate
       - name: Terraform Init
-        working-directory: ${{ inputs.woring_directory }}
+        working-directory: ${{ inputs.working_directory }}
         run: tflocal init
       - name: Run Test
-        working-directory: ${{ inputs.woring_directory }}
+        working-directory: ${{ inputs.working_directory }}
         env:
           AWS_DEFAULT_REGION: us-east-1
           AWS_ACCESS_KEY_ID: fake
