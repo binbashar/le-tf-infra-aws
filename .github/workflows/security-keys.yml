@@ -13,7 +13,7 @@ jobs:
       working_directory: 'apps-devstg/us-east-1/security-keys'
       localstack_version: '3.7.2'
       required_state_file: true
-      state_file_test_path: 'tests/terraform.tfstate'
+      state_file_test_path: 'tests/terraform.tfstate.template'
       bucket_name: 'security'
       bucket_folder: 'identities'
       terraform_version: '1.7.0'
