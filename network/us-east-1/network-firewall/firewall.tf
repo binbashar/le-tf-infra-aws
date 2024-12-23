@@ -2,7 +2,7 @@ module "firewall" {
 
   count = var.enable_network_firewall ? 1 : 0
 
-  source = "github.com/binbashar/terraform-aws-network-firewall.git?ref=v0.1.0"
+  source = "github.com/binbashar/terraform-aws-network-firewall.git?ref=v0.1.4"
 
   name = "${var.project}-${var.environment}-firewall"
 
