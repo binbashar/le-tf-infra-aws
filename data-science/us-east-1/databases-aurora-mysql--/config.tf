@@ -7,7 +7,7 @@ provider "aws" {
 }
 
 provider "mysql" {
-  endpoint = "bb-data-science-binbash-aurora-mysql.cluster-cpo80wy24vfu.us-east-1.rds.amazonaws.com"
+  endpoint = module.demoapps.cluster_endpoint
   username = module.demoapps.cluster_master_username
   password = jsondecode(data.aws_secretsmanager_secret_version.administrator.secret_string)["password"]
 }
