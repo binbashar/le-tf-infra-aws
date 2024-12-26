@@ -23,9 +23,9 @@ terraform {
   required_version = "~> 1.3"
 
   required_providers {
-    aws   = "~> 5.0"
+    aws = "~> 5.0"
     sql = {
-      source = "paultyng/sql"
+      source  = "paultyng/sql"
       version = "0.5.0"
     }
   }

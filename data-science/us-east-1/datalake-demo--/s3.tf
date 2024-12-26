@@ -6,45 +6,10 @@ module "s3_bucket_data_raw" {
   force_destroy = true
 
   attach_policy = false
-  #policy        = data.aws_iam_policy_document.bucket_policy.json
-
-  # replication_configuration = {
-  #   role = aws_iam_role.replication.arn
-
-  #   rules = [
-  #     {
-  #       id     = "ReplicationRule"
-  #       status = "Enabled"
-
-  #       delete_marker_replication = false
-
-  #       source_selection_criteria = {
-  #         sse_kms_encrypted_objects = {
-  #           enabled = true
-  #         }
-  #       }
-
-  #       destination = {
-  #         bucket             = "arn:aws:s3:::${local.bucket_name_replica}"
-  #         storage_class      = "STANDARD"
-  #         replica_kms_key_id = data.terraform_remote_state.keys-dr.outputs.aws_kms_key_arn
-  #         account_id         = data.aws_caller_identity.current.account_id
-  #         access_control_translation = {
-  #           owner = "Destination"
-  #         }
-  #       }
-  #     }
-  #   ]
-  # }
 
   versioning = {
     enabled = true
   }
-
-  # logging = {
-  #   target_bucket = module.log_bucket_demo_files.s3_bucket_id
-  #   target_prefix = "logs/"
-  # }
 
   server_side_encryption_configuration = {
     rule = {
@@ -121,36 +86,6 @@ module "s3_bucket_data_processed" {
   force_destroy = true
 
   attach_policy = false
-  #policy        = data.aws_iam_policy_document.bucket_policy.json
-
-  # replication_configuration = {
-  #   role = aws_iam_role.replication.arn
-
-  #   rules = [
-  #     {
-  #       id     = "ReplicationRule"
-  #       status = "Enabled"
-
-  #       delete_marker_replication = false
-
-  #       source_selection_criteria = {
-  #         sse_kms_encrypted_objects = {
-  #           enabled = true
-  #         }
-  #       }
-
-  #       destination = {
-  #         bucket             = "arn:aws:s3:::${local.bucket_name_replica}"
-  #         storage_class      = "STANDARD"
-  #         replica_kms_key_id = data.terraform_remote_state.keys-dr.outputs.aws_kms_key_arn
-  #         account_id         = data.aws_caller_identity.current.account_id
-  #         access_control_translation = {
-  #           owner = "Destination"
-  #         }
-  #       }
-  #     }
-  #   ]
-  # }
 
   versioning = {
     enabled = true

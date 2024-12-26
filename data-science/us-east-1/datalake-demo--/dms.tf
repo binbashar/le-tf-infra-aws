@@ -22,20 +22,6 @@ module "database_migration_service" {
   access_target_s3_bucket_arns = ["${module.s3_bucket_data_raw.s3_bucket_arn}/*", module.s3_bucket_data_raw.s3_bucket_arn]
 
   endpoints = {
-    # source_apps_devstg_aurora_pgsql = {
-    #   database_name               = "example"
-    #   endpoint_id                 = "example-source-aurora-pgslq"
-    #   endpoint_type               = "source"
-    #   engine_name                 = "aurora-postgresql"
-    #   extra_connection_attributes = "heartbeatFrequency=1;"
-    #   username                    = "postgresqlUser"
-    #   password                    = "youShouldPickABetterPassword123!"
-    #   port                        = 5432
-    #   server_name                 = "dms-ex-src.cluster-abcdefghijkl.us-east-1.rds.amazonaws.com"
-    #   ssl_mode                    = "none"
-    #   tags                        = local.tags
-    # }
-
     source_data_science_aurora_mysql = {
       database_name               = data.terraform_remote_state.aurora_mysql.outputs.cluster_database_name
       endpoint_id                 = data.terraform_remote_state.aurora_mysql.outputs.cluster_id
@@ -67,9 +53,9 @@ module "database_migration_service" {
   # S3 Endpoints
   s3_endpoints = {
     s3-destination = {
-      endpoint_id   = "${local.name}-s3-destination"
-      endpoint_type = "target"
-      engine_name   = "s3"
+      endpoint_id                 = "${local.name}-s3-destination"
+      endpoint_type               = "target"
+      engine_name                 = "s3"
       bucket_folder               = "destinationdata"
       bucket_name                 = module.s3_bucket_data_raw.s3_bucket_id
       data_format                 = "parquet"
@@ -77,7 +63,7 @@ module "database_migration_service" {
       encryption_mode             = "SSE_S3"
       extra_connection_attributes = ""
       #external_table_definition   = file("configs/s3_table_definition.json")
-      tags                        = local.tags
+      tags = local.tags
     }
   }
 

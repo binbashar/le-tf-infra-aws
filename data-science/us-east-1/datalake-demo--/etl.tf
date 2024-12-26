@@ -1,14 +1,14 @@
 locals {
-  parquet_input_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
-  parquet_output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
-  parquet_serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"  
+  parquet_input_format          = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
+  parquet_output_format         = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
+  parquet_serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
 }
 
 module "iam_role" {
-  source  = "cloudposse/iam-role/aws"  
+  source  = "cloudposse/iam-role/aws"
   version = "0.20.0"
 
-  enabled = true
+  enabled   = true
   namespace = "glue-script"
 
   principals = {
@@ -21,11 +21,11 @@ module "iam_role" {
   ]
 
   policy_document_count = 1
-    policy_documents = [
+  policy_documents = [
     join("", data.aws_iam_policy_document.kms.*.json),
   ]
-  policy_description    = "Policy for AWS Glue with access to EC2, S3, and Cloudwatch Logs"
-  role_description      = "Role for AWS Glue with access to EC2, S3, and Cloudwatch Logs"
+  policy_description = "Policy for AWS Glue with access to EC2, S3, and Cloudwatch Logs"
+  role_description   = "Role for AWS Glue with access to EC2, S3, and Cloudwatch Logs"
 
 }
 
@@ -48,7 +48,7 @@ data "aws_iam_policy_document" "kms" {
 module "glue_job" {
   source = "github.com/binbashar/terraform-aws-glue.git//modules/glue-job?ref=0.4.0"
 
-  job_name = "${local.name}-glue-job"
+  job_name          = "${local.name}-glue-job"
   job_description   = "Glue Job that runs Python script"
   role_arn          = module.iam_role.arn
   glue_version      = "5.0"
@@ -74,9 +74,9 @@ module "glue_catalog_database" {
 
   catalog_database_name        = "sales"
   catalog_database_description = "Glue Catalog database for the data located in the Data source"
- # location_uri                 = local.data_source
+  # location_uri                 = local.data_source
 
- # context = module.this.context
+  # context = module.this.context
 }
 
 module "glue_catalog_products" {
@@ -90,7 +90,7 @@ module "glue_catalog_products" {
     location      = format("s3://%s/destinationdata/demoapps/sockshop_products/", module.s3_bucket_data_raw.s3_bucket_id)
     input_format  = local.parquet_input_format
     output_format = local.parquet_output_format
-    ser_de_info   = {
+    ser_de_info = {
       serialization_library = local.parquet_serialization_library
     }
   }
@@ -107,10 +107,10 @@ module "glue_catalog_orders" {
   database_name             = module.glue_catalog_database.name
 
   storage_descriptor = {
-    location = format("s3://%s/destinationdata/public/sockshop_orders/", module.s3_bucket_data_raw.s3_bucket_id)
+    location      = format("s3://%s/destinationdata/public/sockshop_orders/", module.s3_bucket_data_raw.s3_bucket_id)
     input_format  = local.parquet_input_format
     output_format = local.parquet_output_format
-    ser_de_info   = {
+    ser_de_info = {
       serialization_library = local.parquet_serialization_library
     }
   }
@@ -124,7 +124,7 @@ resource "aws_lakeformation_permissions" "default" {
   principal   = module.iam_role.arn
   permissions = ["ALL"]
 
-  database  {
+  database {
     name = module.glue_catalog_database.name
     #name          = module.glue_catalog_table.name
   }
@@ -136,7 +136,7 @@ resource "aws_lakeformation_permissions" "default" {
 module "glue_crawler" {
   source = "github.com/binbashar/terraform-aws-glue.git//modules/glue-crawler?ref=0.4.0"
 
-  crawler_name = "${local.name}-crawler"
+  crawler_name        = "${local.name}-crawler"
   crawler_description = "Glue crawler that processes data in  the source bucket and writes the metadata into a Glue Catalog database"
   database_name       = module.glue_catalog_database.name
   role                = module.iam_role.arn
@@ -150,7 +150,7 @@ module "glue_crawler" {
   catalog_target = [
     {
       database_name = module.glue_catalog_database.name
-      tables        = [module.glue_catalog_orders.name, module.glue_catalog_products.name , module.glue_catalog_products_orders.name]
+      tables        = [module.glue_catalog_orders.name, module.glue_catalog_products.name, module.glue_catalog_products_orders.name]
     }
   ]
 
@@ -224,10 +224,10 @@ module "s3_bucket_glue_script_storage" {
 
 resource "aws_s3_object" "job_script" {
 
-  bucket        = module.s3_bucket_glue_script_storage.s3_bucket_id
-  key           = "etl_script.py"
-  source        = "${path.module}/config/etl_script.py"
-  tags = local.tags
+  bucket = module.s3_bucket_glue_script_storage.s3_bucket_id
+  key    = "etl_script.py"
+  source = "${path.module}/config/etl_script.py"
+  tags   = local.tags
 }
 
 

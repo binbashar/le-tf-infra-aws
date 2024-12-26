@@ -20,8 +20,8 @@ locals {
   replication_task_event_categories     = ["failure", "state change", "creation", "deletion", "configuration change"]
 
   tags = {
-    Name       = local.name
-    Terraform          = "true"
-    Environment        = var.environment
+    Name        = local.name
+    Terraform   = "true"
+    Environment = var.environment
   }
 }
