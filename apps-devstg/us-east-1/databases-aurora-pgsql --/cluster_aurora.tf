@@ -19,7 +19,7 @@ module "apps_devstg_aurora_postgresql" {
   name           = local.name
   engine         = local.engine
   engine_mode    = "provisioned"
-  engine_version = "14.5"
+  engine_version = "14.8"
 
   # Initial database and credentials
   database_name          = "demoapps"
@@ -62,8 +62,15 @@ module "apps_devstg_aurora_postgresql" {
   # enabled_cloudwatch_logs_exports = ["audit", "error", "general", "slowquery"]
 
   # Database parameters: you can specify your own if you must
-  # db_parameter_group_name         = aws_db_parameter_group.aurora_db_57_parameter_group.id
-  # db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.aurora_57_cluster_parameter_group.id
+  #db_parameter_group_name         = aws_db_parameter_group.aurora_db_57_parameter_group.id
+  #db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.aurora_57_cluster_parameter_group.id
+  create_db_cluster_parameter_group = true
+  db_cluster_parameter_group_family = "aurora-postgresql14"
+  db_cluster_parameter_group_parameters = [{
+    name = "rds.logical_replication"
+    value = "1"
+    apply_method = "pending-reboot"
+}]
 
   # If true, must add policy to iam auth (user or role)
   iam_database_authentication_enabled = false
@@ -72,7 +79,8 @@ module "apps_devstg_aurora_postgresql" {
   create_security_group = true
   allowed_cidr_blocks = [
     data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
-    data.terraform_remote_state.shared-vpc.outputs.vpc_cidr_block
+    data.terraform_remote_state.shared-vpc.outputs.vpc_cidr_block,
+    data.terraform_remote_state.datascience-vpc.outputs.vpc_cidr_block
   ]
 
   tags = local.tags

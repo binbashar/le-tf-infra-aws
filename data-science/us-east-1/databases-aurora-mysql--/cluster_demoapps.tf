@@ -10,7 +10,7 @@ data "aws_secretsmanager_secret_version" "administrator" {
 }
 
 module "demoapps" {
-  source = "github.com/binbashar/terraform-aws-rds-aurora.git?ref=v7.2.2"
+  source = "github.com/binbashar/terraform-aws-rds-aurora.git?ref=v7.3.0"
 
   # General settings
   name           = "${var.project}-${var.environment}-binbash-aurora-mysql"
@@ -20,7 +20,7 @@ module "demoapps" {
 
   # Initial database and credentials
   database_name          = "demoapps"
-  master_username        = "admin"
+  master_username        = jsondecode(data.aws_secretsmanager_secret_version.administrator.secret_string)["username"]
   master_password        = jsondecode(data.aws_secretsmanager_secret_version.administrator.secret_string)["password"]
   create_random_password = false
 
@@ -62,6 +62,13 @@ module "demoapps" {
   # Database parameters: you can specify your own if you must
   # db_parameter_group_name         = aws_db_parameter_group.aurora_db_57_parameter_group.id
   # db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.aurora_57_cluster_parameter_group.id
+  create_db_cluster_parameter_group = true
+  db_cluster_parameter_group_family = "aurora-mysql5.7"
+  db_cluster_parameter_group_parameters = [{
+    name = "binlog_format"
+    value = "ROW"
+    apply_method = "pending-reboot"
+}]
 
   # If true, must add policy to iam auth (user or role)
   iam_database_authentication_enabled = false

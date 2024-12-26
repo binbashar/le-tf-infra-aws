@@ -24,5 +24,12 @@ resource "mysql_grant" "sockshop" {
   user       = mysql_user.sockshop.user
   host       = mysql_user.sockshop.host
   database   = mysql_database.sockshop.name
-  privileges = ["SELECT", "INSERT", "UPDATE", "DELETE", "CREATE", "REFERENCES", "DROP", "REPLICATION SLAVE", "REPLICATION CLIENT" ]
+  privileges = ["SELECT", "INSERT", "UPDATE", "DELETE", "CREATE", "REFERENCES", "DROP" ]
+}
+
+resource "mysql_grant" "sockshop_global" {
+  user       = mysql_user.sockshop.user
+  host       = mysql_user.sockshop.host
+  privileges = ["REPLICATION SLAVE", "REPLICATION CLIENT"]
+  database   = "*"  # Use * for global privileges
 }

@@ -46,7 +46,7 @@ data "terraform_remote_state" "vpc" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/network/terraform.tfstate"
+    key     = "${var.environment}/k8s-eks/network/terraform.tfstate"
   }
 }
 
@@ -60,3 +60,15 @@ data "terraform_remote_state" "shared-vpc" {
     key     = "shared/network/terraform.tfstate"
   }
 }
+
+data "terraform_remote_state" "datascience-vpc" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-data-science-devops"
+    bucket  = "${var.project}-data-science-terraform-backend"
+    key     = "data-science/network/terraform.tfstate"
+  }
+}
+

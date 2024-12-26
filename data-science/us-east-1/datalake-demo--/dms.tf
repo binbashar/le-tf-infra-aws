@@ -19,6 +19,8 @@ module "database_migration_service" {
   repl_instance_id                           = local.name
   repl_instance_vpc_security_group_ids       = [module.replication_instance_security_group.security_group_id]
 
+  access_target_s3_bucket_arns = ["${module.s3_bucket_data_raw.s3_bucket_arn}/*", module.s3_bucket_data_raw.s3_bucket_arn]
+
   endpoints = {
     # source_apps_devstg_aurora_pgsql = {
     #   database_name               = "example"
@@ -35,15 +37,28 @@ module "database_migration_service" {
     # }
 
     source_data_science_aurora_mysql = {
-      database_name               = data.terraform_remote_state.aurora_mysql.outputs.demoapps_sockshop_database_name
+      database_name               = data.terraform_remote_state.aurora_mysql.outputs.cluster_database_name
       endpoint_id                 = data.terraform_remote_state.aurora_mysql.outputs.cluster_id
       endpoint_type               = "source"
       engine_name                 = "aurora"
       extra_connection_attributes = "heartbeatFrequency=1;"
-      username                    = data.terraform_remote_state.aurora_mysql.outputs.demoapps_sockshop_username
-      password                    = data.terraform_remote_state.aurora_mysql.outputs.demoapps_sockshop_password
+      username                    = data.terraform_remote_state.aurora_mysql.outputs.cluster_master_username
+      password                    = data.terraform_remote_state.aurora_mysql.outputs.cluster_master_password
       port                        = 3306
       server_name                 = data.terraform_remote_state.aurora_mysql.outputs.cluster_reader_endpoint
+      ssl_mode                    = "none"
+      tags                        = local.tags
+    }
+    source_data_science_aurora_postgres = {
+      database_name               = data.terraform_remote_state.aurora_postgres.outputs.cluster_database_name
+      endpoint_id                 = data.terraform_remote_state.aurora_postgres.outputs.cluster_id
+      endpoint_type               = "source"
+      engine_name                 = "aurora-postgresql"
+      extra_connection_attributes = "heartbeatFrequency=1;"
+      username                    = data.terraform_remote_state.aurora_postgres.outputs.cluster_master_username
+      password                    = data.terraform_remote_state.aurora_postgres.outputs.cluster_master_password
+      port                        = 5432
+      server_name                 = data.terraform_remote_state.aurora_postgres.outputs.cluster_reader_endpoint
       ssl_mode                    = "none"
       tags                        = local.tags
     }
@@ -56,7 +71,7 @@ module "database_migration_service" {
       endpoint_type = "target"
       engine_name   = "s3"
       bucket_folder               = "destinationdata"
-      bucket_name                 = module.s3_bucket_datalake.s3_bucket_id
+      bucket_name                 = module.s3_bucket_data_raw.s3_bucket_id
       data_format                 = "parquet"
       ssl_mode                    = "none"
       encryption_mode             = "SSE_S3"
@@ -67,12 +82,23 @@ module "database_migration_service" {
   }
 
   replication_tasks = {
-    cdc_demo = {
-      replication_task_id       = "${local.name}-replication-task"
-      migration_type            = "cdc"
+    cdc_demo_mysql = {
+      replication_task_id       = "${local.name}-replication-task-mysql"
+      migration_type            = "full-load-and-cdc"
       replication_task_settings = file("config/task_settings.json")
       table_mappings            = file("config/table_mappings.json")
       source_endpoint_key       = "source_data_science_aurora_mysql"
+      target_endpoint_key       = "s3-destination"
+      start_replication_task    = true
+      tags                      = local.tags
+    }
+    cdc_demo_postgres = {
+      replication_task_id       = "${local.name}-replication-task-postgres"
+      migration_type            = "full-load-and-cdc"
+      replication_task_settings = file("config/task_settings.json")
+      table_mappings            = file("config/table_mappings.json")
+      source_endpoint_key       = "source_data_science_aurora_postgres"
+      start_replication_task    = true
       target_endpoint_key       = "s3-destination"
       tags                      = local.tags
     }
