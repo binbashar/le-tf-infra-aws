@@ -46,7 +46,7 @@ data "terraform_remote_state" "vpc" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/k8s-eks/network/terraform.tfstate"
+    key     = "${var.environment}/k8s-eks/network/terraform.tfstate" # Use k8s-vpc to avoid network overlapping
   }
 }
 
