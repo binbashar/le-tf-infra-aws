@@ -3,7 +3,7 @@
 #===============#
 module "waf_regional_alb" {
   count  = var.enable_wafv1_regional ? 1 : 0
-  source = "github.com/binbashar/terraform-aws-waf-owasp.git//modules/waf-regional?ref=v1.0.14"
+  source = "github.com/binbashar/terraform-aws-waf-owasp.git//modules/waf-regional?ref=v1.0.20"
 
   # Just a prefix to add some level of organization
   waf_prefix = "${var.environment}-wafv1-albs"
@@ -15,7 +15,7 @@ module "waf_regional_alb" {
   admin_remote_ipset = []
 
   # Pass the list of ALB ARNs that the WAF ACL will be connected to
-  alb_arn = []
+  resource_arn = []
 
   # By default seted to COUNT for testing in order to avoid service affection; when ready, set it to BLOCK
   rule_size_restriction_action_type = "COUNT"

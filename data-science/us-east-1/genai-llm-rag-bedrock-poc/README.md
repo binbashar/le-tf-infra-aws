@@ -38,3 +38,6 @@ This guide provides instructions for setting up the infrastructure required for 
 
 8. **Build Container Image**
    - In order for the demo to work, you need to create the Docker image running the Action from the demo-app repository [here](https://github.com/binbashar/le-genai-ml-clients/actions/workflows/build-and-push.yml "Build and Push to ECR")
+
+9. **Access the DNS domain**
+    - Go to **demo-genai.binbash.co** and  log in using the credentials that were created in the Step 6.

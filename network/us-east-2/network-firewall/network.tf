@@ -1,10 +1,10 @@
 ## Inspection VPC
 module "vpc" {
-  source = "github.com/binbashar/terraform-aws-vpc-base?ref=0.26.1"
+  source = "github.com/binbashar/terraform-aws-vpc-base?ref=2.0.0"
 
   assign_generated_ipv6_cidr_block = false
   name                             = local.vpc_name
-  cidr_block                       = local.vpc_cidr_block
+  ipv4_primary_cidr_block          = local.vpc_cidr_block
   tags                             = local.tags
 }
 
