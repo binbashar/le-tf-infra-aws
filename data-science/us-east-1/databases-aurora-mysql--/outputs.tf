@@ -4,6 +4,11 @@ output "cluster_id" {
   value       = module.demoapps.cluster_id
 }
 
+output "cluster_arn" {
+  description = "The ID of the cluster"
+  value       = module.demoapps.cluster_arn
+}
+
 output "cluster_resource_id" {
   description = "The Resource ID of the cluster"
   value       = module.demoapps.cluster_resource_id

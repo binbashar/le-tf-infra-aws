@@ -6,9 +6,15 @@ provider "aws" {
   profile = var.profile
 }
 
- # endpoint = module.demoapps.cluster_endpoint
- # username = module.demoapps.cluster_master_username
- # password = jsondecode(data.aws_secretsmanager_secret_version.administrator.secret_string)["password"]
+provider "sql" {
+  alias = "mysql"
+  url   = "mysql://${data.terraform_remote_state.aurora_mysql.outputs.cluster_master_username}:${data.terraform_remote_state.aurora_mysql.outputs.cluster_master_password}@tcp(${data.terraform_remote_state.aurora_mysql.outputs.cluster_endpoint}:3306)/${data.terraform_remote_state.aurora_mysql.outputs.cluster_database_name}"
+}
+
+provider "sql" {
+  alias = "postgres"
+  url   = "postgres://${data.terraform_remote_state.aurora_postgres.outputs.cluster_master_username}:${data.terraform_remote_state.aurora_postgres.outputs.cluster_master_password}@${data.terraform_remote_state.aurora_postgres.outputs.cluster_endpoint}:5432/${data.terraform_remote_state.aurora_postgres.outputs.cluster_database_name}?sslmode=disable"
+}
 
 #=============================#
 # Backend Config (partial)    #
@@ -17,7 +23,11 @@ terraform {
   required_version = "~> 1.3"
 
   required_providers {
-    aws   = "~> 5.0"
+    aws = "~> 5.0"
+    sql = {
+      source  = "paultyng/sql"
+      version = "0.5.0"
+    }
   }
 
   backend "s3" {
@@ -50,6 +60,17 @@ data "terraform_remote_state" "secrets" {
   }
 }
 
+data "terraform_remote_state" "secrets_apps_devstg" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "bb-apps-devstg-devops"
+    bucket  = "bb-apps-devstg-terraform-backend"
+    key     = "apps-devstg/secrets-manager/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "aurora_mysql" {
   backend = "s3"
 
@@ -58,6 +79,17 @@ data "terraform_remote_state" "aurora_mysql" {
     profile = var.profile
     bucket  = var.bucket
     key     = "${var.environment}/databases-aurora-mysql/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "aurora_postgres" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "bb-apps-devstg-devops"
+    bucket  = "bb-apps-devstg-terraform-backend"
+    key     = "apps-devstg/databases-aurora-pgsql/terraform.tfstate"
   }
 }
 

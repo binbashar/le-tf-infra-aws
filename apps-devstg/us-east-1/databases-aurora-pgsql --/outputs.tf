@@ -4,6 +4,11 @@ output "cluster_id" {
   value       = module.apps_devstg_aurora_postgresql.cluster_id
 }
 
+output "cluster_arn" {
+  description = "The ID of the cluster"
+  value       = module.apps_devstg_aurora_postgresql.cluster_arn
+}
+
 output "cluster_resource_id" {
   description = "The Resource ID of the cluster"
   value       = module.apps_devstg_aurora_postgresql.cluster_resource_id
