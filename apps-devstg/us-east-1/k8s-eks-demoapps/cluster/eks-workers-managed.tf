@@ -148,22 +148,6 @@ module "cluster" {
     #     }
     #   }
     # }
-    # argocd = {
-    #   desired_size   = 1
-    #   max_size       = 2
-    #   min_size       = 1
-    #   capacity_type  = "SPOT"
-    #   instance_types = ["t3.medium"]
-
-    #   labels = merge(local.tags, { "stack" = "argocd" })
-    #   taints = {
-    #     dedicated_argocd = {
-    #       key    = "stack"
-    #       value  = "argocd"
-    #       effect = "NO_SCHEDULE"
-    #     }
-    #   }
-    # }
   }
 
   # Configure which roles, users and accounts can access the k8s api

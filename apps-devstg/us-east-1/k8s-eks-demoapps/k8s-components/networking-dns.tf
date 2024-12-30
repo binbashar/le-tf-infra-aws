@@ -2,7 +2,7 @@
 # External DNS (Private): Sync ingresses hosts with your DNS server.
 #------------------------------------------------------------------------------
 resource "helm_release" "externaldns_private" {
-  count = var.enable_private_dns_sync ? 1 : 0
+  count = var.dns_sync.private.enabled ? 1 : 0
 
   # depends_on = [null_resource.download]
 
@@ -28,7 +28,7 @@ resource "helm_release" "externaldns_private" {
 # External DNS (Public): Sync ingresses hosts with your DNS server.
 #------------------------------------------------------------------------------
 resource "helm_release" "externaldns_public" {
-  count = var.enable_public_dns_sync ? 1 : 0
+  count = var.dns_sync.public.enabled ? 1 : 0
 
   name       = "externaldns-public"
   namespace  = kubernetes_namespace.externaldns[0].id

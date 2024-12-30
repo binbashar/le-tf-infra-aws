@@ -9,7 +9,7 @@
 #   around to immediately check what's wrong.
 #------------------------------------------------------------------------------
 resource "helm_release" "kwatch" {
-  count      = var.enable_kwatch ? 1 : 0
+  count      = var.kwatch.enabled ? 1 : 0
   name       = "kwatch"
   namespace  = kubernetes_namespace.monitoring_alerts[0].id
   repository = "https://kwatch.dev/charts"
