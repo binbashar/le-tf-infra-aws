@@ -93,6 +93,7 @@ locals {
       last_name  = "Godoy"
       email      = "ezequiel.godoy@binbash.com.ar"
       groups = [
+        "administrators",
         "devops",
       ]
     }
