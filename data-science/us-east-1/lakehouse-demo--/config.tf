@@ -19,7 +19,7 @@ provider "sql" {
 provider "redshift" {
   host     = module.redshift.cluster_hostname
   username = "admin"
-  password = "ILO~p;yo!7Q%p*v:"
+  password = jsondecode(data.aws_secretsmanager_secret_version.admin_password.secret_string)["password"]
   database = "demo"
   # temporary_credentials {
   #   cluster_identifier = module.redshift.cluster_identifier

@@ -181,34 +181,16 @@ module "security_group" {
 
   tags = local.tags
 
- # depends_on = [ aws_iam_service_linked_role.redshift ]
 }
 
-# resource "aws_iam_service_linked_role" "redshift" {
-#   aws_service_name = "redshift.amazonaws.com"
-# }
 
-# External schema using AWS Glue Data Catalog
-# resource "redshift_schema" "external_from_glue_data_catalog" {
-#   name = "sales"
-#   owner = "admin"
-#   external_schema {
-#     database_name = "sales" # Required. Name of the db in glue catalog
-#     data_catalog_source {
-#      # region = "us-west-2" # Optional. If not specified, Redshift will use the same region as the cluster.
-#       iam_role_arns = [
-#         aws_iam_role.redshift_role.arn
-#       ]
-#       # catalog_role_arns = [
-#       #   # Optional. If specified, must be at least 1 ARN and not more than 10.
-#       #   # If not specified, Redshift will use iam_role_arns for accessing the glue data catalog.
-#       #   "arn:aws:iam::123456789012:role/myAthenaRole",
-#       #   # ...
-#       # ]
-#       create_external_database_if_not_exists = true # Optional. Defaults to false.
-#     }
-#   }
-# }
+
+resource "redshift_grant" "user" {
+  user        = "IAMR:AWSReservedSSO_DevOps_a1627cef3f7399d3"
+  schema      = "awsdatacatalog"
+  object_type = "schema"
+  privileges  = ["usage"]
+}
 
 # IAM Role for Redshift
 resource "aws_iam_role" "redshift_role" {
@@ -246,4 +228,8 @@ resource "aws_iam_role_policy" "redshift_role_policy" {
       }
     ]
   })
+}
+
+data "aws_secretsmanager_secret_version" "admin_password" {
+  secret_id = module.redshift.master_password_secret_arn
 }
