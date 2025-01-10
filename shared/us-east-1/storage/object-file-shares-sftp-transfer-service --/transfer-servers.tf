@@ -30,7 +30,7 @@ module "sftp_server" {
 #
 resource "aws_route53_record" "main" {
   name    = "${var.project}-${var.prefix}-user-sftp.${var.base_domain}"
-  zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id[0]
+  zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id
   type    = "CNAME"
   ttl     = "3600"
   records = [module.sftp_server.sftp_server_endpoint]

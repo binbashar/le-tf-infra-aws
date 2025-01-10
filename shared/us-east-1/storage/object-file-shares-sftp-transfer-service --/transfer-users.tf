@@ -12,8 +12,8 @@ module "sftp_user" {
   role_name       = "${var.prefix}-sftp-${each.value["username"]}"
 
   home_directory_bucket = {
-    id  = data.terraform_remote_state.object-file-shares.outputs.user_buckets[each.value["username"]],
-    arn = data.terraform_remote_state.object-file-shares.outputs.user_buckets_arn[each.value["username"]]
+    id  = module.s3_bucket.s3_bucket_id,
+    arn = module.s3_bucket.s3_bucket_arn
   }
   home_directory_key_prefix = ""
 
@@ -27,21 +27,21 @@ module "sftp_user" {
     "s3:DeleteObject",
   ]
   additional_role_statements = {
-    kms = {
-      sid    = "KmsPermissions"
-      effect = "Allow"
-      actions = [
-        "kms:Decrypt",
-        "kms:Encrypt",
-        "kms:GenerateDataKey",
-        "kms:ReEncryptTo",
-        "kms:DescribeKey",
-        "kms:ReEncryptFrom"
-      ]
-      resources = [
-        data.terraform_remote_state.keys.outputs.aws_kms_key_arn
-      ]
-    }
+    # kms = {
+    #   sid    = "KmsPermissions"
+    #   effect = "Allow"
+    #   actions = [
+    #     "kms:Decrypt",
+    #     "kms:Encrypt",
+    #     "kms:GenerateDataKey",
+    #     "kms:ReEncryptTo",
+    #     "kms:DescribeKey",
+    #     "kms:ReEncryptFrom"
+    #   ]
+    #   resources = [
+    #     data.terraform_remote_state.keys.outputs.aws_kms_key_arn
+    #   ]
+    # }
   }
 
   tags = {
