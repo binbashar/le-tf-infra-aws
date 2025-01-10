@@ -46,17 +46,6 @@ data "terraform_remote_state" "keys" {
   }
 }
 
-data "terraform_remote_state" "object-file-shares" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = var.profile
-    bucket  = var.bucket
-    key     = "${var.environment}/storage/object-file-shares/terraform.tfstate"
-  }
-}
-
 data "terraform_remote_state" "dns" {
   backend = "s3"
 
@@ -64,6 +53,6 @@ data "terraform_remote_state" "dns" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/dns/binbash.com.ar/terraform.tfstate"
+    key     = "${var.environment}/dns/binbash.co/terraform.tfstate"
   }
 }

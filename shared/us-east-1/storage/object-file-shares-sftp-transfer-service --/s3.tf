@@ -68,7 +68,7 @@ module "s3_bucket" {
 
       apply_server_side_encryption_by_default = {
         #kms_master_key_id = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
-        sse_algorithm     = "AES256"
+        sse_algorithm = "AES256"
       }
     }
   }

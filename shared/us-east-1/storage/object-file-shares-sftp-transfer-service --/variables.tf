@@ -22,10 +22,6 @@ variable "users" {
       username       = "john.doe",
       ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7KaxDBUnYwhBfNVe28HUoyxgROxY76xy98D1zOMLJDXVSwkfera00OSIlt1poHR6mp+wsT0Q8fDgJcPqSjMZzQIq7YzZfdTkWsNGC+VcT85ta8dwd/4mRyTbULl1JXQCdKdKdOZmUUeUO2U3vvUaoH1U4o3WwSHd3y5no1h+a5RVBcpoTn8tXOmtVy9LZ3rgWLxuGM9bJQ0acA39lyEV3Cz1IUdVJFJXqXyuEmoamYlvCGRHo4W5eMQVjdHbjvZInA+ArLQcQixjZ3hEcxC5xoTyzAu2bDROUBwobJIO8q7St1E312lxAz7ifvizaGlZpLADKMBpCLaT+Zt4bvsMjKxHgu9Q2CcZd3kuB7SfAJ6WBOaNUnE88CnetVsU9+PV7pRMzvCFZcjZJTgZWSNOOyPejwkOOrwJkNXbSsTJnczpvSPVvvCRBFeaTbprYb+tUT3EwY7RxtgBN/8RT9zugfgWkxYinQzX7ff7nEYW7t+LF/EKp8dPrabjOetIRd48="
     },
-    user_rankmi = {
-      username       = "rankmi",
-      ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBT2MZhNQJYFwnDVMeEjtOfxGaKDHRHk5VqSmeFX3e4a rankmi@rankmi"
-    },
   }
 }
 
@@ -50,7 +46,7 @@ variable "server_host_key" {
 variable "base_domain" {
   type        = string
   description = "Base DNS domain to create the custom endpoint of the server."
-  default     = "binbash.com.ar"
+  default     = "binbash.co"
 }
 
 variable "whitelisted_ips" {

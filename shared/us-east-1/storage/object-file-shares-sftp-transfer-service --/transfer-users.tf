@@ -2,7 +2,7 @@
 # Create user accounts for each customer
 #
 module "sftp_user" {
-  source = "github.com/binbashar/terraform-aws-sftp-user.git?ref=v1.1.0-1"
+  source = "github.com/binbashar/terraform-aws-sftp-user.git?ref=v2.0.0"
 
   for_each = var.users
 
@@ -26,23 +26,6 @@ module "sftp_user" {
     "s3:PutObjectVersion",
     "s3:DeleteObject",
   ]
-  additional_role_statements = {
-    # kms = {
-    #   sid    = "KmsPermissions"
-    #   effect = "Allow"
-    #   actions = [
-    #     "kms:Decrypt",
-    #     "kms:Encrypt",
-    #     "kms:GenerateDataKey",
-    #     "kms:ReEncryptTo",
-    #     "kms:DescribeKey",
-    #     "kms:ReEncryptFrom"
-    #   ]
-    #   resources = [
-    #     data.terraform_remote_state.keys.outputs.aws_kms_key_arn
-    #   ]
-    # }
-  }
 
   tags = {
     Customer = each.value["username"]
