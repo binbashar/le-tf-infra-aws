@@ -1,5 +1,6 @@
 locals {
-  name   = "${var.project}-${var.environment}-data-lake-demo"
+  region = "us-east-1"
+  name   = "${var.project}-${var.environment}-lake-house-demo"
 
   tags = {
     Name        = local.name
