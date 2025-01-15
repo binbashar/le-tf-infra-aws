@@ -1,14 +1,10 @@
-data "aws_ssoadmin_instances" "this" {
-  count = local.enable_sso_client_vpn == true ? 1 : 0
-}
-
 resource "aws_ssoadmin_application" "client_vpn" {
   count = local.enable_sso_client_vpn == true ? 1 : 0
 
   name                     = "${var.project}-client-vpn"
   application_provider_arn = "arn:aws:sso::aws:applicationProvider/custom-saml"
   description              = "Awsome Clieny VPN"
-  instance_arn             = tolist(data.aws_ssoadmin_instances.this[0].arns)[0]
+  instance_arn             = tolist(data.aws_ssoadmin_instances.main.arns)[0]
 
   portal_options {
     visibility = "ENABLED"
