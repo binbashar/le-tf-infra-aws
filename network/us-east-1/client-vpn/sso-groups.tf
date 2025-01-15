@@ -14,7 +14,3 @@ data "aws_identitystore_group" "devops" {
     }
   }
 }
-
-output "group_id" {
-  value = data.aws_identitystore_group.devops.group_id
-}
