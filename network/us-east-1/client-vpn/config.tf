@@ -6,11 +6,17 @@ provider "aws" {
   profile = var.profile
 }
 
+provider "aws" {
+  alias   = "management"
+  region  = var.region
+  profile = "${var.project}-root-administrator"
+}
+
 #=============================#
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = "~> 1.6.0"
+  required_version = "~> 1.3"
 
   required_providers {
     aws = "~> 5.0"
