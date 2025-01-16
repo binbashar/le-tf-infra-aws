@@ -7,8 +7,8 @@ This layer deploy the AWS Client VPN service using AWS SSO to authenticate users
 Due to API limitations, the SSO application must be configured manually (For more information regarding this limitation you can check [this bug](https://github.com/hashicorp/terraform-provider-aws/issues/34813) and the [notes in the AWS Terraform Provider](https://registry.terraform.io/providers/hashicorp/aws/5.39.1/docs/resources/ssoadmin_application?lang=typescript)).
 
 1. In the AWs Identity Center go to to “Applications”, then click the “Add a new application” button, then click “Add a custom SAML 2.0 application”.
-2. Complete the Name and description (if you will import this resource to terrraform note than you ewill not be able to change the name).
-3. Download the AWS SSO Metadata file (with name `saml-metadata.xml` in this folder, it will be ignored by git for of security)
+2. Complete the Name and description (if you will import this resource to terrraform note than you will not be able to change the name).
+3. Download the AWS SSO Metadata file (with name `saml-metadata.xml` in this folder, it will be ignored by git for security reasons)
 4. Enter `http://127.0.0.1:35001` as the Application ACS URL and `urn:amazon:webservices:clientvpn` as the Application SAML audience.
 5. Set up the following attributes mappings: the `Subject` needs to have the value of `${user:email}` and the format `emailAddress`. The `memberOf` attribute has a value of `${user:groups`} and should have the format `unspecified`.
 
@@ -50,7 +50,7 @@ resource "aws_ssoadmin_application_assignment" "client_vpn" {
 
  ### Routes
 
-It is posible to ad a route to 0.0.0.0/0 in the VPN. However, this will break the split tunnel funtionality, and may cause problems with the authorizations.
+It is posible to add a route to 0.0.0.0/0 in the VPN. However, this will break the split tunnel funtionality, and may cause problems with the authorizations.
 
  ### Users
 
