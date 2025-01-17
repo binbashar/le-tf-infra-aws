@@ -116,7 +116,7 @@ resource "kubernetes_namespace" "scaling" {
 }
 
 resource "kubernetes_namespace" "keda" {
-  count = var.enable_keda ? 1 : 0
+  count = var.keda.enabled ? 1 : 0
 
   metadata {
     labels = local.labels

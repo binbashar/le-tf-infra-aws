@@ -121,17 +121,17 @@ EOF
 # resource utilization, custom metrics, and external events.
 #------------------------------------------------------------------------------
 resource "helm_release" "keda" {
-  count      = var.enable_keda ? 1 : 0
+  count      = var.keda.enabled ? 1 : 0
   name       = "keda"
   namespace  = kubernetes_namespace.keda[0].id
   repository = "https://kedacore.github.io/charts"
   chart      = "keda"
   version    = "2.15.0"
-  values = []
+  values     = []
 }
 
 resource "helm_release" "keda_http_add_on" {
-  count      = var.enable_keda && var.enable_keda_http_add_on ? 1 : 0
+  count      = var.keda.enabled && var.keda.http_add_on.enabled ? 1 : 0
   name       = "http-add-on"
   namespace  = kubernetes_namespace.keda[0].id
   repository = "https://kedacore.github.io/charts"

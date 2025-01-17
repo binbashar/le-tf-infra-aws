@@ -199,14 +199,15 @@ variable "cost_optimization" {
   }
 }
 
-#==================================#
-# enable_keda and keda http add on
-#==================================#
-variable "enable_keda" {
-  type    = bool
-  default = false
-}
-variable "enable_keda_http_add_on" {
-  type    = bool
-  default = false
+variable "keda" {
+  type = object({
+    enabled     = bool
+    http_add_on = map(any)
+  })
+  default = {
+    enabled = false
+    http_add_on = {
+      enabled = false
+    }
+  }
 }
