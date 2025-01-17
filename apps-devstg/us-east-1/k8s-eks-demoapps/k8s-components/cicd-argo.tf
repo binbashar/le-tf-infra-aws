@@ -2,6 +2,7 @@
 # ArgoCD: GitOps + CD
 #------------------------------------------------------------------------------
 data "aws_secretsmanager_secret_version" "argocd_admin_password" {
+  count     = var.argocd.enabled ? 1 : 0
   secret_id = "/k8s-eks-demoapps/argocdserveradminpassword"
 }
 
@@ -17,7 +18,7 @@ data "aws_secretsmanager_secret_version" "le_demo_deploy_key" {
   secret_id = "/repositories/le-demo-apps/deploy_key"
 }
 
-data "aws_secretsmanager_secret_version" "argocd_slack_notification_app_oauth" {
+data "aws_secretsmanager_secret_version" "argocd_slack_notifications_app_oauth" {
   count     = var.argocd.enabled && var.argocd.enableNotifications ? 1 : 0
   provider  = aws.shared
   secret_id = "/notifications/devstg/argocd"
@@ -33,11 +34,11 @@ resource "helm_release" "argocd" {
   version    = "7.7.5"
   values = [
     templatefile("chart-values/argo-cd.yaml", {
-      argoHost                   = "argocd.${local.platform}.${local.private_base_domain}"
+      argoHost                   = "argocd.${local.platform}.${local.private_base_domain}",
       ingressClass               = local.private_ingress_class,
       enableWebTerminal          = var.argocd.enableWebTerminal,
       enableNotifications        = var.argocd.enableNotifications,
-      slackNotificationsAppToken = jsondecode(data.aws_secretsmanager_secret_version.argocd_slack_notifications_app_oauth[0].secret_string)["token"],
+      slackNotificationsAppToken = var.argocd.enableNotifications ? jsondecode(data.aws_secretsmanager_secret_version.argocd_slack_notifications_app_oauth[0].secret_string)["slack_app_oauth_token"] : "",
       slackNotificationsChannel  = local.argocd_slack_notifications_channel,
       nodeSelector               = local.tools_nodeSelector,
       tolerations                = local.tools_tolerations
@@ -48,20 +49,20 @@ resource "helm_release" "argocd" {
       configs = {
         secret = {
           # Get argocd admin password from AWS Secrets Manager
-          argocdServerAdminPassword = data.aws_secretsmanager_secret_version.argocd_admin_password.secret_string
+          argocdServerAdminPassword = data.aws_secretsmanager_secret_version.argocd_admin_password[0].secret_string
         }
         repositories = {
           demo-google-microservices = {
             name          = "demo-google-microservices"
             project       = "default"
-            sshPrivateKey = data.aws_secretsmanager_secret_version.demo_google_microservices_deploy_key.secret_string
+            sshPrivateKey = data.aws_secretsmanager_secret_version.demo_google_microservices_deploy_key[0].secret_string
             type          = "git"
             url           = "git@github.com:binbashar/demo-google-microservices.git"
           }
           le-demo-apps = {
             name          = "le-demo-apps"
             project       = "default"
-            sshPrivateKey = data.aws_secretsmanager_secret_version.le_demo_deploy_key.secret_string
+            sshPrivateKey = data.aws_secretsmanager_secret_version.le_demo_deploy_key[0].secret_string
             type          = "git"
             url           = "git@github.com:binbashar/le-demo-apps.git"
           }

@@ -174,8 +174,8 @@ variable "argocd" {
   default = {
     enabled = true
 
-    enableWebTerminal    = true
-    enabledNotifications = false
+    enableWebTerminal   = true
+    enableNotifications = false
 
     image_updater = {
       enabled = false
