@@ -137,5 +137,23 @@ resource "helm_release" "keda_http_add_on" {
   repository = "https://kedacore.github.io/charts"
   chart      = "keda-add-ons-http"
   version    = "0.8.0"
-  values = []
+  values     = []
+}
+
+# ------------------------------------------------------------------------------
+# Goldilocks: tune up resource requests and limits.
+# ------------------------------------------------------------------------------
+resource "helm_release" "goldilocks" {
+  count      = var.goldilocks.enabled ? 1 : 0
+  name       = "goldilocks"
+  namespace  = kubernetes_namespace.monitoring_metrics[0].id
+  repository = "https://charts.fairwinds.com/stable"
+  chart      = "goldilocks"
+  version    = "3.2.1"
+  values = [
+    templatefile("chart-values/goldilocks.yaml", {
+      goldilocksHost = "goldilocks.${local.platform}.${local.private_base_domain}"
+    })
+  ]
+  depends_on = [helm_release.vpa]
 }

@@ -84,6 +84,13 @@ variable "scaling" {
   }
 }
 
+variable "goldilocks" {
+  type = map(any)
+  default = {
+    enabled = false
+  }
+}
+
 variable "logging" {
   type = object({
     enabled    = bool,
