@@ -63,3 +63,25 @@ resource "helm_release" "uptime_kuma" {
 EOT
   ]
 }
+
+#------------------------------------------------------------------------------
+# Gatus: Monitor HTTP, TCP, ICMP and DNS.
+#------------------------------------------------------------------------------
+resource "helm_release" "gatus" {
+  count      = var.gatus.enabled ? 1 : 0
+  name       = "gatus"
+  namespace  = kubernetes_namespace.monitoring_other[0].id
+  repository = "https://minicloudlabs.github.io/helm-charts"
+  chart      = "gatus"
+  version    = "1.1.4"
+  values = [
+    templatefile("chart-values/gatus.yaml", {
+      gatusHost = "gatus.${local.platform}.${local.private_base_domain}"
+    })
+  ]
+  depends_on = [
+    helm_release.ingress_nginx_private,
+    helm_release.certmanager,
+    helm_release.externaldns_private
+  ]
+}

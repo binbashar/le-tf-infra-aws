@@ -153,6 +153,13 @@ variable "uptime_kuma" {
   }
 }
 
+variable "gatus" {
+  type = map(any)
+  default = {
+    enabled = false
+  }
+}
+
 variable "argocd" {
   type = object({
     enabled             = bool
