@@ -54,7 +54,7 @@ It is posible to add a route to 0.0.0.0/0 in the VPN. However, this will break t
 
  ### Users
 
- The users or groups should be firist allowed in the SSO Application, and also authorized in the VPN. If the user applying this layer do not have permissions to assume a role in the management account, you can remove `sso-groups.tf` and pass the group Ids as a local or variable.
+ The users or groups should be allowed in the SSO Application and authorized in the VPN. If the user applying this layer does not have permission to assume a role in the management account, you can remove `sso-groups.tf` and pass the group Ids as a local or variable.
 
  You can authorize different target CIDRs for different groups. However it will always use the same Security Group.
 
