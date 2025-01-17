@@ -91,6 +91,10 @@ logging = {
 prometheus = {
   kube_stack = {
     enabled = true
+
+    alertmanager = {
+      enabled = false
+    }
   }
 
   external = {

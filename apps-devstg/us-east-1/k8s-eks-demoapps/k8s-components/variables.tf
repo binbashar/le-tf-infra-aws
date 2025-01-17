@@ -98,12 +98,19 @@ variable "logging" {
 
 variable "prometheus" {
   type = object({
-    kube_stack = map(any)
-    external   = map(any)
+    kube_stack = object({
+      enabled      = bool,
+      alertmanager = map(any)
+    })
+    external = map(any)
   })
   default = {
     kube_stack = {
       enabled = true
+
+      alertmanager = {
+        enabled = false
+      }
     }
 
     external = {

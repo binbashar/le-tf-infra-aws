@@ -37,9 +37,28 @@ resource "helm_release" "metrics_server" {
   values     = [file("chart-values/metrics-server.yaml")]
 }
 
-#------------------------------------------------------------------------------
-# Prometheus Stack: (in-cluster) Prometheus, Grafana, and AlertManager.
-#------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------
+# Kube Prometheus Stack: Full Prometheus + Alertmanager + Grafana implementation.
+#--------------------------------------------------------------------------------
+
+#
+# Slack webhook
+#
+data "aws_secretsmanager_secret_version" "alertmanager_slack_webhook" {
+  count     = var.prometheus.kube_stack.enabled && var.prometheus.kube_stack.alertmanager.enabled ? 1 : 0
+  provider  = aws.shared
+  secret_id = "/notifications/alertmanager"
+}
+
+#
+# Grafana's credentials
+#
+data "aws_secretsmanager_secret_version" "grafana" {
+  count     = var.prometheus.kube_stack.enabled ? 1 : 0
+  provider  = aws.shared
+  secret_id = "/devops/monitoring/grafana/administrator"
+}
+
 resource "helm_release" "kube_prometheus_stack" {
   count      = var.prometheus.kube_stack.enabled && !var.cost_optimization.cost_analyzer ? 1 : 0
   name       = "kube-prometheus-stack"
@@ -49,11 +68,16 @@ resource "helm_release" "kube_prometheus_stack" {
   version    = "52.1.0"
   values = [templatefile("chart-values/kube-prometheus-stack.yaml",
     {
-      private_ingress_class = local.private_ingress_class
-      platform              = local.platform
-      private_base_domain   = local.private_base_domain
-      nodeSelector          = local.tools_nodeSelector
-      tolerations           = local.tools_tolerations
+      privateIngressClass      = local.private_ingress_class
+      platform                 = local.platform
+      privateBaseDomain        = local.private_base_domain
+      alertmanagerSlackWebhook = var.prometheus.kube_stack.alertmanager.enabled ? jsondecode(data.aws_secretsmanager_secret_version.alertmanager_slack_webhook[0].secret_string)["webhook"] : ""
+      alertmanagerSlackChannel = var.prometheus.kube_stack.alertmanager.enabled ? jsondecode(data.aws_secretsmanager_secret_version.alertmanager_slack_webhook[0].secret_string)["channel"] : ""
+      grafanaUser              = jsondecode(data.aws_secretsmanager_secret_version.grafana[0].secret_string)["username"]
+      grafanaPassword          = jsondecode(data.aws_secretsmanager_secret_version.grafana[0].secret_string)["password"]
+      grafanaRoleArn           = data.terraform_remote_state.cluster-identities.outputs.grafana_role_arn
+      nodeSelector             = local.tools_nodeSelector
+      tolerations              = local.tools_tolerations
     })
   ]
 }
