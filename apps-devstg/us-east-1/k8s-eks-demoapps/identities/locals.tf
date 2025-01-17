@@ -14,6 +14,8 @@ locals {
   tags_externaldns_public  = merge(local.tags, { Subject = "externaldns-public" })
   tags_aws_lb_controller   = merge(local.tags, { Subject = "aws-lb-controller" })
   tags_external_secrets    = merge(local.tags, { Subject = "external-secrets" })
+  tags_grafana             = merge(local.tags, { Subject = "grafana" })
+  tags_fluent_bit          = merge(local.tags, { Subject = "fluent-bit" })
   tags_argo_image_updater  = merge(local.tags, { Subject = "argo-image-updater" })
   tags_vpc_cni             = merge(local.tags, { Subject = "vpc-cni" })
   tags_ebs_csi             = merge(local.tags, { Subject = "ebs-csi" })
