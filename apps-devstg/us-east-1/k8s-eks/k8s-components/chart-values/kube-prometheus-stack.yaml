@@ -61,7 +61,7 @@ alertmanager:
     annotations:
       kubernetes.io/tls-acme: 'true'
       kubernetes.io/ingress.class: ${ingressClass}
-      cert-manager.io/cluster-issuer: clusterissuer-arta-cert-manager-clusterissuer
+      cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
     hosts:
       - ${alertmanagerHost}
     path: /
@@ -99,7 +99,7 @@ grafana:
     annotations:
       kubernetes.io/tls-acme: 'true'
       kubernetes.io/ingress.class: ${ingressClass}
-      cert-manager.io/cluster-issuer: clusterissuer-arta-cert-manager-clusterissuer
+      cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
     hosts:
       - ${grafanaHost}
     path: /
@@ -141,7 +141,7 @@ prometheus:
     annotations:
       kubernetes.io/tls-acme: 'true'
       kubernetes.io/ingress.class: ${ingressClass}
-      cert-manager.io/cluster-issuer: clusterissuer-arta-cert-manager-clusterissuer
+      cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
     hosts:
       - ${prometheusHost}
     path: /

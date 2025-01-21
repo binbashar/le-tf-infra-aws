@@ -20,25 +20,24 @@ module "secrets" {
       secret_string           = "INITIAL_VALUE"
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
     },
-    # "/notifications/alertmanager" = {
-    #   description             = "Slack webhook for Alertmanager notifications"
-    #   recovery_window_in_days = 7
-    #   secret_string           = "INITIAL_VALUE"
-    #   kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
-    # },
-    # "/grafana/administrator" = {
-    #   description             = "Credentials for Grafana administrator user"
-    #   recovery_window_in_days = 7
-    #   secret_string           = "INITIAL_VALUE"
-    #   kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
-    # },
-
     #
     # This secret was created based on the centralized secrets approach and the naming conventions
     # defined here: https://binbash.atlassian.net/wiki/spaces/BDPS/pages/2425978910/Secrets+Management+Conventions
     #
     "/devops/notifications/slack/security" = {
       description             = "Slack Webhook for the security notifications"
+      recovery_window_in_days = 7
+      secret_string           = "INITIAL_VALUE"
+      kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+    },
+    "/devops/monitoring/alertmanager" = {
+      description             = "Slack webhook for Alertmanager notifications"
+      recovery_window_in_days = 7
+      secret_string           = "INITIAL_VALUE"
+      kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+    },
+    "/devops/monitoring/grafana/administrator" = {
+      description             = "Credentials for Grafana administrator user"
       recovery_window_in_days = 7
       secret_string           = "INITIAL_VALUE"
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id

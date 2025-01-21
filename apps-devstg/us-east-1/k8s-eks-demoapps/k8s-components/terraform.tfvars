@@ -1,40 +1,93 @@
 #------------------------------------------------------------------------------
 # Ingress
 #------------------------------------------------------------------------------
-enable_alb_ingress_controller   = false
-enable_nginx_ingress_controller = true
-apps_ingress = {
-  enabled = false
-  # Load balancer type: internet-facing or internal
-  type = "internal"
+ingress = {
+  alb_controller = {
+    enabled = false
+  }
+
+  nginx_controller = {
+    enabled = true
+  }
+
+  apps_ingress = {
+    enabled = false
+    # Load balancer type: internet-facing or internal
+    type = "internal"
+
+    logging = {
+      enabled = false
+      prefix  = ""
+    }
+  }
 }
 
 #------------------------------------------------------------------------------
 # Certificate Manager
 #------------------------------------------------------------------------------
-enable_certmanager = true
+certmanager = {
+  enabled = true
+}
 
 #------------------------------------------------------------------------------
 # External DNS sync
 #------------------------------------------------------------------------------
-enable_private_dns_sync = true
-enable_public_dns_sync  = false
+dns_sync = {
+  private = {
+    enabled = true
+  }
+
+  public = {
+    enabled = false
+  }
+}
 
 #------------------------------------------------------------------------------
 # Secrets Management
 #------------------------------------------------------------------------------
-enable_external_secrets = true
+external_secrets = {
+  enabled = true
+}
 
 #------------------------------------------------------------------------------
 # Scaling
 #------------------------------------------------------------------------------
-enable_hpa_scaling              = false
-enable_vpa_scaling              = false
-enable_cluster_autoscaling      = true
-enable_cluster_overprovisioning = false
-enable_keda                     = false
-enable_keda_http_add_on         = false
+scaling = {
+  hpa = {
+    enabled = false
+  }
 
+  vpa = {
+    enabled = false
+  }
+
+  cluster_autoscaling = {
+    enabled = true
+  }
+
+  cluster_overprovisioning = {
+    enabled = false
+  }
+}
+
+#------------------------------------------------------------------------------
+# Scaling: Goldilocks
+#------------------------------------------------------------------------------
+goldilocks = {
+  enabled = true
+}
+
+
+#------------------------------------------------------------------------------
+# Scaling: Keda
+#------------------------------------------------------------------------------
+keda = {
+  enabled = false
+
+  http_add_on = {
+    enabled = false
+  }
+}
 #------------------------------------------------------------------------------
 # Monitoring: Logging
 #------------------------------------------------------------------------------
@@ -50,34 +103,78 @@ logging = {
 }
 
 #------------------------------------------------------------------------------
-# Monitoring: Metrics
+# Monitoring: Prometheus
 #------------------------------------------------------------------------------
 # KubePrometheusStack
-kube_prometheus_stack = {
-  enabled = false
+prometheus = {
+  kube_stack = {
+    enabled = true
+
+    alertmanager = {
+      enabled = false
+    }
+  }
+
+  external = {
+    dependencies = {
+      enabled = false
+    }
+    grafana_dependencies = {
+      enabled = false
+    }
+  }
 }
-# (External) Prometheus dependencies
-enable_prometheus_dependencies = false
-enable_grafana_dependencies    = false
 
 #------------------------------------------------------------------------------
 # Monitoring: Datadog (logs, metrics, and more)
 #------------------------------------------------------------------------------
-enable_datadog_agent = false
+datadog_agent = {
+  enabled = false
+}
 
 #------------------------------------------------------------------------------
 # Monitoring: Alerts
 #------------------------------------------------------------------------------
 # KWatch
-enable_kwatch = false
+kwatch = {
+  enabled = false
+}
 
 #------------------------------------------------------------------------------
-# CICD | ArgoCD
+# Monitoring: Uptime Kuma
 #------------------------------------------------------------------------------
-enable_cicd                 = true
-enable_argocd_image_updater = true
-enable_argo_rollouts        = false
+uptime_kuma = {
+  enabled = false
+}
 
+#------------------------------------------------------------------------------
+# Monitoring: Gatus
+#------------------------------------------------------------------------------
+gatus = {
+  enabled = true
+}
+
+#------------------------------------------------------------------------------
+# CICD | Argo
+#------------------------------------------------------------------------------
+argocd = {
+  enabled = true
+
+  enableWebTerminal   = true
+  enableNotifications = false
+
+  image_updater = {
+    enabled = true
+  }
+
+  rollouts = {
+    enabled = true
+
+    dashboard = {
+      enabled = false
+    }
+  }
+}
 
 #------------------------------------------------------------------------------
 # FinOps | Cost Optimizations Tools
@@ -86,8 +183,3 @@ cost_optimization = {
   kube_resource_report = false
   cost_analyzer        = false
 }
-
-#------------------------------------------------------------------------------
-# Uptime Kuma
-#------------------------------------------------------------------------------
-enable_uptime_kuma = false

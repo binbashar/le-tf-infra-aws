@@ -2,7 +2,7 @@
 # Service Account & Permissions: External Prometheus
 #------------------------------------------------------------------------------
 resource "kubernetes_cluster_role" "external_prometheus" {
-  count = var.enable_prometheus_dependencies ? 1 : 0
+  count = var.prometheus.external.dependencies.enabled ? 1 : 0
 
   metadata {
     name = "external-prometheus"
@@ -38,7 +38,7 @@ resource "kubernetes_cluster_role" "external_prometheus" {
 }
 
 resource "kubernetes_cluster_role_binding" "external_prometheus" {
-  count = var.enable_prometheus_dependencies ? 1 : 0
+  count = var.prometheus.external.dependencies.enabled ? 1 : 0
 
   metadata {
     name = "external-prometheus"
@@ -56,7 +56,7 @@ resource "kubernetes_cluster_role_binding" "external_prometheus" {
 }
 
 resource "kubernetes_service_account" "external_prometheus" {
-  count = var.enable_prometheus_dependencies ? 1 : 0
+  count = var.prometheus.external.dependencies.enabled ? 1 : 0
 
   metadata {
     name      = "external-prometheus"

@@ -1,8 +1,21 @@
+# ---------------------------------------------------------
+# Controller configs
+# ---------------------------------------------------------
+controller:
+  nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
+# ---------------------------------------------------------
+# Dashboard configs
+# ---------------------------------------------------------
 dashboard:
-  enabled: true
+  enabled: ${enableDashboard}
+
+  nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
 
   ingress:
-    enabled: true
+    enabled: ${enableDashboard}
     annotations:
       kubernetes.io/tls-acme: "true"
       # Associate this ingress with the following ingress controller

@@ -8,13 +8,15 @@ resource "helm_release" "fluentbit" {
   namespace  = kubernetes_namespace.monitoring_logging[0].id
   repository = "https://fluent.github.io/helm-charts"
   chart      = "fluent-bit"
-  version    = "0.20.1"
+  version    = "0.24.0"
   values = [
     templatefile("chart-values/fluentbit.yaml", {
-      es_host     = "elasticsearch.${local.private_base_domain}",
-      es_port     = 443,
-      es_user     = "elastic.user",    # TODO pass secret via AWS Screts Manager
-      es_password = "elastic.password" # TODO pass secret via AWS Screts Manager
+      opensearch_host         = "example-domain.${local.private_base_domain}", # Fetch this from a opensearch layer output
+      opensearch_port         = 443,
+      opensearch_index_suffix = local.environment
+      region                  = var.region,
+      role_arn                = data.terraform_remote_state.cluster-identities.outputs.fluent_bit_role_arn, # Make sure the role allows access to the domain set above
+      tolerations             = local.tools_tolerations,
     })
   ]
 }

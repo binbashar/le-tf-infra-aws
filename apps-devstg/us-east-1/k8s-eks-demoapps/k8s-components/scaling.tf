@@ -2,7 +2,7 @@
 # Vertical Pod Autoscaler: automatic pod vertical autoscaling.
 #------------------------------------------------------------------------------
 resource "helm_release" "vpa" {
-  count      = var.enable_vpa_scaling ? 1 : 0
+  count      = var.scaling.vpa.enabled ? 1 : 0
   name       = "vpa"
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://charts.fairwinds.com/stable"
@@ -16,7 +16,7 @@ resource "helm_release" "vpa" {
 # Cluster Autoscaler: automatic cluster nodes autoscaling.
 #------------------------------------------------------------------------------
 resource "helm_release" "cluster_autoscaling" {
-  count      = var.enable_cluster_autoscaling ? 1 : 0
+  count      = var.scaling.cluster_autoscaling.enabled ? 1 : 0
   name       = "autoscaler"
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://kubernetes.github.io/autoscaler"
@@ -50,7 +50,7 @@ resource "helm_release" "cluster_autoscaling" {
 # Another option is to start with one replica and then use the proportional
 # autoscaler to control the minimum number of replicas there.
 resource "helm_release" "cluster_overprovisioner" {
-  count      = var.enable_cluster_overprovisioning ? 1 : 0
+  count      = var.scaling.cluster_overprovisioning.enabled ? 1 : 0
   name       = "cluster-overprovisioner"
   namespace  = kubernetes_namespace.scaling[0].id
   repository = "https://charts.deliveryhero.io/"
@@ -83,7 +83,7 @@ EOF
 #    targets must, as mush as possible, be assigned to a new node.
 #  - Also, don't forget about using proper values for the min and max settings.
 resource "helm_release" "cluster_proportional_autoscaler" {
-  count      = var.enable_cluster_overprovisioning ? 1 : 0
+  count      = var.scaling.cluster_overprovisioning.enabled ? 1 : 0
   name       = "cluster-proportional-autoscaler"
   namespace  = kubernetes_namespace.scaling[0].id
   repository = "https://kubernetes-sigs.github.io/cluster-proportional-autoscaler"
@@ -121,21 +121,39 @@ EOF
 # resource utilization, custom metrics, and external events.
 #------------------------------------------------------------------------------
 resource "helm_release" "keda" {
-  count      = var.enable_keda ? 1 : 0
+  count      = var.keda.enabled ? 1 : 0
   name       = "keda"
   namespace  = kubernetes_namespace.keda[0].id
   repository = "https://kedacore.github.io/charts"
   chart      = "keda"
   version    = "2.15.0"
-  values = []
+  values     = []
 }
 
 resource "helm_release" "keda_http_add_on" {
-  count      = var.enable_keda && var.enable_keda_http_add_on ? 1 : 0
+  count      = var.keda.enabled && var.keda.http_add_on.enabled ? 1 : 0
   name       = "http-add-on"
   namespace  = kubernetes_namespace.keda[0].id
   repository = "https://kedacore.github.io/charts"
   chart      = "keda-add-ons-http"
   version    = "0.8.0"
-  values = []
+  values     = []
+}
+
+# ------------------------------------------------------------------------------
+# Goldilocks: tune up resource requests and limits.
+# ------------------------------------------------------------------------------
+resource "helm_release" "goldilocks" {
+  count      = var.goldilocks.enabled ? 1 : 0
+  name       = "goldilocks"
+  namespace  = kubernetes_namespace.monitoring_metrics[0].id
+  repository = "https://charts.fairwinds.com/stable"
+  chart      = "goldilocks"
+  version    = "3.2.1"
+  values = [
+    templatefile("chart-values/goldilocks.yaml", {
+      goldilocksHost = "goldilocks.${local.platform}.${local.private_base_domain}"
+    })
+  ]
+  depends_on = [helm_release.vpa]
 }

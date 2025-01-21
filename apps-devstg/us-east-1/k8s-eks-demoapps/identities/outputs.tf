@@ -28,6 +28,16 @@ output "external_secrets_role_arn" {
   value       = module.role_external_secrets.iam_role_arn
 }
 
+output "grafana_role_arn" {
+  description = "Grafana Role ARN"
+  value       = module.role_grafana.iam_role_arn
+}
+
+output "fluent_bit_role_arn" {
+  description = "Fluent Bit Role ARN"
+  value       = module.role_fluent_bit.iam_role_arn
+}
+
 output "argo_cd_image_updater_role_arn" {
   description = "Argo CD Image Updater Role ARN"
   value       = module.role_argo_cd_image_updater.iam_role_arn

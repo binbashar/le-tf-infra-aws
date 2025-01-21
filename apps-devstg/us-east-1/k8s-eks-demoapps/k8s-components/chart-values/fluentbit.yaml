@@ -1,6 +1,13 @@
 # Either DaemonSet or Deployment
 kind: DaemonSet
 
+serviceAccount:
+  name: fluent-bit
+  annotations:
+    eks.amazonaws.com/role-arn: ${role_arn}
+
+tolerations: ${tolerations}
+
 ## Ref: https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/configuration-file
 config:
   service: |
@@ -9,6 +16,7 @@ config:
         Flush        {{ .Values.flush }}
         Log_Level    {{ .Values.logLevel }}
         Parsers_File parsers.conf
+        Parsers_File custom_parsers.conf
         HTTP_Server  On
         HTTP_Listen  0.0.0.0
         HTTP_Port    {{ .Values.metricsPort }}
@@ -30,7 +38,7 @@ config:
     [FILTER]
         Name                kubernetes
         Match               kube.*
-        Merge_Log           Off
+        Merge_Log           On
         Keep_Log            Off
         K8S-Logging.Parser  On
         K8S-Logging.Exclude On
@@ -38,22 +46,22 @@ config:
   ## Ref: https://docs.fluentbit.io/manual/pipeline/outputs
   outputs: |
     [OUTPUT]
-        Name               es
+        Name               opensearch
         Match              kube.*
-        Host               ${es_host}
-        Port               ${es_port}
-        HTTP_User          ${es_user}
-        HTTP_Passwd        ${es_password}
+        Host               ${opensearch_host}
+        Port               ${opensearch_port}
+        AWS_Auth           On
+        AWS_Region         ${region}
         tls                On
         tls.verify         On
-        Suppress_Type_Name On
-        Index              kube_devstg
+        Index              kube_${opensearch_index_suffix}
+        logstash_prefix    kube_${opensearch_index_suffix}
         logstash_format    On
-        logstash_prefix    kube_devstg
+        Replace_Dots       On
+        Suppress_Type_Name On
         time_key           @timestamp
         Buffer_Size        4M
         Retry_Limit        False
-        Suppress_Type_Name On
 
   ## Ref: https://docs.fluentbit.io/manual/pipeline/parsers
   customParsers: |
