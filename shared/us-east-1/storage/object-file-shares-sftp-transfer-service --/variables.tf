@@ -46,7 +46,7 @@ variable "server_host_key" {
 variable "base_domain" {
   type        = string
   description = "Base DNS domain to create the custom endpoint of the server."
-  default     = "binbash.com.ar"
+  default     = "binbash.co"
 }
 
 variable "whitelisted_ips" {

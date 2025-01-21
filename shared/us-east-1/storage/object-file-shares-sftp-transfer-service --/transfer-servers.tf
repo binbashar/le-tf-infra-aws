@@ -2,7 +2,7 @@
 # Create an SFTP server
 #
 module "sftp_server" {
-  source = "github.com/binbashar/terraform-aws-sftp.git?ref=v1.1.0-1"
+  source = "github.com/binbashar/terraform-aws-sftp.git?ref=v2.0.0"
 
   name          = "${var.project}-${var.prefix}-customer-files"
   iam_role_name = "sftp-logging-role"
@@ -29,8 +29,8 @@ module "sftp_server" {
 # Create a user-friendly DNS name for the SFTP server endpoint
 #
 resource "aws_route53_record" "main" {
-  name    = "${var.project}-${var.prefix}-user-sftp.${var.base_domain}"
-  zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id[0]
+  name    = "sftp.${var.base_domain}"
+  zone_id = data.terraform_remote_state.dns.outputs.public_zone_id
   type    = "CNAME"
   ttl     = "3600"
   records = [module.sftp_server.sftp_server_endpoint]
@@ -40,8 +40,8 @@ resource "aws_route53_record" "main" {
 # Elastic IP to associate to the server endpoint
 #
 resource "aws_eip" "sftp_server" {
-  count = var.server_endpoint_type == "VPC" ? 1 : 0
-  vpc   = true
+  count  = var.server_endpoint_type == "VPC" ? 1 : 0
+  domain = "vpc"
 }
 
 #

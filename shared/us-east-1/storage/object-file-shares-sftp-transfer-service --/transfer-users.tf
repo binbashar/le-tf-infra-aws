@@ -2,7 +2,7 @@
 # Create user accounts for each customer
 #
 module "sftp_user" {
-  source = "github.com/binbashar/terraform-aws-sftp-user.git?ref=v1.1.0-1"
+  source = "github.com/binbashar/terraform-aws-sftp-user.git?ref=v2.0.0"
 
   for_each = var.users
 
@@ -12,8 +12,8 @@ module "sftp_user" {
   role_name       = "${var.prefix}-sftp-${each.value["username"]}"
 
   home_directory_bucket = {
-    id  = data.terraform_remote_state.object-file-shares.outputs.user_buckets[each.value["username"]],
-    arn = data.terraform_remote_state.object-file-shares.outputs.user_buckets_arn[each.value["username"]]
+    id  = module.s3_bucket.s3_bucket_id,
+    arn = module.s3_bucket.s3_bucket_arn
   }
   home_directory_key_prefix = ""
 
@@ -26,23 +26,6 @@ module "sftp_user" {
     "s3:PutObjectVersion",
     "s3:DeleteObject",
   ]
-  additional_role_statements = {
-    kms = {
-      sid    = "KmsPermissions"
-      effect = "Allow"
-      actions = [
-        "kms:Decrypt",
-        "kms:Encrypt",
-        "kms:GenerateDataKey",
-        "kms:ReEncryptTo",
-        "kms:DescribeKey",
-        "kms:ReEncryptFrom"
-      ]
-      resources = [
-        data.terraform_remote_state.keys.outputs.aws_kms_key_arn
-      ]
-    }
-  }
 
   tags = {
     Customer = each.value["username"]
