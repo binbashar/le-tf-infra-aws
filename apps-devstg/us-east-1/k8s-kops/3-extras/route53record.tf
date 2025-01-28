@@ -1,8 +1,8 @@
 data "aws_lb" "traefik" {
-  count    = var.traefik && var.create_route53_record ? 1 : 0
+  count = var.traefik && var.create_route53_record ? 1 : 0
 
-  tags  = {
-    "kubernetes.io/service-name": "traefik/traefik"
+  tags = {
+    "kubernetes.io/service-name" : "traefik/traefik"
   }
 
   depends_on = [resource.helm_release.traefik]
@@ -11,7 +11,7 @@ data "aws_lb" "traefik" {
 resource "aws_route53_record" "traefik-faina" {
   provider = aws.shared
 
-  count    = var.traefik && var.create_route53_record ? 1 : 0
+  count = var.traefik && var.create_route53_record ? 1 : 0
 
   allow_overwrite = true
   name            = "subdomain.binbash.co"
@@ -26,7 +26,7 @@ resource "aws_route53_record" "traefik-faina" {
 resource "aws_route53_record" "traefik-therecord" {
   provider = aws.shared
 
-  count    = var.traefik && var.create_route53_record ? 1 : 0
+  count = var.traefik && var.create_route53_record ? 1 : 0
 
   allow_overwrite = true
   name            = "ca.therecord.binbash.co"

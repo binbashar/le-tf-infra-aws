@@ -67,8 +67,8 @@ EOF
 }
 EOF
 
-  attach_policies    = true
-  policies           = [
+  attach_policies = true
+  policies = [
     "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess",
     "arn:aws:iam::aws:policy/CloudWatchEventsFullAccess",
   ]

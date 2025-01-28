@@ -226,9 +226,9 @@ locals {
 }
 
 resource "aws_iam_role" "github_actions_role" {
-  name               = "${local.environment}-github-actions-oidc"
-  description        = "Github OIDC integration for Github Actions"
-  tags               = merge(local.tags, { Name = "github-oidc-workflows" })
+  name        = "${local.environment}-github-actions-oidc"
+  description = "Github OIDC integration for Github Actions"
+  tags        = merge(local.tags, { Name = "github-oidc-workflows" })
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [

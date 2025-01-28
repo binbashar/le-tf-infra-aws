@@ -22,14 +22,14 @@ locals {
     }
     ExternalCallbackFunction = {
       source_path = "src/external_callback_handler"
-      handler = "external_callback_handler.external_callback"
+      handler     = "external_callback_handler.external_callback"
       environment = {
         CALLBACK_TABLE = module.table_callback.dynamodb_table_id
       }
     }
     ProcessShippingResultFunction = {
       source_path = "src/process_shipping_result_handler"
-      handler = "process_shipping_result_handler.process_shipping_result"
+      handler     = "process_shipping_result_handler.process_shipping_result"
       environment = {
         ORDER_TABLE             = module.table_order.dynamodb_table_id
         SHIPPING_INFO_EVENT_KEY = "shipping_info"
@@ -40,7 +40,7 @@ locals {
   functions_common = {
     # Policy ARNs
     policies = [
-        "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess",
+      "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess",
     ]
 
     # Custom policies
@@ -105,8 +105,8 @@ module "functions" {
   policies           = local.functions_common.policies
   number_of_policies = length(local.functions_common.policies)
 
-  attach_policy_jsons = true
-  policy_jsons = local.functions_common.policy_jsons
+  attach_policy_jsons    = true
+  policy_jsons           = local.functions_common.policy_jsons
   number_of_policy_jsons = length(local.functions_common.policy_jsons)
 
   tags = local.tags

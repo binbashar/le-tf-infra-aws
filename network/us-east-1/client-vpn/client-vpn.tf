@@ -24,7 +24,7 @@ resource "aws_ec2_client_vpn_endpoint" "sso" {
   server_certificate_arn = data.terraform_remote_state.certs.outputs.certificate_arn
   client_cidr_block      = local.cidr
   split_tunnel           = local.split_tunnel
-  dns_servers            = local.dns_servers  
+  dns_servers            = local.dns_servers
   security_group_ids     = [module.vpn_sso_sg.security_group_id]
 
   authentication_options {
@@ -33,8 +33,8 @@ resource "aws_ec2_client_vpn_endpoint" "sso" {
   }
 
   connection_log_options {
-    enabled               = true
-    cloudwatch_log_group  = aws_cloudwatch_log_group.sso.name
+    enabled              = true
+    cloudwatch_log_group = aws_cloudwatch_log_group.sso.name
   }
 }
 
@@ -46,7 +46,7 @@ resource "aws_cloudwatch_log_group" "sso" {
 }
 
 resource "aws_ec2_client_vpn_network_association" "this_sso" {
-  for_each               =  toset(local.subnet_ids)
+  for_each = toset(local.subnet_ids)
 
   client_vpn_endpoint_id = aws_ec2_client_vpn_endpoint.sso.id
   subnet_id              = each.key

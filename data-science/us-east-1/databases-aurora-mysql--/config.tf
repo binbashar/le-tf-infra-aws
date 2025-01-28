@@ -19,7 +19,7 @@ terraform {
   required_version = "~> 1.3"
 
   required_providers {
-    aws   = "~> 4.12"
+    aws = "~> 4.12"
     mysql = {
       source  = "winebarrel/mysql"
       version = "1.10.6"

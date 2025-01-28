@@ -1,12 +1,14 @@
 {
-    "rules": [{
-      "rule-type": "selection",
-      "rule-id": "1",
-      "rule-name": "1",
+  "rules": [
+    {
       "object-locator": {
         "schema-name": "%",
         "table-name": "%"
       },
-      "rule-action": "include"
-    }]
-  }
+      "rule-action": "include",
+      "rule-id": "1",
+      "rule-name": "1",
+      "rule-type": "selection"
+    }
+  ]
+}

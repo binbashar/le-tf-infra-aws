@@ -65,10 +65,10 @@ module "demoapps" {
   create_db_cluster_parameter_group = true
   db_cluster_parameter_group_family = "aurora-mysql5.7"
   db_cluster_parameter_group_parameters = [{
-    name = "binlog_format"
-    value = "ROW"
+    name         = "binlog_format"
+    value        = "ROW"
     apply_method = "pending-reboot"
-}]
+  }]
 
   # If true, must add policy to iam auth (user or role)
   iam_database_authentication_enabled = false

@@ -139,7 +139,7 @@ module "fms" {
 
   providers = {
     aws.admin = aws
-    aws = aws
+    aws       = aws
   }
 }
 
@@ -186,6 +186,6 @@ module "fms_cloudfront" {
 
   providers = {
     aws.admin = aws
-    aws = aws
+    aws       = aws
   }
 }

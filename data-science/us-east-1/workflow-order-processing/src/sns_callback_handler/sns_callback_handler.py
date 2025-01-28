@@ -26,8 +26,8 @@ def __send_sns_messsage(sns_client, topic_arn, order_id, payload):
     message = json.dumps({
         'order_id': order_id,
         'payload': payload
-    })    
-    sns_client.publish(TopicArn=topic_arn, Message=message) 
+    })
+    sns_client.publish(TopicArn=topic_arn, Message=message)
 
 
 def __create_callback_task(dynamo_client, callback_table, task_token, order_id, task_type):

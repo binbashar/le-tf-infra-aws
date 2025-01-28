@@ -55,5 +55,5 @@ locals {
   # number_of_cluster_master_azs is 1, 2 or 3
   # master nodes will be deployed in these AZs
   number_of_cluster_master_azs = 1
-  cluster_master_azs           = slice(data.terraform_remote_state.vpc.outputs.availability_zones, 0, local.number_of_cluster_master_azs )
+  cluster_master_azs           = slice(data.terraform_remote_state.vpc.outputs.availability_zones, 0, local.number_of_cluster_master_azs)
 }
