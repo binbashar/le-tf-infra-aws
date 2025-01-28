@@ -39,7 +39,7 @@ output "networking_calico_major_version" {
 #
 output "cluster_master_azs" {
   description = "Availability Zones where masters will be deployed"
-  value = local.cluster_master_azs
+  value       = local.cluster_master_azs
 }
 output "cluster_api_elb_extra_security_group" {
   value = ""
@@ -123,7 +123,7 @@ output "private_subnet_ids" {
 }
 output "nat_gateway_ids" {
   value = zipmap(
-    data.terraform_remote_state.vpc.outputs.availability_zones, [for az in data.terraform_remote_state.vpc.outputs.availability_zones: data.terraform_remote_state.vpc.outputs.nat_gateway_ids[0]]
+    data.terraform_remote_state.vpc.outputs.availability_zones, [for az in data.terraform_remote_state.vpc.outputs.availability_zones : data.terraform_remote_state.vpc.outputs.nat_gateway_ids[0]]
   )
 }
 output "shared_vpc_cidr_block" {

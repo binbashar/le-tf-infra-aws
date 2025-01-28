@@ -11,9 +11,9 @@ This guide provides instructions for setting up the infrastructure required for 
 1. **Run Leverage commands**
    - `leverage terraform plan`
    - `leverage terraform apply`
-  
+
      **NOTE**: The terraform command will execute successfully; however, the ECS task will initially transition to a **Failed** state. This behavior is expected and will be resolved in the following steps.
-     
+
 2. **Log in to the AWS Management Console**  
    Open your web browser and log in to the data-science AWS account.
 

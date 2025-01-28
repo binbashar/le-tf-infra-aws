@@ -15,14 +15,14 @@ To develop this Kops K8s Cluster you need a VPC (with private/public subnets and
 
 !!! Info
     If you want Karpeneter enabled the subnets on which the cluster will be deployed need to have these tags:
-    
+
     ```
     "kops.k8s.io/instance-group/nodes"                     = "true"
     "kubernetes.io/cluster/cluster01-kops.devstg.k8s.local" = "true"
     ```
-    
+
     Note you have to set your cluster name in the tag.
-    
+
 ### Overview
 
 K8s clusters provisioned by Kops have a number of resources that need to be available before the

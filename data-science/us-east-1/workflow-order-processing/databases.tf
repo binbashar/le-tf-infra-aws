@@ -11,7 +11,7 @@ module "table_order" {
   read_capacity  = 1
   write_capacity = 1
   hash_key       = "order_id"
-  attributes     = [
+  attributes = [
     {
       name = "order_id"
       type = "S"
@@ -33,7 +33,7 @@ module "table_callback" {
   write_capacity = 1
   hash_key       = "order_id"
   range_key      = "task_type"
-  attributes     = [
+  attributes = [
     {
       name = "order_id"
       type = "S"

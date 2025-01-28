@@ -55,7 +55,7 @@ data "terraform_remote_state" "network_vpcs" {
   for_each = local.network_vpcs
 
   backend = "s3"
-  config  = {
+  config = {
     region  = lookup(each.value, "region")
     profile = lookup(each.value, "profile")
     bucket  = lookup(each.value, "bucket")
@@ -67,7 +67,7 @@ data "terraform_remote_state" "apps_devstg_vpcs" {
   for_each = local.apps_devstg_vpcs
 
   backend = "s3"
-  config  = {
+  config = {
     region  = lookup(each.value, "region")
     profile = lookup(each.value, "profile")
     bucket  = lookup(each.value, "bucket")
@@ -79,7 +79,7 @@ data "terraform_remote_state" "apps_prd_vpcs" {
   for_each = local.apps_prd_vpcs
 
   backend = "s3"
-  config  = {
+  config = {
     region  = lookup(each.value, "region")
     profile = lookup(each.value, "profile")
     bucket  = lookup(each.value, "bucket")

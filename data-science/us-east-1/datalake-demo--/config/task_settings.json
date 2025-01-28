@@ -1,68 +1,68 @@
 {
-    "TargetMetadata": {
-      "SupportLobs": true,
-      "FullLobMode": false,
-      "LobChunkSize": 64,
-      "LimitedSizeLobMode": true,
-      "LobMaxSize": 32,
-      "BatchApplyEnabled": true
-    },
-    "FullLoadSettings": {
-      "TargetTablePrepMode": "DO_NOTHING",
-      "CreatePkAfterFullLoad": false,
-      "StopTaskCachedChangesApplied": false,
-      "StopTaskCachedChangesNotApplied": false,
-      "MaxFullLoadSubTasks": 8,
-      "TransactionConsistencyTimeout": 600,
-      "CommitRate": 10000
-    },
-    "Logging": {
-      "EnableLogging": true
-    },
-    "ControlTablesSettings": {
-      "HistoryTimeslotInMinutes": 5,
-      "HistoryTableEnabled": false,
-      "SuspendedTablesTableEnabled": false,
-      "StatusTableEnabled": false
-    },
-    "StreamBufferSettings": {
-      "StreamBufferCount": 3,
-      "StreamBufferSizeInMB": 8
-    },
-    "ChangeProcessingTuning": {
-      "BatchApplyPreserveTransaction": true,
-      "BatchApplyTimeoutMin": 1,
-      "BatchApplyTimeoutMax": 30,
-      "BatchApplyMemoryLimit": 500,
-      "BatchSplitSize": 0,
-      "MinTransactionSize": 1000,
-      "CommitTimeout": 1,
-      "MemoryLimitTotal": 1024,
-      "MemoryKeepTime": 60,
-      "StatementCacheSize": 50
-    },
-    "ChangeProcessingDdlHandlingPolicy": {
-      "HandleSourceTableDropped": true,
-      "HandleSourceTableTruncated": true,
-      "HandleSourceTableAltered": true
-    },
-    "ErrorBehavior": {
-      "DataErrorPolicy": "LOG_ERROR",
-      "DataTruncationErrorPolicy": "LOG_ERROR",
-      "DataErrorEscalationPolicy": "SUSPEND_TABLE",
-      "DataErrorEscalationCount": 50,
-      "TableErrorPolicy": "SUSPEND_TABLE",
-      "TableErrorEscalationPolicy": "STOP_TASK",
-      "TableErrorEscalationCount": 50,
-      "RecoverableErrorCount": 0,
-      "RecoverableErrorInterval": 5,
-      "RecoverableErrorThrottling": true,
-      "RecoverableErrorThrottlingMax": 1800,
-      "ApplyErrorDeletePolicy": "IGNORE_RECORD",
-      "ApplyErrorInsertPolicy": "LOG_ERROR",
-      "ApplyErrorUpdatePolicy": "LOG_ERROR",
-      "ApplyErrorEscalationPolicy": "LOG_ERROR",
-      "ApplyErrorEscalationCount": 0,
-      "FullLoadIgnoreConflicts": true
-    }
+  "ChangeProcessingDdlHandlingPolicy": {
+    "HandleSourceTableAltered": true,
+    "HandleSourceTableDropped": true,
+    "HandleSourceTableTruncated": true
+  },
+  "ChangeProcessingTuning": {
+    "BatchApplyMemoryLimit": 500,
+    "BatchApplyPreserveTransaction": true,
+    "BatchApplyTimeoutMax": 30,
+    "BatchApplyTimeoutMin": 1,
+    "BatchSplitSize": 0,
+    "CommitTimeout": 1,
+    "MemoryKeepTime": 60,
+    "MemoryLimitTotal": 1024,
+    "MinTransactionSize": 1000,
+    "StatementCacheSize": 50
+  },
+  "ControlTablesSettings": {
+    "HistoryTableEnabled": false,
+    "HistoryTimeslotInMinutes": 5,
+    "StatusTableEnabled": false,
+    "SuspendedTablesTableEnabled": false
+  },
+  "ErrorBehavior": {
+    "ApplyErrorDeletePolicy": "IGNORE_RECORD",
+    "ApplyErrorEscalationCount": 0,
+    "ApplyErrorEscalationPolicy": "LOG_ERROR",
+    "ApplyErrorInsertPolicy": "LOG_ERROR",
+    "ApplyErrorUpdatePolicy": "LOG_ERROR",
+    "DataErrorEscalationCount": 50,
+    "DataErrorEscalationPolicy": "SUSPEND_TABLE",
+    "DataErrorPolicy": "LOG_ERROR",
+    "DataTruncationErrorPolicy": "LOG_ERROR",
+    "FullLoadIgnoreConflicts": true,
+    "RecoverableErrorCount": 0,
+    "RecoverableErrorInterval": 5,
+    "RecoverableErrorThrottling": true,
+    "RecoverableErrorThrottlingMax": 1800,
+    "TableErrorEscalationCount": 50,
+    "TableErrorEscalationPolicy": "STOP_TASK",
+    "TableErrorPolicy": "SUSPEND_TABLE"
+  },
+  "FullLoadSettings": {
+    "CommitRate": 10000,
+    "CreatePkAfterFullLoad": false,
+    "MaxFullLoadSubTasks": 8,
+    "StopTaskCachedChangesApplied": false,
+    "StopTaskCachedChangesNotApplied": false,
+    "TargetTablePrepMode": "DO_NOTHING",
+    "TransactionConsistencyTimeout": 600
+  },
+  "Logging": {
+    "EnableLogging": true
+  },
+  "StreamBufferSettings": {
+    "StreamBufferCount": 3,
+    "StreamBufferSizeInMB": 8
+  },
+  "TargetMetadata": {
+    "BatchApplyEnabled": true,
+    "FullLobMode": false,
+    "LimitedSizeLobMode": true,
+    "LobChunkSize": 64,
+    "LobMaxSize": 32,
+    "SupportLobs": true
   }
+}

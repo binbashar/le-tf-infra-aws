@@ -20,8 +20,8 @@ provider "kubernetes" {
 
 provider "helm" {
   kubernetes {
-  config_path    = "canada01-kops.devstg.k8s.local"
-  config_context = "canada01-kops.devstg.k8s.local"
+    config_path    = "canada01-kops.devstg.k8s.local"
+    config_context = "canada01-kops.devstg.k8s.local"
   }
 }
 

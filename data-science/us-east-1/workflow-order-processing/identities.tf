@@ -4,10 +4,10 @@
 module "role_apigw" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.41.0"
 
-  create_role             = true
-  role_name               = "APIGatewayLambdaExecuteRole"
-  role_requires_mfa       = false
-  trusted_role_services   = [
+  create_role       = true
+  role_name         = "APIGatewayLambdaExecuteRole"
+  role_requires_mfa = false
+  trusted_role_services = [
     "apigateway.amazonaws.com"
   ]
   custom_role_policy_arns = [

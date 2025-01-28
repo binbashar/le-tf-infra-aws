@@ -1,6 +1,6 @@
 # Create an ACM certificate
 resource "aws_acm_certificate" "main" {
-  domain_name = "*.binbash.co"
+  domain_name       = "*.binbash.co"
   validation_method = "DNS"
   tags              = local.tags
 }

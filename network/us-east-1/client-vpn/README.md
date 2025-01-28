@@ -16,7 +16,7 @@ You can read a more complete guide in [this AWs Post](https://aws.amazon.com/es/
 
 ### SSO Layer in Leverage
 
-To configure the group assignment as code, you can import the SSO Application in `management/global/sso`. 
+To configure the group assignment as code, you can import the SSO Application in `management/global/sso`.
 
 ```bash
 leverage tf import 'aws_ssoadmin_application.client_vpn[0]' application-arn
