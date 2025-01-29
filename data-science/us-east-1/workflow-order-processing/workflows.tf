@@ -3,7 +3,7 @@
 #======================================
 
 module "workflow" {
-  source = "github.com/terraform-aws-modules/terraform-aws-step-functions.git?ref=v4.2.0"
+  source = "github.com/terraform-aws-modules/terraform-aws-step-functions.git?ref=v4.2.1"
 
   publish = true
   name    = "CallbackExampleWorkflow"
