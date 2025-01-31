@@ -37,4 +37,3 @@ jobs:
           cd $GITHUB_WORKSPACE
           pwd
           ls -la
-        working-directory: $GITHUB_WORKSPACE
