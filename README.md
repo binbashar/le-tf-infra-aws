@@ -29,12 +29,7 @@ you should follow the steps below:
 2. Update your [configuration files](https://leverage.binbash.co/user-guide/ref-architecture-aws/configuration/#configuration-files)
 3. Review and assure you meet all the Terraform AWS pre-requisites
    1. AWS Credentials (Including your MFA setup)
-      1. Configure your
-          1. [Web Console](https://leverage.binbash.com.ar/first-steps/post-deployment/#get-the-temporary-password-to-access-aws-console)
-          2. [Programmatic Keys](https://leverage.binbash.com.ar/first-steps/post-deployment/#configure-the-new-credentials)
-              - Types:
-                  1. [management account creds](https://leverage.binbash.co/user-guide/ref-architecture-aws/features/identities/credentials/#management-credentials)
-                  2. [security account creds](https://leverage.binbash.com.ar/user-guide/features/identities/credentials/#security-credentials)
+      1. Run `leverage aws sso login` to setup the credentials.
     2. [Initialize your accounts Terraform State Backend](https://leverage.binbash.co/user-guide/ref-architecture-aws/tf-state/)
 
 4. Follow the [standard `leverage cli` workflow](https://leverage.binbash.co/user-guide/ref-architecture-aws/workflow/)
