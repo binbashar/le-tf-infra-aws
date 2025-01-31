@@ -1,0 +1,41 @@
+name: Test static code and linting
+# The GitHub Actions docs (https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#on)
+# describe other options for 'on', 'pull_request' is a good default.
+on:
+  push:
+    branches-ignore:
+      - master
+env:
+  # If you use private modules you'll need this env variable to use
+  # the same ssh-agent socket value across all jobs & steps.
+  SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+
+jobs:
+  test-and-lint:
+    name: Test and Lint
+    runs-on: ubuntu-24.04
+    env:
+      TF_ROOT: . #/home/runner/work/le-tf-infra-aws/le-tf-infra-aws
+
+    steps:
+      # If you use private modules, add an environment variable or secret
+      # called GIT_SSH_KEY with your private key, so Infracost can access
+      # private repositories (similar to how Terraform/Terragrunt does).
+      # - name: add GIT_SSH_KEY
+      #   run: |
+      #     ssh-agent -a $SSH_AUTH_SOCK
+      #     mkdir -p ~/.ssh
+      #     echo "${{ secrets.GIT_SSH_KEY }}" | tr -d '\r' | ssh-add -
+      #     ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Context Info
+        run: |
+          cd $GITHUB_WORKSPACE
+          pwd
+          ls -la
+          ls -la $GITHUB_WORKSPACE/le-tf-infra-aws
+          ls -la $GITHUB_WORKSPACE/le-tf-infra-aws/le-tf-infra-aws
