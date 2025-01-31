@@ -37,5 +37,4 @@ jobs:
           cd $GITHUB_WORKSPACE
           pwd
           ls -la
-          ls -la $GITHUB_WORKSPACE/le-tf-infra-aws
-          ls -la $GITHUB_WORKSPACE/le-tf-infra-aws/le-tf-infra-aws
+        working-directory: $GITHUB_WORKSPACE
