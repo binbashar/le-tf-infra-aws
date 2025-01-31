@@ -94,6 +94,21 @@ locals {
       email     = "aws+data-science@binbash.com.ar",
       parent_ou = "bbl_data_science"
     }
+    #
+    # Workshop: temporary account created for workshops.
+    #
+    workshop-a = {
+      email     = "aws+workshop-a@binbash.com.ar",
+      parent_ou = "bbl_apps_devstg"
+    },
+    workshop-b = {
+      email     = "aws+workshop-b@binbash.com.ar",
+      parent_ou = "bbl_apps_devstg"
+    },
+    workshop-c = {
+      email     = "aws+workshop-c@binbash.com.ar",
+      parent_ou = "bbl_apps_devstg"
+    },
   }
 
   ## Delegated services to Security Account

@@ -40,6 +40,18 @@ accounts = {
     email = "binbash-data-science@binbash.com.ar",
     id    = 666666666666
   }
+  workshop-a = {
+    email = "aws+workshop-a@binbash.com.ar",
+    id    = 666666666666
+  }
+  workshop-b = {
+    email = "aws+workshop-b@binbash.com.ar",
+    id    = 666666666666
+  }
+  workshop-c = {
+    email = "aws+workshop-c@binbash.com.ar",
+    id    = 666666666666
+  }
 }
 
 # External Accounts Integration
