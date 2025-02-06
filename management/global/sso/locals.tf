@@ -315,6 +315,7 @@ locals {
       email      = "santiago.respane@binbash.com.ar"
       groups = [
         "datascientists",
+        "devops"
       ]
     }
   }
