@@ -70,7 +70,7 @@ jobs:
         with:
           webhook: ${{ secrets.SLACK_DIRECT_WEBHOOK }}
           webhook-type: incoming-webhook
-          slack-message-payload: |
+          payload: |
             {
               "blocks": [
                 {
