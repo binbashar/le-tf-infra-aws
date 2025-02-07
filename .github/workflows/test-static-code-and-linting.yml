@@ -65,9 +65,9 @@ jobs:
           aws-region: us-east-2
           role-to-assume: ${{ vars.role_to_assume_in_test_and_lint_code }}
 
-      - name: Notify slack succeed workflow run
+      - name: Notify slack failure workflow run
         uses: slackapi/slack-github-action@v2.0.0
-        if: success()
+        if: failure()
         with:
           webhook: ${{ secrets.SLACK_DIRECT_WEBHOOK }}
           webhook-type: incoming-webhook
@@ -86,6 +86,43 @@ jobs:
                   "text": {
                     "type": "mrkdwn",
                     "text": ":negative_squared_cross_mark: *Project*: ${{ github.repository }} \n :negative_squared_cross_mark: *Job*: ${{github.run_id}} \n :negative_squared_cross_mark: *Branch:* ${{ github.ref }} \n :negative_squared_cross_mark: *Last Commit:* ${{ github.sha }}"
+                  },
+                  "accessory": {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": ":arrow_forward: View Job in GithubActions",
+                      "emoji": true
+                    },
+                    "value": "click_me_123",
+                    "url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
+                    "action_id": "button-action"
+                  }
+                }
+              ]
+            }
+
+      - name: Notify slack succeed workflow run
+        uses: slackapi/slack-github-action@v2.0.0
+        if: success()
+        with:
+          webhook: ${{ secrets.SLACK_DIRECT_WEBHOOK }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "Successful Pipeline! :checkered_flag: :video-games-star: :video-games-mario-luigi-dance: :tada: :binbash::bb-leverage: :heart: :open-source:"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":heavy_check_mark: *Project*: ${{ github.repository }} \n :heavy_check_mark: *Job*: ${{github.run_id}} \n :heavy_check_mark: *Branch:* ${{ github.ref }} \n :heavy_check_mark: *Last Commit:* ${{ github.sha }}"
                   },
                   "accessory": {
                     "type": "button",
