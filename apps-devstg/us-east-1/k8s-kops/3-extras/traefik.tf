@@ -1,5 +1,5 @@
 resource "kubernetes_namespace" "traefik" {
-  count    = var.traefik ? 1 : 0
+  count = var.traefik ? 1 : 0
 
   metadata {
     labels = local.labels

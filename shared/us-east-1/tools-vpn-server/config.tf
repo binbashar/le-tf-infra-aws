@@ -26,7 +26,7 @@ terraform {
 #=============================#
 data "terraform_remote_state" "vpc" {
   backend = "s3"
-  config  = {
+  config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
@@ -36,7 +36,7 @@ data "terraform_remote_state" "vpc" {
 
 data "terraform_remote_state" "vpc-dr" {
   backend = "s3"
-  config  = {
+  config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
@@ -46,7 +46,7 @@ data "terraform_remote_state" "vpc-dr" {
 
 data "terraform_remote_state" "dns" {
   backend = "s3"
-  config  = {
+  config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
@@ -56,7 +56,7 @@ data "terraform_remote_state" "dns" {
 
 data "terraform_remote_state" "keys" {
   backend = "s3"
-  config  = {
+  config = {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket

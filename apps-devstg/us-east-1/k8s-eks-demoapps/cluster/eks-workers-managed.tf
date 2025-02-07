@@ -197,5 +197,5 @@ data:
   cluster_name: ${module.cluster.cluster_name}
   profile: ${var.profile}
 EOT
-  filename = "${path.module}/cluster.yaml"
+  filename = "${path.module}/metadata.yaml"
 }

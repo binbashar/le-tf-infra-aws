@@ -63,7 +63,7 @@ module "terraform-aws-basic-layout" {
       to_port   = 443,
       protocol  = "tcp",
       cidr_blocks = [
-         data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
+        data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
         #"0.0.0.0/0",    # Public temporally accessible for new users setup (when needed)
       ],
       description = "Allow Pritunl HTTPS UI"

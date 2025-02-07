@@ -179,7 +179,7 @@ locals {
     }
   }
 
-    # data-science
+  # data-science
   data-science-vpcs = {
     data-science-base = {
       region  = var.region
