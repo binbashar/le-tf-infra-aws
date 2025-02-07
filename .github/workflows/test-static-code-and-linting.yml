@@ -32,7 +32,7 @@ jobs:
       
       - name: Test dependencies
         env:
-          TERRAFORM_VER_REF_ARCH : 1.1.9
+          TERRAFORM_VER_REF_ARCH : 1.1.9 #TODO:add env var
         run: |
           # Install pre-commit
           sudo -H pip3 install pre-commit
@@ -51,3 +51,6 @@ jobs:
           chmod +x terraform-docs
           sudo mv ./terraform-docs /usr/local/bin/terraform-docs
           terraform-docs --version
+
+      - name: Test terraform format and docs
+        run: make pre-commit
