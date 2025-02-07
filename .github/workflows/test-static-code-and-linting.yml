@@ -75,7 +75,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":negative_squared_cross_mark: *Project*: ${{ github.repository }} \n :negative_squared_cross_mark: *User*: ${{github.triggering_actor}} \n :negative_squared_cross_mark: *Job*: ${{github.workflow}} \n :negative_squared_cross_mark: *Branch:* ${{ github.ref }} \n :negative_squared_cross_mark: *Last Commit:* ${{ github.sha }}"
+                    "text": ":negative_squared_cross_mark: *Project*: ${{ github.repository }} \n :negative_squared_cross_mark: *User*: ${{github.triggering_actor}} \n :negative_squared_cross_mark: *Job*: ${{github.workflow}} \n :negative_squared_cross_mark: *Branch:* ${{ github.ref_name }} \n :negative_squared_cross_mark: *Last Commit:* ${{ github.sha }}"
                   },
                   "accessory": {
                     "type": "button",
@@ -112,7 +112,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":heavy_check_mark: *Project*: ${{ github.repository }} \n :heavy_check_mark: *User*: ${{github.triggering_actor}} \n :heavy_check_mark: *Job*: ${{github.workflow}} \n :heavy_check_mark: *Branch:* ${{ github.ref }} \n :heavy_check_mark: *Last Commit:* ${{ github.sha }}"
+                    "text": ":heavy_check_mark: *Project*: ${{ github.repository }} \n :heavy_check_mark: *User*: ${{github.triggering_actor}} \n :heavy_check_mark: *Job*: ${{github.workflow}} \n :heavy_check_mark: *Branch:* ${{ github.ref_name }} \n :heavy_check_mark: *Last Commit:* ${{ github.sha }}"
                   },
                   "accessory": {
                     "type": "button",
