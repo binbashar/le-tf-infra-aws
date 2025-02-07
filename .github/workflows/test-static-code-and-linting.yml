@@ -65,8 +65,9 @@ jobs:
           aws-region: us-east-2
           role-to-assume: ${{ vars.role_to_assume_in_test_and_lint_code }}
 
-      - name: Send custom JSON data to Slack workflow
+      - name: Notify slack succeed workflow run
         uses: slackapi/slack-github-action@v2.0.0
+        if: success()
         with:
           webhook: ${{ secrets.SLACK_DIRECT_WEBHOOK }}
           webhook-type: incoming-webhook
@@ -94,7 +95,7 @@ jobs:
                       "emoji": true
                     },
                     "value": "click_me_123",
-                    "url": "https://github.com/${{github.action_repository}}/actions/runs/${{github.run_id}}",
+                    "url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
                     "action_id": "button-action"
                   }
                 }
