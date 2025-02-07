@@ -25,3 +25,7 @@ jobs:
           pwd
           ls -la
 
+      - name: Initialize Repo Makefiles
+        run: |
+          make init-makefiles
+          git update-index --assume-unchanged "Makefile"
