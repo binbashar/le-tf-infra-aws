@@ -54,3 +54,13 @@ jobs:
 
       - name: Test terraform format and docs
         run: make pre-commit
+
+      #is it necessary to configure aws credentials?
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+          role-to-assume: ${{ vars.role_to_assume_in_test_and_lint_code }}
