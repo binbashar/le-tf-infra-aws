@@ -64,7 +64,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
           role-to-assume: ${{ vars.role_to_assume_in_test_and_lint_code }}
-      
+
       - name: Send custom JSON data to Slack workflow
         id: slack
         uses: slackapi/slack-github-action@v1.26.0
@@ -103,4 +103,3 @@ jobs:
                 }
               ]
             }
-            
