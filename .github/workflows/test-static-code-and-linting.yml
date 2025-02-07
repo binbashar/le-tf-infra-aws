@@ -55,11 +55,6 @@ jobs:
       - name: Test terraform format and docs
         run: make pre-commit
 
-      #is it necessary to configure aws credentials?
-
-      - name: Configure AWS Credentials
-        run: exit 1
-
       - name: Notify slack failure workflow run
         uses: slackapi/slack-github-action@v2.0.0
         if: failure()
