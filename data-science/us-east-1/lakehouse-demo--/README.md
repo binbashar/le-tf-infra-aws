@@ -35,8 +35,8 @@ Before applying the Terraform code in this folder, ensure that the **datalake-de
 Once we run `leverage terraform apply`, the following components are **automatically deployed and populated**:
 
 1. **Databases**:
-   - The **MySQL database** is populated with **sock products**.
-   - The **PostgreSQL database** is populated with **orders** (buys referencing the MySQL product table).
+   - The **MySQL database** (data-science account) is populated with **sock products**.
+   - The **PostgreSQL database** (apps-devstg account) is populated with **orders** (buys referencing the MySQL product table).
 
 2. **Data Movement & Processing**:
    - **AWS DMS** reads from both databases and stores the data in **S3**.
