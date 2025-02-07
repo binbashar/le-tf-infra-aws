@@ -95,7 +95,7 @@ jobs:
                       "emoji": true
                     },
                     "value": "click_me_123",
-                    "url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
+                    "url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}/job/${{github.job}}",
                     "action_id": "button-action"
                   }
                 }
@@ -132,7 +132,7 @@ jobs:
                       "emoji": true
                     },
                     "value": "click_me_123",
-                    "url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
+                    "url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}/job/${{github.job}}",
                     "action_id": "button-action"
                   }
                 }
