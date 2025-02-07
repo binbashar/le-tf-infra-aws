@@ -11,6 +11,11 @@ A **lakehouse** is a modern data architecture that combines the best features of
 - **Scalability**: Can handle massive amounts of data efficiently.
 - **Support for Multiple Workloads**: Works for BI, machine learning, and real-time analytics.
 
+
+## Architectural Components
+
+![binbash-logo](../../../@doc/figures/binbash-lakehouse.png "binbash")
+
 ## Prerequisites
 Before applying the Terraform code in this folder, ensure that the **datalake-demo** layer has been successfully deployed. The lakehouse depends on resources created in the data lake layer.
 
