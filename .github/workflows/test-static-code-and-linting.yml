@@ -58,12 +58,7 @@ jobs:
       #is it necessary to configure aws credentials?
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
-          role-to-assume: ${{ vars.role_to_assume_in_test_and_lint_code }}
+        run: exit 1
 
       - name: Notify slack failure workflow run
         uses: slackapi/slack-github-action@v2.0.0
@@ -95,7 +90,7 @@ jobs:
                       "emoji": true
                     },
                     "value": "click_me_123",
-                    "url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}/job/${{github.job}}",
+                    "url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
                     "action_id": "button-action"
                   }
                 }
@@ -132,7 +127,7 @@ jobs:
                       "emoji": true
                     },
                     "value": "click_me_123",
-                    "url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}/job/${{github.job}}",
+                    "url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
                     "action_id": "button-action"
                   }
                 }
