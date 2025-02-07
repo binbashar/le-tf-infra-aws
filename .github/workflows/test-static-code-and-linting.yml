@@ -29,10 +29,10 @@ jobs:
         run: |
           make init-makefiles
           git update-index --assume-unchanged "Makefile"
-      
+
       - name: Test dependencies
         env:
-          TERRAFORM_VER_REF_ARCH : 1.1.9 #TODO:add env var
+          TERRAFORM_VER_REF_ARCH: 1.1.9 #TODO:add env var
         run: |
           # Install pre-commit
           sudo -H pip3 install pre-commit
