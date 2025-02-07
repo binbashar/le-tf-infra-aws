@@ -1,5 +1,5 @@
 locals {
-  name   = "${var.project}-${var.environment}-data-lake-demo"
+  name = "${var.project}-${var.environment}-data-lake-demo"
 
   tags = {
     Name        = local.name

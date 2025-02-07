@@ -28,137 +28,13 @@ module "redshift" {
 
   iam_role_arns = [ aws_iam_role.redshift_role.arn ]
 
-#   snapshot_copy = {
-#     destination_region = "us-east-1"
-#     grant_name         = aws_redshift_snapshot_copy_grant.useast1.snapshot_copy_grant_name
-#   }
-
-#   logging = {
-#     bucket_name   = module.s3_logs.s3_bucket_id
-#     s3_key_prefix = local.s3_prefix
-#   }
-
-  # Parameter group
-#   parameter_group_name        = "${local.name}-custom"
-#   parameter_group_description = "Custom parameter group for ${local.name} cluster"
-#   parameter_group_parameters = {
-#     wlm_json_configuration = {
-#       name = "wlm_json_configuration"
-#       value = jsonencode([
-#         {
-#           query_concurrency = 15
-#         }
-#       ])
-#     }
-#     require_ssl = {
-#       name  = "require_ssl"
-#       value = true
-#     }
-#     use_fips_ssl = {
-#       name  = "use_fips_ssl"
-#       value = false
-#     }
-#     enable_user_activity_logging = {
-#       name  = "enable_user_activity_logging"
-#       value = true
-#     }
-#     max_concurrency_scaling_clusters = {
-#       name  = "max_concurrency_scaling_clusters"
-#       value = 3
-#     }
-#     enable_case_sensitive_identifier = {
-#       name  = "enable_case_sensitive_identifier"
-#       value = true
-#     }
-#   }
-#   parameter_group_tags = {
-#     Additional = "CustomParameterGroup"
-#   }
 
   # Subnet group
   subnet_group_name        = "${local.name}-subnet-group"
   subnet_group_description = "Custom subnet group for ${local.name} cluster"
-#   subnet_group_tags = {
-#     Additional = "CustomSubnetGroup"
-#   }
 
-  # Snapshot schedule
-  create_snapshot_schedule        = false
-  # snapshot_schedule_identifier    = local.name
-  # use_snapshot_identifier_prefix  = true
-  #snapshot_schedule_description   = "Example snapshot schedule"
-#   snapshot_schedule_definitions   = ["rate(12 hours)"]
-#   snapshot_schedule_force_destroy = true
 
-  # Scheduled actions
-#   create_scheduled_action_iam_role = true
-#   scheduled_actions = {
-#     pause = {
-#       name          = "${local.name}-pause"
-#       description   = "Pause cluster every night"
-#       schedule      = "cron(0 22 * * ? *)"
-#       pause_cluster = true
-#     }
-#     resize = {
-#       name        = "${local.name}-resize"
-#       description = "Resize cluster (demo only)"
-#       schedule    = "cron(00 13 * * ? *)"
-#       resize_cluster = {
-#         node_type       = "ds2.xlarge"
-#         number_of_nodes = 5
-#       }
-#     }
-#     resume = {
-#       name           = "${local.name}-resume"
-#       description    = "Resume cluster every morning"
-#       schedule       = "cron(0 12 * * ? *)"
-#       resume_cluster = true
-#     }
-#   }
-
-  # Endpoint access - only available when using the ra3.x type
-#   create_endpoint_access          = true
-#   endpoint_name                   = "${local.name}-example"
-#   endpoint_subnet_group_name      = aws_redshift_subnet_group.endpoint.id
-#   endpoint_vpc_security_group_ids = [module.security_group.security_group_id]
-
-  # Usage limits
-#   usage_limits = {
-#     currency_scaling = {
-#       feature_type  = "concurrency-scaling"
-#       limit_type    = "time"
-#       amount        = 60
-#       breach_action = "emit-metric"
-#     }
-#     spectrum = {
-#       feature_type  = "spectrum"
-#       limit_type    = "data-scanned"
-#       amount        = 2
-#       breach_action = "disable"
-#       tags = {
-#         Additional = "CustomUsageLimits"
-#       }
-#     }
-#   }
-
-  # Authentication profile
-#   authentication_profiles = {
-#     example = {
-#       name = "example"
-#       content = {
-#         AllowDBUserOverride = "1"
-#         Client_ID           = "ExampleClientID"
-#         App_ID              = "example"
-#       }
-#     }
-#     bar = {
-#       content = {
-#         AllowDBUserOverride = "1"
-#         Client_ID           = "ExampleClientID"
-#         App_ID              = "bar"
-#       }
-#     }
-#   }
+  create_snapshot_schedule = false
 
   tags = local.tags
 }
@@ -180,16 +56,18 @@ module "security_group" {
   egress_rules = ["all-all"]
 
   tags = local.tags
-
 }
 
 
-
-resource "redshift_grant" "user" {
-  user        = "IAMR:AWSReservedSSO_DevOps_a1627cef3f7399d3"
-  schema      = "awsdatacatalog"
-  object_type = "schema"
-  privileges  = ["usage"]
+##################################################################################################
+# Run the following query to grant access to specific role to use the awsdatacatalog database.   # 
+# ################################################################################################
+resource "aws_redshiftdata_statement" "grant_usage" {
+    for_each           = toset(local.roles_to_grant_usage)
+  cluster_identifier = module.redshift.cluster_identifier
+  database           = "demo"
+  sql                = "GRANT USAGE ON DATABASE awsdatacatalog to \"IAMR:${each.value}\""
+  secret_arn = module.redshift.master_password_secret_arn
 }
 
 # IAM Role for Redshift
@@ -209,7 +87,6 @@ resource "aws_iam_role" "redshift_role" {
   })
 }
 
-# IAM Policy for accessing Glue and S3
 resource "aws_iam_role_policy" "redshift_role_policy" {
   role = aws_iam_role.redshift_role.name
 
@@ -230,6 +107,3 @@ resource "aws_iam_role_policy" "redshift_role_policy" {
   })
 }
 
-data "aws_secretsmanager_secret_version" "admin_password" {
-  secret_id = module.redshift.master_password_secret_arn
-}

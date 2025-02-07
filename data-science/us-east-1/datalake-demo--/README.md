@@ -114,6 +114,21 @@ in Terraform, ensuring that least privilege is enforced across all data services
 a webhook. Terraform definitions include CloudWatch alarms that trigger SNS in case of ETL job
 failures or other anomalies.
 
+## Expected Result
+Once we run `leverage terraform apply`, the following components are **automatically deployed and populated**:
+
+1. **Databases**:
+   - The **MySQL database** (data-science account) is populated with **sock products**.
+   - The **PostgreSQL database** (apps-devstg account) is populated with **orders** (buys referencing the MySQL product table).
+
+2. **Data Movement & Processing**:
+   - **AWS DMS** reads from both databases and stores the data in **S3**.
+   - **ETL processes** transform and combine the data from both sources, creating a new layer that relates each **product** to the **sum of its orders**.
+
+3. **Data Querying** 
+   - We can query the processed data stored in S3 using **Athena**, which allows direct SQL queries over the same datasets used in our lakehouse architecture.
+
+
 ## Next Steps
 
 - **Complete Terraform Implementation**: The Terraform code for the Data Lake demo is a work-in-progress, with ongoing efforts to finalize DMS tasks, Glue ETL processes, and S3 bucket policies. Contributions are welcome, and more details can be found in the GitHub repository linked above.
