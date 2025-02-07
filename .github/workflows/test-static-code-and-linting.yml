@@ -64,3 +64,43 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
           role-to-assume: ${{ vars.role_to_assume_in_test_and_lint_code }}
+      
+      - name: Send custom JSON data to Slack workflow
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        with:
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "Failed Pipeline! :rotating_light::fire::bash-fire::bangbang::video-games-doom-mad::stopp:",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":negative_squared_cross_mark: *Project*: $CIRCLE_PROJECT_REPONAME \n :negative_squared_cross_mark: *User*: $CIRCLE_USERNAME \n :negative_squared_cross_mark: *Job*: $CIRCLE_JOB in *repo* $CIRCLE_PROJECT_REPONAME \n :negative_squared_cross_mark: *Branch:* $CIRCLE_BRANCH \n :negative_squared_cross_mark: *PR:* $CIRCLE_PULL_REQUEST \n :negative_squared_cross_mark: *Last Commit:* $CIRCLE_SHA1"
+                  },
+                  "accessory": {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": ":arrow_forward: View Job in CircleCi",
+                      "emoji": true
+                    },
+                    "value": "click_me_123",
+                    "url": "$CIRCLE_BUILD_URL",
+                    "action_id": "button-action"
+                  }
+                }
+              ]
+            }
+            
