@@ -77,21 +77,26 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "Header Text"
+                    "text": "Failed Pipeline! :rotating_light::fire::bash-fire::bangbang::video-games-doom-mad::stopp:"
                   }
                 },
                 {
                   "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Field 1*\nThis is the first field."
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":negative_squared_cross_mark: *Project*: $CIRCLE_PROJECT_REPONAME \n :negative_squared_cross_mark: *User*: $CIRCLE_USERNAME \n :negative_squared_cross_mark: *Job*: $CIRCLE_JOB in *repo* $CIRCLE_PROJECT_REPONAME \n :negative_squared_cross_mark: *Branch:* $CIRCLE_BRANCH \n :negative_squared_cross_mark: *PR:* $CIRCLE_PULL_REQUEST \n :negative_squared_cross_mark: *Last Commit:* $CIRCLE_SHA1"
+                  },
+                  "accessory": {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": ":arrow_forward: View Job in GithubActions",
+                      "emoji": true
                     },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Field 2*\nThis is the second field."
-                    }
-                  ]
+                    "value": "click_me_123",
+                    "url": "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}",
+                    "action_id": "button-action"
+                  }
                 }
               ]
             }
