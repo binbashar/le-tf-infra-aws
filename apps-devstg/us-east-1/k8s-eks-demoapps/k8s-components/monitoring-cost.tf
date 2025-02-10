@@ -33,5 +33,5 @@ resource "helm_release" "cost_analyzer" {
   namespace  = kubernetes_namespace.monitoring_tools[0].id
   repository = "https://kubecost.github.io/cost-analyzer/"
   chart      = "cost-analyzer"
-  version    = "1.101.3"
+  version    = "1.108.1"
 }
