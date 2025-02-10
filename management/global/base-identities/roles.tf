@@ -21,7 +21,7 @@ module "iam_assumable_role_oaar" {
   mfa_age              = 3600 # Maximum CLI/API session duration in seconds between 3600 and 43200
   max_session_duration = 7200 # Max age of the session (in seconds) when assuming roles
 
-  tags = local.tags
+  
 }
 
 #
@@ -45,7 +45,7 @@ module "iam_assumable_role_service_organizations" {
     "arn:aws:iam::aws:policy/aws-service-role/AWSOrganizationsServiceTrustPolicy"
   ]
 
-  tags = local.tags
+  
 }
 
 #
@@ -69,7 +69,7 @@ module "iam_assumable_role_service_support" {
     "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
   ]
 
-  tags = local.tags
+  
 }
 
 #
@@ -93,7 +93,7 @@ module "iam_assumable_role_service_trustedadvisor" {
     "arn:aws:iam::aws:policy/aws-service-role/AWSTrustedAdvisorServiceRolePolicy"
   ]
 
-  tags = local.tags
+  
 }
 
 
@@ -122,7 +122,7 @@ module "iam_assumable_role_lambda_costs_explorer_access" {
     aws_iam_policy.lambda_costs_explorer_access.arn,
   ]
 
-  tags = local.tags
+  
 }
 
 #
@@ -149,7 +149,7 @@ module "iam_assumable_role_north_cloud_access" {
     aws_iam_policy.north_cloud_tool_access.arn,
   ]
 
-  tags = local.tags
+  
 }
 
 
