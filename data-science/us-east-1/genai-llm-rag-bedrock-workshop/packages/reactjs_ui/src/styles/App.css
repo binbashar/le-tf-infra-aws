@@ -1,0 +1,236 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  line-height: 30px;
+  /* Adjust this value to match the height of the image */
+}
+
+.header-title img {
+  margin-right: 10px;
+  /* Add some spacing between the image and text */
+}
+
+.header-title svg {
+  margin-right: 10px;
+  /* Add some spacing between the image and text */
+}
+
+.header-title span {
+  margin-right: 10px;
+  /* Add some spacing between the image and text */
+}
+
+.small-icon {
+  width: 26px;
+  height: 26px;
+}
+
+.custom-main-footer {
+  align-items: center;
+  background-color: #0f1b2a;
+  bottom: 0;
+  display: flex;
+  font-family: var(--font-family-base-dnvic8, "Open Sans", "Helvetica Neue", Roboto, Arial, sans-serif);
+  /* font-weight: bold; */
+  font-weight: 600;
+  font-size: 12px;
+  gap: 10px;
+  justify-content: space-between;
+  inset-inline-start: 0;
+  margin: 0;
+  min-block-size: 40px;
+  padding-block: 10px;
+  padding-inline: 20px;
+  position: fixed;
+  inset-inline-end: 0;
+  inset-block-end: 0;
+  z-index: 2000;
+  border-top: 1px solid #545b64;
+}
+
+.custom-main-footer ul {
+  list-style-type: none;
+  padding: 0;
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  flex-wrap: wrap;
+}
+
+.custom-main-footer ul li, .custom-main-footer ul a {
+  color: var(--color-text-home-header-secondary-v3y5co, #b6bec9);
+  text-decoration: none;
+}
+
+.custom-main-footer .copyright {
+  /* color: var(--color-text-home-header-secondary-v3y5co, #b6bec9); */
+  color: #cec8c8;
+  min-inline-size: 164px;
+  text-align: right;
+  display: flex; /* center to the .copyright and .pace classes */
+  align-items: center; /* center to the .copyright and .pace classes */
+}
+
+.custom-main-footer .copyright img {
+  display: inline-block;
+  vertical-align: middle;
+  margin-inline-start: 8px;
+  inline-size: 34px;
+  margin-block-start: 4px;
+}
+
+.custom-main-footer .pace {
+  /* color: var(--color-text-home-header-secondary-v3y5co, #b6bec9); */
+  color: #cec8c8;
+  min-inline-size: 164px;
+  text-align: left;
+  display: flex; /* center to the .copyright and .pace classes */
+  align-items: center; /* center to the .copyright and .pace classes */
+}
+
+.custom-main-footer .pace img {
+  display: inline-block;
+  vertical-align: middle;
+  margin-inline-start: 8px;
+  inline-size: 34px;
+  margin-block-start: 4px;
+}
+
+.vertically-centered {
+  display: inline-flex;
+  align-items: center;
+}
+
+.button-alignment {
+  align-items: center;
+}
+
+.scrollable-container {
+  min-height: 10vh;
+  max-height: 45vh; /* Set the desired maximum height */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
+.scrollable-container-modal {
+  min-height: 10vh;
+  max-height: 65vh; /* Set the desired maximum height */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
+.user-image-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.full-width-image {
+  max-width: 100%;
+  height: auto;
+  max-height: 70vh;
+}
+
+.user-chat-message-dark [class*=" awsui_header"]{
+  background-color: #385081 !important
+}
+
+.user-chat-message [class*=" awsui_header"]{
+  background-color: #adafb4 !important
+}
+
+.model-chat-message-dark [class*=" awsui_header"]{
+  background-color: #3c3d65 !important
+}
+
+.model-chat-message [class*=" awsui_header"]{
+  background-color: #9898b5 !important
+}
+
+
+
+/* K changes below */
+#root {
+  /* max-width: 1280px; */
+  /* padding: 2rem; */
+  margin: 0;
+  text-align: center;
+  width: 100vw !important;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}

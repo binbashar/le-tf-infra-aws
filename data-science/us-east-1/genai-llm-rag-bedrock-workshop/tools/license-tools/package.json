@@ -1,0 +1,14 @@
+{
+  "name": "license-tools",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "create-license": "ts-node src/create-license.ts",
+    "add-headers": "ts-node src/add-headers.ts"
+  },
+  "dependencies": {
+    "typescript": "^5.7.3",
+    "ts-node": "^10.9.2",
+    "@types/node": "^22.7.9"
+  }
+}

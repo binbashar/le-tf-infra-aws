@@ -1,0 +1,159 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Powertools API",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/"
+        }
+    ],
+    "paths": {
+        "/escalate": {
+            "post": {
+                "summary": "POST /escalate",
+                "description": "used to escalate to live agent",
+                "operationId": "escalate_escalate_post",
+                "parameters": [
+                    {
+                        "description": "Email address to look up",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Email",
+                            "description": "Email address to look up"
+                        },
+                        "name": "email",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "boolean",
+                                    "title": "Return",
+                                    "description": "Response only True/False"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/password_change": {
+            "post": {
+                "summary": "POST /password_change",
+                "description": "used for changing account password",
+                "operationId": "password_change_password_change_post",
+                "parameters": [
+                    {
+                        "description": "Email address to look up",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Email",
+                            "description": "Email address to look up"
+                        },
+                        "name": "email",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Phone number to verifying account information",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Phone",
+                            "description": "Phone number to verifying account information"
+                        },
+                        "name": "phone",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string",
+                                    "title": "Return",
+                                    "description": "change the account password after getting all the required information from user"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    }
+}

@@ -1,0 +1,70 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+      "title": "RedshiftQuery API",
+      "description": "API for querying data from a Redshift database",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/redshiftQuery": {
+        "post": {
+          "operationId": "redshift_query",
+          "description": "Execute a query on a Redshift database",
+          "requestBody": {
+            "description": "Redshift query details",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "query": {
+                      "type": "string",
+                      "description": "SQL Query"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful response with query results",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "ResultSet": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "description": "A single row of query results"
+                        },
+                        "description": "Results returned by the query"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "default": {
+              "description": "Error response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }

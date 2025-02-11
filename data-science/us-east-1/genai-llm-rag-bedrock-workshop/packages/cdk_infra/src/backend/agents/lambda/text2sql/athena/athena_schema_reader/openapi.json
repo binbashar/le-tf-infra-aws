@@ -1,0 +1,134 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+      "title": "AthenaSchemaReader API",
+      "description": "API for reading schemas from an Athena database",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/list_tables": {
+        "post": {
+          "operationId": "list_tables",
+          "description": "Retrieve a list of all tables in the specified database",
+          "requestBody": {
+            "description": "Database information to list tables",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "database": {
+                      "type": "string",
+                      "description": "Name of the database to list its tables"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful response with show tables results",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "ResultSet": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "description": "A single row of query results"
+                        },
+                        "description": "Results returned by the query"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "default": {
+              "description": "Error response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/describe_table": {
+        "post": {
+          "operationId": "describe_table",
+          "description": "Retrieve detailed column information (name, type, comment) for a specific table",
+          "requestBody": {
+            "description": "Database and table information to get schema details",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "database": {
+                      "type": "string",
+                      "description": "Name of the database containing the target table"
+                    },
+                    "table": {
+                      "type": "string",
+                      "description": "Name of the table to retrieve schema information"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful response with show create table results",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "ResultSet": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "description": "A single row of query results"
+                        },
+                        "description": "Results returned by the query"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "default": {
+              "description": "Error response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }

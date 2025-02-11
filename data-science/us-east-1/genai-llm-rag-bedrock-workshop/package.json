@@ -1,0 +1,25 @@
+{
+  "name": "bedrock-agent-kb-actions-workshop",
+  "version": "1.1.0",
+  "author": "AWS PACE NAMER",
+  "license": "Amazon Software License",
+  "description": "PACE Generative AI Developer Workshop",
+  "scripts": {
+    "license:init": "pnpm --filter license-tools create-license -- --config $(pwd)/license-config.json && pnpm --filter license-tools add-headers -- --config $(pwd)/license-config.json",
+    "cdk_infra:init-python-venv": "pnpm --filter cdk_infra init-python-venv",
+    "cdK_infra:generate-openapi-schemas": "pnpm --filter cdk_infra generate-openapi-schemas",
+    "cdk_infra:generate-prompt": "pnpm --filter cdk_infra generate-prompt",
+    "cdk_infra:deploy": "pnpm --filter cdk_infra cdk deploy --all --require-approval never --hotswap-fallback",
+    "cdk_infra:destroy": "pnpm --filter cdk_infra cdk destroy --all --force",
+    "cdk": "pnpm --filter cdk_infra cdk",
+    "vite": "pnpm --filter reactjs_ui vite",
+    "build": "pnpm run license:init && pnpm run cdk_infra:init-python-venv && pnpm run cdK_infra:generate-openapi-schemas && pnpm run cdk synth --quiet --all && pnpm run vite build"
+  },
+  "engines": {
+    "node": ">=20.18.1"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "dependencies": {
+    "pnpm": "^9.15.4"
+  }
+}

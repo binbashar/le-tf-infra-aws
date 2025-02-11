@@ -1,0 +1,10 @@
+<ecommerce_data>
+    <tables>
+        <products>
+            Information about products including ID, name, category, and price.
+        </product>
+        <reviews>
+            Customer feedback for products, including review ID, product ID, customer name, rating, comment, and review date.
+        </reviews>
+    </tables>
+</ecommerce_data>

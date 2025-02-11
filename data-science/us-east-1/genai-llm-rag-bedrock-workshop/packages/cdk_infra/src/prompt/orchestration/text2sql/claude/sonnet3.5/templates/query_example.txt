@@ -1,0 +1,36 @@
+<samples>
+    <user_question>
+        What are the top 3 highest-rated products?
+    </user_question>
+    <query>
+        SELECT p.product_name, AVG(r.rating) as avg_rating
+        FROM products p
+        JOIN reviews r ON p.product_id = r.product_id
+        GROUP BY p.product_id, p.product_name
+        ORDER BY avg_rating DESC
+        LIMIT 3;
+    </query>
+
+    <user_question>
+        Which product in the Electronics category has received the most reviews?
+    </user_question>
+    <query>
+        SELECT p.product_name, COUNT(r.review_id) as review_count
+        FROM products p
+        LEFT JOIN reviews r ON p.product_id = r.product_id
+        WHERE p.category = 'Electronics'
+        GROUP BY p.product_id, p.product_name
+        ORDER BY review_count DESC
+        LIMIT 1;
+    </query>
+
+    <user_question>
+        What is the average rating for products priced over $100?
+    </user_question>
+    <query>
+        SELECT AVG(r.rating) as avg_rating
+        FROM products p
+        JOIN reviews r ON p.product_id = r.product_id
+        WHERE p.price > 100;
+    </query>
+</samples>

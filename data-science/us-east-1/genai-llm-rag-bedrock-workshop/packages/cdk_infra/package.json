@@ -1,0 +1,32 @@
+{
+  "name": "cdk_infra",
+  "version": "1.1.0",
+  "author": "AWS PACE NAMER",
+  "license": "Amazon Software License",
+  "scripts": {
+    "test": "jest",
+    "cdk": "cdk",
+    "create-python-venv": "rm -Rf ../../.venv && python3 -m venv ../../.venv && source ../../.venv/bin/activate",
+    "install-python-deps": "source ../../.venv/bin/activate && python3 -m pip install -r ../../requirements.txt",
+    "init-python-venv": "pnpm run create-python-venv && npm run install-python-deps",
+    "generate-openapi-schemas": "cd src/backend/agents/lambda && python3 ./account_actions/account_actions.py",
+    "generate-prompt": "cd src/prompt/orchestration/text2sql/claude/sonnet3.5 && python3 prompt_generator.py"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "22.7.9",
+    "aws-cdk": "^2.174.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.6.3"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-lambda-python-alpha": "2.173.2-alpha.0",
+    "@aws/pdk": "^0.25.15",
+    "@cdklabs/generative-ai-cdk-constructs": "^0.1.287",
+    "aws-cdk-lib": "^2.174.0",
+    "cdk-nag": "^2.34.23",
+    "constructs": "^10.0.0"
+  }
+}

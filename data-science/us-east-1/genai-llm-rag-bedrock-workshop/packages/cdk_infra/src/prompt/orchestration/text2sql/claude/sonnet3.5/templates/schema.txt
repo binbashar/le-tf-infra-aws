@@ -1,0 +1,28 @@
+<ecommerce_data>
+    <tables>
+    <products>
+        CREATE TABLE products
+        (
+        `product_id` INT NOT NULL AUTO_INCREMENT, -- Unique identifier for each product
+        `product_name` VARCHAR(255) NOT NULL, -- Name of the product
+        `category` VARCHAR(100) NOT NULL, -- Category the product belongs to
+        `price` DECIMAL(10,2) NOT NULL, -- Price of the product
+        `description` TEXT, -- Detailed description of the product
+        `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP, -- Timestamp when product was created
+        `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP -- Timestamp when product was last updated
+        )
+    </product>
+    <reviews>
+        CREATE TABLE reviews
+        (
+        `review_id` INT NOT NULL AUTO_INCREMENT, -- Unique identifier for each review
+        `product_id` INT NOT NULL, -- Foreign key referencing the product
+        `customer_name` VARCHAR(255) NOT NULL, -- Name of the customer who left the review
+        `rating` INT NOT NULL, -- Rating given by the customer (e.g., 1-5)
+        `comment` TEXT, -- Text of the review
+        `review_date` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP, -- Date and time when the review was submitted
+        FOREIGN KEY (product_id) REFERENCES products(product_id)
+        )
+    </reviews>
+    </tables>
+</ecommerce_data>
