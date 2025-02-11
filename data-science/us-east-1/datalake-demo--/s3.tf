@@ -20,20 +20,6 @@ module "s3_bucket_data_raw" {
     }
   }
 
-  /* #
-   # Error: Error putting S3 replication configuration: InvalidRequest:
-   # Replication configuration cannot be applied to an Object Lock enabled bucket
-   #
-  object_lock_configuration = {
-    object_lock_enabled = "Enabled"
-    rule = {
-      default_retention = {
-        mode  = "GOVERNANCE"
-        years = 1
-      }
-    }
-  }*/
-
   lifecycle_rule = [
     {
       id      = "billing-objects"
@@ -91,11 +77,6 @@ module "s3_bucket_data_processed" {
     enabled = true
   }
 
-  # logging = {
-  #   target_bucket = module.log_bucket_demo_files.s3_bucket_id
-  #   target_prefix = "logs/"
-  # }
-
   server_side_encryption_configuration = {
     rule = {
       apply_server_side_encryption_by_default = {
@@ -104,20 +85,6 @@ module "s3_bucket_data_processed" {
       }
     }
   }
-
-  /* #
-   # Error: Error putting S3 replication configuration: InvalidRequest:
-   # Replication configuration cannot be applied to an Object Lock enabled bucket
-   #
-  object_lock_configuration = {
-    object_lock_enabled = "Enabled"
-    rule = {
-      default_retention = {
-        mode  = "GOVERNANCE"
-        years = 1
-      }
-    }
-  }*/
 
   lifecycle_rule = [
     {
