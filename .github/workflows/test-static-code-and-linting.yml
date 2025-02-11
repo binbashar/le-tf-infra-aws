@@ -1,4 +1,4 @@
-name: Test static code and linting
+name: Test | Static code and linting
 on:
   push:
     branches-ignore:

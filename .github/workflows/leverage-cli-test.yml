@@ -1,4 +1,4 @@
-name: Leverage CLI Test
+name: Test | Leverage CLI
 
 on:
   pull_request:
