@@ -205,6 +205,8 @@ data "aws_iam_policy_document" "data_scientist" {
       "ce:*",
       "cloudformation:*",
       "cloudwatch:*",
+      "cognito-identity:*",
+      "cognito-idp:*",
       "config:*",
       "dynamodb:*",
       "ec2:*",
