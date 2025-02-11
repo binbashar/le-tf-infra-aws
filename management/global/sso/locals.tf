@@ -318,6 +318,22 @@ locals {
         "devops"
       ]
     }
+    "lucas.langwagen" = {
+      first_name = "Lucas"
+      last_name  = "Langwagen"
+      email      = "lucas.langwagen@binbash.com.ar"
+      groups = [
+        "datascientists",
+      ]
+    }
+    "diego.maye" = {
+      first_name = "Diego"
+      last_name  = "Maye"
+      email      = "diego.maye@binbash.com.ar"
+      groups = [
+        "datascientists",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
