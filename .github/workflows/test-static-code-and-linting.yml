@@ -32,7 +32,7 @@ jobs:
 
       - name: Test dependencies
         env:
-          TERRAFORM_VER_REF_ARCH: ${{ vars.SLACK_DIRECT_WEBHOOK }}
+          TERRAFORM_VER_REF_ARCH: ${{ vars.TERRAFORM_VER_REF_ARCH }}
         run: |
           # Install pre-commit
           sudo -H pip3 install pre-commit
