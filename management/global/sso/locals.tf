@@ -332,6 +332,7 @@ locals {
       email      = "leandro.mana@binbash.com.ar"
       groups = [
         "datascientists",
+        "devops"
       ]
     }
   }
