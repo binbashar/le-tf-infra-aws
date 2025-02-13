@@ -125,7 +125,7 @@ Once we run `leverage terraform apply`, the following components are **automatic
    - **AWS DMS** reads from both databases and stores the data in **S3**.
    - **ETL processes** transform and combine the data from both sources, creating a new layer that relates each **product** to the **sum of its orders**.
 
-3. **Data Querying** 
+3. **Data Querying**
    - We can query the processed data stored in S3 using **Athena**, which allows direct SQL queries over the same datasets used in our lakehouse architecture.
 
 

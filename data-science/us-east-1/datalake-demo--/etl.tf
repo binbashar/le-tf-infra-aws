@@ -230,7 +230,7 @@ module "glue_trigger_job_after_crawler" {
 
 
 ##############################################################################################################################
-# Create trigger: This is for demo purposes. Run an 'on_demand' crawler.                                                     # 
+# Create trigger: This is for demo purposes. Run an 'on_demand' crawler.                                                     #
 # Since the trigger 'glue_trigger_job_after_crawler' is created, the glue job will run after this crawler succeeds:          #
 # 1- Run this crawler 'on_demand'.                                                                                           #
 # 2- Run the glue job due to the trigger condition in 'glue_trigger_job_after_crawler'.                                      #
