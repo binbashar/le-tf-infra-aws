@@ -326,6 +326,15 @@ locals {
         "datascientists",
       ]
     }
+    "leandro.mana" = {
+      first_name = "Leandro"
+      last_name  = "Mana"
+      email      = "leandro.mana@binbash.com.ar"
+      groups = [
+        "datascientists",
+        "devops"
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
