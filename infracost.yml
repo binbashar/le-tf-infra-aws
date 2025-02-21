@@ -207,7 +207,7 @@ projects:
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
-      - "../../config/backend.tfvars"  
+      - "../../config/backend.tfvars"
   - path: "security/us-east-1/base-tf-backend"
     terraform_var_files:
       - "../../../config/common.tfvars"
@@ -242,7 +242,7 @@ projects:
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
-      - "../../config/backend.tfvars"      
+      - "../../config/backend.tfvars"
   - path: "security/us-east-1/security-keys"
     terraform_var_files:
       - "../../../config/common.tfvars"
@@ -624,14 +624,14 @@ projects:
       - "../../../config/backend.tfvars"
   - path: "apps-devstg/us-east-1/k8s-eks-demoapps/secrets"
     terraform_var_files:
-      - "../../../../../config/common.tfvars"
-      - "../../../../config/account.tfvars"
-      - "../../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-eks-demoapps/storage/efs"
-    terraform_var_files:
       - "../../../../config/common.tfvars"
       - "../../../config/account.tfvars"
       - "../../../config/backend.tfvars"
+  - path: "apps-devstg/us-east-1/k8s-eks-demoapps/storage/efs"
+    terraform_var_files:
+      - "../../../../../config/common.tfvars"
+      - "../../../../config/account.tfvars"
+      - "../../../../config/backend.tfvars"
   - path: "apps-devstg/us-east-1/k8s-kind/k8s-resources"
     terraform_var_files:
       - "../../../../config/common.tfvars"
@@ -684,14 +684,14 @@ projects:
       - "../../config/backend.tfvars"
   - path: "apps-devstg/us-east-1/security-keys"
     terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/storage/s3-bucket-demo-files --"
-    terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
+  - path: "apps-devstg/us-east-1/storage/s3-bucket-demo-files --"
+    terraform_var_files:
+      - "../../../../config/common.tfvars"
+      - "../../../config/account.tfvars"
+      - "../../../config/backend.tfvars"
   - path: "apps-devstg/us-east-1/tools-cloud-nuke"
     terraform_var_files:
       - "../../../config/common.tfvars"
@@ -724,7 +724,6 @@ projects:
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
 
-
   #
   # data-science/us-east-1 (North Virginia)
   #
@@ -738,7 +737,7 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: "data-science/us-east-1/databases-aurora-mysql --"
+  - path: "data-science/us-east-1/databases-aurora-mysql--"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
