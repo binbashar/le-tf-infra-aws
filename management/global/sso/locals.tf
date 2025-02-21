@@ -438,5 +438,6 @@ locals {
 
   tags = {
     Terraform = "true"
+    Layer     = local.layer_name
   }
 }

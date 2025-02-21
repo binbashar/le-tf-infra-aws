@@ -13,6 +13,7 @@ locals {
     Environment = local.environment
     Cluster     = "eks-demoapps"
     Terraform   = "true"
+    Layer       = local.layer_name
   }
   tags_list = [
     for k, v in local.tags_map : "${k}=${v}"

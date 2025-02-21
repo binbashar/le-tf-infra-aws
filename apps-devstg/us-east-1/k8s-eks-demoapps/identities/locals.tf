@@ -6,6 +6,7 @@ locals {
     Environment = var.environment
     Purpose     = "eks-oidc"
     Cluster     = data.terraform_remote_state.cluster.outputs.cluster_name
+    Layer       = local.layer_name
   }
 
   tags_cluster_autoscaler  = merge(local.tags, { Subject = "cluster-autoscaler" })
