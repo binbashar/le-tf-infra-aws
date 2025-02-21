@@ -132,3 +132,12 @@ variable "enable_inspector" {
   type        = bool
   default     = false
 }
+
+locals {
+  regions = ["us-east-1", "us-east-2", "global"]
+
+  filtered_region = [for region in local.regions : region if strcontains("${path.cwd}", region)][0]
+
+  layer_name = trimprefix(split(local.filtered_region, "${path.cwd}")[1], "/")
+}
+
