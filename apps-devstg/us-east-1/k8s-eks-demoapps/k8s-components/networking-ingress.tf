@@ -7,7 +7,7 @@ resource "helm_release" "alb_ingress" {
   namespace  = kubernetes_namespace.alb_ingress[0].id
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
-  version    = "1.4.2"
+  version    = "1.11.0"
   values = [
     templatefile("chart-values/alb-ingress.yaml", {
       clusterName        = data.terraform_remote_state.cluster.outputs.cluster_name,

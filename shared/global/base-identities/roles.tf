@@ -26,7 +26,7 @@ module "iam_assumable_role_devops" {
     aws_iam_policy.devops_access.arn
   ]
 
-  tags = local.tags
+
 }
 
 #
@@ -54,7 +54,7 @@ module "iam_assumable_role_auditor" {
     "arn:aws:iam::aws:policy/SecurityAudit"
   ]
 
-  tags = local.tags
+
 }
 
 #
@@ -82,7 +82,7 @@ module "iam_assumable_role_deploy_master" {
     aws_iam_policy.deploy_master_access.arn
   ]
 
-  tags = local.tags
+
 }
 
 
@@ -112,7 +112,7 @@ module "iam_assumable_role_finops" {
     aws_iam_policy.s3_put_gdrive_to_s3_backup.arn,
   ]
 
-  tags = local.tags
+
 }
 
 #
@@ -138,7 +138,7 @@ module "iam_assumable_role_oaar" {
   mfa_age              = 7200 # Maximum CLI/API session duration in seconds between 3600 and 43200
   max_session_duration = 3600 # Max age of the session (in seconds) when assuming roles
 
-  tags = local.tags
+
 }
 
 #
@@ -162,7 +162,7 @@ module "iam_assumable_role_service_organizations" {
     "arn:aws:iam::aws:policy/aws-service-role/AWSOrganizationsServiceTrustPolicy"
   ]
 
-  tags = local.tags
+
 }
 
 #
@@ -186,7 +186,7 @@ module "iam_assumable_role_service_support" {
     "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
   ]
 
-  tags = local.tags
+
 }
 
 #
@@ -210,7 +210,7 @@ module "iam_assumable_role_service_trustedadvisor" {
     "arn:aws:iam::aws:policy/aws-service-role/AWSTrustedAdvisorServiceRolePolicy"
   ]
 
-  tags = local.tags
+
 }
 
 
@@ -285,5 +285,5 @@ module "iam_assumable_role_lambda_costs_explorer_access" {
     aws_iam_policy.lambda_costs_explorer_access.arn,
   ]
 
-  tags = local.tags
+
 }

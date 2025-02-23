@@ -11,7 +11,7 @@ module "database_migration_service" {
   repl_instance_auto_minor_version_upgrade   = true
   repl_instance_allow_major_version_upgrade  = true
   repl_instance_apply_immediately            = true
-  repl_instance_engine_version               = "3.5.2"
+  repl_instance_engine_version               = "3.5.3"
   repl_instance_multi_az                     = true
   repl_instance_preferred_maintenance_window = "sun:10:30-sun:14:30"
   repl_instance_publicly_accessible          = false
@@ -89,39 +89,6 @@ module "database_migration_service" {
       tags                      = local.tags
     }
   }
-
-  # event_subscriptions = {
-  #   instance = {
-  #     name                             = "instance-events"
-  #     enabled                          = true
-  #     instance_event_subscription_keys = ["example"]
-  #     source_type                      = "replication-instance"
-  #     sns_topic_arn                    = "arn:aws:sns:us-east-1:012345678910:example-topic"
-  #     event_categories                 = [
-  #       "failure",
-  #       "creation",
-  #       "deletion",
-  #       "maintenance",
-  #       "failover",
-  #       "low storage",
-  #       "configuration change"
-  #     ]
-  #   }
-  #   task = {
-  #     name                         = "task-events"
-  #     enabled                      = true
-  #     task_event_subscription_keys = ["cdc_ex"]
-  #     source_type                  = "replication-task"
-  #     sns_topic_arn                = "arn:aws:sns:us-east-1:012345678910:example-topic"
-  #     event_categories             = [
-  #       "failure",
-  #       "state change",
-  #       "creation",
-  #       "deletion",
-  #       "configuration change"
-  #     ]
-  #   }
-  # }
 
   tags = local.tags
 }

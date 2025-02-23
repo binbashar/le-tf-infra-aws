@@ -87,7 +87,7 @@ resource "helm_release" "argocd_image_updater" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argocd-image-updater"
-  version    = "0.11.2"
+  version    = "0.12.0"
   values = [
     templatefile("chart-values/argocd-image-updater.yaml", {
       region                   = var.region
@@ -123,7 +123,7 @@ resource "helm_release" "argo_rollouts" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-rollouts"
-  version    = "2.38.0"
+  version    = "2.39.0"
   values = [
     templatefile("chart-values/argo-rollouts.yaml", {
       enableDashboard = var.argocd.rollouts.dashboard.enabled,

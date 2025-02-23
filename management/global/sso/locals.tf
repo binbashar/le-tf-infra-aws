@@ -252,14 +252,6 @@ locals {
         "devops",
       ]
     }
-    "juan.vera" = {
-      first_name = "Juan Manuel"
-      last_name  = "Vera"
-      email      = "juan.vera@binbash.com.ar"
-      groups = [
-        "devops",
-      ]
-    }
     "dario.villavicencio" = {
       first_name = "Dario"
       last_name  = "Villavicencio"
@@ -313,6 +305,31 @@ locals {
       first_name = "Santiago"
       last_name  = "Respane"
       email      = "santiago.respane@binbash.com.ar"
+      groups = [
+        "datascientists",
+        "devops"
+      ]
+    }
+    "lucas.langwagen" = {
+      first_name = "Lucas"
+      last_name  = "Langwagen"
+      email      = "lucas.langwagen@binbash.com.ar"
+      groups = [
+        "datascientists",
+      ]
+    }
+    "diego.maye" = {
+      first_name = "Diego"
+      last_name  = "Maye"
+      email      = "diego.maye@binbash.com.ar"
+      groups = [
+        "datascientists",
+      ]
+    }
+    "leandro.mana" = {
+      first_name = "Leandro"
+      last_name  = "Mana"
+      email      = "leandro.mana@binbash.com.ar"
       groups = [
         "datascientists",
         "devops"

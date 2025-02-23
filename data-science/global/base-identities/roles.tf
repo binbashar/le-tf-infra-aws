@@ -26,7 +26,7 @@ module "iam_assumable_role_devops" {
     aws_iam_policy.devops_access.arn
   ]
 
-  tags = local.tags
+
 }
 
 #
@@ -54,7 +54,7 @@ module "iam_assumable_role_auditor" {
     "arn:aws:iam::aws:policy/SecurityAudit"
   ]
 
-  tags = local.tags
+
 }
 
 #
@@ -83,7 +83,7 @@ module "iam_assumable_role_deploy_master" {
     aws_iam_policy.deploy_master_access.arn
   ]
 
-  tags = local.tags
+
 }
 
 #
@@ -110,7 +110,7 @@ module "iam_assumable_role_grafana" {
     aws_iam_policy.grafana_permissions.arn
   ]
 
-  tags = local.tags
+
 }
 
 #
@@ -138,5 +138,5 @@ module "iam_assumable_role_lambda_costs_explorer_access" {
     aws_iam_policy.lambda_costs_explorer_access.arn,
   ]
 
-  tags = local.tags
+
 }
