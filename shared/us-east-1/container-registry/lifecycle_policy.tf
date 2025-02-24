@@ -1,23 +1,35 @@
 #
-# ECR Lifecycle Policy: keep only the latest 20 images (no tag filtering)
+# ECR Lifecycle Policy
 #
-module "ecr_lifecycle_rule_default_policy_bycount" {
-  source = "github.com/binbashar/terraform-aws-ecr-lifecycle-policy-rule.git?ref=1.1.0"
+data "aws_ecr_lifecycle_policy_document" "default_lifecycle_policy" {
+  rule {
+    priority    = 1
+    description = "Keep only the last 20 images (no tag filtering)"
 
-  tag_status   = "any"
-  count_type   = "imageCountMoreThan"
-  prefixes     = []
-  count_number = 20
-}
+    selection {
+      tag_status       = "tagged"
+      tag_pattern_list = ["*"]
+      count_type       = "imageCountMoreThan"
+      count_number     = 20
+    }
 
-#
-# ECR Lifecycle Policy: expire any (no tag filtering) images older than 90 days
-#
-module "ecr_lifecycle_rule_default_policy_bydate" {
-  source = "github.com/binbashar/terraform-aws-ecr-lifecycle-policy-rule.git?ref=1.1.0"
+    action {
+      type = "expire"
+    }
+  }
+  rule {
+    priority    = 2
+    description = "Expire images older than 90 days (no tag filtering)"
 
-  tag_status   = "any"
-  count_type   = "sinceImagePushed"
-  prefixes     = []
-  count_number = 90
+    selection {
+      tag_status   = "any"
+      count_type   = "sinceImagePushed"
+      count_unit   = "days"
+      count_number = 90
+    }
+
+    action {
+      type = "expire"
+    }
+  }
 }

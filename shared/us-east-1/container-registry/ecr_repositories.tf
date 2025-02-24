@@ -1,31 +1,44 @@
 #
-# Create all repositories from the list of repositories
+# ECR Repositories
 #
-module "ecr_repositories" {
-  for_each = local.repository_list
+module "shared_ecr_repositories" {
+  source = "github.com/binbashar/terraform-aws-ecr.git?ref=v2.2.1"
 
-  source = "github.com/binbashar/terraform-aws-ecr-cross-account.git?ref=1.1.0"
+  for_each = local.repositories
 
-  #
-  # Repository name
-  #
-  create         = each.value.create
-  namespace      = ""
-  name           = each.value.name
-  use_namespaces = false
+  repository_name = each.value.name
 
-  #
-  # Permissions: define read or write access
-  #
-  allowed_read_principals  = each.value.read_permissions
-  allowed_write_principals = each.value.write_permissions
+  repository_image_tag_mutability = lookup(each.value, "image_tag_mutability", "MUTABLE")
 
-  #
-  # Images Retention: set lifecycle policies
-  #
-  lifecycle_policy_rules       = local.default_lifecycle_policy_rules
-  lifecycle_policy_rules_count = length(local.default_lifecycle_policy_rules)
+  repository_read_access_arns       = each.value.read_access_arns
+  repository_read_write_access_arns = each.value.read_write_access_arns
 
-  # Security: whether to scan images upon pushing to repository
-  scan_on_pushing = true
+  repository_lifecycle_policy = lookup(each.value, "lifecycle_policy", data.aws_ecr_lifecycle_policy_document.default_lifecycle_policy.json)
+
+  tags = local.tags
+}
+
+#
+# ECR Global Registry configuration
+#
+module "shared_ecr_registry" {
+  source = "github.com/binbashar/terraform-aws-ecr.git?ref=v2.2.1"
+
+  create_repository = false
+
+  manage_registry_scanning_configuration = true
+  registry_scan_type                     = "BASIC"
+  registry_scan_rules = [
+    {
+      scan_frequency = "SCAN_ON_PUSH"
+      filter = [
+        {
+          filter      = "*"
+          filter_type = "WILDCARD"
+        }
+      ]
+    }
+  ]
+
+  tags = local.tags
 }
