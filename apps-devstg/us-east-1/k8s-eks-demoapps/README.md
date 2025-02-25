@@ -13,7 +13,7 @@ architecture. Consider that we already have an [AWS Landing Zone](https://github
 deployed as baseline which allow us to create, extend and enable new components on its grounds.
 
 ## Code Organization
-The EKS layer (`apps-devstg/us-east-1/leverage-kubernetes-platform`) is divided into sublayers which
+The EKS layer (`apps-devstg/us-east-1/k8s-eks-demoapps`) is divided into sublayers which
 have clear, specific purposes.
 
 ### The "network" layer
@@ -41,7 +41,7 @@ The typical use cases would be:
 
 Below we'll cover the first case but we'll assume that we are creating the `prd` platform from the code that
 defines the `devstg` one:
-1. First, you would copy-paste an existing EKS CLUSTER layer along with all its sublayers: `cp -r apps-devstg/us-east-1/leverage-kubernetes-platform apps-prd/us-east-1/leverage-kubernetes-platform`
+1. First, you would copy-paste an existing EKS CLUSTER layer along with all its sublayers: `cp -r apps-devstg/us-east-1/k8s-eks-demoapps apps-prd/us-east-1/k8s-eks-demoapps`
 2. Then, you need to go through each layer, open up the `config.tf` file and replace any occurrences of `devstg` with `prd`.
    1. There should be a `config.tf` in each sublayer so please make sure you cover all of them.
    2. Note you can use something like this from the layer directory: `find . -name '*.tf' -exec sed 's/devstg/prd/' -i {} \;`
@@ -83,7 +83,7 @@ The EKS CLUSTER layers need to be orchestrated in the following order:
     2. In the same `locals.tf` file, there is a "VPC Peerings" section.
        1. Make sure it contains the right entries to match the VPC peerings that you actually need to set up.
     3. In the `variables.tf` file you will find several variables you can use to configure multiple settings.
-       1. For instance, if you anticipate this cluster is going to be permanent, you could set the `vpc_enable_nat_gateway` flag to `true`;
+       1. For instance, if you anticipate this cluster is going to be permanent, you could set the `vpc_enable_nat_gateway` flag to `true` (you can also do it updating the `terraform.tfvars` in the same folder);
           1. Note this value has to be `true` when installing the cluster, otherwise the nodes won´t be created
        2. or if you are standing up a production cluster, you may want to set `vpc_single_nat_gateway` to `false` in order to have a NAT Gateways per availability zone.
     4. **Apply the layer**: `leverage tf apply`
@@ -94,7 +94,7 @@ The EKS CLUSTER layers need to be orchestrated in the following order:
     1. Since we’re deploying a private K8s cluster you’ll need to be **connected to the VPN**
     2. Check out the `variables.tf` file to configure the Kubernetes version or whether you want to create a cluster with a public endpoint (in most cases you don't but the possibility is there).
     3. Open up `locals.tf` and make sure the `map_accounts`, `map_users` and `map_roles` variables define the right accounts, users and roles that will be granted permissions on the cluster.
-    4. Then open `eks-managed-nodes.tf` to set the node groups and their attributes according to your requirements.
+    4. Then open `eks-workers-managed.tf` to set the node groups and their attributes according to your requirements.
        1. In this file you can also configure security group rules, both for granting access to the cluster API or to the nodes.
     5. **Apply the layer**: `leverage tf apply`
     6. In the output you should see the credentials you need to talk to Kubernetes API via kubectl (or other clients).
@@ -154,7 +154,7 @@ The EKS CLUSTER layers need to be orchestrated in the following order:
         5. Export AWS credentials
            1. `export AWS_SHARED_CREDENTIALS_FILE="~/.aws/bb/credentials"`
            2. `export AWS_CONFIG_FILE="~/.aws/bb/config"`
-        6. `leverage-kubernetes-platform/cluster` layer should generate the `kubeconfig` file in the output of the apply, or by running `leverage tf output` similar to https://github.com/binbashar/le-devops-workflows/blob/master/README.md#eks-clusters-kubeconfig-file
+        6. `k8s-eks-demoapps/cluster` layer should generate the `kubeconfig` file in the output of the apply, or by running `leverage tf output` similar to https://github.com/binbashar/le-devops-workflows/blob/master/README.md#eks-clusters-kubeconfig-file
             1. Edit that file to replace $HOME with the path to your home dir
             2. Place the kubeconfig in `~/.kube/bb/apps-devstg` and then use export `KUBECONFIG=~/.kube/bb/apps-devstg` to help tools like kubectl find a way to talk to the cluster (or `KUBECONFIG=~/.kube/bb/apps-devstg get pods --all-namespaces` )
             3. You should be now able to run kubectl  commands (https://kubernetes.io/docs/reference/kubectl/cheatsheet/)
@@ -173,8 +173,8 @@ The EKS CLUSTER layers need to be orchestrated in the following order:
 
 #### EKS CLUSTER's K8s EKS Cluster Components and Workloads deployment
 
-1. Cluster Components (k8s-resources)
-    1. Note that EKS CLUSTER has a set of default components, anyway you can use the `apps.auto.tfvars` file to configure which components get installed
+1. Cluster Components (k8s-components)
+    1. Note that EKS CLUSTER has a set of default components, anyway you can use the `terraform.tfvars` file to configure which components get installed
     2. Important: For private repo integrations after ArgoCD was successfully installed you will need to create this secret object in the cluster. Before creating the secret you need to update it to add the private SSH key that will grant ArgoCD permission to read the repository where the application definition files can be located. Note that this manual step is only a workaround that could be automated to simplify the orchestration.
     3. **Apply the layer**: `leverage tf apply`
 
