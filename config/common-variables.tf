@@ -134,10 +134,12 @@ variable "enable_inspector" {
 }
 
 locals {
-  regions = ["us-east-1", "us-east-2", "global"]
+  regions = [var.region_primary, var.region_secondary, "global"]
 
-  filtered_region = [for region in local.regions : region if can(regex(region, "${path.cwd}"))][0]
+  #Tries to find the current region for the current layer
+  current_region = [for region in local.regions : region if can(regex(region, "${path.cwd}"))][0]
 
-  layer_name = trimprefix(split(local.filtered_region, "${path.cwd}")[1], "/")
+  #Split the full path of the layer using the region, in order to get the layer path (after the region)
+  layer_name = trimprefix(split(local.current_region, "${path.cwd}")[1], "/")
 }
 
