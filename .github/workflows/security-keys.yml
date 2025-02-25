@@ -16,7 +16,7 @@ jobs:
             version: '1.6'
           - name: tofu
             version: '1.6'
-        accounts: 
+        accounts:
           - layer: apps-devstg/us-east-1/security-keys
             aws_profile: bb-apps-devstg-devops
             aws_region: us-east-1
@@ -61,8 +61,8 @@ jobs:
             aws_profile: bb-shared-devops
             aws_region: us-east-2
             required_state_file: false
-    name: security-keys-layer 
-    uses: ./.github/workflows/testing-workflow.yml 
+    name: security-keys-layer
+    uses: ./.github/workflows/testing-workflow.yml
     with:
       localstack_version: '3.7.2'
       iac_platform: ${{ matrix.iac_platform.name }}
