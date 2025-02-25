@@ -6,6 +6,7 @@ locals {
     ScheduleStopDaily  = true
     ScheduleStartDaily = true
     Backup             = "True"
+    Layer              = local.layer_name
   }
 
   user_data = <<-EOF

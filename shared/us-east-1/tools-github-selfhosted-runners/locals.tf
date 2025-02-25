@@ -3,6 +3,7 @@ locals {
     Name        = "infra-github-selfhosted-runners"
     Terraform   = "true"
     Environment = var.environment
+    Layer       = local.layer_name
   }
 }
 

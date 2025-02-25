@@ -4,6 +4,7 @@ locals {
     Terraform         = "true"
     Environment       = var.environment
     ScheduleStopDaily = true
+    Layer             = local.layer_name
   }
 
   user_data = <<EOF
