@@ -8,6 +8,6 @@ locals {
     Terraform   = "true"
     Environment = var.environment
     Name        = local.domain_name
-
+    Layer       = local.layer_name
   }
 }

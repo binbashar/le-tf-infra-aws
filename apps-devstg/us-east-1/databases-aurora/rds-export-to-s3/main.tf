@@ -4,6 +4,7 @@ locals {
     Name        = "rds-export-to-s3"
     Terraform   = "true"
     Environment = var.environment
+    Layer       = local.layer_name
   }
 }
 

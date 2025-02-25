@@ -3,5 +3,6 @@ locals {
     environment                    = var.environment
     "app.kubernetes.io/managed-by" = "Terraform"
     "app.kubernetes.io/part-of"    = var.environment
+    Layer                          = local.layer_name
   }
 }
