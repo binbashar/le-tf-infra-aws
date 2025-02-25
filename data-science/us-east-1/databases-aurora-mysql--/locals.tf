@@ -5,5 +5,6 @@ locals {
     Environment        = var.environment
     ScheduleStopDaily  = true
     ScheduleStartDaily = true
+    Layer              = local.layer_name
   }
 }

@@ -3,6 +3,7 @@ locals {
     Terraform           = "true"
     Environment         = var.environment
     ProtectFromDeletion = "true"
+    Layer               = local.layer_name
   }
 
   # Data source definitions

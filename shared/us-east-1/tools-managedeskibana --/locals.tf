@@ -5,5 +5,6 @@ locals {
     Name        = "${var.prefix}-${var.name}"
     Terraform   = "true"
     Environment = var.environment
+    Layer       = local.layer_name
   }
 }

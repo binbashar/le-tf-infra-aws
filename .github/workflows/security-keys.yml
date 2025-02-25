@@ -1,0 +1,77 @@
+name: "Security Keys Layer: Unit Tests"
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '**/us-east-1/security-keys/**'
+      - '**/us-east-2/security-keys/**'
+jobs:
+  testing-security-keys-with-terraform:
+    strategy:
+      fail-fast: false
+      matrix:
+        iac_platform:
+          - name: terraform
+            version: '1.6'
+          - name: tofu
+            version: '1.6'
+        accounts: 
+          - layer: apps-devstg/us-east-1/security-keys
+            aws_profile: bb-apps-devstg-devops
+            aws_region: us-east-1
+            required_state_file: true
+            bucket: security
+            bucket_folder: identities
+            aws_profile_required_state_file: bb-security-devops
+            state_file_test_path: tests/terraform.tfstate.template
+          - layer: apps-devstg/us-east-2/security-keys
+            aws_profile: bb-apps-devstg-devops
+            aws_region: us-east-2
+            required_state_file: false
+          - layer: apps-prd/us-east-1/security-keys
+            aws_profile: bb-apps-prd-devops
+            aws_region: us-east-1
+            required_state_file: false
+          - layer: data-science/us-east-1/security-keys
+            aws_profile: bb-data-science-devops
+            aws_region: us-east-1
+            required_state_file: false
+          - layer: management/us-east-1/security-keys
+            aws_profile: bb-root-oaar
+            aws_region: us-east-1
+            required_state_file: false
+          - layer: network/us-east-1/security-keys
+            aws_profile: bb-network-devops
+            aws_region: us-east-1
+            required_state_file: false
+          - layer: network/us-east-2/security-keys
+            aws_profile: bb-network-devops
+            aws_region: us-east-2
+            required_state_file: false
+          - layer: security/us-east-1/security-keys
+            aws_profile: bb-security-devops
+            aws_region: us-east-1
+            required_state_file: false
+          - layer: shared/us-east-1/security-keys
+            aws_profile: bb-shared-devops
+            aws_region: us-east-1
+            required_state_file: false
+          - layer: shared/us-east-2/security-keys
+            aws_profile: bb-shared-devops
+            aws_region: us-east-2
+            required_state_file: false
+    name: security-keys-layer 
+    uses: ./.github/workflows/testing-workflow.yml 
+    with:
+      localstack_version: '3.7.2'
+      iac_platform: ${{ matrix.iac_platform.name }}
+      iac_version: ${{ matrix.iac_platform.version }}
+      aws_profile: ${{ matrix.accounts.aws_profile }}
+      aws_region: ${{ matrix.accounts.aws_region }}
+      required_state_file: ${{ matrix.accounts.required_state_file }}
+      state_file_test_path: ${{ matrix.accounts.state_file_test_path }}
+      bucket_name: ${{ matrix.accounts.bucket }}
+      bucket_folder: ${{ matrix.accounts.bucket_folder }}
+      aws_profile_required_state_file: ${{ matrix.accounts.aws_profile_required_state_file }}
+      working_directory: ${{ matrix.accounts.layer }}
