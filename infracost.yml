@@ -75,11 +75,6 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: "shared/us-east-1/security-audit"
-    terraform_var_files:
-      - "../../../config/common.tfvars"
-      - "../../config/account.tfvars"
-      - "../../config/backend.tfvars"
   - path: "shared/us-east-1/security-base"
     terraform_var_files:
       - "../../../config/common.tfvars"
@@ -111,6 +106,11 @@ projects:
       - "../../../config/account.tfvars"
       - "../../../config/backend.tfvars"
   - path: "shared/us-east-1/tools-cloud-scheduler-stop-start"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "shared/us-east-1/tools-costs-notifications"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
@@ -203,6 +203,11 @@ projects:
   #
   # security/us-east-1 (North Virginia)
   #
+  - path: "security/us-east-1/base-network"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
   - path: "security/us-east-1/base-tf-backend"
     terraform_var_files:
       - "../../../config/common.tfvars"
@@ -233,12 +238,22 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
+  - path: "security/us-east-1/security-hub --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
   - path: "security/us-east-1/security-keys"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
   - path: "security/us-east-1/security-monitoring"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "security/us-east-1/tools-wazuh --"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
@@ -286,6 +301,11 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
+  - path: "network/us-east-1/client-vpn"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
   - path: "network/us-east-1/network-firewall"
     terraform_var_files:
       - "../../../config/common.tfvars"
@@ -296,12 +316,12 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: "network/us-east-1/security-audit"
+  - path: "network/us-east-1/security-base"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: "network/us-east-1/security-base"
+  - path: "network/us-east-1/security-certs"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
@@ -399,17 +419,17 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: "management/us-east-1/security-audit"
-    terraform_var_files:
-      - "../../../config/common.tfvars"
-      - "../../config/account.tfvars"
-      - "../../config/backend.tfvars"
   - path: "management/us-east-1/security-base"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
   - path: "management/us-east-1/security-compliance"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "management/us-east-1/security-hub --"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
@@ -477,11 +497,6 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: "apps-prd/us-east-1/security-audit"
-    terraform_var_files:
-      - "../../../config/common.tfvars"
-      - "../../config/account.tfvars"
-      - "../../config/backend.tfvars"
   - path: "apps-prd/us-east-1/security-base"
     terraform_var_files:
       - "../../../config/common.tfvars"
@@ -514,9 +529,19 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
+  - path: "apps-devstg/global/cli-test-layer"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
   #
   # apps-devstg/us-east-1 (North Virginia)
   #
+  - path: "apps-devstg/us-east-1/aws-cloudwatch-synthetics"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
   - path: "apps-devstg/us-east-1/backups --"
     terraform_var_files:
       - "../../../config/common.tfvars"
@@ -542,6 +567,11 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
+  - path: "apps-devstg/us-east-1/databases-aurora-pgsql --"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
   - path: "apps-devstg/us-east-1/databases-mysql --"
     terraform_var_files:
       - "../../../config/common.tfvars"
@@ -557,52 +587,12 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-eks/cluster"
+  - path: "apps-devstg/us-east-1/ecs-demoapps"
     terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-eks/identities"
-    terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-eks/k8s-components"
-    terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-eks/k8s-workloads"
-    terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-eks/network"
-    terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-eks-v1.17/cluster"
-    terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-eks-v1.17/identities"
-    terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-eks-v1.17/k8s-resources"
-    terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-eks-v1.17/k8s-workloads"
-    terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-eks-v1.17/network"
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "apps-devstg/us-east-1/k8s-eks-demoapps/addons"
     terraform_var_files:
       - "../../../../config/common.tfvars"
       - "../../../config/account.tfvars"
@@ -632,17 +622,32 @@ projects:
       - "../../../../config/common.tfvars"
       - "../../../config/account.tfvars"
       - "../../../config/backend.tfvars"
+  - path: "apps-devstg/us-east-1/k8s-eks-demoapps/secrets"
+    terraform_var_files:
+      - "../../../../config/common.tfvars"
+      - "../../../config/account.tfvars"
+      - "../../../config/backend.tfvars"
+  - path: "apps-devstg/us-east-1/k8s-eks-demoapps/storage/efs"
+    terraform_var_files:
+      - "../../../../../config/common.tfvars"
+      - "../../../../config/account.tfvars"
+      - "../../../../config/backend.tfvars"
   - path: "apps-devstg/us-east-1/k8s-kind/k8s-resources"
     terraform_var_files:
       - "../../../../config/common.tfvars"
       - "../../../config/account.tfvars"
       - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-kops --/1-prerequisites"
+  - path: "apps-devstg/us-east-1/k8s-kops/1-prerequisites"
     terraform_var_files:
       - "../../../../config/common.tfvars"
       - "../../../config/account.tfvars"
       - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/k8s-kops --/2-kops"
+  - path: "apps-devstg/us-east-1/k8s-kops/2-kops"
+    terraform_var_files:
+      - "../../../../config/common.tfvars"
+      - "../../../config/account.tfvars"
+      - "../../../config/backend.tfvars"
+  - path: "apps-devstg/us-east-1/k8s-kops/3-extras"
     terraform_var_files:
       - "../../../../config/common.tfvars"
       - "../../../config/account.tfvars"
@@ -652,7 +657,7 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/security-audit"
+  - path: "apps-devstg/us-east-1/secrets-manager --"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
@@ -695,31 +700,6 @@ projects:
   #
   # apps-devstg/us-east-2 (Ohio)
   #
-  - path: "apps-devstg/us-east-2/k8s-eks-v1.17/cluster"
-    terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-2/k8s-eks-v1.17/identities"
-    terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-2/k8s-eks-v1.17/k8s-resources"
-    terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-2/k8s-eks-v1.17/k8s-workloads"
-    terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-2/k8s-eks-v1.17/network"
-    terraform_var_files:
-      - "../../../../config/common.tfvars"
-      - "../../../config/account.tfvars"
-      - "../../../config/backend.tfvars"
   - path: "apps-devstg/us-east-2/security-compliance --"
     terraform_var_files:
       - "../../../config/common.tfvars"
@@ -736,9 +716,73 @@ projects:
   #=====================================#
 
   #
+  # data-science/global
+  #
+  - path: "data-science/global/base-identities"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+
+  #
   # data-science/us-east-1 (North Virginia)
   #
-  - path: "data-science/us-east-1/databases-aurora-mysql --"
+  - path: "data-science/us-east-1/base-network"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "data-science/us-east-1/base-tf-backend"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "data-science/us-east-1/databases-aurora-mysql--"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "data-science/us-east-1/datalake-demo--"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "data-science/us-east-1/genai-llm-rag-bedrock-poc"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "data-science/us-east-1/lakehouse-demo--"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "data-science/us-east-1/notifications"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "data-science/us-east-1/secrets-manager"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "data-science/us-east-1/security-base"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "data-science/us-east-1/security-certs"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "data-science/us-east-1/security-keys"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
+  - path: "data-science/us-east-1/workflow-order-processing"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
