@@ -7,7 +7,7 @@ resource "helm_release" "kubernetes_dashboard" {
   namespace  = kubernetes_namespace.monitoring.id
   repository = "https://kubernetes.github.io/dashboard"
   chart      = "kubernetes-dashboard"
-  version    = "4.0.0"
+  version    = "4.6.0"
   values     = [file("chart-values/kubernetes-dashboard.yaml")]
 }
 
