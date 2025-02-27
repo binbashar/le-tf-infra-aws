@@ -32,7 +32,7 @@ resource "helm_release" "fluentd" {
   namespace  = kubernetes_namespace.monitoring.id
   repository = "https://kokuwaio.github.io/helm-charts"
   chart      = "fluentd-elasticsearch"
-  version    = "11.10.0"
+  version    = "11.15.0"
   values     = [file("chart-values/fluentd-elasticsearch.yaml")]
 }
 
