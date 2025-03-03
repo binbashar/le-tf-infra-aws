@@ -106,27 +106,6 @@ module "account_assignments" {
       principal_name      = local.groups["devops"].name
       account             = var.accounts.data-science.id
     },
-    {
-      permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn
-      permission_set_name = "DevOps"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["devops"].name
-      account             = var.accounts.workshop-a.id
-    },
-    {
-      permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn
-      permission_set_name = "DevOps"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["devops"].name
-      account             = var.accounts.workshop-b.id
-    },
-    {
-      permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn
-      permission_set_name = "DevOps"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["devops"].name
-      account             = var.accounts.workshop-c.id
-    },
 
     # -------------------------------------------------------------------------
     # FinOps Permissions
@@ -223,27 +202,6 @@ module "account_assignments" {
       principal_type      = local.principal_type_group
       principal_name      = local.groups["datascientists"].name
       account             = var.accounts.data-science.id
-    },
-    {
-      permission_set_arn  = module.permission_sets.permission_sets["DataScientist"].arn
-      permission_set_name = "DataScientist"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["datascientists"].name
-      account             = var.accounts.workshop-a.id
-    },
-    {
-      permission_set_arn  = module.permission_sets.permission_sets["DataScientist"].arn
-      permission_set_name = "DataScientist"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["datascientists"].name
-      account             = var.accounts.workshop-b.id
-    },
-    {
-      permission_set_arn  = module.permission_sets.permission_sets["DataScientist"].arn
-      permission_set_name = "DataScientist"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["datascientists"].name
-      account             = var.accounts.workshop-c.id
     },
   ]
 }
