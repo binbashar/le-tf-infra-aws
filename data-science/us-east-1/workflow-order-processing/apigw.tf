@@ -3,7 +3,7 @@
 #======================================
 
 module "apigw_order" {
-  source = "github.com/SPHTech-Platform/terraform-aws-apigw.git?ref=v0.4.10"
+  source = "github.com/SPHTech-Platform/terraform-aws-apigw.git?ref=v0.4.11"
 
   name  = "OrderApi"
   stage = "v1"
