@@ -44,7 +44,7 @@ resource "helm_release" "fluentd_awses" {
   namespace  = kubernetes_namespace.monitoring_logging[0].id
   repository = "https://kokuwaio.github.io/helm-charts"
   chart      = "fluentd-elasticsearch"
-  version    = "11.12.0"
+  version    = "11.15.0"
   values = [
     templatefile("chart-values/fluentd-elasticsearch-aws.yaml", {
       roleArn = "arn:aws:iam::${var.accounts.shared.id}:role/aws-es-proxy"
@@ -62,6 +62,6 @@ resource "helm_release" "fluentd_selfhosted" {
   namespace  = kubernetes_namespace.monitoring_logging[0].id
   repository = "https://kokuwaio.github.io/helm-charts"
   chart      = "fluentd-elasticsearch"
-  version    = "11.12.0"
+  version    = "11.15.0"
   values     = [file("chart-values/fluentd-elasticsearch-selfhosted.yaml")]
 }
