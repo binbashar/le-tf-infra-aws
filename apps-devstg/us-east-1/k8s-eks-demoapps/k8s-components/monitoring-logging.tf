@@ -31,7 +31,7 @@ resource "helm_release" "k8s_event_logger" {
   namespace  = kubernetes_namespace.monitoring_logging[0].id
   repository = "https://charts.deliveryhero.io/"
   chart      = "k8s-event-logger"
-  version    = "1.0.0"
+  version    = "1.1.8"
 }
 
 #------------------------------------------------------------------------------
