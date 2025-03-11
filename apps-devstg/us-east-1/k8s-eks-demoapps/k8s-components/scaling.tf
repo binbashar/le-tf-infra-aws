@@ -21,7 +21,7 @@ resource "helm_release" "cluster_autoscaling" {
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://kubernetes.github.io/autoscaler"
   chart      = "cluster-autoscaler"
-  version    = "9.46.0"
+  version    = "9.46.3"
   values = [
     templatefile("chart-values/cluster-autoscaler.yaml",
       {
