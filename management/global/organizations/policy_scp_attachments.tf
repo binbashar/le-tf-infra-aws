@@ -1,3 +1,43 @@
+# Import default FullAWSAccess SCP
+resource "aws_organizations_policy_attachment" "default_fullawsaccess_ou" {
+  for_each = local.organizational_units
+
+  policy_id = "p-FullAWSAccess"
+  target_id = aws_organizations_organizational_unit.units[each.key].id
+}
+
+import {
+  for_each = local.organizational_units
+
+  id = "${aws_organizations_organizational_unit.units[each.key].id}:p-FullAWSAccess"
+  to = aws_organizations_policy_attachment.default_fullawsaccess_ou[each.key]
+}
+
+
+resource "aws_organizations_policy_attachment" "default_fullawsaccess_accounts" {
+  for_each = local.accounts
+
+  policy_id = "p-FullAWSAccess"
+  target_id = aws_organizations_account.accounts[each.key].id
+}
+
+import {
+  for_each = local.accounts
+
+  id = "${aws_organizations_account.accounts[each.key].id}:p-FullAWSAccess"
+  to = aws_organizations_policy_attachment.default_fullawsaccess_accounts[each.key]
+}
+
+resource "aws_organizations_policy_attachment" "default_fullawsaccess_root" {
+  policy_id = "p-FullAWSAccess"
+  target_id = aws_organizations_account.root.id
+}
+
+import {
+  id = "${aws_organizations_account.root.id}:p-FullAWSAccess"
+  to = aws_organizations_policy_attachment.default_fullawsaccess_root
+}
+
 #
 # Organizational Units' Policies
 #
