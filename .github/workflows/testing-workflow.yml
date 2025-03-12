@@ -80,7 +80,7 @@ jobs:
         if: steps.check-tests.outputs.hasTests == 'true'
         run: |
           pip install terraform-local
-      - uses: LocalStack/setup-localstack@v0.2.3
+      - uses: LocalStack/setup-localstack@v0.2.4
         if: steps.check-tests.outputs.hasTests == 'true'
         with:
           image-tag: ${{ inputs.localstack_version }}
