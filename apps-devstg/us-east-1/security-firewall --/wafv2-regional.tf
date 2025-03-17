@@ -3,7 +3,7 @@
 #
 module "wafv2_regional_alb" {
   enabled = var.enable_wafv2_regional
-  source  = "github.com/binbashar/terraform-aws-waf-webaclv2.git?ref=3.8.1"
+  source  = "github.com/binbashar/terraform-aws-waf-webaclv2.git?ref=feat/add-aws-managed-rules-atp-rule-set"
 
   name_prefix = "${var.environment}-wafv2-albs"
   scope       = "REGIONAL"
@@ -144,6 +144,33 @@ module "wafv2_regional_alb" {
         vendor_name = "AWS"
       }
     },
+    {
+      name     = "AWSManagedRulesATPRuleSet"
+      priority = "7"
+
+      override_action = "none"
+
+      visibility_config = {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "AWSManagedRulesATPRuleSet-Metrics"
+        sampled_requests_enabled   = true
+      }
+
+      managed_rule_group_statement = {
+        name        = "AWSManagedRulesATPRuleSet"
+        vendor_name = "AWS"
+        managed_rule_group_configs = {
+          aws_managed_rules_atp_rule_set = {
+            login_path = "/api/1/signin"
+            request_inspection = {
+              password_field = "/password"
+              username_field = "/username"
+              payload_type   = "JSON"
+            }
+          }
+        }
+      }
+    }
   ]
 
   # Logging
