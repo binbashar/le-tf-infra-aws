@@ -3,7 +3,7 @@
 #
 module "wafv2_regional_alb" {
   enabled = var.enable_wafv2_regional
-  source  = "github.com/binbashar/terraform-aws-waf-webaclv2.git?ref=feat/add-aws-managed-rules-atp-rule-set"
+  source  = "github.com/binbashar/terraform-aws-waf-webaclv2.git?ref=feat%2Fadd-aws-managed-rules-atp-rule-set"
 
   name_prefix = "${var.environment}-wafv2-albs"
   scope       = "REGIONAL"
