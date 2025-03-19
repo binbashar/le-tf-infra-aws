@@ -140,7 +140,7 @@ module "cluster" {
       capacity_type  = "SPOT"
       instance_types = ["t3.medium", "t3a.medium"]
       labels         = merge(local.tags, { "stack" = "tools" })
-      taints         = {
+      taints = {
         tools = {
           key    = "stack"
           value  = "tools"

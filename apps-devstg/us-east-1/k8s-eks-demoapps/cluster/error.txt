@@ -1,0 +1,18 @@
+tags error
+
+
+╷
+│ Error: creating EKS Node Group (bb-apps-devstg-eks-demoapps:standard_spot-20250318114026017900000001): operation error EKS: CreateNodegroup, https response error StatusCode: 400, RequestID: 14a8c8c1-5553-4f05-be58-31f62705a605, InvalidParameterException: Invalid value: k8s-eks-demoapps/cluster : field must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'MyName',  or 'my.name',  or '123-abc', regex used for validation is '([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]')
+│ 
+│   with module.cluster.module.eks_managed_node_group["standard_spot"].aws_eks_node_group.this[0],
+│   on .terraform/modules/cluster/modules/eks-managed-node-group/main.tf line 392, in resource "aws_eks_node_group" "this":
+│  392: resource "aws_eks_node_group" "this" {
+│ 
+╵
+╷
+│ Error: creating EKS Node Group (bb-apps-devstg-eks-demoapps:tools_spot-20250318114026018100000003): operation error EKS: CreateNodegroup, https response error StatusCode: 400, RequestID: 9356f3d0-8bc8-4c20-b4e6-4b4cf3d5e588, InvalidParameterException: Invalid value: k8s-eks-demoapps/cluster : field must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'MyName',  or 'my.name',  or '123-abc', regex used for validation is '([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]')
+│ 
+│   with module.cluster.module.eks_managed_node_group["tools_spot"].aws_eks_node_group.this[0],
+│   on .terraform/modules/cluster/modules/eks-managed-node-group/main.tf line 392, in resource "aws_eks_node_group" "this":
+│  392: resource "aws_eks_node_group" "this" {
+│ 
