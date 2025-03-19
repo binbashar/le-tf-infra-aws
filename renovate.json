@@ -55,8 +55,8 @@
       ]
     },
     {
-      "allowedVersions": "~> 1.3.5",
-      "description": "Pin Terraform version to ~> 1.3.5",
+      "allowedVersions": "~> 1.6.6",
+      "description": "Pin Terraform version to ~> 1.6.6",
       "enabled": true,
       "matchPackageNames": [
         "terraform"
