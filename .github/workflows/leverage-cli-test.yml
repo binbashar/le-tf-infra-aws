@@ -18,7 +18,7 @@ on:
         description: "Leverage Toolbox version to test"
         required: false
         type: string
-        default: 1.2.7-0.1.6
+        default: 1.6.0-0.2.1
 
 jobs:
   test_leverage:
