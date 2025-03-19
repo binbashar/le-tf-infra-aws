@@ -44,7 +44,7 @@ resource "helm_release" "external_secrets" {
   namespace  = kubernetes_namespace.external-secrets[0].id
   repository = "https://charts.external-secrets.io"
   chart      = "external-secrets"
-  version    = "0.14.4"
+  version    = "0.15.0"
   values = [
     templatefile("chart-values/external-secrets.yaml", {
       roleArn = data.terraform_remote_state.cluster-identities.outputs.external_secrets_role_arn
