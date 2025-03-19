@@ -27,6 +27,9 @@ We pull the configuration from the [Kustomize templates](https://github.com/binb
 of the [Emojivoto Application](https://github.com/binbashar/le-emojivoto).
 You can check some details in the [README.md](https://github.com/binbashar/le-emojivoto/blob/master/README.md) of the emojivoto application repository.
 
+## Deployment
+1. To deploy this layer, you only need to run `leverage tf init`, `leverage tf plan` and `leverage tf apply`
+on the `apps-devstg/us-east-1/k8s-eks-demoapps/k8s-workloads` folder.
 ## Accessing the deployed applications (connectivity)
 To access the Kubernetes resources using `kubectl` take into account that you need **connect
 to the VPN** since all our implementations are via private endpoints (private VPC subnets).
