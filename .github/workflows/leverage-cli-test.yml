@@ -26,7 +26,7 @@ jobs:
     env:
       LEVERAGE_VERSION: 1.10.0
       LEVERAGE_REPO: pypi.org
-      LEVERAGE_TOOLBOX_VERSION: 1.2.7-0.1.6
+      LEVERAGE_TOOLBOX_VERSION: 1.6.0-0.2.1
     steps:
       - name: Checkout base branch
         uses: actions/checkout@v3
