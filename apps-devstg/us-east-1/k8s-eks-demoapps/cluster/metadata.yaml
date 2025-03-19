@@ -1,5 +1,0 @@
-type: k8s-eks-cluster
-data:
-  region: us-east-1
-  cluster_name: bb-apps-devstg-eks-demoapps
-  profile: bb-apps-devstg-devops
