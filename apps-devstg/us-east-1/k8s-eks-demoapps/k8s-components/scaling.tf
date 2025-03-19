@@ -136,7 +136,7 @@ resource "helm_release" "keda_http_add_on" {
   namespace  = kubernetes_namespace.keda[0].id
   repository = "https://kedacore.github.io/charts"
   chart      = "keda-add-ons-http"
-  version    = "0.8.0"
+  version    = "0.10.0"
   values     = []
 }
 
