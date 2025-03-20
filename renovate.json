@@ -63,8 +63,8 @@
       ]
     },
     {
-      "allowedVersions": "~> 4.10",
-      "description": "Pin AWS provider version to ~> 4.10",
+      "allowedVersions": "~> 5.91",
+      "description": "Pin AWS provider version to ~> 5.91",
       "enabled": true,
       "matchPackageNames": [
         "hashicorp/aws"
