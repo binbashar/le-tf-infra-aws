@@ -55,16 +55,16 @@
       ]
     },
     {
-      "allowedVersions": "~> 1.3.5",
-      "description": "Pin Terraform version to ~> 1.3.5",
+      "allowedVersions": "~> 1.6.6",
+      "description": "Pin Terraform version to ~> 1.6.6",
       "enabled": true,
       "matchPackageNames": [
         "terraform"
       ]
     },
     {
-      "allowedVersions": "~> 4.10",
-      "description": "Pin AWS provider version to ~> 4.10",
+      "allowedVersions": "~> 5.91",
+      "description": "Pin AWS provider version to ~> 5.91",
       "enabled": true,
       "matchPackageNames": [
         "hashicorp/aws"
