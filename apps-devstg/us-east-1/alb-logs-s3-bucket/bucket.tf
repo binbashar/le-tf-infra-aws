@@ -32,7 +32,7 @@ module "s3_bucket_alb_logs" {
       transition = local.transition
 
       expiration = {
-        days = local.expiration_days  
+        days = local.expiration_days
       }
 
       noncurrent_version_expiration = {
