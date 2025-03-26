@@ -2,7 +2,7 @@
 # Create an S3 bucket for storing ALB access logs
 #
 module "s3_bucket_alb_logs" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.15.2"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.6.0"
 
   bucket = "${local.bucket_name}-logs"
   acl    = "log-delivery-write"
@@ -19,29 +19,24 @@ module "s3_bucket_alb_logs" {
     {
       id      = "billing-objects-logs"
       enabled = true
-      prefix  = "logs/"
+
+      filter = {
+        prefix = "/"
+      }
 
       tags = {
         rule      = "log"
         autoclean = "true"
       }
 
-      transition = [
-        {
-          days          = 30
-          storage_class = "ONEZONE_IA"
-          }, {
-          days          = 180
-          storage_class = "GLACIER"
-        }
-      ]
+      transition = local.transition
 
       expiration = {
-        days = 365
+        days = local.expiration_days  
       }
 
       noncurrent_version_expiration = {
-        days = 180
+        days = local.noncurrent_version_expiration_days
       }
     },
   ]
