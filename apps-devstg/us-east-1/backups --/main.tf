@@ -15,7 +15,7 @@ module "nightly_backups" {
       enable_continuous_backup = true
       lifecycle = {
         cold_storage_after = 0
-        delete_after = 21
+        delete_after       = 21
       }
     }
   ]
