@@ -33,7 +33,7 @@ module "security_group_ec2_bastion" {
 # EC2 Fleet Bastions instance
 #
 module "ec2_bastion" {
-  source = "github.com/binbashar/terraform-aws-ec2-instance.git?ref=v3.3.0"
+  source = "github.com/binbashar/terraform-aws-ec2-instance.git?ref=v3.6.0"
   count  = var.ec2_instances_count
   name   = "${var.ec2_instance_name}-${count.index}"
 

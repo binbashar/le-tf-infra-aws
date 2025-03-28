@@ -20,7 +20,7 @@ module "security_group_ec2_fleet" {
 # EC2 Fleet for testing purposes
 #
 module "ec2_fleet" {
-  source = "github.com/binbashar/terraform-aws-ec2-instance.git?ref=v4.0.0"
+  source = "github.com/binbashar/terraform-aws-ec2-instance.git?ref=v4.5.0"
 
   for_each = local.multiple_instances
   name     = "ec2-fleet-${each.key}"
