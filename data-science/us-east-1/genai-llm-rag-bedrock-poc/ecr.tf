@@ -1,6 +1,6 @@
 module "ecr_repositories" {
 
-  source = "github.com/binbashar/terraform-aws-ecr.git?ref=v2.2.1"
+  source = "github.com/binbashar/terraform-aws-ecr.git?ref=v2.3.1"
 
   #
   # Repository name
