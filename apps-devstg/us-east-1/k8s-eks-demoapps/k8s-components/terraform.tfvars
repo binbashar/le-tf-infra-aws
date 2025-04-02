@@ -74,7 +74,7 @@ scaling = {
 # Scaling: Goldilocks
 #------------------------------------------------------------------------------
 goldilocks = {
-  enabled = false
+  enabled = true
 }
 
 
@@ -108,7 +108,7 @@ logging = {
 # KubePrometheusStack
 prometheus = {
   kube_stack = {
-    enabled = false
+    enabled = true
 
     alertmanager = {
       enabled = false
@@ -151,7 +151,7 @@ uptime_kuma = {
 # Monitoring: Gatus
 #------------------------------------------------------------------------------
 gatus = {
-  enabled = false
+  enabled = true
 }
 
 #------------------------------------------------------------------------------
