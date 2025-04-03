@@ -328,6 +328,7 @@ resource "aws_s3_object" "job_script" {
   tags   = local.tags
 }
 
+#TODO: I think the permission should be at table level
 resource "aws_lakeformation_permissions" "default" {
 
   principal   = module.iam_role.iam_role_arn
