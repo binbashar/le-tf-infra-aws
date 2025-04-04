@@ -34,4 +34,18 @@ on the `apps-devstg/us-east-1/k8s-eks-demoapps/k8s-workloads` folder.
 To access the Kubernetes resources using `kubectl` take into account that you need **connect
 to the VPN** since all our implementations are via private endpoints (private VPC subnets).
 
+## How the CI/CD workflow works?
+[Diagram](https://github.com/binbashar/le-ref-architecture-doc/blob/master/docs/assets/images/diagrams/ci-cd-argocd-workflow.png)
+
+1. A user commits (merges) changes to the [application code repo](https://github.com/binbashar/le-emojivoto).
+2. The [image building workflow](https://github.com/binbashar/le-emojivoto/actions/workflows/build-images.yml) is triggered.
+    * Image is built.
+    * Image is pushed to ECR.
+    * Throughout the process, the build process status is notified via Slack.
+3. Argo Image Updater monitors ECR for new versions of the app image (it knows which image the app uses via a series of annotations in the Application object).
+    * Argo Image Updater pushes a commit to the [Kustomize files repository](https://github.com/binbashar/le-demo-apps/blob/master/emojivoto/kustomize/overlays/devstg/kustomization.yml#L62) updating the definition for which image version the app should use.
+4. Argo CD monitors the app kustomize definition files in the application manifests repository for changes.
+    * If there are changes more recent than the ones currently applied in the cluster, Argo CD syncs those changes.
+    * Throughout the syncing process the deployment status is notified via Slack.
+
 Note you can use the [binbash Leverage kubectl command](https://leverage.binbash.co/user-guide/leverage-cli/reference/kubectl/) to access the cluster.
