@@ -7,4 +7,5 @@ locals {
     ScheduleStartDaily = true
     Layer              = local.layer_name
   }
+  cluster_engine = "aurora-mysql"
 }

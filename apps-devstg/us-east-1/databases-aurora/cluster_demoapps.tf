@@ -1,16 +1,23 @@
+#
+# DB Administrator secret
+#
+data "aws_secretsmanager_secret_version" "administrator" {
+  secret_id = data.terraform_remote_state.secrets.outputs.secret_ids["/aurora/administrator"]
+}
+
 module "demoapps" {
   source = "github.com/binbashar/terraform-aws-rds-aurora.git?ref=v7.2.2"
 
   # General settings
   name           = "${var.project}-${var.environment}-binbash-aurora-mysql"
-  engine         = "aurora-mysql"
+  engine         = local.cluster_engine
   engine_mode    = "provisioned"
   engine_version = "5.7"
 
   # Initial database and credentials
   database_name          = "demoapps"
-  master_username        = "admin"
-  master_password        = data.vault_generic_secret.databases_aurora.data["administrator_password"]
+  master_username        = jsondecode(data.aws_secretsmanager_secret_version.administrator.secret_string)["username"]
+  master_password        = jsondecode(data.aws_secretsmanager_secret_version.administrator.secret_string)["password"]
   create_random_password = false
 
   # VPC and Subnets

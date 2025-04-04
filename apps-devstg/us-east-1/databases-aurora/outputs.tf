@@ -46,6 +46,11 @@ output "cluster_instances" {
   value       = module.demoapps.cluster_instances
 }
 
+output "cluster_engine" {
+  description = "The cluster engine"
+  value       = local.cluster_engine
+}
+
 # aws_security_group
 output "security_group_id" {
   description = "The security group ID of the cluster"

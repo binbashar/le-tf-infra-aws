@@ -88,6 +88,16 @@ data "terraform_remote_state" "shared_vpc" {
 #       to store admin credentials under a separate path and create separate,
 #       more restrictied credentials for demoapps.
 #
-data "vault_generic_secret" "databases_aurora" {
-  path = "secrets/${var.project}/${var.environment}/databases-aurora"
+#=============================#
+# Data sources                #
+#=============================#
+data "terraform_remote_state" "secrets" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/secrets-manager/terraform.tfstate"
+  }
 }
