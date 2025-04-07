@@ -183,7 +183,9 @@ module "glue_crawler" {
   ]
 
   depends_on = [
-    aws_lakeformation_permissions.default
+    aws_lakeformation_permissions.orders,
+    aws_lakeformation_permissions.products,
+    aws_lakeformation_permissions.products_orders
   ]
 }
 
