@@ -328,13 +328,35 @@ resource "aws_s3_object" "job_script" {
   tags   = local.tags
 }
 
-#TODO: I think the permission should be at table level
-resource "aws_lakeformation_permissions" "default" {
+resource "aws_lakeformation_permissions" "products_orders" {
 
   principal   = module.iam_role.iam_role_arn
   permissions = ["ALL"]
 
-  database {
-    name = module.glue_catalog_database.name
+  table {
+    database_name = module.glue_catalog_database.name
+    name = module.glue_catalog_products_orders.name
+  }
+}
+
+resource "aws_lakeformation_permissions" "orders" {
+
+  principal   = module.iam_role.iam_role_arn
+  permissions = ["ALL"]
+
+  table {
+    database_name = module.glue_catalog_database.name
+    name = module.glue_catalog_orders.name
+  }
+}
+
+resource "aws_lakeformation_permissions" "products" {
+
+  principal   = module.iam_role.iam_role_arn
+  permissions = ["ALL"]
+
+  table {
+    database_name = module.glue_catalog_database.name
+    name = module.glue_catalog_products.name
   }
 }
