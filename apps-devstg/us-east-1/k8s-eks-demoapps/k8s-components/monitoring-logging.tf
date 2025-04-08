@@ -8,7 +8,7 @@ resource "helm_release" "fluentbit" {
   namespace  = kubernetes_namespace.monitoring_logging[0].id
   repository = "https://fluent.github.io/helm-charts"
   chart      = "fluent-bit"
-  version    = "0.24.0"
+  version    = "0.48.9"
   values = [
     templatefile("chart-values/fluentbit.yaml", {
       opensearch_host         = "example-domain.${local.private_base_domain}", # Fetch this from a opensearch layer output
@@ -31,7 +31,7 @@ resource "helm_release" "k8s_event_logger" {
   namespace  = kubernetes_namespace.monitoring_logging[0].id
   repository = "https://charts.deliveryhero.io/"
   chart      = "k8s-event-logger"
-  version    = "1.0.0"
+  version    = "1.1.8"
 }
 
 #------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ resource "helm_release" "fluentd_awses" {
   namespace  = kubernetes_namespace.monitoring_logging[0].id
   repository = "https://kokuwaio.github.io/helm-charts"
   chart      = "fluentd-elasticsearch"
-  version    = "11.12.0"
+  version    = "11.15.0"
   values = [
     templatefile("chart-values/fluentd-elasticsearch-aws.yaml", {
       roleArn = "arn:aws:iam::${var.accounts.shared.id}:role/aws-es-proxy"
@@ -62,6 +62,6 @@ resource "helm_release" "fluentd_selfhosted" {
   namespace  = kubernetes_namespace.monitoring_logging[0].id
   repository = "https://kokuwaio.github.io/helm-charts"
   chart      = "fluentd-elasticsearch"
-  version    = "11.12.0"
+  version    = "11.15.0"
   values     = [file("chart-values/fluentd-elasticsearch-selfhosted.yaml")]
 }

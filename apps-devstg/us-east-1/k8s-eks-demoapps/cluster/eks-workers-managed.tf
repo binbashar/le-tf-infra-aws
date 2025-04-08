@@ -1,5 +1,5 @@
 module "cluster" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v20.28.0"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v20.35.0"
 
   create          = true
   cluster_name    = data.terraform_remote_state.cluster-vpc.outputs.cluster_name
@@ -140,7 +140,7 @@ module "cluster" {
       capacity_type  = "SPOT"
       instance_types = ["t3.medium", "t3a.medium"]
       labels         = merge(local.tags, { "stack" = "tools" })
-      taints = {
+      taints         = {
         tools = {
           key    = "stack"
           value  = "tools"

@@ -32,7 +32,7 @@ resource "helm_release" "fluentd" {
   namespace  = kubernetes_namespace.monitoring.id
   repository = "https://kokuwaio.github.io/helm-charts"
   chart      = "fluentd-elasticsearch"
-  version    = "11.10.0"
+  version    = "11.15.0"
   values     = [file("chart-values/fluentd-elasticsearch.yaml")]
 }
 
@@ -42,7 +42,7 @@ resource "helm_release" "fluentbit" {
   namespace  = kubernetes_namespace.monitoring.id
   repository = "https://fluent.github.io/helm-charts"
   chart      = "fluent-bit"
-  version    = "0.19.23"
+  version    = "0.48.9"
   values = [
     templatefile("chart-values/fluentbit.yaml", {
       es-host   = var.elastic_host,
