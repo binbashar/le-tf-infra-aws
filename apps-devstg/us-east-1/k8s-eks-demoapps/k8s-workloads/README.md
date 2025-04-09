@@ -4,21 +4,20 @@
 This documentation should help you understand the different pieces that make up this
 layer.
 With such understanding you should be able to create copies of this
-layer that are modified to having applications to test inside
-of your kubernetes cluster.
+layer, that will help having initial deployments of demo applications to test inside
+of your kubernetes cluster, with the proper configuration to be able to handle all the lifecycle
+with ArgoCD. More information and diagrams can be found down below.
 
 Learn more about the components  [here](https://leverage.binbash.co/user-guide/ref-architecture-eks/components/).
 
 Terraform code to deploy different applications in order to test the EKS cluster, the CI/CD pipelines,
 and the resources already deployed in other layers.
+
+## Pre-requisites
 Considering that we already have an [EKS Cluster](https://github.com/binbashar/le-tf-infra-aws/tree/master/apps-devstg/us-east-1/k8s-eks-demoapps)
 deployed as baseline, with the `network`, `identities`, `cluster` and `k8s-components` layers, will allow us to
 orchestrate deployments, applications, pipelines and define some applications in order to test the functionality
 of the cluster and its resources.
-
-## Code Organization
-The EKS Workloads Layer (`apps-devstg/us-east-1/k8s-workloads`) is made up of different resources which
-have clear, specific purposes.
 
 ### The "Emojivoto" application
 In [this file](https://github.com/binbashar/le-tf-infra-aws/blob/master/apps-devstg/us-east-1/k8s-eks-demoapps/k8s-workloads/emojivoto.tf)
@@ -29,7 +28,7 @@ You can check some details in the [README.md](https://github.com/binbashar/le-em
 
 ## Deployment
 1. To deploy this layer, you only need to run `leverage tf init`, `leverage tf plan` and `leverage tf apply`
-on the `apps-devstg/us-east-1/k8s-eks-demoapps/k8s-workloads` folder.
+in this folder.
 ## Accessing the deployed applications (connectivity)
 To access the Kubernetes resources using `kubectl` take into account that you need **connect
 to the VPN** since all our implementations are via private endpoints (private VPC subnets).

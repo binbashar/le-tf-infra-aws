@@ -83,7 +83,7 @@ The EKS CLUSTER layers need to be orchestrated in the following order:
     2. In the same `locals.tf` file, there is a "VPC Peerings" section.
        1. Make sure it contains the right entries to match the VPC peerings that you actually need to set up.
     3. In the `variables.tf` file you will find several variables you can use to configure multiple settings.
-       1. For instance, if you anticipate this cluster is going to be permanent, you could set the `vpc_enable_nat_gateway` flag to `true` (you can also do it updating the `terraform.tfvars` in the same folder);
+       1. For instance, if you anticipate this cluster is going to be permanent, you could set the `vpc_enable_nat_gateway` flag to `true` (you could also do that by updating the `terraform.tfvars` in the same folder);
           1. Note this value has to be `true` when installing the cluster, otherwise the nodes won´t be created
        2. or if you are standing up a production cluster, you may want to set `vpc_single_nat_gateway` to `false` in order to have a NAT Gateways per availability zone.
     4. **Apply the layer**: `leverage tf apply`
