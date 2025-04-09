@@ -337,7 +337,7 @@ resource "aws_lakeformation_permissions" "products_orders" {
 
   table {
     database_name = module.glue_catalog_database.name
-    name = module.glue_catalog_products_orders.name
+    name          = module.glue_catalog_products_orders.name
   }
 }
 
@@ -348,7 +348,7 @@ resource "aws_lakeformation_permissions" "orders" {
 
   table {
     database_name = module.glue_catalog_database.name
-    name = module.glue_catalog_orders.name
+    name          = module.glue_catalog_orders.name
   }
 }
 
@@ -359,6 +359,6 @@ resource "aws_lakeformation_permissions" "products" {
 
   table {
     database_name = module.glue_catalog_database.name
-    name = module.glue_catalog_products.name
+    name          = module.glue_catalog_products.name
   }
 }
