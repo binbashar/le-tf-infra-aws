@@ -42,6 +42,6 @@ resource "aws_iam_policy" "ecs_opensearch_access" {
         }
     ]
 }
-      
+
 EOF
 }
