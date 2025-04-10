@@ -31,7 +31,7 @@ module "cloudtrail" {
 # days that CloudTrail provides by default.
 #
 module "cloudtrail_s3_bucket" {
-  source                 = "github.com/binbashar/terraform-aws-cloudtrail-s3-bucket.git?ref=0.26.4"
+  source                 = "github.com/binbashar/terraform-aws-cloudtrail-s3-bucket.git?ref=v0.27.0"
   name                   = "${var.project}-${var.environment}-cloudtrail-org"
   lifecycle_rule_enabled = var.lifecycle_rule_enabled
   versioning_enabled     = true
