@@ -2,6 +2,7 @@ locals {
   tags = {
     Terraform   = "true"
     Environment = var.environment
+    Layer       = local.layer_name
   }
 
   # We'll use a shorter environment name in order to keep things simple

@@ -4,6 +4,7 @@ locals {
     Environment = var.environment
     Project     = var.project
     Cluster     = data.terraform_remote_state.cluster.outputs.cluster_name
+    Layer       = local.layer_name
   }
   addons_available = {
     coredns = {

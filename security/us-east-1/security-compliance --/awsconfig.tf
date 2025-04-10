@@ -87,6 +87,8 @@ module "terraform-aws-config" {
     tag1Value = "true"
     tag2Key   = "Environment"
     tag3Value = var.environment
+    tag4Key   = "Layer"
+    tag4Value = local.layer_name
   }
   check_approved_amis_by_tag = true
   ami_required_tag_key_value = "ApprovedAMI:true"

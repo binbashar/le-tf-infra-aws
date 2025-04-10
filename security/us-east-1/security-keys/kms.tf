@@ -11,7 +11,6 @@ module "kms_key" {
   enable_key_rotation     = true
   alias                   = "alias/${var.project}_${var.environment}_${var.kms_key_name}_key"
   policy                  = data.aws_iam_policy_document.kms.json
-  tags                    = local.tags
 }
 
 data "aws_iam_policy_document" "kms" {

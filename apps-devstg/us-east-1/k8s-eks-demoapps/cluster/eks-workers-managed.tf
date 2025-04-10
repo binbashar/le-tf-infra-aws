@@ -1,5 +1,5 @@
 module "cluster" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v20.28.0"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v20.35.0"
 
   create          = true
   cluster_name    = data.terraform_remote_state.cluster-vpc.outputs.cluster_name
@@ -133,21 +133,21 @@ module "cluster" {
     # ---------------------------------------------------------------
     # Tools, Spot, single node group across all AZs
     # ---------------------------------------------------------------
-    # tools_spot = {
-    #   desired_size   = 1
-    #   max_size       = 6
-    #   min_size       = 1
-    #   capacity_type  = "SPOT"
-    #   instance_types = ["t3.medium", "t3a.medium"]
-    #   labels         = merge(local.tags, { "stack" = "tools" })
-    #   taints         = {
-    #     tools = {
-    #       key    = "stack"
-    #       value  = "tools"
-    #       effect = "NO_SCHEDULE"
-    #     }
-    #   }
-    # }
+    tools_spot = {
+      desired_size   = 1
+      max_size       = 6
+      min_size       = 1
+      capacity_type  = "SPOT"
+      instance_types = ["t3.medium", "t3a.medium"]
+      labels         = merge(local.tags, { "stack" = "tools" })
+      taints = {
+        tools = {
+          key    = "stack"
+          value  = "tools"
+          effect = "NO_SCHEDULE"
+        }
+      }
+    }
   }
 
   # Configure which roles, users and accounts can access the k8s api

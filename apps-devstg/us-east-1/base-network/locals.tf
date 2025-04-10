@@ -2,6 +2,7 @@ locals {
   tags = {
     Terraform   = "true"
     Environment = var.environment
+    Layer       = local.layer_name
   }
 
   # Network Local Vars
@@ -60,7 +61,7 @@ locals {
     for index, state in local.datasources-vpcs : [
       for k, v in state.outputs.private_subnets_cidr :
       {
-        rule_number = 10 * (index(keys(local.datasources-vpcs), index) + 1) + 100 * k
+        rule_number = (10 * (index(keys(local.datasources-vpcs), index) + 1) + 100 * k)
         rule_action = "allow"
         from_port   = 0
         to_port     = 65535

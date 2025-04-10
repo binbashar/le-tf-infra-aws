@@ -4,13 +4,17 @@
 provider "aws" {
   region  = var.region
   profile = var.profile
+
+  default_tags {
+    tags = local.tags
+  }
 }
 
 #=============================#
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = "~> 1.3"
+  required_version = "~> 1.6"
 
   required_providers {
     aws = "~> 5.0"
