@@ -7,7 +7,7 @@ resource "helm_release" "vpa" {
   namespace  = kubernetes_namespace.monitoring.id
   repository = "https://charts.fairwinds.com/stable"
   chart      = "vpa"
-  version    = "0.3.2"
+  version    = "0.5.0"
   values     = [file("chart-values/vpa.yaml")]
   depends_on = [helm_release.metrics_server]
 }
