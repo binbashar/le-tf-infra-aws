@@ -40,6 +40,6 @@ resource "helm_release" "vault" {
   namespace  = kubernetes_namespace.vault.id
   repository = "https://helm.releases.hashicorp.com"
   chart      = "vault"
-  version    = "0.10.0"
+  version    = "0.30.0"
   values     = [file("chart-values/vault.yaml")]
 }
