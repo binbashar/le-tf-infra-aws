@@ -72,7 +72,7 @@ locals {
     }
   }
 
- clusters = {
+  clusters = {
     bedrock-knowledge-base = {
       description = "Amazon Bedrock Knowledge base."
       access_policy = {
