@@ -83,6 +83,7 @@ data "aws_iam_policy_document" "devops" {
       "secretsmanager:*",
       "securityhub:*",
       "servicediscovery:*",
+      "servicequotas:*",
       "ses:*",
       "shield:*",
       "sns:*",
