@@ -1,5 +1,5 @@
 module "managed_elasticsearch_kibana" {
-  source = "github.com/binbashar/terraform-aws-elasticsearch?ref=0.10.0"
+  source = "github.com/binbashar/terraform-aws-elasticsearch?ref=0.14.1"
 
   # Domain (cluster) name and ElasticSearch version
   domain_name           = local.domain_name
