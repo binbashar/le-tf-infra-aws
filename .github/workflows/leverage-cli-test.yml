@@ -59,10 +59,10 @@ jobs:
           fi
         working-directory: ./apps-devstg/global/cli-test-layer
 
-      - name: patch_dependencies
-        run: |
-          python -m pipenv install requests==2.29.0
-        working-directory: ./apps-devstg/global/cli-test-layer
+#      - name: patch_dependencies
+#        run: |
+#          python -m pipenv install requests==2.29.0
+#        working-directory: ./apps-devstg/global/cli-test-layer
 
       - name: Set Leverage Toolbox version
         run: |
