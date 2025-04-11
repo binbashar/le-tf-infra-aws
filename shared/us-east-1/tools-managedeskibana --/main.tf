@@ -34,8 +34,10 @@ module "managed_elasticsearch_kibana" {
 
   # Enable logging to CloudWatch
   log_publishing_options = {
-    enabled  = false
-    log_type = "INDEX_SLOW_LOGS"
+    logs = {
+      enabled  = false
+      log_type = "INDEX_SLOW_LOGS"
+    }
   }
 
   # Use a custom domain
