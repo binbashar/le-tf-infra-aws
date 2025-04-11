@@ -107,7 +107,7 @@ resource "aws_kms_ciphertext" "slack_url_monitoring_costs" {
 # Set create_with_kms_key = true
 # when providing value of kms_key_arn to create required IAM policy which allows to decrypt using specified KMS key.
 module "notify_slack_monitoring_costs" {
-  source = "github.com/binbashar/terraform-aws-notify-slack.git?ref=v5.5.0"
+  source = "github.com/binbashar/terraform-aws-notify-slack.git?ref=v5.6.0"
 
   #
   # Creation Flags
