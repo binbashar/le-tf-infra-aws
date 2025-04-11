@@ -9,7 +9,7 @@ module "vpc" {
 }
 
 module "inspection_private_subnets" {
-  source = "github.com/binbashar/terraform-aws-multi-az-subnets?ref=0.14.0"
+  source = "github.com/binbashar/terraform-aws-multi-az-subnets?ref=0.15.0"
 
   name               = "${var.project}-${var.environment}-inspection"
   vpc_id             = module.vpc.vpc_id
@@ -21,7 +21,7 @@ module "inspection_private_subnets" {
 }
 
 module "network_firewall_private_subnets" {
-  source = "github.com/binbashar/terraform-aws-multi-az-subnets?ref=0.14.0"
+  source = "github.com/binbashar/terraform-aws-multi-az-subnets?ref=0.15.0"
 
   name               = "${var.project}-${var.environment}-firewall"
   vpc_id             = module.vpc.vpc_id
