@@ -48,6 +48,7 @@ data "aws_iam_policy_document" "devops" {
       "es:*",
       "events:*",
       "execute-api:*",
+      "fms:*",
       "glue:*",
       "guardduty:*",
       "health:*",
