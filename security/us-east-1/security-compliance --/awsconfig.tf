@@ -6,7 +6,7 @@
 # AWS Config Logs AES256 SSE Bucket
 #
 module "config_logs" {
-  source = "github.com/binbashar/terraform-aws-logs.git?ref=v16.2.0"
+  source = "github.com/binbashar/terraform-aws-logs.git?ref=v16.3.1"
 
   s3_bucket_name          = "${var.project}-${var.environment}-awsconfig"
   default_allow           = true # Whether all services included in this module should be allowed to write to the bucket by default.
