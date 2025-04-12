@@ -165,17 +165,35 @@ data "aws_iam_policy_document" "devops" {
   statement {
     sid = "OrganizationWide"
     actions = [
-      "organizations:ListDelegatedAdministrators",
-      "organizations:ListAccounts",
+      "organizations:DeregisterDelegatedAdministrator",
       "organizations:DescribeOrganization",
+      "organizations:DisableAWSServiceAccess",
+      "organizations:EnableAWSServiceAccess",
       "organizations:ListAWSServiceAccessForOrganization",
-      "organizations:ListRoots",
+      "organizations:ListAccounts",
       "organizations:ListAccountsForParent",
-      "organizations:ListOrganizationalUnitsForParent"
+      "organizations:ListDelegatedAdministrators",
+      "organizations:ListOrganizationalUnitsForParent",
+      "organizations:ListRoots",
+      "organizations:RegisterDelegatedAdministrator"
     ]
     effect    = "Allow"
     resources = ["*"]
+  }
 
+  statement {
+    sid = "InspectorAdministration"
+    actions = [
+      "inspector2:Enable",
+      "inspector2:Disable",
+      "inspector2:AssociateMember",
+      "inspector2:DisassociateMember",
+      "inspector2:UpdateOrganizationConfiguration",
+      "inspector2:EnableDelegatedAdminAccount",
+      "inspector2:DisableDelegatedAdminAccount"
+    ]
+    effect    = "Allow"
+    resources = ["*"]
   }
 }
 
