@@ -228,14 +228,6 @@ locals {
         "devops",
       ]
     }
-    "daniel.quiroga" = {
-      first_name = "Daniel"
-      last_name  = "Quiroga"
-      email      = "daniel.quiroga@binbash.com.ar"
-      groups = [
-        "devops",
-      ]
-    }
     "ariel.jalil" = {
       first_name = "Ariel"
       last_name  = "Jalil"
@@ -258,14 +250,6 @@ locals {
       email      = "dario.villavicencio@binbash.com.ar"
       groups = [
         "devops",
-      ]
-    }
-    "nicolas.ferreira" = {
-      first_name = "Nicolas"
-      last_name  = "Ferreira"
-      email      = "nicolas.ferreira@binbash.com.ar"
-      groups = [
-        "datascientists",
       ]
     }
     "agustin.rodriguez" = {
