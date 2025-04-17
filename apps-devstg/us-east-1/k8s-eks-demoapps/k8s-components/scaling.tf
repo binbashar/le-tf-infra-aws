@@ -149,7 +149,7 @@ resource "helm_release" "goldilocks" {
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://charts.fairwinds.com/stable"
   chart      = "goldilocks"
-  version    = "3.2.1"
+  version    = "5.0.0"
   values = [
     templatefile("chart-values/goldilocks.yaml", {
       goldilocksHost = "goldilocks.${local.platform}.${local.private_base_domain}"

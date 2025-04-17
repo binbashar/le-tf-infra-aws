@@ -74,7 +74,7 @@ scaling = {
 # Scaling: Goldilocks
 #------------------------------------------------------------------------------
 goldilocks = {
-  enabled = true
+  enabled = false
 }
 
 
