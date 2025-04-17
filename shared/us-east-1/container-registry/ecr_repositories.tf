@@ -2,7 +2,7 @@
 # ECR Repositories
 #
 module "ecr_repositories" {
-  source = "github.com/binbashar/terraform-aws-ecr.git?ref=v2.3.1"
+  source = "github.com/binbashar/terraform-aws-ecr.git?ref=v2.4.0"
 
   for_each = local.repositories
 
@@ -22,7 +22,7 @@ module "ecr_repositories" {
 # ECR Global Registry configuration
 #
 module "ecr_registry" {
-  source = "github.com/binbashar/terraform-aws-ecr.git?ref=v2.3.1"
+  source = "github.com/binbashar/terraform-aws-ecr.git?ref=v2.4.0"
 
   create_repository = false
 
