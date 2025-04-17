@@ -20,7 +20,7 @@ resource "helm_release" "goldilocks" {
   namespace  = kubernetes_namespace.monitoring.id
   repository = "https://charts.fairwinds.com/stable"
   chart      = "goldilocks"
-  version    = "3.3.1"
+  version    = "5.0.0"
   values     = [file("chart-values/goldilocks.yaml")]
   depends_on = [helm_release.vpa]
 }
