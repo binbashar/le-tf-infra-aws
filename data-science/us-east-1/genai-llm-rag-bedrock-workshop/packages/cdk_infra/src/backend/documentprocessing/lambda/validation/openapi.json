@@ -1,0 +1,80 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Document Validation API",
+    "version": "1.0.0",
+    "description": "API for validating processed documents"
+  },
+  "paths": {
+    "/validate": {
+      "post": {
+        "summary": "Validate a processed document",
+        "description": "Validates the results of document processing",
+        "operationId": "validateDocument",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "documentId": {
+                    "type": "string",
+                    "description": "ID of the processed document"
+                  },
+                  "documentType": {
+                    "type": "string",
+                    "description": "Type of the document (e.g., invoice, receipt)"
+                  },
+                  "validationRules": {
+                    "type": "object",
+                    "description": "Validation rules to apply"
+                  }
+                },
+                "required": ["documentId", "documentType"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isValid": {
+                      "type": "boolean",
+                      "description": "Whether the document is valid"
+                    },
+                    "validationResults": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string",
+                            "description": "Field name"
+                          },
+                          "isValid": {
+                            "type": "boolean",
+                            "description": "Whether the field is valid"
+                          },
+                          "message": {
+                            "type": "string",
+                            "description": "Validation message"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+} 

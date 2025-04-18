@@ -18,8 +18,8 @@
     ]
   },
   "context": {
-    "custom:companyName": "AddValueMachine",
-    "custom:agentName": "AVMAgentBot",
+    "custom:companyName": "Binbash",
+    "custom:agentName": "BinbashAgentBot",
     "deploy:case": "all",
     "deploy:knowledgebase": true
   }

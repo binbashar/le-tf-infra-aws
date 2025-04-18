@@ -12,7 +12,8 @@ import Layout from './components/Layout'
 import Footer from './components/Footer'
 import BedrockAgent from "./views/BedrockAgent"
 import MultiModalLLM from "./views/MultiModalLLM"
-import Prompt from "./views/Prompt";
+import Prompt from "./views/Prompt"
+import DocumentProcessing from "./views/DocumentProcessing"
 import React from 'react';
 
 const App = ({ signOut, user }) => {
@@ -29,7 +30,7 @@ const App = ({ signOut, user }) => {
         { path: "multimodal", element: <MultiModalLLM/> },
         { path: "prompt", element: <Prompt /> },
         { path: "bedrockagent", element: <BedrockAgent /> },
-
+        { path: "documentprocessing", element: <DocumentProcessing /> },
       ]
     }
   ])

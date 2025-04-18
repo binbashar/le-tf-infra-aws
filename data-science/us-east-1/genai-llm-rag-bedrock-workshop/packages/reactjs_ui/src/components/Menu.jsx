@@ -113,6 +113,29 @@ const Menu = ({ signOut, groups, ...user }) => {
         overflowMenuBackIconAriaLabel: "Back",
         overflowMenuDismissIconAriaLabel: "Close menu",
       }}
+      onFollow={menuFollow}
+      items={[
+        {
+          type: "link",
+          text: "MultiModal LLM",
+          href: "/multimodal",
+        },
+        {
+          type: "link",
+          text: "Prompt",
+          href: "/prompt",
+        },
+        {
+          type: "link",
+          text: "Bedrock Agent",
+          href: "/bedrockagent",
+        },
+        {
+          type: "link",
+          text: "Document Processing",
+          href: "/documentprocessing",
+        },
+      ]}
     />
   </div>
   );

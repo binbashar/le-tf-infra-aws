@@ -17,12 +17,14 @@ import { BedrockKnowledgeBaseStack } from "./stacks/bedrock-kb-stack";
 import { BedrockText2SqlAgentsStack } from "./stacks/text2sql/bedrock-text2sql-agent-stack";
 import { CommonStack } from "./stacks/common-stack";
 import { Text2SQLStack } from "./stacks/text2sql/text2sql";
-import { ChatBotStack } from "./stacks/chatbot/chatbot"
+import { ChatBotStack } from "./stacks/chatbot/chatbot";
+import { DocumentProcessingStack } from "./stacks/documentprocessing/documentprocessing";
 
 // Define deployment case enum
 enum DeployCase {
   CHATBOT = "chatbot",
   TEXT2SQL = "text2sql",
+  DOCUMENTPROCESSING = "documentprocessing",
   ALL = "all",
 }
 
@@ -38,6 +40,11 @@ function getDeployCase(app: App): DeployCase {
   // Check for TEXT2SQL case
   if (deployCase === DeployCase.TEXT2SQL) {
     return DeployCase.TEXT2SQL;
+  }
+
+  // Check for DOCUMENTPROCESSING case
+  if (deployCase === DeployCase.DOCUMENTPROCESSING) {
+    return DeployCase.DOCUMENTPROCESSING;
   }
 
   // Check for ALL case
@@ -121,6 +128,20 @@ function getDeployCase(app: App): DeployCase {
         },
       );
       break;
+
+    case DeployCase.DOCUMENTPROCESSING:
+      const documentProcessingStack = new DocumentProcessingStack(
+        app,
+        stackNamePrefix + "DocumentProcessingStack",
+        {
+          env: env,
+          stackNamePrefix: deployCase,
+          commonStack: commonStack,
+          bedrockKnowledgeBaseStack: bedrockKnowledgeBaseStack
+        },
+      );
+      break;
+
     case DeployCase.ALL:
       const text2sqlAgentsStackAll = new Text2SQLStack(
         app,
@@ -143,7 +164,18 @@ function getDeployCase(app: App): DeployCase {
           bedrockKnowledgeBaseStack: bedrockKnowledgeBaseStack
         },
       );
-    break;
+
+      const documentProcessingStackAll = new DocumentProcessingStack(
+        app,
+        stackNamePrefix + "DocumentProcessingStack",
+        {
+          env: env,
+          stackNamePrefix: "documentprocessing",
+          commonStack: commonStack,
+          bedrockKnowledgeBaseStack: bedrockKnowledgeBaseStack
+        },
+      );
+      break;
 
     default:
       throw new Error("Invalid deployment case");

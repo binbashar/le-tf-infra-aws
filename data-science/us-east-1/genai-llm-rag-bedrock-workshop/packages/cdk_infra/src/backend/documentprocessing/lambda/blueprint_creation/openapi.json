@@ -1,0 +1,85 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Blueprint Creation API",
+    "version": "1.0.0",
+    "description": "API for creating document processing blueprints"
+  },
+  "paths": {
+    "/create": {
+      "post": {
+        "summary": "Create a document processing blueprint",
+        "description": "Creates a blueprint for processing a specific document type",
+        "operationId": "createBlueprint",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "documentType": {
+                    "type": "string",
+                    "description": "Type of document (e.g., invoice, receipt)"
+                  },
+                  "requiredFields": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "Field name"
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "Field data type"
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "Field description"
+                        }
+                      },
+                      "required": ["name", "type"]
+                    }
+                  },
+                  "processingRules": {
+                    "type": "object",
+                    "description": "Additional processing rules"
+                  }
+                },
+                "required": ["documentType", "requiredFields"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Blueprint created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "blueprintId": {
+                      "type": "string",
+                      "description": "ID of the created blueprint"
+                    },
+                    "blueprint": {
+                      "type": "object",
+                      "description": "The created blueprint"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Creation status"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+} 

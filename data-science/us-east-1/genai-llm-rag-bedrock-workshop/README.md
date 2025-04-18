@@ -75,13 +75,20 @@ Demonstration-purpose React application showing how to integrate Bedrock Agent w
 - [View Details](packages/reactjs_ui/README.md)
 
 ### Backend (`cdk_infra`)
-AWS CDK infrastructure implementing two use cases: Chatbot, Text2SQL
+AWS CDK infrastructure implementing three use cases: Chatbot, Text2SQL, and Document Processing. Each use case has its own dedicated resources and infrastructure:
+
+- **Chatbot**: AI-powered chatbot with knowledge base integration
+- **Text2SQL**: Natural language to SQL conversion using Bedrock Agent
+- **Document Processing**: Automated document processing and validation with dedicated S3 buckets for input and output
 
 - [View Details](packages/cdk_infra/README.md)
 
 ## Getting Started
 
-1. Review the [Backend Implementation](packages/cdk_infra/README.md) and select your use case.
+1. Review the [Backend Implementation](packages/cdk_infra/README.md) and select your use case:
+   - Chatbot for conversational AI
+   - Text2SQL for natural language database queries
+   - Document Processing for automated document validation and processing
 2. Follow the [Deployment Guide](DEPLOYMENT.md) for step-by-step instructions.
 3. Customize your solution using the [Customization Guide](docs/CUSTOMIZATION.md).
 4. Test your deployment with the [API Testing Guide](docs/API_TESTING.md).

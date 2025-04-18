@@ -17,15 +17,22 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 import { ChatSummaryWithSessionId } from "../constructs/chat-summary-with-sessionid";
+import * as s3 from "aws-cdk-lib/aws-s3";
+import * as cdk from 'aws-cdk-lib';
 
-interface BasicRestApiStackProps extends StackProps {
-  LAYER_BOTO: PythonLayerVersion;
+export interface BasicRestApiStackProps extends StackProps {
+  env: cdk.Environment;
   LAYER_POWERTOOLS: PythonLayerVersion;
+  LAYER_BOTO: PythonLayerVersion;
   LAYER_PYDANTIC: PythonLayerVersion;
-  AGENT: bedrock.Agent;
-  AGENT_ALIAS: string;
-  AGENT_KB: bedrock.KnowledgeBase | null;
   PREFIX: string;
+  // Text2SQL specific properties
+  AGENT?: bedrock.Agent;
+  AGENT_ALIAS?: string;
+  AGENT_KB?: bedrock.KnowledgeBase | null;
+  // Document Processing specific properties
+  DOCUMENT_INPUT_BUCKET?: s3.Bucket;
+  DOCUMENT_OUTPUT_BUCKET?: s3.Bucket;
 }
 
 export class BasicRestApiStack extends Stack {
@@ -92,17 +99,19 @@ export class BasicRestApiStack extends Stack {
             }),
           ],
         }),
-        bedrockAgentAccess: new iam.PolicyDocument({
-          statements: [
-            new iam.PolicyStatement({
-              effect: iam.Effect.ALLOW,
-              actions: ["bedrock:InvokeAgent"],
-              resources: [
-                props.AGENT.agentArn,
-                `arn:aws:bedrock:${this.region}:${this.account}:agent-alias/*`,
-              ],
-            }),
-          ],
+        ...(props.AGENT && {
+          bedrockAgentAccess: new iam.PolicyDocument({
+            statements: [
+              new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: ["bedrock:InvokeAgent"],
+                resources: [
+                  props.AGENT.agentArn,
+                  `arn:aws:bedrock:${this.region}:${this.account}:agent-alias/*`,
+                ],
+              }),
+            ],
+          }),
         }),
       },
       roleName: prefixName+"LambdaAPIInterfaceRole",
@@ -125,8 +134,8 @@ export class BasicRestApiStack extends Stack {
           POWERTOOLS_SERVICE_NAME: "QnaAgentApi",
           DEBUG: "false",
           SESSIONS_TABLE: sessionsTable.tableName,
-          AGENT_ID: props.AGENT.agentId,
-          AGENT_ALIAS_ID: props.AGENT_ALIAS,
+          ...(props.AGENT && { AGENT_ID: props.AGENT.agentId }),
+          ...(props.AGENT_ALIAS && { AGENT_ALIAS_ID: props.AGENT_ALIAS }),
         },
         timeout: Duration.seconds(300),
         memorySize: 512,
@@ -177,5 +186,37 @@ export class BasicRestApiStack extends Stack {
       LAYER_POWERTOOLS: props.LAYER_POWERTOOLS,
       PREFIX: prefixName
     });
+
+    // Create Lambda function for Bedrock Agent
+    const bedrockAgentLambda = new PythonFunction(this, "BedrockAgentLambda", {
+      functionName: `${props.PREFIX}BedrockAgentLambda`,
+      entry: path.join(__dirname, "../../backend/text2sql/lambda/bedrock_agent"),
+      index: "bedrock_agent.py",
+      handler: "lambda_handler",
+      runtime: lambda.Runtime.PYTHON_3_11,
+      timeout: Duration.seconds(300),
+      memorySize: 256,
+      layers: [props.LAYER_BOTO, props.LAYER_POWERTOOLS, props.LAYER_PYDANTIC],
+      environment: {
+        DEBUG: "false",
+        SESSIONS_TABLE: sessionsTable.tableName,
+        ...(props.AGENT && { AGENT_ID: props.AGENT.agentId }),
+        ...(props.AGENT_ALIAS && { AGENT_ALIAS_ID: props.AGENT_ALIAS }),
+      },
+    });
+
+    // Add permissions to invoke Bedrock Agent
+    if (props.AGENT) {
+      const bedrockAgentPolicy = new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["bedrock:InvokeAgent"],
+        resources: [
+          props.AGENT.agentArn,
+          `arn:aws:bedrock:${this.region}:${this.account}:agent-alias/*`,
+        ],
+      });
+      bedrockAgentLambda.addToRolePolicy(bedrockAgentPolicy);
+      qnaAgentRestApiBackend.addToRolePolicy(bedrockAgentPolicy);
+    }
   }
 }

@@ -16,19 +16,22 @@ importers:
     dependencies:
       '@aws-cdk/aws-lambda-python-alpha':
         specifier: 2.173.2-alpha.0
-        version: 2.173.2-alpha.0(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2)
+        version: 2.173.2-alpha.0(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2)
       '@aws/pdk':
         specifier: ^0.25.15
-        version: 0.25.16(@aws-cdk/aws-cognito-identitypool-alpha@2.163.1-alpha.0(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2))(aws-cdk-lib@2.175.1(constructs@10.4.2))(cdk-nag@2.34.23(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2))(constructs@10.4.2)(projen@0.82.8(constructs@10.4.2))
+        version: 0.25.16(@aws-cdk/aws-cognito-identitypool-alpha@2.163.1-alpha.0(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2))(aws-cdk-lib@2.188.0(constructs@10.4.2))(cdk-nag@2.34.23(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2))(constructs@10.4.2)(projen@0.82.8(constructs@10.4.2))
       '@cdklabs/generative-ai-cdk-constructs':
         specifier: ^0.1.287
-        version: 0.1.289(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2)
+        version: 0.1.289(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2)
+      aws-bedrock-data-automation:
+        specifier: npm:@cdklabs/generative-ai-cdk-constructs@0.1.299
+        version: '@cdklabs/generative-ai-cdk-constructs@0.1.299(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2)'
       aws-cdk-lib:
-        specifier: ^2.174.0
-        version: 2.175.1(constructs@10.4.2)
+        specifier: ^2.187.0
+        version: 2.188.0(constructs@10.4.2)
       cdk-nag:
         specifier: ^2.34.23
-        version: 2.34.23(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2)
+        version: 2.34.23(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2)
       constructs:
         specifier: ^10.0.0
         version: 10.4.2
@@ -40,8 +43,8 @@ importers:
         specifier: 22.7.9
         version: 22.7.9
       aws-cdk:
-        specifier: ^2.174.0
-        version: 2.175.1
+        specifier: ^2.187.0
+        version: 2.1007.0
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@22.7.9)(ts-node@10.9.2(@types/node@22.7.9)(typescript@5.6.3))
@@ -275,11 +278,8 @@ packages:
       xstate:
         optional: true
 
-  '@aws-cdk/asset-awscli-v1@2.2.218':
-    resolution: {integrity: sha512-t5M+dk7qNM0N6ZbHVDs/6lO7xPw4ogUUsTbXzAfnqrpZQ/wKpphwgBxTNrHMV+NKOFxyCbF5fWUAD7I36jRqZw==}
-
-  '@aws-cdk/asset-kubectl-v20@2.1.3':
-    resolution: {integrity: sha512-cDG1w3ieM6eOT9mTefRuTypk95+oyD7P5X/wRltwmYxU7nZc3+076YEVS6vrjDKr3ADYbfn0lDKpfB1FBtO9CQ==}
+  '@aws-cdk/asset-awscli-v1@2.2.230':
+    resolution: {integrity: sha512-kUnhKIYu42hqBa6a8x2/7o29ObpJgjYGQy28lZDq9awXyvpR62I2bRxrNKNR3uFUQz3ySuT9JXhGHhuZPdbnFw==}
 
   '@aws-cdk/asset-node-proxy-agent-v6@2.1.0':
     resolution: {integrity: sha512-7bY3J8GCVxLupn/kNmpPc5VJz8grx+4RKfnnJiO1LG+uxkZfANZG3RMHhE+qQxxwkyQ9/MfPtTpf748UhR425A==}
@@ -287,6 +287,7 @@ packages:
   '@aws-cdk/aws-cognito-identitypool-alpha@2.163.1-alpha.0':
     resolution: {integrity: sha512-QcgYM8F7lm+bQG6no0X7KfMTPAo/YajSocu3HxO5+Vmz3cETuJVvZWjZVwkAYU71HQh507nAmbONhYnqQO+7FA==}
     engines: {node: '>= 14.15.0'}
+    deprecated: This package has been stabilized and moved to aws-cdk-lib
     peerDependencies:
       aws-cdk-lib: ^2.163.1
       constructs: ^10.0.0
@@ -298,8 +299,9 @@ packages:
       aws-cdk-lib: ^2.173.2
       constructs: ^10.0.0
 
-  '@aws-cdk/cloud-assembly-schema@39.1.44':
-    resolution: {integrity: sha512-iW9qAEsRj22a9/ZRBXBgK5O671Lnecsa1I89I7pswZk8d9+LrOj4rBXl+vjioB8vBjXIyi9Fevvz3lLt3Jiw7w==}
+  '@aws-cdk/cloud-assembly-schema@41.2.0':
+    resolution: {integrity: sha512-JaulVS6z9y5+u4jNmoWbHZRs9uGOnmn/ktXygNWKNu1k6lF3ad4so3s18eRu15XCbUIomxN9WPYT6Ehh7hzONw==}
+    engines: {node: '>= 14.15.0'}
     bundledDependencies:
       - jsonschema
       - semver
@@ -798,6 +800,16 @@ packages:
       aws-cdk-lib: ^2.174.0
       constructs: ^10.3.0
     bundledDependencies:
+      - deepmerge
+
+  '@cdklabs/generative-ai-cdk-constructs@0.1.299':
+    resolution: {integrity: sha512-S2yNwFMrT9dibq9XN0eCVxrU261KGgT1MyRC33hVgMbe5g4FKkZvDGBE5k9ULL7UIZdq29TPUMHascvR2i+dVQ==}
+    engines: {node: '>= 18.12.0 <= 22.x'}
+    peerDependencies:
+      aws-cdk-lib: ^2.187.0
+      constructs: ^10.3.0
+    bundledDependencies:
+      - '@aws-cdk/aws-lambda-python-alpha'
       - deepmerge
 
   '@cloudscape-design/collection-hooks@1.0.57':
@@ -2582,8 +2594,8 @@ packages:
   aws-amplify@6.12.0:
     resolution: {integrity: sha512-rnIw4+0BdCfXMQgXjmguQOe2aKMVc0RNJEgu8UvGeNsHYhC3yhycPUMjt14bbc42uk8t+7CLT2d6CLOORNxmLQ==}
 
-  aws-cdk-lib@2.175.1:
-    resolution: {integrity: sha512-2OiZDUeuAA5nBrWKxQVT0CHrQmLLx7SIpUeqyKRLEdiYPFlj3nCd/0KcVpsy6hPKS+IZp7Qm1kghmGMsV6JGoA==}
+  aws-cdk-lib@2.188.0:
+    resolution: {integrity: sha512-RiAkyKHUYcpI59IXP6VP1NvO0Ph5vlqIsrz6YE8KPuGfQ0LuE5ob4Ta2ibVs/fvaGyJIZkEPw54hDrytVWrk3g==}
     engines: {node: '>= 14.15.0'}
     peerDependencies:
       constructs: ^10.0.0
@@ -2600,8 +2612,8 @@ packages:
       - yaml
       - mime-types
 
-  aws-cdk@2.175.1:
-    resolution: {integrity: sha512-duvy0FtGAAYqJi/x0MjBfCp60ZlDYl0X5/GrADwMz4AfHQ8aTXCyaVsdJuCxz0ZMHSNaFRuCNkAlc2Xu43zQmQ==}
+  aws-cdk@2.1007.0:
+    resolution: {integrity: sha512-/UOYOTGWUm+pP9qxg03tID5tL6euC+pb+xo0RBue+xhnUWwj/Bbsw6DbqbpOPMrNzTUxmM723/uMEQmM6S26dw==}
     engines: {node: '>= 14.15.0'}
     hasBin: true
 
@@ -2694,6 +2706,12 @@ packages:
 
   cdk-nag@2.34.23:
     resolution: {integrity: sha512-TCvQy5uCk1QHek7UhbmFh4Uk2HveXyuQ6jfUC0ZfW5HgAMhv8+6lTY56Jq09/rm0csKDzWnMpGGAXjgLW6rg0A==}
+    peerDependencies:
+      aws-cdk-lib: ^2.156.0
+      constructs: ^10.0.5
+
+  cdk-nag@2.35.65:
+    resolution: {integrity: sha512-TXWsNQV58eZIy1NmFWiUIgNuGdRdzYflw3S71KjEq4fxD7O+M8nMVJyA8/ydvvCzl6pTTnDGWB2uv0C0BoA0FA==}
     peerDependencies:
       aws-cdk-lib: ^2.156.0
       constructs: ^10.0.5
@@ -4653,23 +4671,21 @@ snapshots:
     optionalDependencies:
       xstate: 4.38.3
 
-  '@aws-cdk/asset-awscli-v1@2.2.218': {}
-
-  '@aws-cdk/asset-kubectl-v20@2.1.3': {}
+  '@aws-cdk/asset-awscli-v1@2.2.230': {}
 
   '@aws-cdk/asset-node-proxy-agent-v6@2.1.0': {}
 
-  '@aws-cdk/aws-cognito-identitypool-alpha@2.163.1-alpha.0(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2)':
+  '@aws-cdk/aws-cognito-identitypool-alpha@2.163.1-alpha.0(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2)':
     dependencies:
-      aws-cdk-lib: 2.175.1(constructs@10.4.2)
+      aws-cdk-lib: 2.188.0(constructs@10.4.2)
       constructs: 10.4.2
 
-  '@aws-cdk/aws-lambda-python-alpha@2.173.2-alpha.0(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2)':
+  '@aws-cdk/aws-lambda-python-alpha@2.173.2-alpha.0(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2)':
     dependencies:
-      aws-cdk-lib: 2.175.1(constructs@10.4.2)
+      aws-cdk-lib: 2.188.0(constructs@10.4.2)
       constructs: 10.4.2
 
-  '@aws-cdk/cloud-assembly-schema@39.1.44': {}
+  '@aws-cdk/cloud-assembly-schema@41.2.0': {}
 
   '@aws-crypto/crc32@3.0.0':
     dependencies:
@@ -5687,11 +5703,11 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@aws/pdk@0.25.16(@aws-cdk/aws-cognito-identitypool-alpha@2.163.1-alpha.0(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2))(aws-cdk-lib@2.175.1(constructs@10.4.2))(cdk-nag@2.34.23(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2))(constructs@10.4.2)(projen@0.82.8(constructs@10.4.2))':
+  '@aws/pdk@0.25.16(@aws-cdk/aws-cognito-identitypool-alpha@2.163.1-alpha.0(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2))(aws-cdk-lib@2.188.0(constructs@10.4.2))(cdk-nag@2.34.23(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2))(constructs@10.4.2)(projen@0.82.8(constructs@10.4.2))':
     dependencies:
-      '@aws-cdk/aws-cognito-identitypool-alpha': 2.163.1-alpha.0(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2)
-      aws-cdk-lib: 2.175.1(constructs@10.4.2)
-      cdk-nag: 2.34.23(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2)
+      '@aws-cdk/aws-cognito-identitypool-alpha': 2.163.1-alpha.0(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2)
+      aws-cdk-lib: 2.188.0(constructs@10.4.2)
+      cdk-nag: 2.34.23(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2)
       constructs: 10.4.2
       projen: 0.82.8(constructs@10.4.2)
 
@@ -5925,10 +5941,16 @@ snapshots:
       - encoding
       - utf-8-validate
 
-  '@cdklabs/generative-ai-cdk-constructs@0.1.289(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2)':
+  '@cdklabs/generative-ai-cdk-constructs@0.1.289(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2)':
     dependencies:
-      aws-cdk-lib: 2.175.1(constructs@10.4.2)
-      cdk-nag: 2.34.23(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2)
+      aws-cdk-lib: 2.188.0(constructs@10.4.2)
+      cdk-nag: 2.34.23(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2)
+      constructs: 10.4.2
+
+  '@cdklabs/generative-ai-cdk-constructs@0.1.299(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2)':
+    dependencies:
+      aws-cdk-lib: 2.188.0(constructs@10.4.2)
+      cdk-nag: 2.35.65(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2)
       constructs: 10.4.2
 
   '@cloudscape-design/collection-hooks@1.0.57(react@18.3.1)':
@@ -7758,22 +7780,21 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  aws-cdk-lib@2.175.1(constructs@10.4.2):
+  aws-cdk-lib@2.188.0(constructs@10.4.2):
     dependencies:
-      '@aws-cdk/asset-awscli-v1': 2.2.218
-      '@aws-cdk/asset-kubectl-v20': 2.1.3
+      '@aws-cdk/asset-awscli-v1': 2.2.230
       '@aws-cdk/asset-node-proxy-agent-v6': 2.1.0
-      '@aws-cdk/cloud-assembly-schema': 39.1.44
+      '@aws-cdk/cloud-assembly-schema': 41.2.0
       constructs: 10.4.2
 
-  aws-cdk@2.175.1:
+  aws-cdk@2.1007.0:
     optionalDependencies:
       fsevents: 2.3.2
 
   axios@1.7.4(debug@4.4.0):
     dependencies:
       follow-redirects: 1.15.9(debug@4.4.0)
-      form-data: 4.0.0
+      form-data: 4.0.1
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
@@ -7887,9 +7908,14 @@ snapshots:
 
   caniuse-lite@1.0.30001692: {}
 
-  cdk-nag@2.34.23(aws-cdk-lib@2.175.1(constructs@10.4.2))(constructs@10.4.2):
+  cdk-nag@2.34.23(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2):
     dependencies:
-      aws-cdk-lib: 2.175.1(constructs@10.4.2)
+      aws-cdk-lib: 2.188.0(constructs@10.4.2)
+      constructs: 10.4.2
+
+  cdk-nag@2.35.65(aws-cdk-lib@2.188.0(constructs@10.4.2))(constructs@10.4.2):
+    dependencies:
+      aws-cdk-lib: 2.188.0(constructs@10.4.2)
       constructs: 10.4.2
 
   chalk@3.0.0:

@@ -1,0 +1,76 @@
+I'll create a diagram showing the document processing solution architecture. Here's a Mermaid diagram that illustrates the components and their interactions:
+
+graph TD
+    subgraph "Document Processing Stack"
+        subgraph "Input Layer"
+            A[Document Input Bucket]
+        end
+
+        subgraph "Processing Layer"
+            B[Bedrock Data Automation]
+            C[Document Processing Lambda]
+            D[Blueprint Creation Lambda]
+            E[Document Validation Lambda]
+        end
+
+        subgraph "Agent Layer"
+            F[Bedrock Agent]
+            G[Document Processing Action Group]
+            H[Blueprint Creation Action Group]
+            I[Document Validation Action Group]
+        end
+
+        subgraph "Output Layer"
+            J[Document Output Bucket]
+            K[Blueprints Bucket]
+        end
+
+        subgraph "API Layer"
+            L[API Gateway]
+            M[Basic Rest API Stack]
+        end
+
+        %% Connections
+        A --> B
+        B --> C
+        C --> J
+        D --> K
+        E --> J
+        F --> G
+        F --> H
+        F --> I
+        G --> C
+        H --> D
+        I --> E
+        M --> F
+        L --> M
+    end
+
+    %% External Interactions
+    User[User] --> L
+    L --> User
+
+This diagram shows:
+Input Layer
+    Document Input Bucket: Where raw documents are uploaded
+Processing Layer
+    Bedrock Data Automation: Core processing engine
+    Document Processing Lambda: Handles document processing
+    Blueprint Creation Lambda: Creates processing blueprints
+    Document Validation Lambda: Validates processed documents
+Agent Layer
+    Bedrock Agent: Orchestrates the processing flow
+    Action Groups for each processing step
+Output Layer
+    Document Output Bucket: Stores processed documents
+    Blueprints Bucket: Stores processing blueprints
+API Layer
+    API Gateway: Entry point for API requests
+    Basic Rest API Stack: Handles API routing and authentication
+The flow is:
+    User uploads document to Input Bucket
+    Bedrock Data Automation triggers processing
+    Document Processing Lambda processes the document
+    Validation Lambda validates the results
+    Results are stored in Output Bucket
+    User can interact with the system through the API
