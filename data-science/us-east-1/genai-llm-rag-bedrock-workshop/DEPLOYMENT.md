@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide provides step-by-step instructions for deploying the PACE Generative AI Developer Workshop project.
+This guide provides step-by-step instructions for deploying the Binbash Generative AI Developer Workshop project.
 
 ## Overview
 
@@ -9,7 +9,7 @@ Follow this guide after reviewing the [prerequisites in the main README](README.
 This document provides comprehensive setup instructions for:
 - Backend infrastructure
 - Frontend application
-- Both Chatbot and Text2SQL use cases
+- All use cases: Chatbot, Text2SQL, and Document Processing
 
 ## Table of Contents
 
@@ -29,6 +29,11 @@ This document provides comprehensive setup instructions for:
 ```bash
 aws sts get-caller-identity
 aws configure get region
+```
+
+- If you are logged into another account, and you want to use an account that is in another profile  for this workshop, execute the following.
+```bash
+export AWS_PROFILE=your_profile_for_this_workshop
 ```
 
 Recommended region: `us-west-2`
@@ -68,15 +73,16 @@ Replace <REGION NAME> with your desired region (e.g., `us-west-2`).
 
 > Ensure you run all the `pnpm` commands in the **root** directory of the project
 
-1. Configure the [cdk.json](/packages/cdk_infra/cdk.json) file under `/packages/cdk_infra`:
+1. Configure the [cdk.json](packages/cdk_infra/cdk.json) file under `/packages/cdk_infra`:
     - Set `"custom:companyName"` to your company name
     - Set `"custom:agentName"` to your agent's name
     - Choose your use case:
-        - `"deploy:case"`: Select `chatbot`, `text2sql` or `all` (case-insensitive)
+        - `"deploy:case"`: Select `chatbot`, `text2sql`, `documentprocessing` or `all` (case-insensitive)
         - `"deploy:knowledgebase"`:
             - For `chatbot`: Set to `true` if you want to deploy a knowledge base
             - For `text2sql`: Typically set to `false` (set to `true` only if you need a specific knowledge base)
-            - For `all`:  Set to `true` if you want to deploy a knowledge base. This will deploy both the case `chatbot` and `text2sql`
+            - For `documentprocessing`: Set to `false` (knowledge base not required)
+            - For `all`: Set to `true` if you want to deploy a knowledge base. This will deploy the knowledge base for the chatbot use case
 
    Example for Text2SQL use case:
    ```json
@@ -88,7 +94,7 @@ Replace <REGION NAME> with your desired region (e.g., `us-west-2`).
    }
    ```
 
-   > Note: The deployment will fail if the `deploy:case` is not set to from `chatbot` , `text2sql` or `all`.
+   > Note: The deployment will fail if the `deploy:case` is not set to one of `chatbot`, `text2sql`, `documentprocessing` or `all`.
 
    2. CDK Infrastructure Project Build
 
@@ -103,6 +109,7 @@ Replace <REGION NAME> with your desired region (e.g., `us-west-2`).
       2. Locate the file where the model ID is defined: 
          - For the Chatbot: `packages/cdk_infra/src/stacks/bedrock-agent-stacks.ts`
          - For Text2SQL: `packages/cdk_infra/src/stacks/bedrock-text2sql-agent-stacks.ts`
+         - For Document Processing: `packages/cdk_infra/src/stacks/bedrock-bda-agent-stack.ts`
 
       3. Check the model ARN in your code. For example, the default Claude 3 Sonnet model ARN for `us-west-2` is:
            ```typescript
@@ -110,7 +117,11 @@ Replace <REGION NAME> with your desired region (e.g., `us-west-2`).
            ``` 
       4. If you're deploying to a different region, update the ARN accordingly in the appropriate file based on your deployment case.
 
-      > Note: Make sure the chosen model is available in your selected region. 
+      5. If you're using another model, update the property that is linked to a model by searching for:
+         ```typescript
+           "bedrock.BedrockFoundationModel"
+           ``` 
+      > Note: We recommend to use bedrock.BedrockFoundationModel.ANTHROPIC_CLAUDE_3_5_SONNET_V2_0 . Make sure the chosen model is available in your selected region. 
 
 3. Deploy the infrastructure stack (`cdk_infra`)
 
@@ -223,6 +234,7 @@ After deploying the packages/cdk_infra project, you'll have a sample Amazon Cogn
 For detailed instructions on customizing your deployment:
 - [Chatbot Customization Guide](docs/CUSTOMIZATION.md#chatbot-customization)
 - [Text2SQL Customization Guide](docs/CUSTOMIZATION.md#text2sql-customization)
+- [Document Processing Customization Guide](docs/CUSTOMIZATION.md#document-processing-customization)
 
 ## Testing
 

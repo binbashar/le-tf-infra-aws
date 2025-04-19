@@ -64,15 +64,15 @@ export class BedrockDocumentProcessingStack extends Stack {
       path.join(__dirname, "../../prompt/instruction/documentprocessing", "instruction.txt"),
       "utf8",
     );
-    const orchestration = readFileSync(
+    const orchestration = JSON.parse(readFileSync(
       path.join(__dirname, "../../prompt/orchestration/documentprocessing/claude/sonnet3.5", "orchestration_prompt.txt"),
       "utf8",
-    );
+    ));
 
     // Create Bedrock Agent for document processing validation
     const bedrockAgent = new bedrock.Agent(this, "DocumentProcessingAgent", {
       name: (cdk.Stack.of(this) + "-" + "DocumentProcessingAgent").replace("/", "-"),
-      foundationModel: bedrock.BedrockFoundationModel.ANTHROPIC_CLAUDE_3_5_SONNET_V1_0,
+      foundationModel: bedrock.BedrockFoundationModel.ANTHROPIC_CLAUDE_3_5_SONNET_V2_0,
       shouldPrepareAgent: true,
       enableUserInput: true,
       instruction: "You are " +
@@ -94,7 +94,7 @@ export class BedrockDocumentProcessingStack extends Stack {
               maximumLength: 2048,
               stopSequences: ["</invoke>", "</error>", "</answer>"],
             },
-            basePromptTemplate: orchestration,
+            basePromptTemplate: JSON.stringify(orchestration),
             promptCreationMode: PromptCreationMode.OVERRIDDEN,
             promptState: PromptState.ENABLED,
           },

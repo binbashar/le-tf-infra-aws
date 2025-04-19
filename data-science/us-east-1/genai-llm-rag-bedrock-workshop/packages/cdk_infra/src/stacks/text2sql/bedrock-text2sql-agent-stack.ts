@@ -199,7 +199,7 @@ export class BedrockText2SqlAgentsStack extends Stack {
     const bedrockAgent = new bedrock.Agent(this, "AthenaAgent", {
       name: (cdk.Stack.of(this) + "-" + "AthenaAgent").replace("/", "-"),
       foundationModel:
-        bedrock.BedrockFoundationModel.ANTHROPIC_CLAUDE_3_5_SONNET_V1_0,
+        bedrock.BedrockFoundationModel.ANTHROPIC_CLAUDE_3_5_SONNET_V2_0,
       shouldPrepareAgent: true,
       enableUserInput: true,
       instruction:

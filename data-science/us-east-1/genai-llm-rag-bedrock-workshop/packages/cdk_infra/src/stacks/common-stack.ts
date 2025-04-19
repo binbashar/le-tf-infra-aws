@@ -5,7 +5,7 @@
 */
 
 import * as path from "path";
-import { UserIdentity, UserPoolWithMfa } from "@aws/pdk/identity";
+import { UserIdentity } from "@aws/pdk/identity";
 import { PythonLayerVersion } from "@aws-cdk/aws-lambda-python-alpha";
 import {
   Stack,
@@ -19,12 +19,14 @@ import {
   CfnUserPoolGroup,
   CfnUserPoolUser,
   CfnUserPoolUserToGroupAttachment,
+  UserPool,
 } from "aws-cdk-lib/aws-cognito";
 import * as iam from "aws-cdk-lib/aws-iam";
 import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import { NagSuppressions } from "cdk-nag";
 import { Construct } from "constructs";
+import { AdvancedSecurityMode } from "aws-cdk-lib/aws-cognito";
 
 export class CommonStack extends Stack {
   public readonly LAYER_BOTO: PythonLayerVersion;
@@ -93,9 +95,21 @@ export class CommonStack extends Stack {
 
     // * Amazon Cognito (From PDK's User Identity)
     const userIdentity = new UserIdentity(this, `UserIdentity`, {
-      userPool: new UserPoolWithMfa(this, `UserPool`, {
+      userPool: new UserPool(this, `UserPool`, {
         mfa: Mfa.OFF,
         selfSignUpEnabled: true,
+        standardAttributes: {
+          email: { required: true, mutable: true },
+          givenName: { required: true, mutable: true },
+          familyName: { required: true, mutable: true }
+        },
+        passwordPolicy: {
+          minLength: 8,
+          requireUppercase: true,
+          requireLowercase: true,
+          requireDigits: true,
+          requireSymbols: true,
+        }
       }),
     });
 

@@ -1,4 +1,4 @@
-# PACE Generative AI Developer Workshop
+# Binbash Generative AI Developer Workshop
 
 ## Introduction
 
@@ -21,9 +21,9 @@ You can use this template as a foundation and modify components, prompts, and in
    - Claude (Sonnet 3, 3.5) for Bedrock Agent
    - Titan Embeddings v2 for Knowledge Base
    - Nova Lite for Chat Summary (Optional)
-- [ ] CDK bootstrapped in your target region (Recommended region: `us-west-2`)
+- [ ] CDK bootstrapped in your target region and aws account(Recommended region: `us-west-2`)
   ```bash
-  cdk bootstrap aws://ACCOUNT-NUMBER/REGION
+  cdk bootstrap aws://ACCOUNT-NUMBER/REGION --profile your_aws_account_profile
   ```
   - If you use a different region, ensure [the AWS services](packages/cdk_infra/README.md) and [foundation models required for this project](./README.md/#required-aws-setup) are supported in your chosen region.
   - Using a different region will require changing region settings in some subsequent steps. Guidance for these changes will be provided later in the instructions.
