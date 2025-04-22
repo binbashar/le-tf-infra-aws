@@ -190,7 +190,7 @@ After deploying the packages/cdk_infra project, you'll have a sample Amazon Cogn
         - Find your User Pool
         - Click UserPoolWebClient and copy the Client ID
 
-2. Update [aws-exports.js](../packages/reactjs_ui/src/aws-exports.js) file with the collected values (located at `packages/reactjs_ui/src`). Replace the example values in the file with your own:
+2. Update [aws-exports.js](packages/reactjs_ui/src/aws-exports.js) file with the collected values (located at `packages/reactjs_ui/src`). Replace the example values in the file with your own:
 
    ```json
    {
@@ -226,7 +226,7 @@ After deploying the packages/cdk_infra project, you'll have a sample Amazon Cogn
 
    > Tip: For this demo, you can skip email verification.
 
-4. For detailed UI instructions, refer to the [Frontend Implementation](../packages/reactjs_ui/README.md#getting-started)
+4. For detailed UI instructions, refer to the [Frontend Implementation](packages/reactjs_ui/README.md#getting-started)
 
 
 ## Customization

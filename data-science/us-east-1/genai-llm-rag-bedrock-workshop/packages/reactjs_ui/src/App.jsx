@@ -17,34 +17,28 @@ import DocumentProcessing from "./views/DocumentProcessing"
 import React from 'react';
 
 const App = ({ signOut, user }) => {
-
   const router = createBrowserRouter([
-
     {
       path: "/",
-      errorElement: <div>something went wrong!</div>,
       element: (
-          <Struct signOut={signOut}  {...user} />
+        <div className="app-container">
+          <Menu signOut={signOut} {...user} />
+          <Layout />
+          <Footer />
+        </div>
       ),
       children: [
-        { path: "multimodal", element: <MultiModalLLM/> },
+        { path: "multimodal", element: <MultiModalLLM /> },
         { path: "prompt", element: <Prompt /> },
         { path: "bedrockagent", element: <BedrockAgent /> },
         { path: "documentprocessing", element: <DocumentProcessing /> },
       ]
     }
-  ])
+  ]);
 
-  return (<RouterProvider router={router} />)
-}
-
-const Struct = ({ signOut, ...user }) =>
-[
-    <Menu key={1} signOut={signOut} {...user}></Menu>,
-    <Layout key={2} ></Layout>,
-    <Footer key={3}></Footer>
-]
+  return <RouterProvider router={router} />;
+};
 
 export default withAuthenticator(App, {
   hideSignUp: true
-})
+});

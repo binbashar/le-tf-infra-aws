@@ -31,9 +31,17 @@ applyMode(initialThemeMode);
 sessionStorage.setItem('themeMode', initialThemeMode);
 console.log("Stored theme mode after update:", sessionStorage.getItem('themeMode'));
 
-// Load aws-exports values
-Amplify.configure(awsconfig);
-
+// Configure Amplify with Cognito
+Amplify.configure({
+  ...awsconfig,
+  ssr: true,
+  Auth: {
+    region: awsconfig.aws_project_region,
+    userPoolId: awsconfig.aws_user_pools_id,
+    userPoolWebClientId: awsconfig.aws_user_pools_web_client_id,
+    authenticationFlowType: 'USER_SRP_AUTH'
+  }
+});
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <App />
