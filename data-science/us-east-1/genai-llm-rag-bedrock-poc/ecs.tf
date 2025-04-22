@@ -3,7 +3,7 @@
 ################################################################################
 
 module "ecs_cluster" {
-  source = "github.com/binbashar/terraform-aws-ecs.git//modules/cluster?ref=v5.12.0"
+  source = "github.com/binbashar/terraform-aws-ecs.git//modules/cluster?ref=v5.12.1"
 
   cluster_name = "${local.name}-cluster"
 
@@ -23,7 +23,7 @@ module "ecs_cluster" {
 ################################################################################
 
 module "ecs_service" {
-  source = "github.com/binbashar/terraform-aws-ecs.git//modules/service?ref=v5.12.0"
+  source = "github.com/binbashar/terraform-aws-ecs.git//modules/service?ref=v5.12.1"
 
   name        = local.name
   cluster_arn = module.ecs_cluster.arn
