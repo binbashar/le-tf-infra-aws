@@ -83,7 +83,7 @@ module "permission_sets" {
       name                                = "DataScientist"
       description                         = "Provides access to AWS services that have to do with Data Science and MLOps."
       relay_state                         = local.default_relay_state
-      session_duration                    = "PT2H"
+      session_duration                    = "PT8H"
       tags                                = local.tags
       inline_policy                       = data.aws_iam_policy_document.data_scientist.json
       policy_attachments                  = []
