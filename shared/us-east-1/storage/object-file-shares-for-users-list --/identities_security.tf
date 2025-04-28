@@ -6,7 +6,7 @@ module "user_accounts" {
     aws = aws.security
   }
 
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v4.7.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v4.24.1"
 
   for_each = toset(var.usernames)
 
