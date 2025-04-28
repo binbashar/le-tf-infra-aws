@@ -74,6 +74,7 @@ module "permission_sets" {
       inline_policy    = data.aws_iam_policy_document.marketplaceseller.json
       policy_attachments = [
         "arn:aws:iam::aws:policy/AWSMarketplaceSellerFullAccess",
+        "arn:aws:iam::aws:policy/AWSMarketplaceFullAccess",
         "arn:aws:iam::aws:policy/WellArchitectedConsoleFullAccess",
         "arn:aws:iam::aws:policy/job-function/Billing",
       ]

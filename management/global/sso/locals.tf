@@ -20,6 +20,7 @@ locals {
       groups = [
         "administrators",
         "devops",
+        "marketplaceseller",
       ]
     }
     "marcos.pagnucco" = {
@@ -267,6 +268,7 @@ locals {
       email      = "carlos.paez@binbash.com.ar"
       groups = [
         "devops",
+        "marketplaceseller",
       ]
     }
     "alex.delossantos" = {
@@ -347,7 +349,7 @@ locals {
     }
     marketplaceseller = {
       name        = "MarketplaceSeller"
-      description = "Provides access to the AWS MaketPlace Seller."
+      description = "Provides access to the AWS MarketPlace Seller."
     }
     datascientists = {
       name        = "DataScientists"
