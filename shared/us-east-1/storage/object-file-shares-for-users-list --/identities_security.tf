@@ -14,7 +14,7 @@ module "user_accounts" {
   force_destroy                 = true
   create_iam_user_login_profile = false
   create_iam_access_key         = true
-  pgp_key                       = file("keys/machine.s3.demo")
+  pgp_key                       = file("${path.root}/../../../../security/global/base-identities/keys/machine.s3.demo")
 }
 
 resource "aws_iam_user_policy" "bucket_user_assume_role_permissions" {

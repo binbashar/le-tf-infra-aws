@@ -51,7 +51,7 @@ module "user_logging_buckets" {
   for_each = toset(var.usernames)
 
   bucket                                = "${var.project}-${var.prefix}-user-${each.key}-files-logs"
-  acl                                   = "log-delivery-write"
+  #acl                                   = "log-delivery-write"
   force_destroy                         = true
   attach_elb_log_delivery_policy        = true
   attach_lb_log_delivery_policy         = true
