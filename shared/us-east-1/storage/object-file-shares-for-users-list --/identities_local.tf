@@ -2,7 +2,7 @@
 # Create a role that will be assumed from specific users in Security account.
 #
 module "user_roles" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.7.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.24.1"
 
   for_each = toset(var.usernames)
 

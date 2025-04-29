@@ -6,7 +6,7 @@
 # Assumable Role Cross-Account: Leverage Test
 #
 module "iam_assumable_role_leverage_test" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.7.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.24.1"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.accounts.security.id}:root"
