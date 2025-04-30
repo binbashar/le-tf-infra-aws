@@ -1,5 +1,5 @@
 module "demoapps" {
-  source = "github.com/binbashar/terraform-aws-rds-aurora.git?ref=v7.2.2"
+  source = "github.com/binbashar/terraform-aws-rds-aurora.git?ref=v7.7.1"
 
   # General settings
   name           = "${var.project}-${var.environment}-binbash-aurora-mysql"

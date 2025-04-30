@@ -10,7 +10,7 @@ data "aws_secretsmanager_secret_version" "administrator" {
 }
 
 module "demoapps" {
-  source = "github.com/binbashar/terraform-aws-rds-aurora.git?ref=v7.3.0"
+  source = "github.com/binbashar/terraform-aws-rds-aurora.git?ref=v7.7.1"
 
   # General settings
   name           = "${var.project}-${var.environment}-binbash-aurora-mysql"
