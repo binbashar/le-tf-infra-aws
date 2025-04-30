@@ -7,7 +7,7 @@ resource "helm_release" "cert_manager" {
   namespace  = kubernetes_namespace.cert_manager.id
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
-  version    = "v1.17.1"
+  version    = "v1.17.2"
   values = [
     templatefile("chart-values/certmanager.yaml",
       {
