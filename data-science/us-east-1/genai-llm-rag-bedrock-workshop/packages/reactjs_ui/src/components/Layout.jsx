@@ -48,6 +48,7 @@ export default () => {
             {
               type: "section", text: "Amazon Bedrock Agents", items: [
                 { type: 'link', text: `Agent Chatbot`, href: `/bedrockagent` },
+                { type: 'link', text: `Document Processing`, href: `/kybdocuments` },
               ]
             },
             {type: "divider"},
@@ -59,10 +60,9 @@ export default () => {
               externalIconAriaLabel: "Opens in a new tab"
             }
           ]}
-          onFollow={(event) => {
+          onFollow={event => {
             if (!event.detail.external) {
               event.preventDefault();
-              console.log(event.detail.href);
               setActiveHref(event.detail.href);
               navigate(event.detail.href);
             }

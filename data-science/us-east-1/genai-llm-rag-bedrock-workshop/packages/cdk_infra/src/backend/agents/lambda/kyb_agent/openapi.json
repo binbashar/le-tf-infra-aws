@@ -1,0 +1,120 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "KYB Agent API",
+    "version": "1.0.0",
+    "description": "API for KYB document processing using Bedrock Agent and Data Automation"
+  },
+  "paths": {
+    "/process": {
+      "post": {
+        "summary": "Process a KYB document",
+        "description": "Processes a document using Bedrock Agent and Data Automation",
+        "operationId": "processKYBDocument",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "s3Key": {
+                    "type": "string",
+                    "description": "S3 key of the document to process"
+                  },
+                  "documentType": {
+                    "type": "string",
+                    "description": "Type of document being processed",
+                    "enum": [
+                      "ein_verification",
+                      "income_tax_1120",
+                      "company_formation",
+                      "actionary_composition"
+                    ]
+                  },
+                  "filename": {
+                    "type": "string",
+                    "description": "Original filename of the document"
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "description": "MIME type of the document"
+                  }
+                },
+                "required": ["s3Key", "documentType", "filename"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["success", "error"]
+                    },
+                    "documentType": {
+                      "type": "string"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        },
+                        "data": {
+                          "type": "object"
+                        },
+                        "confidence": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "analysis": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+} 

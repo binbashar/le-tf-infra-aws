@@ -9,7 +9,7 @@ import TopNavigation from "@cloudscape-design/components/top-navigation";
 import { useNavigate } from "react-router-dom";
 import { Mode, applyMode } from "@cloudscape-design/global-styles";
 import 'highlight.js/styles/atom-one-dark.css';
-import PaceLogo from "../assets/images/pace.svg?react";
+import binbashLogo from "../assets/images/binbash_logo.png";
 
 const Menu = ({ signOut, groups, ...user }) => {
   const [isDarkMode, setIsDarkMode] = React.useState(true);
@@ -68,7 +68,7 @@ const Menu = ({ signOut, groups, ...user }) => {
         onFollow: () => {
           navigate("/");
         },
-        title: <div className="header-title"><PaceLogo className="small-icon"></PaceLogo>Generative AI Developer Workshop </div>,
+        title: <div className="header-title"><img src={binbashLogo} className="small-icon" alt="Binbash" />GenAI Innovation Lab Workshop</div>,
       }}
       utilities={[
         {
@@ -117,6 +117,11 @@ const Menu = ({ signOut, groups, ...user }) => {
       items={[
         {
           type: "link",
+          text: "KYB Document Processing",
+          href: "/kybdocuments",
+        },
+        {
+          type: "link",
           text: "MultiModal LLM",
           href: "/multimodal",
         },
@@ -129,11 +134,6 @@ const Menu = ({ signOut, groups, ...user }) => {
           type: "link",
           text: "Bedrock Agent",
           href: "/bedrockagent",
-        },
-        {
-          type: "link",
-          text: "Document Processing",
-          href: "/documentprocessing",
         },
       ]}
     />

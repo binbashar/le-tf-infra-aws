@@ -30,31 +30,24 @@ enum DeployCase {
 
 // Function to get the deployment case
 function getDeployCase(app: App): DeployCase {
-  const deployCase = app.node.tryGetContext("deploy:case")?.toLowerCase();
-
-  // Return CHATBOT as default if no input or explicitly set to 'chatbot'
-  if (!deployCase || deployCase === DeployCase.CHATBOT) {
-    return DeployCase.CHATBOT;
-  }
-
-  // Check for TEXT2SQL case
-  if (deployCase === DeployCase.TEXT2SQL) {
-    return DeployCase.TEXT2SQL;
-  }
-
-  // Check for DOCUMENTPROCESSING case
-  if (deployCase === DeployCase.DOCUMENTPROCESSING) {
-    return DeployCase.DOCUMENTPROCESSING;
-  }
-
-  // Check for ALL case
-  if (deployCase === DeployCase.ALL) {
+  const deploymentCase = app.node.tryGetContext("deploy:case");
+  if (deploymentCase === undefined) {
     return DeployCase.ALL;
   }
 
-  // Throw error for invalid input
+  // Check if given deployment case is valid
+  if (
+    deploymentCase === DeployCase.CHATBOT ||
+    deploymentCase === DeployCase.DOCUMENTPROCESSING ||
+    deploymentCase === DeployCase.TEXT2SQL ||
+    deploymentCase === DeployCase.ALL
+  ) {
+    return deploymentCase;
+  }
   throw new Error(
-    `Invalid deploy case: ${deployCase}. Valid options are: ${Object.values(DeployCase).join(", ")}`,
+    `Invalid deployment case: ${deploymentCase}. Must be one of ${Object.values(
+      DeployCase,
+    ).join(", ")}`,
   );
 }
 
@@ -64,7 +57,7 @@ function getDeployCase(app: App): DeployCase {
     nagPacks: [new AwsPrototypingChecks()],
   });
   // * Setting stack name prefix
-  const stackNamePrefix = "PaceDevWorkshop-";
+  const stackNamePrefix = "BinbashWorkshop-";
 
   // Setting Common Environment
   const env = {
@@ -74,12 +67,12 @@ function getDeployCase(app: App): DeployCase {
 
   // Get the deployment case
   const deployCase = getDeployCase(app);
-  const pace_deployment_version = "1.1.0"
-  const deployment_name = "pace_developer_workshop_prime"
+  const bb_deployment_version = "1.0.0"
+  const deployment_name = "bb_workshop_prime"
   // * Create commonStack
   const commonStack = new CommonStack(app, stackNamePrefix + "CommonStack", {
     env: env,
-    description:"PACE DEVELOPER WORKSHOP (uksb-arjmsrldpz)(tag:" + deployCase + ", " + pace_deployment_version + ", " + deployment_name + ")",
+    description:"BINBASH WORKSHOP (uksb-arjmsrldpz)(tag:" + deployCase + ", " + bb_deployment_version + ", " + deployment_name + ")",
     stackName: stackNamePrefix + "CommonStack",
   });
 
@@ -197,8 +190,8 @@ function getDeployCase(app: App): DeployCase {
   });
 
   // * Custom Tags
-  Tags.of(app).add("creator", "AWS PACE");
-  Tags.of(app).add("project", "Generative AI Developer Workshop");
+  Tags.of(app).add("creator", "Binbash");
+  Tags.of(app).add("project", "GenAI Innovation Lab Workshop");
   app.synth();
   await graph.report();
 })();

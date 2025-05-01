@@ -3,13 +3,13 @@
   "info": {
     "title": "Document Processing API",
     "version": "1.0.0",
-    "description": "API for processing documents"
+    "description": "API for processing documents using Bedrock Data Automation"
   },
   "paths": {
     "/process": {
       "post": {
         "summary": "Process a document",
-        "description": "Processes a document according to the specified blueprint",
+        "description": "Processes a document page using Bedrock Data Automation",
         "operationId": "processDocument",
         "requestBody": {
           "required": true,
@@ -22,48 +22,165 @@
                     "type": "string",
                     "description": "ID of the document to process"
                   },
-                  "documentType": {
-                    "type": "string",
-                    "description": "Type of the document (e.g., invoice, receipt)"
+                  "pageNumber": {
+                    "type": "integer",
+                    "description": "Page number to process"
                   },
                   "blueprintId": {
                     "type": "string",
-                    "description": "ID of the blueprint to use for processing"
-                  },
-                  "processingOptions": {
-                    "type": "object",
-                    "description": "Additional processing options"
+                    "description": "Optional ID of the blueprint to use for processing"
                   }
                 },
-                "required": ["documentId", "documentType", "blueprintId"]
+                "required": ["documentId", "pageNumber"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Processing successful",
+            "description": "Document successfully processed",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "documentId": {
+                      "type": "string",
+                      "description": "ID of the processed document"
+                    },
+                    "pageNumber": {
+                      "type": "integer",
+                      "description": "Page number that was processed"
+                    },
+                    "jobId": {
+                      "type": "string",
+                      "description": "Bedrock Data Automation job ID"
+                    },
                     "status": {
                       "type": "string",
-                      "description": "Processing status"
+                      "description": "Processing status",
+                      "enum": ["COMPLETED", "FAILED", "ERROR", "TIMED_OUT"]
                     },
-                    "processedDocument": {
+                    "result": {
                       "type": "object",
-                      "description": "Processed document data"
-                    },
-                    "processingMetadata": {
-                      "type": "object",
-                      "description": "Metadata about the processing"
+                      "description": "Processing results"
                     }
                   }
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "404": {
+            "description": "Document page not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/blueprints": {
+      "get": {
+        "summary": "List blueprints",
+        "description": "Lists available blueprints in Bedrock Data Automation",
+        "operationId": "listBlueprints",
+        "responses": {
+          "200": {
+            "description": "Blueprints successfully retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "blueprintId": {
+                        "type": "string",
+                        "description": "ID of the blueprint"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Name of the blueprint"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Description of the blueprint"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Creation timestamp"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/blueprints/{blueprintId}": {
+      "get": {
+        "summary": "Get blueprint",
+        "description": "Gets details of a specific blueprint",
+        "operationId": "getBlueprint",
+        "parameters": [
+          {
+            "name": "blueprintId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the blueprint to retrieve",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Blueprint successfully retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "blueprintId": {
+                      "type": "string",
+                      "description": "ID of the blueprint"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Name of the blueprint"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Description of the blueprint"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Creation timestamp"
+                    },
+                    "configuration": {
+                      "type": "object",
+                      "description": "Blueprint configuration"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Blueprint not found"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         }
       }

@@ -8,8 +8,8 @@
   "paths": {
     "/validate": {
       "post": {
-        "summary": "Validate a processed document",
-        "description": "Validates the results of document processing",
+        "summary": "Validate a document",
+        "description": "Validates a processed document against specified rules",
         "operationId": "validateDocument",
         "requestBody": {
           "required": true,
@@ -20,50 +20,132 @@
                 "properties": {
                   "documentId": {
                     "type": "string",
-                    "description": "ID of the processed document"
+                    "description": "ID of the document to validate"
                   },
-                  "documentType": {
-                    "type": "string",
-                    "description": "Type of the document (e.g., invoice, receipt)"
+                  "pageNumber": {
+                    "type": "integer",
+                    "description": "Page number to validate"
                   },
                   "validationRules": {
                     "type": "object",
-                    "description": "Validation rules to apply"
+                    "description": "Optional validation rules to apply",
+                    "properties": {
+                      "requiredFields": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": ["required"]
+                          },
+                          "fields": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "emailFields": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": ["email"]
+                          },
+                          "fields": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "dateFields": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": ["date"]
+                          },
+                          "fields": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
                   }
                 },
-                "required": ["documentId", "documentType"]
+                "required": ["documentId", "pageNumber"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Validation successful",
+            "description": "Document successfully validated",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "isValid": {
-                      "type": "boolean",
-                      "description": "Whether the document is valid"
+                    "documentId": {
+                      "type": "string",
+                      "description": "ID of the validated document"
+                    },
+                    "pageNumber": {
+                      "type": "integer",
+                      "description": "Page number that was validated"
                     },
                     "validationResults": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "field": {
-                            "type": "string",
-                            "description": "Field name"
-                          },
-                          "isValid": {
-                            "type": "boolean",
-                            "description": "Whether the field is valid"
-                          },
-                          "message": {
-                            "type": "string",
-                            "description": "Validation message"
+                      "type": "object",
+                      "properties": {
+                        "isValid": {
+                          "type": "boolean",
+                          "description": "Whether the document passed validation"
+                        },
+                        "validationErrors": {
+                          "type": "array",
+                          "description": "List of validation errors",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string",
+                                "description": "The field that failed validation"
+                              },
+                              "rule": {
+                                "type": "string",
+                                "description": "The validation rule that failed"
+                              },
+                              "message": {
+                                "type": "string",
+                                "description": "Error message"
+                              }
+                            }
+                          }
+                        },
+                        "validationWarnings": {
+                          "type": "array",
+                          "description": "List of validation warnings",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string",
+                                "description": "The field with a warning"
+                              },
+                              "rule": {
+                                "type": "string",
+                                "description": "The validation rule that triggered the warning"
+                              },
+                              "message": {
+                                "type": "string",
+                                "description": "Warning message"
+                              }
+                            }
                           }
                         }
                       }
@@ -72,6 +154,18 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "404": {
+            "description": "Document not found"
+          },
+          "422": {
+            "description": "Document not ready for validation"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         }
       }

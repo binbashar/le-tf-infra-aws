@@ -1,0 +1,111 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Document Splitter API",
+    "version": "1.0.0",
+    "description": "API for splitting documents into pages for processing"
+  },
+  "paths": {
+    "/split": {
+      "post": {
+        "summary": "Split a document",
+        "description": "Splits a document into individual pages for processing",
+        "operationId": "splitDocument",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bucket": {
+                    "type": "string",
+                    "description": "S3 bucket containing the document"
+                  },
+                  "key": {
+                    "type": "string",
+                    "description": "S3 key of the document"
+                  }
+                },
+                "required": ["bucket", "key"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document successfully split",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "documentId": {
+                      "type": "string",
+                      "description": "ID of the document"
+                    },
+                    "originalKey": {
+                      "type": "string",
+                      "description": "Original S3 key of the document"
+                    },
+                    "contentType": {
+                      "type": "string",
+                      "description": "Content type of the document"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "description": "Total number of pages in the document"
+                    },
+                    "pages": {
+                      "type": "array",
+                      "description": "Information about each page",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "documentId": {
+                            "type": "string",
+                            "description": "ID of the document"
+                          },
+                          "pageNumber": {
+                            "type": "integer",
+                            "description": "Page number"
+                          },
+                          "pageId": {
+                            "type": "string",
+                            "description": "Unique ID for the page"
+                          },
+                          "totalPages": {
+                            "type": "integer",
+                            "description": "Total number of pages in the document"
+                          },
+                          "s3Key": {
+                            "type": "string",
+                            "description": "S3 key for the page"
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Status of the page",
+                            "enum": ["PENDING", "PROCESSING", "COMPLETED", "ERROR"]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "404": {
+            "description": "Document not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  }
+} 

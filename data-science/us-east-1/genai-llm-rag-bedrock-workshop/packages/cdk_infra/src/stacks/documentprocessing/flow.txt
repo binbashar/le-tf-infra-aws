@@ -4,11 +4,13 @@ graph TD
     subgraph "Document Processing Stack"
         subgraph "Input Layer"
             A[Document Input Bucket]
+            AWS[EventBridge]
         end
 
         subgraph "Processing Layer"
-            B[Bedrock Data Automation]
+            B[Step Functions Workflow]
             C[Document Processing Lambda]
+            S[Document Splitter Lambda]
             D[Blueprint Creation Lambda]
             E[Document Validation Lambda]
         end
@@ -16,13 +18,14 @@ graph TD
         subgraph "Agent Layer"
             F[Bedrock Agent]
             G[Document Processing Action Group]
+            SP[Document Splitting Action Group]
             H[Blueprint Creation Action Group]
             I[Document Validation Action Group]
         end
 
         subgraph "Output Layer"
             J[Document Output Bucket]
-            K[Blueprints Bucket]
+            K[Metadata DynamoDB Table]
         end
 
         subgraph "API Layer"
@@ -31,15 +34,21 @@ graph TD
         end
 
         %% Connections
-        A --> B
-        B --> C
+        A --> AWS
+        AWS --> B
+        B --> S
+        S --> C
         C --> J
+        C --> K
         D --> K
         E --> J
+        E --> K
         F --> G
+        F --> SP
         F --> H
         F --> I
         G --> C
+        SP --> S
         H --> D
         I --> E
         M --> F
@@ -48,29 +57,43 @@ graph TD
 
     %% External Interactions
     User[User] --> L
+    User --> A
     L --> User
 
 This diagram shows:
+
 Input Layer
-    Document Input Bucket: Where raw documents are uploaded
+- Document Input Bucket: Where raw documents are uploaded
+- EventBridge: Triggers workflow when documents are uploaded
+
 Processing Layer
-    Bedrock Data Automation: Core processing engine
-    Document Processing Lambda: Handles document processing
-    Blueprint Creation Lambda: Creates processing blueprints
-    Document Validation Lambda: Validates processed documents
+- Step Functions Workflow: Orchestrates the document processing
+- Document Splitter Lambda: Splits documents into pages
+- Document Processing Lambda: Processes document chunks with Bedrock
+- Blueprint Creation Lambda: Creates processing blueprints
+- Document Validation Lambda: Validates processed documents
+
 Agent Layer
-    Bedrock Agent: Orchestrates the processing flow
-    Action Groups for each processing step
+- Bedrock Agent: Conversational interface powered by Claude 3.5 Sonnet
+- Document Processing Action Group: For document processing tasks
+- Document Splitting Action Group: For document splitting tasks
+- Blueprint Creation Action Group: For creating processing blueprints
+- Document Validation Action Group: For validation tasks
+
 Output Layer
-    Document Output Bucket: Stores processed documents
-    Blueprints Bucket: Stores processing blueprints
+- Document Output Bucket: Stores processed documents
+- Metadata DynamoDB Table: Tracks document processing status
+
 API Layer
-    API Gateway: Entry point for API requests
-    Basic Rest API Stack: Handles API routing and authentication
+- API Gateway: Entry point for API requests
+- Basic Rest API Stack: Handles API routing and authentication
+
 The flow is:
-    User uploads document to Input Bucket
-    Bedrock Data Automation triggers processing
-    Document Processing Lambda processes the document
-    Validation Lambda validates the results
-    Results are stored in Output Bucket
-    User can interact with the system through the API
+1. User uploads document to Input Bucket
+2. EventBridge detects the upload and triggers Step Functions
+3. Step Functions first invokes Document Splitter to break document into pages
+4. For each page, Document Processing Lambda processes with Bedrock
+5. Document metadata and processing status are stored in DynamoDB
+6. Processed results are stored in Output Bucket
+7. User can interact with the system through the Bedrock Agent via API
+8. The agent can trigger validation, processing, and blueprint management

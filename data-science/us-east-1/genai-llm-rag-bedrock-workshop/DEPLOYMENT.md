@@ -164,13 +164,14 @@ After deploying the packages/cdk_infra project, you'll have a sample Amazon Cogn
 
 | Username | Group          |
 |----------|----------------|
-| Admin    | ADMIN          |
+| admin    | ADMIN          |
 | writer   | READ_AND_WRITE |
 | reader   | READONLY       |
 
 ### Set Default Passwords for Sample Cognito Users
 
 1. Navigate to the Amazon Cognito Console and locate your User Pool ID
+   - From the Menu in Amazon Cognito -> User Pools
 
 2. Set passwords for sample users using AWS CLI:
    ```bash
@@ -184,13 +185,23 @@ After deploying the packages/cdk_infra project, you'll have a sample Amazon Cogn
 
 1. Collect the following from the Amazon Cognito Console:
 
-    - User Pool ID
-    - Identity Pool ID
+    - User Pool ID 
+      - From the Menu in Amazon Cognito -> User Pools
+    - Identity Pool ID 
+      - From the Menu in Amazon Cognito -> Identity pools
     - Web Client ID
-        - Find your User Pool
-        - Click UserPoolWebClient and copy the Client ID
+        - From the Menu in Amazon Cognito -> User Pools -> your user pool
+        - Applications -> App Clients -> copy the Client ID
 
-2. Update [aws-exports.js](packages/reactjs_ui/src/aws-exports.js) file with the collected values (located at `packages/reactjs_ui/src`). Replace the example values in the file with your own:
+2. Find the KYB API Gateway URL:
+
+   - Go to the CloudFormation console
+   - Select your document processing stack (usually contains "BinbashWorkshop-DocumentProcessingStack" in the name)
+   - Go to the "Outputs" tab 
+   - Look for "KYBApiEndpoint" - the value will be your API Gateway URL
+     - It should look like: `https://[api-id].execute-api.[region].amazonaws.com/prod`
+
+3. Update [aws-exports.js](packages/reactjs_ui/src/aws-exports.js) file with the collected values (located at `packages/reactjs_ui/src`). Replace the example values in the file with your own:
 
    ```json
    {
@@ -198,10 +209,30 @@ After deploying the packages/cdk_infra project, you'll have a sample Amazon Cogn
     "aws_cognito_identity_pool_id": "us-west-2:f7be1f09-0202-4700-8fa8-55346a2ec4f5",
     "aws_cognito_region": "us-west-2",
     "aws_user_pools_id": "us-west-2_e2bc0Jiyk",
-    "aws_user_pools_web_client_id": "60pgcj9fas0cig379pkicri954"
+    "aws_user_pools_web_client_id": "60pgcj9fas0cig379pkicri954",
+    "kyb_api_endpoint": "https://abc123xyz.execute-api.us-west-2.amazonaws.com/prod"
    }
    ```
    - If you're not using the `us-west-2` region, update both `aws_project_region` and `aws_cognito_region` in this file to match your deployment region
+
+4. If you're using the document processing use case, you also need to update the S3 bucket for document uploads:
+   - Find the S3 bucket created for document uploads in your CloudFormation stack:
+     - Navigate to CloudFormation console
+     - Find your document processing stack (usually contains "BinbashWorkshop-DocumentProcessingStack" in the name)
+     - Go to the "Resources" tab and find the logical ID "InputBucket" - the Physical ID column will show your bucket name
+   
+   - Alternatively, you can find the bucket in the S3 console by looking for a bucket with the naming pattern below
+   
+   - The bucket name will be dynamically generated and typically follows a pattern like:
+     ```
+     [stack-prefix]-documentproces-inputbucket[random-id]-[random-string]
+     ```
+     For example: `binbashworkshop-documentproces-inputbucket3bf8630a-aw6yy5mziacd`
+   
+   - Update the `document_processing_input_bucket` property in aws-exports.js with your bucket name:
+   ```json
+   "document_processing_input_bucket": "your-document-input-bucket-name"
+   ```
 
 ### Build and Run the Web Application
 

@@ -1,0 +1,217 @@
+{
+  "passportBlueprint": {
+    "name": "US_Passport_Blueprint",
+    "description": "Blueprint for extracting information from US Passports",
+    "fields": [
+      {
+        "name": "firstName",
+        "type": "STRING",
+        "description": "First name of the passport holder"
+      },
+      {
+        "name": "lastName",
+        "type": "STRING",
+        "description": "Last name of the passport holder"
+      },
+      {
+        "name": "dateOfBirth",
+        "type": "STRING",
+        "description": "Date of birth in the format DD MMM YYYY"
+      },
+      {
+        "name": "passportNumber",
+        "type": "STRING",
+        "description": "US Passport number"
+      },
+      {
+        "name": "issueDate",
+        "type": "STRING",
+        "description": "Date of issue in the format DD MMM YYYY"
+      },
+      {
+        "name": "expirationDate",
+        "type": "STRING",
+        "description": "Date of expiration in the format DD MMM YYYY"
+      },
+      {
+        "name": "nationality",
+        "type": "STRING",
+        "description": "Nationality of the passport holder"
+      },
+      {
+        "name": "sex",
+        "type": "STRING",
+        "description": "Gender of the passport holder"
+      }
+    ]
+  },
+  "einVerificationBlueprint": {
+    "name": "EIN_Verification_Letter_Blueprint",
+    "description": "Blueprint for extracting information from EIN Verification Letters",
+    "fields": [
+      {
+        "name": "businessName",
+        "type": "STRING",
+        "description": "Legal name of business as provided to IRS"
+      },
+      {
+        "name": "ein",
+        "type": "STRING",
+        "description": "Employer Identification Number (EIN)"
+      },
+      {
+        "name": "businessAddress",
+        "type": "STRING",
+        "description": "Complete business address as registered with IRS"
+      },
+      {
+        "name": "issueDate",
+        "type": "STRING",
+        "description": "Date when the EIN Verification Letter was issued"
+      },
+      {
+        "name": "taxPeriod",
+        "type": "STRING",
+        "description": "The applicable tax period"
+      }
+    ]
+  },
+  "form1120Blueprint": {
+    "name": "Form_1120_Income_Tax_Blueprint",
+    "description": "Blueprint for extracting information from Form 1120 Income Tax Returns",
+    "fields": [
+      {
+        "name": "corporateName",
+        "type": "STRING",
+        "description": "Name of the corporation"
+      },
+      {
+        "name": "ein",
+        "type": "STRING",
+        "description": "Employer Identification Number (EIN)"
+      },
+      {
+        "name": "taxPeriodBeginning",
+        "type": "STRING",
+        "description": "Start date of the tax period"
+      },
+      {
+        "name": "taxPeriodEnding",
+        "type": "STRING",
+        "description": "End date of the tax period"
+      },
+      {
+        "name": "totalIncome",
+        "type": "STRING",
+        "description": "Total income reported"
+      },
+      {
+        "name": "totalDeductions",
+        "type": "STRING",
+        "description": "Total deductions claimed"
+      },
+      {
+        "name": "taxableincome",
+        "type": "STRING",
+        "description": "Taxable income amount"
+      },
+      {
+        "name": "totalTax",
+        "type": "STRING",
+        "description": "Total tax due amount"
+      },
+      {
+        "name": "businessAddress",
+        "type": "STRING",
+        "description": "Business address listed on the form"
+      }
+    ]
+  },
+  "companyFormationBlueprint": {
+    "name": "Company_Formation_Blueprint",
+    "description": "Blueprint for extracting information from Company Formation documents",
+    "fields": [
+      {
+        "name": "companyName",
+        "type": "STRING",
+        "description": "Legal name of the company"
+      },
+      {
+        "name": "formationDate",
+        "type": "STRING",
+        "description": "Date when the company was formed"
+      },
+      {
+        "name": "stateOfFormation",
+        "type": "STRING",
+        "description": "State where the company was formed"
+      },
+      {
+        "name": "entityType",
+        "type": "STRING",
+        "description": "Type of business entity (LLC, Corporation, etc.)"
+      },
+      {
+        "name": "registeredAgent",
+        "type": "STRING",
+        "description": "Name of the registered agent"
+      },
+      {
+        "name": "registeredAddress",
+        "type": "STRING",
+        "description": "Registered office address"
+      },
+      {
+        "name": "fileNumber",
+        "type": "STRING",
+        "description": "State file or document number"
+      },
+      {
+        "name": "status",
+        "type": "STRING",
+        "description": "Current status of the company (Active, Inactive, etc.)"
+      }
+    ]
+  },
+  "actionaryCompositionBlueprint": {
+    "name": "Actionary_Composition_Blueprint",
+    "description": "Blueprint for extracting information from Actionary Composition documents",
+    "fields": [
+      {
+        "name": "companyName",
+        "type": "STRING",
+        "description": "Company name as listed in the document"
+      },
+      {
+        "name": "totalShares",
+        "type": "STRING",
+        "description": "Total number of shares issued"
+      },
+      {
+        "name": "shareClasses",
+        "type": "STRING",
+        "description": "Different classes of shares if applicable"
+      },
+      {
+        "name": "shareholders",
+        "type": "STRING",
+        "description": "Names of shareholders"
+      },
+      {
+        "name": "shareholderPercentages",
+        "type": "STRING",
+        "description": "Percentage of shares held by each shareholder"
+      },
+      {
+        "name": "documentDate",
+        "type": "STRING",
+        "description": "Date of the document"
+      },
+      {
+        "name": "authorizedSignatory",
+        "type": "STRING",
+        "description": "Name of the person who signed the document"
+      }
+    ]
+  }
+} 

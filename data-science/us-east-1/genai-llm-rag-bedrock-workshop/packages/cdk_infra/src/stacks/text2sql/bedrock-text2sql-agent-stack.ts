@@ -173,7 +173,8 @@ export class BedrockText2SqlAgentsStack extends Stack {
         apiSchema: bedrock.ApiSchema.fromAsset(
           // openapi.json schema must be defined and stored under the path
           path.join(
-            "src/backend/agents/lambda/text2sql/athena",
+            __dirname,
+            "../../../backend/agents/lambda/text2sql/athena",
             agentProps.openApiPath,
             "openapi.json",
           ),

@@ -75,6 +75,7 @@ export class BedrockAgentsStack extends Stack {
         entry: path.join(agentsLambdaDir, "account_actions"),
         index: "account_actions.py",
         handler: "lambda_handler",
+        functionName: `AccountAct-${cdk.Names.uniqueId(this).substring(0, 8)}`,
         timeout: Duration.seconds(300),
         memorySize: 2048,
         reservedConcurrentExecutions: 5,

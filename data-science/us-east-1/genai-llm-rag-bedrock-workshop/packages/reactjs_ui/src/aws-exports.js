@@ -9,10 +9,10 @@
 
 const awsmobile = {
     "aws_project_region": "us-west-2",
-    "aws_cognito_identity_pool_id": "us-west-2:3549d5b0-0032-424f-bd1a-d35baf36130f",
+    "aws_cognito_identity_pool_id": "us-west-2:208cdf78-173f-43a3-af86-51f4db50049f",
     "aws_cognito_region": "us-west-2",
-    "aws_user_pools_id": "us-west-2_HKpYi1pH0",
-    "aws_user_pools_web_client_id": "7sfvmnb5ut8uvrir7pk2eleq3i",
+    "aws_user_pools_id": "us-west-2_XgOQe7RsB",
+    "aws_user_pools_web_client_id": "7n1ndm3a7qvgs9659acgrs0eua",
     "oauth": {},
     "aws_cognito_username_attributes": [],
     "aws_cognito_social_providers": [],
@@ -30,6 +30,8 @@ const awsmobile = {
     "aws_cognito_verification_mechanisms": [
         "EMAIL"
     ],
+    "document_processing_input_bucket": "binbashworkshop-documentproces-inputbucket3bf8630a-dmiswxtf62ry",
+    "kyb_api_endpoint": "https://s61g3xlxni.execute-api.us-west-2.amazonaws.com/prod" // Replace with your API Gateway URL
 };
 
 

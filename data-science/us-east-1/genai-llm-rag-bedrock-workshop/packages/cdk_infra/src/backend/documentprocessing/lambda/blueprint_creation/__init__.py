@@ -1,10 +1,36 @@
 """
-Document Blueprint Creation Lambda Package
+KYB Blueprint Creation Package
 
-This package contains the Lambda function for creating and managing document processing blueprints.
-It provides functionality to define document schemas, field extraction rules, and validation criteria.
+This package provides functionality for creating and managing Know Your Business (KYB)
+document processing blueprints in Amazon Bedrock Data Integration service.
+
+It follows the patterns established in the AWS Bedrock Data Automation CDK construct.
 """
 
-from .blueprint import create_blueprint, update_blueprint, delete_blueprint, lambda_handler
+from .blueprint_creation import (
+    create_project,
+    create_blueprint,
+    create_kyb_blueprints,
+    detect_document_type,
+    get_blueprint_for_document_type,
+    list_blueprints,
+    get_blueprint,
+    delete_blueprint,
+    update_blueprint,
+    process_operation,
+    lambda_handler
+)
 
-__all__ = ['create_blueprint', 'update_blueprint', 'delete_blueprint', 'lambda_handler'] 
+__all__ = [
+    'create_project',
+    'create_blueprint',
+    'create_kyb_blueprints',
+    'detect_document_type',
+    'get_blueprint_for_document_type',
+    'list_blueprints',
+    'get_blueprint',
+    'delete_blueprint',
+    'update_blueprint',
+    'process_operation',
+    'lambda_handler'
+] 

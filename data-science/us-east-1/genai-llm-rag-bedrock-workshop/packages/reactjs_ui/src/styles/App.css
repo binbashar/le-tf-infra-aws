@@ -63,6 +63,7 @@
 .small-icon {
   width: 26px;
   height: 26px;
+  object-fit: contain;
 }
 
 .custom-main-footer {
@@ -107,8 +108,8 @@
   color: #cec8c8;
   min-inline-size: 164px;
   text-align: right;
-  display: flex; /* center to the .copyright and .pace classes */
-  align-items: center; /* center to the .copyright and .pace classes */
+  display: flex; /* center to the .copyright and .company-logo classes */
+  align-items: center; /* center to the .copyright and .company-logo classes */
 }
 
 .custom-main-footer .copyright img {
@@ -119,21 +120,23 @@
   margin-block-start: 4px;
 }
 
-.custom-main-footer .pace {
+.custom-main-footer .company-logo {
   /* color: var(--color-text-home-header-secondary-v3y5co, #b6bec9); */
   color: #cec8c8;
   min-inline-size: 164px;
   text-align: left;
-  display: flex; /* center to the .copyright and .pace classes */
-  align-items: center; /* center to the .copyright and .pace classes */
+  display: flex; /* center to the .copyright and .company-logo classes */
+  align-items: center; /* center to the .copyright and .company-logo classes */
 }
 
-.custom-main-footer .pace img {
+.custom-main-footer .company-logo img {
   display: inline-block;
   vertical-align: middle;
   margin-inline-start: 8px;
   inline-size: 34px;
+  height: 34px;
   margin-block-start: 4px;
+  object-fit: contain;
 }
 
 .vertically-centered {
@@ -233,4 +236,18 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* File Upload Styles */
+/* Simpler approach to ensure text is visible */
+[data-testid="file-upload"] div[class*="awsui_dropzone"] {
+  border: 2px dashed #0972d3;
+  text-align: center;
+  padding: 20px;
+}
+
+[data-testid="file-upload"] div[class*="awsui_dropzone"] button {
+  display: inline-block;
+  margin-top: 10px;
+  font-weight: bold;
 }

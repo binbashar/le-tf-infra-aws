@@ -190,7 +190,7 @@ export class BasicRestApiStack extends Stack {
     // Create Lambda function for Bedrock Agent
     const bedrockAgentLambda = new PythonFunction(this, "BedrockAgentLambda", {
       functionName: `${props.PREFIX}BedrockAgentLambda`,
-      entry: path.join(__dirname, "..", "backend", "basic_rest_api", "lambda", "qna_agent_rest_api"),
+      entry: path.join(basicRestApiLambdaDir, "qna_agent_rest_api"),
       index: "qna_agent_rest_api.py",
       handler: "lambda_handler",
       runtime: lambda.Runtime.PYTHON_3_11,
