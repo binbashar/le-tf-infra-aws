@@ -1,3 +1,9 @@
+/*
+* Copyright Amazon.com and its affiliates; all rights reserved.
+* SPDX-License-Identifier: LicenseRef-.amazon.com.-AmznSL-1.0
+* Licensed under the Amazon Software License  https://aws.amazon.com/asl/
+*/
+
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { NagSuppressions } from 'cdk-nag';

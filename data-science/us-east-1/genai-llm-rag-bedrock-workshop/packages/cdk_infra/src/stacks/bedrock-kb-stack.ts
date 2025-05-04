@@ -68,8 +68,8 @@ export class BedrockKnowledgeBaseStack extends Stack {
     this.AGENT_KB = new bedrock.KnowledgeBase(this, "AgentKnowledgeBase", {
       embeddingsModel: bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V2_1024,
       instruction:
-        "Use this knowledge base for answering general questions related to the company name services and offerings " +
-        "It contains text of FAQ documents like how to change password, how to cancel subscription.",
+        "Use this knowledge base for answering general questions related to AWS bedrock and AWS Lambda." +
+        "It contains text of FAQ documents about quotas.",
     });
 
     this.AGENT_KB.addS3DataSource({

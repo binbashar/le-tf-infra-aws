@@ -146,11 +146,14 @@ const DocumentUploader = ({ onUploadComplete, onProcessingStart }) => {
       const { tokens } = await fetchAuthSession();
       const jwtToken = tokens.idToken.toString();
       
+      // Now attempt the actual POST request
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': jwtToken
+          'Authorization': jwtToken,
+          'Accept': 'application/json',
+          'Origin': window.location.origin
         },
         body: JSON.stringify({
           s3Key: uploadResult.key,
@@ -159,7 +162,7 @@ const DocumentUploader = ({ onUploadComplete, onProcessingStart }) => {
           contentType: file.type
         })
       });
-      
+    
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`API error (${response.status}): ${errorText || 'No response from server'}`);
@@ -168,14 +171,18 @@ const DocumentUploader = ({ onUploadComplete, onProcessingStart }) => {
       // Try to parse JSON response, handle case where response might be empty
       let result;
       const responseText = await response.text();
+      console.log('API Response:', responseText); // Debug log
+      
       if (responseText.trim()) {
         try {
           result = JSON.parse(responseText);
+          console.log('Parsed result:', result); // Debug log
         } catch (e) {
           console.error('Failed to parse API response:', e);
           throw new Error('Invalid response from server');
         }
       } else {
+        // If we get here with an empty but successful response, continue
         result = { status: 'pending', message: 'Document processing initiated' };
       }
       
@@ -206,8 +213,16 @@ const DocumentUploader = ({ onUploadComplete, onProcessingStart }) => {
       message.success('File uploaded and processing started');
     } catch (err) {
       console.error('Error uploading file:', err);
-      setError(err.message || 'An error occurred while uploading the file');
-      message.error('Failed to upload file');
+      
+      // If we hit a CORS error, show a more helpful message
+      if (err.message && err.message.includes('Failed to fetch')) {
+        setError('CORS error: The API server is not accepting cross-origin requests. Please check API Gateway CORS configuration and retry in a few minutes.');
+        message.error('CORS error with API Gateway');
+      } else {
+        setError(err.message || 'An error occurred while uploading the file');
+        message.error('Failed to upload file');
+      }
+      
       setUploadProgress(0);
     } finally {
       setUploading(false);
@@ -314,10 +329,13 @@ const formatFieldValue = (value) => {
 
 // DocumentResult Component
 const DocumentResult = ({ documentData }) => {
+  console.log('Document data in result component:', documentData); // Debug log
+  
   if (!documentData || !documentData.result) {
     return (
       <AntCard>
         <Title level={4}>No document data available</Title>
+        <pre>{JSON.stringify(documentData, null, 2)}</pre>
       </AntCard>
     );
   }
@@ -339,7 +357,14 @@ const DocumentResult = ({ documentData }) => {
     );
   });
 
-  const formattedFields = Object.entries(documentData.result.parsed_data || {}).map(([key, value]) => ({
+  // Extract the parsed data, supporting both nested and flat structures
+  const parsedData = documentData.result.parsed_data || 
+                    (documentData.result.data && documentData.result.data.parsed_data) ||
+                    {};
+  
+  console.log('Parsed data for display:', parsedData); // Debug log
+
+  const formattedFields = Object.entries(parsedData).map(([key, value]) => ({
     label: key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
     value: formatFieldValue(value)
   }));

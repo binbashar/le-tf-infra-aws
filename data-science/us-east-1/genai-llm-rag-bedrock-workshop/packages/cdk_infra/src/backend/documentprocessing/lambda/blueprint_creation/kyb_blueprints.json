@@ -1,217 +1,237 @@
 {
   "passportBlueprint": {
     "name": "US_Passport_Blueprint",
-    "description": "Blueprint for extracting information from US Passports",
-    "fields": [
-      {
-        "name": "firstName",
-        "type": "STRING",
-        "description": "First name of the passport holder"
-      },
-      {
-        "name": "lastName",
-        "type": "STRING",
-        "description": "Last name of the passport holder"
-      },
-      {
-        "name": "dateOfBirth",
-        "type": "STRING",
-        "description": "Date of birth in the format DD MMM YYYY"
-      },
-      {
-        "name": "passportNumber",
-        "type": "STRING",
-        "description": "US Passport number"
-      },
-      {
-        "name": "issueDate",
-        "type": "STRING",
-        "description": "Date of issue in the format DD MMM YYYY"
-      },
-      {
-        "name": "expirationDate",
-        "type": "STRING",
-        "description": "Date of expiration in the format DD MMM YYYY"
-      },
-      {
-        "name": "nationality",
-        "type": "STRING",
-        "description": "Nationality of the passport holder"
-      },
-      {
-        "name": "sex",
-        "type": "STRING",
-        "description": "Gender of the passport holder"
+    "schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "class": "US_Passport_Blueprint",
+      "description": "Blueprint for extracting information from US Passports",
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "instruction": "First name of the passport holder",
+          "inferenceType": "explicit"
+        },
+        "lastName": {
+          "type": "string",
+          "instruction": "Last name of the passport holder",
+          "inferenceType": "explicit"
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "instruction": "Date of birth in the format DD MMM YYYY",
+          "inferenceType": "explicit"
+        },
+        "passportNumber": {
+          "type": "string",
+          "instruction": "US Passport number",
+          "inferenceType": "explicit"
+        },
+        "issueDate": {
+          "type": "string",
+          "instruction": "Date of issue in the format DD MMM YYYY",
+          "inferenceType": "explicit"
+        },
+        "expirationDate": {
+          "type": "string",
+          "instruction": "Date of expiration in the format DD MMM YYYY",
+          "inferenceType": "explicit"
+        },
+        "nationality": {
+          "type": "string",
+          "instruction": "Nationality of the passport holder",
+          "inferenceType": "explicit"
+        },
+        "sex": {
+          "type": "string",
+          "instruction": "Gender of the passport holder",
+          "inferenceType": "explicit"
+        }
       }
-    ]
+    }
   },
   "einVerificationBlueprint": {
     "name": "EIN_Verification_Letter_Blueprint",
-    "description": "Blueprint for extracting information from EIN Verification Letters",
-    "fields": [
-      {
-        "name": "businessName",
-        "type": "STRING",
-        "description": "Legal name of business as provided to IRS"
-      },
-      {
-        "name": "ein",
-        "type": "STRING",
-        "description": "Employer Identification Number (EIN)"
-      },
-      {
-        "name": "businessAddress",
-        "type": "STRING",
-        "description": "Complete business address as registered with IRS"
-      },
-      {
-        "name": "issueDate",
-        "type": "STRING",
-        "description": "Date when the EIN Verification Letter was issued"
-      },
-      {
-        "name": "taxPeriod",
-        "type": "STRING",
-        "description": "The applicable tax period"
+    "schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "class": "EIN_Verification_Letter_Blueprint",
+      "description": "Blueprint for extracting information from EIN Verification Letters",
+      "properties": {
+        "businessName": {
+          "type": "string",
+          "instruction": "Legal name of business as provided to IRS",
+          "inferenceType": "explicit"
+        },
+        "ein": {
+          "type": "string",
+          "instruction": "Employer Identification Number (EIN)",
+          "inferenceType": "explicit"
+        },
+        "businessAddress": {
+          "type": "string",
+          "instruction": "Complete business address as registered with IRS",
+          "inferenceType": "explicit"
+        },
+        "issueDate": {
+          "type": "string",
+          "instruction": "Date when the EIN Verification Letter was issued",
+          "inferenceType": "explicit"
+        },
+        "taxPeriod": {
+          "type": "string",
+          "instruction": "The applicable tax period",
+          "inferenceType": "explicit"
+        }
       }
-    ]
+    }
   },
   "form1120Blueprint": {
     "name": "Form_1120_Income_Tax_Blueprint",
-    "description": "Blueprint for extracting information from Form 1120 Income Tax Returns",
-    "fields": [
-      {
-        "name": "corporateName",
-        "type": "STRING",
-        "description": "Name of the corporation"
-      },
-      {
-        "name": "ein",
-        "type": "STRING",
-        "description": "Employer Identification Number (EIN)"
-      },
-      {
-        "name": "taxPeriodBeginning",
-        "type": "STRING",
-        "description": "Start date of the tax period"
-      },
-      {
-        "name": "taxPeriodEnding",
-        "type": "STRING",
-        "description": "End date of the tax period"
-      },
-      {
-        "name": "totalIncome",
-        "type": "STRING",
-        "description": "Total income reported"
-      },
-      {
-        "name": "totalDeductions",
-        "type": "STRING",
-        "description": "Total deductions claimed"
-      },
-      {
-        "name": "taxableincome",
-        "type": "STRING",
-        "description": "Taxable income amount"
-      },
-      {
-        "name": "totalTax",
-        "type": "STRING",
-        "description": "Total tax due amount"
-      },
-      {
-        "name": "businessAddress",
-        "type": "STRING",
-        "description": "Business address listed on the form"
+    "schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "class": "Form_1120_Income_Tax_Blueprint",
+      "description": "Blueprint for extracting information from Form 1120 Income Tax Returns",
+      "properties": {
+        "corporateName": {
+          "type": "string",
+          "instruction": "Name of the corporation",
+          "inferenceType": "explicit"
+        },
+        "ein": {
+          "type": "string",
+          "instruction": "Employer Identification Number (EIN)",
+          "inferenceType": "explicit"
+        },
+        "taxPeriodBeginning": {
+          "type": "string",
+          "instruction": "Start date of the tax period",
+          "inferenceType": "explicit"
+        },
+        "taxPeriodEnding": {
+          "type": "string",
+          "instruction": "End date of the tax period",
+          "inferenceType": "explicit"
+        },
+        "totalIncome": {
+          "type": "string",
+          "instruction": "Total income reported",
+          "inferenceType": "explicit"
+        },
+        "totalDeductions": {
+          "type": "string",
+          "instruction": "Total deductions claimed",
+          "inferenceType": "explicit"
+        },
+        "taxableincome": {
+          "type": "string",
+          "instruction": "Taxable income amount",
+          "inferenceType": "explicit"
+        },
+        "totalTax": {
+          "type": "string",
+          "instruction": "Total tax due amount",
+          "inferenceType": "explicit"
+        },
+        "businessAddress": {
+          "type": "string",
+          "instruction": "Business address listed on the form",
+          "inferenceType": "explicit"
+        }
       }
-    ]
+    }
   },
   "companyFormationBlueprint": {
     "name": "Company_Formation_Blueprint",
-    "description": "Blueprint for extracting information from Company Formation documents",
-    "fields": [
-      {
-        "name": "companyName",
-        "type": "STRING",
-        "description": "Legal name of the company"
-      },
-      {
-        "name": "formationDate",
-        "type": "STRING",
-        "description": "Date when the company was formed"
-      },
-      {
-        "name": "stateOfFormation",
-        "type": "STRING",
-        "description": "State where the company was formed"
-      },
-      {
-        "name": "entityType",
-        "type": "STRING",
-        "description": "Type of business entity (LLC, Corporation, etc.)"
-      },
-      {
-        "name": "registeredAgent",
-        "type": "STRING",
-        "description": "Name of the registered agent"
-      },
-      {
-        "name": "registeredAddress",
-        "type": "STRING",
-        "description": "Registered office address"
-      },
-      {
-        "name": "fileNumber",
-        "type": "STRING",
-        "description": "State file or document number"
-      },
-      {
-        "name": "status",
-        "type": "STRING",
-        "description": "Current status of the company (Active, Inactive, etc.)"
+    "schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "class": "Company_Formation_Blueprint",
+      "description": "Blueprint for extracting information from Company Formation documents",
+      "properties": {
+        "companyName": {
+          "type": "string",
+          "instruction": "Legal name of the company",
+          "inferenceType": "explicit"
+        },
+        "formationDate": {
+          "type": "string",
+          "instruction": "Date when the company was formed",
+          "inferenceType": "explicit"
+        },
+        "stateOfFormation": {
+          "type": "string",
+          "instruction": "State where the company was formed",
+          "inferenceType": "explicit"
+        },
+        "entityType": {
+          "type": "string",
+          "instruction": "Type of business entity (LLC, Corporation, etc.)",
+          "inferenceType": "explicit"
+        },
+        "registeredAgent": {
+          "type": "string",
+          "instruction": "Name of the registered agent",
+          "inferenceType": "explicit"
+        },
+        "registeredAddress": {
+          "type": "string",
+          "instruction": "Registered office address",
+          "inferenceType": "explicit"
+        },
+        "fileNumber": {
+          "type": "string",
+          "instruction": "State file or document number",
+          "inferenceType": "explicit"
+        },
+        "status": {
+          "type": "string",
+          "instruction": "Current status of the company (Active, Inactive, etc.)",
+          "inferenceType": "explicit"
+        }
       }
-    ]
+    }
   },
   "actionaryCompositionBlueprint": {
     "name": "Actionary_Composition_Blueprint",
-    "description": "Blueprint for extracting information from Actionary Composition documents",
-    "fields": [
-      {
-        "name": "companyName",
-        "type": "STRING",
-        "description": "Company name as listed in the document"
-      },
-      {
-        "name": "totalShares",
-        "type": "STRING",
-        "description": "Total number of shares issued"
-      },
-      {
-        "name": "shareClasses",
-        "type": "STRING",
-        "description": "Different classes of shares if applicable"
-      },
-      {
-        "name": "shareholders",
-        "type": "STRING",
-        "description": "Names of shareholders"
-      },
-      {
-        "name": "shareholderPercentages",
-        "type": "STRING",
-        "description": "Percentage of shares held by each shareholder"
-      },
-      {
-        "name": "documentDate",
-        "type": "STRING",
-        "description": "Date of the document"
-      },
-      {
-        "name": "authorizedSignatory",
-        "type": "STRING",
-        "description": "Name of the person who signed the document"
+    "schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "class": "Actionary_Composition_Blueprint",
+      "description": "Blueprint for extracting information from Actionary Composition documents",
+      "properties": {
+        "companyName": {
+          "type": "string",
+          "instruction": "Company name as listed in the document",
+          "inferenceType": "explicit"
+        },
+        "totalShares": {
+          "type": "string",
+          "instruction": "Total number of shares issued",
+          "inferenceType": "explicit"
+        },
+        "shareClasses": {
+          "type": "string",
+          "instruction": "Different classes of shares if applicable",
+          "inferenceType": "explicit"
+        },
+        "shareholders": {
+          "type": "string",
+          "instruction": "Names of shareholders",
+          "inferenceType": "explicit"
+        },
+        "shareholderPercentages": {
+          "type": "string",
+          "instruction": "Percentage of shares held by each shareholder",
+          "inferenceType": "explicit"
+        },
+        "documentDate": {
+          "type": "string",
+          "instruction": "Date of the document",
+          "inferenceType": "explicit"
+        },
+        "authorizedSignatory": {
+          "type": "string",
+          "instruction": "Name of the person who signed the document",
+          "inferenceType": "explicit"
+        }
       }
-    ]
+    }
   }
 } 

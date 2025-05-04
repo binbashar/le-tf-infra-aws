@@ -1,3 +1,9 @@
+/*
+* Copyright Amazon.com and its affiliates; all rights reserved.
+* SPDX-License-Identifier: LicenseRef-.amazon.com.-AmznSL-1.0
+* Licensed under the Amazon Software License  https://aws.amazon.com/asl/
+*/
+
 import * as cdk from 'aws-cdk-lib';
 import { BedrockAgentsStack } from './bedrock-agents-stack';
 import { BasicRestApiStack } from '../basic-rest-api-stack';

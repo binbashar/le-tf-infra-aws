@@ -1,3 +1,9 @@
+/*
+* Copyright Amazon.com and its affiliates; all rights reserved.
+* SPDX-License-Identifier: LicenseRef-.amazon.com.-AmznSL-1.0
+* Licensed under the Amazon Software License  https://aws.amazon.com/asl/
+*/
+
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { NagSuppressions } from 'cdk-nag';
@@ -207,6 +213,9 @@ export class DocumentProcessingStack extends cdk.Stack {
         'bedrock:ListAgents',
         'bedrock:GetAgent',
         'bedrock:InvokeAgent',
+        'bedrock:ListAgentAliases',
+        'bedrock:GetAgentAlias',
+        'bedrock:InvokeAgentAlias',
         'bedrock:ListDataIntegrationFlows',
         'bedrock:InvokeDataAutomationAsync',
         'bedrock:GetDataAutomationStatus',
@@ -228,8 +237,13 @@ export class DocumentProcessingStack extends cdk.Stack {
         dataTraceEnabled: true,
         metricsEnabled: true,
       },
-      // Don't use defaultCorsPreflightOptions as we need more control
-      // We'll manually set up CORS for each method
+      // Define default CORS options - this will be applied to all methods
+      defaultCorsPreflightOptions: {
+        allowOrigins: ['http://localhost:5173', 'http://localhost:3000', 'https://*.amplifyapp.com'], // Include localhost explicitly
+        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowHeaders: ['Content-Type', 'X-Amz-Date', 'Authorization', 'X-Api-Key', 'X-Amz-Security-Token'],
+        allowCredentials: true,
+      },
     });
 
     // Create Cognito User Pool authorizer for the API
@@ -243,55 +257,14 @@ export class DocumentProcessingStack extends cdk.Stack {
     const apiKybResource = apiResource.addResource('api').addResource('kyb');
     const processResource = apiKybResource.addResource('process');
     
-    // Add OPTIONS method without authorization - critical for CORS preflight requests
-    const optionsMethod = processResource.addMethod('OPTIONS', new apigateway.MockIntegration({
-      integrationResponses: [{
-        statusCode: '200',
-        responseParameters: {
-          'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
-          'method.response.header.Access-Control-Allow-Methods': "'OPTIONS,POST,GET'",
-          'method.response.header.Access-Control-Allow-Origin': "'*'"
-        }
-      }],
-      passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
-      requestTemplates: {
-        'application/json': '{"statusCode": 200}'
-      }
-    }), {
-      methodResponses: [{
-        statusCode: '200',
-        responseParameters: {
-          'method.response.header.Access-Control-Allow-Headers': true,
-          'method.response.header.Access-Control-Allow-Methods': true,
-          'method.response.header.Access-Control-Allow-Origin': true
-        }
-      }]
-    });
-
-    // Add POST method with Cognito authorizer and CORS response headers
+    // Add POST method with Cognito authorizer
     const integration = new apigateway.LambdaIntegration(kybAgentLambda, {
-      proxy: true,
-      integrationResponses: [
-        {
-          statusCode: '200',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': "'*'",
-          }
-        }
-      ]
+      proxy: true
     });
 
     processResource.addMethod('POST', integration, {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
-      methodResponses: [
-        {
-          statusCode: '200',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': true,
-          }
-        }
-      ]
     });
 
     // Output the API URL and important resource names

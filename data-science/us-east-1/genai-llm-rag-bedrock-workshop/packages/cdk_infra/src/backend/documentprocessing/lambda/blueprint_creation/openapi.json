@@ -183,12 +183,12 @@
                     "enum": ["get_blueprint"],
                     "description": "Operation type"
                   },
-                  "blueprint_id": {
+                  "blueprintArn": {
                     "type": "string",
-                    "description": "ID of the blueprint to retrieve"
+                    "description": "ARN of the blueprint to retrieve"
                   }
                 },
-                "required": ["operation", "blueprint_id"]
+                "required": ["operation", "blueprintArn"]
               }
             }
           }
@@ -233,12 +233,12 @@
                     "enum": ["delete_blueprint"],
                     "description": "Operation type"
                   },
-                  "blueprint_id": {
+                  "blueprintArn": {
                     "type": "string",
-                    "description": "ID of the blueprint to delete"
+                    "description": "ARN of the blueprint to delete"
                   }
                 },
-                "required": ["operation", "blueprint_id"]
+                "required": ["operation", "blueprintArn"]
               }
             }
           }
@@ -283,16 +283,16 @@
                     "enum": ["update_blueprint"],
                     "description": "Operation type"
                   },
-                  "blueprint_id": {
+                  "blueprintArn": {
                     "type": "string",
-                    "description": "ID of the blueprint to update"
+                    "description": "ARN of the blueprint to update"
                   },
                   "definition": {
                     "type": "object",
-                    "description": "New blueprint definition"
+                    "description": "New blueprint definition (as a JSON object)"
                   }
                 },
-                "required": ["operation", "blueprint_id", "definition"]
+                "required": ["operation", "blueprintArn", "definition"]
               }
             }
           }
@@ -427,6 +427,62 @@
           },
           "400": {
             "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/blueprints/getByType": {
+      "post": {
+        "summary": "Get blueprint by document type",
+        "description": "Gets details of a blueprint based on its document type, usually inferred from the name",
+        "operationId": "getBlueprintByType",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "operation": {
+                    "type": "string",
+                    "enum": ["GET_BLUEPRINT_BY_TYPE"],
+                    "description": "Operation type"
+                  },
+                  "document_type": {
+                    "type": "string",
+                    "description": "Document type of the blueprint to retrieve (e.g., ein_verification)"
+                  }
+                },
+                "required": ["operation", "document_type"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Blueprint successfully retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "flowId": {"type": "string"},
+                    "name": {"type": "string"},
+                    "description": {"type": "string"},
+                    "projectId": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters (e.g., missing document_type)"
+          },
+          "404": {
+            "description": "Blueprint not found for the given document type"
           },
           "500": {
             "description": "Internal server error"

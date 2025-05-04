@@ -5,11 +5,11 @@
 */
 
 import { App } from "aws-cdk-lib";
-import { AthenaStack } from "../src/stacks/athena-stack";
+import { AthenaStack } from "../src/stacks/text2sql/athena-stack";
 import { BasicRestApiStack } from "../src/stacks/basic-rest-api-stack";
-import { BedrockAgentsStack } from "../src/stacks/bedrock-agents-stack";
+import { BedrockAgentsStack } from "../src/stacks/chatbot/bedrock-agents-stack";
 import { BedrockKnowledgeBaseStack } from "../src/stacks/bedrock-kb-stack";
-import { BedrockText2SqlAgentsStack } from "../src/stacks/bedrock-text2sql-agent-stack";
+import { BedrockText2SqlAgentsStack } from "../src/stacks/text2sql/bedrock-text2sql-agent-stack";
 import { CommonStack } from "../src/stacks/common-stack";
 
 describe("CDK Stack Configurations", () => {
@@ -68,6 +68,7 @@ describe("CDK Stack Configurations", () => {
             AGENT: bedrockAgentsStack.AGENT,
             AGENT_ALIAS: bedrockAgentsStack.AGENT_ALIAS,
             AGENT_KB: bedrockKnowledgeBaseStack.AGENT_KB,
+            PREFIX: stackNamePrefix,
           },
         );
         expect(basicRestApiStack).toBeDefined();
@@ -122,6 +123,7 @@ describe("CDK Stack Configurations", () => {
           AGENT: bedrockText2SqlAgentsStack.AGENT,
           AGENT_ALIAS: bedrockText2SqlAgentsStack.AGENT_ALIAS,
           AGENT_KB: null,
+          PREFIX: stackNamePrefix,
         },
       );
       expect(basicRestApiStack).toBeDefined();
@@ -184,6 +186,7 @@ describe("CDK Stack Configurations", () => {
           AGENT: bedrockText2SqlAgentsStack.AGENT,
           AGENT_ALIAS: bedrockText2SqlAgentsStack.AGENT_ALIAS,
           AGENT_KB: bedrockKnowledgeBaseStack.AGENT_KB,
+          PREFIX: stackNamePrefix,
         },
       );
       expect(basicRestApiStack).toBeDefined();

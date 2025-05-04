@@ -190,6 +190,8 @@ export class CommonStack extends Stack {
             "bedrock:InvokeAgent",
             "bedrock:ListAgents",
             "bedrock:ListAgentAliases",
+            "bedrock:RetrieveAndGenerate",
+            "bedrock:KnowledgeBaseRetrieve"
           ],
           effect: iam.Effect.ALLOW,
         }),

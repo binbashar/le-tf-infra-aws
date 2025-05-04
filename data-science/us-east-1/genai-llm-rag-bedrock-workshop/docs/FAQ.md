@@ -1,6 +1,6 @@
 # Frequently Asked Questions (FAQ)
 
-This document addresses common questions and provides troubleshooting tips for the PACE Generative AI Developer Workshop.
+This document addresses common questions and provides troubleshooting tips for the Binbash Gen AI Innovation Lab Workshop.
 
 ## Table of Contents
 

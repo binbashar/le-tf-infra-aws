@@ -47,7 +47,7 @@ export class BedrockAgentsStack extends Stack {
     const qnaActionsAgent = new bedrock.Agent(this, "QnAActionsAgent", {
       name: (cdk.Stack.of(this) + "-" + "QnAActionsAgent").replace("/", "-"),
       foundationModel:
-        bedrock.BedrockFoundationModel.ANTHROPIC_CLAUDE_SONNET_V1_0,
+        bedrock.BedrockFoundationModel.ANTHROPIC_CLAUDE_3_5_SONNET_V2_0,
       shouldPrepareAgent: true,
       enableUserInput: true,
       instruction:
@@ -115,7 +115,7 @@ export class BedrockAgentsStack extends Stack {
       this,
       "BedrockDashboardConstruct",
       {
-        dashboardName: "PACEGenAIWorkshopBedrockDashboard",
+        dashboardName: "BinbashGenAIWorkshopDashboard",
       },
     );
 

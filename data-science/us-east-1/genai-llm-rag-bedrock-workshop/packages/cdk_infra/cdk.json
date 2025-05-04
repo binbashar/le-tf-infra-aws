@@ -20,7 +20,7 @@
   "context": {
     "custom:companyName": "Binbash",
     "custom:agentName": "BinbashAgentBot",
-    "deploy:case": "documentprocessing",
-    "deploy:knowledgebase": false
+    "deploy:case": "chatbot",
+    "deploy:knowledgebase": true
   }
 }

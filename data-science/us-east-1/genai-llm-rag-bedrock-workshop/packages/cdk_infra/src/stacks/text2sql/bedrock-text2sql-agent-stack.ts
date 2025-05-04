@@ -174,7 +174,7 @@ export class BedrockText2SqlAgentsStack extends Stack {
           // openapi.json schema must be defined and stored under the path
           path.join(
             __dirname,
-            "../../../backend/agents/lambda/text2sql/athena",
+            "../../backend/agents/lambda/text2sql/athena",
             agentProps.openApiPath,
             "openapi.json",
           ),
@@ -352,7 +352,7 @@ export class BedrockText2SqlAgentsStack extends Stack {
       this,
       "BedrockDashboardConstructText2sql",
       {
-        dashboardName: "PACEGenAIWorkshopBedrockDashboardText2Sql",
+        dashboardName: "BinbashGenAIWorkshopDashboardText2Sql",
       },
     );
 

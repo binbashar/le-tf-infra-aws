@@ -1,3 +1,7 @@
+# Copyright Amazon.com and its affiliates; all rights reserved.
+# SPDX-License-Identifier: LicenseRef-.amazon.com.-AmznSL-1.0
+# Licensed under the Amazon Software License  https://aws.amazon.com/asl/
+
 """
 Blueprint Creation Module
 
@@ -17,8 +21,9 @@ from aws_lambda_powertools import Logger
 # Configure logging
 logger = Logger()
 
-# Initialize AWS clients
-bedrock = boto3.client('bedrock')
+# Initialize AWS clients for Bedrock Data Automation
+# Use the correct service name based on Boto3 documentation
+bda_client = boto3.client('bedrock-data-automation')
 
 # Load blueprint definitions
 KYB_BLUEPRINTS_FILE = os.path.join(os.path.dirname(__file__), 'kyb_blueprints.json')
@@ -48,40 +53,16 @@ def create_project(project_name=None, description=None):
         description = "KYB Document Processing Project for Automated Document Analysis"
         
     try:
-        response = bedrock.create_data_integration_project(
+        # Use the correct method name from bedrock-data-automation
+        response = bda_client.create_data_automation_project(
             name=project_name,
             description=description
         )
-        logger.info(f"Created project: {project_name} with ID: {response.get('projectId')}")
+        # Assuming response structure might change slightly, adjust key access if needed
+        logger.info(f"Created project: {project_name} with ID: {response.get('projectIdentifier')}")
         return response
     except Exception as e:
         logger.error(f"Error creating project '{project_name}': {str(e)}")
-        raise
-
-def create_blueprint(project_id, blueprint_name, description, definition):
-    """
-    Create a single blueprint in Bedrock Data Integration.
-    
-    Args:
-        project_id (str): Project ID
-        blueprint_name (str): Blueprint name
-        description (str): Blueprint description
-        definition (dict): Blueprint definition
-    
-    Returns:
-        dict: Created blueprint details
-    """
-    try:
-        response = bedrock.create_data_integration_flow(
-            name=blueprint_name,
-            projectId=project_id,
-            description=description,
-            definition=definition
-        )
-        logger.info(f"Created blueprint: {blueprint_name} with ID: {response.get('flowId')}")
-        return response
-    except Exception as e:
-        logger.error(f"Error creating blueprint '{blueprint_name}': {str(e)}")
         raise
 
 def create_kyb_blueprints(project_id=None, blueprints_config=None):
@@ -108,7 +89,7 @@ def create_kyb_blueprints(project_id=None, blueprints_config=None):
         # If still None, create a new project
         if project_id is None:
             project_response = create_project()
-            project_id = project_response.get('projectId')
+            project_id = project_response.get('projectIdentifier') # Likely new key
             project_info = {
                 'projectId': project_id,
                 'projectName': project_response.get('name'),
@@ -129,34 +110,42 @@ def create_kyb_blueprints(project_id=None, blueprints_config=None):
     created_blueprints = []
     for blueprint_type, blueprint_data in blueprints_config.items():
         try:
-            # Extract blueprint details from configuration
+            # Extract blueprint name and the pre-defined schema object
             blueprint_name = blueprint_data.get('name', f"kyb-{blueprint_type}-blueprint")
-            blueprint_description = blueprint_data.get('description', f"Blueprint for {blueprint_type} KYB document processing")
-            blueprint_fields = blueprint_data.get('fields', [])
-            
-            # Format the definition to match Bedrock Data Integration expectations
-            blueprint_definition = {
-                "fields": blueprint_fields
-            }
-            
-            # Create the blueprint
-            response = create_blueprint(
-                project_id=project_id,
-                blueprint_name=blueprint_name,
-                description=blueprint_description,
-                definition=blueprint_definition
+            blueprint_schema_dict = blueprint_data.get('schema')
+
+            if not blueprint_schema_dict:
+                logger.warning(f"Schema definition missing for blueprint type '{blueprint_type}'. Skipping.")
+                created_blueprints.append({
+                    "type": blueprint_type,
+                    "status": "skipped",
+                    "error": "Missing schema definition in kyb_blueprints.json"
+                })
+                continue
+
+            # Convert the pre-defined schema dictionary to a JSON string
+            blueprint_schema_string = json.dumps(blueprint_schema_dict)
+            logger.info(f"Attempting to create blueprint '{blueprint_name}' with pre-defined schema string: {blueprint_schema_string}")
+
+            # Create the blueprint passing the name and the schema string
+            response = bda_client.create_blueprint(
+                blueprintName=blueprint_name,
+                type='DOCUMENT', # Assuming all are document types
+                schema=blueprint_schema_string
             )
             
             # Record the created blueprint
             created_blueprints.append({
                 "type": blueprint_type,
-                "id": response.get('flowId'),
+                "id": response.get('blueprintIdentifier'), # Adapt if key name is different
                 "name": blueprint_name,
                 "status": "created"
             })
             
         except Exception as e:
             logger.error(f"Failed to create blueprint for {blueprint_type}: {str(e)}")
+            # Log the schema that failed
+            logger.error(f"Failing schema string for {blueprint_type}: {blueprint_schema_string}")
             created_blueprints.append({
                 "type": blueprint_type,
                 "status": "failed",
@@ -233,24 +222,68 @@ def get_blueprint_for_document_type(document_type):
 def list_blueprints(project_id=None):
     """
     List all blueprints or blueprints for a specific project.
-    
+
     Args:
-        project_id (str, optional): Project ID to filter blueprints
-        
+        project_id (str, optional): Project ARN to filter blueprints.
+
     Returns:
         dict: List of blueprints
     """
     try:
+        params = {}
         if project_id:
-            response = bedrock.list_data_integration_flows(
-                projectId=project_id
-            )
-        else:
-            response = bedrock.list_data_integration_flows()
-        return response
+            # Use projectFilter with projectArn as per docs
+            params['projectFilter'] = {
+                'projectArn': project_id
+            }
+
+        # Use the correct client and paginator name
+        paginator = bda_client.get_paginator('list_blueprints')
+        response_iterator = paginator.paginate(**params)
+
+        all_blueprints = []
+        for page in response_iterator:
+            # Use the correct response key 'blueprints' as per docs
+            all_blueprints.extend(page.get('blueprints', []))
+
+        logger.info(f"Found {len(all_blueprints)} blueprints for project ARN: {project_id or 'all projects'}")
+        return {"blueprints": all_blueprints}
     except Exception as e:
-        logger.error(f"Error listing blueprints: {str(e)}")
+        logger.error(f"Error listing blueprints for project {project_id}: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise
+
+def get_blueprint_by_type(project_id, document_type):
+    """
+    Find a blueprint by its associated document type (based on naming convention).
+
+    Args:
+        project_id (str): The project ARN to search within.
+        document_type (str): The document type (e.g., 'ein_verification').
+
+    Returns:
+        dict: Details of the found blueprint or None if not found.
+    """
+    try:
+        logger.info(f"Searching for blueprint of type '{document_type}' in project '{project_id}'")
+        # Expected naming convention, adjust if different
+        expected_blueprint_name = f"kyb-{document_type}-blueprint"
+
+        list_response = list_blueprints(project_id=project_id)
+        blueprints = list_response.get("blueprints", [])
+
+        for blueprint in blueprints:
+            # Use keys from list_blueprints response summary (blueprintName, blueprintArn)
+            if blueprint.get('blueprintName') == expected_blueprint_name:
+                logger.info(f"Found matching blueprint: ARN={blueprint.get('blueprintArn')}, Name={blueprint.get('blueprintName')}")
+                return blueprint # Return the summary details
+
+        logger.warning(f"No blueprint found with name '{expected_blueprint_name}' for document type '{document_type}' in project '{project_id}'.")
+        return None # Indicate not found
+    except Exception as e:
+        logger.error(f"Error getting blueprint by type '{document_type}' for project {project_id}: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise # Propagate error
 
 def get_blueprint(blueprint_id):
     """
@@ -263,8 +296,9 @@ def get_blueprint(blueprint_id):
         dict: Blueprint details
     """
     try:
-        response = bedrock.get_data_integration_flow(
-            flowId=blueprint_id
+        # Use the correct method name and parameter from bedrock-data-automation docs
+        response = bda_client.get_blueprint(
+            blueprintArn=blueprint_id # Use blueprintArn as required by docs
         )
         return response
     except Exception as e:
@@ -274,16 +308,17 @@ def get_blueprint(blueprint_id):
 def delete_blueprint(blueprint_id):
     """
     Delete a blueprint.
-    
+
     Args:
-        blueprint_id (str): Blueprint ID to delete
-        
+        blueprint_id (str): ARN of the Blueprint to delete
+
     Returns:
         dict: Deletion response
     """
     try:
-        response = bedrock.delete_data_integration_flow(
-            flowId=blueprint_id
+        # Use the correct parameter name from bedrock-data-automation docs
+        response = bda_client.delete_blueprint(
+            blueprintArn=blueprint_id # Use blueprintArn as required by docs
         )
         return response
     except Exception as e:
@@ -293,18 +328,22 @@ def delete_blueprint(blueprint_id):
 def update_blueprint(blueprint_id, definition):
     """
     Update a blueprint's definition.
-    
+
     Args:
-        blueprint_id (str): Blueprint ID to update
-        definition (dict): New blueprint definition
-        
+        blueprint_id (str): ARN of the Blueprint to update
+        definition (dict): New blueprint definition (Python dict)
+
     Returns:
         dict: Update response
     """
     try:
-        response = bedrock.update_data_integration_flow(
-            flowId=blueprint_id,
-            definition=definition
+        # Convert schema dictionary to JSON string as required by the API
+        schema_string = json.dumps(definition)
+
+        # Use the correct parameter names from bedrock-data-automation docs
+        response = bda_client.update_blueprint(
+            blueprintArn=blueprint_id, # Use blueprintArn
+            schema=schema_string      # Use schema (as string)
         )
         return response
     except Exception as e:
@@ -313,76 +352,146 @@ def update_blueprint(blueprint_id, definition):
 
 def process_operation(event):
     """
-    Process an operation based on the event content.
-    
+    Process the incoming API Gateway event based on the operation specified.
+
     Args:
-        event (dict): Lambda event
-        
+        event (dict): API Gateway Lambda proxy event
+
     Returns:
-        dict: Operation result
+        dict: Response object for API Gateway
     """
-    operation = event.get('operation', '').lower()
-    
-    if operation == 'create_blueprints':
-        project_id = event.get('project_id')
-        project_name = event.get('project_name')
-        project_description = event.get('project_description')
-        
-        if project_id:
-            return create_kyb_blueprints(project_id)
-        elif project_name:
-            project_response = create_project(project_name, project_description)
-            project_id = project_response.get('projectId')
-            return create_kyb_blueprints(project_id)
+    try:
+        # Check if the event came from EventBridge
+        if 'detail' in event and 'source' in event and event['source'] == 'custom.bedrock.blueprint':
+            logger.info("Processing EventBridge event detail")
+            body = event.get('detail', {})
+            operation = body.get('operation')
         else:
-            return create_kyb_blueprints()
-    
-    elif operation == 'list_blueprints':
-        project_id = event.get('project_id')
-        return list_blueprints(project_id)
-    
-    elif operation == 'get_blueprint':
-        blueprint_id = event.get('blueprint_id')
-        if not blueprint_id:
-            return {"error": "Missing blueprint_id parameter"}
-        return get_blueprint(blueprint_id)
-    
-    elif operation == 'delete_blueprint':
-        blueprint_id = event.get('blueprint_id')
-        if not blueprint_id:
-            return {"error": "Missing blueprint_id parameter"}
-        return delete_blueprint(blueprint_id)
-    
-    elif operation == 'update_blueprint':
-        blueprint_id = event.get('blueprint_id')
-        definition = event.get('definition')
-        if not blueprint_id or not definition:
-            return {"error": "Missing blueprint_id or definition parameters"}
-        return update_blueprint(blueprint_id, definition)
-    
-    elif operation == 'detect_document_type':
-        document_data = event.get('document_data')
-        if not document_data:
-            return {"error": "Missing document_data parameter"}
-        document_type = detect_document_type(document_data)
-        return {"document_type": document_type}
-    
-    elif operation == 'get_blueprint_for_document':
-        document_type = event.get('document_type')
-        if not document_type:
-            document_data = event.get('document_data')
-            if not document_data:
-                return {"error": "Missing document_type or document_data parameter"}
-            document_type = detect_document_type(document_data)
-        
-        blueprint_def = get_blueprint_for_document_type(document_type)
-        return {
-            "document_type": document_type,
-            "blueprint": blueprint_def
-        }
-    
-    else:
-        return {"error": f"Unsupported operation: {operation}"}
+            # Existing logic for Agent/API Gateway calls
+            body = json.loads(event.get('body', '{}'))
+            if 'requestBody' in event:
+                input_body_str = event['requestBody'].get('content', {}).get('application/json', {}).get('properties', [])
+                body = {prop['name']: prop['value'] for prop in input_body_str if 'name' in prop and 'value' in prop}
+            operation = body.get('operation')
+
+        logger.info(f"Processing operation: {operation} with body: {json.dumps(body)}")
+
+        response_body = {}
+        status_code = 200
+
+        if operation == 'create_blueprints':
+            project_id = body.get('project_id')
+            response_body = create_kyb_blueprints(project_id=project_id)
+        elif operation == 'list_blueprints':
+            project_id = body.get('project_id')
+            response_body = list_blueprints(project_id=project_id)
+        elif operation == 'get_blueprint':
+            blueprint_arn = body.get('blueprintArn') # Changed from blueprint_id
+            if not blueprint_arn:
+                status_code = 400
+                response_body = {'message': 'Missing required parameter: blueprintArn'}
+            else:
+                response_body = get_blueprint(blueprint_arn) # Pass the ARN
+                if response_body is None:
+                     status_code = 404
+                     response_body = {'message': f'Blueprint with ARN {blueprint_arn} not found'}
+        elif operation == 'GET_BLUEPRINT_BY_TYPE' or operation == 'GET':
+            project_id = os.environ.get('BDA_PROJECT_ID') # Assuming project ID is in env
+            document_type = body.get('document_type')
+            if not project_id or not document_type:
+                status_code = 400
+                response_body = {'message': 'Missing required parameter: document_type (or Project ID not configured)'}
+            else:
+                blueprint_details = get_blueprint_by_type(project_id, document_type)
+                if blueprint_details:
+                    response_body = blueprint_details
+                else:
+                    status_code = 404
+                    response_body = {'message': f"Blueprint for document type '{document_type}' not found in project '{project_id}'"}
+
+        elif operation == 'delete_blueprint':
+            blueprint_arn = body.get('blueprintArn') # Changed from blueprint_id
+            if not blueprint_arn:
+                status_code = 400
+                response_body = {'message': 'Missing required parameter: blueprintArn'}
+            else:
+                response_body = delete_blueprint(blueprint_arn)
+        elif operation == 'update_blueprint':
+            blueprint_arn = body.get('blueprintArn') # Changed from blueprint_id
+            definition = body.get('definition') # Still get definition dict from body
+            if not blueprint_arn or not definition:
+                 status_code = 400
+                 response_body = {'message': 'Missing required parameters: blueprintArn and definition'}
+            else:
+                 response_body = update_blueprint(blueprint_arn, definition) # Pass ARN and dict
+
+        # Add more operations here as needed...
+
+        else:
+            status_code = 400
+            response_body = {'message': f'Unsupported operation: {operation}'}
+
+        # Prepare the response for the agent or direct invocation
+        # Agent expects a specific response structure
+        if 'agent' in event:
+             action_response = {
+                 "actionGroup": event.get("actionGroup"),
+                 "apiPath": event.get("apiPath"),
+                 "httpMethod": event.get("httpMethod"),
+                 "httpStatusCode": status_code,
+                 "responseBody": {
+                     "application/json": {
+                         "body": json.dumps(response_body)
+                      }
+                  }
+              }
+             final_response = {
+                 'messageVersion': '1.0',
+                 'response': action_response
+             }
+        else:
+            # Standard API Gateway response
+             final_response = {
+                 'statusCode': status_code,
+                 'headers': {
+                     'Content-Type': 'application/json',
+                     'Access-Control-Allow-Origin': '*' # Adjust CORS as needed
+                 },
+                 'body': json.dumps(response_body)
+             }
+
+        logger.info(f"Operation {operation} completed with status {status_code}. Response: {json.dumps(final_response)}")
+        return final_response
+
+    except Exception as e:
+        logger.error(f"Error processing operation: {traceback.format_exc()}")
+        error_response_body = {'message': f'Internal server error: {str(e)}'}
+        # Agent specific error structure
+        if 'agent' in event:
+             action_response = {
+                 "actionGroup": event.get("actionGroup"),
+                 "apiPath": event.get("apiPath"),
+                 "httpMethod": event.get("httpMethod"),
+                 "httpStatusCode": 500,
+                 "responseBody": {
+                     "application/json": {
+                         "body": json.dumps(error_response_body)
+                      }
+                  }
+              }
+             return {
+                 'messageVersion': '1.0',
+                 'response': action_response
+             }
+        else:
+             return {
+                 'statusCode': 500,
+                 'headers': {
+                     'Content-Type': 'application/json',
+                     'Access-Control-Allow-Origin': '*' # Adjust CORS as needed
+                 },
+                 'body': json.dumps(error_response_body)
+             }
 
 @logger.inject_lambda_context(log_event=True)
 def lambda_handler(event, context):
@@ -399,10 +508,6 @@ def lambda_handler(event, context):
     logger.info(f"Received event: {json.dumps(event)}")
     
     try:
-        # Check if detail exists (EventBridge format)
-        if 'detail' in event:
-            event = event.get('detail', {})
-            
         result = process_operation(event)
         return {
             "statusCode": 200,

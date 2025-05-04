@@ -1,3 +1,7 @@
+# Copyright Amazon.com and its affiliates; all rights reserved.
+# SPDX-License-Identifier: LicenseRef-.amazon.com.-AmznSL-1.0
+# Licensed under the Amazon Software License  https://aws.amazon.com/asl/
+
 import json
 import os
 import boto3
@@ -14,12 +18,14 @@ logger = Logger()
 
 # Get environment variables
 OUTPUT_BUCKET = os.environ.get('OUTPUT_BUCKET')
+INPUT_BUCKET = os.environ.get('INPUT_BUCKET')
 METADATA_TABLE = os.environ.get('METADATA_TABLE')
 BDA_PROJECT_ID = os.environ.get('BDA_PROJECT_ID')
 
-# Initialize AWS clients
+# Initialize AWS clients with correct service names
 s3_client = boto3.client('s3')
-bedrock_client = boto3.client('bedrock')
+bda_build_client = boto3.client('bedrock-data-automation')
+bda_runtime_client = boto3.client('bedrock-data-automation-runtime')
 dynamodb = boto3.resource('dynamodb')
 lambda_client = boto3.client('lambda')
 
@@ -112,14 +118,14 @@ def get_blueprint(blueprint_id: str) -> Dict[str, Any]:
     Get the blueprint details from Bedrock Data Automation.
     
     Args:
-        blueprint_id: The ID of the blueprint
+        blueprint_id: The ARN of the blueprint
         
     Returns:
         The blueprint details
     """
     try:
-        response = bedrock_client.get_blueprint(
-            blueprintId=blueprint_id
+        response = bda_build_client.get_blueprint(
+            blueprintArn=blueprint_id
         )
         return response
     except ClientError as e:
@@ -129,28 +135,30 @@ def get_blueprint(blueprint_id: str) -> Dict[str, Any]:
             raise ValueError(f"Blueprint {blueprint_id} not found")
         raise
 
-def list_blueprints() -> List[Dict[str, Any]]:
+def list_blueprints(project_id: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     List all available blueprints in Bedrock Data Automation.
     
+    Args:
+        project_id: The ARN of the project to filter by (optional)
+        
     Returns:
         List of available blueprints
     """
     try:
+        params = {}
+        if project_id:
+            params['projectFilter'] = {
+                'projectArn': project_id
+            }
+
         blueprints = []
-        response = bedrock_client.list_blueprints(projectId=BDA_PROJECT_ID)
-        
-        blueprints.extend(response.get('blueprints', []))
-        
-        next_token = response.get('nextToken')
-        while next_token:
-            response = bedrock_client.list_blueprints(
-                projectId=BDA_PROJECT_ID,
-                nextToken=next_token
-            )
-            blueprints.extend(response.get('blueprints', []))
-            next_token = response.get('nextToken')
-            
+        paginator = bda_build_client.get_paginator('list_blueprints')
+        response_iterator = paginator.paginate(**params)
+
+        for page in response_iterator:
+            blueprints.extend(page.get('blueprints', []))
+
         return blueprints
     except ClientError as e:
         logger.error(f"Error listing blueprints: {str(e)}")
@@ -158,15 +166,15 @@ def list_blueprints() -> List[Dict[str, Any]]:
 
 def process_document(document_id: str, page_number: int, blueprint_id: Optional[str] = None) -> Dict[str, Any]:
     """
-    Process a document page using Bedrock Data Automation.
-    
+    Process a document page using Bedrock Data Automation (synchronous polling).
+
     Args:
         document_id: The ID of the document
         page_number: The page number to process
-        blueprint_id: Optional blueprint ID to use for processing
-        
+        blueprint_id: Optional blueprint ARN to use for processing
+
     Returns:
-        The processing results
+        The processing results and status
     """
     try:
         # Input validation
@@ -189,6 +197,7 @@ def process_document(document_id: str, page_number: int, blueprint_id: Optional[
             
         page_data = response['Item']
         s3_key = page_data['s3Key']
+        input_s3_uri = f"s3://{OUTPUT_BUCKET}/{s3_key}"
         
         # Update status to processing
         logger.info(f"Updating status to PROCESSING for document {document_id}, page {page_number}")
@@ -208,11 +217,11 @@ def process_document(document_id: str, page_number: int, blueprint_id: Optional[
             }
         )
         
-        # Validate BDA project ID
+        # Validate BDA project ID (ARN)
         if not BDA_PROJECT_ID:
-            raise ValueError("BDA_PROJECT_ID environment variable is not set")
+            raise ValueError("BDA_PROJECT_ID environment variable is not set (should be Project ARN)")
         
-        # If no blueprint_id is provided, try to detect document type and get appropriate blueprint
+        # If no blueprint_id (ARN) is provided, try to get appropriate blueprint ARN
         if not blueprint_id:
             document_type = detect_document_type(s3_key)
             logger.info(f"Detected document type: {document_type}")
@@ -221,169 +230,143 @@ def process_document(document_id: str, page_number: int, blueprint_id: Optional[
                 blueprint_id = get_blueprint_for_document_type(document_type)
                 logger.info(f"Selected blueprint ID for {document_type}: {blueprint_id}")
         
-        # Invoke Bedrock Data Automation
-        logger.info(f"Invoking Bedrock Data Automation for document {document_id}, page {page_number}")
+        # Invoke Bedrock Data Automation Runtime Asynchronously
+        logger.info(f"Invoking Bedrock Data Automation async for document {document_id}, page {page_number}")
+
         invoke_params = {
-            'projectId': BDA_PROJECT_ID,
-            's3Uri': f"s3://{OUTPUT_BUCKET}/{s3_key}"
+            'projectId': BDA_PROJECT_ID, # Use the Project ARN from env var
+            's3Uri': input_s3_uri
         }
-        
+
         if blueprint_id:
-            # Verify blueprint exists before using it
+            # Verify blueprint exists using the ARN before using it
             try:
-                get_blueprint(blueprint_id)
-                invoke_params['blueprintId'] = blueprint_id
-                logger.info(f"Using blueprint {blueprint_id} for processing")
+                get_blueprint(blueprint_id) # Check using ARN
+                invoke_params['blueprintId'] = blueprint_id # Use ARN here
+                logger.info(f"Using blueprint ARN {blueprint_id} for execution")
             except ValueError:
-                logger.warning(f"Blueprint {blueprint_id} not found, proceeding without blueprint")
-            
+                logger.warning(f"Blueprint ARN {blueprint_id} not found, proceeding without blueprint")
+
         try:
-            bda_response = bedrock_client.invoke_data_automation_async(**invoke_params)
+            # Use the runtime client and invoke_data_automation_async
+            bda_response = bda_runtime_client.invoke_data_automation_async(**invoke_params)
+            job_id = bda_response['jobId'] # Get jobId
+            logger.info(f"Started BDA job with ID: {job_id}")
         except ClientError as e:
             logger.error(f"Error invoking Bedrock Data Automation: {str(e)}")
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
             if error_code == 'ResourceNotFoundException':
                 raise ValueError(f"Project ID {BDA_PROJECT_ID} not found")
             raise
-        
-        # Get the job ID
-        job_id = bda_response['jobId']
-        logger.info(f"Bedrock Data Automation job ID: {job_id}")
-        
-        # Wait for processing to complete (with timeout)
-        max_wait_time = 600  # 10 minutes
+
+        # --- Polling Logic --- 
+        max_wait_time = 600  # 10 minutes timeout
         start_time = time.time()
         status = 'IN_PROGRESS'
-        
+        status_response = {}
+
+        logger.info(f"Polling status for job ID: {job_id}")
         while status == 'IN_PROGRESS' and (time.time() - start_time) < max_wait_time:
-            # Check status
             try:
-                status_response = bedrock_client.get_data_automation_status(
+                # Check status using get_data_automation_status
+                status_response = bda_runtime_client.get_data_automation_status(
                     jobId=job_id
                 )
-                status = status_response['status']
-                
+                status = status_response.get('status', 'ERROR') # Default to error if key missing
+                logger.debug(f"Job {job_id} status: {status}")
+
                 if status == 'IN_PROGRESS':
-                    # Wait before checking again
-                    time.sleep(5)
+                    time.sleep(10) # Wait 10 seconds before checking again
+                elif status not in ['COMPLETED', 'FAILED', 'PARTIALLY_FAILED', 'CANCELED']:
+                    # Unexpected status, treat as error
+                    logger.error(f"Unexpected status received: {status} for job {job_id}")
+                    status = 'ERROR'
+                    break
+
             except ClientError as e:
-                logger.error(f"Error checking job status: {str(e)}")
+                logger.error(f"Error checking job status for {job_id}: {str(e)}")
                 status = 'ERROR'
                 break
-                
-        # If still in progress after timeout, we'll consider it a failure
+
+        # Handle timeout
         if status == 'IN_PROGRESS':
             status = 'TIMED_OUT'
-            logger.warning(f"Processing timed out for job {job_id}")
-            
-        # Get the results if completed successfully
+            logger.warning(f"Polling timed out for job {job_id}")
+
+        # --- Process Results --- 
         result = {}
+        final_status = 'FAILED' # Default final status unless completed
+
         if status == 'COMPLETED':
             logger.info(f"Processing completed for job {job_id}")
+            final_status = 'COMPLETED'
             try:
-                # Get the output document
-                output_key = f"results/{document_id}/{page_number}/bda_result.json"
-                
-                # Get the S3 URI from the status response
-                output_uri = status_response['outputLocation']
-                
-                # Extract source bucket and key from the output URI
-                source_bucket = output_uri.replace('s3://', '').split('/')[0]
-                source_key = output_uri.replace(f's3://{source_bucket}/', '')
-                
-                logger.info(f"Copying results from {source_bucket}/{source_key} to {OUTPUT_BUCKET}/{output_key}")
-                
-                # Copy to our output location
-                s3_client.copy_object(
-                    Bucket=OUTPUT_BUCKET,
-                    Key=output_key,
-                    CopySource={'Bucket': source_bucket, 'Key': source_key}
-                )
-                
-                # Get the content
-                content_response = s3_client.get_object(
-                    Bucket=OUTPUT_BUCKET,
-                    Key=output_key
-                )
-                
-                result = json.loads(content_response['Body'].read().decode('utf-8'))
-                
-                # Update document metadata with results
-                logger.info(f"Updating metadata with results for document {document_id}, page {page_number}")
-                metadata_table.update_item(
-                    Key={
-                        'documentId': document_id,
-                        'pageNumber': page_number
-                    },
-                    UpdateExpression='SET #status = :status, #lastUpdated = :lastUpdated, #outputKey = :outputKey, #result = :result, #documentType = :documentType',
-                    ExpressionAttributeNames={
-                        '#status': 'status',
-                        '#lastUpdated': 'lastUpdated',
-                        '#outputKey': 'outputKey',
-                        '#result': 'result',
-                        '#documentType': 'documentType'
-                    },
-                    ExpressionAttributeValues={
-                        ':status': 'COMPLETED',
-                        ':lastUpdated': datetime.now().isoformat(),
-                        ':outputKey': output_key,
-                        ':result': result,
-                        ':documentType': detect_document_type(s3_key)
-                    }
-                )
-            except Exception as e:
-                logger.error(f"Error processing results: {str(e)}")
-                status = 'ERROR'
-                
+                output_uri = status_response.get('outputLocation')
+                if output_uri:
+                    output_key = f"results/{document_id}/{page_number}/bda_result.json" # Define our desired key
+                    source_bucket = output_uri.replace('s3://', '').split('/')[0]
+                    source_key = '/'.join(output_uri.replace('s3://', '').split('/')[1:]) # Handle potential paths in key
+
+                    logger.info(f"Copying results from s3://{source_bucket}/{source_key} to s3://{OUTPUT_BUCKET}/{output_key}")
+                    s3_client.copy_object(
+                        Bucket=OUTPUT_BUCKET,
+                        Key=output_key,
+                        CopySource={'Bucket': source_bucket, 'Key': source_key}
+                    )
+
+                    logger.info(f"Reading results from s3://{OUTPUT_BUCKET}/{output_key}")
+                    content_response = s3_client.get_object(Bucket=OUTPUT_BUCKET, Key=output_key)
+                    result = json.loads(content_response['Body'].read().decode('utf-8'))
+
+                    # Update metadata with results
+                    metadata_table.update_item(
+                        Key={'documentId': document_id, 'pageNumber': page_number},
+                        UpdateExpression='SET #status = :status, #lastUpdated = :lastUpdated, #outputKey = :outputKey, #result = :result',
+                        ExpressionAttributeNames={'#status': 'status', '#lastUpdated': 'lastUpdated', '#outputKey': 'outputKey', '#result': 'result'},
+                        ExpressionAttributeValues={':status': final_status, ':lastUpdated': datetime.now().isoformat(), ':outputKey': output_key, ':result': result}
+                    )
+                else:
+                    logger.warning(f"Job {job_id} completed but no outputLocation found in status response.")
+                    # Update metadata without results
+                    metadata_table.update_item(
+                        Key={'documentId': document_id, 'pageNumber': page_number},
+                        UpdateExpression='SET #status = :status, #lastUpdated = :lastUpdated',
+                        ExpressionAttributeNames={'#status': 'status', '#lastUpdated': 'lastUpdated'},
+                        ExpressionAttributeValues={':status': final_status, ':lastUpdated': datetime.now().isoformat()}
+                     )
+
+            except Exception as res_err:
+                logger.error(f"Error processing results for job {job_id}: {str(res_err)}")
+                final_status = 'ERROR_POST_PROCESSING'
                 # Update metadata with error
                 metadata_table.update_item(
-                    Key={
-                        'documentId': document_id,
-                        'pageNumber': page_number
-                    },
-                    UpdateExpression='SET #status = :status, #lastUpdated = :lastUpdated, #errorMessage = :errorMessage',
-                    ExpressionAttributeNames={
-                        '#status': 'status',
-                        '#lastUpdated': 'lastUpdated',
-                        '#errorMessage': 'errorMessage'
-                    },
-                    ExpressionAttributeValues={
-                        ':status': 'ERROR',
-                        ':lastUpdated': datetime.now().isoformat(),
-                        ':errorMessage': f"Error processing results: {str(e)}"
-                    }
+                     Key={'documentId': document_id, 'pageNumber': page_number},
+                     UpdateExpression='SET #status = :status, #lastUpdated = :lastUpdated, #errorMessage = :errorMessage',
+                     ExpressionAttributeNames={'#status': 'status', '#lastUpdated': 'lastUpdated', '#errorMessage': 'errorMessage'},
+                     ExpressionAttributeValues={':status': final_status, ':lastUpdated': datetime.now().isoformat(), ':errorMessage': f"Error processing results: {str(res_err)}"}
                 )
         else:
-            # Update document metadata with failure
-            logger.warning(f"Processing failed with status: {status} for document {document_id}, page {page_number}")
+            # Handle FAILED, TIMED_OUT, ERROR, etc.
+            final_status = status if status != 'ERROR' else 'FAILED' # Map internal ERROR to FAILED
+            logger.warning(f"Processing ended with non-COMPLETED status: {final_status} for job {job_id}")
+            error_message = status_response.get('failureReason', f"Processing ended with status: {final_status}")
             metadata_table.update_item(
-                Key={
-                    'documentId': document_id,
-                    'pageNumber': page_number
-                },
+                Key={'documentId': document_id, 'pageNumber': page_number},
                 UpdateExpression='SET #status = :status, #lastUpdated = :lastUpdated, #errorMessage = :errorMessage',
-                ExpressionAttributeNames={
-                    '#status': 'status',
-                    '#lastUpdated': 'lastUpdated',
-                    '#errorMessage': 'errorMessage'
-                },
-                ExpressionAttributeValues={
-                    ':status': 'FAILED',
-                    ':lastUpdated': datetime.now().isoformat(),
-                    ':errorMessage': f"Processing failed with status: {status}"
-                }
+                ExpressionAttributeNames={'#status': 'status', '#lastUpdated': 'lastUpdated', '#errorMessage': 'errorMessage'},
+                ExpressionAttributeValues={':status': final_status, ':lastUpdated': datetime.now().isoformat(), ':errorMessage': error_message}
             )
-            
+
         return {
             'documentId': document_id,
             'pageNumber': page_number,
             'jobId': job_id,
-            'status': status,
+            'status': final_status,
             'result': result
         }
-        
+
     except Exception as e:
-        logger.error(f"Error processing document: {str(e)}")
+        logger.error(f"Error processing document {document_id}, page {page_number}: {str(e)}")
         
         # Update document metadata with error if possible
         try:
@@ -469,7 +452,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
             if operation == 'list_blueprints':
                 logger.info("Listing blueprints")
                 try:
-                    blueprints = list_blueprints()
+                    blueprints = list_blueprints(BDA_PROJECT_ID)
                     return {
                         'statusCode': 200,
                         'body': json.dumps({

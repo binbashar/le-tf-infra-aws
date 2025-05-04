@@ -72,6 +72,11 @@ interface BedrockDataAutomationConstructProps {
   projectName?: string;
   
   /**
+   * Boto3 Lambda Layer Version
+   */
+  layerBoto: PythonLayerVersion;
+  
+  /**
    * Whether to enable KYB workflow
    * @default false
    */
@@ -142,10 +147,19 @@ class BedrockDataAutomation extends Construct {
         timeout: Duration.minutes(5),
         memorySize: 512,
         role: bedrockRole,
+        layers: [props.layerBoto],
         environment: {
           "BDA_PROJECT_ID": projectName
         }
       });
+
+      // Explicitly grant EventBridge permission to invoke this Lambda
+      this.bdaBlueprintFunction.addPermission('EventBridgeInvokePermission', {
+        principal: new iam.ServicePrincipal('events.amazonaws.com'),
+        action: 'lambda:InvokeFunction',
+        sourceArn: `arn:aws:events:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:rule/BinbashWorkshopDocumentPr-KybBlueprintCreationRule*` // Be specific if possible, use wildcard if name varies
+      });
+
     } else {
       // Create a placeholder Lambda if not required
       this.bdaBlueprintFunction = new lambda.Function(this, 'BlueprintFunction', {
@@ -276,6 +290,7 @@ export class BedrockDocumentProcessingStack extends Stack {
       isBlueprintRequired: true,
       isStatusRequired: true,
       projectName: this.BEDROCK_DATA_AUTOMATION_PROJECT_ID,
+      layerBoto: props.LAYER_BOTO,
       isKYBEnabled: props.KYB_ENABLED ?? false
     });
     
@@ -323,6 +338,11 @@ export class BedrockDocumentProcessingStack extends Stack {
         "INPUT_BUCKET": props.INPUT_BUCKET_NAME,
         "OUTPUT_BUCKET": props.OUTPUT_BUCKET_NAME,
         "METADATA_TABLE": props.METADATA_TABLE_NAME,
+      },
+      bundling: {
+        command: [
+          'pip', 'install', 'PyMuPDF', '-t', '/asset-output'
+        ]
       }
     });
 
@@ -354,28 +374,6 @@ export class BedrockDocumentProcessingStack extends Stack {
       iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonBedrockFullAccess')
     );
     
-    // Create document processing workflow with Step Functions
-    const processDocumentTask = new tasks.LambdaInvoke(this, 'ProcessDocument', {
-      lambdaFunction: this.documentProcessingFunction,
-      outputPath: '$.Payload',
-    });
-    
-    const splitDocumentTask = new tasks.LambdaInvoke(this, 'SplitDocument', {
-      lambdaFunction: this.documentSplitterFunction,
-      outputPath: '$.Payload',
-    });
-    
-    // Define the workflow
-    const definition = stepfunctions.Chain
-      .start(splitDocumentTask)
-      .next(processDocumentTask);
-    
-    // Create the state machine
-    this.documentProcessingStateMachine = new stepfunctions.StateMachine(this, 'DocumentProcessingWorkflow', {
-      definition,
-      timeout: Duration.minutes(30),
-    });
-
     // Read KYB-specific instruction and orchestration prompts
     const instruction = readFileSync(
       path.join(__dirname, "../../prompt/instruction/documentprocessing", props.KYB_ENABLED ? "kyb_instruction.txt" : "instruction.txt"),
@@ -520,7 +518,7 @@ export class BedrockDocumentProcessingStack extends Stack {
 
     // Add action groups to agent - limit to the most essential ones to stay under quota
     bedrockAgent.addActionGroup(documentProcessingActionGroup);   // Keep core processing functionality
-    bedrockAgent.addActionGroup(documentSplitterActionGroup);     // Needed for document splitting
+    //bedrockAgent.addActionGroup(documentSplitterActionGroup);     // Needed for document splitting
     bedrockAgent.addActionGroup(bdaBlueprintActionGroup);         // Needed for blueprint management
     // bedrockAgent.addActionGroup(documentValidationActionGroup); // Temporarily disable validation to stay under the API limit
     
@@ -680,41 +678,5 @@ async function sendResponse(event, context, responseStatus, reason) {
         },
       ],
     );
-  }
-
-  // Method to configure S3 event triggers for the workflow
-  public configureS3EventTrigger(
-    bucket: s3.Bucket,
-    stateMachine: stepfunctions.StateMachine
-  ): void {
-    // Enable EventBridge notifications for the S3 bucket
-    const cfnBucket = bucket.node.defaultChild as s3.CfnBucket;
-    cfnBucket.notificationConfiguration = {
-      eventBridgeConfiguration: {
-        eventBridgeEnabled: true
-      }
-    };
-
-    // Create an EventBridge rule to trigger the state machine
-    const rule = new events.Rule(this, 'S3UploadRule', {
-      eventPattern: {
-        source: ['aws.s3'],
-        detailType: ['Object Created'],
-        detail: {
-          bucket: {
-            name: [bucket.bucketName],
-          },
-        },
-      },
-    });
-
-    // Add the state machine as a target
-    rule.addTarget(new targets.SfnStateMachine(stateMachine, {
-      input: events.RuleTargetInput.fromObject({
-        bucket: events.EventField.fromPath('$.detail.bucket.name'),
-        key: events.EventField.fromPath('$.detail.object.key'),
-        jobId: events.EventField.fromPath('$.id'),
-      }),
-    }));
   }
 }
