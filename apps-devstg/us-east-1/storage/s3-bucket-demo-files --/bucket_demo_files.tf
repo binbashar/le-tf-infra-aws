@@ -2,7 +2,7 @@
 # Pre-req: Logs bucket
 #
 module "log_bucket_demo_files" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.3.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.15.2"
 
   bucket        = "${local.bucket_name}-logs"
   acl           = "log-delivery-write"
@@ -64,7 +64,7 @@ module "log_bucket_demo_files" {
 # S3 Bucket Module Instantiation        #
 #=======================================#
 module "s3_bucket_demo_files" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.3.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.15.2"
 
   bucket        = local.bucket_name
   acl           = "private"
@@ -182,7 +182,7 @@ module "s3_bucket_demo_files" {
 # S3 Bucket Module Instantiation Replica #
 #========================================#
 module "s3_bucket_demo_files_replica" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.3.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.15.2"
 
   providers = {
     aws = aws.secondary_region
