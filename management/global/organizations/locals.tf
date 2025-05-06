@@ -38,7 +38,7 @@ locals {
     }
   }
 
-  root_account = {
+  management_account = {
     email = "aws+root@binbash.com.ar"
   }
 

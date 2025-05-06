@@ -6,8 +6,8 @@
 #  but it could also be used to manage the SCPs of the OUs and accounts.
 #
 resource "aws_organizations_account" "root" {
-  name  = "${var.project_long}-root"
-  email = local.root_account.email
+  name  = "${var.project_long}-management"
+  email = local.management_account.email
 }
 
 #
