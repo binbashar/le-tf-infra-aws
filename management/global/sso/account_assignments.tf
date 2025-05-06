@@ -20,7 +20,7 @@ module "account_assignments" {
       permission_set_name = "Administrator"
       principal_type      = local.principal_type_group
       principal_name      = local.groups["administrators"].name
-      account             = var.accounts.root.id
+      account             = var.accounts.management.id
     },
     #
     # NOTE The following are only left commented out as reference
@@ -115,7 +115,7 @@ module "account_assignments" {
       permission_set_name = "FinOps",
       principal_type      = local.principal_type_group
       principal_name      = local.groups["finops"].name
-      account             = var.accounts.root.id,
+      account             = var.accounts.management.id,
     },
 
     # -------------------------------------------------------------------------
@@ -183,7 +183,7 @@ module "account_assignments" {
       permission_set_name = "MarketplaceSeller"
       principal_type      = local.principal_type_group
       principal_name      = local.groups["marketplaceseller"].name
-      account             = var.accounts.root.id
+      account             = var.accounts.management.id
     },
     {
       permission_set_arn  = module.permission_sets.permission_sets["MarketplaceSeller"].arn
