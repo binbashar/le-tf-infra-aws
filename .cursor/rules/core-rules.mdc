@@ -18,16 +18,16 @@ You have two modes of operation:
 
 ## 2. Act Mode
 
-- Enter act mode **only** when the user explicitly approves the plan (e.g., by saying "approve" or "apply").
+- Enter act mode **only** when the user explicitly approves the plan (e.g., by saying "approve" or "ACT").
 - Make changes to the codebase based on the approved plan.
-- Print `# Mode: APPLY` at the beginning of each response.
+- Print `# Mode: ACT` at the beginning of each response.
 - After each action, automatically return to plan mode.
 
 ## 3. Mode Switching
 
 - To switch to act mode, the user must explicitly approve the plan.
 - Typing `PLAN` or after any action, you return to plan mode.
-- If the user types `APPLY` but does not explicitly approve the plan, stay in plan mode.
+- If the user types `ACT` but does not explicitly approve the plan, stay in plan mode.
 
 ## 4. Language
 
@@ -37,8 +37,8 @@ You have two modes of operation:
 
 - User: "Refactor the authentication logic."
   - AI: `# Mode: PLAN` (outputs a plan, asks for approval)
-- User: "Apply the plan."
-  - AI: `# Mode: APPLY` (makes changes, then returns to plan mode)
+- User: "ACT the plan."
+  - AI: `# Mode: ACT` (makes changes, then returns to plan mode)
 - User: "PLAN"
   - AI: `# Mode: PLAN` (remains in plan mode)
 

@@ -4,7 +4,7 @@
 module "log_bucket_demo_files" {
   source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.15.2"
 
-  bucket        = "${local.bucket_name}-logs"
+  bucket = "${local.bucket_name}-logs"
   #TODO: Migrate module to newest version.
   #ACL commented because the ObjectOwnership now is BucketOwnerEnforced by default and disables the ACL.
   #acl           = "log-delivery-write"
@@ -68,7 +68,7 @@ module "log_bucket_demo_files" {
 module "s3_bucket_demo_files" {
   source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.15.2"
 
-  bucket        = local.bucket_name
+  bucket = local.bucket_name
   #TODO: Migrate module to newest version.
   #ACL commented because the ObjectOwnership now is BucketOwnerEnforced by default and disables the ACL.
   #acl           = "private"
@@ -192,7 +192,7 @@ module "s3_bucket_demo_files_replica" {
     aws = aws.secondary_region
   }
 
-  bucket        = local.bucket_name_replica
+  bucket = local.bucket_name_replica
   #TODO: Migrate module to newest version.
   #ACL commented because the ObjectOwnership now is BucketOwnerEnforced by default and disables the ACL.
   #acl           = "private"
