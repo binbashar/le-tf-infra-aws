@@ -4,6 +4,8 @@
 This repository contains all Terraform configuration files used to create Binbash Leverage Reference
 AWS Organizations Multi-Account baseline layout.
 
+**NOTE:** Includes support for temporary workshop accounts and OUs, such as those used for the AWS Startups | Workshop | GenAI Innovation Lab: Rapid Prototyping for Startups event (https://lu.ma/yl4smcea) - IMPORTANT: TO BE REMOVED AFTER THE WORKSHOP.
+
 ## Leverage Documentation
 
 - **How it works**
@@ -29,6 +31,13 @@ AWS Organizations Multi-Account baseline layout.
 3. Finally, run the [Terraform workflow](https://leverage.binbash.com.ar/user-guide/ref-architecture-aws/workflow/) to apply the actual changes.
 4. Add the new account to `config/common.tfvars`.
 5. From here, you may very likely want to create the initial directory structure for this new account *as explained right below*.
+
+#### Example: Adding temporary workshop accounts
+For events such as the AWS Startups | Workshop | GenAI Innovation Lab, you can add a dedicated OU (e.g., `workshop`) and provision temporary accounts (e.g., `workshop-genai-1`, `workshop-genai-2`, `workshop-genai-3`).
+
+- Add the OU and accounts in `locals.tf`.
+- Add the accounts in `config/common.tfvars`.
+- Run the Terraform workflow to provision them.
 
 ### Add/remove/update AWS Organization Service Control Policies
 1. Go to `management/global/organizations`.

@@ -20,6 +20,7 @@ locals {
       groups = [
         "administrators",
         "devops",
+        "datascientists",
         "marketplaceseller",
       ]
     }
