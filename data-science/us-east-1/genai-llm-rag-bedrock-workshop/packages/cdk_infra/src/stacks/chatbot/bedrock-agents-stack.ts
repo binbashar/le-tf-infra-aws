@@ -17,9 +17,10 @@ import {
 import { AgentActionGroup } from "@cdklabs/generative-ai-cdk-constructs/lib/cdk-lib/bedrock";
 import { Stack, StackProps, Duration } from "aws-cdk-lib";
 import { ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { Runtime } from "aws-cdk-lib/aws-lambda";
+import { Runtime, LayerVersion, Code } from "aws-cdk-lib/aws-lambda";
 import * as cdk from "aws-cdk-lib/core";
 import { Construct } from "constructs";
+import * as iam from "aws-cdk-lib/aws-iam";
 // * Commented imports for pluggable constructs
 // import { EmailInputOutputProcessing } from '../constructs/email-input-agent-output';
 
@@ -94,7 +95,7 @@ export class BedrockAgentsStack extends Stack {
       sourceArn: qnaActionsAgent.agentArn,
     });
 
-    // Agent Action Group
+    // Agent Action Group for Account Actions
     qnaActionsAgent.addActionGroup(
       new AgentActionGroup(this, "QnAActionsAgentAG", {
         actionGroupName: "agent-account-actions",
@@ -109,6 +110,66 @@ export class BedrockAgentsStack extends Stack {
         ),
       }),
     );
+
+    // --- START: Web Search Action Group ---
+
+    // Web Search Agent Lambda
+    // The PythonFunction construct will automatically look for a requirements.txt
+    // in the 'entry' directory (src/backend/agents/lambda/web_search_actions/)
+    // and package the dependencies found there.
+    const agentWebSearchActions = new PythonFunction(
+      this,
+      "AgentWebSearchActions",
+      {
+        runtime: Runtime.PYTHON_3_11,
+        entry: path.join(agentsLambdaDir, "web_search_actions"), // New directory for web search
+        index: "web_search_actions.py", // New Python file
+        handler: "lambda_handler",
+        functionName: `WebSearchAct-${cdk.Names.uniqueId(this).substring(0, 8)}`,
+        timeout: Duration.seconds(30), // Adjust as needed
+        memorySize: 512, // Adjust as needed
+        reservedConcurrentExecutions: 3, // Adjust as needed
+        layers: [
+          props.LAYER_BOTO,       // Keep if Boto3 is explicitly used beyond AWS SDK default
+          props.LAYER_POWERTOOLS, // Keep if Powertools are used in this lambda
+          // requestsLayer, // This is now removed, requests will be bundled from requirements.txt
+        ],
+        environment: {
+          DEBUG: "false",
+          SERPAPI_API_KEY_SECRET_NAME: "BedrockAgentSerpApiKey", // Store secret name
+        },
+      },
+    );
+
+    // Grant the Lambda function permission to read the secret
+    const secretArn = `arn:aws:secretsmanager:${Stack.of(this).region}:${Stack.of(this).account}:secret:BedrockAgentSerpApiKey-*`;
+    agentWebSearchActions.role?.addToPrincipalPolicy(new iam.PolicyStatement({
+      actions: ["secretsmanager:GetSecretValue"],
+      resources: [secretArn],
+    }));
+
+    agentWebSearchActions.addPermission("AmazonBedrockPermissionWebSearch", { // Unique permission name
+      principal: new ServicePrincipal("bedrock.amazonaws.com"),
+      sourceArn: qnaActionsAgent.agentArn,
+    });
+
+    // Web Search Agent Action Group
+    qnaActionsAgent.addActionGroup(
+      new AgentActionGroup(this, "WebSearchAgentAG", { // Unique construct ID
+        actionGroupName: "agent-web-search-actions",
+        description:
+          "Use this function to search the web for information.",
+        actionGroupExecutor: {
+          lambda: agentWebSearchActions,
+        },
+        actionGroupState: "ENABLED",
+        apiSchema: bedrock.ApiSchema.fromAsset(
+          path.join(agentsLambdaDir, "web_search_actions", "openapi.json"), // New OpenAPI schema
+        ),
+      }),
+    );
+
+    // --- END: Web Search Action Group ---
 
     // Create CloudWatch Dashboard for Bedrock
     const bddashboard = new BedrockCwDashboard(

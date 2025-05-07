@@ -15,12 +15,13 @@ This document provides comprehensive setup instructions for:
 
 1. [Before You Start](#before-you-start)
 2. [Install Project Dependencies](#install-project-dependencies)
-3. [CDK Infrastructure Deployment](#cdk-infrastructure-deployment)
-4. [Knowledge Base Synchronization (Optional)](#knowledge-base-synchronization-optional)
-5. [Web UI Deployment](#web-ui-deployment)
-6. [Customization](#customization)
-7. [Testing](#testing)
-8. [Cleanup](#cleanup)
+3. [Configure API Keys (SerpApi Example)](#configure-api-keys-serpapi-example)
+4. [CDK Infrastructure Deployment](#cdk-infrastructure-deployment)
+5. [Knowledge Base Synchronization (Optional)](#knowledge-base-synchronization-optional)
+6. [Web UI Deployment](#web-ui-deployment)
+7. [Customization](#customization)
+8. [Testing](#testing)
+9. [Cleanup](#cleanup)
 
 ## Before You Start
 
@@ -68,6 +69,23 @@ Replace <REGION NAME> with your desired region (e.g., `us-west-2`).
     ```
 
    > Note: This command will install dependencies for both frontend and backend components.
+
+## Configure API Keys (SerpApi Example)
+
+This step is mandatory if you are deploying the **`chatbot`** use case or the **`all`** use case, as these include the Web Search action group which requires a SerpApi key. If you are deploying other use cases exclusively (e.g., `text2sql`, `documentprocessing`) and they do not utilize this specific web search functionality, you may skip this section.
+
+If your agent requires external API keys (like the Web Search action group using SerpApi), you must configure them securely using AWS Secrets Manager **before** deploying the CDK infrastructure.
+
+1.  **Choose a Secret Name:** For this example, we will use `BedrockAgentSerpApiKey` for the SerpApi key.
+2.  **Create the Secret in AWS Secrets Manager:**
+    Replace `YOUR_ACTUAL_SERPAPI_KEY_VALUE` with your real SerpApi key and ensure you are in the correct AWS region where your Bedrock resources will be deployed.
+    ```bash
+    aws secretsmanager create-secret --name BedrockAgentSerpApiKey --description "SerpApi API key for Bedrock Agent web search" --secret-string "YOUR_ACTUAL_SERPAPI_KEY_VALUE"
+    ```
+    *   Verify the secret is created successfully in the AWS Secrets Manager console for your target region.
+    *   The CDK stack is configured to grant the Web Search Lambda function permission to read this specific secret (when the chatbot or all use cases are deployed).
+
+> **Note:** If you use a different secret name or need to configure other API keys for different action groups, you will need to update the relevant Lambda function's environment variables and IAM permissions accordingly in the CDK stack (e.g., `packages/cdk_infra/src/stacks/chatbot/bedrock-agents-stack.ts` for the chatbot's web search).
 
 ## CDK Infrastructure Deployment
 

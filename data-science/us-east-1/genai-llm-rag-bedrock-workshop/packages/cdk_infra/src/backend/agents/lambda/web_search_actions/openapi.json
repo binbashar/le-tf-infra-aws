@@ -1,0 +1,86 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Web Search API",
+    "version": "1.0.0",
+    "description": "API for performing web searches for the Bedrock Agent"
+  },
+  "paths": {
+    "/searchWeb": {
+      "post": {
+        "summary": "Perform a web search",
+        "description": "Takes a search query and returns a list of web search results.",
+        "operationId": "searchWeb",
+        "requestBody": {
+          "description": "The search query.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "The natural language search query."
+                  }
+                },
+                "required": ["query"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful web search results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "description": "The title of the search result."
+                          },
+                          "snippet": {
+                            "type": "string",
+                            "description": "A brief snippet or summary of the search result."
+                          },
+                          "url": {
+                            "type": "string",
+                            "description": "The URL of the search result."
+                          }
+                        },
+                        "required": ["title", "snippet", "url"]
+                      }
+                    }
+                  },
+                  "required": ["results"]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+} 
