@@ -79,7 +79,6 @@ AWS CDK infrastructure implementing three use cases: Chatbot, Text2SQL, and Docu
 
 - **Chatbot**: AI-powered chatbot with knowledge base integration
 - **Text2SQL**: Natural language to SQL conversion using Bedrock Agent
-- **Document Processing**: Automated document processing and validation with dedicated S3 buckets for input and output
 
 - [View Details](packages/cdk_infra/README.md)
 
