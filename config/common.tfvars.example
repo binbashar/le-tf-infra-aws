@@ -12,7 +12,7 @@ region_secondary      = "us-east-2"
 
 # Accounts
 accounts = {
-  root = {
+  management = {
     email = "aws+root@binbash.com.ar",
     id    = 111111111111
   },
