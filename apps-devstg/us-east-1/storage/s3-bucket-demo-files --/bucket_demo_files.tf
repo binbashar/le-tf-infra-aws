@@ -2,10 +2,12 @@
 # Pre-req: Logs bucket
 #
 module "log_bucket_demo_files" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.3.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.15.2"
 
   bucket        = "${local.bucket_name}-logs"
-  acl           = "log-delivery-write"
+  #TODO: Migrate module to newest version.
+  #ACL commented because the ObjectOwnership now is BucketOwnerEnforced by default and disables the ACL.
+  #acl           = "log-delivery-write"
   force_destroy = true
 
   attach_policy = true
@@ -64,10 +66,12 @@ module "log_bucket_demo_files" {
 # S3 Bucket Module Instantiation        #
 #=======================================#
 module "s3_bucket_demo_files" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.3.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.15.2"
 
   bucket        = local.bucket_name
-  acl           = "private"
+  #TODO: Migrate module to newest version.
+  #ACL commented because the ObjectOwnership now is BucketOwnerEnforced by default and disables the ACL.
+  #acl           = "private"
   force_destroy = true
 
   attach_policy = true
@@ -182,14 +186,16 @@ module "s3_bucket_demo_files" {
 # S3 Bucket Module Instantiation Replica #
 #========================================#
 module "s3_bucket_demo_files_replica" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.3.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.15.2"
 
   providers = {
     aws = aws.secondary_region
   }
 
   bucket        = local.bucket_name_replica
-  acl           = "private"
+  #TODO: Migrate module to newest version.
+  #ACL commented because the ObjectOwnership now is BucketOwnerEnforced by default and disables the ACL.
+  #acl           = "private"
   force_destroy = true
 
   attach_policy = true
