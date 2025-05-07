@@ -1,0 +1,20 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+- When working on the Leverage Reference Architecture for AWS, always refer to the official documentation and codebases below.
+- Use these resources to ensure all code and recommendations follow the AWS Well-Architected Framework and binbash best practices.
+- For any questions about module usage, architecture, or CLI orchestration, consult the linked documentation and repositories.
+
+**Key Resources:**
+- [Leverage Documentation](mdc:https:/leverage.binbash.co) — Main source for framework usage, architecture, and best practices.
+- [Leverage High-Level Characteristics](mdc:https:/www.binbash.co/leverage)
+- [Terraform Reference Architecture Code](mdc:https:/github.com/binbashar/le-tf-infra-aws) — The main Terraform codebase for AWS.
+- [Leverage CLI](mdc:https:/github.com/binbashar/leverage) — CLI tool for orchestrating the Reference Architecture. [PyPI package](mdc:https:/pypi.org/project/leverage)
+- [List of Binbash Terraform Modules](mdc:https:/github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile) — Complete module library for the Leverage Infra as Code ecosystem.
+
+**Instructions for the AI:**
+- Use the above documentation and repositories as the primary source of truth for any code generation, review, or architectural advice related to Leverage.
+- When referencing modules, always check the Makefile for the latest list.
+- Ensure all recommendations align with the AWS Well-Architected Framework and Leverage conventions.
