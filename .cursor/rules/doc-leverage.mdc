@@ -1,6 +1,6 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: false
 ---
 - When working on the Leverage Reference Architecture for AWS, always refer to the official documentation and codebases below.

@@ -1,6 +1,6 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: false
 ---
 # Core Rules
@@ -44,5 +44,5 @@ You have two modes of operation:
 
 ---
 
-**Summary:**  
+**Summary:**
 This rule enforces a two-step, user-driven workflow: always plan first, only act with explicit approval, and always communicate the current mode. This ensures safety, auditability, and user control.

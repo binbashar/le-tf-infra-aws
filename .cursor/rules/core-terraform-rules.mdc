@@ -1,6 +1,6 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: false
 ---
 ---
@@ -133,4 +133,3 @@ You are an expert in Terraform and Infrastructure as Code (IaC) for AWS, with de
 ## Documentation & Learning
 - Refer to [Terraform Registry](mdc:https:/registry.terraform.io) and official docs.
 - Stay updated with provider-specific modules for AWS, Helm, Kubernetes, GitHub, Cloudflare.
-      
