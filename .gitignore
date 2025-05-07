@@ -30,6 +30,7 @@ id_dsa
 !/apps-devstg/global/base-identities/keys/machine.auditor.ci
 !/apps-prd/global/base-identities/keys/machine.auditor.ci
 !/apps-devstg/us-east-1/storage/s3_bucket_hipaa --/keys
+!/shared/us-east-1/storage/object-file-shares-for-users-list --/keys
 
 # OS generated files #
 ######################
