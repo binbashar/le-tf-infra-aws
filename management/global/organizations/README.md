@@ -32,13 +32,6 @@ AWS Organizations Multi-Account baseline layout.
 4. Add the new account to `config/common.tfvars`.
 5. From here, you may very likely want to create the initial directory structure for this new account *as explained right below*.
 
-#### Example: Adding temporary workshop accounts
-For events such as the AWS Startups | Workshop | GenAI Innovation Lab, you can add a dedicated OU (e.g., `workshop`) and provision temporary accounts (e.g., `workshop-genai-1`, `workshop-genai-2`, `workshop-genai-3`).
-
-- Add the OU and accounts in `locals.tf`.
-- Add the accounts in `config/common.tfvars`.
-- Run the Terraform workflow to provision them.
-
 ### Add/remove/update AWS Organization Service Control Policies
 1. Go to `management/global/organizations`.
 2. Edit the `policies_scp.tf` file to add/remove/update Service Control Policies.
