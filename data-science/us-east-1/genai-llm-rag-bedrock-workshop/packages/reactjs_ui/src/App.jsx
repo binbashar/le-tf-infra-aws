@@ -31,7 +31,7 @@ const App = ({ signOut, user }) => {
         { path: "multimodal", element: <MultiModalLLM /> },
         { path: "prompt", element: <Prompt /> },
         { path: "bedrockagent", element: <BedrockAgent /> },
-        { path: "kybdocuments", element: <KYBDocuments /> },
+        // { path: "kybdocuments", element: <KYBDocuments /> }, // Commenting out KYB/Document Processing route
       ]
     }
   ]);

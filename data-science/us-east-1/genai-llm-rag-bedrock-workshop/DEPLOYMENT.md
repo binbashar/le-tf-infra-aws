@@ -9,7 +9,7 @@ Follow this guide after reviewing the [prerequisites in the main README](README.
 This document provides comprehensive setup instructions for:
 - Backend infrastructure
 - Frontend application
-- All use cases: Chatbot, Text2SQL, and Document Processing
+- Use cases: Chatbot, Text2SQL
 
 ## Table of Contents
 
@@ -72,7 +72,7 @@ Replace <REGION NAME> with your desired region (e.g., `us-west-2`).
 
 ## Configure API Keys (SerpApi Example)
 
-This step is mandatory if you are deploying the **`chatbot`** use case or the **`all`** use case, as these include the Web Search action group which requires a SerpApi key. If you are deploying other use cases exclusively (e.g., `text2sql`, `documentprocessing`) and they do not utilize this specific web search functionality, you may skip this section.
+This step is mandatory if you are deploying the **`chatbot`** use case or the **`all`** use case, as these include the Web Search action group which requires a SerpApi key. If you are deploying other use cases exclusively (e.g., `text2sql`) and they do not utilize this specific web search functionality, you may skip this section.
 
 If your agent requires external API keys (like the Web Search action group using SerpApi), you must configure them securely using AWS Secrets Manager **before** deploying the CDK infrastructure.
 
@@ -95,11 +95,10 @@ If your agent requires external API keys (like the Web Search action group using
     - Set `"custom:companyName"` to your company name
     - Set `"custom:agentName"` to your agent's name
     - Choose your use case:
-        - `"deploy:case"`: Select `chatbot`, `text2sql`, `documentprocessing` or `all` (case-insensitive)
+        - `"deploy:case"`: Select `chatbot`, `text2sql`, or `all` (case-insensitive)
         - `"deploy:knowledgebase"`:
             - For `chatbot`: Set to `true` if you want to deploy a knowledge base
             - For `text2sql`: Typically set to `false` (set to `true` only if you need a specific knowledge base)
-            - For `documentprocessing`: Set to `false` (knowledge base not required)
             - For `all`: Set to `true` if you want to deploy a knowledge base. This will deploy the knowledge base for the chatbot use case
 
    Example for Text2SQL use case:
@@ -112,7 +111,7 @@ If your agent requires external API keys (like the Web Search action group using
    }
    ```
 
-   > Note: The deployment will fail if the `deploy:case` is not set to one of `chatbot`, `text2sql`, `documentprocessing` or `all`.
+   > Note: The deployment will fail if the `deploy:case` is not set to one of `chatbot`, `text2sql`, or `all`.
 
    2. CDK Infrastructure Project Build
 
@@ -127,7 +126,6 @@ If your agent requires external API keys (like the Web Search action group using
       2. Locate the file where the model ID is defined: 
          - For the Chatbot: `packages/cdk_infra/src/stacks/bedrock-agent-stacks.ts`
          - For Text2SQL: `packages/cdk_infra/src/stacks/bedrock-text2sql-agent-stacks.ts`
-         - For Document Processing: `packages/cdk_infra/src/stacks/bedrock-bda-agent-stack.ts`
 
       3. Check the model ARN in your code. For example, the default Claude 3 Sonnet model ARN for `us-west-2` is:
            ```typescript
@@ -211,13 +209,6 @@ After deploying the packages/cdk_infra project, you'll have a sample Amazon Cogn
         - From the Menu in Amazon Cognito -> User Pools -> your user pool
         - Applications -> App Clients -> copy the Client ID
 
-2. Find the KYB API Gateway URL:
-
-   - Go to the CloudFormation console
-   - Select your document processing stack (usually contains "BinbashWorkshop-DocumentProcessingStack" in the name)
-   - Go to the "Outputs" tab 
-   - Look for "KYBApiEndpoint" - the value will be your API Gateway URL
-     - It should look like: `https://[api-id].execute-api.[region].amazonaws.com/prod`
 
 3. Update [aws-exports.js](packages/reactjs_ui/src/aws-exports.js) file with the collected values (located at `packages/reactjs_ui/src`). Replace the example values in the file with your own:
 
@@ -227,30 +218,13 @@ After deploying the packages/cdk_infra project, you'll have a sample Amazon Cogn
     "aws_cognito_identity_pool_id": "us-west-2:f7be1f09-0202-4700-8fa8-55346a2ec4f5",
     "aws_cognito_region": "us-west-2",
     "aws_user_pools_id": "us-west-2_e2bc0Jiyk",
-    "aws_user_pools_web_client_id": "60pgcj9fas0cig379pkicri954",
-    "kyb_api_endpoint": "https://abc123xyz.execute-api.us-west-2.amazonaws.com/prod"
+    "aws_user_pools_web_client_id": "60pgcj9fas0cig379pkicri954"
+    // "kyb_api_endpoint": "..." // Ensure this line is commented out if not used
+    // "document_processing_input_bucket": "..." // Ensure this line is commented out if not used
    }
    ```
    - If you're not using the `us-west-2` region, update both `aws_project_region` and `aws_cognito_region` in this file to match your deployment region
 
-4. If you're using the document processing use case, you also need to update the S3 bucket for document uploads:
-   - Find the S3 bucket created for document uploads in your CloudFormation stack:
-     - Navigate to CloudFormation console
-     - Find your document processing stack (usually contains "BinbashWorkshop-DocumentProcessingStack" in the name)
-     - Go to the "Resources" tab and find the logical ID "InputBucket" - the Physical ID column will show your bucket name
-   
-   - Alternatively, you can find the bucket in the S3 console by looking for a bucket with the naming pattern below
-   
-   - The bucket name will be dynamically generated and typically follows a pattern like:
-     ```
-     [stack-prefix]-documentproces-inputbucket[random-id]-[random-string]
-     ```
-     For example: `binbashworkshop-documentproces-inputbucket3bf8630a-aw6yy5mziacd`
-   
-   - Update the `document_processing_input_bucket` property in aws-exports.js with your bucket name:
-   ```json
-   "document_processing_input_bucket": "your-document-input-bucket-name"
-   ```
 
 ### Build and Run the Web Application
 
@@ -283,7 +257,6 @@ After deploying the packages/cdk_infra project, you'll have a sample Amazon Cogn
 For detailed instructions on customizing your deployment:
 - [Chatbot Customization Guide](docs/CUSTOMIZATION.md#chatbot-customization)
 - [Text2SQL Customization Guide](docs/CUSTOMIZATION.md#text2sql-customization)
-- [Document Processing Customization Guide](docs/CUSTOMIZATION.md#document-processing-customization)
 
 ## Testing
 

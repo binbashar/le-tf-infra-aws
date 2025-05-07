@@ -123,16 +123,17 @@ function getDeployCase(app: App): DeployCase {
       break;
 
     case DeployCase.DOCUMENTPROCESSING:
-      const documentProcessingStack = new DocumentProcessingStack(
-        app,
-        stackNamePrefix + "DocumentProcessingStack",
-        {
-          env: env,
-          stackNamePrefix: deployCase,
-          commonStack: commonStack,
-          bedrockKnowledgeBaseStack: bedrockKnowledgeBaseStack
-        },
-      );
+      // const documentProcessingStack = new DocumentProcessingStack(
+      //   app,
+      //   stackNamePrefix + "DocumentProcessingStack",
+      //   {
+      //     env: env,
+      //     stackNamePrefix: deployCase,
+      //     commonStack: commonStack,
+      //     bedrockKnowledgeBaseStack: bedrockKnowledgeBaseStack
+      //   },
+      // );
+      console.warn("Deployment of 'documentprocessing' case is disabled in main.ts.");
       break;
 
     case DeployCase.ALL:
@@ -158,16 +159,17 @@ function getDeployCase(app: App): DeployCase {
         },
       );
 
-      const documentProcessingStackAll = new DocumentProcessingStack(
-        app,
-        stackNamePrefix + "DocumentProcessingStack",
-        {
-          env: env,
-          stackNamePrefix: "documentprocessing",
-          commonStack: commonStack,
-          bedrockKnowledgeBaseStack: bedrockKnowledgeBaseStack
-        },
-      );
+      // Commenting out the instantiation of DocumentProcessingStack for the 'all' case
+      // const documentProcessingStackAll = new DocumentProcessingStack(
+      //   app,
+      //   stackNamePrefix + "DocumentProcessingStack",
+      //   {
+      //     env: env,
+      //     stackNamePrefix: "documentprocessing",
+      //     commonStack: commonStack,
+      //     bedrockKnowledgeBaseStack: bedrockKnowledgeBaseStack
+      //   },
+      // ); 
       break;
 
     default:

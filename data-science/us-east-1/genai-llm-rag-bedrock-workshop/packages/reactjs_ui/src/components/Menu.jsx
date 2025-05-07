@@ -115,11 +115,11 @@ const Menu = ({ signOut, groups, ...user }) => {
       }}
       onFollow={menuFollow}
       items={[
-        {
-          type: "link",
-          text: "KYB Document Processing",
-          href: "/kybdocuments",
-        },
+        // {
+        //   type: "link",
+        //   text: "KYB Document Processing",
+        //   href: "/kybdocuments",
+        // },
         {
           type: "link",
           text: "MultiModal LLM",
