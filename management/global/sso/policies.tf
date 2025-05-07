@@ -221,6 +221,7 @@ data "aws_iam_policy_document" "data_scientist" {
     sid = "Default"
     actions = [
       "athena:*",
+      "apigateway:*",
       "autoscaling:*",
       "aws-portal:*",
       "bedrock:*",

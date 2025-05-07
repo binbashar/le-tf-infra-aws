@@ -4,6 +4,8 @@
 This repository contains all Terraform configuration files used to create Binbash Leverage Reference
 AWS Organizations Multi-Account baseline layout.
 
+**NOTE:** Includes support for temporary workshop accounts and OUs, such as those used for the AWS Startups | Workshop | GenAI Innovation Lab: Rapid Prototyping for Startups event (https://lu.ma/yl4smcea) - IMPORTANT: TO BE REMOVED AFTER THE WORKSHOP.
+
 ## Leverage Documentation
 
 - **How it works**
