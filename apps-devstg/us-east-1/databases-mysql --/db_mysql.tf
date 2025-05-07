@@ -30,7 +30,7 @@ module "bb_mysql_db" {
   # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_MySQL.html
   identifier        = "${var.project}-${var.environment}-binbash-mysql"
   engine            = "mysql"
-  engine_version    = "8.0.28"
+  engine_version    = "8.0.41"
   instance_class    = "db.m6g.large"
   allocated_storage = 100
   storage_encrypted = true
@@ -41,7 +41,7 @@ module "bb_mysql_db" {
   username = "administrator"
 
   # Secret from Hashicorp Vault
-  password = data.vault_generic_secret.database_secrets.data["administrator_password"]
+  password = data.aws_secretsmanager_secret_version.database_secrets.secret_string
   port     = "3306"
 
   # Backup and maintenance

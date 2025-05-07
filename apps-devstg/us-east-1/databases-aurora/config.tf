@@ -6,17 +6,10 @@ provider "aws" {
   profile = var.profile
 }
 
-#=============================#
-# Vault Provider Settings     #
-#=============================#
-provider "vault" {
-  address = var.vault_address
-
-  /*
-  Vault token that will be used by Terraform to authenticate.
- admin token from https://portal.cloud.hashicorp.com/.
- */
-  token = var.vault_token
+provider "aws" {
+  alias   = "shared"
+  region  = var.region
+  profile = "${var.project}-shared-devops"
 }
 
 provider "mysql" {
@@ -33,7 +26,6 @@ terraform {
 
   required_providers {
     aws   = "~> 4.12"
-    vault = "~> 3.8.0"
     mysql = {
       source  = "winebarrel/mysql"
       version = "1.10.6"
@@ -88,6 +80,7 @@ data "terraform_remote_state" "shared_vpc" {
 #       to store admin credentials under a separate path and create separate,
 #       more restrictied credentials for demoapps.
 #
-data "vault_generic_secret" "databases_aurora" {
-  path = "secrets/${var.project}/${var.environment}/databases-aurora"
+data "aws_secretsmanager_secret_version" "databases_aurora" {
+  provider  = aws.shared
+  secret_id = "/devops/database-aurora/administrator"
 }

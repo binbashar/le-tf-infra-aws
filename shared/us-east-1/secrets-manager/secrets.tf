@@ -42,6 +42,18 @@ module "secrets" {
       secret_string           = "INITIAL_VALUE"
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
     },
+    "/devops/database-aurora/administrator" = {
+      description             = "Credentials for Aurora administrator user"
+      recovery_window_in_days = 7
+      secret_string           = "INITIAL_VALUE"
+      kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+    },
+    "/devops/database-mysql/administrator" = {
+      description             = "Credentials for MySQL administrator user"
+      recovery_window_in_days = 7
+      secret_string           = "INITIAL_VALUE"
+      kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+    },
   }
 
   tags = local.tags
