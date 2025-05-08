@@ -12,7 +12,7 @@ locals {
 
 module "security_group_waf_example" {
   create_sg = var.alb_waf_example.enabled
-  source    = "github.com/binbashar/terraform-aws-security-group.git?ref=v4.9.0"
+  source    = "github.com/binbashar/terraform-aws-security-group.git?ref=v4.17.2"
 
   name                = "${local.alb_waf_example_name}-sg"
   description         = "Security group for example usage with ALB"
