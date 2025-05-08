@@ -1,5 +1,5 @@
 module "secrets" {
-  source = "github.com/binbashar/terraform-aws-secrets-manager.git?ref=0.6.0"
+  source = "github.com/binbashar/terraform-aws-secrets-manager.git?ref=0.11.5"
 
   secrets = {
     "/repositories/demo-google-microservices/deploy_key" = {
