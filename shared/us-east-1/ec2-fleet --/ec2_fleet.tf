@@ -2,7 +2,7 @@
 # EC2 Fleet Security Group
 #
 module "security_group_ec2_fleet" {
-  source = "github.com/binbashar/terraform-aws-security-group.git?ref=v4.9.0"
+  source = "github.com/binbashar/terraform-aws-security-group.git?ref=v4.17.2"
 
   name        = "ec2-fleet"
   description = "Security group for example usage with EC2 instance"
