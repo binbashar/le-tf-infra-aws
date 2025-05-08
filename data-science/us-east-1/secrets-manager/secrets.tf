@@ -51,8 +51,7 @@ data "aws_iam_policy_document" "secret_policy" {
     principals {
       type = "AWS"
       identifiers = [
-        "arn:aws:iam::${var.accounts.data-science.id}:role/DevOps",
-        "arn:aws:iam::${var.accounts.data-science.id}:role/DataScientist"
+        "arn:aws:iam::${var.accounts.data-science.id}:role/DevOps"
       ]
     }
   }
