@@ -38,10 +38,8 @@ module "bb_mysql_db" {
 
   # Database credentials
   db_name  = "${var.project}_${replace(var.environment, "apps-", "")}_binbash_mysql"
-  username = "administrator"
-
-  # Secret from Hashicorp Vault
-  password = data.aws_secretsmanager_secret_version.database_secrets.secret_string
+  username = jsondecode(data.aws_secretsmanager_secret_version.database_secrets.secret_string).username
+  password = jsondecode(data.aws_secretsmanager_secret_version.database_secrets.secret_string).password
   port     = "3306"
 
   # Backup and maintenance

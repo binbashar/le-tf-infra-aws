@@ -82,5 +82,5 @@ data "terraform_remote_state" "shared_vpc" {
 #
 data "aws_secretsmanager_secret_version" "databases_aurora" {
   provider  = aws.shared
-  secret_id = "/devops/database-aurora/administrator"
+  secret_id = "/bb/apps-devstg/database-aurora/administrator"
 }

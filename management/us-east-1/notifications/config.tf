@@ -20,7 +20,6 @@ terraform {
 
   required_providers {
     aws   = "~> 4.10"
-    vault = "~> 3.6.0"
   }
 
   backend "s3" {
@@ -54,4 +53,9 @@ data "aws_secretsmanager_secret_version" "monitoring" {
 data "aws_secretsmanager_secret_version" "monitoring_security" {
   provider  = aws.shared
   secret_id = "/devops/notifications/slack/security"
+}
+
+data "aws_secretsmanager_secret_version" "costs_phone_numbers_notifications" {
+  provider  = aws.shared
+  secret_id = "/devops/notifications/phone/notifications"
 }

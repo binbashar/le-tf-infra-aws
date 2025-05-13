@@ -54,5 +54,5 @@ data "terraform_remote_state" "vpc-shared" {
 
 data "aws_secretsmanager_secret_version" "database_secrets" {
   provider  = aws.shared
-  secret_id = "/devops/database-mysql/administrator"
+  secret_id = "/bb/apps-devstg/database-mysql/administrator"
 }

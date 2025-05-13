@@ -9,8 +9,8 @@ module "demoapps" {
 
   # Initial database and credentials
   database_name          = "demoapps"
-  master_username        = "admin"
-  master_password        = data.aws_secretsmanager_secret_version.databases_aurora.secret_string
+  master_username        = jsondecode(data.aws_secretsmanager_secret_version.databases_aurora.secret_string).username
+  master_password        = jsondecode(data.aws_secretsmanager_secret_version.databases_aurora.secret_string).password
   create_random_password = false
 
   # VPC and Subnets
