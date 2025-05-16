@@ -24,7 +24,7 @@ resource "aws_security_group_rule" "allow_mysql_port" {
 # Binbash Reference DB
 #
 module "bb_mysql_db" {
-  source = "github.com/binbashar/terraform-aws-rds.git?ref=v5.6.0"
+  source = "github.com/binbashar/terraform-aws-rds.git?ref=v5.9.0"
 
   # Instance settings
   # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_MySQL.html
