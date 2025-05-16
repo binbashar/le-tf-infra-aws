@@ -10,7 +10,7 @@
 #  - MFA Delete: TBD -- For the sake of data safety, but can be easily set up at any time
 # -----------------------------------------------------------------------------
 module "user_buckets" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v2.4.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v2.15.0"
 
   for_each = toset(var.usernames)
 
@@ -46,7 +46,7 @@ module "user_buckets" {
 }
 
 module "user_logging_buckets" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v2.4.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v2.15.0"
 
   for_each = toset(var.usernames)
 
