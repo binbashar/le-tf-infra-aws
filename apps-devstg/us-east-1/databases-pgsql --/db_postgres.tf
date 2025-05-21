@@ -41,14 +41,14 @@ module "bb_postgres_db" {
   # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html
   identifier        = "${var.project}-${var.environment}-binbash-postgres"
   engine            = "postgres"
-  engine_version    = "14.5"
+  engine_version    = "14.18"
   instance_class    = "db.m5.large"
   allocated_storage = 100
   storage_encrypted = true
   multi_az          = true
 
   # Database credentials
-  name     = "${var.project}_${replace(var.environment, "apps-", "")}_binbash_postgres"
+  db_name  = "${var.project}_${replace(var.environment, "apps-", "")}_binbash_postgres"
   username = jsondecode(data.aws_secretsmanager_secret_version.administrator.secret_string)["username"]
   password = jsondecode(data.aws_secretsmanager_secret_version.administrator.secret_string)["password"]
   port     = "5432"
@@ -59,6 +59,7 @@ module "bb_postgres_db" {
   backup_window           = "00:00-02:00"
 
   # Network settings
+  create_db_subnet_group = true
   subnet_ids             = data.terraform_remote_state.vpc.outputs.private_subnets
   vpc_security_group_ids = [aws_security_group.bb_postgres_db.id]
 
