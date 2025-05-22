@@ -2,7 +2,7 @@
 # SNS Topic with SMS subscriptions
 #
 module "notify_costs" {
-  source = "github.com/binbashar/terraform-aws-sns-topic.git?ref=0.20.1"
+  source = "github.com/binbashar/terraform-aws-sns-topic.git?ref=0.21.0"
 
   name = var.sns_topic_name_costs
 
