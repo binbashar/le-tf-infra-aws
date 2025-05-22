@@ -126,7 +126,7 @@ resource "helm_release" "keda" {
   namespace  = kubernetes_namespace.keda[0].id
   repository = "https://kedacore.github.io/charts"
   chart      = "keda"
-  version    = "2.17.0"
+  version    = "2.17.1"
   values     = []
 }
 
