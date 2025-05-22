@@ -86,7 +86,7 @@ locals {
 }
 
 module "functions" {
-  source = "github.com/binbashar/terraform-aws-lambda.git?ref=v7.20.2"
+  source = "github.com/binbashar/terraform-aws-lambda.git?ref=v7.21.0"
 
   for_each = local.functions
 
