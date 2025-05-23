@@ -41,10 +41,12 @@ module "rds_export_to_s3" {
 # This bucket will be used for storing the exported RDS snapshots.
 # -----------------------------------------------------------------------------
 module "bucket" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v2.6.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.0.0"
 
   bucket        = local.bucket_name
-  acl           = "private"
+  #TODO: Migrate module to newest version.
+  #ACL commented because the ObjectOwnership now is BucketOwnerEnforced by default and disables the ACL.
+  #acl           = "private"
   force_destroy = true
 
   attach_deny_insecure_transport_policy = true
