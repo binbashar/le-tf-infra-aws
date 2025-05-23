@@ -1,5 +1,5 @@
 module "permission_sets" {
-  source = "github.com/binbashar/terraform-aws-sso.git//modules/permission-sets?ref=0.7.1"
+  source = "github.com/binbashar/terraform-aws-sso.git//modules/permission-sets?ref=0.8.0"
 
   permission_sets = [
     {
