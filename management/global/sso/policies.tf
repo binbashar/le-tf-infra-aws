@@ -7,7 +7,7 @@ data "aws_iam_policy_document" "devops" {
     actions = [
       "access-analyzer:*",
       "acm:*",
-      "aoss:*",
+      "amplify:*",
       "aoss:*",
       "apigateway:*",
       "appconfig:*",
@@ -97,6 +97,7 @@ data "aws_iam_policy_document" "devops" {
       "synthetics:*",
       "synthetics:*",
       "tag:*",
+      "textract:*",
       "transfer:*",
       "transfer:*",
       "trustedadvisor:*",
@@ -222,7 +223,9 @@ data "aws_iam_policy_document" "data_scientist" {
     actions = [
       "athena:*",
       "apigateway:*",
+      "aoss:*",
       "autoscaling:*",
+      "aws-marketplace:*",
       "aws-portal:*",
       "bedrock:*",
       "ce:*",
@@ -247,8 +250,8 @@ data "aws_iam_policy_document" "data_scientist" {
       "kms:*",
       "lambda:*",
       "logs:*",
-      "aws-marketplace:*",
       "pipes:*",
+      "polly:*",
       "q:*",
       "quicksight:*",
       "ram:*",
@@ -270,7 +273,7 @@ data "aws_iam_policy_document" "data_scientist" {
       "sts:*",
       "support:*",
       "tag:*",
-      "vpc:*",
+      "transcribe:*",
     ]
     resources = ["*"]
     condition {
