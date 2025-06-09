@@ -212,6 +212,7 @@ locals {
       email      = "manuel.quinteros@binbash.com.ar"
       groups = [
         "devops",
+        "marketplaceseller",
       ]
     }
     "julian.curetti" = {
