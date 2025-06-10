@@ -1,0 +1,1799 @@
+[19:55:53.955] INFO     Checking for local docker image, tag: 1.6.0-0.2.1-1000-1000...                                                                                                   
+[19:55:54.022] INFO     ✔ OK                                                                                                                                                             
+                                                                                                                                                                                         
+[19:55:55.924] INFO     Attempting to get temporary credentials for apps-devstg account.                                                                                                 
+[19:55:55.925] INFO     Using already configured temporary credentials.                                                                                                                  
+[19:55:55.926] INFO     Attempting to get temporary credentials for shared account.                                                                                                      
+[19:55:55.927] INFO     Using already configured temporary credentials.                                                                                                                  
+data.terraform_remote_state.vpc: Reading...
+data.terraform_remote_state.keys: Reading...
+data.terraform_remote_state.shared-vpc: Reading...
+module.ecs_services.data.aws_iam_policy_document.codepipeline_assume_role_policy: Reading...
+module.ecs_services.module.codepipeline_bucket.data.aws_caller_identity.current: Reading...
+module.ecs_services.data.aws_iam_policy_document.scheduler_assume_role: Reading...
+module.ecs_services.data.aws_iam_policy_document.codepipeline_assume_role_policy: Read complete after 0s [id=2245101310]
+module.ecs_services.data.aws_iam_policy_document.scheduler_assume_role: Read complete after 0s [id=52247394]
+module.ecs_services.module.codepipeline_notifications["emojivoto-web"].data.aws_caller_identity.current: Reading...
+data.aws_caller_identity.current: Reading...
+module.ecs_services.module.codepipeline_bucket.data.aws_partition.current: Reading...
+module.ecs_services.module.codepipeline_bucket.data.aws_partition.current: Read complete after 0s [id=aws]
+module.ecs_services.data.aws_caller_identity.current: Reading...
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_region.current: Reading...
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_partition.current: Reading...
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_region.current: Read complete after 0s [id=us-east-1]
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_partition.current: Read complete after 0s [id=aws]
+module.ecs_services.module.ecs_codedeploy["emojivoto-web"].data.aws_iam_policy_document.assume_role[0]: Reading...
+module.ecs_services.module.ecs_services["emojivoto-web"].module.container_definition["simple-service"].data.aws_region.current: Reading...
+module.ecs_services.module.ecs_services["emojivoto-web"].module.container_definition["simple-service"].data.aws_region.current: Read complete after 0s [id=us-east-1]
+module.ecs_services.module.ecs_codedeploy["emojivoto-web"].data.aws_iam_policy_document.assume_role[0]: Read complete after 0s [id=4250039221]
+module.ecs_services.module.alb_ecs.data.aws_partition.current: Reading...
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_caller_identity.current: Reading...
+module.ecs_services.module.alb_ecs.data.aws_partition.current: Read complete after 0s [id=aws]
+module.ecs_services.module.codepipeline_bucket.data.aws_region.current: Reading...
+module.ecs_services.module.codepipeline_bucket.data.aws_region.current: Read complete after 0s [id=us-east-1]
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_iam_policy_document.tasks[0]: Reading...
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_iam_policy_document.tasks[0]: Read complete after 0s [id=4084283051]
+module.ecs_services.data.aws_iam_policy_document.ecr_image_assume_role_policy: Reading...
+module.ecs_services.data.aws_iam_policy_document.ecr_image_assume_role_policy: Read complete after 0s [id=3959961479]
+module.ecs_services.module.ecs_codedeploy["emojivoto-web"].data.aws_partition.current[0]: Reading...
+module.ecs_services.module.ecs_codedeploy["emojivoto-web"].data.aws_partition.current[0]: Read complete after 0s [id=aws]
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_iam_policy_document.task_exec_assume[0]: Reading...
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_iam_policy_document.task_exec_assume[0]: Read complete after 0s [id=2291109037]
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_iam_policy_document.task_exec[0]: Reading...
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_iam_policy_document.task_exec[0]: Read complete after 0s [id=735409526]
+module.ecs_services.module.codepipeline_bucket.data.aws_caller_identity.current: Read complete after 0s [id=523857393444]
+module.ecs_services.module.codepipeline_notifications["emojivoto-web"].data.aws_caller_identity.current: Read complete after 0s [id=523857393444]
+data.aws_caller_identity.current: Read complete after 0s [id=523857393444]
+module.ecs_services.data.aws_caller_identity.current: Read complete after 0s [id=523857393444]
+module.ecs_services.data.aws_iam_policy_document.scheduler_role_policy["emojivoto-web"]: Reading...
+module.ecs_services.data.aws_iam_policy_document.scheduler_role_policy["emojivoto-web"]: Read complete after 0s [id=2097598220]
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_caller_identity.current: Read complete after 0s [id=523857393444]
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_iam_policy_document.tasks_assume[0]: Reading...
+module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_iam_policy_document.tasks_assume[0]: Read complete after 0s [id=1206867371]
+data.terraform_remote_state.keys: Read complete after 1s
+data.terraform_remote_state.vpc: Read complete after 2s
+module.ecs_services.data.aws_vpc.vpc: Reading...
+data.terraform_remote_state.shared-vpc: Read complete after 2s
+module.ecs_services.data.aws_vpc.vpc: Read complete after 1s [id=vpc-072f329fed6757e95]
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  + create
+ <= read (data resources)
+
+Terraform will perform the following actions:
+
+  # module.ecs_services.data.aws_iam_policy_document.codepipeline_policy["emojivoto-web"] will be read during apply
+  # (config refers to values not yet known)
+ <= data "aws_iam_policy_document" "codepipeline_policy" {
+      + id            = (known after apply)
+      + json          = (known after apply)
+      + minified_json = (known after apply)
+
+      + statement {
+          + actions   = [
+              + "s3:GetBucketVersioning",
+              + "s3:GetObject",
+              + "s3:GetObjectVersion",
+              + "s3:ListBucket",
+              + "s3:ListBucketVersions",
+              + "s3:PutObject",
+              + "s3:PutObjectAcl",
+              + "s3:PutObjectVersionAcl",
+            ]
+          + resources = [
+              + (known after apply),
+              + (known after apply),
+            ]
+        }
+      + statement {
+          + actions   = [
+              + "codedeploy:CreateDeployment",
+              + "codedeploy:GetApplication",
+              + "codedeploy:GetApplicationRevision",
+              + "codedeploy:GetDeployment",
+              + "codedeploy:GetDeploymentConfig",
+              + "codedeploy:RegisterApplicationRevision",
+            ]
+          + resources = [
+              + "arn:aws:codedeploy:us-east-1:523857393444:*",
+            ]
+          + sid       = "codedeploy"
+        }
+      + statement {
+          + actions   = [
+              + "ecr:BatchCheckLayerAvailability",
+              + "ecr:BatchGetImage",
+              + "ecr:DescribeImages",
+              + "ecr:DescribeRepositories",
+              + "ecr:GetAuthorizationToken",
+              + "ecr:GetDownloadUrlForLayer",
+            ]
+          + resources = [
+              + "*",
+            ]
+          + sid       = "ecr"
+        }
+      + statement {
+          + actions   = [
+              + "ecs:DescribeTaskDefinition",
+              + "ecs:DescribeTasks",
+              + "ecs:ListTasks",
+              + "ecs:RegisterTaskDefinition",
+            ]
+          + resources = [
+              + "*",
+            ]
+          + sid       = "ecsTask"
+        }
+      + statement {
+          + actions   = [
+              + "ecs:DescribeClusters",
+              + "ecs:ListClusters",
+            ]
+          + resources = [
+              + (known after apply),
+            ]
+          + sid       = "ecsCluster"
+        }
+      + statement {
+          + actions   = [
+              + "ecs:DescribeServices",
+              + "ecs:ListServices",
+              + "ecs:UpdateService",
+            ]
+          + resources = [
+              + (known after apply),
+            ]
+          + sid       = "ecsService"
+        }
+      + statement {
+          + actions   = [
+              + "codestar-connections:UseConnection",
+            ]
+          + resources = [
+              + "*",
+            ]
+          + sid       = "codestar"
+        }
+      + statement {
+          + actions   = [
+              + "kms:Decrypt",
+              + "kms:DescribeKey",
+              + "kms:Encrypt",
+              + "kms:GenerateDataKey",
+              + "kms:ReEncrypt*",
+            ]
+          + resources = [
+              + "alias/aws/s3",
+            ]
+          + sid       = "kms"
+        }
+      + statement {
+          + actions   = [
+              + "iam:PassRole",
+            ]
+          + resources = [
+              + "arn:aws:iam::*:role/*",
+            ]
+          + sid       = "iam"
+        }
+    }
+
+  # module.ecs_services.data.aws_iam_policy_document.ecr_image_policy["emojivoto-web"] will be read during apply
+  # (config refers to values not yet known)
+ <= data "aws_iam_policy_document" "ecr_image_policy" {
+      + id            = (known after apply)
+      + json          = (known after apply)
+      + minified_json = (known after apply)
+
+      + statement {
+          + actions   = [
+              + "codepipeline:StartPipelineExecution",
+            ]
+          + resources = [
+              + (known after apply),
+            ]
+        }
+    }
+
+  # module.ecs_services.aws_cloudwatch_event_rule.ecr_image_push["emojivoto-web"] will be created
+  + resource "aws_cloudwatch_event_rule" "ecr_image_push" {
+      + arn            = (known after apply)
+      + description    = "ECR image push event rule for emojivoto-web"
+      + event_bus_name = "default"
+      + event_pattern  = jsonencode(
+            {
+              + detail      = {
+                  + action-type     = [
+                      + "PUSH",
+                    ]
+                  + image-tag       = [
+                      + {
+                          + prefix = "app-devstg"
+                        },
+                    ]
+                  + repository-name = [
+                      + "emojivoto-web",
+                    ]
+                  + result          = [
+                      + "SUCCESS",
+                    ]
+                }
+              + detail-type = [
+                  + "ECR Image Action",
+                ]
+              + source      = [
+                  + "aws.ecr",
+                ]
+            }
+        )
+      + force_destroy  = false
+      + id             = (known after apply)
+      + name           = "ecr-image-push-emojivoto-web"
+      + name_prefix    = (known after apply)
+      + role_arn       = (known after apply)
+      + tags_all       = (known after apply)
+    }
+
+  # module.ecs_services.aws_cloudwatch_event_target.codepipeline_trigger["emojivoto-web"] will be created
+  + resource "aws_cloudwatch_event_target" "codepipeline_trigger" {
+      + arn            = (known after apply)
+      + event_bus_name = "default"
+      + force_destroy  = false
+      + id             = (known after apply)
+      + role_arn       = (known after apply)
+      + rule           = "ecr-image-push-emojivoto-web"
+      + target_id      = "codepipeline-trigger-emojivoto-web"
+
+      + input_transformer {
+          + input_paths    = {
+              + "revisionValue" = "$.detail.image-digest"
+            }
+          + input_template = jsonencode(
+                {
+                  + sourceRevisions = [
+                      + {
+                          + actionName    = "Image"
+                          + revisionType  = "IMAGE_DIGEST"
+                          + revisionValue = "<revisionValue>"
+                        },
+                    ]
+                }
+            )
+        }
+    }
+
+  # module.ecs_services.aws_codepipeline.ecs_apps["emojivoto-web"] will be created
+  + resource "aws_codepipeline" "ecs_apps" {
+      + arn            = (known after apply)
+      + execution_mode = "SUPERSEDED"
+      + id             = (known after apply)
+      + name           = "ecs-service-emojivoto-web"
+      + pipeline_type  = "V2"
+      + role_arn       = (known after apply)
+      + tags_all       = (known after apply)
+      + trigger_all    = (known after apply)
+
+      + artifact_store {
+          + location = (known after apply)
+          + type     = "S3"
+        }
+
+      + stage {
+          + name = "Source"
+
+          + action {
+              + category         = "Source"
+              + configuration    = (known after apply)
+              + name             = "GitHub"
+              + output_artifacts = [
+                  + "source_output",
+                ]
+              + owner            = "AWS"
+              + provider         = "CodeStarSourceConnection"
+              + region           = (known after apply)
+              + run_order        = (known after apply)
+              + version          = "1"
+            }
+          + action {
+              + category         = "Source"
+              + configuration    = {
+                  + "RepositoryName" = "emojivoto-web"
+                }
+              + name             = "Image"
+              + output_artifacts = [
+                  + "service_image",
+                ]
+              + owner            = "AWS"
+              + provider         = "ECR"
+              + region           = (known after apply)
+              + run_order        = (known after apply)
+              + version          = "1"
+            }
+        }
+      + stage {
+          + name = "Deploy"
+
+          + action {
+              + category        = "Deploy"
+              + configuration   = {
+                  + "AppSpecTemplateArtifact"        = "source_output"
+                  + "AppSpecTemplatePath"            = "appspec.yml"
+                  + "ApplicationName"                = "ecs-service-emojivoto-web"
+                  + "DeploymentGroupName"            = "ecs-service-emojivoto-web"
+                  + "Image1ArtifactName"             = "service_image"
+                  + "Image1ContainerName"            = "IMAGE1_NAME"
+                  + "TaskDefinitionTemplateArtifact" = "source_output"
+                  + "TaskDefinitionTemplatePath"     = "task-definition-template.json"
+                }
+              + input_artifacts = [
+                  + "service_image",
+                  + "source_output",
+                ]
+              + name            = "Deploy"
+              + owner           = "AWS"
+              + provider        = "CodeDeployToECS"
+              + region          = (known after apply)
+              + run_order       = (known after apply)
+              + version         = "1"
+            }
+        }
+    }
+
+  # module.ecs_services.aws_codestarconnections_connection.git_connection will be created
+  + resource "aws_codestarconnections_connection" "git_connection" {
+      + arn               = (known after apply)
+      + connection_status = (known after apply)
+      + id                = (known after apply)
+      + name              = "github"
+      + provider_type     = "GitHub"
+      + tags_all          = (known after apply)
+    }
+
+  # module.ecs_services.aws_iam_policy.codepipeline["emojivoto-web"] will be created
+  + resource "aws_iam_policy" "codepipeline" {
+      + arn              = (known after apply)
+      + attachment_count = (known after apply)
+      + description      = "Codepipeline policy for emojivoto-web"
+      + id               = (known after apply)
+      + name             = "codepipeline-policy-emojivoto-web"
+      + name_prefix      = (known after apply)
+      + path             = "/"
+      + policy           = (known after apply)
+      + policy_id        = (known after apply)
+      + tags_all         = (known after apply)
+    }
+
+  # module.ecs_services.aws_iam_policy.ecr_image["emojivoto-web"] will be created
+  + resource "aws_iam_policy" "ecr_image" {
+      + arn              = (known after apply)
+      + attachment_count = (known after apply)
+      + description      = "ECR image policy for emojivoto-web"
+      + id               = (known after apply)
+      + name             = "ecr-image-policy-emojivoto-web"
+      + name_prefix      = (known after apply)
+      + path             = "/"
+      + policy           = (known after apply)
+      + policy_id        = (known after apply)
+      + tags_all         = (known after apply)
+    }
+
+  # module.ecs_services.aws_iam_role.codepipeline["emojivoto-web"] will be created
+  + resource "aws_iam_role" "codepipeline" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "codepipeline.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "codepipeline-role-emojivoto-web"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags_all              = (known after apply)
+      + unique_id             = (known after apply)
+    }
+
+  # module.ecs_services.aws_iam_role.ecr_image["emojivoto-web"] will be created
+  + resource "aws_iam_role" "ecr_image" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "events.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "ecr-push-image-role-emojivoto-web"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags_all              = (known after apply)
+      + unique_id             = (known after apply)
+    }
+
+  # module.ecs_services.aws_iam_role.scheduler_role["emojivoto-web"] will be created
+  + resource "aws_iam_role" "scheduler_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "scheduler.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "emojivoto-web-scheduler-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags_all              = (known after apply)
+      + unique_id             = (known after apply)
+    }
+
+  # module.ecs_services.aws_iam_role_policy.scheduler_role_policy["emojivoto-web"] will be created
+  + resource "aws_iam_role_policy" "scheduler_role_policy" {
+      + id          = (known after apply)
+      + name        = "emojivoto-web-scheduler-role-policy"
+      + name_prefix = (known after apply)
+      + policy      = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action   = [
+                          + "ecs:UpdateService",
+                          + "ecs:DescribeServices",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:ecs:us-east-1:523857393444:service/ecs-bluegreen-cluster/emojivoto-web"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + role        = (known after apply)
+    }
+
+  # module.ecs_services.aws_iam_role_policy_attachment.codepipeline["emojivoto-web"] will be created
+  + resource "aws_iam_role_policy_attachment" "codepipeline" {
+      + id         = (known after apply)
+      + policy_arn = (known after apply)
+      + role       = "codepipeline-role-emojivoto-web"
+    }
+
+  # module.ecs_services.aws_iam_role_policy_attachment.ecr_image["emojivoto-web"] will be created
+  + resource "aws_iam_role_policy_attachment" "ecr_image" {
+      + id         = (known after apply)
+      + policy_arn = (known after apply)
+      + role       = "ecr-push-image-role-emojivoto-web"
+    }
+
+  # module.ecs_services.module.alb_ecs.aws_lb.this[0] will be created
+  + resource "aws_lb" "this" {
+      + arn                                                          = (known after apply)
+      + arn_suffix                                                   = (known after apply)
+      + client_keep_alive                                            = 3600
+      + desync_mitigation_mode                                       = "defensive"
+      + dns_name                                                     = (known after apply)
+      + drop_invalid_header_fields                                   = true
+      + enable_deletion_protection                                   = true
+      + enable_http2                                                 = true
+      + enable_tls_version_and_cipher_suite_headers                  = false
+      + enable_waf_fail_open                                         = false
+      + enable_xff_client_port                                       = false
+      + enable_zonal_shift                                           = false
+      + enforce_security_group_inbound_rules_on_private_link_traffic = (known after apply)
+      + id                                                           = (known after apply)
+      + idle_timeout                                                 = 60
+      + internal                                                     = true
+      + ip_address_type                                              = (known after apply)
+      + load_balancer_type                                           = "application"
+      + name                                                         = "ecs-bluegreen-alb"
+      + name_prefix                                                  = (known after apply)
+      + preserve_host_header                                         = false
+      + security_groups                                              = (known after apply)
+      + subnets                                                      = [
+          + "subnet-05d75d908f61d35e5",
+          + "subnet-094c287defbc07180",
+          + "subnet-0cec521de70ee76a3",
+        ]
+      + tags                                                         = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all                                                     = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + vpc_id                                                       = (known after apply)
+      + xff_header_processing_mode                                   = "append"
+      + zone_id                                                      = (known after apply)
+
+      + timeouts {}
+    }
+
+  # module.ecs_services.module.alb_ecs.aws_lb_listener.this["http"] will be created
+  + resource "aws_lb_listener" "this" {
+      + arn                                                                   = (known after apply)
+      + id                                                                    = (known after apply)
+      + load_balancer_arn                                                     = (known after apply)
+      + port                                                                  = 8080
+      + protocol                                                              = "HTTP"
+      + routing_http_request_x_amzn_mtls_clientcert_header_name               = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_issuer_header_name        = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_leaf_header_name          = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_serial_number_header_name = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_subject_header_name       = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_validity_header_name      = (known after apply)
+      + routing_http_request_x_amzn_tls_cipher_suite_header_name              = (known after apply)
+      + routing_http_request_x_amzn_tls_version_header_name                   = (known after apply)
+      + routing_http_response_access_control_allow_credentials_header_value   = (known after apply)
+      + routing_http_response_access_control_allow_headers_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_methods_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_origin_header_value        = (known after apply)
+      + routing_http_response_access_control_expose_headers_header_value      = (known after apply)
+      + routing_http_response_access_control_max_age_header_value             = (known after apply)
+      + routing_http_response_content_security_policy_header_value            = (known after apply)
+      + routing_http_response_server_enabled                                  = (known after apply)
+      + routing_http_response_strict_transport_security_header_value          = (known after apply)
+      + routing_http_response_x_content_type_options_header_value             = (known after apply)
+      + routing_http_response_x_frame_options_header_value                    = (known after apply)
+      + ssl_policy                                                            = (known after apply)
+      + tags                                                                  = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all                                                              = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tcp_idle_timeout_seconds                                              = (known after apply)
+
+      + default_action {
+          + order = (known after apply)
+          + type  = "fixed-response"
+
+          + fixed_response {
+              + content_type = "text/plain"
+              + message_body = "Not Found"
+              + status_code  = "404"
+            }
+        }
+    }
+
+  # module.ecs_services.module.alb_ecs.aws_lb_listener.this["http_test"] will be created
+  + resource "aws_lb_listener" "this" {
+      + arn                                                                   = (known after apply)
+      + id                                                                    = (known after apply)
+      + load_balancer_arn                                                     = (known after apply)
+      + port                                                                  = 8081
+      + protocol                                                              = "HTTP"
+      + routing_http_request_x_amzn_mtls_clientcert_header_name               = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_issuer_header_name        = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_leaf_header_name          = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_serial_number_header_name = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_subject_header_name       = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_validity_header_name      = (known after apply)
+      + routing_http_request_x_amzn_tls_cipher_suite_header_name              = (known after apply)
+      + routing_http_request_x_amzn_tls_version_header_name                   = (known after apply)
+      + routing_http_response_access_control_allow_credentials_header_value   = (known after apply)
+      + routing_http_response_access_control_allow_headers_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_methods_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_origin_header_value        = (known after apply)
+      + routing_http_response_access_control_expose_headers_header_value      = (known after apply)
+      + routing_http_response_access_control_max_age_header_value             = (known after apply)
+      + routing_http_response_content_security_policy_header_value            = (known after apply)
+      + routing_http_response_server_enabled                                  = (known after apply)
+      + routing_http_response_strict_transport_security_header_value          = (known after apply)
+      + routing_http_response_x_content_type_options_header_value             = (known after apply)
+      + routing_http_response_x_frame_options_header_value                    = (known after apply)
+      + ssl_policy                                                            = (known after apply)
+      + tags                                                                  = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all                                                              = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tcp_idle_timeout_seconds                                              = (known after apply)
+
+      + default_action {
+          + order = (known after apply)
+          + type  = "fixed-response"
+
+          + fixed_response {
+              + content_type = "text/plain"
+              + message_body = "Not Found"
+              + status_code  = "404"
+            }
+        }
+    }
+
+  # module.ecs_services.module.alb_ecs.aws_lb_listener_rule.this["http/emojivoto-web"] will be created
+  + resource "aws_lb_listener_rule" "this" {
+      + arn          = (known after apply)
+      + id           = (known after apply)
+      + listener_arn = (known after apply)
+      + priority     = (known after apply)
+      + tags         = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all     = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+
+      + action {
+          + order            = (known after apply)
+          + target_group_arn = (known after apply)
+          + type             = "forward"
+        }
+
+      + condition {
+          + path_pattern {
+              + values = [
+                  + "/emojivoto-web/*",
+                ]
+            }
+        }
+    }
+
+  # module.ecs_services.module.alb_ecs.aws_lb_listener_rule.this["http_test/emojivoto-web"] will be created
+  + resource "aws_lb_listener_rule" "this" {
+      + arn          = (known after apply)
+      + id           = (known after apply)
+      + listener_arn = (known after apply)
+      + priority     = (known after apply)
+      + tags         = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all     = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+
+      + action {
+          + order            = (known after apply)
+          + target_group_arn = (known after apply)
+          + type             = "forward"
+        }
+
+      + condition {
+          + path_pattern {
+              + values = [
+                  + "/emojivoto-web/*",
+                ]
+            }
+        }
+    }
+
+  # module.ecs_services.module.alb_ecs.aws_lb_target_group.this["emojivoto-web_blue"] will be created
+  + resource "aws_lb_target_group" "this" {
+      + arn                                = (known after apply)
+      + arn_suffix                         = (known after apply)
+      + connection_termination             = (known after apply)
+      + deregistration_delay               = "300"
+      + id                                 = (known after apply)
+      + ip_address_type                    = (known after apply)
+      + lambda_multi_value_headers_enabled = false
+      + load_balancer_arns                 = (known after apply)
+      + load_balancing_algorithm_type      = (known after apply)
+      + load_balancing_anomaly_mitigation  = (known after apply)
+      + load_balancing_cross_zone_enabled  = (known after apply)
+      + name                               = "emojivoto-web-blue"
+      + name_prefix                        = (known after apply)
+      + port                               = 80
+      + preserve_client_ip                 = (known after apply)
+      + protocol                           = "HTTP"
+      + protocol_version                   = (known after apply)
+      + proxy_protocol_v2                  = false
+      + slow_start                         = 0
+      + tags                               = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all                           = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + target_type                        = "ip"
+      + vpc_id                             = "vpc-072f329fed6757e95"
+
+      + health_check {
+          + enabled             = true
+          + healthy_threshold   = 2
+          + interval            = 30
+          + matcher             = (known after apply)
+          + path                = "/"
+          + port                = "80"
+          + protocol            = "HTTP"
+          + timeout             = 20
+          + unhealthy_threshold = 4
+        }
+    }
+
+  # module.ecs_services.module.alb_ecs.aws_lb_target_group.this["emojivoto-web_green"] will be created
+  + resource "aws_lb_target_group" "this" {
+      + arn                                = (known after apply)
+      + arn_suffix                         = (known after apply)
+      + connection_termination             = (known after apply)
+      + deregistration_delay               = "300"
+      + id                                 = (known after apply)
+      + ip_address_type                    = (known after apply)
+      + lambda_multi_value_headers_enabled = false
+      + load_balancer_arns                 = (known after apply)
+      + load_balancing_algorithm_type      = (known after apply)
+      + load_balancing_anomaly_mitigation  = (known after apply)
+      + load_balancing_cross_zone_enabled  = (known after apply)
+      + name                               = "emojivoto-web-green"
+      + name_prefix                        = (known after apply)
+      + port                               = 80
+      + preserve_client_ip                 = (known after apply)
+      + protocol                           = "HTTP"
+      + protocol_version                   = (known after apply)
+      + proxy_protocol_v2                  = false
+      + slow_start                         = 0
+      + tags                               = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all                           = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + target_type                        = "ip"
+      + vpc_id                             = "vpc-072f329fed6757e95"
+
+      + health_check {
+          + enabled             = true
+          + healthy_threshold   = 2
+          + interval            = 30
+          + matcher             = (known after apply)
+          + path                = "/"
+          + port                = "80"
+          + protocol            = "HTTP"
+          + timeout             = 20
+          + unhealthy_threshold = 4
+        }
+    }
+
+  # module.ecs_services.module.alb_ecs.aws_security_group.this[0] will be created
+  + resource "aws_security_group" "this" {
+      + arn                    = (known after apply)
+      + description            = "Security group for ecs-bluegreen-alb application load balancer"
+      + egress                 = (known after apply)
+      + id                     = (known after apply)
+      + ingress                = (known after apply)
+      + name                   = (known after apply)
+      + name_prefix            = "ecs-bluegreen-alb-"
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all               = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + vpc_id                 = "vpc-072f329fed6757e95"
+    }
+
+  # module.ecs_services.module.alb_ecs.aws_vpc_security_group_egress_rule.this["all"] will be created
+  + resource "aws_vpc_security_group_egress_rule" "this" {
+      + arn                    = (known after apply)
+      + cidr_ipv4              = "0.0.0.0/0"
+      + id                     = (known after apply)
+      + ip_protocol            = "-1"
+      + security_group_id      = (known after apply)
+      + security_group_rule_id = (known after apply)
+      + tags                   = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all               = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+    }
+
+  # module.ecs_services.module.alb_ecs.aws_vpc_security_group_ingress_rule.this["http"] will be created
+  + resource "aws_vpc_security_group_ingress_rule" "this" {
+      + arn                    = (known after apply)
+      + cidr_ipv4              = "0.0.0.0/0"
+      + from_port              = 80
+      + id                     = (known after apply)
+      + ip_protocol            = "tcp"
+      + security_group_id      = (known after apply)
+      + security_group_rule_id = (known after apply)
+      + tags                   = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all               = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + to_port                = 80
+    }
+
+  # module.ecs_services.module.alb_ecs.aws_vpc_security_group_ingress_rule.this["http_8080"] will be created
+  + resource "aws_vpc_security_group_ingress_rule" "this" {
+      + arn                    = (known after apply)
+      + cidr_ipv4              = "0.0.0.0/0"
+      + from_port              = 8080
+      + id                     = (known after apply)
+      + ip_protocol            = "tcp"
+      + security_group_id      = (known after apply)
+      + security_group_rule_id = (known after apply)
+      + tags                   = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all               = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + to_port                = 8080
+    }
+
+  # module.ecs_services.module.alb_ecs.aws_vpc_security_group_ingress_rule.this["https"] will be created
+  + resource "aws_vpc_security_group_ingress_rule" "this" {
+      + arn                    = (known after apply)
+      + cidr_ipv4              = "0.0.0.0/0"
+      + from_port              = 443
+      + id                     = (known after apply)
+      + ip_protocol            = "tcp"
+      + security_group_id      = (known after apply)
+      + security_group_rule_id = (known after apply)
+      + tags                   = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all               = {
+          + "Environment"           = "dev"
+          + "Project"               = "ecs-bluegreen"
+          + "terraform-aws-modules" = "alb"
+        }
+      + to_port                = 443
+    }
+
+  # module.ecs_services.module.codepipeline_bucket.aws_s3_bucket.this[0] will be created
+  + resource "aws_s3_bucket" "this" {
+      + acceleration_status         = (known after apply)
+      + acl                         = (known after apply)
+      + arn                         = (known after apply)
+      + bucket                      = "ecs-bluegreen-codepipeline"
+      + bucket_domain_name          = (known after apply)
+      + bucket_prefix               = (known after apply)
+      + bucket_regional_domain_name = (known after apply)
+      + force_destroy               = false
+      + hosted_zone_id              = (known after apply)
+      + id                          = (known after apply)
+      + object_lock_enabled         = false
+      + policy                      = (known after apply)
+      + region                      = (known after apply)
+      + request_payer               = (known after apply)
+      + tags_all                    = (known after apply)
+      + website_domain              = (known after apply)
+      + website_endpoint            = (known after apply)
+    }
+
+  # module.ecs_services.module.codepipeline_bucket.aws_s3_bucket_lifecycle_configuration.this[0] will be created
+  + resource "aws_s3_bucket_lifecycle_configuration" "this" {
+      + bucket                                 = (known after apply)
+      + expected_bucket_owner                  = (known after apply)
+      + id                                     = (known after apply)
+      + transition_default_minimum_object_size = "all_storage_classes_128K"
+
+      + rule {
+          + id     = "delete-reports-1-day"
+          + status = "Enabled"
+
+          + expiration {
+              + days                         = 1
+              + expired_object_delete_marker = false
+            }
+
+          + filter {
+              + prefix = "reports/"
+            }
+
+          + noncurrent_version_expiration {
+              + noncurrent_days = 1
+            }
+        }
+      + rule {
+          + id     = "delete-prints-1-day"
+          + status = "Enabled"
+
+          + expiration {
+              + days                         = 1
+              + expired_object_delete_marker = false
+            }
+
+          + filter {
+              + prefix = "prints/"
+            }
+
+          + noncurrent_version_expiration {
+              + noncurrent_days = 1
+            }
+        }
+    }
+
+  # module.ecs_services.module.codepipeline_bucket.aws_s3_bucket_public_access_block.this[0] will be created
+  + resource "aws_s3_bucket_public_access_block" "this" {
+      + block_public_acls       = true
+      + block_public_policy     = true
+      + bucket                  = (known after apply)
+      + id                      = (known after apply)
+      + ignore_public_acls      = true
+      + restrict_public_buckets = true
+    }
+
+  # module.ecs_services.module.codepipeline_bucket.aws_s3_bucket_server_side_encryption_configuration.this[0] will be created
+  + resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
+      + bucket = (known after apply)
+      + id     = (known after apply)
+
+      + rule {
+          + apply_server_side_encryption_by_default {
+              + kms_master_key_id = "alias/aws/s3"
+              + sse_algorithm     = "AES256"
+            }
+        }
+    }
+
+  # module.ecs_services.module.codepipeline_bucket.aws_s3_bucket_versioning.this[0] will be created
+  + resource "aws_s3_bucket_versioning" "this" {
+      + bucket = (known after apply)
+      + id     = (known after apply)
+
+      + versioning_configuration {
+          + mfa_delete = "Disabled"
+          + status     = "Enabled"
+        }
+    }
+
+  # module.ecs_services.module.codepipeline_notifications["emojivoto-web"].data.aws_iam_policy_document.this[0] will be read during apply
+  # (depends on a resource or a module with changes pending)
+ <= data "aws_iam_policy_document" "this" {
+      + id                        = (known after apply)
+      + json                      = (known after apply)
+      + minified_json             = (known after apply)
+      + override_policy_documents = []
+      + source_policy_documents   = []
+
+      + statement {
+          + actions   = [
+              + "sns:publish",
+            ]
+          + resources = [
+              + "*",
+            ]
+          + sid       = "codepipeline"
+
+          + principals {
+              + identifiers = [
+                  + "codepipeline.amazonaws.com",
+                ]
+              + type        = "Service"
+            }
+        }
+    }
+
+  # module.ecs_services.module.codepipeline_notifications["emojivoto-web"].aws_sns_topic.this[0] will be created
+  + resource "aws_sns_topic" "this" {
+      + arn                         = (known after apply)
+      + beginning_archive_time      = (known after apply)
+      + content_based_deduplication = false
+      + fifo_throughput_scope       = (known after apply)
+      + fifo_topic                  = false
+      + id                          = (known after apply)
+      + kms_master_key_id           = "alias/aws/s3"
+      + name                        = "emojivoto-web-codepipeline-notifications"
+      + name_prefix                 = (known after apply)
+      + owner                       = (known after apply)
+      + policy                      = (known after apply)
+      + signature_version           = (known after apply)
+      + tags_all                    = (known after apply)
+      + tracing_config              = (known after apply)
+    }
+
+  # module.ecs_services.module.codepipeline_notifications["emojivoto-web"].aws_sns_topic_policy.this[0] will be created
+  + resource "aws_sns_topic_policy" "this" {
+      + arn    = (known after apply)
+      + id     = (known after apply)
+      + owner  = (known after apply)
+      + policy = (known after apply)
+    }
+
+  # module.ecs_services.module.ecs_codedeploy["emojivoto-web"].aws_codedeploy_app.default[0] will be created
+  + resource "aws_codedeploy_app" "default" {
+      + application_id      = (known after apply)
+      + arn                 = (known after apply)
+      + compute_platform    = "ECS"
+      + github_account_name = (known after apply)
+      + id                  = (known after apply)
+      + linked_to_github    = (known after apply)
+      + name                = "ecs-service-emojivoto-web"
+      + tags                = {
+          + "Name" = "ecs-service-emojivoto-web"
+        }
+      + tags_all            = {
+          + "Name" = "ecs-service-emojivoto-web"
+        }
+    }
+
+  # module.ecs_services.module.ecs_codedeploy["emojivoto-web"].aws_codedeploy_deployment_config.default[0] will be created
+  + resource "aws_codedeploy_deployment_config" "default" {
+      + arn                    = (known after apply)
+      + compute_platform       = "ECS"
+      + deployment_config_id   = (known after apply)
+      + deployment_config_name = "ecs-service-emojivoto-web"
+      + id                     = (known after apply)
+
+      + minimum_healthy_hosts {
+          + type  = "HOST_COUNT"
+          + value = 1
+        }
+
+      + traffic_routing_config {
+          + type = "AllAtOnce"
+        }
+    }
+
+  # module.ecs_services.module.ecs_codedeploy["emojivoto-web"].aws_codedeploy_deployment_group.default[0] will be created
+  + resource "aws_codedeploy_deployment_group" "default" {
+      + app_name                    = "ecs-service-emojivoto-web"
+      + arn                         = (known after apply)
+      + compute_platform            = (known after apply)
+      + deployment_config_name      = (known after apply)
+      + deployment_group_id         = (known after apply)
+      + deployment_group_name       = "ecs-service-emojivoto-web"
+      + id                          = (known after apply)
+      + outdated_instances_strategy = "UPDATE"
+      + service_role_arn            = (known after apply)
+      + tags                        = {
+          + "Name" = "ecs-service-emojivoto-web"
+        }
+      + tags_all                    = {
+          + "Name" = "ecs-service-emojivoto-web"
+        }
+      + termination_hook_enabled    = false
+
+      + auto_rollback_configuration {
+          + enabled = true
+          + events  = [
+              + "DEPLOYMENT_FAILURE",
+            ]
+        }
+
+      + blue_green_deployment_config {
+          + deployment_ready_option {
+              + action_on_timeout = "CONTINUE_DEPLOYMENT"
+            }
+          + terminate_blue_instances_on_deployment_success {
+              + action                           = "TERMINATE"
+              + termination_wait_time_in_minutes = 4
+            }
+        }
+
+      + deployment_style {
+          + deployment_option = "WITH_TRAFFIC_CONTROL"
+          + deployment_type   = "BLUE_GREEN"
+        }
+
+      + ecs_service {
+          + cluster_name = "ecs-bluegreen-cluster"
+          + service_name = "emojivoto-web"
+        }
+
+      + load_balancer_info {
+          + target_group_pair_info {
+              + prod_traffic_route {
+                  + listener_arns = (known after apply)
+                }
+              + target_group {
+                  + name = "emojivoto-web-blue"
+                }
+              + target_group {
+                  + name = "emojivoto-web-green"
+                }
+            }
+        }
+    }
+
+  # module.ecs_services.module.ecs_codedeploy["emojivoto-web"].aws_iam_role.default[0] will be created
+  + resource "aws_iam_role" "default" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "codedeploy.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "ecs-service-emojivoto-web"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags                  = {
+          + "Name" = "ecs-service-emojivoto-web"
+        }
+      + tags_all              = {
+          + "Name" = "ecs-service-emojivoto-web"
+        }
+      + unique_id             = (known after apply)
+    }
+
+  # module.ecs_services.module.ecs_codedeploy["emojivoto-web"].aws_iam_role_policy_attachment.default[0] will be created
+  + resource "aws_iam_role_policy_attachment" "default" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"
+      + role       = "ecs-service-emojivoto-web"
+    }
+
+  # module.ecs_services.module.ecs_services["emojivoto-web"].data.aws_ecs_task_definition.this[0] will be read during apply
+  # (depends on a resource or a module with changes pending)
+ <= data "aws_ecs_task_definition" "this" {
+      + arn                      = (known after apply)
+      + arn_without_revision     = (known after apply)
+      + container_definitions    = (known after apply)
+      + cpu                      = (known after apply)
+      + enable_fault_injection   = (known after apply)
+      + ephemeral_storage        = (known after apply)
+      + execution_role_arn       = (known after apply)
+      + family                   = (known after apply)
+      + id                       = (known after apply)
+      + inference_accelerator    = (known after apply)
+      + ipc_mode                 = (known after apply)
+      + memory                   = (known after apply)
+      + network_mode             = (known after apply)
+      + pid_mode                 = (known after apply)
+      + placement_constraints    = (known after apply)
+      + proxy_configuration      = (known after apply)
+      + requires_compatibilities = (known after apply)
+      + revision                 = (known after apply)
+      + runtime_platform         = (known after apply)
+      + status                   = (known after apply)
+      + task_definition          = "emojivoto-web"
+      + task_role_arn            = (known after apply)
+      + volume                   = (known after apply)
+    }
+
+  # module.ecs_services.module.ecs_services["emojivoto-web"].aws_appautoscaling_policy.this["cpu"] will be created
+  + resource "aws_appautoscaling_policy" "this" {
+      + alarm_arns         = (known after apply)
+      + arn                = (known after apply)
+      + id                 = (known after apply)
+      + name               = "cpu"
+      + policy_type        = "TargetTrackingScaling"
+      + resource_id        = (known after apply)
+      + scalable_dimension = "ecs:service:DesiredCount"
+      + service_namespace  = "ecs"
+
+      + target_tracking_scaling_policy_configuration {
+          + disable_scale_in   = false
+          + scale_in_cooldown  = 300
+          + scale_out_cooldown = 60
+          + target_value       = 75
+
+          + predefined_metric_specification {
+              + predefined_metric_type = "ECSServiceAverageCPUUtilization"
+            }
+        }
+    }
+
+  # module.ecs_services.module.ecs_services["emojivoto-web"].aws_appautoscaling_policy.this["memory"] will be created
+  + resource "aws_appautoscaling_policy" "this" {
+      + alarm_arns         = (known after apply)
+      + arn                = (known after apply)
+      + id                 = (known after apply)
+      + name               = "memory"
+      + policy_type        = "TargetTrackingScaling"
+      + resource_id        = (known after apply)
+      + scalable_dimension = "ecs:service:DesiredCount"
+      + service_namespace  = "ecs"
+
+      + target_tracking_scaling_policy_configuration {
+          + disable_scale_in   = false
+          + scale_in_cooldown  = 300
+          + scale_out_cooldown = 60
+          + target_value       = 75
+
+          + predefined_metric_specification {
+              + predefined_metric_type = "ECSServiceAverageMemoryUtilization"
+            }
+        }
+    }
+
+  # module.ecs_services.module.ecs_services["emojivoto-web"].aws_appautoscaling_target.this[0] will be created
+  + resource "aws_appautoscaling_target" "this" {
+      + arn                = (known after apply)
+      + id                 = (known after apply)
+      + max_capacity       = 1
+      + min_capacity       = 1
+      + resource_id        = (known after apply)
+      + role_arn           = (known after apply)
+      + scalable_dimension = "ecs:service:DesiredCount"
+      + service_namespace  = "ecs"
+      + tags_all           = (known after apply)
+    }
+
+  # module.ecs_services.module.ecs_services["emojivoto-web"].aws_ecs_service.ignore_task_definition[0] will be created
+  + resource "aws_ecs_service" "ignore_task_definition" {
+      + availability_zone_rebalancing      = "DISABLED"
+      + cluster                            = (known after apply)
+      + deployment_maximum_percent         = 200
+      + deployment_minimum_healthy_percent = 66
+      + desired_count                      = 1
+      + enable_ecs_managed_tags            = true
+      + enable_execute_command             = false
+      + force_new_deployment               = true
+      + iam_role                           = (known after apply)
+      + id                                 = (known after apply)
+      + launch_type                        = "FARGATE"
+      + name                               = "emojivoto-web"
+      + platform_version                   = (known after apply)
+      + scheduling_strategy                = "REPLICA"
+      + tags_all                           = (known after apply)
+      + task_definition                    = (known after apply)
+      + triggers                           = (known after apply)
+      + wait_for_steady_state              = false
+
+      + deployment_controller {
+          + type = "CODE_DEPLOY"
+        }
+
+      + load_balancer {
+          + container_name   = "emojivoto-web"
+          + container_port   = 80
+          + target_group_arn = (known after apply)
+        }
+
+      + network_configuration {
+          + assign_public_ip = false
+          + security_groups  = (known after apply)
+          + subnets          = [
+              + "subnet-05d75d908f61d35e5",
+              + "subnet-094c287defbc07180",
+              + "subnet-0cec521de70ee76a3",
+            ]
+        }
+
+      + timeouts {}
+    }
+
+  # module.ecs_services.module.ecs_services["emojivoto-web"].aws_ecs_task_definition.this[0] will be created
+  + resource "aws_ecs_task_definition" "this" {
+      + arn                      = (known after apply)
+      + arn_without_revision     = (known after apply)
+      + container_definitions    = jsonencode(
+            [
+              + {
+                  + cpu                    = 256
+                  + environment            = [
+                      + {
+                          + name  = "FAKE_ENV_VAR"
+                          + value = "fake-value"
+                        },
+                    ]
+                  + image                  = "docker.l5d.io/buoyantio/emojivoto-web"
+                  + interactive            = false
+                  + linuxParameters        = {
+                      + initProcessEnabled = false
+                    }
+                  + logConfiguration       = {
+                      + logDriver = "awslogs"
+                      + options   = {
+                          + awslogs-group         = "/aws/ecs/emojivoto-web/simple-service"
+                          + awslogs-region        = "us-east-1"
+                          + awslogs-stream-prefix = "ecs"
+                        }
+                    }
+                  + memory                 = 512
+                  + mountPoints            = []
+                  + name                   = "simple-service"
+                  + portMappings           = [
+                      + {
+                          + containerPort = 80
+                          + hostPort      = 80
+                          + name          = "emojivoto-service"
+                          + protocol      = "tcp"
+                        },
+                    ]
+                  + privileged             = false
+                  + pseudoTerminal         = false
+                  + readonlyRootFilesystem = false
+                  + startTimeout           = 30
+                  + stopTimeout            = 120
+                  + systemControls         = []
+                  + user                   = "0"
+                  + volumesFrom            = []
+                },
+            ]
+        )
+      + cpu                      = "1024"
+      + enable_fault_injection   = (known after apply)
+      + execution_role_arn       = (known after apply)
+      + family                   = "emojivoto-web"
+      + id                       = (known after apply)
+      + memory                   = "2048"
+      + network_mode             = "awsvpc"
+      + requires_compatibilities = [
+          + "FARGATE",
+        ]
+      + revision                 = (known after apply)
+      + skip_destroy             = false
+      + tags_all                 = (known after apply)
+      + task_role_arn            = (known after apply)
+      + track_latest             = false
+
+      + runtime_platform {
+          + cpu_architecture        = "X86_64"
+          + operating_system_family = "LINUX"
+        }
+    }
+
+  # module.ecs_services.module.ecs_services["emojivoto-web"].aws_iam_policy.task_exec[0] will be created
+  + resource "aws_iam_policy" "task_exec" {
+      + arn              = (known after apply)
+      + attachment_count = (known after apply)
+      + description      = "Task execution role IAM policy"
+      + id               = (known after apply)
+      + name             = "ecs-bluegreen-service-task-exec"
+      + name_prefix      = (known after apply)
+      + path             = "/"
+      + policy           = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action   = [
+                          + "logs:PutLogEvents",
+                          + "logs:CreateLogStream",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                      + Sid      = "Logs"
+                    },
+                  + {
+                      + Action   = [
+                          + "ecr:GetDownloadUrlForLayer",
+                          + "ecr:GetAuthorizationToken",
+                          + "ecr:BatchGetImage",
+                          + "ecr:BatchCheckLayerAvailability",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                      + Sid      = "ECR"
+                    },
+                  + {
+                      + Action   = "ssm:GetParameters"
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:ssm:*:*:parameter/*"
+                      + Sid      = "GetSSMParams"
+                    },
+                  + {
+                      + Action   = "secretsmanager:GetSecretValue"
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:secretsmanager:us-east-1:*:secret:*"
+                      + Sid      = "GetSecrets"
+                    },
+                  + {
+                      + Action   = [
+                          + "kms:GenerateDataKey",
+                          + "kms:Decrypt",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + policy_id        = (known after apply)
+      + tags_all         = (known after apply)
+    }
+
+  # module.ecs_services.module.ecs_services["emojivoto-web"].aws_iam_role.task_exec[0] will be created
+  + resource "aws_iam_role" "task_exec" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "ecs-tasks.amazonaws.com"
+                        }
+                      + Sid       = "ECSTaskExecutionAssumeRole"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + description           = "Task execution role for ecs-bluegreen-service-task-exec"
+      + force_detach_policies = true
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "ecs-bluegreen-service-task-exec"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags_all              = (known after apply)
+      + unique_id             = (known after apply)
+    }
+
+  # module.ecs_services.module.ecs_services["emojivoto-web"].aws_iam_role.tasks[0] will be created
+  + resource "aws_iam_role" "tasks" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Condition = {
+                          + ArnLike      = {
+                              + "aws:SourceArn" = "arn:aws:ecs:us-east-1:523857393444:*"
+                            }
+                          + StringEquals = {
+                              + "aws:SourceAccount" = "523857393444"
+                            }
+                        }
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "ecs-tasks.amazonaws.com"
+                        }
+                      + Sid       = "ECSTasksAssumeRole"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = true
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "ecs-bluegreen-service-task-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags_all              = (known after apply)
+      + unique_id             = (known after apply)
+    }
+
+  # module.ecs_services.module.ecs_services["emojivoto-web"].aws_iam_role_policy.tasks[0] will be created
+  + resource "aws_iam_role_policy" "tasks" {
+      + id          = (known after apply)
+      + name        = "ecs-bluegreen-service-task-role"
+      + name_prefix = (known after apply)
+      + policy      = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action   = [
+                          + "sqs:SendMessage",
+                          + "sqs:ReceiveMessage",
+                          + "sqs:GetQueueUrl",
+                          + "sqs:GetQueueAttributes",
+                          + "sqs:DeleteMessage",
+                        ]
+                      + Effect   = "Allow"
+                      + Resource = "*"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + role        = (known after apply)
+    }
+
+  # module.ecs_services.module.ecs_services["emojivoto-web"].aws_iam_role_policy_attachment.task_exec[0] will be created
+  + resource "aws_iam_role_policy_attachment" "task_exec" {
+      + id         = (known after apply)
+      + policy_arn = (known after apply)
+      + role       = "ecs-bluegreen-service-task-exec"
+    }
+
+  # module.ecs_services.module.security_group.aws_security_group.this_name_prefix[0] will be created
+  + resource "aws_security_group" "this_name_prefix" {
+      + arn                    = (known after apply)
+      + description            = "Security Group for Backend Services"
+      + egress                 = (known after apply)
+      + id                     = (known after apply)
+      + ingress                = (known after apply)
+      + name                   = (known after apply)
+      + name_prefix            = "backend-"
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Name" = "backend"
+        }
+      + tags_all               = {
+          + "Name" = "backend"
+        }
+      + vpc_id                 = "vpc-072f329fed6757e95"
+
+      + timeouts {
+          + create = "10m"
+          + delete = "15m"
+        }
+    }
+
+  # module.ecs_services.module.security_group.aws_security_group_rule.egress_rules[0] will be created
+  + resource "aws_security_group_rule" "egress_rules" {
+      + cidr_blocks              = [
+          + "0.0.0.0/0",
+        ]
+      + description              = "All protocols"
+      + from_port                = -1
+      + id                       = (known after apply)
+      + ipv6_cidr_blocks         = [
+          + "::/0",
+        ]
+      + prefix_list_ids          = []
+      + protocol                 = "-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = -1
+      + type                     = "egress"
+    }
+
+  # module.ecs_services.module.security_group.aws_security_group_rule.ingress_rules[0] will be created
+  + resource "aws_security_group_rule" "ingress_rules" {
+      + cidr_blocks              = [
+          + "172.18.32.0/20",
+        ]
+      + description              = "HTTP"
+      + from_port                = 80
+      + id                       = (known after apply)
+      + ipv6_cidr_blocks         = []
+      + prefix_list_ids          = []
+      + protocol                 = "tcp"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 80
+      + type                     = "ingress"
+    }
+
+  # module.ecs_services.module.security_group.aws_security_group_rule.ingress_rules[1] will be created
+  + resource "aws_security_group_rule" "ingress_rules" {
+      + cidr_blocks              = [
+          + "172.18.32.0/20",
+        ]
+      + description              = "HTTP"
+      + from_port                = 8080
+      + id                       = (known after apply)
+      + ipv6_cidr_blocks         = []
+      + prefix_list_ids          = []
+      + protocol                 = "tcp"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 8080
+      + type                     = "ingress"
+    }
+
+  # module.ecs_services.module.security_group.aws_security_group_rule.ingress_rules[2] will be created
+  + resource "aws_security_group_rule" "ingress_rules" {
+      + cidr_blocks              = [
+          + "172.18.32.0/20",
+        ]
+      + description              = "HTTPS"
+      + from_port                = 443
+      + id                       = (known after apply)
+      + ipv6_cidr_blocks         = []
+      + prefix_list_ids          = []
+      + protocol                 = "tcp"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 443
+      + type                     = "ingress"
+    }
+
+  # module.ecs_services.module.security_group.aws_security_group_rule.ingress_rules[3] will be created
+  + resource "aws_security_group_rule" "ingress_rules" {
+      + cidr_blocks              = [
+          + "172.18.32.0/20",
+        ]
+      + description              = "HTTPS"
+      + from_port                = 8443
+      + id                       = (known after apply)
+      + ipv6_cidr_blocks         = []
+      + prefix_list_ids          = []
+      + protocol                 = "tcp"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 8443
+      + type                     = "ingress"
+    }
+
+  # module.ecs_services.module.ecs_cluster.module.cluster.aws_cloudwatch_log_group.this[0] will be created
+  + resource "aws_cloudwatch_log_group" "this" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "/aws/ecs/ecs-bluegreen-cluster"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 90
+      + skip_destroy      = false
+      + tags_all          = (known after apply)
+    }
+
+  # module.ecs_services.module.ecs_cluster.module.cluster.aws_ecs_cluster.this[0] will be created
+  + resource "aws_ecs_cluster" "this" {
+      + arn      = (known after apply)
+      + id       = (known after apply)
+      + name     = "ecs-bluegreen-cluster"
+      + tags_all = (known after apply)
+
+      + configuration {
+          + execute_command_configuration {
+              + logging = "DEFAULT"
+            }
+        }
+
+      + setting {
+          + name  = "containerInsights"
+          + value = "enabled"
+        }
+    }
+
+  # module.ecs_services.module.ecs_cluster.module.cluster.aws_ecs_cluster_capacity_providers.this[0] will be created
+  + resource "aws_ecs_cluster_capacity_providers" "this" {
+      + capacity_providers = [
+          + "FARGATE",
+          + "FARGATE_SPOT",
+        ]
+      + cluster_name       = "ecs-bluegreen-cluster"
+      + id                 = (known after apply)
+
+      + default_capacity_provider_strategy {
+          + base              = 0
+          + capacity_provider = "FARGATE_SPOT"
+          + weight            = 40
+        }
+      + default_capacity_provider_strategy {
+          + base              = 1
+          + capacity_provider = "FARGATE"
+          + weight            = 60
+        }
+    }
+
+  # module.ecs_services.module.ecs_codedeploy["emojivoto-web"].module.sns_topic.aws_sns_topic.this[0] will be created
+  + resource "aws_sns_topic" "this" {
+      + arn                         = (known after apply)
+      + beginning_archive_time      = (known after apply)
+      + content_based_deduplication = false
+      + display_name                = "ecs-service-emojivoto-web"
+      + fifo_throughput_scope       = (known after apply)
+      + fifo_topic                  = false
+      + id                          = (known after apply)
+      + kms_master_key_id           = "alias/aws/sns"
+      + name                        = "ecs-service-emojivoto-web"
+      + name_prefix                 = (known after apply)
+      + owner                       = (known after apply)
+      + policy                      = (known after apply)
+      + signature_version           = (known after apply)
+      + tags                        = {
+          + "Name" = "ecs-service-emojivoto-web"
+        }
+      + tags_all                    = {
+          + "Name" = "ecs-service-emojivoto-web"
+        }
+      + tracing_config              = (known after apply)
+    }
+
+  # module.ecs_services.module.ecs_services["emojivoto-web"].module.container_definition["simple-service"].aws_cloudwatch_log_group.this[0] will be created
+  + resource "aws_cloudwatch_log_group" "this" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "/aws/ecs/emojivoto-web/simple-service"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 3
+      + skip_destroy      = false
+      + tags_all          = (known after apply)
+    }
+
+Plan: 57 to add, 0 to change, 0 to destroy.
+
+Warning: Value for undeclared variable
+
+The root module does not declare a variable named "vault_address" but a value was found in file "/binbash/config/common.tfvars". If you meant to use this value, add a "variable" block to the configuration.
+
+To silence these warnings, use TF_VAR_... environment variables to provide certain "global" settings to all configurations in your organization. To reduce the verbosity of these warnings, use the -compact-warnings option.
+
+Warning: Value for undeclared variable
+
+The root module does not declare a variable named "vault_token" but a value was found in file "/binbash/config/common.tfvars". If you meant to use this value, add a "variable" block to the configuration.
+
+To silence these warnings, use TF_VAR_... environment variables to provide certain "global" settings to all configurations in your organization. To reduce the verbosity of these warnings, use the -compact-warnings option.
+
+
+
+Note: You didn't use the -out option to save this plan, so Terraform can't guarantee to take exactly these actions if you run "terraform apply" now.
