@@ -1,6 +1,6 @@
 module "nightly_backups" {
 
-  source = "github.com/binbashar/terraform-aws-backup.git?ref=0.23.8"
+  source = "github.com/binbashar/terraform-aws-backup.git?ref=v0.24.0"
 
   # Plan
   plan_name = "nightly_backups"
