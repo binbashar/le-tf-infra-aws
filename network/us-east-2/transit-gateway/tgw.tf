@@ -15,7 +15,7 @@
 # AWS Transit Gateway
 module "tgw-dr" {
 
-  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.11.3"
 
   count = var.enable_tgw ? 1 : 0
   name  = "${var.project}-${var.environment}-tgw-dr"
@@ -74,7 +74,7 @@ module "tgw-dr" {
 #
 module "tgw_inspection_route_table" {
 
-  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.11.3"
 
   count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network-dr", false) ? 1 : 0
 
@@ -114,7 +114,7 @@ module "tgw_inspection_route_table" {
 # apps-devstg-dr
 module "tgw_apps_devstg_dr_route_table" {
 
-  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.11.3"
 
   count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg-dr", false) ? 1 : 0
 
@@ -149,7 +149,7 @@ module "tgw_apps_devstg_dr_route_table" {
 # apps-prd-dr
 module "tgw_apps_prd_dr_route_table" {
 
-  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.4.0"
+  source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.11.3"
 
   count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd-dr", false) ? 1 : 0
 
