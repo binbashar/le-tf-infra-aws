@@ -23,7 +23,7 @@ resource "aws_route53_record" "main" {
   records         = [each.value.record]
   ttl             = 3600
   type            = each.value.type
-  zone_id         = data.terraform_remote_state.shared-dns.outputs.aws_public_zone_id[0]
+  zone_id         = data.terraform_remote_state.shared-dns.outputs.aws_public_zone_id
 }
 
 # "This resource represents a successful validation of an ACM certificate in
