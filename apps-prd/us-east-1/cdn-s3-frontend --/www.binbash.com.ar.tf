@@ -11,7 +11,7 @@ module "www_binbash_com_ar" {
   cors_allowed_origins = ["www.${local.public_domain}", local.public_domain]
 
   # Certificate settings
-  acm_certificate_arn = data.terraform_remote_state.certificates.outputs.binbash_com_ar_arn
+  acm_certificate_arn = data.terraform_remote_state.certificates.outputs.certificate_arn
   price_class         = "PriceClass_100"
 
   # CloudFront settings
@@ -81,7 +81,7 @@ data "aws_iam_policy_document" "additional_bucket_policy" {
 #
 resource "aws_route53_record" "pub_A_www_binbash_com_ar" {
   provider = aws.shared-route53
-  zone_id  = data.terraform_remote_state.dns-shared.outputs.aws_public_zone_id[0]
+  zone_id  = data.terraform_remote_state.dns-shared.outputs.aws_public_zone_id
   name     = "www.${local.public_domain}"
   type     = "A"
 
@@ -94,7 +94,7 @@ resource "aws_route53_record" "pub_A_www_binbash_com_ar" {
 
 resource "aws_route53_record" "pub_A_binbash_com_ar" {
   provider = aws.shared-route53
-  zone_id  = data.terraform_remote_state.dns-shared.outputs.aws_public_zone_id[0]
+  zone_id  = data.terraform_remote_state.dns-shared.outputs.aws_public_zone_id
   name     = local.public_domain
   type     = "A"
 
