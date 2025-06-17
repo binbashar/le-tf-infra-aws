@@ -14,7 +14,7 @@ module "user_buckets" {
 
   for_each = toset(var.usernames)
 
-  bucket        = "${var.project}-${var.prefix}-user-${each.key}-files"
+  bucket = "${var.project}-${var.prefix}-user-${each.key}-files"
   #TODO: Migrate module to newest version.
   #ACL commented because the ObjectOwnership now is BucketOwnerEnforced by default and disables the ACL.
   #acl           = "private"
