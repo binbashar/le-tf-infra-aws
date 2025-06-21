@@ -43,7 +43,7 @@ module "rds_export_to_s3" {
 module "bucket" {
   source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.0.0"
 
-  bucket        = local.bucket_name
+  bucket = local.bucket_name
   #TODO: Migrate module to newest version.
   #ACL commented because the ObjectOwnership now is BucketOwnerEnforced by default and disables the ACL.
   #acl           = "private"
