@@ -42,7 +42,7 @@ data "aws_iam_policy_document" "kms" {
 
     principals {
       type        = "Service"
-      identifiers = ["s3.${var.region_secondary}.amazonaws.com"]
+      identifiers = ["s3.${var.region}.amazonaws.com"]
     }
   }
 
@@ -65,7 +65,7 @@ data "aws_iam_policy_document" "kms" {
     condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
-      values   = ["arn:aws:logs:${var.region_secondary}:${var.accounts.apps-devstg.id}:*"]
+      values   = ["arn:aws:logs:${var.region}:${var.accounts.network.id}:*"]
     }
   }
 }
