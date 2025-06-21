@@ -34,7 +34,7 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = ">= 1.0.9"
+  required_version = "~> 1.6"
 
   required_providers {
     aws = "~> 3.0"
@@ -59,7 +59,7 @@ data "terraform_remote_state" "tools-vpn-server" {
     region  = var.region
     profile = "${var.project}-shared-devops"
     bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/vpn/terraform.tfstate"
+    key     = "shared/vpn-server/terraform.tfstate"
   }
 }
 
