@@ -224,9 +224,7 @@ data "aws_iam_policy_document" "data_scientist" {
       "athena:*",
       "apigateway:*",
       "aoss:*",
-      "aoss:*",
       "autoscaling:*",
-      "aws-marketplace:*",
       "aws-marketplace:*",
       "aws-portal:*",
       "bedrock:*",
@@ -254,7 +252,6 @@ data "aws_iam_policy_document" "data_scientist" {
       "logs:*",
       "pipes:*",
       "polly:*",
-      "polly:*",
       "q:*",
       "quicksight:*",
       "ram:*",
@@ -276,7 +273,6 @@ data "aws_iam_policy_document" "data_scientist" {
       "sts:*",
       "support:*",
       "tag:*",
-      "transcribe:*",
       "transcribe:*",
     ]
     resources = ["*"]
