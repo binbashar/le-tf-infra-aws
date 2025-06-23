@@ -6,17 +6,10 @@ provider "aws" {
   profile = var.profile
 }
 
-#=============================#
-# Vault Provider Settings     #
-#=============================#
-provider "vault" {
-  address = var.vault_address
-
-  /*
-  Vault token that will be used by Terraform to authenticate.
- admin token from https://portal.cloud.hashicorp.com/.
- */
-  token = var.vault_token
+provider "aws" {
+  alias   = "shared"
+  region  = var.region
+  profile = "${var.project}-shared-devops"
 }
 
 #=============================#
@@ -35,6 +28,25 @@ terraform {
   }
 }
 
-data "vault_generic_secret" "slack_hook_url_monitoring" {
-  path = "secrets/${var.project}/${var.environment}/security-monitoring"
+#=============================#
+# Data sources                #
+#=============================#
+
+#
+# data type from output for security
+#
+data "terraform_remote_state" "keys" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/security-keys/terraform.tfstate"
+  }
+}
+
+data "aws_secretsmanager_secret_version" "monitoring_security" {
+  provider  = aws.shared
+  secret_id = "/devops/notifications/slack/security"
 }

@@ -1,7 +1,7 @@
 # Encrypt the URL, storing encryption here will show it in logs and in tfstate
 # https://www.terraform.io/docs/state/sensitive-data.html
 resource "aws_kms_ciphertext" "slack_url_monitoring_sec" {
-  plaintext = data.vault_generic_secret.notifications.data["slack_webhook_monitoring_sec"]
+  plaintext = data.aws_secretsmanager_secret_version.monitoring_security.secret_string
   key_id    = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
 }
 

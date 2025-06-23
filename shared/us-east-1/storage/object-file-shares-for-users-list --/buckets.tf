@@ -10,12 +10,14 @@
 #  - MFA Delete: TBD -- For the sake of data safety, but can be easily set up at any time
 # -----------------------------------------------------------------------------
 module "user_buckets" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v2.4.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.0.0"
 
   for_each = toset(var.usernames)
 
-  bucket        = "${var.project}-${var.prefix}-user-${each.key}-files"
-  acl           = "private"
+  bucket = "${var.project}-${var.prefix}-user-${each.key}-files"
+  #TODO: Migrate module to newest version.
+  #ACL commented because the ObjectOwnership now is BucketOwnerEnforced by default and disables the ACL.
+  #acl           = "private"
   force_destroy = true
 
   server_side_encryption_configuration = {
@@ -46,7 +48,7 @@ module "user_buckets" {
 }
 
 module "user_logging_buckets" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v2.4.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v3.0.0"
 
   for_each = toset(var.usernames)
 

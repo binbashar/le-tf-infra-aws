@@ -24,13 +24,13 @@ resource "aws_security_group_rule" "allow_mysql_port" {
 # Binbash Reference DB
 #
 module "bb_mysql_db" {
-  source = "github.com/binbashar/terraform-aws-rds.git?ref=v5.6.0"
+  source = "github.com/binbashar/terraform-aws-rds.git?ref=v5.9.0"
 
   # Instance settings
   # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_MySQL.html
   identifier        = "${var.project}-${var.environment}-binbash-mysql"
   engine            = "mysql"
-  engine_version    = "8.0.28"
+  engine_version    = "8.0.41"
   instance_class    = "db.m6g.large"
   allocated_storage = 100
   storage_encrypted = true
@@ -38,10 +38,8 @@ module "bb_mysql_db" {
 
   # Database credentials
   db_name  = "${var.project}_${replace(var.environment, "apps-", "")}_binbash_mysql"
-  username = "administrator"
-
-  # Secret from Hashicorp Vault
-  password = data.vault_generic_secret.database_secrets.data["administrator_password"]
+  username = jsondecode(data.aws_secretsmanager_secret_version.database_secrets.secret_string).username
+  password = jsondecode(data.aws_secretsmanager_secret_version.database_secrets.secret_string).password
   port     = "3306"
 
   # Backup and maintenance
