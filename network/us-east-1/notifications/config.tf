@@ -8,7 +8,7 @@ provider "aws" {
 
 provider "aws" {
   alias   = "shared"
-  region  = var.region
+  region  = "us-east-1"
   profile = "${var.project}-shared-devops"
 }
 
