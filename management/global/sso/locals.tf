@@ -46,6 +46,7 @@ locals {
       last_name  = "Rivera"
       email      = "francisco.rivera@binbash.com.ar"
       groups = [
+        "administrators",
         "devops",
       ]
     }
