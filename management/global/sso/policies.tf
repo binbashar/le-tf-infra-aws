@@ -96,6 +96,7 @@ data "aws_iam_policy_document" "devops" {
       "states:*",
       "sts:*",
       "support:*",
+      "supportplans:*",
       "synthetics:*",
       "tag:*",
       "textract:*",
