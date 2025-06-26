@@ -122,7 +122,7 @@ module "iam_assumable_role_oaar" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
 
   trusted_role_arns = [
-    "arn:aws:iam::${var.accounts.root.id}:root"
+    "arn:aws:iam::${var.accounts.management.id}:root"
   ]
 
   create_role           = true
@@ -252,6 +252,11 @@ resource "aws_iam_role" "github_actions_role" {
       }
     ]
   })
+
+  # Had to add this because Tofu kept wanting to apply the same tags updates everytime
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "github_actions_oidc" {
