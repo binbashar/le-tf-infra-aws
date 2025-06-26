@@ -6,7 +6,7 @@ module "iam_group_auditors" {
   name   = "auditors"
 
   group_users = [
-    module.user_auditor_ci.iam_user_name,
+    module.user["auditor_ci"].iam_user_name,
   ]
 
   custom_group_policy_arns = [
