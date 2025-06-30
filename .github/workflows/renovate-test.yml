@@ -75,15 +75,18 @@ jobs:
         run: |
           printf "[INFO] Setting up credentials\n"
           mkdir -p  ~/.aws/bb
-          aws configure set region us-east-1 --profile bb-network-devops
-          aws configure set output json --profile bb-network-devops
-          aws configure set role_arn arn:aws:iam::${{ secrets.AWS_NETWORK_ACCOUNT_ID }}:role/DeployMaster --profile bb-network-devops
-          aws configure set source_profile bb-deploymaster --profile bb-network-devops
+          configure_profile() {
+            profile=$1
+            account_id=$2
 
-          aws configure set region us-east-1 --profile bb-apps-devstg-devops
-          aws configure set output json --profile bb-apps-devstg-devops
-          aws configure set role_arn arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
-          aws configure set source_profile bb-deploymaster --profile bb-apps-devstg-devops
+            aws configure set region us-east-1 --profile "$profile"
+            aws configure set output json --profile "$profile"
+            aws configure set role_arn arn:aws:iam::$account_id:role/DeployMaster --profile "$profile"
+            aws configure set source_profile bb-deploymaster --profile "$profile"
+          }
+
+          configure_profile bb-network-devops ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
+          configure_profile bb-apps-devstg-devops ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
 
           cat << EOF > ~/.aws/credentials
           [bb-deploymaster]
