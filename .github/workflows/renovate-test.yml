@@ -24,136 +24,116 @@ jobs:
       with:
         ref: ${{ github.ref }}
         fetch-depth: 0
-
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-
-    - name: install_dependencies
-      run: |
-        pip3 install --user --upgrade pipenv
-      shell: bash
-
-    - id: cache-pipenv
-      uses: actions/cache@v3
-      with:
-        path: /home/runner/.local/share/virtualenvs
-        key: ${{ runner.os }}-pipenv-${{ github.run_id }}
-
-    - name: Installing Leverage CLI
-      run: |
-        printf "[INFO] Installing Leverage CLI\n"
-        echo "Installing https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}"
-        python -m pipenv install -i https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}
-    
-    - name: Set up credentials
-      run: |
-        printf "[INFO] Setting up credentials\n"
-        mkdir -p  ~/.aws/bb
-        aws configure set region us-east-1 --profile bb-network-devops
-        aws configure set output json --profile bb-network-devops
-        aws configure set role_arn arn:aws:iam::${{ secrets.AWS_NETWORK_ACCOUNT_ID }}:role/DeployMaster --profile bb-network-devops
-        aws configure set source_profile bb-deploymaster --profile bb-network-devops
-
-        aws configure set region us-east-1 --profile bb-apps-devstg-devops
-        aws configure set output json --profile bb-apps-devstg-devops
-        aws configure set role_arn arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
-        aws configure set source_profile bb-deploymaster --profile bb-apps-devstg-devops
-
-
-        cat << EOF > ~/.aws/credentials
-        [bb-deploymaster]
-        aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        EOF
-        cp ~/.aws/credentials ~/.aws/bb/
-        cp ~/.aws/config ~/.aws/bb/
-      
-    - name: Configure Reference Architecture
-      run: |
-        echo "[INFO] Configure Reference Architecture\n"
-        cat << EOF > ./config/common.tfvars
-        project = "bb"
-        project_long = "binbash"
-        region_primary = "us-east-1"
-        region_secondary = "us-east-2"
-        vault_address = "vault_trash"
-        vault_token = "vault_trash"
-        sso_region = "us-east-1"
-        sso_enabled = false
-        sso_start_url = "sso_trash"
-
-        accounts = {
-          security = {
-            id = ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
-          }
-        }
-        EOF
-        echo "[INFO] Disable MFA\n"
-        sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env
       
     - name: Get changed folders
-      id: changed-files
+      id: get-changed-folders
       run: |
         git fetch origin +refs/heads/master:refs/remotes/origin/master
-        changed_directories=$(git diff --name-only origin/master...HEAD | xargs -n1 dirname | sort -u)
-        {
-          echo 'changed_directories<<EOF'
-          echo "$changed_directories"
-          echo 'EOF'
-        } >> "$GITHUB_OUTPUT"
+        changed_directories=$(git diff --name-only origin/main...HEAD | xargs -n1 dirname | sort -u | grep -v '^\.github' | jq -R . | jq -s .)
+        echo "changed_directories=$changed_directories" >> "$GITHUB_OUTPUT"
 
-    - name: Process each changed module
-      env:
-        UNIQUE_FOLDERS: ${{ steps.changed-files.outputs.changed_directories }}
-      run: |
-        mapfile -t folders <<< "$UNIQUE_FOLDERS"
+  plan-modules:
+    needs: get-changed-folders
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        folder: ${{ fromJson(needs.get-changed-folders.outputs.changed_directories) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
 
-        for folder in "${folders[@]}"; do
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: install_dependencies
+        run: |
+          pip3 install --user --upgrade pipenv
+        shell: bash
+
+      - id: cache-pipenv
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/.local/share/virtualenvs
+          key: ${{ runner.os }}-pipenv-${{ github.run_id }}
+
+      - name: Installing Leverage CLI
+        run: |
+          printf "[INFO] Installing Leverage CLI\n"
+          echo "Installing https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}"
+          python -m pipenv install -i https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}
+      
+      - name: Set up credentials
+        run: |
+          printf "[INFO] Setting up credentials\n"
+          mkdir -p  ~/.aws/bb
+          aws configure set region us-east-1 --profile bb-network-devops
+          aws configure set output json --profile bb-network-devops
+          aws configure set role_arn arn:aws:iam::${{ secrets.AWS_NETWORK_ACCOUNT_ID }}:role/DeployMaster --profile bb-network-devops
+          aws configure set source_profile bb-deploymaster --profile bb-network-devops
+
+          aws configure set region us-east-1 --profile bb-apps-devstg-devops
+          aws configure set output json --profile bb-apps-devstg-devops
+          aws configure set role_arn arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
+          aws configure set source_profile bb-deploymaster --profile bb-apps-devstg-devops
+
+          cat << EOF > ~/.aws/credentials
+          [bb-deploymaster]
+          aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          EOF
+          cp ~/.aws/credentials ~/.aws/bb/
+          cp ~/.aws/config ~/.aws/bb/
+        
+      - name: Configure Reference Architecture
+        run: |
+          echo "[INFO] Configure Reference Architecture\n"
+          cat << EOF > ./config/common.tfvars
+          project = "bb"
+          project_long = "binbash"
+          region_primary = "us-east-1"
+          region_secondary = "us-east-2"
+          vault_address = "vault_trash"
+          vault_token = "vault_trash"
+          sso_region = "us-east-1"
+          sso_enabled = false
+          sso_start_url = "sso_trash"
+
+          accounts = {
+            security = {
+              id = ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+            }
+          }
+          EOF
+          echo "[INFO] Disable MFA\n"
+          sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env
+
+      - name: Run leverage in folder
+        working-directory: ${{ matrix.folder }}
+        run: |
+          echo "Running in folder: ${{ matrix.folder }}"
+
           echo "Current folder: $folder"
-          if [[ "$folder" == .github* ]]; then
+          if [[ "${{ matrix.folder }}" == .github* ]]; then
             echo "Skipping $folder"
-            continue
+            exit 0
           fi
-          if [ -d "$folder" ]; then
-            echo "Processing module in $folder"
-            
-            # Check if folder contains '--'
-            if [[ "$folder" == *"--"* ]]; then
-              echo "Folder contains '--', temporarily renaming for Terraform operations"
-              # Create temporary name without '--'
-              temp_folder="${folder//--/}"
-              # Rename the folder
-              mv "$folder" "$temp_folder"
-              # Use the temporary folder for Terraform operations
-              cd "$temp_folder"
-            else
-              cd "$folder"
-            fi
-            
-            # Initialize Leverage project
-            echo "Running leverage terraform init in $(pwd)"
-            python -m pipenv run leverage tf init -upgrade
-            
-            # Plan changes
-            echo "Running leverage terraform plan in $(pwd)"
-            python -m pipenv run leverage tf plan
-            
-            # Apply changes if plan is successful
-            #echo "Running leverage terraform apply in $(pwd)"
-            #leverage terraform apply --auto-approve
-            
-            # Run destroy
-            #echo "Running leverage terraform destroy in $(pwd)"
-            #leverage terraform destroy --auto-approve
-            
-            # Go back to root directory
-            cd "$GITHUB_WORKSPACE"
-            
-            # If we renamed the folder, rename it back
-            if [[ "$folder" == *"--"* ]]; then
-              echo "Restoring original folder name"
-              mv "$temp_folder" "$folder"
-            fi
+
+          if [[ "${{ matrix.folder }}" == *"--"* ]]; then
+            echo "Temporarily renaming folder..."
+            temp_folder="${{ matrix.folder//--/}}"
+            mv "${{ matrix.folder }}" "$temp_folder"
+            echo "Moving to: $temp_folder"
+            cd "$temp_folder"
+          else
+              echo "Moving to: ${{ matrix.folder }}"
+              cd "${{ matrix.folder }}"
           fi
-        done
+
+          echo "Running leverage terraform init"
+          python -m pipenv run leverage tf init -upgrade
+
+          echo "Running leverage terraform plan"
+          python -m pipenv run leverage tf plan
