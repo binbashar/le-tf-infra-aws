@@ -1,0 +1,310 @@
+{
+  "version": 4,
+  "terraform_version": "1.6.6",
+  "serial": 23,
+  "lineage": "04f861a8-0b13-5b90-0579-e6b026f6b214",
+  "outputs": {
+    "certificate_arn": {
+      "value": "arn:aws:acm:us-east-1:523857393444:certificate/35fe3841-33f9-4e93-b033-352e78154486",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "data",
+      "type": "terraform_remote_state",
+      "name": "shared-dns",
+      "provider": "provider[\"terraform.io/builtin/terraform\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "backend": "s3",
+            "config": {
+              "value": {
+                "bucket": "bb-shared-terraform-backend",
+                "key": "shared/dns/binbash.com.ar/terraform.tfstate",
+                "profile": "bb-shared-devops",
+                "region": "us-east-1"
+              },
+              "type": [
+                "object",
+                {
+                  "bucket": "string",
+                  "key": "string",
+                  "profile": "string",
+                  "region": "string"
+                }
+              ]
+            },
+            "defaults": null,
+            "outputs": {
+              "value": {
+                "aws_internal_zone_domain_name": "aws.binbash.com.ar",
+                "aws_internal_zone_id": "Z0720681OVT4N4IWRPDJ",
+                "aws_public_zone_domain_name": "binbash.com.ar",
+                "aws_public_zone_id": "Z1F75NUGYJVN3L"
+              },
+              "type": [
+                "object",
+                {
+                  "aws_internal_zone_domain_name": "string",
+                  "aws_internal_zone_id": "string",
+                  "aws_public_zone_domain_name": "string",
+                  "aws_public_zone_id": "string"
+                }
+              ]
+            },
+            "workspace": null
+          },
+          "sensitive_attributes": []
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_acm_certificate",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:acm:us-east-1:523857393444:certificate/35fe3841-33f9-4e93-b033-352e78154486",
+            "certificate_authority_arn": "",
+            "certificate_body": null,
+            "certificate_chain": null,
+            "domain_name": "*.binbash.com.ar",
+            "domain_validation_options": [
+              {
+                "domain_name": "*.binbash.com.ar",
+                "resource_record_name": "_2be740eb009de6977aa6d9f42e08c731.binbash.com.ar.",
+                "resource_record_type": "CNAME",
+                "resource_record_value": "_cde533fc7e470bf6c9035a8e40005292.mqzgcdqkwq.acm-validations.aws."
+              },
+              {
+                "domain_name": "*.demo.devstg.aws.binbash.com.ar",
+                "resource_record_name": "_d2e4103b137297a85be62f7c1b8a8ddb.demo.devstg.aws.binbash.com.ar.",
+                "resource_record_type": "CNAME",
+                "resource_record_value": "_fea4df905afd6f6ba17e0054e7f20519.gbycpywhzv.acm-validations.aws."
+              },
+              {
+                "domain_name": "*.devstg.aws.binbash.com.ar",
+                "resource_record_name": "_719546ea2b9a5d53ef0dc12f5371ffdd.devstg.aws.binbash.com.ar.",
+                "resource_record_type": "CNAME",
+                "resource_record_value": "_65e2034836b5584abdf99b7fcdff4810.hkmpvcwbzw.acm-validations.aws."
+              },
+              {
+                "domain_name": "*.ecs.devstg.aws.binbash.com.ar",
+                "resource_record_name": "_31e06621556f9e9dc8da558c8da35363.ecs.devstg.aws.binbash.com.ar.",
+                "resource_record_type": "CNAME",
+                "resource_record_value": "_800c1d280f3fb47c5a7df24860a5666d.sdgjtdhdhz.acm-validations.aws."
+              }
+            ],
+            "early_renewal_duration": "",
+            "id": "arn:aws:acm:us-east-1:523857393444:certificate/35fe3841-33f9-4e93-b033-352e78154486",
+            "key_algorithm": "RSA_2048",
+            "not_after": "2025-07-13T23:59:59Z",
+            "not_before": "2024-06-13T00:00:00Z",
+            "options": [
+              {
+                "certificate_transparency_logging_preference": "ENABLED"
+              }
+            ],
+            "pending_renewal": false,
+            "private_key": null,
+            "renewal_eligibility": "INELIGIBLE",
+            "renewal_summary": [],
+            "status": "ISSUED",
+            "subject_alternative_names": [
+              "*.binbash.com.ar",
+              "*.demo.devstg.aws.binbash.com.ar",
+              "*.devstg.aws.binbash.com.ar",
+              "*.ecs.devstg.aws.binbash.com.ar"
+            ],
+            "tags": {
+              "Environment": "apps-devstg",
+              "Terraform": "true"
+            },
+            "tags_all": {
+              "Environment": "apps-devstg",
+              "Terraform": "true"
+            },
+            "type": "AMAZON_ISSUED",
+            "validation_emails": [],
+            "validation_method": "DNS",
+            "validation_option": []
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_acm_certificate_validation",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "certificate_arn": "arn:aws:acm:us-east-1:523857393444:certificate/35fe3841-33f9-4e93-b033-352e78154486",
+            "id": "2024-06-13 04:05:40.401 +0000 UTC",
+            "timeouts": null,
+            "validation_record_fqdns": [
+              "_2be740eb009de6977aa6d9f42e08c731.binbash.com.ar",
+              "_31e06621556f9e9dc8da558c8da35363.ecs.devstg.aws.binbash.com.ar",
+              "_719546ea2b9a5d53ef0dc12f5371ffdd.devstg.aws.binbash.com.ar",
+              "_d2e4103b137297a85be62f7c1b8a8ddb.demo.devstg.aws.binbash.com.ar"
+            ]
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo0NTAwMDAwMDAwMDAwfX0=",
+          "dependencies": [
+            "aws_acm_certificate.main",
+            "aws_route53_record.main",
+            "data.terraform_remote_state.shared-dns"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route53_record",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"].shared",
+      "instances": [
+        {
+          "index_key": "*.binbash.com.ar",
+          "schema_version": 2,
+          "attributes": {
+            "alias": [],
+            "allow_overwrite": true,
+            "cidr_routing_policy": [],
+            "failover_routing_policy": [],
+            "fqdn": "_2be740eb009de6977aa6d9f42e08c731.binbash.com.ar",
+            "geolocation_routing_policy": [],
+            "geoproximity_routing_policy": [],
+            "health_check_id": "",
+            "id": "Z1F75NUGYJVN3L__2be740eb009de6977aa6d9f42e08c731.binbash.com.ar._CNAME",
+            "latency_routing_policy": [],
+            "multivalue_answer_routing_policy": false,
+            "name": "_2be740eb009de6977aa6d9f42e08c731.binbash.com.ar",
+            "records": [
+              "_cde533fc7e470bf6c9035a8e40005292.mqzgcdqkwq.acm-validations.aws."
+            ],
+            "set_identifier": "",
+            "ttl": 3600,
+            "type": "CNAME",
+            "weighted_routing_policy": [],
+            "zone_id": "Z1F75NUGYJVN3L"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjIifQ==",
+          "dependencies": [
+            "aws_acm_certificate.main",
+            "data.terraform_remote_state.shared-dns"
+          ]
+        },
+        {
+          "index_key": "*.demo.devstg.aws.binbash.com.ar",
+          "schema_version": 2,
+          "attributes": {
+            "alias": [],
+            "allow_overwrite": true,
+            "cidr_routing_policy": [],
+            "failover_routing_policy": [],
+            "fqdn": "_d2e4103b137297a85be62f7c1b8a8ddb.demo.devstg.aws.binbash.com.ar",
+            "geolocation_routing_policy": [],
+            "geoproximity_routing_policy": [],
+            "health_check_id": "",
+            "id": "Z1F75NUGYJVN3L__d2e4103b137297a85be62f7c1b8a8ddb.demo.devstg.aws.binbash.com.ar._CNAME",
+            "latency_routing_policy": [],
+            "multivalue_answer_routing_policy": false,
+            "name": "_d2e4103b137297a85be62f7c1b8a8ddb.demo.devstg.aws.binbash.com.ar",
+            "records": [
+              "_fea4df905afd6f6ba17e0054e7f20519.gbycpywhzv.acm-validations.aws."
+            ],
+            "set_identifier": "",
+            "ttl": 3600,
+            "type": "CNAME",
+            "weighted_routing_policy": [],
+            "zone_id": "Z1F75NUGYJVN3L"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjIifQ==",
+          "dependencies": [
+            "aws_acm_certificate.main",
+            "data.terraform_remote_state.shared-dns"
+          ]
+        },
+        {
+          "index_key": "*.devstg.aws.binbash.com.ar",
+          "schema_version": 2,
+          "attributes": {
+            "alias": [],
+            "allow_overwrite": true,
+            "cidr_routing_policy": [],
+            "failover_routing_policy": [],
+            "fqdn": "_719546ea2b9a5d53ef0dc12f5371ffdd.devstg.aws.binbash.com.ar",
+            "geolocation_routing_policy": [],
+            "geoproximity_routing_policy": [],
+            "health_check_id": "",
+            "id": "Z1F75NUGYJVN3L__719546ea2b9a5d53ef0dc12f5371ffdd.devstg.aws.binbash.com.ar._CNAME",
+            "latency_routing_policy": [],
+            "multivalue_answer_routing_policy": false,
+            "name": "_719546ea2b9a5d53ef0dc12f5371ffdd.devstg.aws.binbash.com.ar",
+            "records": [
+              "_65e2034836b5584abdf99b7fcdff4810.hkmpvcwbzw.acm-validations.aws."
+            ],
+            "set_identifier": "",
+            "ttl": 3600,
+            "type": "CNAME",
+            "weighted_routing_policy": [],
+            "zone_id": "Z1F75NUGYJVN3L"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjIifQ==",
+          "dependencies": [
+            "aws_acm_certificate.main",
+            "data.terraform_remote_state.shared-dns"
+          ]
+        },
+        {
+          "index_key": "*.ecs.devstg.aws.binbash.com.ar",
+          "schema_version": 2,
+          "attributes": {
+            "alias": [],
+            "allow_overwrite": true,
+            "cidr_routing_policy": [],
+            "failover_routing_policy": [],
+            "fqdn": "_31e06621556f9e9dc8da558c8da35363.ecs.devstg.aws.binbash.com.ar",
+            "geolocation_routing_policy": [],
+            "geoproximity_routing_policy": [],
+            "health_check_id": "",
+            "id": "Z1F75NUGYJVN3L__31e06621556f9e9dc8da558c8da35363.ecs.devstg.aws.binbash.com.ar._CNAME",
+            "latency_routing_policy": [],
+            "multivalue_answer_routing_policy": false,
+            "name": "_31e06621556f9e9dc8da558c8da35363.ecs.devstg.aws.binbash.com.ar",
+            "records": [
+              "_800c1d280f3fb47c5a7df24860a5666d.sdgjtdhdhz.acm-validations.aws."
+            ],
+            "set_identifier": "",
+            "ttl": 3600,
+            "type": "CNAME",
+            "weighted_routing_policy": [],
+            "zone_id": "Z1F75NUGYJVN3L"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjIifQ==",
+          "dependencies": [
+            "aws_acm_certificate.main",
+            "data.terraform_remote_state.shared-dns"
+          ]
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}

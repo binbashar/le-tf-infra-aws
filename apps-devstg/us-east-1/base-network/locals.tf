@@ -182,5 +182,4 @@ locals {
       key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
     }
   }
-
 }
