@@ -32,7 +32,9 @@ jobs:
       run: |
         git fetch origin +refs/heads/master:refs/remotes/origin/master
         changed_directories=$(git diff --name-only origin/main...HEAD | xargs -n1 dirname | sort -u | grep -v '^\.github' | jq -R . | jq -s .)
-        echo "changed_directories=$changed_directories" >> "$GITHUB_OUTPUT"
+        echo "Change dirs"
+        echo $changed_directories
+        echo "changed_directories=$changed_directories" >> $GITHUB_OUTPUT
 
   plan-modules:
     needs: test-updated-layers
