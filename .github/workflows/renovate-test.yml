@@ -34,7 +34,8 @@ jobs:
         changed_directories=$(git diff --name-only origin/master...HEAD | xargs -n1 dirname | sort -u | grep -v '^\.github' | jq -R . | jq -s .)
         echo "Change dirs"
         echo $changed_directories
-        echo "changed_directories=$changed_directories" >> $GITHUB_OUTPUT
+        printf "changed_directories=%s\n" "$changed_directories" >> "$GITHUB_OUTPUT"
+
 
   plan-modules:
     needs: test-updated-layers
