@@ -1,6 +1,7 @@
 name: Renovate Test Update
 
 on:
+  push:
   pull_request:
     branches: [ main ]
     types: [ opened, synchronize, reopened ]
