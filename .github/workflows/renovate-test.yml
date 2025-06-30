@@ -12,10 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       changed_directories: ${{ steps.get-changed-folders.outputs.changed_directories }}
-    env:
-      LEVERAGE_VERSION: 2.0.0
-      LEVERAGE_REPO: pypi.org
-      LEVERAGE_TOOLBOX_VERSION: 1.6.2-tofu-0.3.0
     permissions:
       contents: write
       pull-requests: write
@@ -40,6 +36,10 @@ jobs:
   plan-modules:
     needs: test-updated-layers
     runs-on: ubuntu-latest
+    env:
+      LEVERAGE_VERSION: 2.0.0
+      LEVERAGE_REPO: pypi.org
+      LEVERAGE_TOOLBOX_VERSION: 1.6.2-tofu-0.3.0
     strategy:
       matrix:
         folder: ${{ fromJson(needs.test-updated-layers.outputs.changed_directories) }}
