@@ -41,6 +41,7 @@ jobs:
       LEVERAGE_REPO: pypi.org
       LEVERAGE_TOOLBOX_VERSION: 1.6.2-tofu-0.3.0
     strategy:
+      fail-fast: false
       matrix:
         folder: ${{ fromJson(needs.test-updated-layers.outputs.changed_directories) }}
     steps:
