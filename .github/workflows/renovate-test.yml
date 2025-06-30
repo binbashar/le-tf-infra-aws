@@ -7,7 +7,7 @@ on:
     types: [ opened, synchronize, reopened ]
 
 jobs:
-  terraform:
+  test-updated-layers:
     #if: github.actor == 'renovate[bot]'
     runs-on: ubuntu-latest
     env:
@@ -54,6 +54,13 @@ jobs:
         aws configure set output json --profile bb-network-devops
         aws configure set role_arn arn:aws:iam::${{ secrets.AWS_NETWORK_ACCOUNT_ID }}:role/DeployMaster --profile bb-network-devops
         aws configure set source_profile bb-deploymaster --profile bb-network-devops
+
+        aws configure set region us-east-1 --profile bb-apps-devstg-devops
+        aws configure set output json --profile bb-apps-devstg-devops
+        aws configure set role_arn arn:aws:iam::${{ secrets.AWS_NETWORK_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
+        aws configure set source_profile bb-deploymaster --profile bb-apps-devstg-devops
+
+
         cat << EOF > ~/.aws/credentials
         [bb-deploymaster]
         aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
