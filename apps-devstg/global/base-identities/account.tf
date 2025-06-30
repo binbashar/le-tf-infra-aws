@@ -23,3 +23,4 @@ module "aws_iam_account_config" {
 }
 
 data "aws_caller_identity" "current" {}
+

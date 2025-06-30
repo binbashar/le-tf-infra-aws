@@ -57,7 +57,7 @@ jobs:
 
         aws configure set region us-east-1 --profile bb-apps-devstg-devops
         aws configure set output json --profile bb-apps-devstg-devops
-        aws configure set role_arn arn:aws:iam::${{ secrets.AWS_NETWORK_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
+        aws configure set role_arn arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
         aws configure set source_profile bb-deploymaster --profile bb-apps-devstg-devops
 
 
