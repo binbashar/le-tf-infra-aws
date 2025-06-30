@@ -10,6 +10,8 @@ jobs:
   test-updated-layers:
     #if: github.actor == 'renovate[bot]'
     runs-on: ubuntu-latest
+    outputs:
+      changed_directories: ${{ steps.get-changed-folders.outputs.changed_directories }}
     env:
       LEVERAGE_VERSION: 2.0.0
       LEVERAGE_REPO: pypi.org
@@ -33,11 +35,11 @@ jobs:
         echo "changed_directories=$changed_directories" >> "$GITHUB_OUTPUT"
 
   plan-modules:
-    needs: get-changed-folders
+    needs: test-updated-layers
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        folder: ${{ fromJson(needs.get-changed-folders.outputs.changed_directories) }}
+        folder: ${{ fromJson(needs.test-updated-layers.outputs.changed_directories) }}
     steps:
       - uses: actions/checkout@v4
         with:
