@@ -110,6 +110,10 @@ jobs:
         for folder in "${folders[@]}"; do
           echo "Option:"
           echo $folder
+          if [[ "$folder" == .github* ]]; then
+            echo "Skipping $folder"
+            continue
+          fi
           if [ -d "$folder" ]; then
             echo "Processing module in $folder"
             
@@ -128,11 +132,11 @@ jobs:
             
             # Initialize Leverage project
             echo "Running leverage terraform init in $(pwd)"
-            leverage tf init -upgrade
+            python -m pipenv run leverage tf init -upgrade
             
             # Plan changes
             echo "Running leverage terraform plan in $(pwd)"
-            leverage tf plan
+            python -m pipenv run leverage tf plan
             
             # Apply changes if plan is successful
             #echo "Running leverage terraform apply in $(pwd)"
