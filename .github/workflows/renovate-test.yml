@@ -97,8 +97,14 @@ jobs:
     - name: Process each changed module
       run: |
         # Convert comma-separated list to array and remove duplicates
+        echo "OUTPUTS:"
+        echo "${{ steps.changed-files.outputs.all_changed_directories }}"
         IFS=',' read -ra FOLDERS <<< "${{ steps.changed-files.outputs.all_changed_directories }}"
+        echo "IFS:"
+        echo "$IFS"
         UNIQUE_FOLDERS=($(printf "%s\n" "${FOLDERS[@]}" | sort -u))
+        echo "UNIQUE_FOLDERS:"
+        echo "$UNIQUE_FOLDERS"
         
         for folder in "${UNIQUE_FOLDERS[@]}"; do
           if [ -d "$folder" ]; then
