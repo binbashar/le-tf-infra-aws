@@ -31,7 +31,7 @@ jobs:
       id: get-changed-folders
       run: |
         git fetch origin +refs/heads/master:refs/remotes/origin/master
-        changed_directories=$(git diff --name-only origin/main...HEAD | xargs -n1 dirname | sort -u | grep -v '^\.github' | jq -R . | jq -s .)
+        changed_directories=$(git diff --name-only origin/master...HEAD | xargs -n1 dirname | sort -u | grep -v '^\.github' | jq -R . | jq -s .)
         echo "Change dirs"
         echo $changed_directories
         echo "changed_directories=$changed_directories" >> $GITHUB_OUTPUT
