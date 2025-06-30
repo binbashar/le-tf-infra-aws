@@ -105,6 +105,8 @@ jobs:
         echo "Printing unique folders"       
         echo $UNIQUE_FOLDERS
         for folder in "${UNIQUE_FOLDERS[@]}"; do
+          echo "Option:"
+          echo $folder
           if [ -d "$folder" ]; then
             echo "Processing module in $folder"
             
