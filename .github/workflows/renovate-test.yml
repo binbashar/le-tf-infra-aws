@@ -116,15 +116,8 @@ jobs:
           sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env
 
       - name: Run leverage in folder
-        working-directory: ${{ matrix.folder }}
         run: |
           folder="${{ matrix.folder }}"
-
-          echo "Current folder: $folder"
-          if [[ "$folder" == .github* ]]; then
-            echo "Skipping $folder"
-            exit 0
-          fi
 
           if [[ "$folder" == *"--"* ]]; then
             echo "Temporarily renaming folder..."
