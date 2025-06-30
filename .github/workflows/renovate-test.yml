@@ -1,0 +1,150 @@
+name: Renovate Test Update
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  terraform:
+    if: github.actor == 'renovate[bot]'
+    runs-on: ubuntu-latest
+    env:
+      LEVERAGE_VERSION: 2.0.0
+      LEVERAGE_REPO: pypi.org
+      LEVERAGE_TOOLBOX_VERSION: 1.6.2-tofu-0.3.0
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: install_dependencies
+      run: |
+        pip3 install --user --upgrade pipenv
+      shell: bash
+
+    - id: cache-pipenv
+      uses: actions/cache@v3
+      with:
+        path: /home/runner/.local/share/virtualenvs
+        key: ${{ runner.os }}-pipenv-${{ github.run_id }}
+
+    - name: Installing Leverage CLI
+      run: |
+        printf "[INFO] Installing Leverage CLI\n"
+        echo "Installing https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}"
+        python -m pipenv install -i https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}
+    
+    - name: Set up credentials
+      run: |
+        printf "[INFO] Setting up credentials\n"
+        mkdir -p  ~/.aws/bb
+        aws configure set region us-east-1 --profile bb-apps-devstg-devops
+        aws configure set output json --profile bb-apps-devstg-devops
+        aws configure set role_arn arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
+        aws configure set source_profile bb-deploymaster --profile bb-apps-devstg-devops
+        cat << EOF > ~/.aws/credentials
+        [bb-deploymaster]
+        aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        EOF
+        cp ~/.aws/credentials ~/.aws/bb/
+        cp ~/.aws/config ~/.aws/bb/
+      
+    - name: Configure Reference Architecture
+      run: |
+        echo "[INFO] Configure Reference Architecture\n"
+        cat << EOF > ./config/common.tfvars
+        project = "bb"
+        project_long = "binbash"
+        region_primary = "us-east-1"
+        region_secondary = "us-east-2"
+        vault_address = "vault_trash"
+        vault_token = "vault_trash"
+        sso_region = "us-east-1"
+        sso_enabled = false
+        sso_start_url = "sso_trash"
+
+        accounts = {
+          security = {
+            id = ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+          }
+        }
+        EOF
+        echo "[INFO] Disable MFA\n"
+        sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env
+      
+    - name: Get changed folders
+      id: changed-files
+      uses: tj-actions/changed-files@v40
+      with:
+        files_separator: ','
+        dir_names: true
+        files: |
+          **/*.tf
+          **/*.tfvars
+          **/*.tfstate
+          **/*.tfstate.backup
+
+    - name: Process each changed module
+      run: |
+        # Convert comma-separated list to array and remove duplicates
+        IFS=',' read -ra FOLDERS <<< "${{ steps.changed-files.outputs.all_changed_directories }}"
+        UNIQUE_FOLDERS=($(printf "%s\n" "${FOLDERS[@]}" | sort -u))
+        
+        for folder in "${UNIQUE_FOLDERS[@]}"; do
+          if [ -d "$folder" ]; then
+            echo "Processing module in $folder"
+            
+            # Check if folder contains '--'
+            if [[ "$folder" == *"--"* ]]; then
+              echo "Folder contains '--', temporarily renaming for Terraform operations"
+              # Create temporary name without '--'
+              temp_folder="${folder//--/}"
+              # Rename the folder
+              mv "$folder" "$temp_folder"
+              # Use the temporary folder for Terraform operations
+              cd "$temp_folder"
+            else
+              cd "$folder"
+            fi
+            
+            # Initialize Leverage project
+            echo "Running leverage terraform init in $(pwd)"
+            leverage tf init -upgrade
+            
+            # Plan changes
+            echo "Running leverage terraform plan in $(pwd)"
+            leverage tf plan
+            
+            # Apply changes if plan is successful
+            #echo "Running leverage terraform apply in $(pwd)"
+            #leverage terraform apply --auto-approve
+            
+            # Run destroy
+            #echo "Running leverage terraform destroy in $(pwd)"
+            #leverage terraform destroy --auto-approve
+            
+            # Go back to root directory
+            cd "$GITHUB_WORKSPACE"
+            
+            # If we renamed the folder, rename it back
+            if [[ "$folder" == *"--"* ]]; then
+              echo "Restoring original folder name"
+              mv "$temp_folder" "$folder"
+            fi
+          fi
+        done
+      env:
+        TF_INPUT: false
+        # Add any required Leverage environment variables here
+        # AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        # AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        # AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
