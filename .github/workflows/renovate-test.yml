@@ -113,23 +113,23 @@ jobs:
       - name: Run leverage in folder
         working-directory: ${{ matrix.folder }}
         run: |
-          echo "Running in folder: ${{ matrix.folder//--/ }}"
+          folder="${{ matrix.folder }}"
 
           echo "Current folder: $folder"
-          if [[ "${{ matrix.folder }}" == .github* ]]; then
+          if [[ "$folder" == .github* ]]; then
             echo "Skipping $folder"
             exit 0
           fi
 
-          if [[ "${{ matrix.folder }}" == *"--"* ]]; then
+          if [[ "$folder" == *"--"* ]]; then
             echo "Temporarily renaming folder..."
-            temp_folder="${{ matrix.folder//--/}}"
-            mv "${{ matrix.folder }}" "$temp_folder"
+            temp_folder="${folder//--/}"
+            mv "$folder" "$temp_folder"
             echo "Moving to: $temp_folder"
             cd "$temp_folder"
           else
-              echo "Moving to: ${{ matrix.folder }}"
-              cd "${{ matrix.folder }}"
+              echo "Moving to: $folder"
+              cd "$folder"
           fi
 
           echo "Running leverage terraform init"
