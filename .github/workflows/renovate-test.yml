@@ -89,13 +89,14 @@ jobs:
       id: changed-files
       run: |
         git fetch origin +refs/heads/master:refs/remotes/origin/master
-        echo "----------"
-        git diff --name-only origin/master...HEAD | xargs -n1 dirname | sort -u
-        echo "----------"
         changed_directories=$(git diff --name-only origin/master...HEAD | xargs -n1 dirname | sort -u)
         echo "Printing changed_directories:"
         echo $changed_directories
-        echo "changed_directories=$changed_directories" >> $GITHUB_OUTPUT
+        {
+          echo 'changed_directories<<EOF'
+          echo "$changed_directories"
+          echo 'EOF'
+        } >> "$GITHUB_OUTPUT"
 
     - name: Process each changed module
       env:
