@@ -1,4 +1,4 @@
-name: "Tests | Unit | Security Keys Layer"
+name: "Test | Unit | Security Keys Layer"
 on:
   pull_request:
     branches:
