@@ -1,14 +1,13 @@
 name: Renovate Test Update
 
 on:
-  push:
   pull_request:
     branches: [ main ]
     types: [ opened, synchronize, reopened ]
 
 jobs:
   test-updated-layers:
-    #if: github.actor == 'renovate[bot]'
+    if: github.actor == 'renovate[bot]'
     runs-on: ubuntu-latest
     outputs:
       changed_directories: ${{ steps.get-changed-folders.outputs.changed_directories }}
@@ -20,7 +19,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        ref: ${{ github.ref }}
+        ref: ${{ github.head_ref }}
         fetch-depth: 0
       
     - name: Get changed folders
@@ -47,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
       - uses: actions/setup-python@v4
