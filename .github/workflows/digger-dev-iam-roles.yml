@@ -1,0 +1,49 @@
+name: Digger PR flow
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    types: [ closed, opened, synchronize, reopened ]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+
+
+permissions:
+  contents: write
+  id-token: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: mcblair/configure-aws-profile-action@v0.1.1
+        with:
+          role-arn: arn:aws:iam::209539466991:role/github-oidc-connect
+          profile-name: default
+          region: us-east-1
+
+      - uses: mcblair/configure-aws-profile-action@v0.1.1
+        with:
+          role-arn: arn:aws:iam::209539466991:role/github-oidc-connect
+          profile-name: testaccount
+          region: us-east-1
+
+      - uses: mcblair/configure-aws-profile-action@v0.1.1
+        with:
+          role-arn: arn:aws:iam::682903345738:role/github-oidc-access
+          profile-name: stagingaccount
+          region: us-east-1
+
+      - name: digger run
+        uses: diggerhq/digger@fix/replace-prints
+        with:
+          setup-aws: false
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
