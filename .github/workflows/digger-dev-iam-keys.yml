@@ -1,5 +1,4 @@
-name: Digger Workflow
-
+name: GitOps | Digger with IAM Keys
 on:
   workflow_dispatch:
     inputs:

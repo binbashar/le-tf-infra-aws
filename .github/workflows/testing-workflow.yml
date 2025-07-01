@@ -1,4 +1,4 @@
-name: Testing Workflow
+name: Test | Workflow IaC
 
 on:
   workflow_call:

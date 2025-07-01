@@ -1,50 +1,34 @@
-# https://github.com/diggerhq/demo-assume-role-multi-account-aws/blob/main/.github/workflows/diggr_pullrequest_flow.yml
-name: Digger PR flow
+# https://docs.digger.dev/ce/cloud-providers/authenticating-with-oidc-on-aws#authenticating-with-oidc-on-aws
+name: GitOps | Digger with IAM Roles
 
 on:
-  pull_request:
-    branches: [ "main" ]
-    types: [ closed, opened, synchronize, reopened ]
-  issue_comment:
-    types: [created]
   workflow_dispatch:
+    inputs:
+      run_name:
+        required: false
+      spec:
+        required: true
 
-
-permissions:
-  contents: write
-  id-token: write
-  pull-requests: write
-  statuses: write
+run-name: '${{inputs.run_name}}'
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    permissions:
+      contents: write      # required to merge PRs
+      id-token: write      # required for workload-identity-federation
+      pull-requests: write # required to post PR comments
+      issues: read         # required to check if PR number is an issue or not
+      statuses: write      # required to validate combined PR status
 
     steps:
-
-      - uses: mcblair/configure-aws-profile-action@v0.1.1
-        with:
-          role-arn: arn:aws:iam::209539466991:role/github-oidc-connect
-          profile-name: default
-          region: us-east-1
-
-      - uses: mcblair/configure-aws-profile-action@v0.1.1
-        with:
-          role-arn: arn:aws:iam::209539466991:role/github-oidc-connect
-          profile-name: testaccount
-          region: us-east-1
-
-      - uses: mcblair/configure-aws-profile-action@v0.1.1
-        with:
-          role-arn: arn:aws:iam::682903345738:role/github-oidc-access
-          profile-name: stagingaccount
-          region: us-east-1
-
       - name: digger run
-        uses: diggerhq/digger@fix/replace-prints
+        uses: diggerhq/digger@vLatest
         with:
-          setup-aws: false
+          digger-spec: ${{ inputs.spec }}
+          setup-aws: true
+        **aws-role-to-assume: arn:aws:iam::{AccountID}:role/{RoleName}**
+          aws-region: us-east-1
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
