@@ -85,8 +85,14 @@ jobs:
             aws configure set source_profile bb-deploymaster --profile "$profile"
           }
 
-          configure_profile bb-network-devops ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
           configure_profile bb-apps-devstg-devops ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
+          configure_profile bb-shared-devops ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
+          configure_profile bb-network-devops ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
+          configure_profile bb-data-science-devops ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
+          configure_profile bb-apps-prd-devops ${{ secrets.AWS_PRD_ACCOUNT_ID }}
+          configure_profile bb-root-oaar ${{ secrets.AWS_ROOT_ACCOUNT_ID }}
+          configure_profile bb-security-devops ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+          
 
           cat << EOF > ~/.aws/credentials
           [bb-deploymaster]
