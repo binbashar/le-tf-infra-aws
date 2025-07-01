@@ -1,0 +1,63 @@
+## TODO
+# To be updated with the correct values
+# https://docs.digger.dev/ce/reference/digger.yml#digger-yml
+# https://docs.digger.dev/ce/howto/generate-projects
+# https://docs.digger.dev/ce/howto/custom-commands
+
+traverse_to_nested_projects: true
+auto_merge: false
+pr_locks: true
+
+workflows:
+  leverage-tofu-default:
+    plan:
+      steps:
+        - run: leverage tofu init
+        - run: leverage tofu plan
+    apply:
+      steps:
+        - run: leverage tofu init
+        - run: leverage tofu apply
+
+generate_projects:
+  - root_dir: management
+    opentofu: true
+    terraform: false
+    exclude:
+      - .terraform/**
+  - root_dir: apps-devstg
+    opentofu: true
+    terraform: false
+    exclude:
+      - .terraform/**
+    workflow: leverage-tofu-default
+  - root_dir: apps-prd
+    opentofu: true
+    terraform: false
+    exclude:
+      - .terraform/**
+    workflow: leverage-tofu-default
+  - root_dir: shared
+    opentofu: true
+    terraform: false
+    exclude:
+      - .terraform/**
+    workflow: leverage-tofu-default
+  - root_dir: network
+    opentofu: true
+    terraform: false
+    exclude:
+      - .terraform/**
+    workflow: leverage-tofu-default
+  - root_dir: security
+    opentofu: true
+    terraform: false
+    exclude:
+      - .terraform/**
+    workflow: leverage-tofu-default
+  - root_dir: data-science
+    opentofu: true
+    terraform: false
+    exclude:
+      - .terraform/**
+    workflow: leverage-tofu-default
