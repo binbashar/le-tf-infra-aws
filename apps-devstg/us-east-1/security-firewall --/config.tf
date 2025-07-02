@@ -14,19 +14,17 @@ provider "aws" {
 provider "aws" {
   region  = var.region
   profile = "${var.project}-shared-devops"
-  //  profile                 = var.profile_shared
-  shared_credentials_file = "~/.aws/bb/config"
-  alias                   = "shared-route53"
+  alias   = "shared-route53"
 }
 
 #=============================#
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = "~> 1.2.7"
+  required_version = "~> 1.6"
 
   required_providers {
-    aws = "~> 5.0.0"
+    aws = "~> 5.0"
   }
 
   backend "s3" {

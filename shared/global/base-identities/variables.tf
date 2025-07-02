@@ -16,7 +16,7 @@ variable "users" {
     create_iam_user_login_profile = bool
     create_iam_access_key         = bool
     upload_iam_user_ssh_key       = bool
-    pgp_key                      = string
+    pgp_key                       = string
   }))
   default = {
     auditor_ci = {
@@ -26,7 +26,7 @@ variable "users" {
       create_iam_user_login_profile = false
       create_iam_access_key         = true
       upload_iam_user_ssh_key       = false
-      pgp_key                      = "keys/machine.auditor.ci"
+      pgp_key                       = "keys/machine.auditor.ci"
     }
   }
 }

@@ -77,7 +77,7 @@ module "cluster" {
     # Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS
     ami_type       = "AL2_x86_64"
     disk_size      = 50
-    instance_types = ["t2.medium"]
+    instance_types = ["t3.medium", "t3a.medium"]
     k8s_labels     = local.tags
     # IMPORTANT: setting this to true is only necessary during the initial bootstrap
     # of the cluster, otherwise the built-in VPC CNI won't start. Then, after you get

@@ -24,12 +24,12 @@ provider "helm" {
 # Backend Config (partial)
 #------------------------------------------------------------------------------
 terraform {
-  required_version = "~> 1.3"
+  required_version = "~> 1.6"
 
   required_providers {
-    aws        = "~> 4.11.0"
-    kubernetes = "~> 2.11.0"
-    helm       = "~> 2.5.1"
+    aws        = "~> 5.0"
+    kubernetes = "~> 2.23"
+    helm       = "~> 2.11"
   }
 
   backend "s3" {
