@@ -27,8 +27,8 @@ module "dynamodb_table" {
 
 # DynamoDB to Kinesis Streaming Destination
 resource "aws_dynamodb_kinesis_streaming_destination" "ddb_to_kinesis" {
-  stream_arn = module.kinesis_stream_datalake.stream_arn
-  table_name = module.dynamodb_table.table_name
+  stream_arn                               = module.kinesis_stream_datalake.stream_arn
+  table_name                               = module.dynamodb_table.table_name
   approximate_creation_date_time_precision = "MICROSECOND"
 }
 
@@ -65,6 +65,6 @@ module "kinesis_firehose_datalake" {
   buffering_interval          = 100
 
   # TRANSFORMATION (optional, add your lambda if needed)
-  enable_lambda_transform = false
+  enable_lambda_transform                    = false
   dynamic_partition_metadata_extractor_query = "{tableName:.tableName}"
 }
