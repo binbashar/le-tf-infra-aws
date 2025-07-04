@@ -66,6 +66,5 @@ module "kinesis_firehose_datalake" {
 
   # TRANSFORMATION (optional, add your lambda if needed)
   enable_lambda_transform = false
-  # transform_lambda_arn  = module.lambda_function_ddb_stream_converter.lambda_function_arn
   dynamic_partition_metadata_extractor_query = "{tableName:.tableName}"
 }
