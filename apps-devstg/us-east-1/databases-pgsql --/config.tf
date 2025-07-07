@@ -7,19 +7,6 @@ provider "aws" {
 }
 
 #=============================#
-# Vault Provider Settings     #
-#=============================#
-provider "vault" {
-  address = var.vault_address
-
-  /*
-  Vault token that will be used by Terraform to authenticate.
- admin token from https://portal.cloud.hashicorp.com/.
- */
-  token = var.vault_token
-}
-
-#=============================#
 # Backend Config (partial)    #
 #=============================#
 terraform {
