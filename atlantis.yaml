@@ -1,5 +1,10 @@
 version: 3
 
+autodiscover:
+  mode: "enabled"
+  ignore_paths:
+  - config/*
+
 workflows:
   leverage:
     # Customize plan command
@@ -20,7 +25,7 @@ workflows:
       # Again, you must use the $PLANFILE environment variable.
       - run: leverage tf apply $PLANFILE
 
-projects:
-- name: shared_tf_backend
-  dir: shared/us-east-1/base-tf-backend
-  workflow: leverage
+# projects:
+# - name: shared_tf_backend
+#   dir: shared/us-east-1/base-tf-backend
+#   workflow: leverage
