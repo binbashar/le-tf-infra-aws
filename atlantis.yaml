@@ -6,7 +6,7 @@ autodiscover:
   - config/*
 
 workflows:
-  leverage:
+  default:
     # Customize plan command
     plan:
       steps:
