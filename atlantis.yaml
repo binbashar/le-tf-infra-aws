@@ -7,13 +7,18 @@ autodiscover:
 
 workflows:
   default:
+    # Customize init command
+    init:
+      steps:
+      - run:
+          command: leverage tf init
+          # output: hide
+
     # Customize plan command
     plan:
       steps:
       # Run init before plan
-      - run:
-          command: leverage tf init
-          # output: hide
+      - init
 
       # You MUST output the plan using -out $PLANFILE because Atlantis expects
       # plans to be in a specific location.
