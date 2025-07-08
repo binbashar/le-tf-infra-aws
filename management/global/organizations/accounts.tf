@@ -20,3 +20,23 @@ resource "aws_organizations_account" "accounts" {
   email     = each.value.email
   parent_id = aws_organizations_organizational_unit.units[each.value.parent_ou].id
 }
+
+data "aws_iam_roles" "shared" {
+  provider = aws.shared
+  name_regex = "AWSReservedSSO_DevOps.*"
+}
+
+data "aws_iam_roles" "network" {
+  provider = aws.network
+  name_regex = "AWSReservedSSO_DevOps.*"
+}
+
+data "aws_iam_roles" "apps-devstg" {
+  provider = aws.apps-devstg
+  name_regex = "AWSReservedSSO_DevOps.*"
+}
+
+data "aws_iam_roles" "apps-prd" {
+  provider = aws.apps-prd
+  name_regex = "AWSReservedSSO_DevOps.*"
+}
