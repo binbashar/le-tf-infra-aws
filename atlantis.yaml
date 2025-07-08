@@ -1,0 +1,26 @@
+version: 3
+
+workflows:
+  leverage:
+    # Customize plan command
+    plan:
+      steps:
+      # Run init before plan
+      - run:
+          command: leverage tf init
+          # output: hide
+
+      # You MUST output the plan using -out $PLANFILE because Atlantis expects
+      # plans to be in a specific location.
+      - run: leverage tf plan -input=false -refresh -out $PLANFILE
+
+    # Customize apply command
+    apply:
+      steps:
+      # Again, you must use the $PLANFILE environment variable.
+      - run: leverage tf apply $PLANFILE
+
+projects:
+- name: shared_tf_backend
+  dir: shared/us-east-1/base-tf-backend
+  workflow: leverage
