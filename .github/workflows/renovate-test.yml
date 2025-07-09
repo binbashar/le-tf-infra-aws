@@ -1,0 +1,146 @@
+name: Renovate Test Update
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  test-updated-layers:
+    if: github.actor == 'renovate[bot]'
+    runs-on: ubuntu-latest
+    outputs:
+      changed_directories: ${{ steps.get-changed-folders.outputs.changed_directories }}
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref }}
+        fetch-depth: 0
+      
+    - name: Get changed folders
+      id: get-changed-folders
+      run: |
+        git fetch origin +refs/heads/master:refs/remotes/origin/master
+        changed_directories=$(git diff --name-only origin/master...HEAD | xargs -n1 dirname | sort -u | grep -v '^\.github' | jq -R . | jq -cs .)
+        output=$(echo "$changed_directories" | jq -c '.')
+        echo $output
+        echo "changed_directories=$output" >> "$GITHUB_OUTPUT"
+
+
+  plan-modules:
+    needs: test-updated-layers
+    runs-on: ubuntu-latest
+    env:
+      LEVERAGE_VERSION: 2.0.0
+      LEVERAGE_REPO: pypi.org
+      LEVERAGE_TOOLBOX_VERSION: 1.6.2-tofu-0.3.0
+    strategy:
+      fail-fast: false
+      matrix:
+        folder: ${{ fromJson(needs.test-updated-layers.outputs.changed_directories) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: install_dependencies
+        run: |
+          pip3 install --user --upgrade pipenv
+        shell: bash
+
+      - id: cache-pipenv
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/.local/share/virtualenvs
+          key: ${{ runner.os }}-pipenv-${{ github.run_id }}
+
+      - name: Installing Leverage CLI
+        run: |
+          printf "[INFO] Installing Leverage CLI\n"
+          echo "Installing https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}"
+          python -m pipenv install -i https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}
+      
+      - name: Set up credentials
+        run: |
+          printf "[INFO] Setting up credentials\n"
+          mkdir -p  ~/.aws/bb
+          configure_profile() {
+            profile=$1
+            account_id=$2
+
+            aws configure set region us-east-1 --profile "$profile"
+            aws configure set output json --profile "$profile"
+            aws configure set role_arn arn:aws:iam::$account_id:role/DeployMaster --profile "$profile"
+            aws configure set source_profile bb-deploymaster --profile "$profile"
+          }
+
+          configure_profile bb-apps-devstg-devops ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
+          configure_profile bb-shared-devops ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
+          configure_profile bb-network-devops ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
+          configure_profile bb-data-science-devops ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
+          configure_profile bb-apps-prd-devops ${{ secrets.AWS_PRD_ACCOUNT_ID }}
+          configure_profile bb-root-oaar ${{ secrets.AWS_ROOT_ACCOUNT_ID }}
+          configure_profile bb-security-devops ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+          
+
+          cat << EOF > ~/.aws/credentials
+          [bb-deploymaster]
+          aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          EOF
+          cp ~/.aws/credentials ~/.aws/bb/
+          cp ~/.aws/config ~/.aws/bb/
+        
+      - name: Configure Reference Architecture
+        run: |
+          echo "[INFO] Configure Reference Architecture\n"
+          cat << EOF > ./config/common.tfvars
+          project = "bb"
+          project_long = "binbash"
+          region_primary = "us-east-1"
+          region_secondary = "us-east-2"
+          vault_address = "vault_trash"
+          vault_token = "vault_trash"
+          sso_region = "us-east-1"
+          sso_enabled = false
+          sso_start_url = "sso_trash"
+
+          accounts = {
+            security = {
+              id = ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+            }
+          }
+          EOF
+          echo "[INFO] Disable MFA\n"
+          sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env
+
+      - name: Run leverage in folder
+        run: |
+          folder="${{ matrix.folder }}"
+
+          if [[ "$folder" == *"--"* ]]; then
+            echo "Temporarily renaming folder..."
+            temp_folder="${folder//--/}"
+            mv "$folder" "$temp_folder"
+            echo "Moving to: $temp_folder"
+            cd "$temp_folder"
+          else
+              echo "Moving to: $folder"
+              cd "$folder"
+          fi
+
+          echo "Running leverage terraform init"
+          python -m pipenv run leverage tf init -upgrade
+
+          echo "Running leverage terraform plan"
+          python -m pipenv run leverage tf plan
