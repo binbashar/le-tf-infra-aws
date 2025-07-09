@@ -45,4 +45,4 @@ projects:
   dir: shared/us-east-1/base-tf-backend
   terraform_distribution: opentofu
   terraform_version: 1.6.6
-  workflow: leverage
+  workflow: default
