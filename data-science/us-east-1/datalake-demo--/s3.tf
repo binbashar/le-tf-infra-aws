@@ -5,7 +5,7 @@ module "s3_bucket_data_raw" {
   acl           = null
   force_destroy = true
 
-  attach_policy = false
+  attach_policy = true
 
   versioning = {
     enabled = true
@@ -14,8 +14,7 @@ module "s3_bucket_data_raw" {
   server_side_encryption_configuration = {
     rule = {
       apply_server_side_encryption_by_default = {
-        kms_master_key_id = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
-        sse_algorithm     = "aws:kms"
+        sse_algorithm = "AES256"
       }
     }
   }
@@ -61,8 +60,31 @@ module "s3_bucket_data_raw" {
   restrict_public_buckets = true
 
   tags = local.tags
+
+  policy = data.aws_iam_policy_document.s3_raw_bucket_policy.json
 }
 
+# Add this data source to generate the bucket policy for the Firehose role
+data "aws_iam_policy_document" "s3_raw_bucket_policy" {
+  statement {
+    sid    = "AllowKinesisFirehoseAccess"
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:ListBucket",
+      "s3:DeleteObject"
+    ]
+    resources = [
+      module.s3_bucket_data_raw.s3_bucket_arn,
+      "${module.s3_bucket_data_raw.s3_bucket_arn}/*"
+    ]
+    principals {
+      type        = "AWS"
+      identifiers = [data.terraform_remote_state.kinesis_stream_apps_devstg.outputs.kinesis_firehose_role_arn]
+    }
+  }
+}
 
 module "s3_bucket_data_processed" {
   source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.2.1"

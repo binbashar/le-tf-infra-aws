@@ -102,3 +102,15 @@ data "terraform_remote_state" "keys" {
     key     = "${var.environment}/security-keys/terraform.tfstate"
   }
 }
+
+# Data source: Kinesis stream from apps-devstg
+
+data "terraform_remote_state" "kinesis_stream_apps_devstg" {
+  backend = "s3"
+  config = {
+    region  = var.region
+    profile = "bb-apps-devstg-devops"
+    bucket  = "bb-apps-devstg-terraform-backend"
+    key     = "apps-devstg/databases-dynamodb/terraform.tfstate"
+  }
+}
