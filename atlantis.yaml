@@ -46,4 +46,4 @@ projects:
   terraform_distribution: opentofu
   terraform_version: 1.6.6
   workflow: default
-  delete_source_branch_on_merge: false
+  # delete_source_branch_on_merge: false
