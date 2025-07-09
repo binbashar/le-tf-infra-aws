@@ -2,13 +2,13 @@
 # Statics S3 Bucket + CloudFront CDN for moderncare.com
 #
 module "www_binbash_com_ar" {
-  source = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=0.82.4"
+  source = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=v0.98.0"
 
   # Common: bucket naming convention is "bb-apps-prd-frontend-[DOMAIN_NAME]-origin"
   namespace            = "${var.project}-${var.environment}-frontend"
   name                 = "www.${local.public_domain_name}"
-  aliases              = ["www.${local.public_domain}", local.public_domain]
-  cors_allowed_origins = ["www.${local.public_domain}", local.public_domain]
+  aliases              = ["www.${local.public_domain}"]
+  cors_allowed_origins = ["www.${local.public_domain}"]
 
   # Certificate settings
   acm_certificate_arn = data.terraform_remote_state.certificates.outputs.certificate_arn
