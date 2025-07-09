@@ -3,7 +3,7 @@ locals {
   # Removing trailing dot from domain - just to be sure :)
   private_domain_name = trimsuffix(local.private_domain, ".")
 
-  public_domain = "binbash.com.ar"
+  public_domain = "prd.aws.binbash.com.ar"
   # Removing trailing dot from domain - just to be sure :)
   public_domain_name = trimsuffix(local.private_domain, ".")
 

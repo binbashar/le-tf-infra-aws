@@ -11,7 +11,7 @@ module "dev_aws_binbash_com_ar" {
   aliases   = ["dev.${local.domain_name}"]
 
   # Certificate settings
-  acm_certificate_arn = data.terraform_remote_state.certificates.outputs.aws_binbash_com_ar_arn
+  acm_certificate_arn = data.terraform_remote_state.certificates.outputs.certificate_arn
   price_class         = "PriceClass_100"
 
   # CloudFront settings
@@ -81,7 +81,7 @@ data "aws_iam_policy_document" "additional_bucket_policy" {
 #
 resource "aws_route53_record" "priv_oring_dev_aws_binbash_com_ar" {
   provider = aws.shared-route53
-  zone_id  = data.terraform_remote_state.dns-shared.outputs.aws_internal_zone_id[0]
+  zone_id  = data.terraform_remote_state.dns-shared.outputs.aws_internal_zone_id
   name     = "dev.${local.domain_name}"
   type     = "A"
 

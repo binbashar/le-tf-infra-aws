@@ -7,8 +7,8 @@ module "www_binbash_com_ar" {
   # Common: bucket naming convention is "bb-apps-prd-frontend-[DOMAIN_NAME]-origin"
   namespace            = "${var.project}-${var.environment}-frontend"
   name                 = "www.${local.public_domain_name}"
-  aliases              = ["www.${local.public_domain}", local.public_domain]
-  cors_allowed_origins = ["www.${local.public_domain}", local.public_domain]
+  aliases              = ["www.${local.public_domain}"]
+  cors_allowed_origins = ["www.${local.public_domain}"]
 
   # Certificate settings
   acm_certificate_arn = data.terraform_remote_state.certificates.outputs.certificate_arn
