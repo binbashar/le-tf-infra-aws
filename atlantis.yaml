@@ -1,26 +1,23 @@
 version: 3
 
-workflows:
-  leverage:
-    # Customize plan command
-    plan:
-      steps:
-      # Run init before plan
-      - run:
-          command: leverage tf init
-          # output: hide
+# Other settings
+automerge: false
+# delete_source_branch_on_merge: false
 
-      # You MUST output the plan using -out $PLANFILE because Atlantis expects
-      # plans to be in a specific location.
-      - run: leverage tf plan -input=false -refresh -out $PLANFILE
+# This allows Atlantis to autodiscover projects, however it should also honor
+# explicit definitions under the projects key
+autodiscover:
+  mode: "enabled"
+  ignore_paths:
+  - config/*
 
-    # Customize apply command
-    apply:
-      steps:
-      # Again, you must use the $PLANFILE environment variable.
-      - run: leverage tf apply $PLANFILE
-
+# Here we define the projects (or layers) explicitly
 projects:
-- name: shared_tf_backend
+- name: test
   dir: shared/us-east-1/base-tf-backend
-  workflow: leverage
+  # Not sure what this does, I had to install tofy on the server anyway
+  terraform_distribution: opentofu
+  # Same as above, not sure if this is doing anything
+  terraform_version: 1.6.6
+  # workflow: default
+  # delete_source_branch_on_merge: false
