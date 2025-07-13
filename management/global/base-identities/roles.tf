@@ -5,7 +5,7 @@ module "iam_assumable_role_oaar" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
 
   trusted_role_arns = [
-    "arn:aws:iam::${var.accounts.root.id}:root"
+    "arn:aws:iam::${var.accounts.management.id}:root"
   ]
 
   create_role           = true
@@ -148,9 +148,29 @@ module "iam_assumable_role_north_cloud_access" {
   custom_role_policy_arns = [
     aws_iam_policy.north_cloud_tool_access.arn,
   ]
-
-
 }
 
+#
+# Assumable Role Cross-Account: DeployMaster
+#
+module "iam_assumable_role_deploy_master" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
 
+  trusted_role_arns = [
+    "arn:aws:iam::${var.accounts.security.id}:root",
+  ]
 
+  create_role = true
+  role_name   = "DeployMaster"
+  role_path   = "/"
+
+  #
+  # MFA setup
+  #
+  role_requires_mfa    = false
+  mfa_age              = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
+  max_session_duration = 10800 # Max age of the session (in seconds) when assuming roles
+  custom_role_policy_arns = [
+    aws_iam_policy.deploy_master_access.arn
+  ]
+}
