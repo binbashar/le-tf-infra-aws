@@ -1,8 +1,9 @@
 version: 3
 
-# Other settings
-automerge: false
-# delete_source_branch_on_merge: false
+# Auto-merge the PR after all plans have been successfully applied
+automerge: true
+# Remove the source branch upon merging
+delete_source_branch_on_merge: true
 
 # This allows Atlantis to autodiscover projects, however it should also honor
 # explicit definitions under the projects key
