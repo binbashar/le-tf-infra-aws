@@ -315,13 +315,12 @@ locals {
         "datascientists",
       ]
     }
-    "leandro.mana" = {
-      first_name = "Leandro"
-      last_name  = "Mana"
-      email      = "leandro.mana@binbash.com.ar"
+    "roberto.trujillo" = {
+      first_name = "Roberto"
+      last_name  = "Trujillo"
+      email      = "roberto.trujillo@binbash.com.ar"
       groups = [
-        "datascientists",
-        "devops"
+        "datascientists"
       ]
     }
   }
