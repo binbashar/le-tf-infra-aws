@@ -22,21 +22,21 @@ resource "aws_organizations_account" "accounts" {
 }
 
 data "aws_iam_roles" "shared" {
-  provider = aws.shared
+  provider   = aws.shared
   name_regex = "AWSReservedSSO_DevOps.*"
 }
 
 data "aws_iam_roles" "network" {
-  provider = aws.network
+  provider   = aws.network
   name_regex = "AWSReservedSSO_DevOps.*"
 }
 
 data "aws_iam_roles" "apps-devstg" {
-  provider = aws.apps-devstg
+  provider   = aws.apps-devstg
   name_regex = "AWSReservedSSO_DevOps.*"
 }
 
 data "aws_iam_roles" "apps-prd" {
-  provider = aws.apps-prd
+  provider   = aws.apps-prd
   name_regex = "AWSReservedSSO_DevOps.*"
 }

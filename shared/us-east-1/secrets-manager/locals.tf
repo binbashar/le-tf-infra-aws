@@ -27,11 +27,11 @@ locals {
       recovery_window_in_days = 7
       secret_string           = "INITIAL_VALUE"
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
-      custom_policy_json      = {
-        sid       = "CostReportsLambda"
-        effect    = "Allow"
+      custom_policy_json = {
+        sid    = "CostReportsLambda"
+        effect = "Allow"
         principal = {
-          "AWS": "arn:aws:iam::${var.accounts.management.id}:role/bb-root-cost-report"
+          "AWS" : "arn:aws:iam::${var.accounts.management.id}:role/bb-root-cost-report"
         }
         actions   = ["secretsmanager:GetSecretValue"],
         resources = ["*"]
