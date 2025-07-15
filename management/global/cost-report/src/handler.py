@@ -50,13 +50,13 @@ def find_by_key(values: list, key: str, value: str):
 def get_secret(secret_identifier):
     """
     Get secret value from AWS Secrets Manager.
-    
+
     Args:
         secret_identifier: Can be either:
             - Secret name (e.g., 'my-secret')
             - Full ARN (e.g., 'arn:aws:secretsmanager:us-east-1:123456789012:secret:my-secret-ABC123')
             - Partial ARN (e.g., 'us-east-1:123456789012:secret:my-secret')
-    
+
     Returns:
         str: The secret value
     """
@@ -86,7 +86,7 @@ def lambda_handler(event, context):
     teams_hook_url = os.environ.get('TEAMS_WEBHOOK_URL')
     if teams_hook_url:
         publish_teams(teams_hook_url, summary, buffer)
-    
+
     google_hook_url = os.environ.get('GOOGLE_WEBHOOK_URL')
     if google_hook_url:
         publish_google(google_hook_url, summary, buffer)
@@ -279,7 +279,7 @@ def publish_google(hook_url, summary, buffer):
     message = {
         "text": summary + "\n\n```\n" + buffer + "\n```"
     }
-    
+
     resp = requests.post(hook_url, json=message)
 
     if resp.status_code != 200:
