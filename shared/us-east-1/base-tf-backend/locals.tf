@@ -3,6 +3,5 @@ locals {
     Terraform   = "true"
     Environment = var.environment
     Layer       = local.layer_name
-    Project     = "leverage"
   }
 }
