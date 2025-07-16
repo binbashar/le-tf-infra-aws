@@ -12,7 +12,7 @@ resource "aws_iam_policy" "assume_oaar_role" {
           "sts:AssumeRole"
         ],
         "Resource": [
-          "arn:aws:iam::${var.accounts.root.id}:role/OrganizationAccountAccessRole",
+          "arn:aws:iam::${var.accounts.management.id}:role/OrganizationAccountAccessRole",
           "arn:aws:iam::${var.accounts.security.id}:role/OrganizationAccountAccessRole",
           "arn:aws:iam::${var.accounts.shared.id}:role/OrganizationAccountAccessRole",
           "arn:aws:iam::${var.accounts.network.id}:role/OrganizationAccountAccessRole",

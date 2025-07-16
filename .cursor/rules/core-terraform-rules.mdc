@@ -1,0 +1,135 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+---
+description: Core Terraform Best Practices for Binbash Leverage Reference Architecture
+globs:
+  - "**/*.tf"
+alwaysApply: true
+---
+
+# Source of Truth
+- All code, reviews, and recommendations **must** align with:
+  - [Leverage Documentation](mdc:https:/leverage.binbash.co)
+  - [Leverage High-Level Characteristics](mdc:https:/www.binbash.co/leverage)
+  - [Terraform Reference Architecture Code](mdc:https:/github.com/binbashar/le-tf-infra-aws)
+  - [Leverage CLI](mdc:https:/github.com/binbashar/leverage)
+  - [Binbash Terraform Module Library](mdc:https:/github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile)
+
+# Key Principles
+- Write concise, well-structured Terraform code with clear examples.
+- Organize resources into reusable, versioned modules.
+- Use variables and locals for all configurable values; avoid hardcoding.
+- Structure files logically: main config, locals, variables, outputs, modules.
+
+# Leverage CLI Usage
+- **Always use the Leverage CLI** (`leverage terraform <command>`) for all Terraform operations (init, plan, apply, test, fmt, validate).
+- This ensures consistency, automation, and alignment with Leverage best practices.
+
+# Module Guidelines
+- **Always prefer Binbash Leverage modules**. Only create new modules if no suitable Leverage module exists.
+- Check the [module Makefile](mdc:https:/github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile) for the latest list.
+- Contribute improvements upstream when possible.
+- Use outputs to pass data between modules.
+- Follow semantic versioning for modules.
+- Document modules with examples and clear input/output definitions.
+
+# Terraform Best Practices
+- Use remote backends (e.g., S3) with state locking and encryption.
+- Follow the [Leverage AWS directory structure](mdc:https:/leverage.binbash.co/user-guide/ref-architecture-aws/dir-structure).
+- Always run `leverage terraform fmt` for formatting.
+- Use `leverage terraform validate` and tools like `tflint` or `terrascan` for linting.
+- Store sensitive data in AWS Secrets Manager. [Example layer](mdc:https:/github.com/binbashar/le-tf-infra-aws/tree/master/apps-devstg/us-east-1/secrets-manager).
+
+# Error Handling & Validation
+- Use variable validation rules.
+- Handle edge cases with conditionals and `null` checks.
+- Use `depends_on` for explicit dependencies.
+
+# Security Practices
+- Never hardcode sensitive values; use Vault or environment variables.
+- Enable encryption for all storage and communication.
+- Define access controls and security groups for each resource.
+- Follow [AWS Well-Architected Framework](mdc:https:/aws.amazon.com/architecture/well-architected) and Leverage security guidelines.
+
+# Performance Optimization
+- Use `-target` for resource-specific changes.
+- Cache provider plugins locally.
+- Limit use of `count`/`for_each` to avoid unnecessary duplication.
+
+# Testing & CI/CD
+- Integrate with CI/CD (e.g., GitHub Actions, [Digger](mdc:https:/digger.dev)).
+- Run `leverage terraform plan` in CI to catch issues before apply.
+- Use `leverage terraform test` for module unit tests ([example workflow](mdc:https:/github.com/binbashar/le-tf-infra-aws/blob/master/.github/workflows/testing-workflow.yml)).
+- Automate tests for critical infrastructure (e.g., network, IAM).
+
+# Key Conventions
+1. Lock provider versions.
+2. Tag all resources for tracking and cost management.
+3. Define resources modularly for scalability.
+4. Document all modules and configurations with `README.md`.
+
+# Documentation & Learning
+- Refer to [Terraform Registry](mdc:https:/registry.terraform.io) and official docs.
+- Stay updated with provider-specific modules for AWS, Helm, Kubernetes, GitHub, Cloudflare.
+
+# Review & PR Process
+- Reference Leverage docs and module sources in PR descriptions and code comments.
+- Reviewers: Ensure all changes align with Leverage conventions and the AWS Well-Architected Framework.
+- Document any deviations from Leverage standards in code comments and PRs.
+
+You are an expert in Terraform and Infrastructure as Code (IaC) for AWS, with deep experience in Cloud Architecture, DevOps, Security, Data Engineering, GenAI, and container orchestration (EKS, ECS).
+
+## Key Principles
+- Write concise, well-structured Terraform code with clear examples.
+- Organize resources into reusable, versioned modules.
+- Use variables and locals for all configurable values; avoid hardcoding.
+- Structure files logically: main config, locals, variables, outputs, modules.
+
+## Terraform Best Practices
+- Use remote backends (e.g., S3) with state locking and encryption.
+- Follow the [Leverage AWS directory structure](mdc:https:/leverage.binbash.co/user-guide/ref-architecture-aws/dir-structure).
+- Always run `leverage terraform fmt` for formatting.
+- Use `leverage terraform validate` and tools like `tflint` or `terrascan` for linting.
+- Store sensitive data in AWS Secrets Manager. [Example layer](mdc:https:/github.com/binbashar/le-tf-infra-aws/tree/master/apps-devstg/us-east-1/secrets-manager).
+
+## Error Handling & Validation
+- Use variable validation rules.
+- Handle edge cases with conditionals and `null` checks.
+- Use `depends_on` for explicit dependencies.
+
+## Module Guidelines
+- Split code into reusable modules; avoid duplication.
+- Prefer [Binbash Leverage Terraform modules](mdc:https:/github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile).
+- Use outputs to pass data between modules.
+- Follow semantic versioning for modules.
+- Document modules with examples and clear input/output definitions.
+
+## Security Practices
+- Never hardcode sensitive values; use Vault or environment variables.
+- Enable encryption for all storage and communication.
+- Define access controls and security groups for each resource.
+- Follow [AWS Well-Architected Framework](mdc:https:/aws.amazon.com/architecture/well-architected) and Leverage security guidelines.
+
+## Performance Optimization
+- Use `-target` for resource-specific changes.
+- Cache provider plugins locally.
+- Limit use of `count`/`for_each` to avoid unnecessary duplication.
+
+## Testing & CI/CD
+- Integrate with CI/CD (e.g., GitHub Actions, [Digger](mdc:https:/digger.dev)).
+- Run `leverage terraform plan` in CI to catch issues before apply.
+- Use `leverage terraform test` for module unit tests ([example workflow](mdc:https:/github.com/binbashar/le-tf-infra-aws/blob/master/.github/workflows/testing-workflow.yml)).
+- Automate tests for critical infrastructure (e.g., network, IAM).
+
+## Key Conventions
+1. Lock provider versions.
+2. Tag all resources for tracking and cost management.
+3. Define resources modularly for scalability.
+4. Document all modules and configurations with `README.md`.
+
+## Documentation & Learning
+- Refer to [Terraform Registry](mdc:https:/registry.terraform.io) and official docs.
+- Stay updated with provider-specific modules for AWS, Helm, Kubernetes, GitHub, Cloudflare.

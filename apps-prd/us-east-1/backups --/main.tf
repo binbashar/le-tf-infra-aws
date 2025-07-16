@@ -1,6 +1,6 @@
 module "nightly_backups" {
 
-  source = "github.com/binbashar/terraform-aws-backup.git?ref=0.11.6"
+  source = "github.com/binbashar/terraform-aws-backup.git?ref=v0.24.0"
 
   # Plan
   plan_name = "nightly_backups"
@@ -15,7 +15,8 @@ module "nightly_backups" {
       completion_window        = 360
       enable_continuous_backup = true
       lifecycle = {
-        delete_after = 21
+        cold_storage_after = 0
+        delete_after       = 21
       }
     }
   ]

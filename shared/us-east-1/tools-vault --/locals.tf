@@ -11,5 +11,6 @@ locals {
     ScheduleStopDaily  = false
     ScheduleStartDaily = false
     Backup             = "True"
+    Layer              = local.layer_name
   }
 }

@@ -2,7 +2,7 @@
 # Run daily backups on tagged resources
 #
 module "daily_backups_tagged_resources" {
-  source = "github.com/binbashar/terraform-aws-backup.git?ref=0.11.6"
+  source = "github.com/binbashar/terraform-aws-backup.git?ref=v0.24.0"
 
   # Backup vaults are containers where your backups are stored. You can specify
   # a new one to be created by this module or omit it to use the default one.

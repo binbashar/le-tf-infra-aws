@@ -183,10 +183,10 @@ resource "aws_organizations_policy" "tag_protection" {
       "Condition": {
         "StringNotEquals": {
           "aws:PrincipalArn": [
-            "arn:aws:iam::${aws_organizations_account.accounts["shared"].id}:role/DevOps",
-            "arn:aws:iam::${aws_organizations_account.accounts["network"].id}:role/DevOps",
-            "arn:aws:iam::${aws_organizations_account.accounts["apps-devstg"].id}:role/DevOps",
-            "arn:aws:iam::${aws_organizations_account.accounts["apps-prd"].id}:role/DevOps"
+            "${tolist(data.aws_iam_roles.shared.arns)[0]}",
+            "${tolist(data.aws_iam_roles.network.arns)[0]}",
+            "${tolist(data.aws_iam_roles.apps-devstg.arns)[0]}",
+            "${tolist(data.aws_iam_roles.apps-prd.arns)[0]}"
           ]
         },
         "ForAnyValue:StringEquals": {

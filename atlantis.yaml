@@ -1,0 +1,23 @@
+version: 3
+
+# Other settings
+automerge: false
+# delete_source_branch_on_merge: false
+
+# This allows Atlantis to autodiscover projects, however it should also honor
+# explicit definitions under the projects key
+autodiscover:
+  mode: "enabled"
+  ignore_paths:
+  - config/*
+
+# Here we define the projects (or layers) explicitly
+projects:
+- name: test
+  dir: shared/us-east-1/base-tf-backend
+  # Not sure what this does, I had to install tofy on the server anyway
+  terraform_distribution: opentofu
+  # Same as above, not sure if this is doing anything
+  terraform_version: 1.6.6
+  # workflow: default
+  # delete_source_branch_on_merge: false

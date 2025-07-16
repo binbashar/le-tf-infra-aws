@@ -29,16 +29,22 @@ locals {
     #
     bbl_apps_prd = {
       policy = aws_organizations_policy.standard
-    }
+    },
     #
     # Data Science: Organizational Unit Policies
     #
     bbl_data_science = {
       policy = aws_organizations_policy.standard
     }
+    #
+    # Workshop: Organizational Unit Policies
+    #
+    bbl_workshop = {
+      policy = aws_organizations_policy.standard
+    }
   }
 
-  root_account = {
+  management_account = {
     email = "aws+root@binbash.com.ar"
   }
 
@@ -86,13 +92,29 @@ locals {
     apps-prd = {
       email     = "aws+apps-prd@binbash.com.ar",
       parent_ou = "bbl_apps_prd"
-    }
+    },
     #
     # DataScience: data science workloads, MLOps, and such.
     #
     data-science = {
-      email     = "aws+data-science@binbash.com.ar",
+      email     = "aws+data-science@binbash.com.ar"
       parent_ou = "bbl_data_science"
+      # other attributes as needed
+    },
+    #
+    # Workshop temporary accounts for GenAI Innovation Lab event
+    #
+    workshop-genai-1 = {
+      email     = "aws+workshop-genai-1@binbash.com.ar"
+      parent_ou = "bbl_workshop"
+    },
+    workshop-genai-2 = {
+      email     = "aws+workshop-genai-2@binbash.com.ar"
+      parent_ou = "bbl_workshop"
+    },
+    workshop-genai-3 = {
+      email     = "aws+workshop-genai-3@binbash.com.ar"
+      parent_ou = "bbl_workshop"
     }
   }
 

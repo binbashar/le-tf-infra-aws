@@ -1,5 +1,5 @@
 module "managed_elasticsearch_kibana" {
-  source = "github.com/binbashar/terraform-aws-elasticsearch?ref=0.10.0"
+  source = "github.com/binbashar/terraform-aws-elasticsearch?ref=0.14.1"
 
   # Domain (cluster) name and ElasticSearch version
   domain_name           = local.domain_name
@@ -34,8 +34,10 @@ module "managed_elasticsearch_kibana" {
 
   # Enable logging to CloudWatch
   log_publishing_options = {
-    enabled  = false
-    log_type = "INDEX_SLOW_LOGS"
+    logs = {
+      enabled  = false
+      log_type = "INDEX_SLOW_LOGS"
+    }
   }
 
   # Use a custom domain

@@ -4,7 +4,7 @@
 variable "aws_ami_os_id" {
   type        = string
   description = "AWS AMI Operating System Identificator"
-  default     = "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"
+  default     = "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
 }
 
 variable "aws_ami_os_owner" {

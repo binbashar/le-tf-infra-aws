@@ -7,7 +7,7 @@ resource "helm_release" "vpa" {
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://charts.fairwinds.com/stable"
   chart      = "vpa"
-  version    = "0.3.2"
+  version    = "0.5.0"
   values     = [file("chart-values/vpa.yaml")]
   depends_on = [helm_release.metrics_server]
 }
@@ -21,7 +21,7 @@ resource "helm_release" "cluster_autoscaling" {
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://kubernetes.github.io/autoscaler"
   chart      = "cluster-autoscaler"
-  version    = "9.46.0"
+  version    = "9.46.6"
   values = [
     templatefile("chart-values/cluster-autoscaler.yaml",
       {
@@ -126,7 +126,7 @@ resource "helm_release" "keda" {
   namespace  = kubernetes_namespace.keda[0].id
   repository = "https://kedacore.github.io/charts"
   chart      = "keda"
-  version    = "2.15.0"
+  version    = "2.17.1"
   values     = []
 }
 
@@ -136,7 +136,7 @@ resource "helm_release" "keda_http_add_on" {
   namespace  = kubernetes_namespace.keda[0].id
   repository = "https://kedacore.github.io/charts"
   chart      = "keda-add-ons-http"
-  version    = "0.8.0"
+  version    = "0.10.0"
   values     = []
 }
 
@@ -149,7 +149,7 @@ resource "helm_release" "goldilocks" {
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://charts.fairwinds.com/stable"
   chart      = "goldilocks"
-  version    = "3.2.1"
+  version    = "5.3.0"
   values = [
     templatefile("chart-values/goldilocks.yaml", {
       goldilocksHost = "goldilocks.${local.platform}.${local.private_base_domain}"

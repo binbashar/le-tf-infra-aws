@@ -7,19 +7,6 @@ provider "aws" {
 }
 
 #=============================#
-# Vault Provider Settings     #
-#=============================#
-provider "vault" {
-  address = var.vault_address
-
-  /*
-  Vault token that will be used by Terraform to authenticate.
- admin token from https://portal.cloud.hashicorp.com/.
- */
-  token = var.vault_token
-}
-
-#=============================#
 # Backend Config (partial)    #
 #=============================#
 terraform {
@@ -29,7 +16,7 @@ terraform {
     aws = "~> 4.10"
     postgresql = {
       source  = "cyrilgdn/postgresql"
-      version = "1.17.1"
+      version = "1.24.0"
     }
   }
 

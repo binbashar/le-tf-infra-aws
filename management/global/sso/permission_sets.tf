@@ -1,5 +1,5 @@
 module "permission_sets" {
-  source = "github.com/binbashar/terraform-aws-sso.git//modules/permission-sets?ref=0.7.1"
+  source = "github.com/binbashar/terraform-aws-sso.git//modules/permission-sets?ref=0.8.0"
 
   permission_sets = [
     {
@@ -74,6 +74,7 @@ module "permission_sets" {
       inline_policy    = data.aws_iam_policy_document.marketplaceseller.json
       policy_attachments = [
         "arn:aws:iam::aws:policy/AWSMarketplaceSellerFullAccess",
+        "arn:aws:iam::aws:policy/AWSMarketplaceFullAccess",
         "arn:aws:iam::aws:policy/WellArchitectedConsoleFullAccess",
         "arn:aws:iam::aws:policy/job-function/Billing",
       ]
@@ -83,7 +84,7 @@ module "permission_sets" {
       name                                = "DataScientist"
       description                         = "Provides access to AWS services that have to do with Data Science and MLOps."
       relay_state                         = local.default_relay_state
-      session_duration                    = "PT2H"
+      session_duration                    = "PT8H"
       tags                                = local.tags
       inline_policy                       = data.aws_iam_policy_document.data_scientist.json
       policy_attachments                  = []

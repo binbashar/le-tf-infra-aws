@@ -6,7 +6,7 @@
 # AWS Config Logs AES256 SSE Bucket
 #
 module "config_logs" {
-  source = "github.com/binbashar/terraform-aws-logs.git?ref=v16.2.0"
+  source = "github.com/binbashar/terraform-aws-logs.git?ref=v16.3.1"
 
   s3_bucket_name          = "${var.project}-${var.environment}-awsconfig"
   default_allow           = true # Whether all services included in this module should be allowed to write to the bucket by default.
@@ -87,6 +87,8 @@ module "terraform-aws-config" {
     tag1Value = "true"
     tag2Key   = "Environment"
     tag3Value = var.environment
+    tag4Key   = "Layer"
+    tag4Value = local.layer_name
   }
   check_approved_amis_by_tag = true
   ami_required_tag_key_value = "ApprovedAMI:true"

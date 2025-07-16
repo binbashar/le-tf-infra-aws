@@ -20,6 +20,8 @@ locals {
       groups = [
         "administrators",
         "devops",
+        "datascientists",
+        "marketplaceseller",
       ]
     }
     "marcos.pagnucco" = {
@@ -44,6 +46,7 @@ locals {
       last_name  = "Rivera"
       email      = "francisco.rivera@binbash.com.ar"
       groups = [
+        "administrators",
         "devops",
       ]
     }
@@ -210,6 +213,7 @@ locals {
       email      = "manuel.quinteros@binbash.com.ar"
       groups = [
         "devops",
+        "marketplaceseller",
       ]
     }
     "julian.curetti" = {
@@ -224,14 +228,6 @@ locals {
       first_name = "Nicolas"
       last_name  = "Fressero"
       email      = "nicolas.fressero@binbash.com.ar"
-      groups = [
-        "devops",
-      ]
-    }
-    "daniel.quiroga" = {
-      first_name = "Daniel"
-      last_name  = "Quiroga"
-      email      = "daniel.quiroga@binbash.com.ar"
       groups = [
         "devops",
       ]
@@ -260,14 +256,6 @@ locals {
         "devops",
       ]
     }
-    "nicolas.ferreira" = {
-      first_name = "Nicolas"
-      last_name  = "Ferreira"
-      email      = "nicolas.ferreira@binbash.com.ar"
-      groups = [
-        "datascientists",
-      ]
-    }
     "agustin.rodriguez" = {
       first_name = "Agustin"
       last_name  = "Rodriguez"
@@ -283,6 +271,7 @@ locals {
       email      = "carlos.paez@binbash.com.ar"
       groups = [
         "devops",
+        "marketplaceseller",
       ]
     }
     "alex.delossantos" = {
@@ -326,13 +315,12 @@ locals {
         "datascientists",
       ]
     }
-    "leandro.mana" = {
-      first_name = "Leandro"
-      last_name  = "Mana"
-      email      = "leandro.mana@binbash.com.ar"
+    "roberto.trujillo" = {
+      first_name = "Roberto"
+      last_name  = "Trujillo"
+      email      = "roberto.trujillo@binbash.com.ar"
       groups = [
-        "datascientists",
-        "devops"
+        "datascientists"
       ]
     }
   }
@@ -363,7 +351,7 @@ locals {
     }
     marketplaceseller = {
       name        = "MarketplaceSeller"
-      description = "Provides access to the AWS MaketPlace Seller."
+      description = "Provides access to the AWS MarketPlace Seller."
     }
     datascientists = {
       name        = "DataScientists"
@@ -438,5 +426,6 @@ locals {
 
   tags = {
     Terraform = "true"
+    Layer     = local.layer_name
   }
 }

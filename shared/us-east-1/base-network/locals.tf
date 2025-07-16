@@ -2,6 +2,7 @@ locals {
   tags = {
     Terraform   = "true"
     Environment = var.environment
+    Layer       = local.layer_name
   }
 
   # Network Local Vars
@@ -128,12 +129,6 @@ locals {
       profile = "${var.project}-apps-devstg-devops"
       bucket  = "${var.project}-apps-devstg-terraform-backend"
       key     = "apps-devstg/network/terraform.tfstate"
-    }
-    apps-devstg-k8s-eks = {
-      region  = var.region
-      profile = "${var.project}-apps-devstg-devops"
-      bucket  = "${var.project}-apps-devstg-terraform-backend"
-      key     = "apps-devstg/k8s-eks/network/terraform.tfstate"
     }
     apps-devstg-eks-demoapps = {
       region  = var.region

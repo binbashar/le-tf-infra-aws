@@ -37,6 +37,7 @@ locals {
   tags = {
     Terraform   = "true"
     Environment = var.environment
+    Layer       = local.layer_name
   }
 
   # We need these so that k8s aws cloud provider recognizes our private subnets

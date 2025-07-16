@@ -6,5 +6,6 @@ locals {
     ScheduleStopDaily  = false
     ScheduleStartDaily = false
     ScheduleStopDaily  = true
+    Layer              = local.layer_name
   }
 }

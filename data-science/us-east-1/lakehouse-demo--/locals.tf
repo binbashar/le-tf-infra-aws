@@ -5,6 +5,7 @@ locals {
     Name        = local.name
     Terraform   = "true"
     Environment = var.environment
+    Layer       = local.layer_name
   }
 
 

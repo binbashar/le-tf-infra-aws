@@ -1,5 +1,5 @@
 module "secrets" {
-  source = "github.com/binbashar/terraform-aws-secrets-manager.git?ref=0.6.0"
+  source = "github.com/binbashar/terraform-aws-secrets-manager.git?ref=0.11.5"
 
   secrets = {
     # NOTE: Fields annotated with "#@" must be commented out in the first step, when the database is not yet deployed
@@ -51,8 +51,7 @@ data "aws_iam_policy_document" "secret_policy" {
     principals {
       type = "AWS"
       identifiers = [
-        "arn:aws:iam::${var.accounts.data-science.id}:role/DevOps",
-        "arn:aws:iam::${var.accounts.data-science.id}:role/DataScientist"
+        "arn:aws:iam::${var.accounts.data-science.id}:role/DevOps"
       ]
     }
   }

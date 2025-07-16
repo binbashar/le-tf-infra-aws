@@ -7,46 +7,51 @@ data "aws_iam_policy_document" "devops" {
     actions = [
       "access-analyzer:*",
       "acm:*",
+      "amplify:*",
       "aoss:*",
-      "autoscaling:*",
+      "apigateway:*",
       "appconfig:*",
       "application-autoscaling:*",
       "apprunner:*",
-      "apigateway:*",
-      "aoss:*",
       "athena:*",
-      "aws-portal:*",
+      "autoscaling:*",
       "aws-marketplace:*",
-      "backup:*",
+      "aws-portal:*",
       "backup-storage:*",
+      "backup:*",
       "bedrock:*",
       "ce:*",
       "cloudformation:*",
       "cloudfront:*",
+      "cloudshell:*",
       "cloudtrail:*",
       "cloudwatch:*",
-      "cognito-idp:*",
+      "codepipeline:*",
+      "codedeploy:*",
+      "codestar-connections:*",
+      "codeconnections:*",
       "cognito-identity:*",
-      "config:*",
+      "cognito-idp:*",
       "compute-optimizer:*",
+      "config:*",
       "datasync:*",
       "dlm:*",
       "dms:*",
       "ds:*",
       "dynamodb:*",
-      "ec2:*",
       "ec2-instance-connect:*",
-      "ecr:*",
+      "ec2:*",
       "ecr-public:*",
+      "ecr:*",
       "ecs:*",
-      "elasticfilesystem:*",
       "eks:*",
       "elasticbeanstalk:*",
-      "elasticloadbalancing:*",
       "elasticfilesystem:*",
+      "elasticloadbalancing:*",
       "es:*",
       "events:*",
       "execute-api:*",
+      "fms:*",
       "glue:*",
       "guardduty:*",
       "health:*",
@@ -65,12 +70,12 @@ data "aws_iam_policy_document" "devops" {
       "q:*",
       "quicksight:*",
       "ram:*",
-      "rds:*",
       "rds-data:*",
-      "redshift:*",
+      "rds:*",
       "redshift-data:*",
-      "resource-explorer:*",
+      "redshift:*",
       "resource-explorer-2:*",
+      "resource-explorer:*",
       "resource-groups:*",
       "route53:*",
       "route53domains:*",
@@ -78,13 +83,12 @@ data "aws_iam_policy_document" "devops" {
       "s3:*",
       "sagemaker:*",
       "scheduler:*",
-      "ses:*",
       "secretsmanager:*",
       "securityhub:*",
       "servicediscovery:*",
-      "scheduler:*",
+      "servicequotas:*",
+      "ses:*",
       "shield:*",
-      "synthetics:*",
       "sns:*",
       "sqlworkbench:*",
       "sqs:*",
@@ -92,18 +96,18 @@ data "aws_iam_policy_document" "devops" {
       "states:*",
       "sts:*",
       "support:*",
+      "supportplans:*",
       "synthetics:*",
       "tag:*",
+      "textract:*",
       "transfer:*",
       "trustedadvisor:*",
-      "transfer:*",
-      "vpc:*",
+      "waf-regional:*",
       "waf:*",
       "wafv2:*",
-      "waf-regional:*",
-      "workspaces:*",
+      "wellarchitected:*",
       "workspaces-web:*",
-      "wellarchitected:*"
+      "workspaces:*"
     ]
     resources = ["*"]
     condition {
@@ -164,17 +168,35 @@ data "aws_iam_policy_document" "devops" {
   statement {
     sid = "OrganizationWide"
     actions = [
-      "organizations:ListDelegatedAdministrators",
-      "organizations:ListAccounts",
+      "organizations:DeregisterDelegatedAdministrator",
       "organizations:DescribeOrganization",
+      "organizations:DisableAWSServiceAccess",
+      "organizations:EnableAWSServiceAccess",
       "organizations:ListAWSServiceAccessForOrganization",
-      "organizations:ListRoots",
+      "organizations:ListAccounts",
       "organizations:ListAccountsForParent",
-      "organizations:ListOrganizationalUnitsForParent"
+      "organizations:ListDelegatedAdministrators",
+      "organizations:ListOrganizationalUnitsForParent",
+      "organizations:ListRoots",
+      "organizations:RegisterDelegatedAdministrator"
     ]
     effect    = "Allow"
     resources = ["*"]
+  }
 
+  statement {
+    sid = "InspectorAdministration"
+    actions = [
+      "inspector2:Enable",
+      "inspector2:Disable",
+      "inspector2:AssociateMember",
+      "inspector2:DisassociateMember",
+      "inspector2:UpdateOrganizationConfiguration",
+      "inspector2:EnableDelegatedAdminAccount",
+      "inspector2:DisableDelegatedAdminAccount"
+    ]
+    effect    = "Allow"
+    resources = ["*"]
   }
 }
 
@@ -201,7 +223,10 @@ data "aws_iam_policy_document" "data_scientist" {
     sid = "Default"
     actions = [
       "athena:*",
+      "apigateway:*",
+      "aoss:*",
       "autoscaling:*",
+      "aws-marketplace:*",
       "aws-portal:*",
       "bedrock:*",
       "ce:*",
@@ -226,8 +251,8 @@ data "aws_iam_policy_document" "data_scientist" {
       "kms:*",
       "lambda:*",
       "logs:*",
-      "aws-marketplace:*",
       "pipes:*",
+      "polly:*",
       "q:*",
       "quicksight:*",
       "ram:*",
@@ -249,7 +274,7 @@ data "aws_iam_policy_document" "data_scientist" {
       "sts:*",
       "support:*",
       "tag:*",
-      "vpc:*",
+      "transcribe:*",
     ]
     resources = ["*"]
     condition {

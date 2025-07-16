@@ -1,5 +1,5 @@
 module "secrets" {
-  source = "github.com/binbashar/terraform-aws-secrets-manager.git?ref=0.7.0"
+  source = "github.com/binbashar/terraform-aws-secrets-manager.git?ref=0.11.5"
 
   secrets = {
     "/k8s-eks-demoapps/test-secrets" = {

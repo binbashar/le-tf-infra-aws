@@ -2,7 +2,7 @@
 # SNS Topic with SMS subscriptions
 #
 module "notify_costs" {
-  source = "github.com/binbashar/terraform-aws-sns-topic.git?ref=0.20.1"
+  source = "github.com/binbashar/terraform-aws-sns-topic.git?ref=0.21.0"
 
   name = var.sns_topic_name_costs
 
@@ -10,7 +10,7 @@ module "notify_costs" {
     for v in ["phone1", "phone2", "phone3", "phone4", "phone5"] :
     v => {
       protocol               = "sms"
-      endpoint               = data.vault_generic_secret.notifications.data[v]
+      endpoint               = jsondecode(data.aws_secretsmanager_secret_version.costs_phone_numbers_notifications.secret_string)[v]
       endpoint_auto_confirms = true
       raw_message_delivery   = false
     }
@@ -100,14 +100,14 @@ data "aws_iam_policy_document" "sns-notify-costs" {
 # Encrypt the URL, storing encryption here will show it in logs and in tfstate
 # https://www.terraform.io/docs/state/sensitive-data.html
 resource "aws_kms_ciphertext" "slack_url_monitoring_costs" {
-  plaintext = data.vault_generic_secret.notifications.data["slack_webhook_monitoring_costs"]
+  plaintext = data.aws_secretsmanager_secret_version.monitoring.secret_string
   key_id    = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
 }
 
 # Set create_with_kms_key = true
 # when providing value of kms_key_arn to create required IAM policy which allows to decrypt using specified KMS key.
 module "notify_slack_monitoring_costs" {
-  source = "github.com/binbashar/terraform-aws-notify-slack.git?ref=v5.5.0"
+  source = "github.com/binbashar/terraform-aws-notify-slack.git?ref=v5.6.0"
 
   #
   # Creation Flags
