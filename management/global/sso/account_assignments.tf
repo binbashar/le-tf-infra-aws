@@ -111,11 +111,11 @@ module "account_assignments" {
     # FinOps Permissions
     # -------------------------------------------------------------------------
     {
-      permission_set_arn  = module.permission_sets.permission_sets["FinOps"].arn,
-      permission_set_name = "FinOps",
+      permission_set_arn  = module.permission_sets.permission_sets["FinOps"].arn
+      permission_set_name = "FinOps"
       principal_type      = local.principal_type_group
       principal_name      = local.groups["finops"].name
-      account             = var.accounts.management.id,
+      account             = var.accounts.management.id
     },
 
     # -------------------------------------------------------------------------
@@ -203,5 +203,26 @@ module "account_assignments" {
       principal_name      = local.groups["datascientists"].name
       account             = var.accounts.data-science.id
     },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["DataScientist"].arn
+      permission_set_name = "DataScientist"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["datascientists"].name
+      account             = var.accounts["workshop-genai-1"].id
+    },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["DataScientist"].arn
+      permission_set_name = "DataScientist"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["datascientists"].name
+      account             = var.accounts["workshop-genai-2"].id
+    },
+    /*     {
+      permission_set_arn  = module.permission_sets.permission_sets["DataScientist"].arn
+      permission_set_name = "DataScientist"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["datascientists"].name
+      account             = var.accounts["workshop-genai-3"].id
+    }, */
   ]
 }

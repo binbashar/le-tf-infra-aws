@@ -40,7 +40,7 @@ variable "vpc_vault_hvn_cidr" {
 variable "vpc_enable_nat_gateway" {
   description = "Enable NAT Gateway"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "vpc_single_nat_gateway" {

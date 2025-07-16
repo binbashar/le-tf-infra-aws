@@ -288,6 +288,11 @@ resource "aws_iam_policy" "github_actions_oidc" {
     ]
 }
 EOF
+
+  # Had to add this because Tofu kept wanting to apply the same tags updates everytime
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 

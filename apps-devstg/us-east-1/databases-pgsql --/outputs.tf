@@ -32,7 +32,7 @@ output "database_password" {
 
 output "database_endpoint" {
   description = "Database endpoint"
-  value       = module.bb_postgres_db.database_endpoint
+  value       = module.bb_postgres_db.db_instance_endpoint
 }
 
 output "database_security_group_id" {

@@ -20,6 +20,7 @@ locals {
       groups = [
         "administrators",
         "devops",
+        "datascientists",
         "marketplaceseller",
       ]
     }
@@ -45,6 +46,7 @@ locals {
       last_name  = "Rivera"
       email      = "francisco.rivera@binbash.com.ar"
       groups = [
+        "administrators",
         "devops",
       ]
     }
@@ -211,6 +213,7 @@ locals {
       email      = "manuel.quinteros@binbash.com.ar"
       groups = [
         "devops",
+        "marketplaceseller",
       ]
     }
     "julian.curetti" = {
@@ -312,13 +315,12 @@ locals {
         "datascientists",
       ]
     }
-    "leandro.mana" = {
-      first_name = "Leandro"
-      last_name  = "Mana"
-      email      = "leandro.mana@binbash.com.ar"
+    "roberto.trujillo" = {
+      first_name = "Roberto"
+      last_name  = "Trujillo"
+      email      = "roberto.trujillo@binbash.com.ar"
       groups = [
-        "datascientists",
-        "devops"
+        "datascientists"
       ]
     }
   }

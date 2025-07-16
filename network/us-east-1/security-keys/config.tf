@@ -2,7 +2,7 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  region  = var.region_secondary
+  region  = var.region
   profile = var.profile
 
   default_tags {

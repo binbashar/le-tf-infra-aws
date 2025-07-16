@@ -1,25 +1,20 @@
-# This file is maintained automatically by "terraform init".
+# This file is maintained automatically by "tofu init".
 # Manual edits may be lost in future updates.
 
-provider "registry.terraform.io/hashicorp/aws" {
-  version     = "4.46.0"
-  constraints = ">= 3.64.0, ~> 4.10"
+provider "registry.opentofu.org/hashicorp/aws" {
+  version     = "5.100.0"
+  constraints = ">= 3.64.0, ~> 5.0"
   hashes = [
-    "h1:EZB4OgvytV38JpWyye9zoMQ0bfT9yB9xSXM5NY3Lrws=",
-    "zh:1678e6a4bdb3d81a6713adc62ca0fdb8250c584e10c10d1daca72316e9db8df2",
-    "zh:329903acf86ef6072502736dff4c43c2b50f762a958f76aa924e2d74c7fca1e3",
-    "zh:33db8131fe0ec7e1d9f30bc9f65c2440e9c1f708d681b6062757a351f1df7ce6",
-    "zh:3a3b010bc393784c16f4b6cdce7f76db93d5efa323fce4920bfea9e9ba6abe44",
-    "zh:979e2713a5759a7483a065e149e3cb69db9225326fc0457fa3fc3a48aed0c63f",
-    "zh:9b12af85486a96aedd8d7984b0ff811a4b42e3d88dad1a3fb4c0b580d04fa425",
-    "zh:9efcf0067e16ad53da7504178a05eb2118770b4ae00c193c10ecad4cbfce308e",
-    "zh:a10655bf1b6376ab7f3e55efadf54dc70f7bd07ca11369557c312095076f9d62",
-    "zh:b0394dd42cbd2a718a7dd7ae0283f04769aaf8b3d52664e141da59c0171a11ab",
-    "zh:b958e614c2cf6d9c05a6ad5e94dc5c04b97ebfb84415da068be5a081b5ebbe24",
-    "zh:ba5069e624210c63ad9e633a8eb0108b21f2322bc4967ba2b82d09168c466888",
-    "zh:d7dfa597a17186e7f4d741dd7111849f1c0dd6f7ebc983043d8262d2fb37b408",
-    "zh:e8a641ca2c99f96d64fa2725875e797273984981d3e54772a2823541c44e3cd3",
-    "zh:f89898b7067c4246293a8007f59f5cfcac7b8dd251d39886c7a53ba596251466",
-    "zh:fb1e1df1d5cc208e08a850f8e84423bce080f01f5e901791c79df369d3ed52f2",
+    "h1:zef23ac/YWw9O2FepFWRs+my9iWWUkniL4dT4LnCKjU=",
+    "zh:1a41f3ee26720fee7a9a0a361890632a1701b5dc1cf5355dc651ddbe115682ff",
+    "zh:30457f36690c19307921885cc5e72b9dbeba369445815903acd5c39ac0e41e7a",
+    "zh:42c22674d5f23f6309eaf3ac3a4f1f8b66b566c1efe1dcb0dd2fb30c17ce1f78",
+    "zh:4cc271c795ff8ce6479ec2d11a8ba65a0a9ed6331def6693f4b9dccb6e662838",
+    "zh:60932aa376bb8c87cd1971240063d9d38ba6a55502c867fdbb9f5361dc93d003",
+    "zh:864e42784bde77b18393ebfcc0104cea9123da5f4392e8a059789e296952eefa",
+    "zh:9750423138bb01ecaa5cec1a6691664f7783d301fb1628d3b64a231b6b564e0e",
+    "zh:e5d30c4dec271ef9d6fe09f48237ec6cfea1036848f835b4e47f274b48bda5a7",
+    "zh:e62bd314ae97b43d782e0841b13e68a3f8ec85cc762004f973ce5ce7b6cdbfd0",
+    "zh:ea851a3c072528a4445ac6236ba2ce58ffc99ec466019b0bd0e4adde63a248e4",
   ]
 }
