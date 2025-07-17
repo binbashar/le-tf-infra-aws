@@ -13,10 +13,12 @@ resource "aws_iam_policy" "deploy_master_access" {
             "Effect": "Allow",
             "Action": [
                 "dynamodb:*",
+                "events:*",
                 "iam:*",
                 "logs:*",
                 "s3:*",
                 "kms:*",
+                "lambda:*",
                 "organizations:Describe*",
                 "organizations:List*"
             ],
