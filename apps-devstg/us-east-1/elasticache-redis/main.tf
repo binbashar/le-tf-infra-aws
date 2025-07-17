@@ -32,7 +32,7 @@ module "elasticache" {
       # Default type is `ingress`
       # Default port is based on the default engine port
       description = "VPC traffic"
-      cidr_ipv4   = "0.0.0.0/0"
+      cidr_ipv4   = "0.0.0.0/0" #TODO: fix this
     }
   }
 
@@ -59,6 +59,7 @@ output "v2" {
   value = data.terraform_remote_state.vpc.outputs.vpc_cidr_block
 }*/
 
+#TODO: FIX ports and cidrs
 resource "aws_security_group_rule" "elasticache_egress_custom" {
   type              = "egress"
   from_port         = 0                                    # customize as needed
