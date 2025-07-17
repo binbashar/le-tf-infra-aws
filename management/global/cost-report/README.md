@@ -19,4 +19,4 @@ This module deploys a Lambda function to fetch AWS cost data and post a daily re
 - **Runtime Retrieval**: At runtime, the Lambda reads the secret ARN from the `SLACK_WEBHOOK_SECRET_ID` environment variable and fetches the actual webhook URL using the AWS SDK (`boto3`).
 - **Usage**: This approach ensures the Slack webhook URL is never exposed in plaintext in the Lambda configuration or logs, and can be rotated easily in Secrets Manager without redeploying the function. The use of a KMS CMK ensures that only authorized resources (like this Lambda) can decrypt and access the secret value.
 
-> For advanced configuration or troubleshooting, review the comments in `main.tf`. 
+> For advanced configuration or troubleshooting, review the comments in `main.tf`.

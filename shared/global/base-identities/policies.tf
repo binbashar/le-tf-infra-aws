@@ -181,7 +181,8 @@ resource "aws_iam_policy" "deploy_master_access" {
                 "wafv2:*",
                 "waf-regional:*",
                 "kms:*",
-                "secretsmanager:GetSecretValue"
+                "secretsmanager:Get*",
+                "secretsmanager:Describe*"
             ],
             "Resource": [
                 "*"

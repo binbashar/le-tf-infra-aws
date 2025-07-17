@@ -48,7 +48,7 @@ module "cost_report" {
   # Grant this Lambda permissions through ad-hoc policies
   attach_policy_jsons    = true
   number_of_policy_jsons = 1
-  policy_jsons           = [
+  policy_jsons = [
     <<-EOT
     {
       "Version": "2012-10-17",
