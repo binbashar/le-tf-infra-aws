@@ -15,6 +15,7 @@ data "aws_iam_policy_document" "secrets_policy" {
       type = "AWS"
       identifiers = [
         "arn:aws:iam::${var.accounts.shared.id}:role/DevOps",
+        "arn:aws:iam::${var.accounts.shared.id}:role/DeployMaster",
         "arn:aws:iam::${var.accounts.data-science.id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_DevOps_a1627cef3f7399d3",
       ]
     }
@@ -37,7 +38,7 @@ data "aws_iam_policy_document" "merged_secret_policy" {
       actions   = statement.value.actions
       resources = statement.value.resources
       effect    = statement.value.effect
-      
+
       dynamic "principals" {
         for_each = contains(keys(statement.value), "principal") ? [statement.value.principal] : []
         content {
