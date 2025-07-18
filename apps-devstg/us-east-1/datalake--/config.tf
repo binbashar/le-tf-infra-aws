@@ -1,0 +1,53 @@
+#=============================#
+# AWS Provider Settings       #
+#=============================#
+provider "aws" {
+  region  = var.region
+  profile = var.profile
+}
+
+#=============================#
+# Backend Config (partial)    #
+#=============================#
+terraform {
+  required_version = ">= 1.1.3"
+
+  required_providers {
+    aws = "~> 5.0"
+  }
+
+  backend "s3" {
+    key = "apps-devstg/datalake/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "keys" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/security-keys/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "dynamodb" {
+  backend = "s3"
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/databases-dynamodb/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "datalake_demo" {
+  backend = "s3"
+  config = {
+    region  = var.region
+    profile = "bb-data-science-devops"
+    bucket  = "bb-data-science-terraform-backend"
+    key     = "data-science/datalake-demo/terraform.tfstate"
+  }
+}
