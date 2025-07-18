@@ -40,4 +40,4 @@ resource "aws_dynamodb_kinesis_streaming_destination" "ddb_to_kinesis" {
   stream_arn                               = module.kinesis_stream_datalake.stream_arn
   table_name                               = data.terraform_remote_state.dynamodb.outputs.dynamodb_table_name
   approximate_creation_date_time_precision = "MICROSECOND"
-} 
+}

@@ -50,4 +50,4 @@ data "terraform_remote_state" "datalake_demo" {
     bucket  = "bb-data-science-terraform-backend"
     key     = "data-science/datalake-demo/terraform.tfstate"
   }
-} 
+}
