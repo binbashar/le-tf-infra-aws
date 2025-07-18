@@ -111,6 +111,6 @@ data "terraform_remote_state" "kinesis_stream_apps_devstg" {
     region  = var.region
     profile = "bb-apps-devstg-devops"
     bucket  = "bb-apps-devstg-terraform-backend"
-    key     = "apps-devstg/databases-dynamodb/terraform.tfstate"
+    key     = "apps-devstg/datalake/terraform.tfstate"
   }
 }

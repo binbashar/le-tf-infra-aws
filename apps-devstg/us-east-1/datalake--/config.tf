@@ -17,7 +17,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/databases-dynamodb/terraform.tfstate"
+    key = "apps-devstg/datalake/terraform.tfstate"
   }
 }
 
@@ -31,3 +31,23 @@ data "terraform_remote_state" "keys" {
     key     = "${var.environment}/security-keys/terraform.tfstate"
   }
 }
+
+data "terraform_remote_state" "dynamodb" {
+  backend = "s3"
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/databases-dynamodb/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "datalake_demo" {
+  backend = "s3"
+  config = {
+    region  = var.region
+    profile = "bb-data-science-devops"
+    bucket  = "bb-data-science-terraform-backend"
+    key     = "data-science/datalake-demo/terraform.tfstate"
+  }
+} 

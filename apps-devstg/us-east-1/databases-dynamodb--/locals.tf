@@ -9,4 +9,4 @@ locals {
     Environment = var.environment
     Layer       = local.layer_name
   }
-} 
+}
