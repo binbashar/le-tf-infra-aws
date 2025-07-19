@@ -178,6 +178,7 @@ resource "aws_iam_policy" "deploy_master_access" {
         {
             "Effect": "Allow",
             "Action": [
+                "access-analyzer:*",
                 "athena:*",
                 "budgets:*",
                 "cloudfront:*",
@@ -190,6 +191,7 @@ resource "aws_iam_policy" "deploy_master_access" {
                 "dynamodb:*",
                 "ec2:*",
                 "ecr:*",
+                "events:*",
                 "glue:*",
                 "iam:*",
                 "logs:*",
