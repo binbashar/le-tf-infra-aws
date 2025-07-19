@@ -31,5 +31,11 @@ module "machine_user" {
   create_iam_access_key         = true
   upload_iam_user_ssh_key       = false
 
+  #
+  # TODO These machine users are managed by us, the DevOps/Infra team. For
+  # these we don't really need to create separate GPG keys per user because we
+  # will be ones decrypting the encrypted secret access key. So, a single key
+  # should suffice and simplify the process.
+  #
   pgp_key = file("keys/${each.key}")
 }
