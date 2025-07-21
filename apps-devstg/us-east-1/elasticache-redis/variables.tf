@@ -11,15 +11,15 @@ variable "node_type" {
 }
 
 variable "cluster_mode_enabled" {
-  type = bool
+  type        = bool
   description = "If true, more than one instance is created. Cannot be true if single_instance_mode_enabled is true."
-  default = false
+  default     = false
 }
 
 variable "single_instance_mode_enabled" {
-  type = bool
+  type        = bool
   description = "If true, it creates only one instance. Cannot be true if cluster_mode_enabled is true."
-  default = true
+  default     = true
 }
 
 variable "multi_az_enabled" {
@@ -80,4 +80,16 @@ variable "apply_immediately" {
   description = "Whether any database modifications are applied immediately, or during the next maintenance window."
   type        = bool
   default     = true
+}
+
+variable "port" {
+  description = "The port number on which each of the cache nodes will accept connections."
+  type        = number
+  default     = 6379
+}
+
+variable "parameters" {
+  description = "List of ElastiCache parameters to apply"
+  type        = list(map(string))
+  default     = []
 }

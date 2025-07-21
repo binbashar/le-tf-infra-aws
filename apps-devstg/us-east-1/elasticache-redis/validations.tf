@@ -1,8 +1,4 @@
 resource "null_resource" "cluster_mode" {
-  triggers = {
-    always_run = timestamp()
-  }
-
   lifecycle {
     precondition {
       condition     = var.cluster_mode_enabled != var.single_instance_mode_enabled
@@ -13,10 +9,6 @@ resource "null_resource" "cluster_mode" {
 
 
 resource "null_resource" "multi_az_and_failover" {
-  triggers = {
-    always_run = timestamp()
-  }
-
   lifecycle {
     precondition {
       condition     = !(var.multi_az_enabled && !var.automatic_failover_enabled)
@@ -26,10 +18,6 @@ resource "null_resource" "multi_az_and_failover" {
 }
 
 resource "null_resource" "cluster_mode_and_failover" {
-  triggers = {
-    always_run = timestamp()
-  }
-
   lifecycle {
     precondition {
       condition     = !(var.cluster_mode_enabled && !var.automatic_failover_enabled)

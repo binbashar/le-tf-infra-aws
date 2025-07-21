@@ -4,6 +4,15 @@
 provider "aws" {
   region  = var.region
   profile = var.profile
+  default_tags {
+    tags = local.tags
+  }
+}
+
+provider "aws" {
+  region  = var.region
+  profile = "${var.project}-shared-devops"
+  alias   = "shared"
 }
 
 #=============================#
@@ -32,17 +41,6 @@ data "terraform_remote_state" "vpc" {
   }
 }
 
-data "terraform_remote_state" "tools-vpn-server" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-shared-devops"
-    bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/vpn-server/terraform.tfstate"
-  }
-}
-
 data "terraform_remote_state" "shared_vpc" {
   backend = "s3"
 
@@ -52,4 +50,9 @@ data "terraform_remote_state" "shared_vpc" {
     bucket  = "${var.project}-shared-terraform-backend"
     key     = "shared/network/terraform.tfstate"
   }
+}
+
+data "aws_secretsmanager_secret_version" "auth_token" {
+  provider  = aws.shared
+  secret_id = "/devops/apps-devstg/elasticache-redis/auth_token"
 }
