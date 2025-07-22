@@ -1,7 +1,3 @@
-output "replication_group_primary_endpoint_address" {
-  value       = module.elasticache.replication_group_primary_endpoint_address
-  description = "Address of the endpoint for the primary node in the replication group, if the cluster mode is disabled"
-}
 output "replication_group_configuration_endpoint_address" {
   value       = module.elasticache.replication_group_configuration_endpoint_address
   description = "Address of the replication group configuration endpoint when cluster mode is enabled"

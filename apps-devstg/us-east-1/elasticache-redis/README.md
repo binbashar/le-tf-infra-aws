@@ -1,35 +1,68 @@
-# Elasticache Redis reference layer
+# ElastiCache Redis Reference Layer
 
 ## Overview
-This documentation should help you understand the possible variants this layer has. \
-Notice this module is helpful to create only elasticache Redis type, not memcache or Valkey. \
-This module support both `Single Instance Mode` and `Cluster Mode`. \
-In `Cluster Mode`, it will create replication groups, with a shards and a nodes. \
-In `Single Instance Mode`, it will create an isolated cluster with a single node and no shards. \
-In the `Cluster Mode`, you can manage how many replication groups, shards, and nodes can be created. \
-By default this layer will be `Single Instance Mode`.
 
-## MultiAZ and Failover configurations
-It only works in `Cluster Mode`. \
-This two features can be easily added by setting `multi_az_enabled = true`, and `automatic_failover_enabled = true`. \
-If you want to enable MultiAZ, Failover must be enabled as well. \
-By default, they are both disabled.
+This module provisions AWS ElastiCache for Redis clusters.  
+**Note:** This module supports only Redis, not Memcached or Valkey. \
+You can deploy in two modes:
+- **Single Instance Mode:** A single-node, non-sharded Redis cluster.
+- **Cluster Mode:** A sharded Redis cluster with configurable replication groups, shards, and nodes.
 
-## Sizing
-The default size is `cache.t3.small`. \
-It can be updated by changing the var `node_type`.
+By default, the module deploys in **Single Instance Mode**.  
+To customize variables, edit the `terraform.tfvars` file.
 
 ## Cluster Mode
-To start this configuration `cluster_mode_enabled = true`, `single_instance_mode_enabled = false` is needed. \
-If you want to update the number of shards (or node groups), should set `num_node_groups = <x>`. \
-If you want to update the number of replicas (or nodes), should set `replicas_per_node_group = <x>`. \
-The limit is 90 nodes. It could be 90 shards with 0 replicas or 15 shards with 5 replicas. (Notice that every shard starts with 1 primary read/write node, and replicas are read-only). \
-If you want to check the sharding limitation and possible configurations, can be checked [here](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Shards.html).
+
+To enable Cluster Mode, set:
+```hcl
+cluster_mode_enabled           = true
+single_instance_mode_enabled   = false
+```
+
+- **Shards (Node Groups):** Set `num_node_groups = <number_of_shards>`.
+- **Replicas (Nodes) per Shard:** Set `replicas_per_node_group = <number_of_replicas>`.
+
+**Limits:**  
+- Maximum 90 nodes per cluster (e.g., 90 shards with 0 replicas, or 15 shards with 5 replicas each).
+- Each shard has 1 primary (read/write) node; replicas are read-only.
+
+For more details on sharding and limitations, see the [AWS documentation](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Shards.html).
+
+## Multi-AZ and Failover
+
+These features are available only in **Cluster Mode**.
+
+- Enable Multi-AZ: `multi_az_enabled = true`
+- Enable Automatic Failover: `automatic_failover_enabled = true`
+
+**Note:** Multi-AZ requires automatic failover to be enabled.  
+Both are disabled by default.
+
+## Sizing
+
+- Default node type: `cache.t3.small`
+- To change, set the `node_type` variable.
 
 ## Single Instance Mode
-By default, it will be a `Single Instance Mode`. \
-You should setup the vars `cluster_mode_enabled = false` and `single_instance_mode_enabled = true`.
 
-## How to test it?
-Take the endpoint and the port from the output (in the outputs file), and the auth-token from the secret.
+By default, the module deploys in Single Instance Mode:
+```hcl
+cluster_mode_enabled           = false
+single_instance_mode_enabled   = true
+```
+
+## Outputs & Testing
+
+After applying the infrastructure, refer to the `outputs.tf` file for connection details:
+
+- **Port:** Output variable `port`
+- **Endpoint:**
+  - Single Instance: `cluster_address`
+  - Cluster Mode: `replication_group_configuration_endpoint_address`
+
+**To test connectivity:**
+```sh
 redis-cli --tls -h <endpoint> -p <port> -a '<auth-token>'
+```
+- Obtain the auth token from your secrets manager.
+- If using a VPC, ensure security groups and VPN access are properly configured.

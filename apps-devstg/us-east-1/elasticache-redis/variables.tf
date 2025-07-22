@@ -19,7 +19,7 @@ variable "cluster_mode_enabled" {
 variable "single_instance_mode_enabled" {
   type        = bool
   description = "If true, it creates only one instance. Cannot be true if cluster_mode_enabled is true."
-  default     = true
+  default     = false
 }
 
 variable "multi_az_enabled" {
