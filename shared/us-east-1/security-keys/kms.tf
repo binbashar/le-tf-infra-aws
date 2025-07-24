@@ -37,7 +37,6 @@ data "aws_iam_policy_document" "kms" {
     principals {
       type = "AWS"
       identifiers = [
-        "arn:aws:iam::${var.accounts.data-science.id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_DevOps_a1627cef3f7399d3",
         # Cost Report lambda function
         "arn:aws:iam::${var.accounts.management.id}:role/bb-root-cost-report"
       ]

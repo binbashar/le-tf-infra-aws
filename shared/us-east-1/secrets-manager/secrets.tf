@@ -14,10 +14,14 @@ data "aws_iam_policy_document" "secrets_policy" {
     principals {
       type = "AWS"
       identifiers = [
-        "arn:aws:iam::${var.accounts.shared.id}:role/DevOps",
-        "arn:aws:iam::${var.accounts.shared.id}:role/DeployMaster",
-        "arn:aws:iam::${var.accounts.data-science.id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_DevOps_a1627cef3f7399d3",
-        "arn:aws:iam::${var.accounts.apps-devstg.id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_DevOps_229828e5923d6952",
+        # Delegate control to the owner account; which happens by default but I couldn't leave this
+        # identifiers list empty
+        "arn:aws:iam::${var.accounts.shared.id}:root"
+
+        # Add below only cross-account (or cross-region) roles that require read access to all secrets.
+        # For instance, SSO roles or IAM entities in this account shouldn't need that.
+        # Important: you will also have to update the KMS key that is used to encrypt the secrets
+        # E.g. "arn:aws:iam::some-account:role/some-special-tool-that-requires-this-much-access"
       ]
     }
   }
