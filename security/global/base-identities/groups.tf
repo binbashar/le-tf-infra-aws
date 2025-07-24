@@ -62,11 +62,24 @@ module "iam_group_deploymaster" {
 
   group_users = [
     module.machine_user["machine.circle.ci"].iam_user_name,
-    module.machine_user["machine.github.actions"].iam_user_name
+    module.machine_user["machine.github.actions"].iam_user_name,
   ]
 
   custom_group_policy_arns = [
     aws_iam_policy.assume_deploymaster_role.arn,
+  ]
+}
+
+module "iam_group_atlantis" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v5.9.2"
+  name   = "atlantis"
+
+  group_users = [
+    module.machine_user["machine.atlantis"].iam_user_name,
+  ]
+
+  custom_group_policy_arns = [
+    aws_iam_policy.atlantis.arn,
   ]
 }
 

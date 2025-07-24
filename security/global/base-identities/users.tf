@@ -21,7 +21,7 @@ module "user" {
 module "machine_user" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v5.60.0"
 
-  for_each = toset(local.machine_users)
+  for_each = local.machine_users
 
   name                    = each.key
   force_destroy           = true
@@ -31,11 +31,5 @@ module "machine_user" {
   create_iam_access_key         = true
   upload_iam_user_ssh_key       = false
 
-  #
-  # TODO These machine users are managed by us, the DevOps/Infra team. For
-  # these we don't really need to create separate GPG keys per user because we
-  # will be ones decrypting the encrypted secret access key. So, a single key
-  # should suffice and simplify the process.
-  #
-  pgp_key = file("keys/${each.key}")
+  pgp_key = file("keys/${each.value}")
 }
