@@ -52,61 +52,13 @@ resource "aws_route53_record" "aws_public_hosted_zone_1_mx_records" {
 module "domain-redirect-binbash_com_ar-to-binbash_co" {
   source                  = "github.com/binbashar/terraform-aws-domain-redirect?ref=v1.0.1"
   source_hosted_zone_name = "binbash.com.ar"
+  source_hosted_zone_sub_domains = [
+    "www.binbash.com.ar", 
+    ]
   target_url              = "binbash.co"
   providers = {
     aws.us-east-1 = aws.main_region
   }
-}
-
-#
-# CNAME records
-#
-resource "aws_route53_record" "pub_CNAME_www_binbash_com_ar" {
-  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
-  name    = "www.binbash.com.ar"
-  records = ["www33.wixdns.net"]
-  type    = "CNAME"
-  ttl     = 300
-}
-
-resource "aws_route53_record" "pub_CNAME_sendgrid_1" {
-  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
-  name    = "url5402.binbash.com.ar"
-  records = ["sendgrid.net"]
-  type    = "CNAME"
-  ttl     = 300
-}
-
-resource "aws_route53_record" "pub_CNAME_sendgrid_2" {
-  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
-  name    = "26974810.binbash.com.ar"
-  records = ["sendgrid.net"]
-  type    = "CNAME"
-  ttl     = 300
-}
-
-resource "aws_route53_record" "pub_CNAME_sendgrid_3" {
-  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
-  name    = "em8184.binbash.com.ar"
-  records = ["u26974810.wl061.sendgrid.net"]
-  type    = "CNAME"
-  ttl     = 300
-}
-
-resource "aws_route53_record" "pub_CNAME_sendgrid_4" {
-  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
-  name    = "s1._domainkey.binbash.com.ar"
-  records = ["s1.domainkey.u26974810.wl061.sendgrid.net"]
-  type    = "CNAME"
-  ttl     = 300
-}
-
-resource "aws_route53_record" "pub_CNAME_sendgrid_5" {
-  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
-  name    = "s2._domainkey.binbash.com.ar"
-  records = ["s2.domainkey.u26974810.wl061.sendgrid.net"]
-  type    = "CNAME"
-  ttl     = 300
 }
 
 #
