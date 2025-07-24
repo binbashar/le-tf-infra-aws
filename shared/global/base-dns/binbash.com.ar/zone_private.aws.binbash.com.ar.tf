@@ -29,14 +29,10 @@ resource "aws_route53_zone" "aws_private_hosted_zone_1" {
     vpc_id     = data.terraform_remote_state.vpc-apps-devstg.outputs.vpc_id
     vpc_region = var.region
   }
-  vpc {
-    vpc_id     = data.terraform_remote_state.vpc-apps-devstg-eks.outputs.vpc_id
-    vpc_region = var.region
-  }
-  vpc {
+/*   vpc {
     vpc_id     = data.terraform_remote_state.vpc-apps-devstg-eks-demoapps.outputs.vpc_id
     vpc_region = var.region
-  }
+  } */
   vpc {
     vpc_id     = data.terraform_remote_state.vpc-apps-devstg-eks-dr.outputs.vpc_id
     vpc_region = var.region
