@@ -19,7 +19,7 @@ module "guardduty" {
   # Pre-existing Org Accounts (already members) have to be declared below
   guardduty_member_accounts = {
     root = {
-      account_id = var.accounts.root.id
+      account_id = var.accounts.management.id
       email      = "info@binbash.com.ar"
     },
     shared = {
