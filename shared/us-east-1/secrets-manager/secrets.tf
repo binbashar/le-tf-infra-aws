@@ -17,6 +17,7 @@ data "aws_iam_policy_document" "secrets_policy" {
         "arn:aws:iam::${var.accounts.shared.id}:role/DevOps",
         "arn:aws:iam::${var.accounts.shared.id}:role/DeployMaster",
         "arn:aws:iam::${var.accounts.data-science.id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_DevOps_a1627cef3f7399d3",
+        "arn:aws:iam::${var.accounts.apps-devstg.id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_DevOps_229828e5923d6952",
       ]
     }
   }
