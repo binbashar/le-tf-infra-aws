@@ -10,6 +10,9 @@ region_primary = "us-east-1"
 # AWS Region for DR replication (required by the backend but also used for other resources)
 region_secondary      = "us-east-2"
 
+# List of regions allowed (commonly used in IAM policies to constrain access)
+regions_allowed = ["us-east-1", "us-east-2", "us-west-2"]
+
 # Accounts
 accounts = {
   management = {

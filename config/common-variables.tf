@@ -18,6 +18,11 @@ variable "region_primary" {
   description = "AWS Region"
 }
 
+variable "regions_allowed" {
+  type        = list
+  description = "List of allowed AWS regions"
+}
+
 variable "profile" {
   type        = string
   description = "AWS Profile (required by the backend but also used for other resources)"

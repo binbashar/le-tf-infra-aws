@@ -134,29 +134,6 @@ module "iam_assumable_role_grafana" {
 }
 
 #
-# Role: alb-ingress for EKS OIDC
-#
-# module "alb_ingress" {
-#   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v4.7.0"
-
-#   create_role  = true
-#   role_name    = "alb-ingress"
-#   provider_url = replace(data.terraform_remote_state.cluster-eks.outputs.cluster_oidc_issuer_url, "https://", "")
-
-#   role_policy_arns = [
-#     aws_iam_policy.alb_ingress.arn
-#   ]
-#   oidc_fully_qualified_subjects = [
-#     "system:serviceaccount:alb-ingress:alb-ingress"
-#   ]
-
-#   tags = {
-#     Subject = "alb-ingress"
-#     Purpose = "eks-oidc"
-#   }
-# }
-
-#
 # Assumable Role Cross-Account: Velero Backups
 #
 
@@ -313,5 +290,87 @@ module "iam_assumable_role_north_cloud_access" {
 
 }
 
+#
+# Cross-Account Role: Atlantis
+#
+module "iam_assumable_role_atlantis" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.59.0"
 
+  create_role       = true
+  role_name         = "Atlantis"
+  role_requires_mfa = false
 
+  trusted_role_arns = [
+    "arn:aws:iam::${var.accounts.security.id}:root",
+  ]
+
+  # Use inline only if you anticipate you won't need to reuse the same policy statements
+  inline_policy_statements = [
+    {
+      sid = "Baseline"
+      actions = [
+        "acm:*",
+        "apigateway:*",
+        "application-autoscaling:*",
+        "appsync:*",
+        "autoscaling:*",
+        "aws-portal:*",
+        "backup-storage:*",
+        "backup:*",
+        "budgets:*",
+        "ce:*",
+        "cloudformation:*",
+        "cloudfront:*",
+        "cloudtrail:*",
+        "cloudwatch:*",
+        "compute-optimizer:*",
+        "config:*",
+        "dlm:*",
+        "dynamodb:*",
+        "ec2:*",
+        "ecr:*",
+        "ecs:*",
+        "eks:*",
+        "elasticloadbalancing:*",
+        "events:*",
+        "health:*",
+        "iam:*",
+        "kms:*",
+        "lambda:*",
+        "logs:*",
+        "organizations:Describe*",
+        "organizations:List*",
+        "ram:*",
+        "rds:*",
+        "redshift:*",
+        "route53:*",
+        "route53domains:*",
+        "route53resolver:*",
+        "s3:*",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:Describe*",
+        "ses:*",
+        "shield:*",
+        "sns:*",
+        "sqs:*",
+        "ssm:*",
+        "support:*",
+        "tag:*",
+        "transfer:*",
+        "trustedadvisor:*",
+        "waf-regional:*",
+        "waf:*",
+        "wafv2:*",
+      ]
+      effect    = "Allow"
+      resources = ["*"]
+      conditions = [
+        {
+          test     = "StringEquals"
+          values   = var.regions_allowed
+          variable = "aws:RequestedRegion"
+        }
+      ]
+    }
+  ]
+}
