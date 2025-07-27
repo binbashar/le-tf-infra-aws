@@ -25,8 +25,6 @@ module "iam_assumable_role_devops" {
   custom_role_policy_arns = [
     aws_iam_policy.devops_access.arn
   ]
-
-
 }
 
 #
@@ -53,8 +51,6 @@ module "iam_assumable_role_auditor" {
   custom_role_policy_arns = [
     "arn:aws:iam::aws:policy/SecurityAudit"
   ]
-
-
 }
 
 #
@@ -82,8 +78,6 @@ module "iam_assumable_role_deploy_master" {
   custom_role_policy_arns = [
     aws_iam_policy.deploy_master_access.arn
   ]
-
-
 }
 
 #
@@ -109,8 +103,6 @@ module "iam_assumable_role_grafana" {
   custom_role_policy_arns = [
     aws_iam_policy.grafana_permissions.arn
   ]
-
-
 }
 
 #
@@ -137,6 +129,71 @@ module "iam_assumable_role_lambda_costs_explorer_access" {
   custom_role_policy_arns = [
     aws_iam_policy.lambda_costs_explorer_access.arn,
   ]
+}
 
+#
+# Cross-Account Role: Atlantis
+#
+module "iam_assumable_role_atlantis" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.59.0"
 
+  create_role       = true
+  role_name         = "Atlantis"
+  role_requires_mfa = false
+
+  trusted_role_arns = [
+    "arn:aws:iam::${var.accounts.security.id}:root",
+  ]
+
+  # Use inline only if you anticipate you won't need to reuse the same policy statements
+  inline_policy_statements = [
+    {
+      sid = "Baseline"
+      actions = [
+        "acm:*",
+        "apigateway:*",
+        "autoscaling:*",
+        "aws-portal:*",
+        "cloudformation:*",
+        "cloudfront:*",
+        "cloudtrail:*",
+        "cloudwatch:*",
+        "config:*",
+        "dlm:*",
+        "dynamodb:*",
+        "ec2:*",
+        "ecs:*",
+        "elasticloadbalancing:*",
+        "events:*",
+        "health:*",
+        "iam:*",
+        "kms:*",
+        "lambda:*",
+        "logs:*",
+        "organizations:Describe*",
+        "organizations:List*",
+        "rds:*",
+        "redshift:*",
+        "route53:*",
+        "s3:*",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:Describe*",
+        "sns:*",
+        "sqs:*",
+        "ssm:*",
+        "support:*",
+        "tag:*",
+        "trustedadvisor:*",
+      ]
+      effect    = "Allow"
+      resources = ["*"]
+      conditions = [
+        {
+          test     = "StringEquals"
+          values   = var.regions_allowed
+          variable = "aws:RequestedRegion"
+        }
+      ]
+    }
+  ]
 }

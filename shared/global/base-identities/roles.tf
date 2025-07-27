@@ -65,7 +65,6 @@ module "iam_assumable_role_deploy_master" {
 
   trusted_role_arns = [
     "arn:aws:iam::${var.accounts.security.id}:root",
-    "arn:aws:iam::${var.accounts.shared.id}:root"
   ]
 
   create_role = true
@@ -289,6 +288,61 @@ module "iam_assumable_role_lambda_costs_explorer_access" {
   custom_role_policy_arns = [
     aws_iam_policy.lambda_costs_explorer_access.arn,
   ]
+}
 
+#
+# Cross-Account Role: Atlantis
+#
+module "iam_assumable_role_atlantis" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.59.0"
 
+  create_role       = true
+  role_name         = "Atlantis"
+  role_requires_mfa = false
+
+  trusted_role_arns = [
+    "arn:aws:iam::${var.accounts.security.id}:root",
+  ]
+
+  # Use inline only if you anticipate you won't need to reuse the same policy statements
+  inline_policy_statements = [
+    {
+      sid = "Baseline"
+      actions = [
+        "athena:*",
+        "budgets:*",
+        "cloudfront:*",
+        "cloudtrail:*",
+        "cloudwatch:*",
+        "config:*",
+        "dynamodb:*",
+        "ec2:*",
+        "ecr:*",
+        "elasticloadbalancing:*",
+        "glue:*",
+        "iam:*",
+        "kms:*",
+        "logs:*",
+        "organizations:Describe*",
+        "organizations:List*",
+        "route53:*",
+        "route53domains:*",
+        "s3:*",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:Describe*",
+        "sns:*",
+        "ssm:*",
+        "sqs:*",
+      ]
+      effect    = "Allow"
+      resources = ["*"]
+      conditions = [
+        {
+          test     = "StringEquals"
+          values   = var.regions_allowed
+          variable = "aws:RequestedRegion"
+        }
+      ]
+    }
+  ]
 }
