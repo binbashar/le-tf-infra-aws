@@ -174,6 +174,55 @@ module "account_assignments" {
       principal_name      = local.groups["readonly"].name
       account             = var.accounts.apps-prd.id
     },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["ReadOnly"].arn
+      permission_set_name = "ReadOnly"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["readonly"].name
+      account             = var.accounts.management.id
+    },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["ReadOnly"].arn
+      permission_set_name = "ReadOnly"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["readonly"].name
+      account             = var.accounts.security.id
+    },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["ReadOnly"].arn
+      permission_set_name = "ReadOnly"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["readonly"].name
+      account             = var.accounts.network.id
+    },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["ReadOnly"].arn
+      permission_set_name = "ReadOnly"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["readonly"].name
+      account             = var.accounts.data-science.id
+    },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["ReadOnly"].arn
+      permission_set_name = "ReadOnly"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["readonly"].name
+      account             = var.accounts["workshop-genai-1"].id
+    },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["ReadOnly"].arn
+      permission_set_name = "ReadOnly"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["readonly"].name
+      account             = var.accounts["workshop-genai-2"].id
+    },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["ReadOnly"].arn
+      permission_set_name = "ReadOnly"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["readonly"].name
+      account             = var.accounts["workshop-genai-3"].id
+    },
 
     # -------------------------------------------------------------------------
     # Marketplace Permissions
