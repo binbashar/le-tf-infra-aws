@@ -1,1 +1,0 @@
-single_instance_mode_enabled = true
