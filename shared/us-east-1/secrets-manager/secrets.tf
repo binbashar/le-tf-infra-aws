@@ -38,7 +38,7 @@ data "aws_iam_policy_document" "merged_secret_policy" {
       actions   = statement.value.actions
       resources = statement.value.resources
       effect    = statement.value.effect
-      
+
       dynamic "principals" {
         for_each = contains(keys(statement.value), "principal") ? [statement.value.principal] : []
         content {
