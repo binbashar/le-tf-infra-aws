@@ -1,28 +1,5 @@
 #==============================================================
-# TITLE: Elasticache for Redis
-#--------------------------------------------------------------
-# DESCRIPTION: This example showcases a single node cluster,
-# which should be a good fit for low throughput environments.
-#--------------------------------------------------------------
-# FEATURES:
-# - VPC connectivity
-# - Encryption at-rest & in-transit
-# - Authentication
-#--------------------------------------------------------------
-# ROADMAP:
-# - Replication
-# - Data Partitioning
-# - MultiAZ
-# - Automated Failover
-# - Persistence
-# - Custom DNS
-# - Snapshots
-# - Logging
-# - Notifications
-# - Alarms
-#
-# REFERENCES:
-# - https://aws.amazon.com/blogs/database/work-with-cluster-mode-on-amazon-elasticache-for-redis/
+# Check out the README.md file for implementation details.
 #==============================================================
 module "elasticache_redis" {
   source = "github.com/binbashar/terraform-aws-elasticache-redis.git?ref=v1.9.2"

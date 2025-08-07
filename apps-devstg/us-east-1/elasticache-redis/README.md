@@ -1,68 +1,41 @@
-# ElastiCache Redis Reference Layer
+# ElastiCache for Redis
 
 ## Overview
+This code can be used as a reference for provisioning AWS ElastiCache for Redis clusters.
 
-This module provisions AWS ElastiCache for Redis clusters.  
-**Note:** This module supports only Redis, not Memcached or Valkey. \
-You can deploy in two modes:
-- **Single Instance Mode:** A single-node, non-sharded Redis cluster.
-- **Cluster Mode:** A sharded Redis cluster with configurable replication groups, shards, and nodes.
+## Use Cases
+This example showcases a single node cluster, which should be a good fit for low throughput environments.
 
-By default, the module deploys in **Single Instance Mode**.  
-To customize variables, edit the `terraform.tfvars` file.
+## Limitations
+At the moment, only OSS Redis is supported, not Memcached or Valkey.
 
-## Cluster Mode
+## Features
+- VPC connectivity
+- Encryption at-rest & in-transit
+- Authentication via AUTH token
 
-To enable Cluster Mode, set:
-```hcl
-cluster_mode_enabled           = true
-single_instance_mode_enabled   = false
-```
+## Roadmap
+- Replication
+- Data Partitioning
+- MultiAZ
+- Automated Failover
+- Authentication via IAM
+- Persistence
+- Custom DNS
+- Snapshots
+- Logging
+- Notifications
+- Alarms
 
-- **Shards (Node Groups):** Set `num_node_groups = <number_of_shards>`.
-- **Replicas (Nodes) per Shard:** Set `replicas_per_node_group = <number_of_replicas>`.
+## Usage
+After deploying the infrastructure, refer to the outputs to grab the connection details. You'll need the `endpoint` and `port`.
 
-**Limits:**  
-- Maximum 90 nodes per cluster (e.g., 90 shards with 0 replicas, or 15 shards with 5 replicas each).
-- Each shard has 1 primary (read/write) node; replicas are read-only.
+Now, keep in mind that this setup is configured to be private, but you should be able to connect to it via AWS CloudShell.
 
-For more details on sharding and limitations, see the [AWS documentation](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Shards.html).
-
-## Multi-AZ and Failover
-
-These features are available only in **Cluster Mode**.
-
-- Enable Multi-AZ: `multi_az_enabled = true`
-- Enable Automatic Failover: `automatic_failover_enabled = true`
-
-**Note:** Multi-AZ requires automatic failover to be enabled.  
-Both are disabled by default.
-
-## Sizing
-
-- Default node type: `cache.t3.small`
-- To change, set the `node_type` variable.
-
-## Single Instance Mode
-
-By default, the module deploys in Single Instance Mode:
-```hcl
-cluster_mode_enabled           = false
-single_instance_mode_enabled   = true
-```
-
-## Outputs & Testing
-
-After applying the infrastructure, refer to the `outputs.tf` file for connection details:
-
-- **Port:** Output variable `port`
-- **Endpoint:**
-  - Single Instance: `cluster_address`
-  - Cluster Mode: `replication_group_configuration_endpoint_address`
-
-**To test connectivity:**
+However, if you still would like to connect from your machine, you'll need to get VPN access and you'll also need access to the authentication token stored in Secrets Manager. Once you get those, you should be able to connect using the example below:
 ```sh
 redis-cli --tls -h <endpoint> -p <port> -a '<auth-token>'
 ```
-- Obtain the auth token from your secrets manager.
-- If using a VPC, ensure security groups and VPN access are properly configured.
+
+## References
+- https://aws.amazon.com/blogs/database/work-with-cluster-mode-on-amazon-elasticache-for-redis/
