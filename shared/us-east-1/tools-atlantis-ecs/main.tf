@@ -5,7 +5,8 @@ module "atlantis" {
   source  = "terraform-aws-modules/atlantis/aws"
   version = "4.4.0"
 
-  name = var.name
+  name   = var.name
+  create = var.create
 
   # ECS Cluster
   create_cluster = true
