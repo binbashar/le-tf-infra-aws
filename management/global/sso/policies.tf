@@ -253,6 +253,7 @@ data "aws_iam_policy_document" "data_scientist" {
       "kms:*",
       "lambda:*",
       "logs:*",
+      "mediaconvert:*",
       "pipes:*",
       "polly:*",
       "q:*",
