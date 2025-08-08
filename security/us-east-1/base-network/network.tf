@@ -2,7 +2,7 @@
 # VPC
 #
 module "vpc" {
-  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.18.1"
+  source = "github.com/binbashar/terraform-aws-vpc.git?ref=v3.19.0"
 
   name = local.vpc_name
   cidr = local.vpc_cidr_block
@@ -45,7 +45,7 @@ locals {
 }
 
 module "vpc_endpoints" {
-  source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.18.1"
+  source = "github.com/binbashar/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.19.0"
 
   for_each = local.vpc_endpoints
 
