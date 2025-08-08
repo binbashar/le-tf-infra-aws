@@ -103,56 +103,15 @@ output "user_franco_gauchat_login_profile_encrypted_password" {
 #
 # Machine / Automation Users
 #
-output "user_circle_ci_name" {
-  description = "The user's name"
-  value       = module.machine_user["machine.circle.ci"].iam_user_name
+output "machine_users" {
+  description = "All machine users: username, access_key_id, and access_key_secret for each."
+  value = {
+    for k, v in module.machine_user :
+      k => {
+        username          = v.iam_user_name
+        access_key_id     = v.iam_access_key_id
+        access_key_secret = v.iam_access_key_encrypted_secret
+      }
+  }
+  sensitive = true
 }
-
-output "user_circle_ci_iam_access_key_id" {
-  description = "The aws aim access key"
-  value       = module.machine_user["machine.circle.ci"].iam_access_key_id
-  sensitive   = true
-}
-
-output "user_circle_ci_iam_access_key_encrypted_secret" {
-  description = "The encrypted secret key, base64 encoded"
-  value       = module.machine_user["machine.circle.ci"].iam_access_key_encrypted_secret
-  sensitive   = true
-}
-
-output "user_github_actions_name" {
-  description = "The user's name"
-  value       = module.machine_user["machine.github.actions"].iam_user_name
-}
-
-output "user_github_actions_iam_access_key_id" {
-  description = "The aws aim access key"
-  value       = module.machine_user["machine.github.actions"].iam_access_key_id
-  sensitive   = true
-}
-
-output "user_github_actions_iam_access_key_encrypted_secret" {
-  description = "The encrypted secret key, base64 encoded"
-  value       = module.machine_user["machine.github.actions"].iam_access_key_encrypted_secret
-  sensitive   = true
-}
-
-output "user_s3_demo_name" {
-  description = "The user's name"
-  value       = module.machine_user["machine.s3.demo"].iam_user_name
-}
-
-output "user_s3_demo_iam_access_key_id" {
-  description = "The aws aim access key"
-  value       = module.machine_user["machine.s3.demo"].iam_access_key_id
-  sensitive   = true
-}
-
-output "user_s3_demo_iam_access_key_encrypted_secret" {
-  description = "The encrypted secret key, base64 encoded"
-  value       = module.machine_user["machine.s3.demo"].iam_access_key_encrypted_secret
-  sensitive   = true
-}
-
-
-

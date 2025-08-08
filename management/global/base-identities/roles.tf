@@ -174,3 +174,46 @@ module "iam_assumable_role_deploy_master" {
     aws_iam_policy.deploy_master_access.arn
   ]
 }
+
+#
+# Cross-Account Role: Atlantis
+#
+module "iam_assumable_role_atlantis" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.59.0"
+
+  create_role       = true
+  role_name         = "Atlantis"
+  role_requires_mfa = false
+
+  trusted_role_arns = [
+    "arn:aws:iam::${var.accounts.security.id}:root",
+  ]
+
+  # Use inline only if you anticipate you won't need to reuse the same policy statements
+  inline_policy_statements = [
+    {
+      sid = "Baseline"
+      actions = [
+        "dynamodb:*",
+        "events:*",
+        "iam:*",
+        "kms:*",
+        "logs:*",
+        "s3:*",
+        "lambda:*",
+        "organizations:Describe*",
+        "organizations:List*",
+        "sso:ListInstances",
+      ]
+      effect    = "Allow"
+      resources = ["*"]
+      conditions = [
+        {
+          test     = "StringEquals"
+          values   = var.regions_allowed
+          variable = "aws:RequestedRegion"
+        }
+      ]
+    }
+  ]
+}

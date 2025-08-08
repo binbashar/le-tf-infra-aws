@@ -290,3 +290,73 @@ module "iam_assumable_role_north_cloud_access" {
 
 
 }
+
+#
+# Cross-Account Role: Atlantis
+#
+module "iam_assumable_role_atlantis" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.59.0"
+
+  create_role       = true
+  role_name         = "Atlantis"
+  role_requires_mfa = false
+
+  trusted_role_arns = [
+    "arn:aws:iam::${var.accounts.security.id}:root",
+  ]
+
+  # Use inline only if you anticipate you won't need to reuse the same policy statements
+  inline_policy_statements = [
+    {
+      sid = "Baseline"
+      actions = [
+        "acm:*",
+        "apigateway:*",
+        "application-autoscaling:*",
+        "autoscaling:*",
+        "aws-portal:*",
+        "budgets:*",
+        "cloudformation:*",
+        "cloudfront:*",
+        "cloudtrail:*",
+        "cloudwatch:*",
+        "compute-optimizer:*",
+        "config:*",
+        "dlm:*",
+        "dynamodb:*",
+        "ec2:*",
+        "elasticloadbalancing:*",
+        "events:*",
+        "health:*",
+        "iam:*",
+        "kms:*",
+        "lambda:*",
+        "logs:*",
+        "organizations:Describe*",
+        "organizations:List*",
+        "s3:*",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:Describe*",
+        "shield:*",
+        "sns:*",
+        "sqs:*",
+        "ssm:*",
+        "support:*",
+        "tag:*",
+        "trustedadvisor:*",
+        "waf-regional:*",
+        "waf:*",
+        "wafv2:*",
+      ]
+      effect    = "Allow"
+      resources = ["*"]
+      conditions = [
+        {
+          test     = "StringEquals"
+          values   = var.regions_allowed
+          variable = "aws:RequestedRegion"
+        }
+      ]
+    }
+  ]
+}

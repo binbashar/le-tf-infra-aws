@@ -1,0 +1,47 @@
+# Here we can define settings for all repositories, or per-repo settings.
+repos:
+- id: /.*/
+  branch: /.*/
+  plan_requirements: []
+  apply_requirements: [approved]
+  import_requirements: []
+  workflow: default
+  allowed_overrides: []
+  allow_custom_workflows: false
+
+# We need to define a custom workflow because we use our own conventions, so
+# for instance we'd like to use the Leverage CLI to run init/plan/apply cmds
+workflows:
+  default:
+    # Customize plan command
+    plan:
+      steps:
+      # The commands below could be used for troubleshooting
+      #- run: env > out
+      # We need to set up the ref arch by using a proper common.tfvars and
+      # also fixing the build.env to use mfa auth
+      - env:
+          name: REPO_ROOT_DIR
+          command: 'echo "/root/.atlantis/repos/${BASE_REPO_OWNER}/${BASE_REPO_NAME}/${PULL_NUM}/${WORKSPACE}/"'
+      - env:
+          name: REAL_PLANFILE
+          command: 'basename $PLANFILE'
+      - run: cp /opt/common.tfvars $REPO_ROOT_DIR/config/
+      - run: sed -i s/MFA_ENABLED=true/MFA_ENABLED=false/ $REPO_ROOT_DIR/build.env
+
+      # Run init before plan
+      - run:
+          command: leverage tf init
+          output: hide
+
+      # You MUST output the plan using -out $PLANFILE because Atlantis expects
+      # plans to be in a specific location.
+      - run:
+          command: leverage tf plan -input=false -refresh -out="$REAL_PLANFILE"
+          output: show
+
+    # Customize apply command
+    apply:
+      steps:
+      # Again, you must use the $PLANFILE environment variable.
+      - run: leverage tf apply -auto-approve $REAL_PLANFILE

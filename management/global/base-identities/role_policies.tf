@@ -20,7 +20,8 @@ resource "aws_iam_policy" "deploy_master_access" {
                 "kms:*",
                 "lambda:*",
                 "organizations:Describe*",
-                "organizations:List*"
+                "organizations:List*",
+                "sso:ListInstances"
             ],
             "Resource": [
                 "*"

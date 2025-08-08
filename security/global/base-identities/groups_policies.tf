@@ -92,6 +92,37 @@ EOF
 }
 
 #
+# This policy was created for our Atlantis deployment.
+#
+resource "aws_iam_policy" "atlantis" {
+  name        = "atlantis"
+  description = "Can assume the Atlantis role in all given accounts"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sts:AssumeRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::${var.accounts.security.id}:role/Atlantis",
+                "arn:aws:iam::${var.accounts.shared.id}:role/Atlantis",
+                "arn:aws:iam::${var.accounts.network.id}:role/Atlantis",
+                "arn:aws:iam::${var.accounts.apps-devstg.id}:role/Atlantis",
+                "arn:aws:iam::${var.accounts.apps-prd.id}:role/Atlantis",
+                "arn:aws:iam::${var.accounts.data-science.id}:role/Atlantis",
+                "arn:aws:iam::${var.accounts.management.id}:role/Atlantis"
+            ]
+        }
+    ]
+}
+EOF
+}
+
+#
 # Policy: Assume Auditor Role (Cross-Org Accounts)
 #
 resource "aws_iam_policy" "assume_auditor_role" {
