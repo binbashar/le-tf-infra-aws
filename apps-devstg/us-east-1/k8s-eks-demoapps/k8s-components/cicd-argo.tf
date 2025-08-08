@@ -87,7 +87,7 @@ resource "helm_release" "argocd_image_updater" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argocd-image-updater"
-  version    = "0.12.2"
+  version    = "0.12.3"
   values = [
     templatefile("chart-values/argocd-image-updater.yaml", {
       region                   = var.region
