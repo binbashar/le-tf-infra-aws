@@ -328,6 +328,7 @@ module "iam_assumable_role_atlantis" {
         "route53:*",
         "route53domains:*",
         "s3:*",
+        "secretsmanager:GetResourcePolicy",
         "secretsmanager:GetSecretValue",
         "secretsmanager:Describe*",
         "sns:*",

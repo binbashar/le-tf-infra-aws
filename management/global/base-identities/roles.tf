@@ -203,6 +203,7 @@ module "iam_assumable_role_atlantis" {
         "lambda:*",
         "organizations:Describe*",
         "organizations:List*",
+        "sso:ListInstances",
       ]
       effect    = "Allow"
       resources = ["*"]
