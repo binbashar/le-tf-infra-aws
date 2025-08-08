@@ -9,7 +9,10 @@ data "aws_iam_policy_document" "secrets_policy" {
   statement {
     sid       = "ReadSecrets"
     effect    = "Allow"
-    actions   = ["secretsmanager:GetSecretValue"]
+    actions   = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:GetResourcePolicy",
+    ]
     resources = ["*"]
     principals {
       type = "AWS"
