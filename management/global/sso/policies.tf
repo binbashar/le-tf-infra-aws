@@ -46,6 +46,7 @@ data "aws_iam_policy_document" "devops" {
       "ecs:*",
       "eks:*",
       "elasticbeanstalk:*",
+      "elasticache:*",
       "elasticfilesystem:*",
       "elasticloadbalancing:*",
       "es:*",
