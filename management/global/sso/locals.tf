@@ -107,6 +107,8 @@ locals {
       groups = [
         "administrators",
         "devops",
+        "datascientists",
+        "readonly",
       ]
     }
     "martin.galeano" = {
@@ -139,14 +141,6 @@ locals {
       email      = "caetano.prates@binbash.com.ar"
       groups = [
         "marketplaceseller",
-      ]
-    }
-    "osvaldo.demo" = {
-      first_name = "Osvaldo"
-      last_name  = "Demo"
-      email      = "osvaldo.demo@binbash.com.ar"
-      groups = [
-        "devops",
       ]
     }
     "matias.sorozabal" = {
@@ -198,15 +192,6 @@ locals {
         "devops",
       ]
     }
-    "dorian.machado" = {
-      first_name = "Dorian"
-      last_name  = "Machado"
-      email      = "dorian.machado@binbash.com.ar"
-      groups = [
-        "datascientists",
-        "devops",
-      ]
-    }
     "manuel.quinteros" = {
       first_name = "Manuel"
       last_name  = "Quinteros"
@@ -224,26 +209,10 @@ locals {
         "devops",
       ]
     }
-    "nicolas.fressero" = {
-      first_name = "Nicolas"
-      last_name  = "Fressero"
-      email      = "nicolas.fressero@binbash.com.ar"
-      groups = [
-        "devops",
-      ]
-    }
     "ariel.jalil" = {
       first_name = "Ariel"
       last_name  = "Jalil"
       email      = "ariel.jalil@binbash.com.ar",
-      groups = [
-        "devops",
-      ]
-    }
-    "federico.losso" = {
-      first_name = "Federico"
-      last_name  = "Losso"
-      email      = "federico.losso@binbash.com.ar"
       groups = [
         "devops",
       ]
@@ -253,15 +222,6 @@ locals {
       last_name  = "Villavicencio"
       email      = "dario.villavicencio@binbash.com.ar"
       groups = [
-        "devops",
-      ]
-    }
-    "agustin.rodriguez" = {
-      first_name = "Agustin"
-      last_name  = "Rodriguez"
-      email      = "agustin.rodriguez@binbash.com.ar"
-      groups = [
-        "administrators",
         "devops",
       ]
     }
