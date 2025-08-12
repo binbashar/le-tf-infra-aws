@@ -53,9 +53,9 @@ module "domain-redirect-binbash_com_ar-to-binbash_co" {
   source                  = "github.com/binbashar/terraform-aws-domain-redirect?ref=v1.0.1"
   source_hosted_zone_name = "binbash.com.ar"
   source_hosted_zone_sub_domains = [
-    "www.binbash.com.ar", 
-    ]
-  target_url              = "binbash.co"
+    "www.binbash.com.ar",
+  ]
+  target_url = "binbash.co"
   providers = {
     aws.us-east-1 = aws.main_region
   }
