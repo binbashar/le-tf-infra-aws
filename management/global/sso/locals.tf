@@ -31,6 +31,7 @@ locals {
       groups = [
         "administrators",
         "devops",
+        "readonly",
       ]
     }
     "franco.gauchat" = {
