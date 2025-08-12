@@ -19,7 +19,7 @@ terraform {
   required_version = ">= 1.2.7"
 
   required_providers {
-    aws   = "~> 5.0"
+    aws = "~> 5.0"
   }
 
   backend "s3" {
