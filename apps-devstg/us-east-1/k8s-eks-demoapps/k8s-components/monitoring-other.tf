@@ -42,7 +42,7 @@ resource "helm_release" "uptime_kuma" {
   namespace  = kubernetes_namespace.monitoring_other[0].id
   repository = "https://helm.irsigler.cloud"
   chart      = "uptime-kuma"
-  version    = "2.14.2"
+  version    = "2.21.2"
   values = [
     <<-EOT
       ingress:
