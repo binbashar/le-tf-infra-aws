@@ -14,7 +14,7 @@ resource "helm_release" "kwatch" {
   namespace  = kubernetes_namespace.monitoring_alerts[0].id
   repository = "https://kwatch.dev/charts"
   chart      = "kwatch"
-  version    = "0.10.2"
+  version    = "0.10.3"
   values = [
     <<-EOT
       config:
