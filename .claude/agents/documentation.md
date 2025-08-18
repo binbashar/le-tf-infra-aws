@@ -104,7 +104,7 @@ graph TB
     ALB --> Web[Web Tier - Public Subnets]
     Web --> App[App Tier - Private Subnets]
     App --> DB[Database Tier - Private Subnets]
-    
+
     subgraph VPC[VPC - 10.0.0.0/16]
         subgraph AZ1[Availability Zone 1]
             Web
@@ -128,11 +128,11 @@ graph TB
     Management --> DevStg[Apps DevStg Account]
     Management --> Prod[Apps Production Account]
     Management --> DataScience[Data Science Account]
-    
+
     Security --> GuardDuty[GuardDuty]
     Security --> Config[AWS Config]
     Security --> SecurityHub[Security Hub]
-    
+
     Network --> TGW[Transit Gateway]
     Network --> VPN[Client VPN]
     Network --> DNS[Route 53]
@@ -234,7 +234,7 @@ graph TB
     SG1 --> EC2[EC2 Instances]
     EC2 --> SG2[Security Group - Database]
     SG2 --> RDS[RDS Database]
-    
+
     GuardDuty[GuardDuty] --> SecurityHub[Security Hub]
     Config[AWS Config] --> SecurityHub
     CloudTrail[CloudTrail] --> S3[S3 Audit Logs]

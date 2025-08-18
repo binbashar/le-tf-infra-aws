@@ -62,7 +62,7 @@ Location: `/renovate.json`
    ```bash
    # Activate environment
    source ~/git/binbash/activate-leverage.sh
-   
+
    # Test in a sample layer
    cd le-tf-infra-aws/shared/us-east-1/base-tf-backend
    leverage tofu init -upgrade
@@ -98,13 +98,13 @@ Location: `/renovate.json`
    ```bash
    # Format check
    leverage tofu fmt -check
-   
+
    # Validation
    leverage tofu validate
-   
+
    # Plan without applying
    leverage tofu plan -out=tfplan
-   
+
    # Review plan
    leverage tofu show tfplan
    ```

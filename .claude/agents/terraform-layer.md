@@ -91,7 +91,7 @@ Always ensure backend.tfvars contains:
 # When creating an EKS cluster:
 1. mcp__terraform-server__resolveProviderDocID(
      providerName="aws",
-     providerNamespace="hashicorp", 
+     providerNamespace="hashicorp",
      serviceSlug="eks",
      providerDataType="resources"
    )

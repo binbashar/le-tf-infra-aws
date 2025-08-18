@@ -52,7 +52,7 @@ infracost diff --path . --compare-to tfplan.json
 
 ### AWS Cost Management
 - Use `management/global/cost-mgmt/` layer
-- Monitor via `management/global/cost-report/` 
+- Monitor via `management/global/cost-report/`
 - Set up billing alerts
 
 ## Tagging Strategy Implementation
@@ -65,21 +65,21 @@ locals {
     Project      = var.project
     ProjectLong  = var.project_long
     Environment  = var.environment
-    
+
     # Cost allocation
     CostCenter   = var.cost_center
     Owner        = var.owner
     Department   = var.department
-    
+
     # Operations
     Layer        = local.layer
     Account      = local.account
     Region       = var.region_primary
-    
+
     # Automation
     ManagedBy    = "opentofu"
     Repository   = "le-tf-infra-aws"
-    
+
     # Lifecycle
     CreatedDate  = formatdate("YYYY-MM-DD", timestamp())
     BackupPolicy = var.backup_policy
@@ -93,14 +93,14 @@ locals {
 # Example for EC2 instances
 resource "aws_instance" "example" {
   # ... configuration ...
-  
+
   tags = merge(local.tags, {
     Name        = "${local.project}-${local.account}-${local.layer}-instance"
     Service     = "compute"
     Purpose     = "application-server"
     Schedule    = "business-hours"
   })
-  
+
   volume_tags = local.tags
 }
 ```
@@ -133,7 +133,7 @@ resource "aws_s3_bucket_intelligent_tiering_configuration" "example" {
     access_tier = "DEEP_ARCHIVE_ACCESS"
     days        = 180
   }
-  
+
   tiering {
     access_tier = "ARCHIVE_ACCESS"
     days        = 125
@@ -154,12 +154,12 @@ resource "aws_rds_cluster" "example" {
   engine         = "aurora-postgresql"
   engine_mode    = "provisioned"      # required for Serverless v2
   engine_version = "13.7"
-  
+
   serverlessv2_scaling_configuration {
     max_capacity = 4
     min_capacity = 0.5
   }
-  
+
   tags = local.tags
 }
 ```
@@ -262,9 +262,9 @@ resource "aws_eks_node_group" "spot" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "${local.project}-${local.account}-spot-workers"
   capacity_type   = "SPOT"
-  
+
   instance_types = ["t3.medium", "t3a.medium", "t2.medium"]
-  
+
   scaling_config {
     desired_size = 2
     max_size     = 10
