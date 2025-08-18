@@ -5,13 +5,13 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
 ## Core Responsibilities
 - Debug static check failures and CI/CD issues
 - Fix KMS layer tests and configuration problems
-- Resolve Terraform policy errors and IAM issues
+- Resolve OpenTofu/Terraform policy errors and IAM issues
 - Handle Docker and Leverage CLI connectivity problems
 - Fix pre-commit hook failures
 
 ## MCP Integration (REQUIRED)
 ### Terraform MCP Server - Use for All Provider Issues
-**When debugging Terraform errors:**
+**When debugging OpenTofu/Terraform errors:**
 1. **Identify the resource/provider causing issues**
 2. **Get current documentation:**
    ```
@@ -56,7 +56,7 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
    ```
 
 3. **Use MCP to verify syntax:**
-   - Check Terraform documentation for correct syntax
+   - Check OpenTofu/Terraform documentation for correct syntax
    - Validate against current provider schema
 
 ### 2. KMS Layer Test Failures
@@ -177,7 +177,7 @@ pre-commit run --all-files
 
 ## Error Pattern Recognition
 
-### Terraform State Issues
+### OpenTofu/Terraform State Issues
 - Error: "Resource not found in state"
 - Fix: Import existing resources or refresh state
 
@@ -197,7 +197,7 @@ pre-commit run --all-files
 1. **Use MCP servers** to verify syntax before implementing
 2. **Test in dev environments** first
 3. **Keep providers updated** via dependency agent
-4. **Monitor deprecation warnings** in Terraform plans
+4. **Monitor deprecation warnings** in OpenTofu/Terraform plans
 5. **Maintain consistent patterns** across layers
 
 ## Important Notes

@@ -24,7 +24,7 @@ mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 - sphinx (documentation generation)
 
 ### Terraform MCP Server - Resource Documentation
-**When documenting Terraform resources:**
+**When documenting OpenTofu/Terraform resources:**
 ```
 mcp__terraform-server__resolveProviderDocID(
   serviceSlug="<service>",
@@ -95,8 +95,9 @@ mcp__context7__get-library-docs(context7CompatibleLibraryID="/mermaid/mermaid")
 ```
 
 #### Mermaid Diagram Examples
+
+### Network Architecture
 ```mermaid
-# Network Architecture
 graph TB
     Internet[Internet] --> IGW[Internet Gateway]
     IGW --> ALB[Application Load Balancer]
@@ -118,8 +119,8 @@ graph TB
     end
 ```
 
+### Account Structure
 ```mermaid
-# Account Structure
 graph TB
     Management[Management Account] --> Security[Security Account]
     Management --> Network[Network Account]
@@ -144,7 +145,7 @@ When a new layer is created:
 
 1. **Create README.md** using the standard template
 2. **Generate architecture diagram** using mermaid
-3. **Document variables and outputs** from Terraform code
+3. **Document variables and outputs** from OpenTofu/Terraform code
 4. **Add cost estimates** using infracost
 5. **Include security notes** from security configurations
 6. **Test deployment instructions** to ensure accuracy
@@ -223,8 +224,9 @@ Document how each layer meets compliance requirements:
 ```
 
 ### Security Architecture Diagrams
+
+### Security Control Flow
 ```mermaid
-# Security Control Flow
 graph TB
     User[User] --> WAF[Web Application Firewall]
     WAF --> ALB[Application Load Balancer]
@@ -241,9 +243,9 @@ graph TB
 
 ## Automated Documentation
 
-### 1. Terraform Documentation Generation
+### 1. OpenTofu/Terraform Documentation Generation
 ```bash
-# Generate Terraform documentation
+# Generate OpenTofu/Terraform documentation
 terraform-docs markdown table --output-file README.md .
 
 # Generate provider requirements

@@ -62,6 +62,19 @@ resource "aws_config_configuration_recorder" "main" {
   tags = local.tags
 }
 
+resource "aws_config_delivery_channel" "main" {
+  name           = "${local.project}-${local.account}-config-delivery"
+  s3_bucket_name = aws_s3_bucket.config_logs.id
+  # Optionally specify s3_key_prefix, sns_topic_arn, etc.
+  depends_on     = [aws_config_configuration_recorder.main]
+}
+
+resource "aws_config_configuration_recorder_status" "main" {
+  name       = aws_config_configuration_recorder.main.name
+  is_enabled = true
+  depends_on = [aws_config_delivery_channel.main]
+}
+
 # Compliance rules
 resource "aws_config_config_rule" "s3_bucket_public_access_prohibited" {
   name = "s3-bucket-public-access-prohibited"
@@ -71,7 +84,10 @@ resource "aws_config_config_rule" "s3_bucket_public_access_prohibited" {
     source_identifier = "S3_BUCKET_PUBLIC_ACCESS_PROHIBITED"
   }
 
-  depends_on = [aws_config_configuration_recorder.main]
+  depends_on = [
+    aws_config_configuration_recorder_status.main,
+    aws_config_delivery_channel.main
+  ]
   tags       = local.tags
 }
 ```
@@ -83,7 +99,7 @@ resource "aws_guardduty_detector" "main" {
   enable                       = true
   finding_publishing_frequency = "FIFTEEN_MINUTES"
 
-  datasources {
+  data_sources {
     s3_logs {
       enable = true
     }
@@ -130,14 +146,16 @@ resource "aws_securityhub_account" "main" {
 
 # Enable security standards
 resource "aws_securityhub_standards_subscription" "cis" {
-  standards_arn = "arn:aws:securityhub:::ruleset/finding-format/aws-foundational-security-best-practices/v/1.0.0"
+  standards_arn = "arn:aws:securityhub:::ruleset/cis-aws-foundations-benchmark/v/1.2.0"
   depends_on    = [aws_securityhub_account.main]
 }
 
 resource "aws_securityhub_standards_subscription" "aws_foundational" {
-  standards_arn = "arn:aws:securityhub:${data.aws_region.current.name}::standard/cis-aws-foundations-benchmark/v/1.2.0"
+  standards_arn = "arn:aws:securityhub:${data.aws_region.current.name}::standards/aws-foundational-security-best-practices/v/1.0.0"
   depends_on    = [aws_securityhub_account.main]
 }
+
+data "aws_region" "current" {}
 ```
 
 ## IAM Security Implementation
@@ -431,9 +449,9 @@ resource "aws_cloudwatch_metric_alarm" "root_access" {
 ### 1. Automated Security Scanning
 ```bash
 # Use security scanning tools
-checkov --framework terraform --directory .
+checkov --framework terraform --directory .  # Also supports OpenTofu
 tfsec .
-terrascan scan -t terraform
+terrascan scan -t terraform  # Also supports OpenTofu
 ```
 
 ### 2. Compliance Checking

@@ -77,7 +77,7 @@ locals {
     Region       = var.region_primary
     
     # Automation
-    ManagedBy    = "terraform"
+    ManagedBy    = "opentofu"
     Repository   = "le-tf-infra-aws"
     
     # Lifecycle
@@ -151,7 +151,8 @@ resource "aws_s3_bucket_intelligent_tiering_configuration" "example" {
 ```hcl
 # Aurora Serverless v2 for variable workloads
 resource "aws_rds_cluster" "example" {
-  engine_mode = "provisioned"
+  engine         = "aurora-postgresql"
+  engine_mode    = "provisioned"      # required for Serverless v2
   engine_version = "13.7"
   
   serverlessv2_scaling_configuration {

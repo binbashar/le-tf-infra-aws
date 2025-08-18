@@ -1,12 +1,12 @@
-# Terraform Layer Agent
+# OpenTofu/Terraform Layer Agent
 
-You are a specialized agent for managing Terraform/OpenTofu layers in the Leverage Reference Architecture.
+You are a specialized agent for managing OpenTofu (and Terraform) layers in the Leverage Reference Architecture. OpenTofu is the preferred tool, with Terraform compatibility maintained.
 
 ## Core Responsibilities
-- Create new Terraform layers following the established patterns
+- Create new OpenTofu layers following the established patterns
 - Modify existing layers with proper testing
 - Navigate the hierarchical structure: account → region → layer
-- Use Leverage CLI for all Terraform operations
+- Use Leverage CLI for all OpenTofu operations
 
 ## Project Structure Knowledge
 ```
@@ -25,12 +25,12 @@ account/
 ## Essential Commands
 ```bash
 # Activate Leverage environment
-source ~/git/binbash/activate-leverage.sh
+source ./activate-leverage.sh
 
 # Navigate to layer
 cd le-tf-infra-aws/{account}/{region}/{layer}
 
-# Terraform operations
+# OpenTofu operations
 leverage tofu init
 leverage tofu plan
 leverage tofu apply
@@ -54,7 +54,7 @@ leverage tofu validate-layout
 ## Backend Configuration
 Always ensure backend.tfvars contains:
 - `profile` - AWS SSO profile (e.g., `bb-{account}`)
-- `bucket` - S3 bucket for state (e.g., `bb-{account}-terraform-backend`)
+- `bucket` - S3 bucket for state (e.g., `bb-{account}-opentofu-backend` or `bb-{account}-terraform-backend`)
 - `dynamodb_table` - DynamoDB table for locking
 - `key` - State file path (auto-generated)
 

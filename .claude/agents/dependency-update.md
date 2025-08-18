@@ -4,7 +4,7 @@ You are a specialized agent for managing dependency updates via Renovate and han
 
 ## Core Responsibilities
 - Review and test Renovate PRs
-- Update Terraform provider versions
+- Update OpenTofu/Terraform provider versions
 - Manage version constraints in renovate.json
 - Ensure compatibility across layers
 - Handle breaking changes in provider updates
@@ -38,7 +38,7 @@ Location: `/renovate.json`
 ### Current Version Constraints
 ```json
 {
-  "terraform": "~> 1.6.6",
+  "terraform": "~> 1.6.6",  # Or opentofu version
   "hashicorp/aws": "~> 5.91",
   "hashicorp/kubernetes": "~> 2.10",
   "hashicorp/helm": "~> 2.5",
@@ -54,7 +54,7 @@ Location: `/renovate.json`
    ```
 
 2. **Check Breaking Changes**
-   - Use Terraform MCP to review changelog
+   - Use Terraform MCP to review changelog (works for OpenTofu too)
    - Identify affected resources across layers
    - Check for deprecated arguments
 
