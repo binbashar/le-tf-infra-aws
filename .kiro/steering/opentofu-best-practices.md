@@ -135,7 +135,7 @@
 ## Learning Resources
 
 ### Primary Documentation
-- [OpenTofu Registry](https://registry.terraform.io) and official docs
+- [Terraform Registry](https://registry.terraform.io) and official docs
 - Stay updated with provider-specific modules for AWS, Helm, Kubernetes, GitHub, Cloudflare
 - Leverage documentation and examples
 
