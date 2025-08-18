@@ -18,6 +18,9 @@
 !*.pre-commit-config.yaml
 !*.terraform.lock.hcl
 apps-devstg/us-east-1/k8s-eks-demoapps/cluster/metadata.yaml
+!.kiro
+!.cursor
+!.mcp.json
 
 # SSH keys #
 ############

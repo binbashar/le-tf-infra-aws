@@ -1,7 +1,5 @@
 ---
-description:
-globs:
-alwaysApply: false
+alwaysApply: true
 ---
 - When working on the Leverage Reference Architecture for AWS, always refer to the official documentation and codebases below.
 - Use these resources to ensure all code and recommendations follow the AWS Well-Architected Framework and binbash best practices.
