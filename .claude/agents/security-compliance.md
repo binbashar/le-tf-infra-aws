@@ -486,7 +486,7 @@ resource "aws_lambda_function" "security_response" {
   function_name = "${local.project}-${local.account}-security-response"
   role          = aws_iam_role.security_response.arn
   handler       = "index.handler"
-  runtime       = "python3.9"
+  runtime       = "python3.12"
   timeout       = 60
 
   environment {

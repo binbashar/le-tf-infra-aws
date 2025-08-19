@@ -35,14 +35,35 @@ You are a specialized agent for managing dependency updates via Renovate and han
 ## Renovate Configuration
 Location: `/renovate.json`
 
-### Current Version Constraints
+### Current Renovate Configuration
 ```json
 {
-  "terraform": "~> 1.6.6",  # Or opentofu version
-  "hashicorp/aws": "~> 5.91",
-  "hashicorp/kubernetes": "~> 2.10",
-  "hashicorp/helm": "~> 2.5",
-  "hashicorp/vault": "~> 3.6"
+  "extends": ["config:base"],
+  "packageRules": [
+    {
+      "groupName": "Terraform providers",
+      "matchManagers": ["terraform"],
+      "matchPackagePatterns": ["^hashicorp/"],
+      "automerge": false,
+      "reviewers": ["@team-devops"]
+    },
+    {
+      "groupName": "OpenTofu/Terraform core",
+      "matchPackageNames": ["terraform", "opentofu"],
+      "automerge": false,
+      "major": {
+        "enabled": false
+      }
+    },
+    {
+      "groupName": "Helm charts",
+      "matchManagers": ["helm-values"],
+      "automerge": false,
+      "reviewers": ["@team-platform"]
+    }
+  ],
+  "schedule": ["before 6am on monday"],
+  "timezone": "America/New_York"
 }
 ```
 

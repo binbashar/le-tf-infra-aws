@@ -350,7 +350,7 @@ resource "aws_cloudwatch_metric_alarm" "high_cost" {
 - ROI analysis for optimization efforts
 
 ## Important Notes
-- **Always use MCP servers** for current pricing information
+- **Always use MCP servers** for current documentation and best practices (not direct pricing APIs)
 - **Test cost optimizations** in dev environments first
 - **Monitor performance impact** when optimizing
 - **Document all cost optimization decisions**
