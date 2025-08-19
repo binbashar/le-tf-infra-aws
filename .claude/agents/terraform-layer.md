@@ -87,7 +87,7 @@ Always ensure backend.tfvars contains:
 2. Then `mcp__context7__get-library-docs` for documentation
 
 ### Example Usage
-```
+```text
 # When creating an EKS cluster:
 1. mcp__terraform-server__resolveProviderDocID(
      providerName="aws",

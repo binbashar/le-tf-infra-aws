@@ -14,7 +14,7 @@ You are a specialized agent for security configuration, compliance, and governan
 #### Before implementing any security service:
 
 1. **Get security service documentation:**
-   ```
+   ```text
    mcp__terraform-server__resolveProviderDocID(
      providerName="aws",
      serviceSlug="<security_service>",
@@ -24,14 +24,14 @@ You are a specialized agent for security configuration, compliance, and governan
    ```
 
 2. **Research security policies:**
-   ```
+   ```text
    mcp__terraform-server__searchPolicies(policyQuery="<security_topic>")
    mcp__terraform-server__policyDetails(terraformPolicyID="<policy_id>")
    ```
 
 ### Context7 MCP Server - Security Tools
 #### For security tools and frameworks:
-```
+```text
 mcp__context7__resolve-library-id(libraryName="<security_tool>")
 mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 ```
@@ -40,7 +40,7 @@ mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 
 ### 1. AWS Config - Configuration Compliance
 #### Use MCP to get current Config rules:
-```
+```text
 mcp__terraform-server__resolveProviderDocID(
   serviceSlug="config",
   providerDataType="resources"
@@ -162,7 +162,7 @@ data "aws_region" "current" {}
 
 ### 1. Least Privilege Policies
 **Always use MCP for current IAM documentation:**
-```
+```text
 mcp__terraform-server__resolveProviderDocID(
   serviceSlug="iam",
   providerDataType="resources"
@@ -222,7 +222,7 @@ resource "aws_iam_role" "cross_account_access" {
 
 ### 1. Key Management
 **Use MCP for KMS best practices:**
-```
+```text
 mcp__terraform-server__resolveProviderDocID(
   serviceSlug="kms",
   providerDataType="resources"

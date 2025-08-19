@@ -14,7 +14,7 @@ You are a specialized agent for cost optimization and financial governance in th
 #### Before optimizing any resource:
 
 1. **Get resource cost information:**
-   ```
+   ```text
    mcp__terraform-server__resolveProviderDocID(
      providerName="aws",
      serviceSlug="<service>",
@@ -24,13 +24,13 @@ You are a specialized agent for cost optimization and financial governance in th
    ```
 
 2. **Research cost optimization features:**
-   ```
+   ```text
    mcp__terraform-server__searchModules(moduleQuery="cost optimization <service>")
    ```
 
 ### Context7 MCP Server - For Cost Tools
 #### When using cost management tools:
-```
+```text
 mcp__context7__resolve-library-id(libraryName="infracost")
 mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 ```
@@ -109,7 +109,7 @@ resource "aws_instance" "example" {
 
 ### 1. Right-Sizing Resources
 #### Use MCP to understand resource options:
-```
+```text
 mcp__terraform-server__resolveProviderDocID(
   serviceSlug="ec2",
   providerDataType="resources"
@@ -168,7 +168,7 @@ resource "aws_rds_cluster" "example" {
 
 ### 1. Budget Creation
 **Use MCP for Cost Explorer API:**
-```
+```text
 mcp__terraform-server__resolveProviderDocID(
   serviceSlug="budgets",
   providerDataType="resources"

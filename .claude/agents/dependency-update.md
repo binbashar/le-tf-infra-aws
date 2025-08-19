@@ -12,7 +12,7 @@ You are a specialized agent for managing dependency updates via Renovate and han
 ## MCP Integration (REQUIRED)
 ### ALWAYS Use Terraform MCP Server for Provider Updates
 1. **Before updating any provider:**
-   ```
+   ```text
    mcp__terraform-server__resolveProviderDocID(
      providerName="<provider>",
      providerNamespace="hashicorp",
@@ -21,11 +21,11 @@ You are a specialized agent for managing dependency updates via Renovate and han
    )
    ```
 2. **Review breaking changes:**
-   ```
+   ```text
    mcp__terraform-server__getProviderDocs(providerDocID="<id>")
    ```
 3. **Check specific resource changes:**
-   ```
+   ```text
    mcp__terraform-server__resolveProviderDocID(
      serviceSlug="<resource>",
      providerDataType="resources"
