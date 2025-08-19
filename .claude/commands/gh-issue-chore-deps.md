@@ -79,13 +79,27 @@ fi
 OWNER="binbashar"
 REPO="le-tf-infra-aws"
 
-# Auto-detect if it's an issue or PR using GitHub API
+# Validate we have gh CLI
+if ! command -v gh &> /dev/null; then
+  echo "❌ GitHub CLI (gh) is required but not found"
+  echo "   Install: https://cli.github.com/"
+  exit 1
+fi
+
+# Validate repository access
+if ! gh repo view "$OWNER/$REPO" &> /dev/null; then
+  echo "❌ Cannot access repository $OWNER/$REPO"
+  echo "   Check if you have proper authentication and access rights"
+  exit 1
+fi
+
+echo "✅ Repository access confirmed"
 echo "🔍 Detecting if #$ISSUE_NUMBER is an issue or PR..."
 if gh pr view "$ISSUE_NUMBER" --repo "$OWNER/$REPO" &> /dev/null; then
   ISSUE_TYPE="pull"
   ISSUE_URL="https://github.com/$OWNER/$REPO/pull/$ISSUE_NUMBER"
 elif gh issue view "$ISSUE_NUMBER" --repo "$OWNER/$REPO" &> /dev/null; then
-  ISSUE_TYPE="issues"
+  ISSUE_TYPE="issue"
   ISSUE_URL="https://github.com/$OWNER/$REPO/issues/$ISSUE_NUMBER"
 else
   echo "❌ Issue/PR #$ISSUE_NUMBER not found in $OWNER/$REPO"
@@ -104,22 +118,6 @@ if [ -n "$CUSTOM_ASSIGNEE" ]; then
   echo "👤 Custom assignee: $CUSTOM_ASSIGNEE"
 fi
 echo ""
-
-# Validate we have gh CLI
-if ! command -v gh &> /dev/null; then
-  echo "❌ GitHub CLI (gh) is required but not found"
-  echo "   Install: https://cli.github.com/"
-  exit 1
-fi
-
-# Validate repository access
-if ! gh repo view "$OWNER/$REPO" &> /dev/null; then
-  echo "❌ Cannot access repository $OWNER/$REPO"
-  echo "   Check if you have proper authentication and access rights"
-  exit 1
-fi
-
-echo "✅ Repository access confirmed"
 echo "🔄 Initiating comprehensive dependency analysis..."
 echo ""
 
