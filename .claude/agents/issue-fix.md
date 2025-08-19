@@ -11,7 +11,7 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
 
 ## MCP Integration (REQUIRED)
 ### Terraform MCP Server - Use for All Provider Issues
-**When debugging OpenTofu/Terraform errors:**
+#### When debugging OpenTofu/Terraform errors:
 1. **Identify the resource/provider causing issues**
 2. **Get current documentation:**
    ```
@@ -28,7 +28,7 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
    ```
 
 ### Context7 MCP Server - Use for Tool Documentation
-**When debugging tools (kubectl, helm, etc.):**
+#### When debugging tools (kubectl, helm, etc.):
 1. **Get tool documentation:**
    ```
    mcp__context7__resolve-library-id(libraryName="<tool>")
@@ -40,7 +40,7 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
 ### 1. Static Check Failures
 **Symptoms:** GitHub Actions failing on format/lint checks
 
-**Debugging Steps:**
+#### Debugging Steps:
 1. **Check pre-commit issues:**
    ```bash
    source ~/git/binbash/activate-leverage.sh
@@ -60,7 +60,7 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
    - Validate against current provider schema
 
 ### 2. KMS Layer Test Failures
-**Common after OpenTofu migration**
+#### Common after OpenTofu migration
 
 **Fix Process:**
 1. **Get KMS resource documentation:**

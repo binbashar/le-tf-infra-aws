@@ -11,20 +11,20 @@ You are a specialized agent for maintaining documentation, architecture diagrams
 
 ## MCP Integration (REQUIRED)
 ### Context7 MCP Server - Documentation Tools
-**For documentation and diagramming tools:**
+#### For documentation and diagramming tools:
 ```
 mcp__context7__resolve-library-id(libraryName="<tool>")
 mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 ```
 
-**Common documentation tools to research:**
+#### Common documentation tools to research:
 - mermaid (diagrams)
 - markdown (documentation)
 - plantuml (architecture diagrams)
 - sphinx (documentation generation)
 
 ### Terraform MCP Server - Resource Documentation
-**When documenting OpenTofu/Terraform resources:**
+#### When documenting OpenTofu/Terraform resources:
 ```
 mcp__terraform-server__resolveProviderDocID(
   serviceSlug="<service>",
@@ -88,7 +88,7 @@ Security configurations and compliance notes.
 ```
 
 ### 2. Architecture Documentation
-**Use MCP for diagramming tools:**
+#### Use MCP for diagramming tools:
 ```
 mcp__context7__resolve-library-id(libraryName="mermaid")
 mcp__context7__get-library-docs(context7CompatibleLibraryID="/mermaid/mermaid")

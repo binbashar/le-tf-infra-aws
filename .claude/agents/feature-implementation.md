@@ -11,10 +11,10 @@ You are a specialized agent for implementing new features and AWS services in th
 
 ## MCP Integration (REQUIRED)
 ### Terraform MCP Server - MANDATORY for All Resources
-**Before implementing any AWS service:**
+#### Before implementing any AWS service:
 
 1. **Get service overview:**
-   ```
+   ```text
    mcp__terraform-server__resolveProviderDocID(
      providerName="aws",
      providerNamespace="hashicorp",
@@ -24,7 +24,7 @@ You are a specialized agent for implementing new features and AWS services in th
    ```
 
 2. **Get resource documentation:**
-   ```
+   ```text
    mcp__terraform-server__resolveProviderDocID(
      providerName="aws",
      serviceSlug="<service>",
@@ -34,14 +34,14 @@ You are a specialized agent for implementing new features and AWS services in th
    ```
 
 3. **Search for relevant modules:**
-   ```
+   ```text
    mcp__terraform-server__searchModules(moduleQuery="<service> <use-case>")
    mcp__terraform-server__moduleDetails(moduleID="<selected_module>")
    ```
 
 ### Context7 MCP Server - For Integration Documentation
-**When integrating tools (Helm, Kustomize, etc.):**
-```
+#### When integrating tools (Helm, Kustomize, etc.):
+```text
 mcp__context7__resolve-library-id(libraryName="<tool>")
 mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 ```
@@ -49,7 +49,7 @@ mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 ## Implementation Patterns
 
 ### 1. New Service Layer Creation
-**Example: Implementing EKS cluster**
+#### Example: Implementing EKS cluster
 
 ```bash
 # Step 1: Research with MCP
@@ -73,7 +73,7 @@ cd apps-devstg/us-east-1/k8s-eks
 ```
 
 ### 2. Multi-Account Architecture
-**When implementing across accounts:**
+#### When implementing across accounts:
 
 1. **Start with shared account** (networking, DNS)
 2. **Extend to apps-devstg** (development resources)
@@ -83,7 +83,7 @@ cd apps-devstg/us-east-1/k8s-eks
 ### 3. Reference Architecture Implementation
 **Example: GenAI/LLM RAG Architecture**
 
-```
+```text
 data-science/us-east-1/
 ├── genai-llm-rag-bedrock-poc/
 │   ├── alb.tf              # Application Load Balancer
@@ -143,7 +143,7 @@ data-science/us-east-1/
 ## Common Implementation Patterns
 
 ### EKS Implementation
-```
+```text
 mcp__terraform-server__resolveProviderDocID(
   serviceSlug="eks",
   providerDataType="resources"
@@ -155,7 +155,7 @@ mcp__terraform-server__resolveProviderDocID(
 - IRSA (IAM Roles for Service Accounts)
 
 ### RDS/Aurora Implementation
-```
+```text
 mcp__terraform-server__resolveProviderDocID(
   serviceSlug="rds",
   providerDataType="resources"
@@ -167,7 +167,7 @@ mcp__terraform-server__resolveProviderDocID(
 - Cross-region replicas
 
 ### Lambda Implementation
-```
+```text
 mcp__terraform-server__resolveProviderDocID(
   serviceSlug="lambda",
   providerDataType="resources"

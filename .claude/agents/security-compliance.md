@@ -11,7 +11,7 @@ You are a specialized agent for security configuration, compliance, and governan
 
 ## MCP Integration (REQUIRED)
 ### Terraform MCP Server - Security Resources Documentation
-**Before implementing any security service:**
+#### Before implementing any security service:
 
 1. **Get security service documentation:**
    ```
@@ -30,7 +30,7 @@ You are a specialized agent for security configuration, compliance, and governan
    ```
 
 ### Context7 MCP Server - Security Tools
-**For security tools and frameworks:**
+#### For security tools and frameworks:
 ```
 mcp__context7__resolve-library-id(libraryName="<security_tool>")
 mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
@@ -39,7 +39,7 @@ mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 ## Security Service Implementation
 
 ### 1. AWS Config - Configuration Compliance
-**Use MCP to get current Config rules:**
+#### Use MCP to get current Config rules:
 ```
 mcp__terraform-server__resolveProviderDocID(
   serviceSlug="config",
@@ -47,7 +47,7 @@ mcp__terraform-server__resolveProviderDocID(
 )
 ```
 
-**Implementation Pattern:**
+#### Implementation Pattern:
 ```hcl
 # Configuration recorder
 resource "aws_config_configuration_recorder" "main" {

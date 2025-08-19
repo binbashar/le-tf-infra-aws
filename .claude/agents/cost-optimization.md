@@ -11,7 +11,7 @@ You are a specialized agent for cost optimization and financial governance in th
 
 ## MCP Integration (REQUIRED)
 ### Terraform MCP Server - For Cost-Related Resources
-**Before optimizing any resource:**
+#### Before optimizing any resource:
 
 1. **Get resource cost information:**
    ```
@@ -29,7 +29,7 @@ You are a specialized agent for cost optimization and financial governance in th
    ```
 
 ### Context7 MCP Server - For Cost Tools
-**When using cost management tools:**
+#### When using cost management tools:
 ```
 mcp__context7__resolve-library-id(libraryName="infracost")
 mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
@@ -108,7 +108,7 @@ resource "aws_instance" "example" {
 ## Cost Optimization Strategies
 
 ### 1. Right-Sizing Resources
-**Use MCP to understand resource options:**
+#### Use MCP to understand resource options:
 ```
 mcp__terraform-server__resolveProviderDocID(
   serviceSlug="ec2",
@@ -116,7 +116,7 @@ mcp__terraform-server__resolveProviderDocID(
 )
 ```
 
-**Common optimizations:**
+#### Common optimizations:
 - EC2: Use appropriate instance types, spot instances
 - RDS: Right-size instances, use Aurora Serverless
 - Lambda: Optimize memory allocation

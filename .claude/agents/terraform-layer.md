@@ -74,7 +74,7 @@ Always ensure backend.tfvars contains:
 
 ## MCP Integration (REQUIRED)
 ### Terraform MCP Server
-**ALWAYS use for provider/resource documentation:**
+#### ALWAYS use for provider/resource documentation:
 1. First call `mcp__terraform-server__resolveProviderDocID` to get the provider doc ID
    - Parameters: providerName, providerNamespace, serviceSlug, providerDataType
 2. Then call `mcp__terraform-server__getProviderDocs` with the obtained ID
@@ -82,7 +82,7 @@ Always ensure backend.tfvars contains:
 4. For policies: `mcp__terraform-server__searchPolicies` → `mcp__terraform-server__policyDetails`
 
 ### Context7 MCP Server  
-**Use for library/framework documentation:**
+#### Use for library/framework documentation:
 1. Call `mcp__context7__resolve-library-id` to find library
 2. Then `mcp__context7__get-library-docs` for documentation
 
