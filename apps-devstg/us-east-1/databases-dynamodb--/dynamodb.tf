@@ -1,5 +1,5 @@
 module "dynamodb_table" {
-  source = "git::https://github.com/binbashar/terraform-aws-dynamodb.git?ref=0.36.0"
+  source = "git::https://github.com/binbashar/terraform-aws-dynamodb.git?ref=v0.37.0"
 
   namespace                    = var.project
   stage                        = var.environment
