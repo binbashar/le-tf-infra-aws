@@ -50,6 +50,38 @@ use to make changes on AWS.
   to understand how to set up a profile to assume a role
 
 
+## AI Development Configs
+
+This repository includes pre-configured settings for AI-powered development tools to enhance productivity and maintain consistency across the codebase.
+
+### Supported IDE/AI Tools
+
+- **[Cursor IDE](.cursor/)** - AI-first code editor with project-specific rules
+  - [`.cursor/rules/`](.cursor/rules/) - Markdown rules for OpenTofu/Terraform best practices
+  - [`.cursor/mcp.json`](.cursor/mcp.json) - MCP server configurations for AWS and Terraform documentation
+  
+- **[Kiro IDE](.kiro/)** - AI development environment with steering documents
+  - [`.kiro/steering/`](.kiro/steering/) - Comprehensive documentation about the project structure, tech stack, and best practices
+  - [`.kiro/settings/mcp.json`](.kiro/settings/mcp.json) - MCP configurations for enhanced AWS/Terraform support
+
+- **[Claude Code](CLAUDE.md)** - Anthropic's AI coding assistant
+  - [`CLAUDE.md`](CLAUDE.md) - Project instructions and context for Claude
+  - [`.mcp.json`](.mcp.json) - Root-level MCP server configurations
+
+### Usage
+
+These configurations are automatically loaded when you open the project in the respective IDE/tool. They provide:
+- Context-aware code suggestions aligned with Leverage best practices
+- AWS and Terraform/OpenTofu specific assistance
+- Consistent code formatting and structure guidelines
+- Direct access to AWS documentation and Terraform registry
+
+### Learn More
+
+- [Cursor Documentation](https://cursor.sh/docs)
+- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
+- [MCP Protocol Specification](https://modelcontextprotocol.io/)
+
 ## Project context commands
 ```shell
 ╭─    ~/ref-architecture/le-tf-infra-aws  on   master · ✔  at 12:13:36 
