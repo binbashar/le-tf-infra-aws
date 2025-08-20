@@ -6,11 +6,11 @@ alwaysApply: true
 - For any questions about module usage, architecture, or CLI orchestration, consult the linked documentation and repositories.
 
 **Key Resources:**
-- [Leverage Documentation](mdc:https:/leverage.binbash.co) — Main source for framework usage, architecture, and best practices.
-- [Leverage High-Level Characteristics](mdc:https:/www.binbash.co/leverage)
-- [Terraform Reference Architecture Code](mdc:https:/github.com/binbashar/le-tf-infra-aws) — The main Terraform codebase for AWS.
-- [Leverage CLI](mdc:https:/github.com/binbashar/leverage) — CLI tool for orchestrating the Reference Architecture. [PyPI package](mdc:https:/pypi.org/project/leverage)
-- [List of Binbash Terraform Modules](mdc:https:/github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile) — Complete module library for the Leverage Infra as Code ecosystem.
+- [Leverage Documentation](mdc:https://leverage.binbash.co) — Main source for framework usage, architecture, and best practices.
+- [Leverage High-Level Characteristics](mdc:https://www.binbash.co/leverage)
+- [Terraform Reference Architecture Code](mdc:https://github.com/binbashar/le-tf-infra-aws) — The main Terraform codebase for AWS.
+- [Leverage CLI](mdc:https://github.com/binbashar/leverage) — CLI tool for orchestrating the Reference Architecture. [PyPI package](mdc:https://pypi.org/project/leverage)
+- [List of Binbash Terraform Modules](mdc:https://github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile) — Complete module library for the Leverage Infra as Code ecosystem.
 
 **Instructions for the AI:**
 - Use the above documentation and repositories as the primary source of truth for any code generation, review, or architectural advice related to Leverage.

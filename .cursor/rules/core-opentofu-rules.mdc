@@ -7,11 +7,11 @@ alwaysApply: true
 
 # Source of Truth
 - All code, reviews, and recommendations **must** align with:
-  - [Leverage Documentation](mdc:https:/leverage.binbash.co)
-  - [Leverage High-Level Characteristics](mdc:https:/www.binbash.co/leverage)
-  - [Open Tofu Reference Architecture Code](mdc:https:/github.com/binbashar/le-tf-infra-aws)
-  - [Leverage CLI](mdc:https:/github.com/binbashar/leverage)
-  - [Binbash Open Tofu Module Library](mdc:https:/github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile)
+  - [Leverage Documentation](mdc:https://leverage.binbash.co)
+  - [Leverage High-Level Characteristics](mdc:https://www.binbash.co/leverage)
+  - [Open Tofu Reference Architecture Code](mdc:https://github.com/binbashar/le-tf-infra-aws)
+  - [Leverage CLI](mdc:https://github.com/binbashar/leverage)
+  - [Binbash Open Tofu Module Library](mdc:https://github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile)
 
 # Key Principles
 - Write concise, well-structured Open Tofu code with clear examples.
@@ -25,7 +25,7 @@ alwaysApply: true
 
 # Module Guidelines
 - **Always prefer Binbash Leverage modules**. Only create new modules if no suitable Leverage module exists.
-- Check the [module Makefile](mdc:https:/github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile) for the latest list.
+- Check the [module Makefile](mdc:https://github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile) for the latest list.
 - Contribute improvements upstream when possible.
 - Use outputs to pass data between modules.
 - Follow semantic versioning for modules.
@@ -33,10 +33,10 @@ alwaysApply: true
 
 # Open Tofu Best Practices
 - Use remote backends (e.g., S3) with state locking and encryption.
-- Follow the [Leverage AWS directory structure](mdc:https:/leverage.binbash.co/user-guide/ref-architecture-aws/dir-structure).
+- Follow the [Leverage AWS directory structure](mdc:https://leverage.binbash.co/user-guide/ref-architecture-aws/dir-structure).
 - Always run `leverage terraform fmt` for formatting.
 - Use `leverage terraform validate` and tools like `tflint` or `terrascan` for linting.
-- Store sensitive data in AWS Secrets Manager. [Example layer](mdc:https:/github.com/binbashar/le-tf-infra-aws/tree/master/apps-devstg/us-east-1/secrets-manager).
+- Store sensitive data in AWS Secrets Manager. [Example layer](mdc:https://github.com/binbashar/le-tf-infra-aws/tree/master/apps-devstg/us-east-1/secrets-manager).
 
 # Error Handling & Validation
 - Use variable validation rules.
@@ -47,7 +47,7 @@ alwaysApply: true
 - Never hardcode sensitive values; use Vault or environment variables.
 - Enable encryption for all storage and communication.
 - Define access controls and security groups for each resource.
-- Follow [AWS Well-Architected Framework](mdc:https:/aws.amazon.com/architecture/well-architected) and Leverage security guidelines.
+- Follow [AWS Well-Architected Framework](mdc:https://aws.amazon.com/architecture/well-architected) and Leverage security guidelines.
 
 # Performance Optimization
 - Use `-target` for resource-specific changes.
@@ -55,9 +55,9 @@ alwaysApply: true
 - Limit use of `count`/`for_each` to avoid unnecessary duplication.
 
 # Testing & CI/CD
-- Integrate with CI/CD (e.g., GitHub Actions, [Digger](mdc:https:/digger.dev)).
+- Integrate with CI/CD (e.g., GitHub Actions, [Digger](mdc:https://digger.dev)).
 - Run `leverage terraform plan` in CI to catch issues before apply.
-- Use `leverage terraform test` for module unit tests ([example workflow](mdc:https:/github.com/binbashar/le-tf-infra-aws/blob/master/.github/workflows/testing-workflow.yml)).
+- Use `leverage terraform test` for module unit tests ([example workflow](mdc:https://github.com/binbashar/le-tf-infra-aws/blob/master/.github/workflows/testing-workflow.yml)).
 - Automate tests for critical infrastructure (e.g., network, IAM).
 
 # Key Conventions
@@ -67,7 +67,7 @@ alwaysApply: true
 4. Document all modules and configurations with `README.md`.
 
 # Documentation & Learning
-- Refer to [Open Tofu Registry](mdc:https:/registry.terraform.io) and official docs.
+- Refer to [Open Tofu Registry](mdc:https://registry.terraform.io) and official docs.
 - Stay updated with provider-specific modules for AWS, Helm, Kubernetes, GitHub, Cloudflare.
 
 # Review & PR Process
@@ -85,10 +85,10 @@ You are an expert in Open Tofu and Infrastructure as Code (IaC) for AWS, with de
 
 ## Open Tofu Best Practices
 - Use remote backends (e.g., S3) with state locking and encryption.
-- Follow the [Leverage AWS directory structure](mdc:https:/leverage.binbash.co/user-guide/ref-architecture-aws/dir-structure).
+- Follow the [Leverage AWS directory structure](mdc:https://leverage.binbash.co/user-guide/ref-architecture-aws/dir-structure).
 - Always run `leverage terraform fmt` for formatting.
 - Use `leverage terraform validate` and tools like `tflint` or `terrascan` for linting.
-- Store sensitive data in AWS Secrets Manager. [Example layer](mdc:https:/github.com/binbashar/le-tf-infra-aws/tree/master/apps-devstg/us-east-1/secrets-manager).
+- Store sensitive data in AWS Secrets Manager. [Example layer](mdc:https://github.com/binbashar/le-tf-infra-aws/tree/master/apps-devstg/us-east-1/secrets-manager).
 
 ## Error Handling & Validation
 - Use variable validation rules.
@@ -97,7 +97,7 @@ You are an expert in Open Tofu and Infrastructure as Code (IaC) for AWS, with de
 
 ## Module Guidelines
 - Split code into reusable modules; avoid duplication.
-- Prefer [Binbash Leverage Open Tofu modules](mdc:https:/github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile).
+- Prefer [Binbash Leverage Open Tofu modules](mdc:https://github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile).
 - Use outputs to pass data between modules.
 - Follow semantic versioning for modules.
 - Document modules with examples and clear input/output definitions.
@@ -106,7 +106,7 @@ You are an expert in Open Tofu and Infrastructure as Code (IaC) for AWS, with de
 - Never hardcode sensitive values; use Vault or environment variables.
 - Enable encryption for all storage and communication.
 - Define access controls and security groups for each resource.
-- Follow [AWS Well-Architected Framework](mdc:https:/aws.amazon.com/architecture/well-architected) and Leverage security guidelines.
+- Follow [AWS Well-Architected Framework](mdc:https://aws.amazon.com/architecture/well-architected) and Leverage security guidelines.
 
 ## Performance Optimization
 - Use `-target` for resource-specific changes.
@@ -114,9 +114,9 @@ You are an expert in Open Tofu and Infrastructure as Code (IaC) for AWS, with de
 - Limit use of `count`/`for_each` to avoid unnecessary duplication.
 
 ## Testing & CI/CD
-- Integrate with CI/CD (e.g., GitHub Actions, [Digger](mdc:https:/digger.dev)).
+- Integrate with CI/CD (e.g., GitHub Actions, [Digger](mdc:https://digger.dev)).
 - Run `leverage terraform plan` in CI to catch issues before apply.
-- Use `leverage terraform test` for module unit tests ([example workflow](mdc:https:/github.com/binbashar/le-tf-infra-aws/blob/master/.github/workflows/testing-workflow.yml)).
+- Use `leverage terraform test` for module unit tests ([example workflow](mdc:https://github.com/binbashar/le-tf-infra-aws/blob/master/.github/workflows/testing-workflow.yml)).
 - Automate tests for critical infrastructure (e.g., network, IAM).
 
 ## Key Conventions
@@ -126,5 +126,5 @@ You are an expert in Open Tofu and Infrastructure as Code (IaC) for AWS, with de
 4. Document all modules and configurations with `README.md`.
 
 ## Documentation & Learning
-- Refer to [Open Tofu Registry](mdc:https:/registry.terraform.io) and official docs.
+- Refer to [Open Tofu Registry](mdc:https://registry.terraform.io) and official docs.
 - Stay updated with provider-specific modules for AWS, Helm, Kubernetes, GitHub, Cloudflare.
