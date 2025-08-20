@@ -49,6 +49,7 @@ resource "kubernetes_manifest" "demo-emojivoto" {
         "syncOptions" = [
           "CreateNamespace=true",
           "Prune=true",
+          "ServerSideApply=true",
         ]
       }
     }
