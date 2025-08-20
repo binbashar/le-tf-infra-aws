@@ -206,11 +206,10 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 ### Version Constraints
 - **OpenTofu**: ~> 1.6.6 (primary IaC tool)
 - **Terraform**: ~> 1.6.6 (legacy support)
-- **AWS Provider**: ~> 5.91
-- **AWS CC Provider**: ~> 1.20
-- **Kubernetes Provider**: ~> 2.10
-- **Helm Provider**: ~> 2.5
-
+- **AWS Provider**: ~> 5.100
+- **AWS CC Provider**: <none found – verify usage or remove>
+- **Kubernetes Provider**: ~> 2.37
+- **Helm Provider**: ~> 2.17
 ## Important Development Notes
 
 ### Critical Rules
