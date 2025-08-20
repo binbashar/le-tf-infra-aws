@@ -3,60 +3,53 @@
   "extends": [
     "config:recommended"
   ],
+  "minimumReleaseAge": "3 days",
   "packageRules": [
     {
       "automerge": false,
-      "description": "Disable automerge and enable Renovate for specific Terraform packages",
-      "enabled": true,
-      "managers": [
-        "terraform"
-      ],
-      "matchPackageNames": [
-        "terraform",
-        "hashicorp/terraform",
-        "hashicorp/aws",
-        "hashicorp/kubernetes",
-        "hashicorp/helm",
-        "hashicorp/vault"
-      ]
-    },
-    {
-      "automerge": false,
-      "description": "Disable automerge and enable Renovate for Terraform providers",
-      "enabled": true,
+      "description": "Group patch updates for Terraform providers and modules",
+      "groupName": "terraform-patches",
       "matchDatasources": [
-        "terraform-provider"
-      ]
-    },
-    {
-      "automerge": false,
-      "description": "Disable automerge and enable Renovate for Terraform modules",
-      "enabled": true,
-      "matchDatasources": [
+        "terraform-provider",
         "terraform-module"
-      ]
-    },
-    {
-      "automerge": true,
-      "description": "Enable automerge for patch updates without requiring CI/CD checks",
-      "enabled": true,
+      ],
       "matchUpdateTypes": [
         "patch"
       ],
-      "requiredStatusChecks": []
+      "schedule": [
+        "before 6am on monday"
+      ]
     },
     {
       "automerge": false,
-      "description": "Disable automerge for minor and major updates",
-      "enabled": true,
+      "description": "Group minor feature updates for Terraform providers and modules",
+      "groupName": "terraform-minors",
+      "matchDatasources": [
+        "terraform-provider",
+        "terraform-module"
+      ],
       "matchUpdateTypes": [
-        "minor",
+        "minor"
+      ],
+      "schedule": [
+        "before 6am on monday"
+      ]
+    },
+    {
+      "automerge": false,
+      "description": "Individual review for breaking changes in Terraform providers and modules",
+      "groupName": "terraform-majors",
+      "matchDatasources": [
+        "terraform-provider",
+        "terraform-module"
+      ],
+      "matchUpdateTypes": [
         "major"
       ]
     },
     {
-      "allowedVersions": "~> 1.6.6",
-      "description": "Pin Terraform version to ~> 1.6.6",
+      "allowedVersions": "~> 1.6",
+      "description": "Allow Terraform minor updates within 1.6.x",
       "enabled": true,
       "matchPackageNames": [
         "terraform"
@@ -95,6 +88,7 @@
       ]
     }
   ],
+  "prConcurrentLimit": 5,
   "terraform": {
     "enabled": true
   }
