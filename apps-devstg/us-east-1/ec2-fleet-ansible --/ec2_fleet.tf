@@ -21,7 +21,7 @@ module "security_group_ec2_fleet" {
 # EC2 Fleet for ansible playbooks testing
 #
 module "ec2_ansible_fleet" {
-  source = "github.com/binbashar/terraform-aws-ec2-instance.git?ref=v5.5.0"
+  source = "github.com/binbashar/terraform-aws-ec2-instance.git?ref=v5.8.0"
 
   for_each = local.multiple_instances
   name     = "ec2-ansible-fleet-${each.key}"
