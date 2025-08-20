@@ -49,7 +49,7 @@
     },
     {
       "allowedVersions": "~> 1.6",
-      "description": "Allow Terraform minor updates within 1.6.x",
+      "description": "Allow Terraform 1.x updates starting from 1.6 (>= 1.6, < 2.0)",
       "enabled": true,
       "matchPackageNames": [
         "terraform"
