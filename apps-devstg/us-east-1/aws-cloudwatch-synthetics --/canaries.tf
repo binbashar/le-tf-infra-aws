@@ -1,5 +1,5 @@
 module "target-canary" {
-  source = "github.com/binbashar/terraform-aws-cloudwatch-synthetics.git?ref=1.5.1"
+  source = "github.com/binbashar/terraform-aws-cloudwatch-synthetics.git?ref=1.6.0"
 
   name_prefix = "${var.project}-${var.environment}"
   environment = var.environment
