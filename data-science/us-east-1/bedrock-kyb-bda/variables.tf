@@ -146,3 +146,13 @@ variable "enable_s3_versioning" {
   type        = bool
   default     = true
 }
+
+variable "kyb_blueprint_version" {
+  description = "Version of the KYB blueprint to use for data automation processing"
+  type        = string
+  default     = "1"
+  validation {
+    condition     = can(regex("^[0-9]+$", var.kyb_blueprint_version))
+    error_message = "kyb_blueprint_version must be a valid numeric version string (e.g., '1', '2', '10')."
+  }
+}

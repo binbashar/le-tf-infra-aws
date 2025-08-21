@@ -8,7 +8,7 @@ resource "awscc_bedrock_data_automation_project" "kyb_project" {
       {
         blueprint_arn     = awscc_bedrock_blueprint.kyb_blueprint.blueprint_arn
         blueprint_stage   = "LIVE"
-        blueprint_version = "1"
+        blueprint_version = var.kyb_blueprint_version
       }
     ]
   }

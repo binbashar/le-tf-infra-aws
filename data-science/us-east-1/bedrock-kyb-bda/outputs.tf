@@ -48,6 +48,11 @@ output "kyb_blueprint_arn" {
   value       = awscc_bedrock_blueprint.kyb_blueprint.blueprint_arn
 }
 
+output "kyb_blueprint_version" {
+  description = "Version of the KYB blueprint being used"
+  value       = var.kyb_blueprint_version
+}
+
 output "eventbridge_rule_name" {
   description = "Name of the EventBridge rule for S3 triggers"
   value       = aws_cloudwatch_event_rule.s3_trigger.name

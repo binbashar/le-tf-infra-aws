@@ -88,6 +88,7 @@ leverage tofu apply
 The following variables can be customized:
 
 - `kyb_extraction_schema`: JSON schema defining data extraction structure
+- `kyb_blueprint_version`: Version of the KYB blueprint to use (default: "1")
 - `enable_encryption`: Enable KMS encryption (default: true)
 - `lambda_timeout`: Lambda function timeout in seconds (default: 300)
 - `lambda_memory_size`: Lambda function memory in MB (default: 1024)
