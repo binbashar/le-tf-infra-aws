@@ -34,10 +34,10 @@ you should follow the steps below:
 
 4. Follow the [standard `leverage cli` workflow](https://leverage.binbash.co/user-guide/ref-architecture-aws/workflow/)
     1. Get into the folder that you need to work with (e.g. [`/security/global/base-identities`](https://github.com/binbashar/le-tf-infra-aws/tree/master/security/global/base-identities) )
-    2. Run `leverage terraform init`
+    2. Run `leverage tf init`
     3. Make whatever changes you need to make
-    4. Run `leverage terraform plan` (if you only mean to preview those changes)
-    5. Run `leverage terraform apply` (if you want to review and likely apply those changes)
+    4. Run `leverage tf plan` (if you only mean to preview those changes)
+    5. Run `leverage tf apply` (if you want to review and likely apply those changes)
     6. Repeat for any desired Reference Architecture layer
 
 ### Consideration
@@ -110,15 +110,15 @@ Commands:
 ## Layer context Terraform commands
 ```shell
 ╭─    ~/ref-architecture/le-tf-infra-aws  on   master · ✔  at 12:13:36 
-╰─ leverage terraform
-Usage: leverage terraform [OPTIONS] COMMAND [ARGS]...
+╰─ leverage tf
+Usage: leverage tf [OPTIONS] COMMAND [ARGS]...
 
   Run Terraform commands in a custom containerized environment that provides
   extra functionality when interacting with your cloud provider such as
   handling multi factor authentication for you. All terraform subcommands that
   receive extra args will pass the given strings as is to their corresponding
   Terraform counterparts in the container. For example as in `leverage
-  terraform apply -auto-approve` or `leverage terraform init -reconfigure`
+  terraform apply -auto-approve` or `leverage tf init -reconfigure`
 
 Options:
   -h, --help  Show this message and exit.

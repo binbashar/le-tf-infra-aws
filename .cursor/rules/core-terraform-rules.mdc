@@ -25,7 +25,7 @@ alwaysApply: true
 - Structure files logically: main config, locals, variables, outputs, modules.
 
 # Leverage CLI Usage
-- **Always use the Leverage CLI** (`leverage terraform <command>`) for all Terraform operations (init, plan, apply, test, fmt, validate).
+- **Always use the Leverage CLI** (`leverage tf <command>`) for all Terraform operations (init, plan, apply, test, fmt, validate).
 - This ensures consistency, automation, and alignment with Leverage best practices.
 
 # Module Guidelines
@@ -39,8 +39,8 @@ alwaysApply: true
 # Terraform Best Practices
 - Use remote backends (e.g., S3) with state locking and encryption.
 - Follow the [Leverage AWS directory structure](mdc:https://leverage.binbash.co/user-guide/ref-architecture-aws/dir-structure).
-- Always run `leverage terraform fmt` for formatting.
-- Use `leverage terraform validate` and tools like `tflint` or `terrascan` for linting.
+- Always run `leverage tf fmt` for formatting.
+- Use `leverage tf validate` and tools like `tflint` or `terrascan` for linting.
 - Store sensitive data in AWS Secrets Manager. [Example layer](mdc:https://github.com/binbashar/le-tf-infra-aws/tree/master/apps-devstg/us-east-1/secrets-manager).
 
 # Error Handling & Validation
@@ -61,8 +61,8 @@ alwaysApply: true
 
 # Testing & CI/CD
 - Integrate with CI/CD (e.g., GitHub Actions, [Digger](mdc:https://digger.dev)).
-- Run `leverage terraform plan` in CI to catch issues before apply.
-- Use `leverage terraform test` for module unit tests ([example workflow](mdc:https://github.com/binbashar/le-tf-infra-aws/blob/master/.github/workflows/testing-workflow.yml)).
+- Run `leverage tf plan` in CI to catch issues before apply.
+- Use `leverage tf test` for module unit tests ([example workflow](mdc:https://github.com/binbashar/le-tf-infra-aws/blob/master/.github/workflows/testing-workflow.yml)).
 - Automate tests for critical infrastructure (e.g., network, IAM).
 
 # Key Conventions
@@ -91,8 +91,8 @@ You are an expert in Terraform and Infrastructure as Code (IaC) for AWS, with de
 ## Terraform Best Practices
 - Use remote backends (e.g., S3) with state locking and encryption.
 - Follow the [Leverage AWS directory structure](mdc:https://leverage.binbash.co/user-guide/ref-architecture-aws/dir-structure).
-- Always run `leverage terraform fmt` for formatting.
-- Use `leverage terraform validate` and tools like `tflint` or `terrascan` for linting.
+- Always run `leverage tf fmt` for formatting.
+- Use `leverage tf validate` and tools like `tflint` or `terrascan` for linting.
 - Store sensitive data in AWS Secrets Manager. [Example layer](mdc:https://github.com/binbashar/le-tf-infra-aws/tree/master/apps-devstg/us-east-1/secrets-manager).
 
 ## Error Handling & Validation
@@ -120,8 +120,8 @@ You are an expert in Terraform and Infrastructure as Code (IaC) for AWS, with de
 
 ## Testing & CI/CD
 - Integrate with CI/CD (e.g., GitHub Actions, [Digger](mdc:https://digger.dev)).
-- Run `leverage terraform plan` in CI to catch issues before apply.
-- Use `leverage terraform test` for module unit tests ([example workflow](mdc:https://github.com/binbashar/le-tf-infra-aws/blob/master/.github/workflows/testing-workflow.yml)).
+- Run `leverage tf plan` in CI to catch issues before apply.
+- Use `leverage tf test` for module unit tests ([example workflow](mdc:https://github.com/binbashar/le-tf-infra-aws/blob/master/.github/workflows/testing-workflow.yml)).
 - Automate tests for critical infrastructure (e.g., network, IAM).
 
 ## Key Conventions
