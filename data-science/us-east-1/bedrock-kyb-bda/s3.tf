@@ -82,6 +82,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "kyb_input" {
       days          = var.s3_glacier_days
       storage_class = "GLACIER"
     }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
   }
 }
 
@@ -100,6 +104,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "kyb_output" {
     transition {
       days          = var.s3_glacier_days
       storage_class = "GLACIER"
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
     }
   }
 }

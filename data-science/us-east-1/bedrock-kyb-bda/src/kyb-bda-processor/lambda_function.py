@@ -2,11 +2,11 @@ import json
 import boto3
 import os
 import urllib.parse
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper(), logging.INFO))
 
 bedrock_client = boto3.client("bedrock-data-automation-runtime")
 s3_client = boto3.client("s3")
@@ -62,7 +62,7 @@ def lambda_handler(event, context):
             "body": json.dumps(
                 {
                     "message": "Documents processed successfully",
-                    "timestamp": datetime.now(UTC).isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             ),
         }
@@ -97,7 +97,7 @@ def process_kyb_document(input_bucket, object_key):
         input_s3_uri = f"s3://{input_bucket}/{object_key}"
 
         # Generate output key with timestamp
-        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         base_name = os.path.splitext(object_key)[0]
         output_key = f"processed/{base_name}_{timestamp}.json"
         output_s3_uri = f"s3://{output_bucket}/{output_key}"
