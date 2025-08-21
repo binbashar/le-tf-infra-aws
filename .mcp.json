@@ -1,0 +1,35 @@
+{
+  "mcpServers": {
+    "aws-core": {
+      "args": [
+        "awslabs.core-mcp-server@latest"
+      ],
+      "command": "uvx",
+      "env": {
+        "AWS_REGION": "us-east-1",
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      },
+      "type": "stdio"
+    },
+    "aws-documentation": {
+      "args": [
+        "awslabs.aws-documentation-mcp-server@latest"
+      ],
+      "command": "uvx",
+      "env": {
+        "AWS_DOCUMENTATION_PARTITION": "aws"
+      },
+      "type": "stdio"
+    },
+    "terraform-mcp": {
+      "args": [
+        "awslabs.terraform-mcp-server@latest"
+      ],
+      "command": "uvx",
+      "env": {
+        "AWS_REGION": "us-east-1"
+      },
+      "type": "stdio"
+    }
+  }
+}
