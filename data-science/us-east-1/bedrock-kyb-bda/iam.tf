@@ -13,16 +13,26 @@ data "aws_iam_policy_document" "lambda_assume_role" {
 
 data "aws_iam_policy_document" "lambda_policy" {
   statement {
-    sid    = "CloudWatchLogs"
+    sid    = "CloudWatchLogsCreateGroup"
     effect = "Allow"
 
     actions = [
-      "logs:CreateLogGroup",
+      "logs:CreateLogGroup"
+    ]
+
+    resources = ["arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:*"]
+  }
+
+  statement {
+    sid    = "CloudWatchLogsStreamAndEvents"
+    effect = "Allow"
+
+    actions = [
       "logs:CreateLogStream",
       "logs:PutLogEvents"
     ]
 
-    resources = ["arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${local.lambda_function_name}:*"]
+    resources = ["arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.lambda_function_name}:*"]
   }
 
   statement {
