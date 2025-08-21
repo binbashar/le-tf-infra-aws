@@ -31,15 +31,3 @@ resource "helm_release" "clusterissuer_binbash" {
   depends_on = [helm_release.cert_manager]
 }
 
-#------------------------------------------------------------------------------
-# HashiCorp Vault Agent Injector: Automated Vault secrets injection.
-#------------------------------------------------------------------------------
-resource "helm_release" "vault" {
-  count      = var.enable_vault ? 1 : 0
-  name       = "vault"
-  namespace  = kubernetes_namespace.vault.id
-  repository = "https://helm.releases.hashicorp.com"
-  chart      = "vault"
-  version    = "0.10.0"
-  values     = [file("chart-values/vault.yaml")]
-}
