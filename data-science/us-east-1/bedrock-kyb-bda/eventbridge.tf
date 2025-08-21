@@ -38,8 +38,9 @@ resource "aws_cloudwatch_event_target" "lambda_target" {
 resource "aws_sqs_queue" "dlq" {
   name = "${local.lambda_function_name}-dlq"
 
-  message_retention_seconds = 1209600 # 14 days
+  message_retention_seconds  = 1209600 # 14 days
   visibility_timeout_seconds = 60
+  kms_master_key_id          = "alias/aws/sqs"
 
   tags = merge(local.tags, {
     Purpose = "dead-letter-queue"
@@ -53,8 +54,8 @@ resource "aws_sqs_queue_policy" "dlq_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "AllowEventBridgeToSendMessage"
-        Effect = "Allow"
+        Sid       = "AllowEventBridgeToSendMessage"
+        Effect    = "Allow"
         Principal = {
           Service = "events.amazonaws.com"
         }
@@ -63,6 +64,9 @@ resource "aws_sqs_queue_policy" "dlq_policy" {
         Condition = {
           StringEquals = {
             "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+          }
+          ArnEquals = {
+            "aws:SourceArn" = aws_cloudwatch_event_rule.s3_trigger.arn
           }
         }
       }

@@ -21,28 +21,41 @@ def lambda_handler(event, context):
     try:
         logger.info(f"Received event: {json.dumps(event)}")
 
-        # Extract S3 event information from EventBridge event
-        for record in event.get("Records", []):
-            if record.get("source") == "aws.s3":
-                detail = record.get("detail", {})
-                bucket_name = detail.get("bucket", {}).get("name")
-                object_key = urllib.parse.unquote_plus(
-                    detail.get("object", {}).get("key")
-                )
+        processed = 0
+        failed = 0
 
-                if not bucket_name or not object_key:
-                    logger.error("Missing bucket name or object key in event")
-                    continue
-
+        # EventBridge S3 Object Created (preferred)
+        if event.get("source") == "aws.s3" and "detail" in event:
+            detail = event["detail"]
+            bucket_name = detail.get("bucket", {}).get("name")
+            key_raw = detail.get("object", {}).get("key")
+            object_key = urllib.parse.unquote_plus(key_raw) if key_raw else None
+            if bucket_name and object_key:
                 logger.info(f"Processing file: s3://{bucket_name}/{object_key}")
-
-                # Process the document with Bedrock Data Automation
-                result = process_kyb_document(bucket_name, object_key)
-
-                if result:
-                    logger.info(f"Successfully processed document: {object_key}")
+                if process_kyb_document(bucket_name, object_key):
+                    processed += 1
                 else:
-                    logger.error(f"Failed to process document: {object_key}")
+                    failed += 1
+            else:
+                logger.error("Missing bucket name or object key in EventBridge event")
+
+        # Direct S3 -> Lambda notifications (optional compatibility)
+        elif "Records" in event:
+            for rec in event.get("Records", []):
+                s3 = rec.get("s3", {})
+                bucket_name = s3.get("bucket", {}).get("name")
+                key_raw = s3.get("object", {}).get("key")
+                object_key = urllib.parse.unquote_plus(key_raw) if key_raw else None
+                if bucket_name and object_key:
+                    logger.info(f"Processing file: s3://{bucket_name}/{object_key}")
+                    if process_kyb_document(bucket_name, object_key):
+                        processed += 1
+                    else:
+                        failed += 1
+                else:
+                    logger.error("Missing bucket name or object key in S3 record")
+        else:
+            logger.warning("Unrecognized event shape; no work performed")
 
         return {
             "statusCode": 200,

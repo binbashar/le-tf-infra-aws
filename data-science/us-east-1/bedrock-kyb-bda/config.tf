@@ -5,11 +5,19 @@ terraform {
   required_version = "~> 1.3"
 
   required_providers {
-    aws = "~> 5.0"
-    awscc = "~> 1.0"
-    archive = "~> 2.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    awscc = {
+      source  = "hashicorp/awscc"
+      version = "~> 1.0"
+    }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.0"
+    }
   }
-
   backend "s3" {
     key = "data-science/bedrock-kyb-agent/terraform.tfstate"
   }

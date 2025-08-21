@@ -71,7 +71,7 @@ The custom blueprint extracts the following business information:
 
 ```bash
 # Navigate to the layer directory
-cd data-science/us-east-1/bedrock-kyb-agent
+ cd data-science/us-east-1/bedrock-kyb-bda
 
 # Initialize OpenTofu
 leverage tofu init

@@ -80,8 +80,10 @@ data "aws_iam_policy_document" "lambda_policy" {
       effect = "Allow"
 
       actions = [
+        "kms:Encrypt",
         "kms:Decrypt",
-        "kms:GenerateDataKey"
+        "kms:GenerateDataKey",
+        "kms:DescribeKey"
       ]
 
       resources = [data.terraform_remote_state.keys.outputs.aws_kms_key_arn]
