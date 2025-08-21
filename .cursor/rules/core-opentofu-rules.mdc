@@ -2,6 +2,7 @@
 description: Core OpenTofu Best Practices for Binbash Leverage Reference Architecture
 globs:
   - "**/*.tf"
+  - "**/*.tfvars"
 alwaysApply: true
 ---
 
