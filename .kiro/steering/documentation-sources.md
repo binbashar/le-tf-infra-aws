@@ -16,7 +16,7 @@ All code, reviews, and recommendations **must** align with the following officia
 - Prefer these modules over creating custom solutions
 
 ### External References
-- **[OpenTofu Registry](https://registry.terraform.io)** - Official OpenTofu provider and module documentation
+- **[Terraform Registry](https://registry.terraform.io)** - Official Terraform provider and module documentation
 - **[AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected)** - AWS best practices and design principles
 - **[Digger](https://digger.dev)** - CI/CD integration for OpenTofu workflows
 

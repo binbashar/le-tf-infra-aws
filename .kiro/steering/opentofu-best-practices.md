@@ -46,6 +46,7 @@
 - Use `leverage tf validate` for validation
 - Use tools like `tflint` or `terrascan` for linting
 - Lock provider versions for consistency
+- Configure pre-commit hooks to run fmt/validate/lint locally (e.g., `tofu fmt`, `tofu validate`, `tflint`, `terrascan`)
 
 ### Backend Configuration
 - Use remote backends (S3) with state locking and encryption
@@ -55,7 +56,8 @@
 ## Security Practices
 
 ### Sensitive Data Management
-- Never hardcode sensitive values; use AWS Secrets Manager or environment variables
+- Never hardcode sensitive values; prefer AWS Secrets Manager or AWS Systems Manager Parameter Store
+- Avoid long-lived environment variables for secrets; if used in CI, ensure strict redaction and short TTLs
 - Store sensitive data in AWS Secrets Manager ([example layer](https://github.com/binbashar/le-tf-infra-aws/tree/master/apps-devstg/us-east-1/secrets-manager))
 - Enable encryption for all storage and communication
 - Define access controls and security groups for each resource
@@ -70,7 +72,7 @@
 ### Input Validation
 - Use variable validation rules
 - Handle edge cases with conditionals and `null` checks
-- Use `depends_on` for explicit dependencies
+- Prefer implicit dependencies via resource/output references; use `depends_on` only when implicit dependencies are not inferred
 
 ### Resource Management
 - Define resources modularly for scalability
@@ -105,7 +107,7 @@
 ## Key Conventions
 
 ### Resource Naming
-- AWS resources: `{project}-{account}-{resource}` (e.g., `bb-shared-devops`)
+- AWS resources: `{project}-{environment}-{resource}` (e.g., `bb-devstg-devops`)
 - Use consistent naming patterns across all resources
 - Follow Leverage naming conventions
 
@@ -118,6 +120,7 @@
 - Lock provider versions
 - Use semantic versioning for custom modules
 - Keep dependencies up to date
+- Set `required_version` (OpenTofu/Terraform) and pin `required_providers` in `config.tf`
 
 ## Review & PR Process
 

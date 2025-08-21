@@ -67,6 +67,8 @@ leverage run decrypt
 leverage run encrypt
 ```
 
+**Note**: Never commit decrypted secrets. Re-encrypt before committing and ensure `.gitignore` covers any plaintext artifacts.
+
 ### Cost Analysis
 ```bash
 # Generate cost breakdown (from repository root)
@@ -152,13 +154,15 @@ leverage tf test  # Module unit tests
 - **GitHub Actions**: Automated workflows for validation and deployment
 - **Digger**: CI/CD integration for OpenTofu workflows
 - **Atlantis**: Pull request automation for infrastructure changes
-- **Example Workflow**: [Reference implementation](https://github.com/binbashar/le-tf-infra-aws/blob/master/.github/workflows/testing-workflow.yml)
+- **Example Workflow**: [Reference implementation](https://github.com/binbashar/le-tf-infra-aws/blob/master/.github/workflows/testing-workflow.yml) and see this repo's `.github/workflows/` directory for active pipelines
 
 ### Performance & Optimization
 ```bash
 # Targeted operations for efficiency
 leverage tf plan -target=resource.name
 leverage tf apply -target=resource.name
+
+**Note**: Use -target sparingly; it's intended for exceptional cases and can lead to partial applies and unintended drift if misused.
 
 # State management
 leverage tf state list

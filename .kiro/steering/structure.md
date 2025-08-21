@@ -64,7 +64,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 
 ### Resources
 - Project prefix: `${var.project}-${var.environment}-{resource}`
-- Tags: Consistent tagging with `Terraform`, `Environment`, `Layer`
+- Tags: At minimum `Project`, `Environment`, `Layer`, `Owner`, `CostCenter`, and `ManagedBy=OpenTofu`
 
 ### Files
 - Configuration: `*.tf` for Terraform, `*.tfvars` for variables
@@ -80,7 +80,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 
 ### Special Markers
 - `--` suffix: Indicates disabled/optional layers
-- `common-variables.tf/`: Symlinked shared variable definitions
+- `common-variables.tf`: Symlinked shared variable definitions
 
 ## Remote State Management
 
@@ -93,7 +93,7 @@ Layers reference each other via Terraform remote state:
 
 1. **Navigate to specific layer directory** - Always work from layer directories, not root
 2. **Use Leverage CLI** - Use `leverage tofu` or `leverage tf` (shorthand) for all operations
-3. **Check dependencies** - Run `python build.py layer_dependency` before major changes
+3. **Check dependencies** - Run `python build.py layer_dependency` (from repo root) before major changes
 4. **Follow standard workflow** - init → plan → apply → validate
 5. **Maintain consistent structure** - Follow established file patterns and naming conventions
 6. **Cost awareness** - Run `make infracost-breakdown` before significant changes

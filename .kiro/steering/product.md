@@ -19,7 +19,7 @@ This repository contains the **Binbash Leverage Reference Architecture** - a com
 - **Cost optimization** with built-in Infracost integration
 - **Atlantis integration** for automated workflow management
 
-## Advanced Capabilities
+## Advanced Capabilities (Optional)
 - **AWS Bedrock integration** for AI/ML workloads and document processing
 - **Event-driven architectures** using EventBridge, Lambda, and SQS
 - **Multi-region deployment** support (us-east-1 primary, us-east-2 DR)
