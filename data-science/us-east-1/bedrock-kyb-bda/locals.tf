@@ -7,9 +7,15 @@ locals {
     Service     = "bedrock-data-automation"
   }
 
-  # S3 bucket names
-  input_bucket_name  = lower("${var.project}-${var.environment}-kyb-input")
-  output_bucket_name = lower("${var.project}-${var.environment}-kyb-output")
+  # Sanitized name prefix
+  name_prefix = lower(replace("${var.project}-${var.environment}-kyb", "_", "-"))
+  
+  # Deterministic unique suffix based on account
+  unique_suffix = substr(md5("${local.name_prefix}-${data.aws_caller_identity.current.account_id}"), 0, 6)
+  
+  # S3 bucket names with suffix and length limit
+  input_bucket_name  = substr("${local.name_prefix}-input-${local.unique_suffix}", 0, 63)
+  output_bucket_name = substr("${local.name_prefix}-output-${local.unique_suffix}", 0, 63)
 
   # Lambda function name
   lambda_function_name = "${var.project}-${var.environment}-kyb-bda-processor"
