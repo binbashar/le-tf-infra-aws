@@ -125,7 +125,7 @@ resource "aws_s3_bucket_policy" "kyb_input" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
+    Statement = concat([
       {
         Sid    = "DenyInsecureConnections"
         Effect = "Deny"
@@ -141,7 +141,45 @@ resource "aws_s3_bucket_policy" "kyb_input" {
           }
         }
       }
-    ]
+    ], var.enable_encryption ? [
+      {
+        Sid    = "DenyIncorrectEncryptionHeader"
+        Effect = "Deny"
+        Principal = "*"
+        Action = "s3:PutObject"
+        Resource = "${aws_s3_bucket.kyb_input.arn}/*"
+        Condition = {
+          StringNotEquals = {
+            "s3:x-amz-server-side-encryption" = "aws:kms"
+          }
+        }
+      },
+      {
+        Sid    = "DenyWrongKMSKey"
+        Effect = "Deny"
+        Principal = "*"
+        Action = "s3:PutObject"
+        Resource = "${aws_s3_bucket.kyb_input.arn}/*"
+        Condition = {
+          StringNotEqualsIfExists = {
+            "s3:x-amz-server-side-encryption-aws-kms-key-id" = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
+          }
+        }
+      }
+    ] : [
+      {
+        Sid    = "DenyUnencryptedObjectUploads"
+        Effect = "Deny"
+        Principal = "*"
+        Action = "s3:PutObject"
+        Resource = "${aws_s3_bucket.kyb_input.arn}/*"
+        Condition = {
+          StringNotEquals = {
+            "s3:x-amz-server-side-encryption" = "AES256"
+          }
+        }
+      }
+    ])
   })
 }
 
@@ -150,7 +188,7 @@ resource "aws_s3_bucket_policy" "kyb_output" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
+    Statement = concat([
       {
         Sid    = "DenyInsecureConnections"
         Effect = "Deny"
@@ -166,7 +204,45 @@ resource "aws_s3_bucket_policy" "kyb_output" {
           }
         }
       }
-    ]
+    ], var.enable_encryption ? [
+      {
+        Sid    = "DenyIncorrectEncryptionHeader"
+        Effect = "Deny"
+        Principal = "*"
+        Action = "s3:PutObject"
+        Resource = "${aws_s3_bucket.kyb_output.arn}/*"
+        Condition = {
+          StringNotEquals = {
+            "s3:x-amz-server-side-encryption" = "aws:kms"
+          }
+        }
+      },
+      {
+        Sid    = "DenyWrongKMSKey"
+        Effect = "Deny"
+        Principal = "*"
+        Action = "s3:PutObject"
+        Resource = "${aws_s3_bucket.kyb_output.arn}/*"
+        Condition = {
+          StringNotEqualsIfExists = {
+            "s3:x-amz-server-side-encryption-aws-kms-key-id" = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
+          }
+        }
+      }
+    ] : [
+      {
+        Sid    = "DenyUnencryptedObjectUploads"
+        Effect = "Deny"
+        Principal = "*"
+        Action = "s3:PutObject"
+        Resource = "${aws_s3_bucket.kyb_output.arn}/*"
+        Condition = {
+          StringNotEquals = {
+            "s3:x-amz-server-side-encryption" = "AES256"
+          }
+        }
+      }
+    ])
   })
 }
 
