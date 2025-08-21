@@ -3,10 +3,6 @@
   "extends": [
     "config:recommended"
   ],
-  "schedule": [
-    "before 6am on monday"
-  ],
-  "timezone": "America/New_York",
   "minimumReleaseAge": "3 days",
   "packageRules": [
     {
@@ -93,7 +89,11 @@
     }
   ],
   "prConcurrentLimit": 5,
+  "schedule": [
+    "before 6am on monday"
+  ],
   "terraform": {
     "enabled": true
-  }
+  },
+  "timezone": "America/New_York"
 }
