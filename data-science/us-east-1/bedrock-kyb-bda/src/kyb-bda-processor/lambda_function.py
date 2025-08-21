@@ -87,9 +87,10 @@ def process_kyb_document(input_bucket, object_key):
     try:
         # Get environment variables
         bda_project_arn = os.environ.get("BDA_PROJECT_ARN")
+        bda_profile_arn = os.environ.get("BDA_PROFILE_ARN")
         output_bucket = os.environ.get("OUTPUT_BUCKET")
 
-        if not bda_project_arn or not output_bucket:
+        if not bda_project_arn or not bda_profile_arn or not output_bucket:
             logger.error("Missing required environment variables")
             return False
 
@@ -105,15 +106,19 @@ def process_kyb_document(input_bucket, object_key):
         logger.info(f"Input URI: {input_s3_uri}")
         logger.info(f"Output URI: {output_s3_uri}")
 
+        # Generate clientToken with only alphanumeric and hyphens (AWS regex: [a-zA-Z0-9](-*[a-zA-Z0-9]){1,256})
+        client_timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        client_token = f"kyb-{client_timestamp}-{abs(hash(object_key)) % 10000}"
+
         # Invoke Bedrock Data Automation asynchronously
         response = bedrock_client.invoke_data_automation_async(
-            inputConfiguration={"s3InputConfiguration": {"s3Uri": input_s3_uri}},
-            outputConfiguration={"s3OutputConfiguration": {"s3Uri": output_s3_uri}},
+            dataAutomationProfileArn=bda_profile_arn,
+            inputConfiguration={"s3Uri": input_s3_uri},
+            outputConfiguration={"s3Uri": output_s3_uri},
             dataAutomationConfiguration={
-                "dataAutomationProjectArn": bda_project_arn,
-                "stage": "LIVE"
+                "dataAutomationProjectArn": bda_project_arn
             },
-            clientToken=f"kyb-{timestamp}-{hash(object_key) % 10000}",
+            clientToken=client_token,
         )
 
         invocation_arn = response.get("invocationArn")
@@ -124,7 +129,7 @@ def process_kyb_document(input_bucket, object_key):
             "invocation_arn": invocation_arn,
             "input_s3_uri": input_s3_uri,
             "output_s3_uri": output_s3_uri,
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "status": "processing",
         }
 

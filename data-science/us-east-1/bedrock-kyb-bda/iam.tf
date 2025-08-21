@@ -69,7 +69,11 @@ data "aws_iam_policy_document" "lambda_policy" {
     ]
 
     resources = [
-      "arn:aws:bedrock:${var.region}:*:data-automation-project/*"
+      "arn:aws:bedrock:us-east-1:*:data-automation-project/*",
+      "arn:aws:bedrock:us-east-1:*:data-automation-profile/*",
+      "arn:aws:bedrock:us-east-2:*:data-automation-profile/*",
+      "arn:aws:bedrock:us-west-1:*:data-automation-profile/*",
+      "arn:aws:bedrock:us-west-2:*:data-automation-profile/*"
     ]
   }
 

@@ -17,6 +17,7 @@ resource "aws_lambda_function" "kyb_bda_processor" {
   environment {
     variables = {
       BDA_PROJECT_ARN = awscc_bedrock_data_automation_project.kyb_project.project_arn
+      BDA_PROFILE_ARN = local.bda_profile_arn
       OUTPUT_BUCKET   = aws_s3_bucket.kyb_output.bucket
       LOG_LEVEL       = "INFO"
     }

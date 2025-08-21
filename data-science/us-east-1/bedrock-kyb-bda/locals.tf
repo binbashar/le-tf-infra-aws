@@ -19,4 +19,7 @@ locals {
 
   # EventBridge rule name
   eventbridge_rule_name = "${var.project}-${var.environment}-kyb-s3-trigger"
+
+  # Bedrock Data Automation Profile ARN (hardcoded to us-east-1 to fix region mismatch)
+  bda_profile_arn = "arn:aws:bedrock:us-east-1:${data.aws_caller_identity.current.account_id}:data-automation-profile/us.data-automation-v1"
 }
