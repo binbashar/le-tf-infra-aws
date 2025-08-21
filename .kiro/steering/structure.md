@@ -93,7 +93,7 @@ Layers reference each other via Terraform remote state:
 
 1. **Navigate to specific layer directory** - Always work from layer directories, not root
 2. **Use Leverage CLI** - Use `leverage tofu` or `leverage tf` (shorthand) for all operations
-3. **Check dependencies** - Run `python build.py layer_dependency` (from repo root) before major changes
+3. **Check dependencies** - Run `leverage run layer_dependency` (from layer directory) before major changes
 4. **Follow standard workflow** - init → plan → apply → validate
 5. **Maintain consistent structure** - Follow established file patterns and naming conventions
 6. **Cost awareness** - Run `make infracost-breakdown` before significant changes
