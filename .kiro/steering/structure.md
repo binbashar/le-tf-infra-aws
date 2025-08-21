@@ -108,6 +108,6 @@ Layers reference each other via Terraform remote state:
 
 ### State Management Best Practices
 - Each account has isolated S3 backend with DynamoDB locking
-- State files stored per layer: `{account}/{layer}/terraform.tfstate`
+- State files stored per layer: `{account}/{region}/{layer}/terraform.tfstate`
 - Remote state references enable cross-layer data sharing
 - Force unlock only when necessary: `leverage tf shell` then `tofu force-unlock -force <LOCK_ID>`
