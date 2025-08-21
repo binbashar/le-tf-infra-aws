@@ -68,7 +68,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 
 ### Files
 - Configuration: `*.tf` for Terraform, `*.tfvars` for variables
-- Secrets: `secrets.enc` (encrypted), `secrets.dec.tf` (decrypted)
+- Secrets: `secrets.enc` (encrypted), `secrets.dec.tf` (decrypted; must be .gitignored — never commit)
 - Documentation: `README.md`, `NOTES.md`
 
 ## Key Directories
