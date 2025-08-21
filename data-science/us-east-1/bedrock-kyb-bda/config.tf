@@ -19,7 +19,7 @@ terraform {
     }
   }
   backend "s3" {
-    key = "data-science/bedrock-kyb-agent/terraform.tfstate"
+    key = "data-science/us-east-1/bedrock-kyb-bda/terraform.tfstate"
   }
 }
 

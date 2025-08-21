@@ -15,7 +15,7 @@ locals {
   lambda_function_name = "${var.project}-${var.environment}-kyb-bda-processor"
 
   # BDA Project name
-  bda_project_name = "${var.project}-${var.environment}-kyb-project"
+  bda_project_name = "${var.project}-${var.environment}-kyb-project-v2"
 
   # EventBridge rule name
   eventbridge_rule_name = "${var.project}-${var.environment}-kyb-s3-trigger"

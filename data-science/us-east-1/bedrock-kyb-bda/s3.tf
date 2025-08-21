@@ -73,6 +73,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "kyb_input" {
     id     = "transition-old-objects"
     status = "Enabled"
 
+    filter {
+      prefix = ""
+    }
+
     transition {
       days          = var.s3_lifecycle_days
       storage_class = "STANDARD_IA"
@@ -95,6 +99,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "kyb_output" {
   rule {
     id     = "transition-old-objects"
     status = "Enabled"
+
+    filter {
+      prefix = ""
+    }
 
     transition {
       days          = var.s3_lifecycle_days
