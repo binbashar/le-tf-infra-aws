@@ -3,6 +3,10 @@
   "extends": [
     "config:recommended"
   ],
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "timezone": "America/New_York",
   "minimumReleaseAge": "3 days",
   "packageRules": [
     {
