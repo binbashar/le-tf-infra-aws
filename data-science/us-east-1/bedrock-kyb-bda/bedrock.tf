@@ -51,9 +51,9 @@ resource "awscc_bedrock_data_automation_project" "kyb_project" {
   kms_key_id = var.enable_encryption ? data.terraform_remote_state.keys.outputs.aws_kms_key_arn : null
 
   kms_encryption_context = var.enable_encryption ? {
-    project = var.project
+    project     = var.project
     environment = var.environment
-    purpose = "kyb-data-automation"
+    purpose     = "kyb-data-automation"
   } : null
 
   tags = [
@@ -72,10 +72,10 @@ resource "awscc_bedrock_data_automation_project" "kyb_project" {
 
 resource "awscc_bedrock_blueprint" "kyb_blueprint" {
   blueprint_name = "${local.bda_project_name}-blueprint"
-  
+
   # Custom schema for KYB data extraction
   schema = var.kyb_extraction_schema
-  
+
   # Type of blueprint - DOCUMENT for business document processing
   type = "DOCUMENT"
 
@@ -83,9 +83,9 @@ resource "awscc_bedrock_blueprint" "kyb_blueprint" {
   kms_key_id = var.enable_encryption ? data.terraform_remote_state.keys.outputs.aws_kms_key_arn : null
 
   kms_encryption_context = var.enable_encryption ? {
-    project = var.project
+    project     = var.project
     environment = var.environment
-    purpose = "kyb-blueprint"
+    purpose     = "kyb-blueprint"
   } : null
 
   tags = [

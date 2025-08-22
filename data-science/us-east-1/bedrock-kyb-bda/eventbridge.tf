@@ -54,8 +54,8 @@ resource "aws_sqs_queue_policy" "dlq_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowEventBridgeToSendMessage"
-        Effect    = "Allow"
+        Sid    = "AllowEventBridgeToSendMessage"
+        Effect = "Allow"
         Principal = {
           Service = "events.amazonaws.com"
         }

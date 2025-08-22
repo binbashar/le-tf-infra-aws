@@ -57,7 +57,7 @@ variable "kyb_extraction_schema" {
         },
         "Fecha liquidación": {
             "type": "string",
-            "inferenceType": "explicit", 
+            "inferenceType": "explicit",
             "instruction": "Fecha en que se generó la liquidación de sueldo. Puede aparecer como 'Fecha liquidación', 'Periodo', 'Mes', 'Remuneraciones', 'Liquidación de sueldo', etc, seguido por la fecha. Formato esperado de salida: YYYY-MM. Ejemplos: 'Mayo 2025', 'Mes: Mayo 2025', 'Periodo: 05-2025' -> salida: '2025-05'"
         },
         "RUT": {
