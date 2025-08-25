@@ -1,5 +1,5 @@
 module "user" {
-  source   = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v5.9.2"
+  source   = "github.com/binbashar/terraform-aws-iam.git//modules/iam-user?ref=v5.60.0"
   for_each = var.users
 
   name                          = each.value.name

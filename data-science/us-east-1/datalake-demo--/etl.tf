@@ -10,7 +10,7 @@ locals {
 ################################################################
 
 module "iam_role" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.52.2"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
 
   create_role = true
   role_name   = "glue-script"
