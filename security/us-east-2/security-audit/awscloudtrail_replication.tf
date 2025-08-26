@@ -13,6 +13,45 @@ resource "aws_s3_bucket" "cloudtrail_s3_bucket-dr" {
   }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "cloudtrail_s3_bucket-dr" {
+  count = var.enable_cloudtrail_bucket_replication ? 1 : 0
+
+  bucket = aws_s3_bucket.cloudtrail_s3_bucket-dr[0].id
+
+  rule {
+    id     = "cloudtrail-retention"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+
+    expiration {
+      days = 730  # 2 year retention for audit compliance
+    }
+  }
+
+  rule {
+    id     = "cloudtrail-transitions"
+    status = "Enabled"
+
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+
+    transition {
+      days          = 90
+      storage_class = "GLACIER"
+    }
+
+    transition {
+      days          = 365
+      storage_class = "DEEP_ARCHIVE"
+    }
+  }
+}
+
 resource "aws_iam_role" "cloudtrail_replication_role" {
   count = var.enable_cloudtrail_bucket_replication ? 1 : 0
   name  = "cloudtrail-replication-role"
