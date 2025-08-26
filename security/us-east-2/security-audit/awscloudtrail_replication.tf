@@ -27,7 +27,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "cloudtrail_s3_bucket-dr" {
     }
 
     expiration {
-      days = 730  # 2 year retention for audit compliance
+      days = 730 # 2 year retention for audit compliance
     }
   }
 

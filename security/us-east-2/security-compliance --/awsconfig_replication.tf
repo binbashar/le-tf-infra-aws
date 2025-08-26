@@ -27,7 +27,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "config_s3_bucket-dr" {
     }
 
     expiration {
-      days = 730  # 2 years retention for compliance
+      days = 730 # 2 years retention for compliance
     }
   }
 
