@@ -1,7 +1,7 @@
 ---
 name: issue-fix
 description: Specialized agent for debugging and fixing issues in the Leverage Reference Architecture. Handles CI/CD failures, policy errors, IAM issues, and Docker connectivity problems.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-server__resolveProviderDocID, mcp__terraform-server__getProviderDocs, mcp__sequential-thinking-server__sequentialthinking
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-server__resolveProviderDocID, mcp__terraform-server__getProviderDocs, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
 ---
 
 # Issue Fix Agent
