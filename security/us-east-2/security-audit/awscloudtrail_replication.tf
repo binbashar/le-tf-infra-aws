@@ -1,14 +1,3 @@
-# Terraform moved blocks to prevent destroy/recreate during resource rename
-moved {
-  from = aws_s3_bucket.cloudtrail_s3_bucket_dr
-  to   = aws_s3_bucket.cloudtrail_s3_bucket-dr
-}
-
-moved {
-  from = aws_s3_bucket_lifecycle_configuration.cloudtrail_s3_bucket_dr
-  to   = aws_s3_bucket_lifecycle_configuration.cloudtrail_s3_bucket-dr
-}
-
 data "aws_s3_bucket" "cloudtrail_source" {
   count    = var.enable_cloudtrail_bucket_replication ? 1 : 0
   bucket   = data.terraform_remote_state.cloudtrail[0].outputs.bucket_id
