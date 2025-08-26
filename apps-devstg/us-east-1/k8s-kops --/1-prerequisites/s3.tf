@@ -216,17 +216,13 @@ resource "aws_s3_bucket_lifecycle_configuration" "kops_irsa" {
   bucket = aws_s3_bucket.kops_irsa[0].id
 
   rule {
-    id     = "expire-objects"
+    id     = "abort-incomplete-mpu"
     status = "Enabled"
 
     filter {}
 
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
-    }
-
-    expiration {
-      days = 90
     }
   }
 }
