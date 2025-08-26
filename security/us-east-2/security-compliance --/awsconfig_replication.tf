@@ -4,7 +4,7 @@ data "aws_s3_bucket" "config_source" {
   provider = aws.primary
 }
 
-resource "aws_s3_bucket" "config_s3_bucket-dr" {
+resource "aws_s3_bucket" "config_s3_bucket_dr" {
   count  = var.enable_config_bucket_replication ? 1 : 0
   bucket = "${var.project}-${var.environment}-awsconfig-dr"
 
@@ -13,14 +13,20 @@ resource "aws_s3_bucket" "config_s3_bucket-dr" {
   }
 }
 
-resource "aws_s3_bucket_lifecycle_configuration" "config_s3_bucket-dr" {
+resource "aws_s3_bucket_lifecycle_configuration" "config_s3_bucket_dr" {
   count = var.enable_config_bucket_replication ? 1 : 0
 
-  bucket = aws_s3_bucket.config_s3_bucket-dr[0].id
+  bucket = aws_s3_bucket.config_s3_bucket_dr[0].id
 
   rule {
     id     = "config-retention"
     status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
 
     noncurrent_version_expiration {
       noncurrent_days = 30
@@ -34,6 +40,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "config_s3_bucket-dr" {
   rule {
     id     = "config-transitions"
     status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
 
     transition {
       days          = 30
@@ -109,7 +121,7 @@ resource "aws_iam_policy" "config_replication_policy" {
         "s3:ReplicateTags"
       ],
       "Effect": "Allow",
-      "Resource": "${aws_s3_bucket.config_s3_bucket-dr[0].arn}/*"
+      "Resource": "${aws_s3_bucket.config_s3_bucket_dr[0].arn}/*"
     }
   ]
 }
@@ -132,7 +144,7 @@ resource "aws_s3_bucket_replication_configuration" "config_replication" {
     status = "Enabled"
 
     destination {
-      bucket        = aws_s3_bucket.config_s3_bucket-dr[0].arn
+      bucket        = aws_s3_bucket.config_s3_bucket_dr[0].arn
       storage_class = "STANDARD"
     }
   }
