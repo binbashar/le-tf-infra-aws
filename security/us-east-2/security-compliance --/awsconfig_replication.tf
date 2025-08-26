@@ -13,6 +13,57 @@ resource "aws_s3_bucket" "config_s3_bucket-dr" {
   }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "config_s3_bucket-dr" {
+  count = var.enable_config_bucket_replication ? 1 : 0
+
+  bucket = aws_s3_bucket.config_s3_bucket-dr[0].id
+
+  rule {
+    id     = "config-retention"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+
+    expiration {
+      days = 730 # 2 years retention for compliance
+    }
+  }
+
+  rule {
+    id     = "config-transitions"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+
+    transition {
+      days          = 90
+      storage_class = "GLACIER"
+    }
+
+    transition {
+      days          = 365
+      storage_class = "DEEP_ARCHIVE"
+    }
+  }
+}
+
 resource "aws_iam_role" "config_replication_role" {
   count = var.enable_config_bucket_replication ? 1 : 0
   name  = "config-replication-role"

@@ -45,6 +45,29 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "kops_state" {
   }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "kops_state" {
+  bucket = aws_s3_bucket.kops_state.id
+
+  rule {
+    id     = "expire-noncurrent-versions"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+
+    expiration {
+      days = 90
+    }
+  }
+}
+
 #
 # S3 State Bucket Policy
 #
@@ -184,5 +207,22 @@ data "aws_iam_policy_document" "kops_irsa_bucket_policy" {
     resources = [
       "${aws_s3_bucket.kops_irsa[0].arn}/*",
     ]
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "kops_irsa" {
+  count = var.enable_irsa ? 1 : 0
+
+  bucket = aws_s3_bucket.kops_irsa[0].id
+
+  rule {
+    id     = "abort-incomplete-mpu"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
   }
 }
