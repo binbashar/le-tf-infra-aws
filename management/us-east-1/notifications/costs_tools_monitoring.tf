@@ -75,7 +75,7 @@ data "aws_iam_policy_document" "sns-notify-costs" {
       variable = "AWS:SourceOwner"
 
       values = [
-        var.accounts.root.id,
+        var.accounts.management.id,
       ]
     }
 
