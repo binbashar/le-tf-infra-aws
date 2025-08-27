@@ -90,6 +90,7 @@ locals {
       email      = "luis.gallardo@binbash.com.ar"
       groups = [
         "devops",
+        "administrators",
       ]
     }
     "ezequiel.godoy" = {
