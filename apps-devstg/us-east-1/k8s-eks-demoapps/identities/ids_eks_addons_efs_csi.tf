@@ -2,7 +2,7 @@
 # EKS Add-ons: EBS CSI
 #
 module "role_eks_addons_efs_csi" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-role-for-service-accounts-eks?ref=v5.32.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-role-for-service-accounts-eks?ref=v5.60.0"
 
   create_role           = true
   role_name             = "efs-csi"

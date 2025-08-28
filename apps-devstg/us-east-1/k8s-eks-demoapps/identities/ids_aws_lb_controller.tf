@@ -2,7 +2,7 @@
 # AWS Load Balancer Controller (ALB Ingress) Roles & Policies
 #
 module "role_aws_lb_controller" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v5.2.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=v5.60.0"
 
   create_role  = true
   role_name    = "${local.environment}-${local.prefix}-aws-lb-controller"
