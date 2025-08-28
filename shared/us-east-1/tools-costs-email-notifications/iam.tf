@@ -51,7 +51,7 @@ resource "aws_iam_policy" "monthly_services_usage_lambda_role_policy" {
           "arn:aws:iam::${var.accounts.shared.id}:role/LambdaCostsExplorerAccess",
           "arn:aws:iam::${var.accounts.network.id}:role/LambdaCostsExplorerAccess",
           "arn:aws:iam::${var.accounts.security.id}:role/LambdaCostsExplorerAccess",
-          "arn:aws:iam::${var.accounts.root.id}:role/LambdaCostsExplorerAccess",
+          "arn:aws:iam::${var.accounts.management.id}:role/LambdaCostsExplorerAccess",
           "arn:aws:iam::${var.accounts.data-science.id}:role/LambdaCostsExplorerAccess",
         ]
         Effect = "Allow"

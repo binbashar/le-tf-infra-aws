@@ -16,7 +16,7 @@ module "config_logs" {
   versioning_status       = "Enabled"
   force_destroy           = true
   config_accounts = [
-    var.accounts.root.id,
+    var.accounts.management.id,
     var.accounts.security.id,
     var.accounts.shared.id,
     var.accounts.network.id,

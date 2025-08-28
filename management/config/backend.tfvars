@@ -3,7 +3,7 @@
 #
 
 # AWS Profile (required by the backend but also used for other resources)
-profile = "bb-root-oaar"
+profile = "bb-management-oaar"
 
 # S3 bucket
 bucket = "bb-root-terraform-backend"
