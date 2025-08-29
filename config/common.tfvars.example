@@ -14,43 +14,43 @@ region_secondary      = "us-east-2"
 accounts = {
   management = {
     email = "aws+root@binbash.com.ar",
-    id    = 111111111111
+    id    = "111111111111"
   },
   security = {
     email = "binbash-security@binbash.com.ar",
-    id    = 222222222222
+    id    = "222222222222"
   },
   shared = {
     email = "binbash-shared@binbash.com.ar",
-    id    = 333333333333
+    id    = "333333333333"
   },
   network = {
     email = "binbash-network@binbash.com.ar",
-    id    = 444444444444
+    id    = "444444444444"
   },
   apps-devstg = {
     email = "binbash-apps-devstg@binbash.com.ar",
-    id    = 555555555555
+    id    = "555555555555"
   },
   apps-prd = {
     email = "binbash-apps-prd@binbash.com.ar",
-    id    = 666666666666
+    id    = "666666666666"
   }
   data-science = {
     email = "binbash-data-science@binbash.com.ar",
-    id    = 666666666666
+    id    = "666666666666"
   }
   workshop-genai-1 = {
     email = "aws+workshop-genai-1@binbash.com.ar",
-    id    = 777777777777
+    id    = "777777777777"
   }
   workshop-genai-2 = {
     email = "aws+workshop-genai-2@binbash.com.ar",
-    id    = 888888888888
+    id    = "888888888888"
   }
   workshop-genai-3 = {
     email = "aws+workshop-genai-3@binbash.com.ar",
-    id    = 999999999999
+    id    = "999999999999"
   }
 }
 
