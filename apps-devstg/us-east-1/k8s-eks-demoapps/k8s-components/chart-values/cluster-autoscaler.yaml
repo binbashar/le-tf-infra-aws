@@ -23,3 +23,5 @@ rbac:
   serviceAccount:
     annotations:
       eks.amazonaws.com/role-arn: ${roleArn}
+  # Disable PodSecurityPolicy for EKS 1.31 compatibility (PSP removed in K8s 1.25+)
+  pspEnabled: false
