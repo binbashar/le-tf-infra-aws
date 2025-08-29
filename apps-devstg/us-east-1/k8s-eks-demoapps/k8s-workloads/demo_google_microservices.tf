@@ -74,6 +74,7 @@ resource "kubernetes_manifest" "google_microservices_dev" {
         "syncOptions" = [
           "CreateNamespace=true",
           "Prune=true",
+          "ServerSideApply=true",
         ]
       }
     }
