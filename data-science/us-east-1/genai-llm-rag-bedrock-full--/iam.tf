@@ -1,5 +1,5 @@
 module "iam_assumable_role_ecs_opensearch" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.52.2"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
 
   trusted_role_arns = [
     module.ecs_service.tasks_iam_role_arn

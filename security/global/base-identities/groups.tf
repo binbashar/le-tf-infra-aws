@@ -3,7 +3,7 @@
 #
 
 module "iam_group_auditors" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v5.9.2"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v5.60.0"
   name   = "auditors"
 
   group_users = [
@@ -18,7 +18,7 @@ module "iam_group_auditors" {
 }
 
 module "iam_group_devops" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v5.9.2"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v5.60.0"
   name   = "devops"
 
   group_users = [
@@ -38,7 +38,7 @@ module "iam_group_devops" {
 }
 
 module "iam_group_finops" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v5.9.2"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v5.60.0"
   name   = "finops"
 
   attach_iam_self_management_policy = false
@@ -57,7 +57,7 @@ module "iam_group_finops" {
 # Machine users groups
 #
 module "iam_group_deploymaster" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v5.9.2"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v5.60.0"
   name   = "deploymaster"
 
   group_users = [

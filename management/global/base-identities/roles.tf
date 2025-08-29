@@ -2,7 +2,7 @@
 # Assumable Role Cross-Account: OrganizationAccountAccessRole
 #
 module "iam_assumable_role_oaar" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.accounts.management.id}:root"
@@ -28,7 +28,7 @@ module "iam_assumable_role_oaar" {
 # Assumable Role: AWSServiceRoleForOrganizations
 #
 module "iam_assumable_role_service_organizations" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
 
   trusted_role_services = [
     "organizations.amazonaws.com"
@@ -52,7 +52,7 @@ module "iam_assumable_role_service_organizations" {
 # Assumable Role: AWSServiceRoleForSupport
 #
 module "iam_assumable_role_service_support" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
 
   trusted_role_services = [
     "support.amazonaws.com"
@@ -76,7 +76,7 @@ module "iam_assumable_role_service_support" {
 # Assumable Role: AWSServiceRoleForTrustedadvisor
 #
 module "iam_assumable_role_service_trustedadvisor" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
 
   trusted_role_services = [
     "trustedadvisor.amazonaws.com"
@@ -101,7 +101,7 @@ module "iam_assumable_role_service_trustedadvisor" {
 # Assumable Role: Costs Explorer access
 #
 module "iam_assumable_role_lambda_costs_explorer_access" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.3.3"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.accounts.shared.id}:root",
@@ -129,7 +129,7 @@ module "iam_assumable_role_lambda_costs_explorer_access" {
 # Assumable Role: north.cloud
 #
 module "iam_assumable_role_north_cloud_access" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.3.3"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.external_accounts.north_cloud.aws_account_id}:root"
@@ -154,7 +154,7 @@ module "iam_assumable_role_north_cloud_access" {
 # Assumable Role Cross-Account: DeployMaster
 #
 module "iam_assumable_role_deploy_master" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.9.2"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
 
   trusted_role_arns = [
     "arn:aws:iam::${var.accounts.security.id}:root",

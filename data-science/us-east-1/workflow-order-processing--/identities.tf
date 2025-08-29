@@ -2,7 +2,7 @@
 # Roles & Policies: API Gateway
 #======================================
 module "role_apigw" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.41.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
 
   create_role       = true
   role_name         = "APIGatewayLambdaExecuteRole"
@@ -17,7 +17,7 @@ module "role_apigw" {
 }
 
 module "policy_apigw" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-policy?ref=v5.41.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-policy?ref=v5.60.0"
 
   name        = "LambdaExecutionPolicy"
   path        = "/"
