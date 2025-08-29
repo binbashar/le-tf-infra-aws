@@ -11,7 +11,7 @@ variable "vpc_shared_created" {
 variable "vpc_enable_nat_gateway" {
   description = "Enable NAT Gatewway"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "vpc_single_nat_gateway" {

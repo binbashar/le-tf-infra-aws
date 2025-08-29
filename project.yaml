@@ -1,0 +1,27 @@
+project_name: bb
+short_name: bb
+primary_region: us-east-1
+secondary_region: us-east-2
+mfa_enabled: false
+organization_accounts:
+  - name: management
+    email: aws+root@binbash.com.ar
+    id: 111111111111
+  - name: security 
+    email: binbash-security@binbash.com.ar
+    id: 222222222222
+  - name: shared
+    email: binbash-shared@binbash.com.ar
+    id: 333333333333
+  - name: network
+    email: binbash-network@binbash.com.ar
+    id: 444444444444
+  - name: apps-devstg
+    email: binbash-apps-devstg@binbash.com.ar
+    id: 555555555555
+  - name: apps-prd
+    email: binbash-apps-prd@binbash.com.ar
+    id: 666666666666
+  - name: data-science
+    email: binbash-data-science@binbash.com.ar
+    id: 777777777777
