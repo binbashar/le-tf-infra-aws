@@ -21,6 +21,7 @@ apps-devstg/us-east-1/k8s-eks-demoapps/cluster/metadata.yaml
 !.kiro
 !.cursor
 !.mcp.json
+!.claude
 
 # SSH keys #
 ############
