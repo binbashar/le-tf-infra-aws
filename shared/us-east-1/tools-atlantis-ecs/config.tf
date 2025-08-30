@@ -17,7 +17,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "shared/atlantis/terraform.tfstate"
+    key = "shared/atlantis-ecs/terraform.tfstate"
   }
 }
 
