@@ -56,8 +56,9 @@ module "atlantis" {
         value = join(",", ["github.com/binbashar/le-tf-infra-aws"]) # TODO
       },
       {
-        name : "ATLANTIS_REPO_CONFIG_JSON",
-        value : jsonencode(yamldecode(file("${path.module}/server-atlantis.yaml"))),
+      {
+        name  = "ATLANTIS_REPO_CONFIG_JSON",
+        value = jsonencode(yamldecode(file("${path.module}/server-atlantis.yaml"))),
       },
       {
         name  = "ATLANTIS_EMOJI_REACTION"
