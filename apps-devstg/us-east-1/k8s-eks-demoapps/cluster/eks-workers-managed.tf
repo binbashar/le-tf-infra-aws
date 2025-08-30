@@ -101,53 +101,54 @@ module "cluster" {
     # ---------------------------------------------------------------
     # Standard, On-demand, one node group per AZs (HA)
     # ---------------------------------------------------------------
-    # standard_ondemand_a = {
-    #   min_size       = 1
-    #   max_size       = 6
-    #   desired_size   = 1
-    #   capacity_type  = "ON_DEMAND"
-    #   instance_types = ["t3.medium"]
-    #   subnet_ids   = [data.terraform_remote_state.eks-vpc.outputs.private_subnets[0]]
-    # }
+     standard_ondemand_a = {
+       min_size       = 1
+       max_size       = 6
+       desired_size   = 1
+       capacity_type  = "ON_DEMAND"
+       instance_types = ["t3.medium"]
+       subnet_ids   = [data.terraform_remote_state.cluster-vpc.outputs.private_subnets[0]]
+     }
     # standard_ondemand_b = {
     #   min_size       = 1
     #   max_size       = 6
     #   desired_size   = 1
     #   capacity_type  = "ON_DEMAND"
     #   instance_types = ["t3.medium"]
-    #   subnet_ids   = [data.terraform_remote_state.eks-vpc.outputs.private_subnets[1]]
+    #   subnet_ids   = [data.terraform_remote_state.cluster-vpc.outputs.private_subnets[1]]
     # }
 
     # ---------------------------------------------------------------
     # Standard, Spot, single node group across all AZs
     # ---------------------------------------------------------------
-    standard_spot = {
-      desired_size   = 1
-      max_size       = 6
-      min_size       = 1
-      capacity_type  = "SPOT"
-      instance_types = ["t3.medium", "t3a.medium"]
-      labels         = merge(local.tags, { "stack" = "standard" })
-    }
+    #standard_spot = {
+    #  desired_size   = 1
+    #  max_size       = 6
+    #  min_size       = 1
+    #  capacity_type  = "SPOT"
+    #  instance_types = ["t3.medium", "t3a.medium"]
+    #  labels         = merge(local.tags, { "stack" = "standard" })
+    #}
 
     # ---------------------------------------------------------------
     # Tools, Spot, single node group across all AZs
     # ---------------------------------------------------------------
-    tools_spot = {
-      desired_size   = 1
-      max_size       = 6
-      min_size       = 1
-      capacity_type  = "SPOT"
-      instance_types = ["t3.medium", "t3a.medium"]
-      labels         = merge(local.tags, { "stack" = "tools" })
-      taints = {
-        tools = {
-          key    = "stack"
-          value  = "tools"
-          effect = "NO_SCHEDULE"
-        }
-      }
-    }
+    #tools_spot = {
+    #  desired_size   = 1
+    #  max_size       = 6
+    #  min_size       = 1
+    #  capacity_type  = "SPOT"
+    #  instance_types = ["t3.medium", "t3a.medium"]
+    #  labels         = merge(local.tags, { "stack" = "tools" })
+    #  taints = {
+    #    tools = {
+    #      key    = "stack"
+    #      value  = "tools"
+    #      effect = "NO_SCHEDULE"
+    #    }
+    #  }
+    #}
+
   }
 
   # Configure which roles, users and accounts can access the k8s api
