@@ -90,9 +90,14 @@ locals {
       secret_string           = "INITIAL_VALUE"
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
     },
-
     "/devops/apps-devstg/elasticache-redis/auth_token" = {
       description             = "Password used to access Elasticache Redis protected server"
+      recovery_window_in_days = 7
+      secret_string           = "INITIAL_VALUE"
+      kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+    },
+    "/devops/shared/atlantis" = {
+      description             = "Atlantis required credentials"
       recovery_window_in_days = 7
       secret_string           = "INITIAL_VALUE"
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id

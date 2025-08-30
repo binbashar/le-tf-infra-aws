@@ -25,8 +25,6 @@ module "iam_assumable_role_devops" {
   custom_role_policy_arns = [
     aws_iam_policy.devops_access.arn
   ]
-
-
 }
 
 #
@@ -53,8 +51,6 @@ module "iam_assumable_role_auditor" {
   custom_role_policy_arns = [
     "arn:aws:iam::aws:policy/SecurityAudit"
   ]
-
-
 }
 
 #
@@ -81,8 +77,6 @@ module "iam_assumable_role_deploy_master" {
   custom_role_policy_arns = [
     aws_iam_policy.deploy_master_access.arn
   ]
-
-
 }
 
 #
@@ -108,8 +102,6 @@ module "iam_assumable_role_grafana" {
   custom_role_policy_arns = [
     aws_iam_policy.grafana_permissions.arn
   ]
-
-
 }
 
 #
@@ -132,8 +124,6 @@ module "iam_assumable_role_service_organizations" {
   custom_role_policy_arns = [
     "arn:aws:iam::aws:policy/aws-service-role/AWSOrganizationsServiceTrustPolicy"
   ]
-
-
 }
 
 #
@@ -156,8 +146,6 @@ module "iam_assumable_role_service_support" {
   custom_role_policy_arns = [
     "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
   ]
-
-
 }
 
 #
@@ -182,8 +170,6 @@ module "iam_assumable_role_oaar" {
   role_requires_mfa    = true
   mfa_age              = 7200 # Maximum CLI/API session duration in seconds between 3600 and 43200
   max_session_duration = 3600 # Max age of the session (in seconds) when assuming roles
-
-
 }
 
 #
@@ -206,8 +192,6 @@ module "iam_assumable_role_service_trustedadvisor" {
   custom_role_policy_arns = [
     "arn:aws:iam::aws:policy/aws-service-role/AWSTrustedAdvisorServiceRolePolicy"
   ]
-
-
 }
 
 #
@@ -234,6 +218,60 @@ module "iam_assumable_role_lambda_costs_explorer_access" {
   custom_role_policy_arns = [
     aws_iam_policy.lambda_costs_explorer_access.arn,
   ]
+}
 
+#
+# Cross-Account Role: Atlantis
+#
+module "iam_assumable_role_atlantis" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.59.0"
 
+  create_role       = true
+  role_name         = "Atlantis"
+  role_requires_mfa = false
+
+  trusted_role_arns = [
+    "arn:aws:iam::${var.accounts.security.id}:root",
+  ]
+
+  # Use inline only if you anticipate you won't need to reuse the same policy statements
+  inline_policy_statements = [
+    {
+      sid = "Baseline"
+      actions = [
+        "budgets:*",
+        "cloudtrail:*",
+        "cloudwatch:*",
+        "config:*",
+        "dynamodb:*",
+        "ec2:*",
+        "ecr:*",
+        "elasticloadbalancing:*",
+        "iam:*",
+        "logs:*",
+        "network-firewall:*",
+        "organizations:DescribeOrganization",
+        "organizations:ListAccounts",
+        "ram:*",
+        "route53:*",
+        "route53domains:*",
+        "s3:*",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:Describe*",
+        "sns:*",
+        "sqs:*",
+        "ssm:*",
+      ]
+    }
+      effect    = "Allow"
+      resources = ["*"]
+      conditions = [
+        {
+          test     = "StringEquals"
+          values   = var.regions_allowed
+          variable = "aws:RequestedRegion"
+        }
+      ]
+    }
+  ]
 }

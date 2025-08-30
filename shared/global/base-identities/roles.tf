@@ -65,7 +65,6 @@ module "iam_assumable_role_deploy_master" {
 
   trusted_role_arns = [
     "arn:aws:iam::${var.accounts.security.id}:root",
-    "arn:aws:iam::${var.accounts.shared.id}:root"
   ]
 
   create_role = true
@@ -96,7 +95,7 @@ module "iam_assumable_role_finops" {
     "arn:aws:iam::${var.accounts.security.id}:root"
   ]
 
-  create_role            = true
+  create_role            = false
   role_name              = "FinOps"
   attach_readonly_policy = true
   role_path              = "/"
@@ -140,79 +139,6 @@ module "iam_assumable_role_oaar" {
 
 
 }
-
-#
-# Assumable Role: AWSServiceRoleForOrganizations
-#
-module "iam_assumable_role_service_organizations" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
-
-  trusted_role_services = [
-    "organizations.amazonaws.com"
-  ]
-
-  create_role      = true
-  role_name        = "AWSServiceRoleForOrganizations"
-  role_description = "Service-linked role used by AWS Organizations to enable integration of other AWS services with Organizations."
-  role_path        = "/aws-service-role/organizations.amazonaws.com/"
-
-  role_requires_mfa = false
-
-  custom_role_policy_arns = [
-    "arn:aws:iam::aws:policy/aws-service-role/AWSOrganizationsServiceTrustPolicy"
-  ]
-
-
-}
-
-#
-# Assumable Role: AWSServiceRoleForSupport
-#
-module "iam_assumable_role_service_support" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
-
-  trusted_role_services = [
-    "support.amazonaws.com"
-  ]
-
-  create_role      = true
-  role_name        = "AWSServiceRoleForSupport"
-  role_description = "Enables resource access for AWS to provide billing, administrative and support services"
-  role_path        = "/aws-service-role/support.amazonaws.com/"
-
-  role_requires_mfa = false
-
-  custom_role_policy_arns = [
-    "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
-  ]
-
-
-}
-
-#
-# Assumable Role: AWSServiceRoleForTrustedadvisor
-#
-module "iam_assumable_role_service_trustedadvisor" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
-
-  trusted_role_services = [
-    "trustedadvisor.amazonaws.com"
-  ]
-
-  create_role      = true
-  role_name        = "AWSServiceRoleForTrustedAdvisor"
-  role_description = "Access for the AWS Trusted Advisor Service to help reduce cost, increase performance, and improve security of your AWS environment."
-  role_path        = "/aws-service-role/trustedadvisor.amazonaws.com/"
-
-  role_requires_mfa = false
-
-  custom_role_policy_arns = [
-    "arn:aws:iam::aws:policy/aws-service-role/AWSTrustedAdvisorServiceRolePolicy"
-  ]
-
-
-}
-
 
 #------------------------------------------------------------------------------
 # Github OIDC Integration
@@ -289,6 +215,62 @@ module "iam_assumable_role_lambda_costs_explorer_access" {
   custom_role_policy_arns = [
     aws_iam_policy.lambda_costs_explorer_access.arn,
   ]
+}
 
+#
+# Cross-Account Role: Atlantis
+#
+module "iam_assumable_role_atlantis" {
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.59.0"
 
+  create_role       = true
+  role_name         = "Atlantis"
+  role_requires_mfa = false
+
+  trusted_role_arns = [
+    "arn:aws:iam::${var.accounts.security.id}:root",
+  ]
+
+  # Use inline only if you anticipate you won't need to reuse the same policy statements
+  inline_policy_statements = [
+    {
+      sid = "Baseline"
+      actions = [
+        "athena:*",
+        "budgets:*",
+        "cloudfront:*",
+        "cloudtrail:*",
+        "cloudwatch:*",
+        "config:*",
+        "dynamodb:*",
+        "ec2:*",
+        "ecr:*",
+        "elasticloadbalancing:*",
+        "glue:*",
+        "iam:*",
+        "kms:*",
+        "logs:*",
+        "organizations:Describe*",
+        "organizations:List*",
+        "route53:*",
+        "route53domains:*",
+        "s3:*",
+        "secretsmanager:GetResourcePolicy",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:Describe*",
+        "sns:*",
+        "ssm:*",
+        "sqs:*",
+      ]
+      effect    = "Allow"
+      resources = ["*"]
+      conditions = [
+        {
+          test     = "StringEquals"
+          values   = var.regions_allowed
+          variable = "aws:RequestedRegion"
+        }
+      ]
+    }
+  ]
 }
