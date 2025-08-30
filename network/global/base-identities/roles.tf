@@ -246,9 +246,7 @@ module "iam_assumable_role_atlantis" {
         "dynamodb:*",
         "ec2:*",
         "ecr:*",
-        "ecr:*",
         "elasticloadbalancing:*",
-        "iam:*",
         "iam:*",
         "logs:*",
         "network-firewall:*",
@@ -264,6 +262,7 @@ module "iam_assumable_role_atlantis" {
         "sqs:*",
         "ssm:*",
       ]
+    }
       effect    = "Allow"
       resources = ["*"]
       conditions = [
