@@ -44,10 +44,7 @@ module "schedule_ec2_start_daily_morning" {
   # eg2: once a week every friday at 00hs cron(0 00 ? * FRI *)
   # eg3: everyday at 00hs cron(0 00 * * ? *)
   # none: do not create a schedule (e.g. http endpoints enabled)
-  cloudwatch_schedule_expression = "none"
-
-  # Create an http endpoint to trigger lambda
-  http_trigger = true
+  cloudwatch_schedule_expression = "cron(0 9 * * ? *)"
 
   # Define schedule action to apply on resources
   schedule_action = "start"
