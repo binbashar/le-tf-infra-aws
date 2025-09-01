@@ -42,6 +42,14 @@ locals {
         "devops",
       ]
     }
+    "hecber.cordova" = {
+      first_name = "Hecber"
+      last_name  = "Cordova"
+      email      = "hecber.cordova@binbash.com.ar"
+      groups = [
+        "devops",
+      ]
+    }
     "francisco.rivera" = {
       first_name = "Francisco"
       last_name  = "Rivera"
