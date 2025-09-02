@@ -1,7 +1,7 @@
 ---
 name: documentation
 description: Specialized agent for maintaining documentation, architecture diagrams, and knowledge management in the Leverage Reference Architecture. Creates layer docs, generates diagrams, and maintains CLAUDE.md.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__mcp-mermaid__generate_mermaid_diagram, mcp__sequential-thinking-server__sequentialthinking
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__mcp-mermaid__generate_mermaid_diagram, mcp__sequential-thinking-server__sequentialthinking, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchAwsProviderDocs
 ---
 
 # Documentation Agent
@@ -29,12 +29,18 @@ mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 - plantuml (architecture diagrams)
 - sphinx (documentation generation)
 
-### Terraform MCP Server - Resource Documentation
+### AWS MCP Server - Resource Documentation
 #### When documenting OpenTofu/Terraform resources:
 ```
-mcp__terraform-server__resolveProviderDocID(
-  serviceSlug="<service>",
-  providerDataType="resources"
+mcp__terraform-mcp__SearchAwsccProviderDocs(
+  asset_name="awscc_<service>",
+  asset_type="resource"
+)
+```
+```
+mcp__terraform-mcp__SearchAwsProviderDocs(
+  asset_name="aws_<service>",
+  asset_type="resource"
 )
 ```
 

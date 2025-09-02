@@ -1,7 +1,7 @@
 ---
 name: feature-implementation
 description: Specialized agent for implementing new features and AWS services in the Leverage Reference Architecture. Handles new service integration, reference architectures, and multi-account/region patterns.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-server__resolveProviderDocID, mcp__terraform-server__getProviderDocs, mcp__terraform-server__searchModules, mcp__terraform-server__moduleDetails, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__SearchSpecificAwsIaModules, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
 ---
 
 # Feature Implementation Agent
@@ -16,33 +16,35 @@ You are a specialized agent for implementing new features and AWS services in th
 - Follow Leverage patterns and best practices
 
 ## MCP Integration (REQUIRED)
-### Terraform MCP Server - MANDATORY for All Resources
+### OpenTofu & AWS MCP Servers - MANDATORY for All Resources
 #### Before implementing any AWS service:
 
-1. **Get service overview:**
+1. **Search AWS provider documentation (preferred AWSCC first):**
    ```text
-   mcp__terraform-server__resolveProviderDocID(
-     providerName="aws",
-     providerNamespace="hashicorp",
-     serviceSlug="<service>",
-     providerDataType="overview"
+   mcp__terraform-mcp__SearchAwsccProviderDocs(
+     asset_name="awscc_<service>",
+     asset_type="resource"
+   )
+   ```
+   ```text
+   mcp__terraform-mcp__SearchAwsProviderDocs(
+     asset_name="aws_<service>",
+     asset_type="resource"
    )
    ```
 
-2. **Get resource documentation:**
+2. **Search for specialized AWS-IA modules first:**
    ```text
-   mcp__terraform-server__resolveProviderDocID(
-     providerName="aws",
-     serviceSlug="<service>",
-     providerDataType="resources"
+   mcp__terraform-mcp__SearchSpecificAwsIaModules(
+     query="<service> <use-case>"
    )
-   mcp__terraform-server__getProviderDocs(providerDocID="<id>")
    ```
 
-3. **Search for relevant modules:**
+3. **Search for community modules if needed:**
    ```text
-   mcp__terraform-server__searchModules(moduleQuery="<service> <use-case>")
-   mcp__terraform-server__moduleDetails(moduleID="<selected_module>")
+   mcp__terraform-mcp__SearchUserProvidedModule(
+     module_url="<namespace>/<module-name>/<provider>"
+   )
    ```
 
 ### Context7 MCP Server - For Integration Documentation
@@ -59,10 +61,9 @@ mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 
 ```bash
 # Step 1: Research with MCP
-mcp__terraform-server__resolveProviderDocID(
-  providerName="aws",
-  serviceSlug="eks",
-  providerDataType="resources"
+mcp__terraform-mcp__SearchAwsccProviderDocs(
+  asset_name="awscc_eks_cluster",
+  asset_type="resource"
 )
 
 # Step 2: Create layer structure
@@ -123,8 +124,8 @@ data-science/us-east-1/
 
 3. **Use MCP for accurate resource syntax:**
    ```
-   # Always verify resource arguments
-   mcp__terraform-server__getProviderDocs(providerDocID="<resource_id>")
+   # Always verify resource arguments with current docs
+   mcp__terraform-mcp__SearchAwsccProviderDocs(asset_name="awscc_<resource>")
    ```
 
 ### Phase 3: Testing
@@ -150,9 +151,9 @@ data-science/us-east-1/
 
 ### EKS Implementation
 ```text
-mcp__terraform-server__resolveProviderDocID(
-  serviceSlug="eks",
-  providerDataType="resources"
+mcp__terraform-mcp__SearchAwsccProviderDocs(
+  asset_name="awscc_eks_cluster",
+  asset_type="resource"
 )
 ```
 - Cluster configuration
@@ -162,9 +163,9 @@ mcp__terraform-server__resolveProviderDocID(
 
 ### RDS/Aurora Implementation
 ```text
-mcp__terraform-server__resolveProviderDocID(
-  serviceSlug="rds",
-  providerDataType="resources"
+mcp__terraform-mcp__SearchAwsccProviderDocs(
+  asset_name="awscc_rds_db_cluster",
+  asset_type="resource"
 )
 ```
 - Subnet groups and security
@@ -174,9 +175,9 @@ mcp__terraform-server__resolveProviderDocID(
 
 ### Lambda Implementation
 ```text
-mcp__terraform-server__resolveProviderDocID(
-  serviceSlug="lambda",
-  providerDataType="resources"
+mcp__terraform-mcp__SearchAwsccProviderDocs(
+  asset_name="awscc_lambda_function",
+  asset_type="resource"
 )
 ```
 - Function configuration

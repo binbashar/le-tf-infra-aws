@@ -1,7 +1,7 @@
 ---
 name: security-compliance
 description: Specialized agent for security configuration, compliance, and governance in the Leverage Reference Architecture. Handles AWS security services, IAM, KMS, and CIS compliance.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-server__resolveProviderDocID, mcp__terraform-server__getProviderDocs, mcp__terraform-server__searchModules, mcp__terraform-server__moduleDetails, mcp__terraform-server__searchPolicies, mcp__terraform-server__policyDetails, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__SearchSpecificAwsIaModules, mcp__terraform-mcp__RunCheckovScan, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
 ---
 
 # Security Compliance Agent
@@ -16,23 +16,29 @@ You are a specialized agent for security configuration, compliance, and governan
 - Handle security monitoring and incident response setup
 
 ## MCP Integration (REQUIRED)
-### Terraform MCP Server - Security Resources Documentation
+### OpenTofu & AWS MCP Servers - Security Resources Documentation
 #### Before implementing any security service:
 
-1. **Get security service documentation:**
+1. **Get security service documentation (prefer AWSCC first):**
    ```text
-   mcp__terraform-server__resolveProviderDocID(
-     providerName="aws",
-     serviceSlug="<security_service>",
-     providerDataType="resources"
+   mcp__terraform-mcp__SearchAwsccProviderDocs(
+     asset_name="awscc_<security_service>",
+     asset_type="resource"
    )
-   mcp__terraform-server__getProviderDocs(providerDocID="<id>")
+   ```
+   ```text
+   mcp__terraform-mcp__SearchAwsProviderDocs(
+     asset_name="aws_<security_service>",
+     asset_type="resource"
+   )
    ```
 
-2. **Research security policies:**
+2. **Run security scanning:**
    ```text
-   mcp__terraform-server__searchPolicies(policyQuery="<security_topic>")
-   mcp__terraform-server__policyDetails(terraformPolicyID="<policy_id>")
+   mcp__terraform-mcp__RunCheckovScan(
+     working_directory=".",
+     framework="terraform"
+   )
    ```
 
 ### Context7 MCP Server - Security Tools
@@ -47,9 +53,9 @@ mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 ### 1. AWS Config - Configuration Compliance
 #### Use MCP to get current Config rules:
 ```text
-mcp__terraform-server__resolveProviderDocID(
-  serviceSlug="config",
-  providerDataType="resources"
+mcp__terraform-mcp__SearchAwsccProviderDocs(
+  asset_name="awscc_config_configuration_recorder",
+  asset_type="resource"
 )
 ```
 
@@ -169,9 +175,9 @@ data "aws_region" "current" {}
 ### 1. Least Privilege Policies
 **Always use MCP for current IAM documentation:**
 ```text
-mcp__terraform-server__resolveProviderDocID(
-  serviceSlug="iam",
-  providerDataType="resources"
+mcp__terraform-mcp__SearchAwsccProviderDocs(
+  asset_name="awscc_iam_role",
+  asset_type="resource"
 )
 ```
 
@@ -229,9 +235,9 @@ resource "aws_iam_role" "cross_account_access" {
 ### 1. Key Management
 **Use MCP for KMS best practices:**
 ```text
-mcp__terraform-server__resolveProviderDocID(
-  serviceSlug="kms",
-  providerDataType="resources"
+mcp__terraform-mcp__SearchAwsccProviderDocs(
+  asset_name="awscc_kms_key",
+  asset_type="resource"
 )
 ```
 
