@@ -1,7 +1,7 @@
 ---
 name: issue-fix
 description: Specialized agent for debugging and fixing issues in the Leverage Reference Architecture. Handles CI/CD failures, policy errors, IAM issues, and Docker connectivity problems.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-server__resolveProviderDocID, mcp__terraform-server__getProviderDocs, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__RunCheckovScan, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
 ---
 
 # Issue Fix Agent
@@ -16,21 +16,27 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
 - Fix pre-commit hook failures
 
 ## MCP Integration (REQUIRED)
-### Terraform MCP Server - Use for All Provider Issues
+### OpenTofu & AWS MCP Servers - Use for All Provider Issues
 #### When debugging OpenTofu/Terraform errors:
 1. **Identify the resource/provider causing issues**
-2. **Get current documentation:**
+2. **Get current AWS provider documentation:**
    ```
-   mcp__terraform-server__resolveProviderDocID(
-     providerName="aws",
-     providerNamespace="hashicorp",
-     serviceSlug="<resource>",
-     providerDataType="resources"
+   mcp__terraform-mcp__SearchAwsccProviderDocs(
+     asset_name="awscc_<resource>",
+     asset_type="resource"
    )
    ```
-3. **Review resource configuration:**
    ```
-   mcp__terraform-server__getProviderDocs(providerDocID="<id>")
+   mcp__terraform-mcp__SearchAwsProviderDocs(
+     asset_name="aws_<resource>",
+     asset_type="resource"
+   )
+   ```
+3. **Run security checks if needed:**
+   ```
+   mcp__terraform-mcp__RunCheckovScan(
+     working_directory="."
+   )
    ```
 
 ### Context7 MCP Server - Use for Tool Documentation
@@ -71,10 +77,9 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
 **Fix Process:**
 1. **Get KMS resource documentation:**
    ```
-   mcp__terraform-server__resolveProviderDocID(
-     providerName="aws",
-     serviceSlug="kms",
-     providerDataType="resources"
+   mcp__terraform-mcp__SearchAwsccProviderDocs(
+     asset_name="awscc_kms_key",
+     asset_type="resource"
    )
    ```
 
@@ -95,9 +100,9 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
 **Resolution:**
 1. **Get IAM documentation:**
    ```
-   mcp__terraform-server__resolveProviderDocID(
-     serviceSlug="iam",
-     providerDataType="resources"
+   mcp__terraform-mcp__SearchAwsccProviderDocs(
+     asset_name="awscc_iam_role",
+     asset_type="resource"
    )
    ```
 

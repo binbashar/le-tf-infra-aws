@@ -1,7 +1,7 @@
 ---
 name: cost-optimization
 description: Specialized agent for cost optimization and financial governance in the Leverage Reference Architecture. Analyzes infracost reports, implements tagging strategies, and optimizes resource costs.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-server__resolveProviderDocID, mcp__terraform-server__getProviderDocs, mcp__terraform-server__searchModules, mcp__terraform-server__moduleDetails, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__SearchSpecificAwsIaModules, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
 ---
 
 # Cost Optimization Agent
@@ -16,22 +16,28 @@ You are a specialized agent for cost optimization and financial governance in th
 - Review and optimize data transfer costs
 
 ## MCP Integration (REQUIRED)
-### Terraform MCP Server - For Cost-Related Resources
+### OpenTofu & AWS MCP Servers - For Cost-Related Resources
 #### Before optimizing any resource:
 
-1. **Get resource cost information:**
+1. **Get AWS resource documentation:**
    ```text
-   mcp__terraform-server__resolveProviderDocID(
-     providerName="aws",
-     serviceSlug="<service>",
-     providerDataType="resources"
+   mcp__terraform-mcp__SearchAwsccProviderDocs(
+     asset_name="awscc_<service>",
+     asset_type="resource"
    )
-   mcp__terraform-server__getProviderDocs(providerDocID="<id>")
+   ```
+   ```text
+   mcp__terraform-mcp__SearchAwsProviderDocs(
+     asset_name="aws_<service>",
+     asset_type="resource"
+   )
    ```
 
-2. **Research cost optimization features:**
+2. **Research cost optimization modules:**
    ```text
-   mcp__terraform-server__searchModules(moduleQuery="cost optimization <service>")
+   mcp__terraform-mcp__SearchSpecificAwsIaModules(
+     query="cost optimization <service>"
+   )
    ```
 
 ### Context7 MCP Server - For Cost Tools
@@ -116,9 +122,9 @@ resource "aws_instance" "example" {
 ### 1. Right-Sizing Resources
 #### Use MCP to understand resource options:
 ```text
-mcp__terraform-server__resolveProviderDocID(
-  serviceSlug="ec2",
-  providerDataType="resources"
+mcp__terraform-mcp__SearchAwsccProviderDocs(
+  asset_name="awscc_ec2_instance",
+  asset_type="resource"
 )
 ```
 
@@ -175,9 +181,9 @@ resource "aws_rds_cluster" "example" {
 ### 1. Budget Creation
 **Use MCP for Cost Explorer API:**
 ```text
-mcp__terraform-server__resolveProviderDocID(
-  serviceSlug="budgets",
-  providerDataType="resources"
+mcp__terraform-mcp__SearchAwsccProviderDocs(
+  asset_name="awscc_budgets_budget",
+  asset_type="resource"
 )
 ```
 

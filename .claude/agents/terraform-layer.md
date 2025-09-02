@@ -1,7 +1,7 @@
 ---
 name: terraform-layer
 description: Specialized agent for managing OpenTofu/Terraform layers in the Leverage Reference Architecture. Handles layer creation, modification, testing, and Leverage CLI operations.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-server__resolveProviderDocID, mcp__terraform-server__getProviderDocs, mcp__terraform-server__searchModules, mcp__terraform-server__moduleDetails, mcp__terraform-server__searchPolicies, mcp__terraform-server__policyDetails, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__SearchSpecificAwsIaModules, mcp__terraform-mcp__ExecuteTerraformCommand, mcp__terraform-mcp__RunCheckovScan, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
 ---
 
 # OpenTofu/Terraform Layer Agent
@@ -79,13 +79,27 @@ Always ensure backend.tfvars contains:
 - Reference common.tfvars for shared configuration
 
 ## MCP Integration (REQUIRED)
-### Terraform MCP Server
+### OpenTofu & AWS MCP Servers
 #### ALWAYS use for provider/resource documentation:
-1. First call `mcp__terraform-server__resolveProviderDocID` to get the provider doc ID
-   - Parameters: providerName, providerNamespace, serviceSlug, providerDataType
-2. Then call `mcp__terraform-server__getProviderDocs` with the obtained ID
-3. For modules: `mcp__terraform-server__searchModules` → `mcp__terraform-server__moduleDetails`
-4. For policies: `mcp__terraform-server__searchPolicies` → `mcp__terraform-server__policyDetails`
+1. **Check AWS provider documentation (prefer AWSCC first):**
+   ```text
+   mcp__terraform-mcp__SearchAwsccProviderDocs(
+     asset_name="awscc_<service>",
+     asset_type="resource"
+   )
+   ```
+2. **Search AWS-IA specialized modules:**
+   ```text
+   mcp__terraform-mcp__SearchSpecificAwsIaModules(
+     query="<service>"
+   )
+   ```
+3. **Run security scans:**
+   ```text
+   mcp__terraform-mcp__RunCheckovScan(
+     working_directory="."
+   )
+   ```
 
 ### Context7 MCP Server  
 #### Use for library/framework documentation:
@@ -95,13 +109,16 @@ Always ensure backend.tfvars contains:
 ### Example Usage
 ```text
 # When creating an EKS cluster:
-1. mcp__terraform-server__resolveProviderDocID(
-     providerName="aws",
-     providerNamespace="hashicorp",
-     serviceSlug="eks",
-     providerDataType="resources"
+1. mcp__terraform-mcp__SearchAwsccProviderDocs(
+     asset_name="awscc_eks_cluster",
+     asset_type="resource"
    )
-2. mcp__terraform-server__getProviderDocs(providerDocID="<returned_id>")
+2. mcp__terraform-mcp__SearchSpecificAwsIaModules(
+     query="eks"
+   )
+3. mcp__terraform-mcp__RunCheckovScan(
+     working_directory="."
+   )
 ```
 
 ## Error Handling

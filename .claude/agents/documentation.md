@@ -29,12 +29,18 @@ mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 - plantuml (architecture diagrams)
 - sphinx (documentation generation)
 
-### Terraform MCP Server - Resource Documentation
+### AWS MCP Server - Resource Documentation
 #### When documenting OpenTofu/Terraform resources:
 ```
-mcp__terraform-server__resolveProviderDocID(
-  serviceSlug="<service>",
-  providerDataType="resources"
+mcp__terraform-mcp__SearchAwsccProviderDocs(
+  asset_name="awscc_<service>",
+  asset_type="resource"
+)
+```
+```
+mcp__terraform-mcp__SearchAwsProviderDocs(
+  asset_name="aws_<service>",
+  asset_type="resource"
 )
 ```
 
