@@ -13,6 +13,7 @@ syncPolicy:
   syncOptions:
     - Validate=true
     - CreateNamespace=true
+    - ServerSideApply=true
 
 finalizers:
   - resources-finalizer.argocd.argoproj.io
