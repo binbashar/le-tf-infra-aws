@@ -19,7 +19,7 @@ variable "region_primary" {
 }
 
 variable "regions_allowed" {
-  type        = list
+  type        = list(any)
   description = "List of allowed AWS regions"
 }
 

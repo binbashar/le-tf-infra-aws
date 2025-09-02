@@ -107,11 +107,11 @@ output "machine_users" {
   description = "All machine users: username, access_key_id, and access_key_secret for each."
   value = {
     for k, v in module.machine_user :
-      k => {
-        username          = v.iam_user_name
-        access_key_id     = v.iam_access_key_id
-        access_key_secret = v.iam_access_key_encrypted_secret
-      }
+    k => {
+      username          = v.iam_user_name
+      access_key_id     = v.iam_access_key_id
+      access_key_secret = v.iam_access_key_encrypted_secret
+    }
   }
   sensitive = true
 }
