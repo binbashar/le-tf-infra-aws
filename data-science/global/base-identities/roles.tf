@@ -135,7 +135,7 @@ module "iam_assumable_role_lambda_costs_explorer_access" {
 # Cross-Account Role: Atlantis
 #
 module "iam_assumable_role_atlantis" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.59.0"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
 
   create_role       = true
   role_name         = "Atlantis"

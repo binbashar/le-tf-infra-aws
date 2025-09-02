@@ -71,7 +71,7 @@ module "iam_group_deploymaster" {
 }
 
 module "iam_group_atlantis" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v5.9.2"
+  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v5.60.0"
   name   = "atlantis"
 
   group_users = [
