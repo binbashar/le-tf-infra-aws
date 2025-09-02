@@ -24,7 +24,7 @@ jobs:
   test_leverage:
     runs-on: ubuntu-latest
     env:
-      LEVERAGE_VERSION: 1.13.0
+      LEVERAGE_VERSION: 2.1.1
       LEVERAGE_REPO: pypi.org
       LEVERAGE_TOOLBOX_VERSION: 1.6.0-0.2.1
     steps:
