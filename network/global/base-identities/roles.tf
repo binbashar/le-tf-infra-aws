@@ -262,7 +262,6 @@ module "iam_assumable_role_atlantis" {
         "sqs:*",
         "ssm:*",
       ]
-    }
       effect    = "Allow"
       resources = ["*"]
       conditions = [

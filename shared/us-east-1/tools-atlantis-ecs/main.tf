@@ -12,9 +12,9 @@ module "atlantis" {
   create_cluster = true
   cluster = {
     configuration = {
-      capacity_providers = ["FARGATE"]        # NOT WORKING
+      capacity_providers = ["FARGATE"] # NOT WORKING
 
-      default_capacity_provider_strategy = {  # NOT WORKING
+      default_capacity_provider_strategy = { # NOT WORKING
         FARGATE = {
           weight = 100
           base   = 1
@@ -155,11 +155,11 @@ module "atlantis" {
   # VPC Settings
   vpc_id          = data.terraform_remote_state.vpc.outputs.vpc_id
   service_subnets = data.terraform_remote_state.vpc.outputs.private_subnets
-  
+
   # ALB Settings
   alb = {
-    enable_deletion_protection    = false
-    security_group_ingress_rules  = {
+    enable_deletion_protection = false
+    security_group_ingress_rules = {
       gh1 = {
         from_port   = 443
         to_port     = 443
@@ -211,15 +211,15 @@ module "atlantis" {
       }
     }
   }
-  alb_subnets     = data.terraform_remote_state.vpc.outputs.public_subnets
+  alb_subnets = data.terraform_remote_state.vpc.outputs.public_subnets
 
   # Certificate
-  create_certificate  = false
-  certificate_arn     = data.terraform_remote_state.certs.outputs.certificate_arn
+  create_certificate = false
+  certificate_arn    = data.terraform_remote_state.certs.outputs.certificate_arn
 
   # DNS
-  route53_zone_id     = data.terraform_remote_state.dns.outputs.aws_public_zone_id
+  route53_zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id
 
   # Misc
-  tags                = local.tags
+  tags = local.tags
 }

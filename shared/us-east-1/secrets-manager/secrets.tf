@@ -7,9 +7,9 @@ module "secrets" {
 # The following policy is the one shared by all secrets
 data "aws_iam_policy_document" "secrets_policy" {
   statement {
-    sid       = "ReadSecrets"
-    effect    = "Allow"
-    actions   = [
+    sid    = "ReadSecrets"
+    effect = "Allow"
+    actions = [
       "secretsmanager:GetSecretValue",
       "secretsmanager:GetResourcePolicy",
     ]
