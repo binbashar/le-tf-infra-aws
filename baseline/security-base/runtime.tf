@@ -13,7 +13,7 @@ locals {
       ]
     }
     security = {
-      profile = "bb-security-devops"
+      profile = "bb-sso-security"
       regions = [
         "us-east-1",
         "us-west-2",
@@ -41,7 +41,7 @@ locals {
       ]
     },
     apps-prd = {
-      profile = "bb-apps-prd-devops"
+      profile = "bb-sso-apps-prd"
       regions = [
         "us-east-1",
         "us-west-2",

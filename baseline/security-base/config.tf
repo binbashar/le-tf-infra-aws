@@ -5,18 +5,18 @@ provider "aws" {
   alias   = "accounts"
   for_each = local.account_settings
   region  = each.value.region
-  shared_credentials_files = ["~/.aws/bb/credentials"]
-  shared_config_files = ["~/.aws/bb/config"]
 
-  profile = each.value.profile
-  
+  access_key = each.value.access_key
+  secret_key = each.value.secret_key
+  token = each.value.token
+
 }
 
 #=============================#
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = "~> 1.10.0"
+  required_version = ">= 1.6.0"
 
   required_providers {
     aws = "~> 4.10"
