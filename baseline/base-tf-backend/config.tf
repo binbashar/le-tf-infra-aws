@@ -1,22 +1,16 @@
 #=============================#
 # AWS Provider Settings       #
 #=============================#
-# Add default aws provider configuration
+# Default provider configuration
 provider "aws" {
-  region  = var.region
-  profile = var.profile
+  region = var.region_primary
 }
 
 provider "aws" {
-  alias   = "main_region"
-  region  = var.region
-  profile = var.profile
-}
+  alias    = "accounts"
+  for_each = local.accounts_providers
+  region   = each.value.region
 
-provider "aws" {
-  alias   = "secondary_region"
-  region  = var.region_secondary
-  profile = var.profile
 }
 
 terraform {
@@ -26,7 +20,8 @@ terraform {
     aws = "~> 5.0"
   }
 
-  backend "s3" {
-    key = "apps-devstg/tf-backend/terraform.tfstate"
-  }
+  //backend "s3" {
+  //  key    = local.backend_settings.bucket.key
+  //}
 }
+

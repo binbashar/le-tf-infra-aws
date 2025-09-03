@@ -8,35 +8,30 @@
 #================================#
 # Terraform AWS Backend Settings #
 #================================#
-variable "region" {
-  type        = string
-  description = "AWS Region"
-}
-
+//variable "region" {
+//  type        = string
+//  description = "AWS Region"
+//}
+//
 variable "region_primary" {
   type        = string
   description = "AWS Region"
 }
 
-variable "profile" {
-  type        = string
-  description = "AWS Profile (required by the backend but also used for other resources)"
-}
+//variable "profile" {
+//  type        = string
+//  description = "AWS Profile (required by the backend but also used for other resources)"
+//}
 
-variable "bucket" {
-  type        = string
-  description = "AWS S3 TF State Backend Bucket"
-}
+//variable "dynamodb_table" {
+//  type        = string
+//  description = "AWS DynamoDB TF Lock state table name"
+//}
 
-variable "dynamodb_table" {
-  type        = string
-  description = "AWS DynamoDB TF Lock state table name"
-}
-
-variable "encrypt" {
-  type        = bool
-  description = "Enable AWS DynamoDB with server side encryption"
-}
+//variable "encrypt" {
+//  type        = bool
+//  description = "Enable AWS DynamoDB with server side encryption"
+//}
 
 #
 # config/base.config
@@ -134,12 +129,9 @@ variable "enable_inspector" {
 }
 
 locals {
-  regions = [var.region_primary, var.region_secondary, "global"]
+  regions = ["us-east-1", "us-west-2", "global"]
 
-  #Tries to find the current region for the current layer
-  current_region = [for region in local.regions : region if can(regex(region, "${path.cwd}"))][0]
-
-  #Split the full path of the layer using the region, in order to get the layer path (after the region)
-  layer_name = trimprefix(split(local.current_region, "${path.cwd}")[1], "/")
+  # Layer name for baseline
+  layer_name = "baseline"
 }
 

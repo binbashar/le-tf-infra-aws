@@ -12,31 +12,8 @@ variable "sns_topic_name_monitoring_sec" {
 #=============================#
 # Settings Variables          #
 #=============================#
-variable "parameters" {
-  description = "Global parameters"
+variable "inputs" {
+  description = "Global inputs"
   type        = map(any)
   default     = {}
-}
-
-variable "settings" {
-  description = "Settings configuration"
-  type        = any
-  default     = {}
-}
-
-variable "accounts" {
-  description = "Accounts configuration"
-  type        = any
-  default     = {}
-}
-
-variable "accounts_settings" {
-  description = "Account settings by region"
-  type        = any
-  default     = {}
-}
-
-variable "account_name" {
-  description = "Account name"
-  type        = string
 }

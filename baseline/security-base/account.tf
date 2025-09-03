@@ -2,19 +2,19 @@
 # Enable encrypted EBS by default (HIPAA)
 #
 resource "aws_ebs_encryption_by_default" "main" {
-  for_each = local.accounts_settings
-  provider = aws.by_region[each.key]
-  enabled = each.value.parameters.ebs_encryption
+  for_each = local.account_settings
+  provider = aws.accounts[each.key]
+  enabled = each.value.inputs.ebs_encryption
 }
 
 #
 # Disable public access through ACLs or bucket policies to all buckets by default
 #
 resource "aws_s3_account_public_access_block" "main" {
-  for_each = local.accounts_settings
-  provider = aws.by_region[each.key]
-  block_public_acls   = each.value.parameters.block_public_acls
-  block_public_policy = each.value.parameters.block_public_policy
+  for_each = local.account_settings
+  provider = aws.accounts[each.key]
+  block_public_acls   = each.value.inputs.block_public_acls
+  block_public_policy = each.value.inputs.block_public_policy
 }
 
 //module "root-login-notifications" {

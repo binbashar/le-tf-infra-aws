@@ -2,9 +2,13 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  alias   = "by_region"
-  for_each = local.accounts_settings
-  region  = each.key
+  alias   = "accounts"
+  for_each = local.account_settings
+  region  = each.value.region
+  shared_credentials_files = ["~/.aws/bb/credentials"]
+  shared_config_files = ["~/.aws/bb/config"]
+
+  profile = each.value.profile
   
 }
 
