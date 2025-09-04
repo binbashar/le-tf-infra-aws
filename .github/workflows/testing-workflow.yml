@@ -76,10 +76,6 @@ jobs:
         uses: opentofu/setup-opentofu@v1
         with:
           tofu_version: ${{ inputs.iac_version }}
-      - name: Install tflocal
-        if: steps.check-tests.outputs.hasTests == 'true'
-        run: |
-          pip install terraform-local
       - uses: LocalStack/setup-localstack@v0.2.4
         if: steps.check-tests.outputs.hasTests == 'true'
         with:
@@ -110,7 +106,7 @@ jobs:
       - name: Terraform Init
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
-        run: tflocal init -upgrade
+        run: $TF_CMD init -upgrade
       - name: Run Test
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
@@ -121,4 +117,4 @@ jobs:
           AWS_ENDPOINT_URL: http://localhost:4566
         run: |
           cp ../../../config/common.tfvars.example ../../../config/common.tfvars
-          tflocal test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars
+          $TF_CMD test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars
