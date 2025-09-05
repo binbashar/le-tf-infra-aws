@@ -1,4 +1,4 @@
-# Testing simplified State Mockingbird - fixed YAML syntax - PR #932
+# Testing CI validation for OpenTofu compatibility fix - PR #932
 module "kms_key" {
   source = "github.com/binbashar/terraform-aws-kms-key.git?ref=0.12.2"
 
