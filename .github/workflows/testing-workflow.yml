@@ -95,42 +95,118 @@ jobs:
           awslocal configure set aws_secret_access_key fake --profile ${{ inputs.aws_profile_required_state_file }}
           awslocal configure set region ${{ inputs.aws_region }} --profile ${{ inputs.aws_profile_required_state_file }}
           awslocal configure set endpoint_url http://localhost:4566 --profile ${{ inputs.aws_profile_required_state_file }}
-      - name: Create LocalStack Backend Bucket (Sentinel Bucket Solution)
+      - name: Create LocalStack S3 Buckets (State Mockingbird Solution)
         if: steps.check-tests.outputs.hasTests == 'true'
         run: |
-          # Always create a backend bucket - use provided name or default fallback
+          # Create all cross-account S3 buckets that layers reference in terraform_remote_state
+          echo "Creating all cross-account S3 buckets for remote state dependencies..."
+          
+          # Main backend buckets for each account
+          awslocal s3 mb s3://bb-security-terraform-backend --region ${{ inputs.aws_region }}
+          awslocal s3 mb s3://bb-shared-terraform-backend --region ${{ inputs.aws_region }}
+          awslocal s3 mb s3://bb-apps-devstg-terraform-backend --region ${{ inputs.aws_region }}
+          awslocal s3 mb s3://bb-network-terraform-backend --region ${{ inputs.aws_region }}
+          awslocal s3 mb s3://bb-data-science-terraform-backend --region ${{ inputs.aws_region }}
+          
+          # Default fallback bucket for layers without specific bucket_name
           BUCKET_NAME="${{ inputs.bucket_name }}"
           if [ -z "$BUCKET_NAME" ]; then
             BUCKET_NAME="localstack-terraform-backend-default"
           fi
-          echo "Using backend bucket: $BUCKET_NAME"
           awslocal s3 mb s3://$BUCKET_NAME --region ${{ inputs.aws_region }}
           echo "BACKEND_BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
+          
+          echo "All S3 buckets created successfully"
       - name: Copy Terraform State File for testing to S3 Bucket
         if: ${{ inputs.required_state_file && steps.check-tests.outputs.hasTests == 'true' }}
         run: |
           awslocal s3 cp ${{ inputs.working_directory }}/${{ inputs.state_file_test_path}} s3://$BACKEND_BUCKET_NAME/${{inputs.bucket_folder }}/terraform.tfstate
-      - name: Create Shared State File for Remote Dependencies
+      - name: Create Mock State Files for Remote Dependencies (State Mockingbird)
         if: steps.check-tests.outputs.hasTests == 'true'
         run: |
-          # Create minimal state file for remote state dependencies
-          cat > shared_dummy_state.json << 'EOF'
+          # Create comprehensive mock state files for all terraform_remote_state dependencies
+          echo "Generating mock state files for all cross-account dependencies..."
+          
+          # Security account state files
+          cat > security_identities_state.json << 'EOF'
           {
             "version": 4,
             "terraform_version": "1.6.0",
             "serial": 1,
-            "lineage": "dummy-lineage",
+            "lineage": "security-identities-mock",
             "outputs": {
-              "dummy_output": {
-                "value": "dummy-value",
+              "cross_account_role_arn": {
+                "value": "arn:aws:iam::000000000000:role/OrganizationAccountAccessRole",
+                "type": "string"
+              },
+              "admin_role_arn": {
+                "value": "arn:aws:iam::000000000000:role/AdminRole",
+                "type": "string"
+              },
+              "devops_role_arn": {
+                "value": "arn:aws:iam::000000000000:role/DevOpsRole",
                 "type": "string"
               }
             },
             "resources": []
           }
           EOF
-          # Upload to shared location using dynamic bucket name
-          awslocal s3 cp shared_dummy_state.json s3://$BACKEND_BUCKET_NAME/shared-dependencies/terraform.tfstate
+          
+          # Network account state files
+          cat > network_base_state.json << 'EOF'
+          {
+            "version": 4,
+            "terraform_version": "1.6.0",
+            "serial": 1,
+            "lineage": "network-base-mock",
+            "outputs": {
+              "vpc_id": {
+                "value": "vpc-mock123456",
+                "type": "string"
+              },
+              "private_subnets": {
+                "value": ["subnet-mock123", "subnet-mock456"],
+                "type": ["list", "string"]
+              },
+              "public_subnets": {
+                "value": ["subnet-mock789", "subnet-mock012"],
+                "type": ["list", "string"]
+              }
+            },
+            "resources": []
+          }
+          EOF
+          
+          # Shared account state files
+          cat > shared_base_state.json << 'EOF'
+          {
+            "version": 4,
+            "terraform_version": "1.6.0",
+            "serial": 1,
+            "lineage": "shared-base-mock",
+            "outputs": {
+              "ecr_registry": {
+                "value": "000000000000.dkr.ecr.us-east-1.amazonaws.com",
+                "type": "string"
+              },
+              "route53_zone_id": {
+                "value": "Z123456789ABCDEFGH",
+                "type": "string"
+              }
+            },
+            "resources": []
+          }
+          EOF
+          
+          # Upload all state files to their respective S3 locations
+          awslocal s3 cp security_identities_state.json s3://bb-security-terraform-backend/security/identities/terraform.tfstate
+          awslocal s3 cp network_base_state.json s3://bb-network-terraform-backend/network/base-network/terraform.tfstate
+          awslocal s3 cp shared_base_state.json s3://bb-shared-terraform-backend/shared/base-network/terraform.tfstate
+          
+          # Create default state file for the working layer's own backend
+          awslocal s3 cp security_identities_state.json s3://$BACKEND_BUCKET_NAME/shared-dependencies/terraform.tfstate
+          
+          echo "All mock state files created and uploaded successfully"
       - name: Create LocalStack Provider Override
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
@@ -169,24 +245,13 @@ jobs:
             }
           }
           EOF
-      - name: Create Backend Override for LocalStack
-        if: steps.check-tests.outputs.hasTests == 'true'
-        working-directory: ${{ inputs.working_directory }}
-        run: |
-          # Create backend override using dynamic bucket name (Sentinel Bucket solution)
-          cat > backend_override.tfvars << EOF
-          bucket = "$BACKEND_BUCKET_NAME"
-          key = "shared-dependencies/terraform.tfstate"
-          profile = "${{ inputs.aws_profile }}"
-          region = "${{ inputs.aws_region }}"
-          EOF
       - name: Terraform Init
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
         env:
           AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
           AWS_S3_FORCE_PATH_STYLE: true
-        run: $TF_CMD init -upgrade -reconfigure
+        run: $TF_CMD init -upgrade
       - name: Run Test
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
