@@ -103,6 +103,27 @@ jobs:
         if: ${{ inputs.required_state_file && steps.check-tests.outputs.hasTests == 'true' }}
         run: |
           awslocal s3 cp ${{ inputs.working_directory }}/${{ inputs.state_file_test_path}} s3://${{ inputs.bucket_name }}/${{inputs.bucket_folder }}/terraform.tfstate
+      - name: Create Shared State File for Remote Dependencies
+        if: steps.check-tests.outputs.hasTests == 'true'
+        run: |
+          # Create minimal state file for remote state dependencies
+          cat > shared_dummy_state.json << 'EOF'
+          {
+            "version": 4,
+            "terraform_version": "1.6.0",
+            "serial": 1,
+            "lineage": "dummy-lineage",
+            "outputs": {
+              "dummy_output": {
+                "value": "dummy-value",
+                "type": "string"
+              }
+            },
+            "resources": []
+          }
+          EOF
+          # Upload to shared location for all remote state references
+          awslocal s3 cp shared_dummy_state.json s3://${{ inputs.bucket_name }}/shared-dependencies/terraform.tfstate
       - name: Create LocalStack Provider Override
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
@@ -141,13 +162,24 @@ jobs:
             }
           }
           EOF
+      - name: Create Backend Override for LocalStack
+        if: steps.check-tests.outputs.hasTests == 'true'
+        working-directory: ${{ inputs.working_directory }}
+        run: |
+          # Create backend override to redirect all remote state to same bucket
+          cat > backend_override.tfvars << 'EOF'
+          bucket = "${{ inputs.bucket_name }}"
+          key = "shared-dependencies/terraform.tfstate"
+          profile = "${{ inputs.aws_profile }}"
+          region = "${{ inputs.aws_region }}"
+          EOF
       - name: Terraform Init
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
         env:
           AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
           AWS_S3_FORCE_PATH_STYLE: true
-        run: $TF_CMD init -upgrade
+        run: $TF_CMD init -upgrade -reconfigure
       - name: Run Test
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
