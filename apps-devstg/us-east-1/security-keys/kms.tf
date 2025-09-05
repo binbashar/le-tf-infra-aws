@@ -1,4 +1,4 @@
-# Testing State Mockingbird solution - PR #932
+# Testing State Mockingbird - retry after runner queue issue - PR #932
 module "kms_key" {
   source = "github.com/binbashar/terraform-aws-kms-key.git?ref=0.12.2"
 
