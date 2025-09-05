@@ -107,20 +107,57 @@ jobs:
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
         env:
+          # Core AWS configuration
           AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
           AWS_ACCESS_KEY_ID: fake
           AWS_SECRET_ACCESS_KEY: fake
           AWS_ENDPOINT_URL: http://localhost:4566
           AWS_S3_FORCE_PATH_STYLE: true
+
+          # Service-specific endpoints (replaces tflocal functionality)
+          AWS_KMS_ENDPOINT_URL: http://localhost:4566
+          AWS_IAM_ENDPOINT_URL: http://localhost:4566
+          AWS_STS_ENDPOINT_URL: http://localhost:4566
+          AWS_CLOUDWATCH_ENDPOINT_URL: http://localhost:4566
+          AWS_SECRETSMANAGER_ENDPOINT_URL: http://localhost:4566
+          AWS_SSM_ENDPOINT_URL: http://localhost:4566
+
+          # LocalStack-specific configuration
+          S3_HOSTNAME: s3.localhost.localstack.cloud
+          USE_EXEC: "true"
+
+          # Provider behavior overrides for LocalStack compatibility
+          TF_VAR_skip_credentials_validation: "true"
+          TF_VAR_skip_metadata_api_check: "true"
+          TF_VAR_skip_requesting_account_id: "true"
         run: $TF_CMD init -upgrade
       - name: Run Test
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
         env:
+          # Core AWS configuration
           AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
           AWS_ACCESS_KEY_ID: fake
           AWS_SECRET_ACCESS_KEY: fake
           AWS_ENDPOINT_URL: http://localhost:4566
+          AWS_S3_FORCE_PATH_STYLE: true
+
+          # Service-specific endpoints (replaces tflocal functionality)
+          AWS_KMS_ENDPOINT_URL: http://localhost:4566
+          AWS_IAM_ENDPOINT_URL: http://localhost:4566
+          AWS_STS_ENDPOINT_URL: http://localhost:4566
+          AWS_CLOUDWATCH_ENDPOINT_URL: http://localhost:4566
+          AWS_SECRETSMANAGER_ENDPOINT_URL: http://localhost:4566
+          AWS_SSM_ENDPOINT_URL: http://localhost:4566
+
+          # LocalStack-specific configuration
+          S3_HOSTNAME: s3.localhost.localstack.cloud
+          USE_EXEC: "true"
+
+          # Provider behavior overrides for LocalStack compatibility
+          TF_VAR_skip_credentials_validation: "true"
+          TF_VAR_skip_metadata_api_check: "true"
+          TF_VAR_skip_requesting_account_id: "true"
         run: |
           cp ../../../config/common.tfvars.example ../../../config/common.tfvars
           $TF_CMD test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars
