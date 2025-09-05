@@ -106,6 +106,12 @@ jobs:
       - name: Terraform Init
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
+        env:
+          AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
+          AWS_ACCESS_KEY_ID: fake
+          AWS_SECRET_ACCESS_KEY: fake
+          AWS_ENDPOINT_URL: http://localhost:4566
+          AWS_S3_FORCE_PATH_STYLE: true
         run: $TF_CMD init -upgrade
       - name: Run Test
         if: steps.check-tests.outputs.hasTests == 'true'
