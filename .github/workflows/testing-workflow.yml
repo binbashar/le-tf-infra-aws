@@ -95,14 +95,21 @@ jobs:
           awslocal configure set aws_secret_access_key fake --profile ${{ inputs.aws_profile_required_state_file }}
           awslocal configure set region ${{ inputs.aws_region }} --profile ${{ inputs.aws_profile_required_state_file }}
           awslocal configure set endpoint_url http://localhost:4566 --profile ${{ inputs.aws_profile_required_state_file }}
-      - name: Create S3 Buckets
-        if: ${{ inputs.required_state_file && steps.check-tests.outputs.hasTests == 'true' }}
+      - name: Create LocalStack Backend Bucket (Sentinel Bucket Solution)
+        if: steps.check-tests.outputs.hasTests == 'true'
         run: |
-          awslocal s3 mb s3://${{ inputs.bucket_name }} --region ${{ inputs.aws_region }}
+          # Always create a backend bucket - use provided name or default fallback
+          BUCKET_NAME="${{ inputs.bucket_name }}"
+          if [ -z "$BUCKET_NAME" ]; then
+            BUCKET_NAME="localstack-terraform-backend-default"
+          fi
+          echo "Using backend bucket: $BUCKET_NAME"
+          awslocal s3 mb s3://$BUCKET_NAME --region ${{ inputs.aws_region }}
+          echo "BACKEND_BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
       - name: Copy Terraform State File for testing to S3 Bucket
         if: ${{ inputs.required_state_file && steps.check-tests.outputs.hasTests == 'true' }}
         run: |
-          awslocal s3 cp ${{ inputs.working_directory }}/${{ inputs.state_file_test_path}} s3://${{ inputs.bucket_name }}/${{inputs.bucket_folder }}/terraform.tfstate
+          awslocal s3 cp ${{ inputs.working_directory }}/${{ inputs.state_file_test_path}} s3://$BACKEND_BUCKET_NAME/${{inputs.bucket_folder }}/terraform.tfstate
       - name: Create Shared State File for Remote Dependencies
         if: steps.check-tests.outputs.hasTests == 'true'
         run: |
@@ -122,8 +129,8 @@ jobs:
             "resources": []
           }
           EOF
-          # Upload to shared location for all remote state references
-          awslocal s3 cp shared_dummy_state.json s3://${{ inputs.bucket_name }}/shared-dependencies/terraform.tfstate
+          # Upload to shared location using dynamic bucket name
+          awslocal s3 cp shared_dummy_state.json s3://$BACKEND_BUCKET_NAME/shared-dependencies/terraform.tfstate
       - name: Create LocalStack Provider Override
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
@@ -166,9 +173,9 @@ jobs:
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
         run: |
-          # Create backend override to redirect all remote state to same bucket
-          cat > backend_override.tfvars << 'EOF'
-          bucket = "${{ inputs.bucket_name }}"
+          # Create backend override using dynamic bucket name (Sentinel Bucket solution)
+          cat > backend_override.tfvars << EOF
+          bucket = "$BACKEND_BUCKET_NAME"
           key = "shared-dependencies/terraform.tfstate"
           profile = "${{ inputs.aws_profile }}"
           region = "${{ inputs.aws_region }}"
