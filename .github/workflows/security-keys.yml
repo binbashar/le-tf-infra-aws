@@ -33,22 +33,6 @@ jobs:
             aws_profile: bb-apps-prd-devops
             aws_region: us-east-1
             required_state_file: false
-          - layer: data-science/us-east-1/security-keys
-            aws_profile: bb-data-science-devops
-            aws_region: us-east-1
-            required_state_file: false
-          - layer: management/us-east-1/security-keys
-            aws_profile: bb-root-oaar
-            aws_region: us-east-1
-            required_state_file: false
-          - layer: network/us-east-1/security-keys
-            aws_profile: bb-network-devops
-            aws_region: us-east-1
-            required_state_file: false
-          - layer: network/us-east-2/security-keys
-            aws_profile: bb-network-devops
-            aws_region: us-east-2
-            required_state_file: false
           - layer: security/us-east-1/security-keys
             aws_profile: bb-security-devops
             aws_region: us-east-1
@@ -60,6 +44,22 @@ jobs:
           - layer: shared/us-east-2/security-keys
             aws_profile: bb-shared-devops
             aws_region: us-east-2
+            required_state_file: false
+          - layer: network/us-east-1/security-keys
+            aws_profile: bb-network-devops
+            aws_region: us-east-1
+            required_state_file: false
+          - layer: network/us-east-2/security-keys
+            aws_profile: bb-network-devops
+            aws_region: us-east-2
+            required_state_file: false
+          - layer: management/us-east-1/security-keys
+            aws_profile: bb-management-devops
+            aws_region: us-east-1
+            required_state_file: false
+          - layer: data-science/us-east-1/security-keys
+            aws_profile: bb-data-science-devops
+            aws_region: us-east-1
             required_state_file: false
     name: security-keys-layer
     uses: ./.github/workflows/testing-workflow.yml
