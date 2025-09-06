@@ -1,4 +1,4 @@
-# Testing comprehensive CI/CD diagnostics with health probes and verbose logging
+# Testing complete root cause fix: LocalStack provider override + comprehensive diagnostics
 module "kms_key" {
   source = "github.com/binbashar/terraform-aws-kms-key.git?ref=0.12.2"
 
