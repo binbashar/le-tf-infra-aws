@@ -128,25 +128,56 @@ jobs:
           awslocal s3 mb s3://bb-apps-prd-terraform-backend --region ${{ inputs.aws_region }} || true
           awslocal s3 mb s3://bb-management-terraform-backend --region ${{ inputs.aws_region }} || true
           awslocal s3 mb s3://bb-data-science-terraform-backend --region ${{ inputs.aws_region }} || true
-      - name: Create LocalStack Provider Override for Cross-Account State Access
+      - name: Fix Profile Dependencies in Terraform Files for LocalStack
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
         run: |
-          # Create provider override that removes profile requirements for LocalStack
-          cat > localstack_providers_override.tf << 'EOF'
-          # LocalStack Provider Override for Testing
-          # This removes AWS profile dependencies that cause authentication failures
-
-          terraform {
-            required_providers {
-              aws = {
-                source  = "hashicorp/aws"
-                version = "~> 5.0"
-              }
-            }
-          }
-
-          # Override the default provider to use LocalStack without profiles
+          echo "=== Fixing Profile Dependencies for LocalStack Testing ==="
+          
+          # Create backup of original files
+          find . -name "*.tf" -exec cp {} {}.backup \;
+          
+          # Remove profile references from provider blocks in all .tf files
+          echo "Removing AWS profile references from provider blocks..."
+          find . -name "*.tf" -exec sed -i 's/profile.*=.*/# profile removed for LocalStack testing/' {} \;
+          
+          # Fix terraform_remote_state data sources to use LocalStack
+          echo "Fixing terraform_remote_state data sources..."
+          
+          # Replace profile-based remote state with LocalStack-compatible version
+          for tf_file in $(find . -name "*.tf"); do
+            if grep -q "terraform_remote_state" "$tf_file"; then
+              echo "Processing remote state in: $tf_file"
+              
+              # Create a temporary file with LocalStack-compatible remote state
+              sed -E '
+                # Find terraform_remote_state blocks and modify config
+                /data "terraform_remote_state"/,/^[[:space:]]*}[[:space:]]*$/ {
+                  # Remove profile line entirely
+                  /profile[[:space:]]*=/d
+                  # Add LocalStack credentials after region line
+                  /region[[:space:]]*=.*/ a\
+    access_key                  = "test"\
+    secret_key                  = "test"\
+    skip_credentials_validation = true\
+    skip_metadata_api_check     = true\
+    skip_requesting_account_id  = true\
+    force_path_style           = true\
+    \
+    endpoints = {\
+      s3 = "http://localhost:4566"\
+    }
+                }
+              ' "$tf_file" > "${tf_file}.localstack"
+              
+              # Replace original with LocalStack version
+              mv "${tf_file}.localstack" "$tf_file"
+            fi
+          done
+          
+          # Create LocalStack provider override
+          cat > localstack_provider.tf << 'EOF'
+          # LocalStack Provider Configuration for Testing
           provider "aws" {
             region                      = var.region
             access_key                  = "test"
@@ -154,7 +185,7 @@ jobs:
             skip_credentials_validation = true
             skip_metadata_api_check     = true
             skip_requesting_account_id  = true
-
+            
             endpoints {
               s3       = "http://localhost:4566"
               iam      = "http://localhost:4566"
@@ -162,30 +193,14 @@ jobs:
               sts      = "http://localhost:4566"
             }
           }
-
-          # Override remote state data sources to use LocalStack
-          data "terraform_remote_state" "security-identities" {
-            backend = "s3"
-            config = {
-              bucket                      = "bb-security-terraform-backend"
-              key                         = "security/identities/terraform.tfstate"
-              region                      = var.region
-              access_key                  = "test"
-              secret_key                  = "test"
-              skip_credentials_validation = true
-              skip_metadata_api_check     = true
-              skip_requesting_account_id  = true
-              force_path_style           = true
-
-              endpoints = {
-                s3 = "http://localhost:4566"
-              }
-            }
-          }
           EOF
-
-          echo "Created LocalStack provider override for cross-account state access"
-          ls -la localstack_providers_override.tf
+          
+          echo "✅ Fixed profile dependencies for LocalStack testing"
+          echo "Modified files:"
+          find . -name "*.tf" | head -5
+          echo ""
+          echo "Sample terraform_remote_state after modification:"
+          grep -A 15 "terraform_remote_state" *.tf | head -20 || echo "No remote state found in current directory"
       - name: Generate Mock State Files for Cross-Account Dependencies
         if: steps.check-tests.outputs.hasTests == 'true'
         run: |
@@ -462,7 +477,13 @@ jobs:
             ${{ inputs.working_directory }}/*.tfplan
           retention-days: 7
           if-no-files-found: ignore
-      - name: Cleanup LocalStack Provider Override
+      - name: Restore Original Terraform Files
         if: always() && steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
-        run: rm -f localstack_providers_override.tf
+        run: |
+          echo "=== Restoring Original Terraform Files ==="
+          # Restore original files from backups
+          find . -name "*.tf.backup" -exec sh -c 'mv "$1" "${1%.backup}"' _ {} \;
+          # Clean up LocalStack provider file
+          rm -f localstack_provider.tf
+          echo "✅ Original Terraform files restored"

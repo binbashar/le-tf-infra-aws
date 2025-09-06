@@ -1,4 +1,4 @@
-# Testing complete root cause fix: LocalStack provider override + comprehensive diagnostics
+# Testing CORRECT root cause fix: Direct terraform_remote_state profile removal + LocalStack endpoints
 module "kms_key" {
   source = "github.com/binbashar/terraform-aws-kms-key.git?ref=0.12.2"
 
