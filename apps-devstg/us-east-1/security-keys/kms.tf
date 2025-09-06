@@ -1,4 +1,4 @@
-# Testing selective 3-layer validation for OpenTofu compatibility - PR #932
+# Testing opentofu-local solution for OpenTofu compatibility - Final Implementation
 module "kms_key" {
   source = "github.com/binbashar/terraform-aws-kms-key.git?ref=0.12.2"
 

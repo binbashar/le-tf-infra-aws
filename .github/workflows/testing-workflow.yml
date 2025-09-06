@@ -81,114 +81,49 @@ jobs:
         with:
           image-tag: ${{ inputs.localstack_version }}
           install-awslocal: true
-      - name: Configure AWS Credentials for Localstack
+      - name: Install LocalStack wrapper for platform
         if: steps.check-tests.outputs.hasTests == 'true'
         run: |
-          awslocal configure set aws_access_key_id fake --profile ${{ inputs.aws_profile }}
-          awslocal configure set aws_secret_access_key fake --profile ${{ inputs.aws_profile }}
-          awslocal configure set region ${{ inputs.aws_region }} --profile ${{ inputs.aws_profile }}
-          awslocal configure set endpoint_url http://localhost:4566 --profile ${{ inputs.aws_profile }}
-      - name: Configure AWS Credentials for Required State File
+          if [ "${{ inputs.iac_platform }}" = "tofu" ]; then
+            echo "Installing opentofu-local for OpenTofu..."
+            pip install opentofu-local
+          else
+            echo "Installing terraform-local for Terraform..."
+            pip install terraform-local
+          fi
+      - name: Create S3 Backend Bucket for Testing
         if: ${{ inputs.required_state_file && steps.check-tests.outputs.hasTests == 'true' }}
         run: |
-          awslocal configure set aws_access_key_id fake --profile ${{ inputs.aws_profile_required_state_file }}
-          awslocal configure set aws_secret_access_key fake --profile ${{ inputs.aws_profile_required_state_file }}
-          awslocal configure set region ${{ inputs.aws_region }} --profile ${{ inputs.aws_profile_required_state_file }}
-          awslocal configure set endpoint_url http://localhost:4566 --profile ${{ inputs.aws_profile_required_state_file }}
-      - name: Create LocalStack S3 Buckets (State Mockingbird Solution)
-        if: steps.check-tests.outputs.hasTests == 'true'
-        run: |
-          # Create all cross-account S3 buckets that layers reference in terraform_remote_state
-          echo "Creating all cross-account S3 buckets for remote state dependencies..."
-
-          # Main backend buckets for each account
-          awslocal s3 mb s3://bb-security-terraform-backend --region ${{ inputs.aws_region }}
-          awslocal s3 mb s3://bb-shared-terraform-backend --region ${{ inputs.aws_region }}
-          awslocal s3 mb s3://bb-apps-devstg-terraform-backend --region ${{ inputs.aws_region }}
-          awslocal s3 mb s3://bb-network-terraform-backend --region ${{ inputs.aws_region }}
-          awslocal s3 mb s3://bb-data-science-terraform-backend --region ${{ inputs.aws_region }}
-
-          # Default fallback bucket for layers without specific bucket_name
+          # Create bucket for required state file testing
           BUCKET_NAME="${{ inputs.bucket_name }}"
           if [ -z "$BUCKET_NAME" ]; then
             BUCKET_NAME="localstack-terraform-backend-default"
           fi
           awslocal s3 mb s3://$BUCKET_NAME --region ${{ inputs.aws_region }}
           echo "BACKEND_BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
-
-          echo "All S3 buckets created successfully"
-      - name: Copy Terraform State File for testing to S3 Bucket
+      - name: Copy Required State File for Testing
         if: ${{ inputs.required_state_file && steps.check-tests.outputs.hasTests == 'true' }}
         run: |
           awslocal s3 cp ${{ inputs.working_directory }}/${{ inputs.state_file_test_path}} s3://$BACKEND_BUCKET_NAME/${{inputs.bucket_folder }}/terraform.tfstate
-      - name: Create Mock State Files for Remote Dependencies (State Mockingbird)
-        if: steps.check-tests.outputs.hasTests == 'true'
-        run: |
-          # Create simplified mock state files using echo commands
-          echo "Generating mock state files for cross-account dependencies..."
-
-          # Security identities state - includes user_s3_demo_name needed by KMS layer
-          echo '{"version":4,"terraform_version":"1.6.0","serial":1,"lineage":"security-identities-mock","outputs":{"user_s3_demo_name":{"value":"mock-s3-demo-user","type":"string"},"cross_account_role_arn":{"value":"arn:aws:iam::000000000000:role/OrganizationAccountAccessRole","type":"string"}},"resources":[]}' > security_identities_state.json
-
-          # Upload state files to expected S3 locations
-          awslocal s3 cp security_identities_state.json s3://bb-security-terraform-backend/security/identities/terraform.tfstate
-          awslocal s3 cp security_identities_state.json s3://$BACKEND_BUCKET_NAME/shared-dependencies/terraform.tfstate
-
-          echo "Mock state files created and uploaded successfully"
-      - name: Create LocalStack Provider Override
+      - name: Initialize with LocalStack wrapper
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
         run: |
-          cat > localstack_providers_override.tf << 'EOF'
-          provider "aws" {
-            region                      = "${{ inputs.aws_region }}"
-            access_key                  = "fake"
-            secret_key                  = "fake"
-            skip_credentials_validation = true
-            skip_metadata_api_check     = true
-            skip_requesting_account_id  = true
-
-            endpoints {
-              acm             = "http://localhost:4566"
-              apigateway      = "http://localhost:4566"
-              apigatewayv2    = "http://localhost:4566"
-              cloudformation  = "http://localhost:4566"
-              cloudfront      = "http://localhost:4566"
-              cloudwatch      = "http://localhost:4566"
-              dynamodb        = "http://localhost:4566"
-              ec2             = "http://localhost:4566"
-              ecs             = "http://localhost:4566"
-              iam             = "http://localhost:4566"
-              kms             = "http://localhost:4566"
-              lambda          = "http://localhost:4566"
-              rds             = "http://localhost:4566"
-              route53         = "http://localhost:4566"
-              s3              = "http://localhost:4566"
-              secretsmanager  = "http://localhost:4566"
-              ses             = "http://localhost:4566"
-              sns             = "http://localhost:4566"
-              sqs             = "http://localhost:4566"
-              ssm             = "http://localhost:4566"
-              sts             = "http://localhost:4566"
-            }
-          }
-          EOF
-      - name: Terraform Init
+          if [ "${{ inputs.iac_platform }}" = "tofu" ]; then
+            tflocal init -upgrade
+          else
+            tflocal init -upgrade
+          fi
+      - name: Run Test with LocalStack wrapper
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
-        env:
-          AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
-          AWS_S3_FORCE_PATH_STYLE: true
-        run: $TF_CMD init -upgrade
-      - name: Run Test
-        if: steps.check-tests.outputs.hasTests == 'true'
-        working-directory: ${{ inputs.working_directory }}
-        env:
-          AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
-          AWS_S3_FORCE_PATH_STYLE: true
         run: |
           cp ../../../config/common.tfvars.example ../../../config/common.tfvars
-          $TF_CMD test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars
+          if [ "${{ inputs.iac_platform }}" = "tofu" ]; then
+            tflocal test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars
+          else
+            tflocal test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars
+          fi
       - name: Cleanup LocalStack Provider Override
         if: always() && steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
