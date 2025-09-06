@@ -117,6 +117,29 @@ jobs:
         if: ${{ inputs.required_state_file && steps.check-tests.outputs.hasTests == 'true' }}
         run: |
           awslocal s3 cp ${{ inputs.working_directory }}/${{ inputs.state_file_test_path}} s3://$BACKEND_BUCKET_NAME/${{inputs.bucket_folder }}/terraform.tfstate
+      - name: Create Cross-Account S3 Buckets for Dependencies
+        if: steps.check-tests.outputs.hasTests == 'true'
+        run: |
+          # Create all S3 buckets that complex layers expect for terraform_remote_state
+          awslocal s3 mb s3://bb-security-terraform-backend --region ${{ inputs.aws_region }} || true
+          awslocal s3 mb s3://bb-shared-terraform-backend --region ${{ inputs.aws_region }} || true
+          awslocal s3 mb s3://bb-network-terraform-backend --region ${{ inputs.aws_region }} || true
+          awslocal s3 mb s3://bb-apps-devstg-terraform-backend --region ${{ inputs.aws_region }} || true
+          awslocal s3 mb s3://bb-apps-prd-terraform-backend --region ${{ inputs.aws_region }} || true
+          awslocal s3 mb s3://bb-management-terraform-backend --region ${{ inputs.aws_region }} || true
+          awslocal s3 mb s3://bb-data-science-terraform-backend --region ${{ inputs.aws_region }} || true
+      - name: Generate Mock State Files for Cross-Account Dependencies
+        if: steps.check-tests.outputs.hasTests == 'true'
+        run: |
+          # Create realistic mock state file for security-identities (most common dependency)
+          echo '{"version":4,"terraform_version":"1.6.0","serial":1,"lineage":"security-identities-mock","outputs":{"user_s3_demo_name":{"value":"mock-s3-demo-user","type":"string"},"cross_account_role_arn":{"value":"arn:aws:iam::000000000000:role/OrganizationAccountAccessRole","type":"string"}},"resources":[]}' > security_identities_state.json
+          
+          # Create mock state for shared-network (another common dependency)
+          echo '{"version":4,"terraform_version":"1.6.0","serial":1,"lineage":"shared-network-mock","outputs":{"vpc_id":{"value":"vpc-mock123456","type":"string"},"vpc_cidr_block":{"value":"10.0.0.0/16","type":"string"}},"resources":[]}' > shared_network_state.json
+          
+          # Upload to exact locations expected by terraform_remote_state blocks
+          awslocal s3 cp security_identities_state.json s3://bb-security-terraform-backend/security/identities/terraform.tfstate || true
+          awslocal s3 cp shared_network_state.json s3://bb-shared-terraform-backend/shared/base-network/terraform.tfstate || true
       - name: Initialize with LocalStack wrapper
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
