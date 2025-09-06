@@ -128,6 +128,64 @@ jobs:
           awslocal s3 mb s3://bb-apps-prd-terraform-backend --region ${{ inputs.aws_region }} || true
           awslocal s3 mb s3://bb-management-terraform-backend --region ${{ inputs.aws_region }} || true
           awslocal s3 mb s3://bb-data-science-terraform-backend --region ${{ inputs.aws_region }} || true
+      - name: Create LocalStack Provider Override for Cross-Account State Access
+        if: steps.check-tests.outputs.hasTests == 'true'
+        working-directory: ${{ inputs.working_directory }}
+        run: |
+          # Create provider override that removes profile requirements for LocalStack
+          cat > localstack_providers_override.tf << 'EOF'
+          # LocalStack Provider Override for Testing
+          # This removes AWS profile dependencies that cause authentication failures
+
+          terraform {
+            required_providers {
+              aws = {
+                source  = "hashicorp/aws"
+                version = "~> 5.0"
+              }
+            }
+          }
+
+          # Override the default provider to use LocalStack without profiles
+          provider "aws" {
+            region                      = var.region
+            access_key                  = "test"
+            secret_key                  = "test"
+            skip_credentials_validation = true
+            skip_metadata_api_check     = true
+            skip_requesting_account_id  = true
+
+            endpoints {
+              s3       = "http://localhost:4566"
+              iam      = "http://localhost:4566"
+              kms      = "http://localhost:4566"
+              sts      = "http://localhost:4566"
+            }
+          }
+
+          # Override remote state data sources to use LocalStack
+          data "terraform_remote_state" "security-identities" {
+            backend = "s3"
+            config = {
+              bucket                      = "bb-security-terraform-backend"
+              key                         = "security/identities/terraform.tfstate"
+              region                      = var.region
+              access_key                  = "test"
+              secret_key                  = "test"
+              skip_credentials_validation = true
+              skip_metadata_api_check     = true
+              skip_requesting_account_id  = true
+              force_path_style           = true
+
+              endpoints = {
+                s3 = "http://localhost:4566"
+              }
+            }
+          }
+          EOF
+
+          echo "Created LocalStack provider override for cross-account state access"
+          ls -la localstack_providers_override.tf
       - name: Generate Mock State Files for Cross-Account Dependencies
         if: steps.check-tests.outputs.hasTests == 'true'
         run: |
@@ -240,8 +298,16 @@ jobs:
           echo "Working Directory: ${{ inputs.working_directory }}"
           echo "AWS Region: ${{ inputs.aws_region }}"
 
-          # First attempt with normal logging
-          echo "=== Test Attempt 1 (Normal Logging) ==="
+          # Pre-create all log files to ensure capture
+          touch ./test-attempt-1.log
+          touch ./test-attempt-1-stderr.log
+          touch ./test-attempt-2.log
+          touch ./test-attempt-2-stderr.log
+          touch ./terraform-debug.log
+          touch ./provider-trace.log
+
+          # First attempt with comprehensive logging
+          echo "=== Test Attempt 1 (Comprehensive Logging) ==="
           test_cmd=""
           if [ "${{ inputs.iac_platform }}" = "tofu" ]; then
             test_cmd="tflocal test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars"
@@ -249,32 +315,51 @@ jobs:
             test_cmd="tflocal test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars"
           fi
 
-          # Run test and capture exit code
+          echo "Executing: $test_cmd"
+          echo "Capturing all output to: test-attempt-1.log and test-attempt-1-stderr.log"
+
+          # Run test with comprehensive output capture
           set +e  # Don't exit on error
-          $test_cmd
+          $test_cmd >./test-attempt-1.log 2>./test-attempt-1-stderr.log
           test_exit_code=$?
           set -e  # Re-enable exit on error
+
+          # Always show last part of logs for immediate feedback
+          echo "=== Last 50 lines of stdout ==="
+          tail -50 ./test-attempt-1.log || echo "No stdout captured"
+          echo "=== Last 50 lines of stderr ==="
+          tail -50 ./test-attempt-1-stderr.log || echo "No stderr captured"
 
           if [ $test_exit_code -eq 0 ]; then
             echo "✅ Test passed on first attempt!"
           else
             echo "❌ Test failed on first attempt (exit code: $test_exit_code)"
             echo ""
-            echo "=== Test Attempt 2 (Verbose Logging with TF_LOG=TRACE) ==="
-            echo "Re-running with maximum verbosity for diagnostics..."
+            echo "=== Test Attempt 2 (Maximum Diagnostics + Provider Tracing) ==="
+            echo "Re-running with TRACE-level logging and provider RPC tracing..."
 
-            # Set verbose logging environment variables
+            # Set comprehensive logging environment variables
             export TF_LOG=TRACE
             export TF_LOG_PATH="./terraform-debug.log"
+            export TF_LOG_PROVIDER=TRACE
+            export TF_LOG_PROVIDER_PATH="./provider-trace.log"
 
-            echo "Verbose logging enabled: TF_LOG=$TF_LOG"
-            echo "Log file: $TF_LOG_PATH"
+            echo "Comprehensive logging enabled:"
+            echo "  TF_LOG=$TF_LOG -> $TF_LOG_PATH"
+            echo "  TF_LOG_PROVIDER=$TF_LOG_PROVIDER -> $TF_LOG_PROVIDER_PATH"
+            echo "  Capturing to: test-attempt-2.log and test-attempt-2-stderr.log"
 
-            # Second attempt with verbose logging
+            # Second attempt with maximum diagnostics and output capture
             set +e  # Don't exit on error
-            $test_cmd
+            $test_cmd >./test-attempt-2.log 2>./test-attempt-2-stderr.log
             verbose_exit_code=$?
             set -e  # Re-enable exit on error
+
+            # Show immediate feedback from attempt 2
+            echo "=== Last 30 lines of attempt 2 stdout ==="
+            tail -30 ./test-attempt-2.log || echo "No attempt 2 stdout captured"
+            echo "=== Last 30 lines of attempt 2 stderr ==="
+            tail -30 ./test-attempt-2-stderr.log || echo "No attempt 2 stderr captured"
 
             echo ""
             echo "=== Verbose Test Results ==="
@@ -365,9 +450,14 @@ jobs:
         if: failure() && steps.check-tests.outputs.hasTests == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: test-failure-logs-${{ inputs.iac_platform }}-${{ matrix.accounts.layer || 'unknown' }}
+          name: comprehensive-logs-${{ inputs.iac_platform }}-${{ github.run_number }}
           path: |
+            ${{ inputs.working_directory }}/test-attempt-1.log
+            ${{ inputs.working_directory }}/test-attempt-1-stderr.log
+            ${{ inputs.working_directory }}/test-attempt-2.log
+            ${{ inputs.working_directory }}/test-attempt-2-stderr.log
             ${{ inputs.working_directory }}/terraform-debug.log
+            ${{ inputs.working_directory }}/provider-trace.log
             ${{ inputs.working_directory }}/localstack-full.log
             ${{ inputs.working_directory }}/*.tfplan
           retention-days: 7
