@@ -76,6 +76,18 @@ jobs:
         uses: opentofu/setup-opentofu@v1
         with:
           tofu_version: ${{ inputs.iac_version }}
+      - name: Set up Docker Buildx
+        if: steps.check-tests.outputs.hasTests == 'true'
+        uses: docker/setup-buildx-action@v3
+      - name: Cache Docker layers
+        if: steps.check-tests.outputs.hasTests == 'true'
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: docker-localstack-${{ inputs.localstack_version }}-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            docker-localstack-${{ inputs.localstack_version }}-${{ runner.os }}-
+            docker-localstack-${{ inputs.localstack_version }}-
       - uses: LocalStack/setup-localstack@v0.2.4
         if: steps.check-tests.outputs.hasTests == 'true'
         with:
@@ -108,6 +120,14 @@ jobs:
       - name: Initialize with LocalStack wrapper
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
+        env:
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
+          AWS_ENDPOINT_URL: http://localhost:4566
+          AWS_S3_FORCE_PATH_STYLE: true
+          # Override AWS profile requirement for LocalStack testing
+          AWS_PROFILE: ""
         run: |
           if [ "${{ inputs.iac_platform }}" = "tofu" ]; then
             tflocal init -upgrade
@@ -117,6 +137,14 @@ jobs:
       - name: Run Test with LocalStack wrapper
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
+        env:
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
+          AWS_ENDPOINT_URL: http://localhost:4566
+          AWS_S3_FORCE_PATH_STYLE: true
+          # Override AWS profile requirement for LocalStack testing
+          AWS_PROFILE: ""
         run: |
           cp ../../../config/common.tfvars.example ../../../config/common.tfvars
           if [ "${{ inputs.iac_platform }}" = "tofu" ]; then
