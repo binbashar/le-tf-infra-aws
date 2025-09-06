@@ -1,4 +1,4 @@
-# Testing opentofu-local solution for OpenTofu compatibility - Final Implementation
+# Testing opentofu-local solution for OpenTofu compatibility - Final AWS Profile Fix
 module "kms_key" {
   source = "github.com/binbashar/terraform-aws-kms-key.git?ref=0.12.2"
 

@@ -133,10 +133,10 @@ jobs:
         run: |
           # Create realistic mock state file for security-identities (most common dependency)
           echo '{"version":4,"terraform_version":"1.6.0","serial":1,"lineage":"security-identities-mock","outputs":{"user_s3_demo_name":{"value":"mock-s3-demo-user","type":"string"},"cross_account_role_arn":{"value":"arn:aws:iam::000000000000:role/OrganizationAccountAccessRole","type":"string"}},"resources":[]}' > security_identities_state.json
-          
+
           # Create mock state for shared-network (another common dependency)
           echo '{"version":4,"terraform_version":"1.6.0","serial":1,"lineage":"shared-network-mock","outputs":{"vpc_id":{"value":"vpc-mock123456","type":"string"},"vpc_cidr_block":{"value":"10.0.0.0/16","type":"string"}},"resources":[]}' > shared_network_state.json
-          
+
           # Upload to exact locations expected by terraform_remote_state blocks
           awslocal s3 cp security_identities_state.json s3://bb-security-terraform-backend/security/identities/terraform.tfstate || true
           awslocal s3 cp shared_network_state.json s3://bb-shared-terraform-backend/shared/base-network/terraform.tfstate || true
@@ -150,7 +150,7 @@ jobs:
           AWS_ENDPOINT_URL: http://localhost:4566
           AWS_S3_FORCE_PATH_STYLE: true
           # Override AWS profile requirement for LocalStack testing
-          AWS_PROFILE: ""
+          # AWS_PROFILE unset to avoid profile configuration errors
         run: |
           if [ "${{ inputs.iac_platform }}" = "tofu" ]; then
             tflocal init -upgrade
@@ -167,7 +167,7 @@ jobs:
           AWS_ENDPOINT_URL: http://localhost:4566
           AWS_S3_FORCE_PATH_STYLE: true
           # Override AWS profile requirement for LocalStack testing
-          AWS_PROFILE: ""
+          # AWS_PROFILE unset to avoid profile configuration errors
         run: |
           cp ../../../config/common.tfvars.example ../../../config/common.tfvars
           if [ "${{ inputs.iac_platform }}" = "tofu" ]; then
