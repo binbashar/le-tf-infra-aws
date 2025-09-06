@@ -141,35 +141,23 @@ jobs:
           echo "Removing AWS profile references from provider blocks..."
           find . -name "*.tf" -exec sed -i 's/profile.*=.*/# profile removed for LocalStack testing/' {} \;
           
-          # Fix terraform_remote_state data sources to use LocalStack
-          echo "Fixing terraform_remote_state data sources..."
+          # Fix terraform_remote_state data sources - simple approach
+          echo "Removing profile references from terraform_remote_state blocks..."
           
-          # Simple approach: directly replace profile lines and add LocalStack config
+          # Just remove profile lines - the simpler the better
           for tf_file in $(find . -name "*.tf"); do
             if grep -q "terraform_remote_state" "$tf_file"; then
-              echo "Processing remote state in: $tf_file"
-              
-              # Remove profile lines from terraform_remote_state config blocks
-              sed -i '/data "terraform_remote_state"/,/^[[:space:]]*}[[:space:]]*$/{/profile[[:space:]]*=/d}' "$tf_file"
-              
-              # Add LocalStack configuration after region line in config blocks
-              sed -i '/data "terraform_remote_state"/,/^[[:space:]]*}[[:space:]]*$/{
-                /region[[:space:]]*=.*/{
-                  a\
-    access_key                  = "test"\
-    secret_key                  = "test"\
-    skip_credentials_validation = true\
-    skip_metadata_api_check     = true\
-    skip_requesting_account_id  = true\
-    force_path_style           = true\
-    \
-    endpoints = {\
-      s3 = "http://localhost:4566"\
-    }
-                }
-              }' "$tf_file"
+              echo "Processing: $tf_file"
+              sed -i '/profile.*=.*bb-.*-devops/d' "$tf_file"
             fi
           done
+          
+          # Set environment variables for terraform to use instead of profiles
+          echo "Setting LocalStack environment variables..."
+          export AWS_ACCESS_KEY_ID=test
+          export AWS_SECRET_ACCESS_KEY=test  
+          export AWS_DEFAULT_REGION=${{ inputs.aws_region }}
+          export AWS_ENDPOINT_URL=http://localhost:4566
           
           # Create LocalStack provider override
           cat > localstack_provider.tf << 'EOF'
