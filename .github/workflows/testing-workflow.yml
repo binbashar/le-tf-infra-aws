@@ -144,19 +144,18 @@ jobs:
           # Fix terraform_remote_state data sources to use LocalStack
           echo "Fixing terraform_remote_state data sources..."
           
-          # Replace profile-based remote state with LocalStack-compatible version
+          # Simple approach: directly replace profile lines and add LocalStack config
           for tf_file in $(find . -name "*.tf"); do
             if grep -q "terraform_remote_state" "$tf_file"; then
               echo "Processing remote state in: $tf_file"
               
-              # Create a temporary file with LocalStack-compatible remote state
-              sed -E '
-                # Find terraform_remote_state blocks and modify config
-                /data "terraform_remote_state"/,/^[[:space:]]*}[[:space:]]*$/ {
-                  # Remove profile line entirely
-                  /profile[[:space:]]*=/d
-                  # Add LocalStack credentials after region line
-                  /region[[:space:]]*=.*/ a\
+              # Remove profile lines from terraform_remote_state config blocks
+              sed -i '/data "terraform_remote_state"/,/^[[:space:]]*}[[:space:]]*$/{/profile[[:space:]]*=/d}' "$tf_file"
+              
+              # Add LocalStack configuration after region line in config blocks
+              sed -i '/data "terraform_remote_state"/,/^[[:space:]]*}[[:space:]]*$/{
+                /region[[:space:]]*=.*/{
+                  a\
     access_key                  = "test"\
     secret_key                  = "test"\
     skip_credentials_validation = true\
@@ -168,10 +167,7 @@ jobs:
       s3 = "http://localhost:4566"\
     }
                 }
-              ' "$tf_file" > "${tf_file}.localstack"
-              
-              # Replace original with LocalStack version
-              mv "${tf_file}.localstack" "$tf_file"
+              }' "$tf_file"
             fi
           done
           
