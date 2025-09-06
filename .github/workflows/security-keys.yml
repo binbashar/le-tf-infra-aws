@@ -10,7 +10,6 @@ jobs:
   testing-security-keys-with-terraform:
     strategy:
       fail-fast: false
-      max-parallel: 6  # Respect GitHub concurrent job limits
       matrix:
         iac_platform:
           - name: terraform
@@ -18,7 +17,6 @@ jobs:
           - name: tofu
             version: '1.6'
         accounts:
-          # Selective testing - 3 complex layers for OpenTofu compatibility validation
           - layer: apps-devstg/us-east-1/security-keys
             aws_profile: bb-apps-devstg-devops
             aws_region: us-east-1
@@ -27,13 +25,57 @@ jobs:
             bucket_folder: identities
             aws_profile_required_state_file: bb-security-devops
             state_file_test_path: tests/terraform.tfstate.template
+          - layer: apps-devstg/us-east-2/security-keys
+            aws_profile: bb-apps-devstg-devops
+            aws_region: us-east-2
+            required_state_file: false
+          - layer: apps-prd/us-east-1/security-keys
+            aws_profile: bb-apps-prd-devops
+            aws_region: us-east-1
+            required_state_file: false
+          - layer: apps-prd/us-east-2/security-keys
+            aws_profile: bb-apps-prd-devops
+            aws_region: us-east-2
+            required_state_file: false
           - layer: security/us-east-1/security-keys
             aws_profile: bb-security-devops
             aws_region: us-east-1
             required_state_file: false
+          - layer: security/us-east-2/security-keys
+            aws_profile: bb-security-devops
+            aws_region: us-east-2
+            required_state_file: false
           - layer: shared/us-east-1/security-keys
             aws_profile: bb-shared-devops
             aws_region: us-east-1
+            required_state_file: false
+          - layer: shared/us-east-2/security-keys
+            aws_profile: bb-shared-devops
+            aws_region: us-east-2
+            required_state_file: false
+          - layer: network/us-east-1/security-keys
+            aws_profile: bb-network-devops
+            aws_region: us-east-1
+            required_state_file: false
+          - layer: network/us-east-2/security-keys
+            aws_profile: bb-network-devops
+            aws_region: us-east-2
+            required_state_file: false
+          - layer: management/us-east-1/security-keys
+            aws_profile: bb-management-devops
+            aws_region: us-east-1
+            required_state_file: false
+          - layer: management/us-east-2/security-keys
+            aws_profile: bb-management-devops
+            aws_region: us-east-2
+            required_state_file: false
+          - layer: data-science/us-east-1/security-keys
+            aws_profile: bb-data-science-devops
+            aws_region: us-east-1
+            required_state_file: false
+          - layer: data-science/us-east-2/security-keys
+            aws_profile: bb-data-science-devops
+            aws_region: us-east-2
             required_state_file: false
     name: security-keys-layer
     uses: ./.github/workflows/testing-workflow.yml
