@@ -21,7 +21,6 @@ jobs:
           echo "Runner: $(hostname)"
           echo "OS: $(uname -a)"
           echo "=== Success: Runner is working ==="
-      
       - name: Test runner performance
         run: |
           echo "Testing basic commands..."

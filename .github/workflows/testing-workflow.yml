@@ -140,6 +140,70 @@ jobs:
           # Upload to exact locations expected by terraform_remote_state blocks
           awslocal s3 cp security_identities_state.json s3://bb-security-terraform-backend/security/identities/terraform.tfstate || true
           awslocal s3 cp shared_network_state.json s3://bb-shared-terraform-backend/shared/base-network/terraform.tfstate || true
+      - name: LocalStack Service Health Check
+        if: steps.check-tests.outputs.hasTests == 'true'
+        run: |
+          echo "=== LocalStack Service Health Check ==="
+          echo "Checking LocalStack readiness for services required by security-keys layer..."
+
+          # Wait for LocalStack to be fully ready
+          max_attempts=30
+          attempt=0
+
+          while [ $attempt -lt $max_attempts ]; do
+            echo "Health check attempt $((attempt + 1))/$max_attempts"
+
+            # Test S3 service
+            if awslocal s3 ls > /dev/null 2>&1; then
+              echo "✅ S3 service is ready"
+              s3_ready=true
+            else
+              echo "❌ S3 service not ready"
+              s3_ready=false
+            fi
+
+            # Test KMS service
+            if awslocal kms list-keys --region ${{ inputs.aws_region }} > /dev/null 2>&1; then
+              echo "✅ KMS service is ready"
+              kms_ready=true
+            else
+              echo "❌ KMS service not ready"
+              kms_ready=false
+            fi
+
+            # Test IAM service
+            if awslocal iam list-roles > /dev/null 2>&1; then
+              echo "✅ IAM service is ready"
+              iam_ready=true
+            else
+              echo "❌ IAM service not ready"
+              iam_ready=false
+            fi
+
+            # Check if all services are ready
+            if [ "$s3_ready" = true ] && [ "$kms_ready" = true ] && [ "$iam_ready" = true ]; then
+              echo "🎉 All LocalStack services are ready!"
+              break
+            fi
+
+            attempt=$((attempt + 1))
+            if [ $attempt -lt $max_attempts ]; then
+              echo "Waiting 10 seconds before next attempt..."
+              sleep 10
+            fi
+          done
+
+          # Final check - fail if services are not ready
+          if [ $attempt -eq $max_attempts ]; then
+            echo "💥 LocalStack services failed to become ready after $max_attempts attempts"
+            echo "=== LocalStack Container Status ==="
+            docker ps | grep localstack || echo "No LocalStack container found"
+            echo "=== LocalStack Container Logs (last 50 lines) ==="
+            docker logs $(docker ps -q --filter "ancestor=localstack/localstack:${{ inputs.localstack_version }}") --tail 50 || echo "Could not retrieve LocalStack logs"
+            exit 1
+          fi
+
+          echo "=== LocalStack Health Check Complete ==="
       - name: Initialize with LocalStack wrapper
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
@@ -170,11 +234,144 @@ jobs:
           # AWS_PROFILE unset to avoid profile configuration errors
         run: |
           cp ../../../config/common.tfvars.example ../../../config/common.tfvars
+
+          echo "=== Starting Test Execution ==="
+          echo "Platform: ${{ inputs.iac_platform }}"
+          echo "Working Directory: ${{ inputs.working_directory }}"
+          echo "AWS Region: ${{ inputs.aws_region }}"
+
+          # First attempt with normal logging
+          echo "=== Test Attempt 1 (Normal Logging) ==="
+          test_cmd=""
           if [ "${{ inputs.iac_platform }}" = "tofu" ]; then
-            tflocal test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars
+            test_cmd="tflocal test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars"
           else
-            tflocal test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars
+            test_cmd="tflocal test -var-file=../../../config/common.tfvars -var-file=../../config/account.tfvars -var-file=../../config/backend.tfvars"
           fi
+
+          # Run test and capture exit code
+          set +e  # Don't exit on error
+          $test_cmd
+          test_exit_code=$?
+          set -e  # Re-enable exit on error
+
+          if [ $test_exit_code -eq 0 ]; then
+            echo "✅ Test passed on first attempt!"
+          else
+            echo "❌ Test failed on first attempt (exit code: $test_exit_code)"
+            echo ""
+            echo "=== Test Attempt 2 (Verbose Logging with TF_LOG=TRACE) ==="
+            echo "Re-running with maximum verbosity for diagnostics..."
+
+            # Set verbose logging environment variables
+            export TF_LOG=TRACE
+            export TF_LOG_PATH="./terraform-debug.log"
+
+            echo "Verbose logging enabled: TF_LOG=$TF_LOG"
+            echo "Log file: $TF_LOG_PATH"
+
+            # Second attempt with verbose logging
+            set +e  # Don't exit on error
+            $test_cmd
+            verbose_exit_code=$?
+            set -e  # Re-enable exit on error
+
+            echo ""
+            echo "=== Verbose Test Results ==="
+            echo "Verbose test exit code: $verbose_exit_code"
+
+            # Show last 100 lines of verbose log if it exists
+            if [ -f "./terraform-debug.log" ]; then
+              echo "=== Last 100 lines of Terraform Debug Log ==="
+              tail -100 ./terraform-debug.log || echo "Could not read debug log"
+            else
+              echo "⚠️  No debug log file found at $TF_LOG_PATH"
+            fi
+
+            # Exit with original failure code
+            echo "💥 Test failed after both attempts. Original exit code: $test_exit_code"
+            exit $test_exit_code
+          fi
+      - name: LocalStack Diagnostic Log Collection
+        if: failure() && steps.check-tests.outputs.hasTests == 'true'
+        run: |
+          echo "=== LocalStack Diagnostic Information ==="
+          echo "Collecting LocalStack logs and container information for failure analysis..."
+
+          # Get LocalStack container information
+          echo "=== LocalStack Container Status ==="
+          docker ps --filter "name=localstack" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || echo "No LocalStack containers found by name"
+          docker ps --filter "ancestor=localstack/localstack:${{ inputs.localstack_version }}" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || echo "No LocalStack containers found by image"
+
+          # Get container logs with error pattern matching
+          echo ""
+          echo "=== LocalStack Container Logs Analysis ==="
+          container_id=$(docker ps -q --filter "ancestor=localstack/localstack:${{ inputs.localstack_version }}" | head -1)
+
+          if [ -n "$container_id" ]; then
+            echo "Found LocalStack container: $container_id"
+
+            # Get full logs and save as artifact
+            echo "Collecting full LocalStack logs..."
+            docker logs "$container_id" > localstack-full.log 2>&1 || echo "Could not collect full logs"
+
+            # Search for common error patterns
+            echo ""
+            echo "=== Error Pattern Analysis ==="
+
+            echo "🔍 Searching for ValidationException errors:"
+            docker logs "$container_id" 2>&1 | grep -i "ValidationException" | tail -10 || echo "No ValidationException errors found"
+
+            echo ""
+            echo "🔍 Searching for NotImplementedError:"
+            docker logs "$container_id" 2>&1 | grep -i "NotImplementedError\|not implemented" | tail -10 || echo "No NotImplementedError found"
+
+            echo ""
+            echo "🔍 Searching for InternalFailure/ServerError:"
+            docker logs "$container_id" 2>&1 | grep -i "InternalFailure\|InternalError\|ServerError" | tail -10 || echo "No internal server errors found"
+
+            echo ""
+            echo "🔍 Searching for KMS-specific errors:"
+            docker logs "$container_id" 2>&1 | grep -i "kms\|CMK\|key.*not found" | tail -10 || echo "No KMS-specific errors found"
+
+            echo ""
+            echo "🔍 Searching for S3-specific errors:"
+            docker logs "$container_id" 2>&1 | grep -i "s3.*error\|bucket.*not found\|NoSuchBucket" | tail -10 || echo "No S3-specific errors found"
+
+            echo ""
+            echo "🔍 Searching for IAM-specific errors:"
+            docker logs "$container_id" 2>&1 | grep -i "iam.*error\|role.*not found\|AccessDenied" | tail -10 || echo "No IAM-specific errors found"
+
+            # Show recent logs (last 200 lines)
+            echo ""
+            echo "=== Recent LocalStack Logs (Last 200 lines) ==="
+            docker logs "$container_id" --tail 200 2>&1 || echo "Could not retrieve recent logs"
+
+          else
+            echo "⚠️  No LocalStack container found - this might be the root cause!"
+            echo "Available containers:"
+            docker ps -a
+          fi
+
+          # Check if log file was created and make it available as artifact
+          if [ -f "localstack-full.log" ]; then
+            echo ""
+            echo "📁 Full LocalStack logs saved to localstack-full.log"
+            ls -la localstack-full.log
+          fi
+
+          echo "=== LocalStack Diagnostic Collection Complete ==="
+      - name: Upload Test Artifacts
+        if: failure() && steps.check-tests.outputs.hasTests == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failure-logs-${{ inputs.iac_platform }}-${{ matrix.accounts.layer || 'unknown' }}
+          path: |
+            ${{ inputs.working_directory }}/terraform-debug.log
+            ${{ inputs.working_directory }}/localstack-full.log
+            ${{ inputs.working_directory }}/*.tfplan
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Cleanup LocalStack Provider Override
         if: always() && steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
