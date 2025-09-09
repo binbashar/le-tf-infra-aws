@@ -1,0 +1,23 @@
+openapi: 3.0.0
+info:
+  title: S3 Read API
+  version: 1.0.0
+paths:
+  /read/{key}:
+    get:
+      description: Read file from S3
+      operationId: readS3File
+      parameters:
+        - name: key
+          in: path
+          required: true
+          description: S3 object key
+          schema:
+            type: string
+      responses:
+        "200":
+          description: File content
+          content:
+            application/json:
+              schema:
+                type: string
