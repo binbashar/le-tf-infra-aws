@@ -159,25 +159,59 @@ jobs:
           export AWS_DEFAULT_REGION=${{ inputs.aws_region }}
           export AWS_ENDPOINT_URL=http://localhost:4566
           
-          # Create LocalStack provider override
-          cat > localstack_provider.tf << 'EOF'
-          # LocalStack Provider Configuration for Testing
-          provider "aws" {
-            region                      = var.region
-            access_key                  = "test"
-            secret_key                  = "test"
-            skip_credentials_validation = true
-            skip_metadata_api_check     = true
-            skip_requesting_account_id  = true
+          # Inject LocalStack endpoints into existing provider block instead of creating duplicate
+          echo "Injecting LocalStack endpoints into existing AWS provider configuration..."
+          
+          # Find and modify existing provider "aws" blocks
+          for tf_file in $(find . -name "*.tf" -exec grep -l 'provider "aws"' {} \;); do
+            echo "Modifying provider in: $tf_file"
             
-            endpoints {
-              s3       = "http://localhost:4566"
-              iam      = "http://localhost:4566"
-              kms      = "http://localhost:4566"
-              sts      = "http://localhost:4566"
+            # Create a temp file to build the new provider configuration
+            temp_file=$(mktemp)
+            
+            # Parse the file and modify the provider block
+            awk '
+            BEGIN { in_provider = 0; provider_content = ""; brace_count = 0; }
+            /^[[:space:]]*provider "aws" {/ { 
+              in_provider = 1; 
+              brace_count = 1;
+              print "provider \"aws\" {"
+              print "  region                      = var.region"
+              print "  access_key                  = \"test\""  
+              print "  secret_key                  = \"test\""
+              print "  skip_credentials_validation = true"
+              print "  skip_metadata_api_check     = true"
+              print "  skip_requesting_account_id  = true"
+              print ""
+              print "  endpoints {"
+              print "    s3       = \"http://localhost:4566\""
+              print "    iam      = \"http://localhost:4566\""
+              print "    kms      = \"http://localhost:4566\""
+              print "    sts      = \"http://localhost:4566\""
+              print "  }"
+              print ""
+              print "  default_tags {"
+              print "    tags = local.tags"
+              print "  }"
+              next;
             }
-          }
-          EOF
+            in_provider == 1 {
+              # Count braces to find the end of provider block
+              gsub(/[^{]/, "", dummy); brace_count += length(dummy)
+              gsub(/[^}]/, "", dummy2); brace_count -= length(dummy2)
+              
+              if (brace_count == 0) {
+                in_provider = 0;
+                print "}"
+              }
+              next;
+            }
+            { print }
+            ' "$tf_file" > "$temp_file"
+            
+            # Replace original file with modified version
+            mv "$temp_file" "$tf_file"
+          done
           
           echo "✅ Fixed profile dependencies for LocalStack testing"
           echo "Modified files:"
@@ -468,6 +502,4 @@ jobs:
           echo "=== Restoring Original Terraform Files ==="
           # Restore original files from backups
           find . -name "*.tf.backup" -exec sh -c 'mv "$1" "${1%.backup}"' _ {} \;
-          # Clean up LocalStack provider file
-          rm -f localstack_provider.tf
           echo "✅ Original Terraform files restored"
