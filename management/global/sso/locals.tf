@@ -285,6 +285,14 @@ locals {
         "datascientists"
       ]
     }
+    "marcelo.rodriguez" = {
+      first_name = "Marcelo"
+      last_name  = "Rodriguez"
+      email      = "marcelo.rodriguez@binbash.com.ar"
+      groups = [
+        "datascientists"
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
