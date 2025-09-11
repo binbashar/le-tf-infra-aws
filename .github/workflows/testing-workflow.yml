@@ -171,10 +171,15 @@ jobs:
             
             # Parse the file and modify the provider block
             awk '
-            BEGIN { in_provider = 0; provider_content = ""; brace_count = 0; }
+            BEGIN { 
+              in_provider = 0
+              brace_count = 0
+            }
+            
+            # Detect start of provider block
             /^[[:space:]]*provider "aws" {/ { 
-              in_provider = 1; 
-              brace_count = 1;
+              in_provider = 1
+              brace_count = 1
               print "provider \"aws\" {"
               print "  region                      = var.region"
               print "  access_key                  = \"test\""  
@@ -193,19 +198,27 @@ jobs:
               print "  default_tags {"
               print "    tags = local.tags"
               print "  }"
-              next;
+              print "}"
+              next
             }
+            
+            # Skip all content inside provider block  
             in_provider == 1 {
-              # Count braces to find the end of provider block
-              gsub(/[^{]/, "", dummy); brace_count += length(dummy)
-              gsub(/[^}]/, "", dummy2); brace_count -= length(dummy2)
-              
-              if (brace_count == 0) {
-                in_provider = 0;
-                print "}"
+              # Count opening and closing braces to find the end
+              for (i = 1; i <= length($0); i++) {
+                char = substr($0, i, 1)
+                if (char == "{") brace_count++
+                if (char == "}") brace_count--
               }
-              next;
+              
+              # End of provider block found
+              if (brace_count == 0) {
+                in_provider = 0
+              }
+              next
             }
+            
+            # Print all other lines unchanged
             { print }
             ' "$tf_file" > "$temp_file"
             
