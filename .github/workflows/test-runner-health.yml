@@ -1,0 +1,30 @@
+name: "Runner Health Test"
+on:
+  workflow_dispatch:
+    inputs:
+      test_message:
+        description: 'Test message to echo'
+        required: false
+        default: 'GitHub Actions Runner Health Check'
+        type: string
+
+jobs:
+  simple-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Test basic runner availability
+        run: |
+          echo "=== Runner Health Check ==="
+          echo "Test message: ${{ inputs.test_message }}"
+          echo "Timestamp: $(date)"
+          echo "Runner: $(hostname)"
+          echo "OS: $(uname -a)"
+          echo "=== Success: Runner is working ==="
+      - name: Test runner performance
+        run: |
+          echo "Testing basic commands..."
+          ls -la
+          pwd
+          whoami
+          echo "All tests passed!"
