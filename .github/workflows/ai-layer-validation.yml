@@ -11,7 +11,6 @@ on:
     types: [created]
 
 permissions:
-  id-token: write      # Required for AWS OIDC
   contents: read       # Required to read repository contents
   pull-requests: write # Required to post PR comments
   issues: write        # Required for @aibot interactions
@@ -101,11 +100,62 @@ jobs:
           leverage --version
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ vars.AWS_VALIDATION_ROLE_ARN }}
-          role-session-name: github-actions-validation
-          aws-region: ${{ env.AWS_REGION }}
+        id: aws-config
+        run: |
+          # Parse layer information to determine AWS account
+          LAYER_PATH="${{ matrix.layer }}"
+          ACCOUNT=$(echo "$LAYER_PATH" | cut -d'/' -f1)
+
+          echo "🔑 Configuring AWS credentials for account: $ACCOUNT"
+
+          # Map account directories to credential secrets
+          case "$ACCOUNT" in
+            "apps-devstg")
+              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+              echo "account-id=${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+            "shared")
+              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+              echo "account-id=${{ secrets.AWS_SHARED_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+            "security")
+              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+              echo "account-id=${{ secrets.AWS_SECURITY_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+            "network")
+              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+              echo "account-id=${{ secrets.AWS_NETWORK_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+            "apps-prd")
+              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+              echo "account-id=${{ secrets.AWS_PRD_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+            "data-science")
+              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+              echo "account-id=${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+            "management")
+              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+              echo "account-id=${{ secrets.AWS_ROOT_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "⚠️ Unknown account directory: $ACCOUNT, using default credentials"
+              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+              echo "account-id=unknown" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+          # Set AWS region
+          echo "AWS_DEFAULT_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
+          echo "✅ AWS credentials configured for account: $ACCOUNT"
 
       - name: Parse layer information
         id: layer-info
@@ -325,25 +375,16 @@ jobs:
             *) STATUS_EMOJI="⚠️" ;;
           esac
 
-          # Create PR comment
-          PR_COMMENT="## ${STATUS_EMOJI} AI-Powered Infrastructure Validation
-
-> 🤖 **AI Analysis powered by GitHub Models API**
->
-> This analysis was generated automatically for PR #${{ github.event.pull_request.number }}
->
-> **Overall Status:** \`$OVERALL_STATUS\`
-
-$AI_RESPONSE
-
----
-### 🎯 Interactive Commands
-Reply with these commands for additional analysis:
-- \`@aibot explain security risks\` - Deep dive into security implications
-- \`@aibot blast radius\` - Analyze cross-layer dependencies
-- \`@aibot best practices\` - Review against AWS Well-Architected Framework
-
-*Powered by Binbash Leverage + GitHub Models API*"
+          # Create simple PR comment (building it step by step to avoid YAML issues)
+          PR_COMMENT="${STATUS_EMOJI} AI-Powered Infrastructure Validation"
+          PR_COMMENT+="\n\n**Overall Status:** \`$OVERALL_STATUS\`"
+          PR_COMMENT+="\n\n$AI_RESPONSE"
+          PR_COMMENT+="\n\n---"
+          PR_COMMENT+="\n**Interactive Commands:** Reply with @aibot commands for additional analysis:"
+          PR_COMMENT+="\n- \`@aibot explain security risks\`"
+          PR_COMMENT+="\n- \`@aibot blast radius\`"
+          PR_COMMENT+="\n- \`@aibot best practices\`"
+          PR_COMMENT+="\n\n*Powered by Binbash Leverage + GitHub Models API*"
 
           # Post comment
           gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
@@ -411,18 +452,15 @@ Reply with these commands for additional analysis:
                 jq -r '.choices[0].message.content // "Analysis unavailable"')
 
               # Reply to comment
+              AIBOT_RESPONSE="🤖 **@aibot response for \`$COMMAND\`:**\n\n$AI_RESPONSE"
               gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
                 --method POST \
-                --field body="🤖 **@aibot response for \`$COMMAND\`:**
-
-$AI_RESPONSE"
+                --field body="$AIBOT_RESPONSE"
               ;;
             *)
+              AIBOT_HELP="🤖 Available @aibot commands:\n- \`@aibot explain security risks\`\n- \`@aibot blast radius\`\n- \`@aibot best practices\`"
               gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
                 --method POST \
-                --field body="🤖 Available @aibot commands:
-- \`@aibot explain security risks\`
-- \`@aibot blast radius\`
-- \`@aibot best practices\`"
+                --field body="$AIBOT_HELP"
               ;;
           esac
