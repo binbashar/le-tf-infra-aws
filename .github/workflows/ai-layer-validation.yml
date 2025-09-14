@@ -1,0 +1,430 @@
+name: AI-Powered Infrastructure Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.tf'
+      - '**/*.tfvars'
+      - '**/*.hcl'
+  issue_comment:
+    types: [created]
+
+permissions:
+  id-token: write      # Required for AWS OIDC
+  contents: read       # Required to read repository contents
+  pull-requests: write # Required to post PR comments
+  issues: write        # Required for @aibot interactions
+  models: read         # Required for GitHub Models API
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  AWS_REGION: us-east-1
+
+jobs:
+  # Job 1: Detect affected layers from changed files
+  detect-layers:
+    name: Detect Modified Layers
+    runs-on: ubuntu-latest
+    outputs:
+      layers: ${{ steps.parse-layers.outputs.layers }}
+      has-changes: ${{ steps.parse-layers.outputs.has-changes }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files and extract layers
+        id: parse-layers
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔍 Analyzing changed files in PR #${{ github.event.pull_request.number }}"
+
+          # Get list of changed files from PR
+          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files \
+            --jq '.[] | select(.status != "removed") | .filename' > changed_files.txt
+
+          echo "📁 Changed files:"
+          cat changed_files.txt
+
+          # Extract unique layers from changed infrastructure files
+          grep -E '\.(tf|tfvars|hcl)$' changed_files.txt | \
+          while IFS='/' read -r account region layer rest; do
+            # Skip if not a valid layer structure (needs at least 3 path components)
+            if [[ -n "$account" && -n "$region" && -n "$layer" && -d "$account/$region/$layer" ]]; then
+              echo "$account/$region/$layer"
+            fi
+          done | sort -u > detected_layers.txt
+
+          echo "🎯 Detected layers:"
+          cat detected_layers.txt
+
+          # Check if we have any valid layers
+          if [[ -s detected_layers.txt ]]; then
+            # Convert to JSON array for matrix strategy
+            layers_json=$(jq -R -s -c 'split("\n") | map(select(length > 0))' detected_layers.txt)
+            echo "layers=${layers_json}" >> $GITHUB_OUTPUT
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Found $(wc -l < detected_layers.txt) layer(s) to validate"
+          else
+            echo "layers=[]" >> $GITHUB_OUTPUT
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No valid infrastructure layers detected in changes"
+          fi
+
+  # Job 2: Validate each layer using Leverage CLI (runs in parallel)
+  validate-layers:
+    name: Validate Layer
+    needs: detect-layers
+    if: needs.detect-layers.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        layer: ${{ fromJson(needs.detect-layers.outputs.layers) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Leverage CLI
+        run: |
+          echo "📦 Installing Leverage CLI"
+          pip install leverage
+          leverage --version
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ vars.AWS_VALIDATION_ROLE_ARN }}
+          role-session-name: github-actions-validation
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Parse layer information
+        id: layer-info
+        run: |
+          # Extract layer components
+          LAYER_PATH="${{ matrix.layer }}"
+          ACCOUNT=$(echo "$LAYER_PATH" | cut -d'/' -f1)
+          REGION=$(echo "$LAYER_PATH" | cut -d'/' -f2)
+          LAYER_NAME=$(echo "$LAYER_PATH" | cut -d'/' -f3)
+
+          # Determine layer type for persona selection
+          case "$LAYER_NAME" in
+            security-*|secrets-manager|base-identities) LAYER_TYPE="security" ;;
+            base-network|*-vpn|network-*) LAYER_TYPE="network" ;;
+            databases-*) LAYER_TYPE="database" ;;
+            k8s-*|*-ecs) LAYER_TYPE="container" ;;
+            tools-*|*-jenkins|*-monitoring) LAYER_TYPE="devops" ;;
+            *-s3|*-backup|*-storage) LAYER_TYPE="storage" ;;
+            *-ec2|*-lambda|*-autoscaling) LAYER_TYPE="compute" ;;
+            data-*|*-ml|*-bedrock) LAYER_TYPE="data-analytics" ;;
+            *) LAYER_TYPE="infrastructure" ;;
+          esac
+
+          echo "account=$ACCOUNT" >> $GITHUB_OUTPUT
+          echo "region=$REGION" >> $GITHUB_OUTPUT
+          echo "layer-name=$LAYER_NAME" >> $GITHUB_OUTPUT
+          echo "layer-type=$LAYER_TYPE" >> $GITHUB_OUTPUT
+
+          echo "🏗️ Validating layer: $LAYER_PATH (type: $LAYER_TYPE)"
+
+      - name: Run Leverage CLI validations
+        id: validation
+        working-directory: ${{ matrix.layer }}
+        run: |
+          echo "🚀 Running validations in $(pwd)"
+
+          # Initialize validation results
+          VALIDATION_RESULTS=""
+          VALIDATION_STATUS="success"
+
+          # Function to capture command output
+          run_validation() {
+            local cmd="$1"
+            local description="$2"
+
+            echo "⚡ Running: $description"
+            if output=$(timeout 300 $cmd 2>&1); then
+              echo "✅ $description: PASSED"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED**\n\`\`\`\n${output}\n\`\`\`\n\n"
+            else
+              echo "❌ $description: FAILED"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n❌ **FAILED**\n\`\`\`\n${output}\n\`\`\`\n\n"
+              VALIDATION_STATUS="failed"
+            fi
+          }
+
+          # Run validation commands
+          run_validation "leverage tf fmt -check -diff" "Terraform Format Check"
+          run_validation "leverage tf init" "Terraform Initialization"
+          run_validation "leverage tf validate" "Terraform Validation"
+
+          # Generate execution plan (non-blocking)
+          echo "📋 Generating execution plan..."
+          if plan_output=$(timeout 600 leverage tf plan -no-color 2>&1); then
+            echo "✅ Plan generation: PASSED"
+            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan\n✅ **GENERATED**\n\`\`\`\n${plan_output}\n\`\`\`\n\n"
+          else
+            echo "⚠️ Plan generation: WARNING"
+            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan\n⚠️ **WARNING**\n\`\`\`\n${plan_output}\n\`\`\`\n\n"
+          fi
+
+          # Save results to file for next job
+          mkdir -p /tmp/validation-results
+          echo -e "$VALIDATION_RESULTS" > "/tmp/validation-results/${{ matrix.layer }}.md"
+          echo "$VALIDATION_STATUS" > "/tmp/validation-results/${{ matrix.layer }}.status"
+
+          echo "status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
+
+      - name: Upload validation results
+        uses: actions/upload-artifact@v3
+        with:
+          name: validation-results
+          path: /tmp/validation-results/
+          retention-days: 1
+
+  # Job 3: AI-powered analysis of validation results
+  ai-analysis:
+    name: AI Analysis
+    needs: [detect-layers, validate-layers]
+    if: needs.detect-layers.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download validation results
+        uses: actions/download-artifact@v3
+        with:
+          name: validation-results
+          path: /tmp/validation-results/
+
+      - name: Load AI personas configuration
+        id: load-personas
+        run: |
+          # Load AI personas from configuration file
+          if [[ -f .github/ai-personas.yml ]]; then
+            echo "📚 Loading AI personas configuration"
+            cat .github/ai-personas.yml
+          else
+            echo "⚠️ AI personas configuration not found, using defaults"
+          fi
+
+      - name: Analyze validation results with AI
+        id: ai-analysis
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🤖 Starting AI analysis of validation results"
+
+          # Get PR diff for context
+          PR_DIFF=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files \
+            --jq '.[] | "File: \(.filename)\nStatus: \(.status)\nChanges: +\(.additions) -\(.deletions)\n---"' | head -c 8000)
+
+          # Collect all validation results
+          COMBINED_RESULTS="# Validation Results Summary\n\n"
+          OVERALL_STATUS="success"
+
+          for result_file in /tmp/validation-results/*.md; do
+            if [[ -f "$result_file" ]]; then
+              layer_path=$(basename "$result_file" .md)
+              status=$(cat "/tmp/validation-results/${layer_path}.status" 2>/dev/null || echo "unknown")
+
+              if [[ "$status" == "failed" ]]; then
+                OVERALL_STATUS="failed"
+              fi
+
+              COMBINED_RESULTS="${COMBINED_RESULTS}## Layer: $layer_path (Status: $status)\n"
+              COMBINED_RESULTS="${COMBINED_RESULTS}$(cat "$result_file")\n"
+            fi
+          done
+
+          # Prepare AI prompt (simple format to avoid YAML issues)
+          AI_PROMPT_BASE="You are an expert DevOps engineer analyzing Terraform infrastructure changes in a Binbash Leverage Reference Architecture project. Context: Repository ${{ github.repository }}, PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}. Architecture: Multi-account AWS with layer-based structure. Please provide: 1. Executive Summary, 2. Key Findings, 3. Potential Issues, 4. Recommendations, 5. Cross-Layer Impact Analysis, 6. Risk Assessment. Focus on infrastructure best practices, security implications, and cross-layer dependencies."
+
+          # Combine prompt with data (truncate if too long)
+          FULL_PROMPT="${AI_PROMPT_BASE} PR Changes: $(echo "$PR_DIFF" | head -c 3000) Validation Results: $(echo "$COMBINED_RESULTS" | head -c 3000)"
+
+          # Call GitHub Models API
+          echo "🧠 Calling GitHub Models API for analysis..."
+
+          # Create JSON payload and call API
+          JSON_PAYLOAD=$(jq -n --arg model "openai/gpt-4o" --arg content "$FULL_PROMPT" '{"model": $model, "messages": [{"role": "user", "content": $content}], "temperature": 0.3, "max_tokens": 2000}')
+
+          # Make API call with error handling
+          echo "Calling GitHub Models API..."
+          API_RESPONSE=$(curl -s -w "HTTP_CODE:%{http_code}" -X POST -H "Authorization: Bearer $GITHUB_TOKEN" -H "Content-Type: application/json" -d "$JSON_PAYLOAD" "https://models.github.ai/inference/chat/completions")
+
+          # Extract HTTP code and response body
+          HTTP_CODE=$(echo "$API_RESPONSE" | grep -o 'HTTP_CODE:[0-9]*' | cut -d: -f2)
+          RESPONSE_BODY=$(echo "$API_RESPONSE" | sed 's/HTTP_CODE:[0-9]*$//')
+
+          # Process API response
+          if [[ "$HTTP_CODE" == "200" ]]; then
+            AI_CONTENT=$(echo "$RESPONSE_BODY" | jq -r '.choices[0].message.content // "AI analysis parsing failed"')
+            echo "✅ AI analysis successful"
+          else
+            AI_CONTENT="AI analysis temporarily unavailable (HTTP $HTTP_CODE). Validation results are still available above."
+            echo "⚠️ AI analysis failed with HTTP code $HTTP_CODE"
+          fi
+
+          # Save AI response
+          mkdir -p /tmp/ai-analysis
+          echo "$AI_CONTENT" > /tmp/ai-analysis/response.md
+          echo "$OVERALL_STATUS" > /tmp/ai-analysis/status.txt
+
+          echo "overall-status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
+
+      - name: Upload AI analysis
+        uses: actions/upload-artifact@v3
+        with:
+          name: ai-analysis
+          path: /tmp/ai-analysis/
+          retention-days: 1
+
+  # Job 4: Post results as PR comments
+  post-results:
+    name: Post AI Analysis Results
+    needs: [detect-layers, validate-layers, ai-analysis]
+    if: always() && needs.detect-layers.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download AI analysis
+        uses: actions/download-artifact@v3
+        with:
+          name: ai-analysis
+          path: /tmp/ai-analysis/
+
+      - name: Post AI analysis as PR comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "💬 Posting AI analysis to PR #${{ github.event.pull_request.number }}"
+
+          # Load AI response
+          if [[ -f /tmp/ai-analysis/response.md ]]; then
+            AI_RESPONSE=$(cat /tmp/ai-analysis/response.md)
+            OVERALL_STATUS=$(cat /tmp/ai-analysis/status.txt)
+          else
+            AI_RESPONSE="AI analysis was not available for this validation run."
+            OVERALL_STATUS="unknown"
+          fi
+
+          # Determine status emoji
+          case "$OVERALL_STATUS" in
+            "success") STATUS_EMOJI="✅" ;;
+            "failed") STATUS_EMOJI="❌" ;;
+            *) STATUS_EMOJI="⚠️" ;;
+          esac
+
+          # Create PR comment
+          PR_COMMENT="## ${STATUS_EMOJI} AI-Powered Infrastructure Validation
+
+> 🤖 **AI Analysis powered by GitHub Models API**
+>
+> This analysis was generated automatically for PR #${{ github.event.pull_request.number }}
+>
+> **Overall Status:** \`$OVERALL_STATUS\`
+
+$AI_RESPONSE
+
+---
+### 🎯 Interactive Commands
+Reply with these commands for additional analysis:
+- \`@aibot explain security risks\` - Deep dive into security implications
+- \`@aibot cost analysis\` - Estimate cost impact of changes
+- \`@aibot blast radius\` - Analyze cross-layer dependencies
+- \`@aibot best practices\` - Review against AWS Well-Architected Framework
+
+*Powered by Binbash Leverage + GitHub Models API*"
+
+          # Post comment
+          gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
+            --method POST \
+            --field body="$PR_COMMENT"
+
+          echo "✅ AI analysis posted successfully"
+
+  # Job 5: Handle @aibot interactive commands (triggered by issue comments)
+  handle-aibot:
+    name: Handle @aibot Commands
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issue_comment' && contains(github.event.comment.body, '@aibot')
+    steps:
+      - name: Process @aibot command
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          echo "🤖 Processing @aibot command: $COMMENT_BODY"
+
+          # Extract command after @aibot
+          COMMAND=$(echo "$COMMENT_BODY" | sed -n 's/.*@aibot \([^[:space:]]*\).*/\1/p')
+
+          case "$COMMAND" in
+            "explain"|"security"|"cost"|"blast"|"best")
+              # Create prompt based on command
+              case "$COMMAND" in
+                "explain"|"security")
+                  BOT_PROMPT="You are a security expert. Analyze the infrastructure changes in this PR and explain potential security risks, vulnerabilities, and recommended mitigations. Focus on AWS security best practices."
+                  ;;
+                "cost")
+                  BOT_PROMPT="You are a cost optimization expert. Analyze the infrastructure changes and estimate cost impact, potential savings opportunities, and cost-effective alternatives."
+                  ;;
+                "blast")
+                  BOT_PROMPT="You are an infrastructure expert. Analyze cross-layer dependencies and predict the blast radius of these changes on other infrastructure components."
+                  ;;
+                "best")
+                  BOT_PROMPT="You are an AWS Well-Architected Framework expert. Review these changes against the 5 pillars: Security, Reliability, Performance, Cost Optimization, and Operational Excellence."
+                  ;;
+              esac
+
+              # Create JSON payload for API call
+              JSON_PAYLOAD=$(jq -n \
+                --arg model "openai/gpt-4o" \
+                --arg content "$BOT_PROMPT" \
+                '{
+                  "model": $model,
+                  "messages": [
+                    {
+                      "role": "user",
+                      "content": $content
+                    }
+                  ],
+                  "temperature": 0.3,
+                  "max_tokens": 1500
+                }')
+
+              # Call GitHub Models API
+              AI_RESPONSE=$(curl -s -X POST \
+                -H "Authorization: Bearer $GITHUB_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "$JSON_PAYLOAD" \
+                "https://models.github.ai/inference/chat/completions" | \
+                jq -r '.choices[0].message.content // "Analysis unavailable"')
+
+              # Reply to comment
+              gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
+                --method POST \
+                --field body="🤖 **@aibot response for \`$COMMAND\`:**
+
+$AI_RESPONSE"
+              ;;
+            *)
+              gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
+                --method POST \
+                --field body="🤖 Available @aibot commands:
+- \`@aibot explain security risks\`
+- \`@aibot cost analysis\`
+- \`@aibot blast radius\`
+- \`@aibot best practices\`"
+              ;;
+          esac
