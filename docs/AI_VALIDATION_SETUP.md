@@ -128,45 +128,80 @@ Add the following secrets to your repository (`Settings` > `Secrets and variable
 
 | Secret Name | Description | Required |
 |-------------|-------------|----------|
-| `AWS_VALIDATION_ROLE_ARN` | IAM role ARN for AWS validation access | ✅ |
+| `AWS_ACCESS_KEY_ID` | AWS Access Key for infrastructure validation | ✅ |
+| `AWS_SECRET_ACCESS_KEY` | AWS Secret Key for infrastructure validation | ✅ |
+| `AWS_DEVSTG_ACCOUNT_ID` | Account ID for apps-devstg layers | ✅ |
+| `AWS_SHARED_ACCOUNT_ID` | Account ID for shared layers | ✅ |
+| `AWS_SECURITY_ACCOUNT_ID` | Account ID for security layers | ✅ |
+| `AWS_NETWORK_ACCOUNT_ID` | Account ID for network layers | ✅ |
+| `AWS_PRD_ACCOUNT_ID` | Account ID for apps-prd layers | ✅ |
+| `AWS_DATA_SCIENCE_ACCOUNT_ID` | Account ID for data-science layers | ✅ |
+| `AWS_ROOT_ACCOUNT_ID` | Account ID for management layers | ✅ |
 | `GITHUB_TOKEN` | Automatically provided by GitHub | ✅ |
 
-### 3. Repository Variables
+### 3. Account-Specific Authentication
 
-Configure the following repository variables (`Settings` > `Secrets and variables` > `Actions` > `Variables`):
+The workflow automatically selects the appropriate AWS account credentials based on the layer path:
 
-| Variable Name | Description | Example |
-|---------------|-------------|---------|
-| `AWS_VALIDATION_ROLE_ARN` | IAM role for validation operations | `arn:aws:iam::123456789012:role/GitHubActionsValidation` |
+| Layer Path Pattern | Uses Account | Example |
+|-------------------|--------------|---------|
+| `apps-devstg/**` | `AWS_DEVSTG_ACCOUNT_ID` | `apps-devstg/us-east-1/secrets-manager/` |
+| `shared/**` | `AWS_SHARED_ACCOUNT_ID` | `shared/us-east-1/k8s-eks/` |
+| `security/**` | `AWS_SECURITY_ACCOUNT_ID` | `security/us-east-1/security-hub/` |
+| `network/**` | `AWS_NETWORK_ACCOUNT_ID` | `network/us-east-1/base-network/` |
+| `apps-prd/**` | `AWS_PRD_ACCOUNT_ID` | `apps-prd/us-east-1/databases-aurora/` |
+| `data-science/**` | `AWS_DATA_SCIENCE_ACCOUNT_ID` | `data-science/us-east-1/ml-bedrock/` |
+| `management/**` | `AWS_ROOT_ACCOUNT_ID` | `management/global/base-identities/` |
 
-### 4. AWS IAM Role Setup
+### 4. AWS Credentials Setup
 
-Create an IAM role for GitHub Actions with the following trust policy:
+Configure AWS access credentials for infrastructure validation:
 
+#### Security Considerations
+- **Principle of Least Privilege**: Ensure AWS credentials have minimal required permissions
+- **Credential Rotation**: Regularly rotate AWS access keys for security
+- **Account Separation**: Each account ID maps to its respective AWS account for proper isolation
+- **Audit Trail**: Monitor credential usage through AWS CloudTrail
+
+#### Required AWS Permissions
+The AWS credentials should have the following permissions in each respective account:
+- **ReadOnlyAccess**: For reading infrastructure state and configuration
+- **Terraform Backend Access**: Read/write access to S3 backend and DynamoDB lock table
+- **Service-Specific Permissions**: Read access to validate specific AWS services being deployed
+
+#### Example IAM Policy
 ```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::ACCOUNT-ID:oidc-provider/token.actions.githubusercontent.com"
-      },
-      "Action": "sts:AssumeRole",
-      "Condition": {
-        "StringEquals": {
-          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": "repo:YOUR-ORG/le-tf-infra-aws:ref:refs/heads/master"
-        }
-      }
+      "Action": [
+        "s3:GetObject",
+        "s3:ListBucket",
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:DeleteItem"
+      ],
+      "Resource": [
+        "arn:aws:s3:::terraform-backend-bucket/*",
+        "arn:aws:dynamodb:*:*:table/terraform-state-lock"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:Get*",
+        "iam:List*",
+        "ec2:Describe*",
+        "s3:List*",
+        "rds:Describe*"
+      ],
+      "Resource": "*"
     }
   ]
 }
 ```
-
-Attach the following managed policies:
-- `ReadOnlyAccess` (for validation operations)
-- `AWSCloudFormationReadOnlyAccess` (for stack validation)
 
 ### 5. GitHub Models API Access
 
@@ -182,13 +217,40 @@ The system uses GitHub Models API (free for OSS projects):
 
 **Note**: GitHub token permissions (`models: read`, `contents: read`, `pull-requests: write`, `issues: write`) should be verified by your GitHub administrator.
 
-### 6. Enable Workflow
+### 6. Step-by-Step Setup Guide
 
-The workflow files should be automatically detected once merged to your main branch. To enable:
+#### Step 1: Add GitHub Secrets
+1. Navigate to your repository: `Settings` > `Secrets and variables` > `Actions`
+2. Add each required secret from the table above:
+   - Click `New repository secret`
+   - Enter the secret name exactly as shown (case-sensitive)
+   - Enter the corresponding value (AWS credentials and account IDs)
+   - Click `Add secret`
 
+#### Step 2: Verify Account Mapping
+Ensure your layer directory structure matches the account mapping:
+```
+apps-devstg/us-east-1/secrets-manager/     → Uses AWS_DEVSTG_ACCOUNT_ID
+shared/us-east-1/k8s-eks/                  → Uses AWS_SHARED_ACCOUNT_ID
+security/us-east-1/security-hub/           → Uses AWS_SECURITY_ACCOUNT_ID
+```
+
+#### Step 3: Test Credentials
+Before enabling the workflow, test your credentials:
+```bash
+# Set environment variables
+export AWS_ACCESS_KEY_ID="your-access-key"
+export AWS_SECRET_ACCESS_KEY="your-secret-key"
+
+# Test connectivity
+aws sts get-caller-identity
+```
+
+#### Step 4: Enable Workflow
 1. Commit all configuration files to your repository
-2. Create a test PR modifying a Terraform file
+2. Create a test PR modifying a Terraform file in the test scope
 3. Verify the workflow triggers and runs successfully
+4. Check the workflow logs for any authentication issues
 
 ## 🎛️ Configuration Options
 
@@ -296,10 +358,13 @@ Changes may affect: `databases-aurora`, `databases-pgsql` layers
 **Symptoms**: `Error: could not retrieve credentials` or `Access Denied`
 
 **Solutions**:
-- Verify `AWS_VALIDATION_ROLE_ARN` secret is correctly set
-- Check IAM role trust policy includes correct repository path
-- Ensure role has required permissions (`ReadOnlyAccess`)
-- Verify OIDC provider is configured in AWS account
+- Verify `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` secrets are correctly set
+- Check that all required account ID secrets are configured (e.g., `AWS_DEVSTG_ACCOUNT_ID`)
+- Ensure AWS credentials have required permissions in each account
+- Verify credential mapping matches your layer directory structure
+- Test credentials manually using AWS CLI: `aws sts get-caller-identity`
+- Check for expired or rotated access keys
+- Ensure credentials have access to Terraform backend (S3 + DynamoDB)
 
 #### 3. Leverage CLI Installation Issues
 
@@ -366,10 +431,13 @@ gh api repos/YOUR-ORG/le-tf-infra-aws/pulls/123/files --jq '.[] | .filename'
 cd apps-devstg/us-east-1/secrets-manager
 leverage tf validate
 
+# Test AWS credentials
+aws sts get-caller-identity
+
 # Test AI API call
 curl -X POST -H "Authorization: Bearer $GITHUB_TOKEN" \
-  "https://models.inference.ai.azure.com/chat/completions" \
-  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"Test"}]}'
+  "https://models.github.ai/inference/chat/completions" \
+  -d '{"model":"openai/gpt-4o","messages":[{"role":"user","content":"Test"}]}'
 ```
 
 ## 🎨 Customization
