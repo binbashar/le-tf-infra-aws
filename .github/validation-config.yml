@@ -6,7 +6,6 @@ validation:
   settings:
     timeout_seconds: 600  # Maximum time for validation commands
     max_plan_size_kb: 1024  # Maximum size of terraform plan output for AI analysis
-    enable_cost_analysis: true  # Enable infracost integration
     enable_security_scan: true  # Enable security scanning
     parallel_validations: true  # Run layer validations in parallel
 
@@ -247,7 +246,6 @@ ai_analysis:
   # Feature toggles
   features:
     enable_blast_radius: true  # Analyze cross-layer dependencies
-    enable_cost_analysis: true  # Include cost impact analysis
     enable_security_focus: true  # Enhanced security analysis
     enable_compliance_check: true  # Check against compliance standards
     enable_interactive_bot: true  # Enable @aibot commands
@@ -318,13 +316,6 @@ security:
 
 # Integration settings
 integrations:
-  # Infracost integration for cost analysis
-  infracost:
-    enabled: true
-    api_key_secret: "INFRACOST_API_KEY"  # GitHub secret name
-    currency: "USD"
-    include_usage: false  # Include usage-based cost estimates
-
   # Checkov security scanner integration
   checkov:
     enabled: true
@@ -344,9 +335,6 @@ environments:
   development:
     validation:
       timeout_seconds: 300  # Shorter timeout for dev
-    ai_analysis:
-      features:
-        enable_cost_analysis: false  # Skip cost analysis in dev
 
   staging:
     validation:
@@ -362,7 +350,6 @@ environments:
     ai_analysis:
       features:
         enable_blast_radius: true
-        enable_cost_analysis: true
         enable_security_focus: true
         enable_compliance_check: true
     notifications:

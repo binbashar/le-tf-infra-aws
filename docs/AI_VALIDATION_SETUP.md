@@ -6,6 +6,8 @@ This guide explains how to set up and configure the AI-powered infrastructure va
 
 The AI validation system provides intelligent analysis of Terraform infrastructure changes using GitHub Models API, specialized AI personas, and the Leverage CLI. It automatically detects which layers are modified in pull requests and runs targeted validations with expert-level feedback.
 
+**🧪 Testing Phase**: Currently configured to trigger only on `apps-devstg/us-east-1/k8s-eks-demoapps/secrets/**` for safe validation before full deployment.
+
 ## 📊 System Architecture
 
 ```mermaid
@@ -128,7 +130,6 @@ Add the following secrets to your repository (`Settings` > `Secrets and variable
 |-------------|-------------|----------|
 | `AWS_VALIDATION_ROLE_ARN` | IAM role ARN for AWS validation access | ✅ |
 | `GITHUB_TOKEN` | Automatically provided by GitHub | ✅ |
-| `INFRACOST_API_KEY` | Infracost API key for cost analysis | ⚠️ Optional |
 
 ### 3. Repository Variables
 
@@ -179,6 +180,8 @@ The system uses GitHub Models API (free for OSS projects):
 6. **Rate Limits**: 15-20 requests/minute depending on model tier
 7. **No API Keys**: No additional setup or API keys required
 
+**Note**: GitHub token permissions (`models: read`, `contents: read`, `pull-requests: write`, `issues: write`) should be verified by your GitHub administrator.
+
 ### 6. Enable Workflow
 
 The workflow files should be automatically detected once merged to your main branch. To enable:
@@ -193,10 +196,17 @@ The workflow files should be automatically detected once merged to your main bra
 
 The system automatically detects layers using the pattern `{account}/{region}/{layer}`:
 
+**Current Testing Scope** (configured for initial testing):
+- ✅ `apps-devstg/us-east-1/k8s-eks-demoapps/secrets` → Test layer (triggers workflow)
+- ❌ Other layers → Not monitored during testing phase
+
+**Full Implementation Example**:
 - ✅ `apps-devstg/us-east-1/secrets-manager` → Valid layer
 - ✅ `network/us-east-1/base-network` → Valid layer
 - ❌ `README.md` → Not a layer
 - ❌ `scripts/deploy.sh` → Not a layer
+
+**Note**: The workflow is currently configured to trigger only on changes to `apps-devstg/us-east-1/k8s-eks-demoapps/secrets/**` for safe testing.
 
 ### Validation Commands per Layer Type
 
@@ -224,9 +234,11 @@ Each layer type has specific validation commands defined in `.github/validation-
 
 The system automatically triggers on:
 
-- **Pull Request Creation**: New PRs with infrastructure changes
+- **Pull Request Creation**: New PRs with infrastructure changes in test scope
 - **Pull Request Updates**: New commits pushed to existing PRs
-- **File Patterns**: Changes to `.tf`, `.tfvars`, or `.hcl` files
+- **File Patterns**: Changes to `.tf`, `.tfvars`, or `.hcl` files in `apps-devstg/us-east-1/k8s-eks-demoapps/secrets/**`
+
+**Testing Phase**: Currently limited to `apps-devstg/us-east-1/k8s-eks-demoapps/secrets/` directory for safe validation before full rollout.
 
 ### Interactive Commands
 
@@ -235,7 +247,6 @@ Use these commands in PR comments for additional analysis:
 | Command | Description | Example |
 |---------|-------------|---------|
 | `@aibot explain security risks` | Deep security analysis | Detailed security vulnerability assessment |
-| `@aibot cost analysis` | Cost impact analysis | Monthly cost changes and optimization suggestions |
 | `@aibot blast radius` | Cross-layer dependency analysis | Impact prediction on other layers |
 | `@aibot best practices` | AWS Well-Architected review | Compliance with AWS best practices |
 
@@ -474,13 +485,29 @@ For issues and questions:
 3. **GitHub Discussions**: Ask questions and share feedback
 4. **Documentation**: Refer to Binbash Leverage documentation
 
+## 🧪 Testing Phase Configuration
+
+**Current Status**: The workflow is configured for safe testing with limited scope.
+
+### Testing Configuration
+- **Scope**: Only `apps-devstg/us-east-1/k8s-eks-demoapps/secrets/**` directory
+- **Python Version**: 3.13 (latest)
+- **Leverage CLI**: Latest version with `--upgrade` flag
+- **Purpose**: Validate functionality before full rollout
+
+### Expanding After Testing
+1. **Verify workflow operation** in test scope
+2. **Confirm GitHub token permissions** with administrator
+3. **Update trigger paths** to include additional layers
+4. **Monitor performance** and adjust configuration as needed
+
 ## 🔄 Updates and Maintenance
 
 ### Keeping the System Updated
 
 1. **Monitor GitHub Models API**: Stay updated on API changes
 2. **Update AI Personas**: Regularly review and improve prompts
-3. **Validate Dependencies**: Keep Leverage CLI and tools updated
+3. **Validate Dependencies**: Leverage CLI auto-updates to latest version
 4. **Review Security**: Regularly audit permissions and access
 
 ### Version Tracking

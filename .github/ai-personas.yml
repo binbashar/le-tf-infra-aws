@@ -398,9 +398,6 @@ global_settings:
 
   # Cross-cutting concerns (applied to all personas)
   universal_checks:
-    - name: "Cost Analysis"
-      description: "Analyze potential cost impact of changes"
-      enabled: true
     - name: "Tagging Compliance"
       description: "Ensure proper resource tagging"
       required_tags: ["Environment", "Project", "Owner", "CostCenter"]

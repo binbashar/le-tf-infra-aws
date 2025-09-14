@@ -4,9 +4,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - '**/*.tf'
-      - '**/*.tfvars'
-      - '**/*.hcl'
+      - 'apps-devstg/us-east-1/k8s-eks-demoapps/secrets/**/*.tf'
+      - 'apps-devstg/us-east-1/k8s-eks-demoapps/secrets/**/*.tfvars'
+      - 'apps-devstg/us-east-1/k8s-eks-demoapps/secrets/**/*.hcl'
   issue_comment:
     types: [created]
 
@@ -91,13 +91,13 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.13'
           cache: 'pip'
 
       - name: Install Leverage CLI
         run: |
-          echo "📦 Installing Leverage CLI"
-          pip install leverage
+          echo "📦 Installing latest Leverage CLI"
+          pip install --upgrade leverage
           leverage --version
 
       - name: Configure AWS credentials
@@ -340,7 +340,6 @@ $AI_RESPONSE
 ### 🎯 Interactive Commands
 Reply with these commands for additional analysis:
 - \`@aibot explain security risks\` - Deep dive into security implications
-- \`@aibot cost analysis\` - Estimate cost impact of changes
 - \`@aibot blast radius\` - Analyze cross-layer dependencies
 - \`@aibot best practices\` - Review against AWS Well-Architected Framework
 
@@ -370,7 +369,7 @@ Reply with these commands for additional analysis:
           COMMAND=$(echo "$COMMENT_BODY" | sed -n 's/.*@aibot \([^[:space:]]*\).*/\1/p')
 
           case "$COMMAND" in
-            "explain"|"security"|"cost"|"blast"|"best")
+            "explain"|"security"|"blast"|"best")
               # Create prompt based on command
               case "$COMMAND" in
                 "explain"|"security")
@@ -423,7 +422,6 @@ $AI_RESPONSE"
                 --method POST \
                 --field body="🤖 Available @aibot commands:
 - \`@aibot explain security risks\`
-- \`@aibot cost analysis\`
 - \`@aibot blast radius\`
 - \`@aibot best practices\`"
               ;;
