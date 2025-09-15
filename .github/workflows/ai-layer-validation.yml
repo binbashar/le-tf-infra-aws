@@ -350,9 +350,9 @@ jobs:
             DOCKER_IMAGE_TAG="1.6.6-latest"  # Default for legacy
             echo "🐳 Using legacy Terraform Docker image: $DOCKER_IMAGE_TAG"
           else
-            # Modern layers - use actual available OpenTofu images
-            DOCKER_IMAGE_CANDIDATES=("1.6.0-0.2.0" "1.6.0-0.1.14" "1.5.7-0.1.14" "1.6.6-latest")
-            DOCKER_IMAGE_TAG="1.6.0-0.2.0"  # Latest available OpenTofu version
+            # Modern layers - use verified OpenTofu images (fallback to original build.env image)
+            DOCKER_IMAGE_CANDIDATES=("1.9.1-tofu-0.3.0" "1.6.6-latest" "1.5.7-latest")
+            DOCKER_IMAGE_TAG="1.9.1-tofu-0.3.0"  # Original build.env OpenTofu version
             echo "🚀 Using modern OpenTofu Docker image: $DOCKER_IMAGE_TAG"
           fi
 
