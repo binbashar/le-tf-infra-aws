@@ -235,7 +235,7 @@ jobs:
           echo "status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
 
       - name: Upload validation results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: validation-results
           path: /tmp/validation-results/
@@ -252,7 +252,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download validation results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: validation-results
           path: /tmp/validation-results/
@@ -334,7 +334,7 @@ jobs:
           echo "overall-status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
 
       - name: Upload AI analysis
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ai-analysis
           path: /tmp/ai-analysis/
@@ -348,7 +348,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download AI analysis
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ai-analysis
           path: /tmp/ai-analysis/
