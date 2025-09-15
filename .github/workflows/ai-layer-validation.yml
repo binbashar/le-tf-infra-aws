@@ -483,10 +483,15 @@ jobs:
 
           echo "status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
 
+          # Create layer slug for unique artifact naming
+          LAYER_SLUG="${{ matrix.layer }}"
+          LAYER_SLUG="${LAYER_SLUG//\//-}"  # Replace slashes with dashes
+          echo "layer-slug=$LAYER_SLUG" >> $GITHUB_OUTPUT
+
       - name: Upload validation results
         uses: actions/upload-artifact@v4
         with:
-          name: validation-results
+          name: validation-results-${{ steps.run-validations.outputs.layer-slug }}
           path: /tmp/validation-results/
           retention-days: 1
 
@@ -593,10 +598,15 @@ jobs:
 
           echo "overall-status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
 
+          # Create layer slug for unique artifact naming
+          LAYER_SLUG="${{ matrix.layer }}"
+          LAYER_SLUG="${LAYER_SLUG//\//-}"  # Replace slashes with dashes
+          echo "layer-slug=$LAYER_SLUG" >> $GITHUB_OUTPUT
+
       - name: Upload AI analysis
         uses: actions/upload-artifact@v4
         with:
-          name: ai-analysis
+          name: ai-analysis-${{ steps.ai-analysis.outputs.layer-slug }}
           path: /tmp/ai-analysis/
           retention-days: 1
 
