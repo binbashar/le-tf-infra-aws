@@ -284,16 +284,21 @@ EOF
             echo "✅ Found existing build.env file"
           fi
 
-          # Determine appropriate Docker image based on binary selection
+          # Determine appropriate Docker image based on binary selection with fallbacks
           if [[ "${{ steps.tf-compat.outputs.tf-command }}" == "terraform" ]]; then
-            # Legacy layers - use pure Terraform image
-            DOCKER_IMAGE_TAG="1.9.1-latest"
+            # Legacy layers - use pure Terraform image with fallbacks
+            DOCKER_IMAGE_CANDIDATES=("1.6.6-latest" "1.5.7-latest" "1.3.5-latest")
+            DOCKER_IMAGE_TAG="1.6.6-latest"  # Default for legacy
             echo "🐳 Using legacy Terraform Docker image: $DOCKER_IMAGE_TAG"
           else
-            # Modern layers - use OpenTofu image
-            DOCKER_IMAGE_TAG="1.9.1-tofu-0.3.0"
+            # Modern layers - use OpenTofu image with fallbacks
+            DOCKER_IMAGE_CANDIDATES=("1.6.3-tofu-0.3.0" "1.6.2-tofu-0.3.0" "1.6.6-latest")
+            DOCKER_IMAGE_TAG="1.6.3-tofu-0.3.0"  # Default for modern (more stable than 1.9.1)
             echo "🚀 Using modern OpenTofu Docker image: $DOCKER_IMAGE_TAG"
           fi
+
+          # Export fallback candidates for the pre-pull step
+          echo "DOCKER_IMAGE_CANDIDATES=${DOCKER_IMAGE_CANDIDATES[*]}" >> $GITHUB_ENV
 
           # Update TERRAFORM_IMAGE_TAG in build.env
           sed -i "s/TERRAFORM_IMAGE_TAG=.*/TERRAFORM_IMAGE_TAG=$DOCKER_IMAGE_TAG/" build.env
@@ -312,20 +317,39 @@ EOF
           echo "🐳 Pre-pulling Leverage toolbox Docker image..."
           echo "Image: binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG"
 
-          # Pre-pull with retry logic for reliability
-          for i in {1..3}; do
-            if docker pull "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG"; then
-              echo "✅ Successfully pulled Docker image on attempt $i"
-              break
-            else
-              echo "⚠️ Failed to pull Docker image on attempt $i"
-              if [[ $i -eq 3 ]]; then
-                echo "❌ Failed to pull Docker image after 3 attempts"
-                exit 1
+          # Try primary image first, then fallbacks
+          SUCCESSFUL_IMAGE=""
+
+          # Convert space-separated string back to array
+          IFS=' ' read -ra CANDIDATES <<< "$DOCKER_IMAGE_CANDIDATES"
+
+          echo "🔄 Available fallback images: ${CANDIDATES[*]}"
+
+          for candidate in "${CANDIDATES[@]}"; do
+            echo "📋 Trying Docker image: binbash/leverage-toolbox:$candidate"
+
+            # Try pulling with 2 attempts per candidate
+            for attempt in {1..2}; do
+              if docker pull "binbash/leverage-toolbox:$candidate"; then
+                echo "✅ Successfully pulled: binbash/leverage-toolbox:$candidate (attempt $attempt)"
+                SUCCESSFUL_IMAGE="$candidate"
+                break 2  # Break out of both loops
+              else
+                echo "⚠️ Failed to pull $candidate on attempt $attempt"
+                sleep 3
               fi
-              sleep 5
-            fi
+            done
           done
+
+          if [[ -z "$SUCCESSFUL_IMAGE" ]]; then
+            echo "❌ Failed to pull any Docker images from candidates: ${CANDIDATES[*]}"
+            echo "🚨 This may be a Docker Hub connectivity issue"
+            exit 1
+          fi
+
+          # Update TERRAFORM_IMAGE_TAG to the successful image
+          echo "TERRAFORM_IMAGE_TAG=$SUCCESSFUL_IMAGE" >> $GITHUB_ENV
+          echo "✅ Using Docker image: binbash/leverage-toolbox:$SUCCESSFUL_IMAGE"
 
           # Verify image exists locally
           if docker images "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" --format "table {{.Repository}}:{{.Tag}}" | grep -q "$TERRAFORM_IMAGE_TAG"; then
