@@ -270,16 +270,14 @@ jobs:
           # Ensure build.env exists with proper configuration
           if [[ ! -f "build.env" ]]; then
             echo "📝 Creating build.env file..."
-            cat > build.env << 'EOF'
-# Project settings
-PROJECT=bb
-
-# General
-MFA_ENABLED=false
-
-# Terraform
-TERRAFORM_IMAGE_TAG=1.9.1-tofu-0.3.0
-EOF
+            echo "# Project settings" > build.env
+            echo "PROJECT=bb" >> build.env
+            echo "" >> build.env
+            echo "# General" >> build.env
+            echo "MFA_ENABLED=false" >> build.env
+            echo "" >> build.env
+            echo "# Terraform" >> build.env
+            echo "TERRAFORM_IMAGE_TAG=1.9.1-tofu-0.3.0" >> build.env
           else
             echo "✅ Found existing build.env file"
           fi
