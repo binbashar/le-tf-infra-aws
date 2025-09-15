@@ -491,7 +491,7 @@ jobs:
       - name: Upload validation results
         uses: actions/upload-artifact@v4
         with:
-          name: validation-results-${{ steps.run-validations.outputs.layer-slug }}
+          name: validation-results-${{ steps.validation.outputs.layer-slug }}
           path: /tmp/validation-results/
           retention-days: 1
 
