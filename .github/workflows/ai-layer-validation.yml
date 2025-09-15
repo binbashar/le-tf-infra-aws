@@ -200,6 +200,63 @@ jobs:
 
           echo "🏗️ Validating layer: $LAYER_PATH (type: $LAYER_TYPE)"
 
+      - name: Detect Terraform compatibility
+        id: tf-compat
+        working-directory: ${{ matrix.layer }}
+        run: |
+          echo "🔍 Detecting Terraform/OpenTofu compatibility..."
+
+          # Default to OpenTofu for modern layers
+          TF_COMMAND="tf"
+          TF_BINARY="OpenTofu"
+
+          # Check if config.tf exists and analyze version constraints
+          if [[ -f "config.tf" ]]; then
+            echo "📄 Found config.tf, analyzing version constraints..."
+
+            # Check Terraform required version
+            if grep -q "required_version.*~>.*1\.[0-5]" config.tf; then
+              TF_COMMAND="terraform"
+              TF_BINARY="Terraform (legacy)"
+              echo "🔧 Detected legacy Terraform version constraint"
+            elif grep -q "required_version.*~>.*1\.[0-3]" config.tf; then
+              TF_COMMAND="terraform"
+              TF_BINARY="Terraform (legacy)"
+              echo "🔧 Detected very old Terraform version constraint"
+            fi
+
+            # Check AWS provider version (additional indicator)
+            if grep -q "aws.*~>.*[0-4]\\.[0-9]" config.tf; then
+              TF_COMMAND="terraform"
+              TF_BINARY="Terraform (legacy)"
+              echo "🔧 Detected legacy AWS provider version"
+            fi
+          elif [[ -f "versions.tf" ]]; then
+            echo "📄 Found versions.tf, analyzing version constraints..."
+
+            # Check versions.tf for same patterns
+            if grep -q "required_version.*~>.*1\.[0-5]" versions.tf; then
+              TF_COMMAND="terraform"
+              TF_BINARY="Terraform (legacy)"
+              echo "🔧 Detected legacy Terraform version in versions.tf"
+            fi
+
+            if grep -q "aws.*~>.*[0-4]\\.[0-9]" versions.tf; then
+              TF_COMMAND="terraform"
+              TF_BINARY="Terraform (legacy)"
+              echo "🔧 Detected legacy AWS provider in versions.tf"
+            fi
+          else
+            echo "⚠️ No config.tf or versions.tf found, using default: $TF_BINARY"
+          fi
+
+          # Set environment variable for subsequent steps
+          echo "TF_COMMAND=$TF_COMMAND" >> $GITHUB_ENV
+          echo "tf-command=$TF_COMMAND" >> $GITHUB_OUTPUT
+          echo "tf-binary=$TF_BINARY" >> $GITHUB_OUTPUT
+
+          echo "✅ Selected binary: $TF_BINARY (command: leverage $TF_COMMAND)"
+
       - name: Run Leverage CLI validations
         id: validation
         working-directory: ${{ matrix.layer }}
@@ -226,14 +283,15 @@ jobs:
             fi
           }
 
-          # Run validation commands
-          run_validation "leverage tf fmt -check -diff" "Terraform Format Check"
-          run_validation "leverage tf init" "Terraform Initialization"
-          run_validation "leverage tf validate" "Terraform Validation"
+          # Run validation commands using detected binary
+          echo "🔧 Using Terraform binary: ${{ steps.tf-compat.outputs.tf-binary }}"
+          run_validation "leverage $TF_COMMAND fmt -check -diff" "Terraform Format Check"
+          run_validation "leverage $TF_COMMAND init" "Terraform Initialization"
+          run_validation "leverage $TF_COMMAND validate" "Terraform Validation"
 
           # Generate execution plan (non-blocking)
-          echo "📋 Generating execution plan..."
-          if plan_output=$(timeout 600 leverage tf plan -no-color 2>&1); then
+          echo "📋 Generating execution plan with ${{ steps.tf-compat.outputs.tf-binary }}..."
+          if plan_output=$(timeout 600 leverage $TF_COMMAND plan -no-color 2>&1); then
             echo "✅ Plan generation: PASSED"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan\n✅ **GENERATED**\n\`\`\`\n${plan_output}\n\`\`\`\n\n"
           else
