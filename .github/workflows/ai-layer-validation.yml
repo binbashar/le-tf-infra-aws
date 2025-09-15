@@ -352,9 +352,9 @@ EOF
             DOCKER_IMAGE_TAG="1.6.6-latest"  # Default for legacy
             echo "🐳 Using legacy Terraform Docker image: $DOCKER_IMAGE_TAG"
           else
-            # Modern layers - use OpenTofu image with fallbacks
-            DOCKER_IMAGE_CANDIDATES=("1.6.3-tofu-0.3.0" "1.6.2-tofu-0.3.0" "1.6.6-latest")
-            DOCKER_IMAGE_TAG="1.6.3-tofu-0.3.0"  # Default for modern (more stable than 1.9.1)
+            # Modern layers - use actual available OpenTofu images
+            DOCKER_IMAGE_CANDIDATES=("1.6.0-0.2.0" "1.6.0-0.1.14" "1.5.7-0.1.14" "1.6.6-latest")
+            DOCKER_IMAGE_TAG="1.6.0-0.2.0"  # Latest available OpenTofu version
             echo "🚀 Using modern OpenTofu Docker image: $DOCKER_IMAGE_TAG"
           fi
 
@@ -453,6 +453,31 @@ EOF
           echo "🔍 Repository root: $(git rev-parse --show-toplevel)"
           echo "🔑 AWS Profile: ${{ steps.aws-profiles.outputs.aws-profile }}"
           echo "🌍 AWS Region: $AWS_DEFAULT_REGION"
+
+          # Verify container binary availability
+          echo "🔍 Container binary verification:"
+          TF_COMMAND="${{ steps.tf-compat.outputs.tf-command }}"
+          if [[ "$TF_COMMAND" == "tf" ]]; then
+            echo "Checking for OpenTofu binary in container..."
+            if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" which tofu; then
+              echo "✅ OpenTofu binary found in container"
+            elif docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" which terraform; then
+              echo "⚠️ OpenTofu not found, but Terraform available - falling back to terraform command"
+              TF_COMMAND="terraform"
+              echo "TF_COMMAND=terraform" >> $GITHUB_ENV
+            else
+              echo "❌ Neither OpenTofu nor Terraform binary found in container"
+              exit 1
+            fi
+          else
+            echo "Checking for Terraform binary in container..."
+            if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" which terraform; then
+              echo "✅ Terraform binary found in container"
+            else
+              echo "❌ Terraform binary not found in container"
+              exit 1
+            fi
+          fi
 
           # Verify AWS configuration
           echo "🔍 AWS Configuration verification:"
