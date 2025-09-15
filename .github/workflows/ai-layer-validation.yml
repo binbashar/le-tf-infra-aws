@@ -257,6 +257,84 @@ jobs:
 
           echo "✅ Selected binary: $TF_BINARY (command: leverage $TF_COMMAND)"
 
+      - name: Setup Leverage environment
+        id: leverage-setup
+        working-directory: ${{ matrix.layer }}
+        run: |
+          echo "🔧 Setting up Leverage environment..."
+
+          # Navigate to repository root to find/create build.env
+          REPO_ROOT=$(git rev-parse --show-toplevel)
+          cd "$REPO_ROOT"
+
+          # Ensure build.env exists with proper configuration
+          if [[ ! -f "build.env" ]]; then
+            echo "📝 Creating build.env file..."
+            cat > build.env << 'EOF'
+# Project settings
+PROJECT=bb
+
+# General
+MFA_ENABLED=false
+
+# Terraform
+TERRAFORM_IMAGE_TAG=1.9.1-tofu-0.3.0
+EOF
+          else
+            echo "✅ Found existing build.env file"
+          fi
+
+          # Determine appropriate Docker image based on binary selection
+          if [[ "${{ steps.tf-compat.outputs.tf-command }}" == "terraform" ]]; then
+            # Legacy layers - use pure Terraform image
+            DOCKER_IMAGE_TAG="1.9.1-latest"
+            echo "🐳 Using legacy Terraform Docker image: $DOCKER_IMAGE_TAG"
+          else
+            # Modern layers - use OpenTofu image
+            DOCKER_IMAGE_TAG="1.9.1-tofu-0.3.0"
+            echo "🚀 Using modern OpenTofu Docker image: $DOCKER_IMAGE_TAG"
+          fi
+
+          # Update TERRAFORM_IMAGE_TAG in build.env
+          sed -i "s/TERRAFORM_IMAGE_TAG=.*/TERRAFORM_IMAGE_TAG=$DOCKER_IMAGE_TAG/" build.env
+
+          # Source the environment for subsequent steps
+          source build.env
+          echo "PROJECT=$PROJECT" >> $GITHUB_ENV
+          echo "MFA_ENABLED=$MFA_ENABLED" >> $GITHUB_ENV
+          echo "TERRAFORM_IMAGE_TAG=$TERRAFORM_IMAGE_TAG" >> $GITHUB_ENV
+
+          echo "✅ Leverage environment configured with image: $TERRAFORM_IMAGE_TAG"
+
+      - name: Pre-pull Docker image
+        id: docker-pull
+        run: |
+          echo "🐳 Pre-pulling Leverage toolbox Docker image..."
+          echo "Image: binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG"
+
+          # Pre-pull with retry logic for reliability
+          for i in {1..3}; do
+            if docker pull "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG"; then
+              echo "✅ Successfully pulled Docker image on attempt $i"
+              break
+            else
+              echo "⚠️ Failed to pull Docker image on attempt $i"
+              if [[ $i -eq 3 ]]; then
+                echo "❌ Failed to pull Docker image after 3 attempts"
+                exit 1
+              fi
+              sleep 5
+            fi
+          done
+
+          # Verify image exists locally
+          if docker images "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" --format "table {{.Repository}}:{{.Tag}}" | grep -q "$TERRAFORM_IMAGE_TAG"; then
+            echo "✅ Docker image verified locally"
+          else
+            echo "❌ Docker image not found locally after pull"
+            exit 1
+          fi
+
       - name: Run Leverage CLI validations
         id: validation
         working-directory: ${{ matrix.layer }}
@@ -283,8 +361,11 @@ jobs:
             fi
           }
 
-          # Run validation commands using detected binary
+          # Run validation commands using detected binary and configured environment
           echo "🔧 Using Terraform binary: ${{ steps.tf-compat.outputs.tf-binary }}"
+          echo "🐳 Using Docker image: binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG"
+          echo "📁 Working directory: $(pwd)"
+          echo "🔍 Repository root: $(git rev-parse --show-toplevel)"
           run_validation "leverage $TF_COMMAND fmt -check -diff" "Terraform Format Check"
           run_validation "leverage $TF_COMMAND init" "Terraform Initialization"
           run_validation "leverage $TF_COMMAND validate" "Terraform Validation"
