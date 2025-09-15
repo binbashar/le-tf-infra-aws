@@ -204,19 +204,17 @@ jobs:
           esac
 
           # Create AWS credentials file
-          cat > ~/.aws/credentials << EOF
-[$PROFILE_NAME]
-aws_access_key_id = $AWS_ACCESS_KEY_ID
-aws_secret_access_key = $AWS_SECRET_ACCESS_KEY
-region = ${{ env.AWS_REGION }}
-EOF
+          echo "Creating AWS credentials file..."
+          echo "[$PROFILE_NAME]" > ~/.aws/credentials
+          echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
+          echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+          echo "region = ${{ env.AWS_REGION }}" >> ~/.aws/credentials
 
           # Create AWS config file
-          cat > ~/.aws/config << EOF
-[profile $PROFILE_NAME]
-region = ${{ env.AWS_REGION }}
-output = json
-EOF
+          echo "Creating AWS config file..."
+          echo "[profile $PROFILE_NAME]" > ~/.aws/config
+          echo "region = ${{ env.AWS_REGION }}" >> ~/.aws/config
+          echo "output = json" >> ~/.aws/config
 
           # Set AWS profile for Leverage CLI
           echo "AWS_PROFILE=$PROFILE_NAME" >> $GITHUB_ENV
