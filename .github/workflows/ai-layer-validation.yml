@@ -323,7 +323,7 @@ jobs:
           echo "🧠 Calling GitHub Models API for analysis..."
 
           # Create JSON payload and call API
-          JSON_PAYLOAD=$(jq -n --arg model "openai/gpt-5" --arg content "$FULL_PROMPT" '{"model": $model, "messages": [{"role": "user", "content": $content}], "temperature": 0.3, "max_tokens": 2000}')
+          JSON_PAYLOAD=$(jq -n --arg model "openai/gpt-4o" --arg content "$FULL_PROMPT" '{"model": $model, "messages": [{"role": "user", "content": $content}], "temperature": 0.3, "max_tokens": 2000}')
 
           # Make API call with error handling
           echo "Calling GitHub Models API..."
@@ -456,7 +456,7 @@ jobs:
 
               # Create JSON payload for API call
               JSON_PAYLOAD=$(jq -n \
-                --arg model "openai/gpt-5" \
+                --arg model "openai/gpt-4o" \
                 --arg content "$BOT_PROMPT" \
                 '{
                   "model": $model,

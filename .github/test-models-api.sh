@@ -18,7 +18,7 @@ echo "📝 Testing JSON payload creation..."
 TEST_PROMPT="You are a DevOps expert. Analyze this test infrastructure change."
 
 JSON_PAYLOAD=$(jq -n \
-    --arg model "openai/gpt-5" \
+    --arg model "openai/gpt-4o" \
     --arg content "$TEST_PROMPT" \
     '{
       "model": $model,
@@ -46,7 +46,7 @@ echo ""
 echo "Key improvements made:"
 echo "  ✅ Added 'models: read' permission"
 echo "  ✅ Updated to correct GitHub Models API endpoint"
-echo "  ✅ Upgraded to GPT-5 model (openai/gpt-5)"
+echo "  ✅ Using GPT-4o model (openai/gpt-4o) - confirmed working in GitHub Actions"
 echo "  ✅ Proper JSON payload creation with jq"
 echo "  ✅ Added error handling for API failures"
 echo "  ✅ Fixed YAML syntax issues"
