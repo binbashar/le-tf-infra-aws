@@ -50,10 +50,16 @@ jobs:
 
           # Extract unique layers from changed infrastructure files
           grep -E '\.(tf|tfvars|hcl)$' changed_files.txt | \
-          while IFS='/' read -r account region layer rest; do
-            # Skip if not a valid layer structure (needs at least 3 path components)
-            if [[ -n "$account" && -n "$region" && -n "$layer" && -d "$account/$region/$layer" ]]; then
-              echo "$account/$region/$layer"
+          while IFS='/' read -r account region layer sublayer rest; do
+            # Handle both 3-level and 4-level layer structures
+            if [[ -n "$account" && -n "$region" && -n "$layer" ]]; then
+              if [[ -n "$sublayer" && -d "$account/$region/$layer/$sublayer" ]]; then
+                # 4-level structure: account/region/layer/sublayer
+                echo "$account/$region/$layer/$sublayer"
+              elif [[ -d "$account/$region/$layer" ]]; then
+                # 3-level structure: account/region/layer
+                echo "$account/$region/$layer"
+              fi
             fi
           done | sort -u > detected_layers.txt
 
@@ -165,10 +171,18 @@ jobs:
           ACCOUNT=$(echo "$LAYER_PATH" | cut -d'/' -f1)
           REGION=$(echo "$LAYER_PATH" | cut -d'/' -f2)
           LAYER_NAME=$(echo "$LAYER_PATH" | cut -d'/' -f3)
+          SUBLAYER=$(echo "$LAYER_PATH" | cut -d'/' -f4)
+
+          # For 4-level paths, use sublayer for persona selection
+          if [[ -n "$SUBLAYER" ]]; then
+            LAYER_FOR_PERSONA="$SUBLAYER"
+          else
+            LAYER_FOR_PERSONA="$LAYER_NAME"
+          fi
 
           # Determine layer type for persona selection
-          case "$LAYER_NAME" in
-            security-*|secrets-manager|base-identities) LAYER_TYPE="security" ;;
+          case "$LAYER_FOR_PERSONA" in
+            security-*|secrets-manager|secrets|base-identities) LAYER_TYPE="security" ;;
             base-network|*-vpn|network-*) LAYER_TYPE="network" ;;
             databases-*) LAYER_TYPE="database" ;;
             k8s-*|*-ecs) LAYER_TYPE="container" ;;
@@ -229,8 +243,10 @@ jobs:
 
           # Save results to file for next job
           mkdir -p /tmp/validation-results
-          echo -e "$VALIDATION_RESULTS" > "/tmp/validation-results/${{ matrix.layer }}.md"
-          echo "$VALIDATION_STATUS" > "/tmp/validation-results/${{ matrix.layer }}.status"
+          LAYER_FILE_NAME="${{ matrix.layer }}"
+          LAYER_FILE_NAME="${LAYER_FILE_NAME//\//-}"  # Replace slashes with dashes
+          echo -e "$VALIDATION_RESULTS" > "/tmp/validation-results/${LAYER_FILE_NAME}.md"
+          echo "$VALIDATION_STATUS" > "/tmp/validation-results/${LAYER_FILE_NAME}.status"
 
           echo "status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
 
