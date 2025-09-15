@@ -457,9 +457,9 @@ jobs:
           TF_COMMAND="${{ steps.tf-compat.outputs.tf-command }}"
           if [[ "$TF_COMMAND" == "tf" ]]; then
             echo "Checking for OpenTofu binary in container..."
-            if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" which tofu; then
+            if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" sh -c "command -v tofu" >/dev/null 2>&1; then
               echo "✅ OpenTofu binary found in container"
-            elif docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" which terraform; then
+            elif docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" sh -c "command -v terraform" >/dev/null 2>&1; then
               echo "⚠️ OpenTofu not found, but Terraform available - falling back to terraform command"
               TF_COMMAND="terraform"
               echo "TF_COMMAND=terraform" >> $GITHUB_ENV
@@ -469,7 +469,7 @@ jobs:
             fi
           else
             echo "Checking for Terraform binary in container..."
-            if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" which terraform; then
+            if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" sh -c "command -v terraform" >/dev/null 2>&1; then
               echo "✅ Terraform binary found in container"
             else
               echo "❌ Terraform binary not found in container"
