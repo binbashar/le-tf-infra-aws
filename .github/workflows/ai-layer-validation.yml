@@ -508,8 +508,9 @@ jobs:
       - name: Download validation results
         uses: actions/download-artifact@v4
         with:
-          name: validation-results
+          pattern: validation-results-*
           path: /tmp/validation-results/
+          merge-multiple: true
 
       - name: Load AI personas configuration
         id: load-personas
