@@ -163,6 +163,69 @@ jobs:
           echo "AWS_DEFAULT_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
           echo "✅ AWS credentials configured for account: $ACCOUNT"
 
+      - name: Setup AWS CLI profiles
+        id: aws-profiles
+        run: |
+          # Parse layer information to determine profile name
+          LAYER_PATH="${{ matrix.layer }}"
+          ACCOUNT=$(echo "$LAYER_PATH" | cut -d'/' -f1)
+
+          echo "🔧 Setting up AWS CLI profiles for Leverage compatibility..."
+
+          # Create AWS credentials directory
+          mkdir -p ~/.aws
+
+          # Determine profile name based on account (matching Leverage conventions)
+          case "$ACCOUNT" in
+            "apps-devstg")
+              PROFILE_NAME="bb-apps-devstg-devops"
+              ;;
+            "shared")
+              PROFILE_NAME="bb-shared-devops"
+              ;;
+            "security")
+              PROFILE_NAME="bb-security-devops"
+              ;;
+            "network")
+              PROFILE_NAME="bb-network-devops"
+              ;;
+            "apps-prd")
+              PROFILE_NAME="bb-apps-prd-devops"
+              ;;
+            "data-science")
+              PROFILE_NAME="bb-data-science-devops"
+              ;;
+            "management")
+              PROFILE_NAME="bb-management-devops"
+              ;;
+            *)
+              PROFILE_NAME="bb-${ACCOUNT}-devops"
+              ;;
+          esac
+
+          # Create AWS credentials file
+          cat > ~/.aws/credentials << EOF
+[$PROFILE_NAME]
+aws_access_key_id = $AWS_ACCESS_KEY_ID
+aws_secret_access_key = $AWS_SECRET_ACCESS_KEY
+region = ${{ env.AWS_REGION }}
+EOF
+
+          # Create AWS config file
+          cat > ~/.aws/config << EOF
+[profile $PROFILE_NAME]
+region = ${{ env.AWS_REGION }}
+output = json
+EOF
+
+          # Set AWS profile for Leverage CLI
+          echo "AWS_PROFILE=$PROFILE_NAME" >> $GITHUB_ENV
+          echo "aws-profile=$PROFILE_NAME" >> $GITHUB_OUTPUT
+
+          echo "✅ AWS CLI profile configured: $PROFILE_NAME"
+          echo "🔍 Profile verification:"
+          aws configure list --profile "$PROFILE_NAME" || echo "Profile setup completed"
+
       - name: Parse layer information
         id: layer-info
         run: |
@@ -388,6 +451,13 @@ jobs:
           echo "🐳 Using Docker image: binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG"
           echo "📁 Working directory: $(pwd)"
           echo "🔍 Repository root: $(git rev-parse --show-toplevel)"
+          echo "🔑 AWS Profile: ${{ steps.aws-profiles.outputs.aws-profile }}"
+          echo "🌍 AWS Region: $AWS_DEFAULT_REGION"
+
+          # Verify AWS configuration
+          echo "🔍 AWS Configuration verification:"
+          aws configure list || echo "AWS CLI not configured"
+          aws sts get-caller-identity || echo "AWS credentials test failed"
           run_validation "leverage $TF_COMMAND fmt -check -diff" "Terraform Format Check"
           run_validation "leverage $TF_COMMAND init" "Terraform Initialization"
           run_validation "leverage $TF_COMMAND validate" "Terraform Validation"
