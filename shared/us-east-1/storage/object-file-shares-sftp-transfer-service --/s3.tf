@@ -2,7 +2,7 @@
 # Access Logs Bucket                    #
 #=======================================#
 module "log_bucket" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.1.1"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.11.0"
 
   bucket        = "${var.project}-${var.prefix}-sftp-customer-files-log"
   force_destroy = true
@@ -46,7 +46,7 @@ module "s3_bucket" {
   ##############################################################
   # TO DO: Consider adding a lifecycle policy to this bucket   #
   ##############################################################
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.1.1"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.11.0"
 
   bucket        = "${var.project}-${var.prefix}-sftp-customer-files"
   force_destroy = true

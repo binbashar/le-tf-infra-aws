@@ -2,7 +2,7 @@
 # Create an S3 bucket for storing ALB access logs
 #
 module "s3_bucket_alb_logs" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.6.0"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.11.0"
 
   bucket = "${local.bucket_name}-logs"
   acl    = "log-delivery-write"

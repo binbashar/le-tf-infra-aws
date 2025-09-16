@@ -59,7 +59,7 @@ This repository includes pre-configured settings for AI-powered development tool
 - **[Cursor IDE](.cursor/)** - AI-first code editor with project-specific rules
   - [`.cursor/rules/`](.cursor/rules/) - Markdown rules for OpenTofu/Terraform best practices
   - [`.cursor/mcp.json`](.cursor/mcp.json) - MCP server configurations for AWS and Terraform documentation
-  
+
 - **[Kiro IDE](.kiro/)** - AI development environment with steering documents
   - [`.kiro/steering/`](.kiro/steering/) - Comprehensive documentation about the project structure, tech stack, and best practices
   - [`.kiro/settings/mcp.json`](.kiro/settings/mcp.json) - MCP configurations for enhanced AWS/Terraform support

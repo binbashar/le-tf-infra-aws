@@ -47,10 +47,10 @@ echo "🤖 Delegating to dependency-update agent for issue #${ISSUE_NUMBER}..."
 # ===================================================================================
 # CLAUDE: MANDATORY - Use the Task tool with subagent_type="dependency-update"
 # ===================================================================================
-# 
+#
 # You MUST execute the Task tool with the following exact parameters:
 # - description: "Dependency analysis for issue #${ISSUE_NUMBER}"
-# - subagent_type: "dependency-update" 
+# - subagent_type: "dependency-update"
 # - prompt: [The detailed prompt below]
 #
 # DO NOT analyze the issue yourself - ALWAYS delegate to the dependency-update agent
