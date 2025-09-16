@@ -1,7 +1,7 @@
 module "secrets" {
   source = "github.com/binbashar/terraform-aws-secrets-manager.git?ref=0.11.5"
 
-  # Test change to trigger AI validation workflow - Force secrets-manager layer with debugging
+  # Test change to trigger AI validation workflow - GPT-5 upgrade validation test
   secrets = {
     # NOTE: Fields annotated with "#@" must be commented out in the first step, when the database is not yet deployed
     # Update the secret to a secure password via web console after applying
