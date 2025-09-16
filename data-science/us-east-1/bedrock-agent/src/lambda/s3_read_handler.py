@@ -1,6 +1,7 @@
 import os
 
 import boto3
+from botocore.exceptions import ClientError
 from bedrock_agent_utils import (
     format_error,
     format_response,
@@ -105,24 +106,27 @@ def handle_read_request(request, logger):
             request["http_method"],
         )
 
-    except s3_client.exceptions.NoSuchKey:
-        logger.warning("s3_object_not_found", bucket=bucket, key=key)
-        return format_error(
-            Exception(f"Object not found: {key}"),
-            404,
-            request["action_group"],
-            request["api_path"],
-            request["http_method"],
-        )
-    except s3_client.exceptions.NoSuchBucket:
-        logger.warning("s3_bucket_not_found", bucket=bucket)
-        return format_error(
-            Exception(f"Bucket not found: {bucket}"),
-            404,
-            request["action_group"],
-            request["api_path"],
-            request["http_method"],
-        )
+    except ClientError as e:
+        code = e.response.get("Error", {}).get("Code")
+        if code == "NoSuchKey":
+            logger.warning("s3_object_not_found", bucket=bucket, key=key)
+            return format_error(
+                Exception(f"Object not found: {key}"),
+                404,
+                request["action_group"],
+                request["api_path"],
+                request["http_method"],
+            )
+        elif code == "NoSuchBucket":
+            logger.warning("s3_bucket_not_found", bucket=bucket)
+            return format_error(
+                Exception(f"Bucket not found: {bucket}"),
+                404,
+                request["action_group"],
+                request["api_path"],
+                request["http_method"],
+            )
+        raise
     except Exception as e:
         logger.error(
             "s3_operation_failed",
