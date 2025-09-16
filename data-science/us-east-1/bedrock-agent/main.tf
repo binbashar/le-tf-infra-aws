@@ -71,12 +71,12 @@ resource "null_resource" "orchestrated_cleanup" {
     when    = destroy
     command = "${path.module}/scripts/cleanup-agent.sh"
     environment = {
-      AGENT_ID      = self.triggers.agent_id
+      AGENT_ID = self.triggers.agent_id
       # Empty action groups - script will find them dynamically
       ACTION_GROUPS = "[]"
       AWS_REGION    = self.triggers.region
       AWS_PROFILE   = self.triggers.profile
-      FIND_GROUPS   = "true"  # Tell script to find action groups
+      FIND_GROUPS   = "true" # Tell script to find action groups
     }
   }
 }
@@ -87,7 +87,7 @@ resource "aws_bedrockagent_agent_action_group" "s3_read" {
   agent_version              = "DRAFT"
   skip_resource_in_use_check = true
   prepare_agent              = false
-  
+
   action_group_executor {
     lambda = aws_lambda_function.s3_read.arn
   }
@@ -108,7 +108,7 @@ resource "aws_bedrockagent_agent_action_group" "s3_write" {
   agent_version              = "DRAFT"
   skip_resource_in_use_check = true
   prepare_agent              = false
-  
+
   action_group_executor {
     lambda = aws_lambda_function.s3_write.arn
   }
