@@ -504,19 +504,34 @@ jobs:
           docker images | grep leverage || echo "No leverage images found"
           docker images "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" || echo "Target image not found"
 
-          # Test container execution
-          echo "🧪 Testing container execution:"
-          if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" which terraform; then
-            echo "✅ terraform binary found in container"
+          # Test container execution and binary availability
+          echo "🧪 Testing container execution and binary availability:"
+
+          # Test terraform binary directly
+          if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" terraform version; then
+            echo "✅ terraform binary working in container"
           else
-            echo "❌ terraform binary not found in container"
+            echo "❌ terraform binary not working in container"
           fi
 
-          if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" which tofu; then
-            echo "✅ tofu binary found in container"
+          # Test tofu binary directly
+          if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" tofu version; then
+            echo "✅ tofu binary working in container"
           else
-            echo "❌ tofu binary not found in container"
+            echo "❌ tofu binary not working in container"
           fi
+
+          # Test basic container functionality
+          if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" echo "Container test successful"; then
+            echo "✅ Basic container execution working"
+          else
+            echo "❌ Basic container execution failed"
+          fi
+
+          # List available binaries in container for debugging
+          echo "🔍 Available binaries in container:"
+          docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" ls -la /usr/local/bin/ || echo "Cannot list /usr/local/bin/"
+          docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" ls -la /usr/bin/ | grep -E "(terraform|tofu)" || echo "No terraform/tofu found in /usr/bin/"
 
           # Test Leverage CLI
           echo "🔧 Leverage CLI test:"
@@ -524,7 +539,16 @@ jobs:
 
           # Test container with environment variables and volume mounting
           echo "🔐 Testing container with AWS environment and volume mounting:"
-          docker run --rm \
+
+          # First test basic AWS CLI availability in container
+          if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" aws --version; then
+            echo "✅ AWS CLI available in container"
+          else
+            echo "❌ AWS CLI not available in container"
+          fi
+
+          # Test with environment variables and volume mounting
+          if docker run --rm \
             -e AWS_ACCESS_KEY_ID \
             -e AWS_SECRET_ACCESS_KEY \
             -e AWS_DEFAULT_REGION \
@@ -532,22 +556,34 @@ jobs:
             -v "$(pwd):/workspace" \
             -w "/workspace" \
             "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" \
-            aws sts get-caller-identity || echo "AWS credentials test in container failed"
+            aws sts get-caller-identity; then
+            echo "✅ AWS credentials test in container successful"
+          else
+            echo "❌ AWS credentials test in container failed"
+          fi
 
           # Test Leverage CLI container orchestration
           echo "🎯 Testing Leverage CLI container orchestration:"
-          if leverage --version --verbose; then
+          if leverage --version; then
             echo "✅ Leverage CLI basic operation successful"
           else
             echo "❌ Leverage CLI basic operation failed"
           fi
 
-          # Test if Leverage CLI can access containers properly
+          # Test if Leverage CLI can access containers properly with better error handling
           echo "🔧 Testing Leverage CLI Terraform access:"
-          if timeout 60 leverage tf version; then
+          if timeout 60 leverage tf version 2>&1; then
             echo "✅ Leverage CLI can execute terraform in container"
           else
             echo "❌ Leverage CLI cannot execute terraform in container"
+            echo "🔍 Debugging Leverage CLI container issues..."
+
+            # Additional debugging
+            echo "Container processes:"
+            docker ps -a | grep leverage || echo "No leverage containers found"
+
+            echo "Available Docker images:"
+            docker images | grep binbash || echo "No binbash images found"
           fi
 
           # Enhanced validation with fallback
