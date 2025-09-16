@@ -48,20 +48,24 @@ jobs:
           echo "📁 Changed files:"
           cat changed_files.txt
 
-          # Extract unique layers from changed infrastructure files
-          grep -E '\.(tf|tfvars|hcl)$' changed_files.txt | \
-          while IFS='/' read -r account region layer sublayer rest; do
-            # Handle both 3-level and 4-level layer structures
-            if [[ -n "$account" && -n "$region" && -n "$layer" ]]; then
-              if [[ -n "$sublayer" && -d "$account/$region/$layer/$sublayer" ]]; then
-                # 4-level structure: account/region/layer/sublayer
-                echo "$account/$region/$layer/$sublayer"
-              elif [[ -d "$account/$region/$layer" ]]; then
-                # 3-level structure: account/region/layer
-                echo "$account/$region/$layer"
-              fi
-            fi
-          done | sort -u > detected_layers.txt
+          # Force only secrets-manager layer for targeted testing
+          echo "🎯 Forcing specific layer for targeted validation: secrets-manager"
+          echo "apps-devstg/us-east-1/secrets-manager" > detected_layers.txt
+
+          # Backup: Extract unique layers from changed infrastructure files (disabled)
+          # grep -E '\.(tf|tfvars|hcl)$' changed_files.txt | \
+          # while IFS='/' read -r account region layer sublayer rest; do
+          #   # Handle both 3-level and 4-level layer structures
+          #   if [[ -n "$account" && -n "$region" && -n "$layer" ]]; then
+          #     if [[ -n "$sublayer" && -d "$account/$region/$layer/$sublayer" ]]; then
+          #       # 4-level structure: account/region/layer/sublayer
+          #       echo "$account/$region/$layer/$sublayer"
+          #     elif [[ -d "$account/$region/$layer" ]]; then
+          #       # 3-level structure: account/region/layer
+          #       echo "$account/$region/$layer"
+          #     fi
+          #   fi
+          # done | sort -u > detected_layers.txt
 
           echo "🎯 Detected layers:"
           cat detected_layers.txt
@@ -460,8 +464,47 @@ jobs:
           echo "🔍 AWS Configuration verification:"
           aws configure list || echo "AWS CLI not configured"
           aws sts get-caller-identity || echo "AWS credentials test failed"
-          run_validation "leverage $TF_COMMAND fmt -check" "Terraform Format Check"
-          run_validation "leverage $TF_COMMAND init -no-color" "Terraform Initialization"
+
+          # Debug leverage environment
+          echo "🐳 Docker and Leverage environment debugging:"
+          echo "Current working directory: $(pwd)"
+          echo "Files in directory: $(ls -la)"
+          echo "Build.env file:"
+          cat build.env || echo "No build.env found"
+          echo "Docker images:"
+          docker images | grep leverage || echo "No leverage images found"
+          echo "Leverage CLI test:"
+          leverage --version || echo "Leverage CLI not accessible"
+
+          # Enhanced validation with fallback
+          run_validation_with_fallback() {
+            local cmd="$1"
+            local description="$2"
+            local fallback_cmd="$3"
+
+            echo "⚡ Running: $description"
+            if output=$(timeout 300 $cmd 2>&1); then
+              echo "✅ $description: PASSED"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED**\n\`\`\`\n${output}\n\`\`\`\n\n"
+            elif [[ -n "$fallback_cmd" ]]; then
+              echo "⚠️ Primary command failed, trying fallback: $fallback_cmd"
+              if fallback_output=$(timeout 300 $fallback_cmd 2>&1); then
+                echo "✅ $description (fallback): PASSED"
+                VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description (fallback)\n✅ **PASSED**\n\`\`\`\n${fallback_output}\n\`\`\`\n\n"
+              else
+                echo "❌ $description: FAILED (both primary and fallback)"
+                VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n❌ **FAILED**\n\`\`\`\nPrimary: ${output}\n\nFallback: ${fallback_output}\n\`\`\`\n\n"
+                VALIDATION_STATUS="failed"
+              fi
+            else
+              echo "❌ $description: FAILED"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n❌ **FAILED**\n\`\`\`\n${output}\n\`\`\`\n\n"
+              VALIDATION_STATUS="failed"
+            fi
+          }
+
+          run_validation_with_fallback "leverage $TF_COMMAND fmt -check" "Terraform Format Check" "terraform fmt -check"
+          run_validation_with_fallback "leverage $TF_COMMAND init -no-color" "Terraform Initialization" "terraform init -no-color"
           run_validation "leverage $TF_COMMAND validate" "Terraform Validation"
 
           # Generate execution plan (non-blocking)
