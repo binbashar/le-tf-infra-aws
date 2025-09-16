@@ -109,25 +109,6 @@ jobs:
           pip install --upgrade leverage
           leverage --version
 
-      - name: Install fallback Terraform/OpenTofu binaries
-        run: |
-          echo "🔧 Installing fallback Terraform and OpenTofu binaries for container-less execution"
-
-          # Install OpenTofu
-          echo "📦 Installing OpenTofu..."
-          curl -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh
-          chmod +x install-opentofu.sh
-          sudo ./install-opentofu.sh --install-method deb
-          tofu version || echo "OpenTofu installation failed"
-
-          # Install Terraform as additional fallback
-          echo "📦 Installing Terraform..."
-          wget -qO terraform.zip https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip
-          unzip terraform.zip
-          sudo mv terraform /usr/local/bin/
-          terraform version || echo "Terraform installation failed"
-
-          echo "✅ Fallback binaries installed"
 
       - name: Configure AWS credentials
         id: aws-config
@@ -583,30 +564,26 @@ jobs:
             docker images | grep binbash || echo "No binbash images found"
           fi
 
-          # Enhanced validation with fallback
-          run_validation_with_fallback() {
+          # Leverage CLI only validation function
+          run_validation() {
             local cmd="$1"
             local description="$2"
-            local fallback_cmd="$3"
 
             echo "⚡ Running: $description"
             if output=$(timeout 300 $cmd 2>&1); then
               echo "✅ $description: PASSED"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED**\n\`\`\`\n${output}\n\`\`\`\n\n"
-            elif [[ -n "$fallback_cmd" ]]; then
-              echo "⚠️ Primary command failed, trying fallback: $fallback_cmd"
-              if fallback_output=$(timeout 300 $fallback_cmd 2>&1); then
-                echo "✅ $description (fallback): PASSED"
-                VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description (fallback)\n✅ **PASSED**\n\`\`\`\n${fallback_output}\n\`\`\`\n\n"
-              else
-                echo "❌ $description: FAILED (both primary and fallback)"
-                VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n❌ **FAILED**\n\`\`\`\nPrimary: ${output}\n\nFallback: ${fallback_output}\n\`\`\`\n\n"
-                VALIDATION_STATUS="failed"
-              fi
             else
               echo "❌ $description: FAILED"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n❌ **FAILED**\n\`\`\`\n${output}\n\`\`\`\n\n"
               VALIDATION_STATUS="failed"
+
+              # Enhanced error reporting for Leverage CLI issues
+              echo "🔍 Leverage CLI debugging for failed command: $cmd"
+              echo "Container status:"
+              docker ps -a | head -5 || echo "Cannot list containers"
+              echo "Recent container logs:"
+              docker logs $(docker ps -lq) 2>/dev/null | tail -10 || echo "No recent container logs"
             fi
           }
 
@@ -628,17 +605,17 @@ jobs:
           echo "Account config: $(ls -la $ACCOUNT_CONFIG 2>/dev/null || echo 'NOT FOUND')"
           echo "Build env: $(ls -la build.env 2>/dev/null || echo 'NOT FOUND')"
 
-          # Determine fallback binary based on layer type
-          if [[ "$TF_COMMAND" == "tf" ]]; then
-            FALLBACK_BINARY="tofu"  # Modern layers use OpenTofu
+
+          # Test Leverage CLI with AWS credentials
+          echo "🔐 Testing Leverage CLI with AWS credentials integration..."
+          if timeout 60 leverage aws sts get-caller-identity 2>/dev/null; then
+            echo "✅ Leverage CLI AWS credential integration working"
           else
-            FALLBACK_BINARY="terraform"  # Legacy layers use Terraform
+            echo "⚠️ Leverage CLI AWS credential integration has issues (this might affect tf commands)"
           fi
 
-          echo "🔄 Using fallback binary: $FALLBACK_BINARY for layer type: $TF_COMMAND"
-
-          # Run validations with dependency-aware handling
-          run_validation_with_fallback "leverage $TF_COMMAND fmt -check" "Terraform Format Check" "$FALLBACK_BINARY fmt -check"
+          # Run validations using only Leverage CLI
+          run_validation "leverage $TF_COMMAND fmt -check" "Terraform Format Check"
 
           # Try full backend init first, then fallback to backend=false if dependencies missing
           echo "🔄 Attempting full backend initialization with dependencies..."
@@ -664,26 +641,14 @@ jobs:
           fi
 
           # Validate syntax (should work regardless of backend)
-          run_validation_with_fallback "leverage $TF_COMMAND validate" "Terraform Validation" "$FALLBACK_BINARY validate"
+          run_validation "leverage $TF_COMMAND validate" "Terraform Validation"
 
           # Generate execution plan (dependency-aware)
           echo "📋 Generating execution plan with ${{ steps.tf-compat.outputs.tf-binary }}..."
 
           if [[ "$BACKEND_INITIALIZED" == "true" ]]; then
-            echo "🔄 Backend available - attempting full plan with remote state..."
-            if plan_output=$(timeout 600 leverage $TF_COMMAND plan -no-color -var-file=$ACCOUNT_CONFIG 2>&1); then
-              echo "✅ Plan generation with remote state: PASSED"
-              VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan (with remote state)\n✅ **GENERATED**\n\`\`\`\n${plan_output}\n\`\`\`\n\n"
-            else
-              echo "⚠️ Plan with remote state failed, trying fallback..."
-              if fallback_plan_output=$(timeout 600 $FALLBACK_BINARY plan -no-color -var-file=$ACCOUNT_CONFIG 2>&1); then
-                echo "✅ Plan generation (fallback): PASSED"
-                VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan (fallback)\n✅ **GENERATED**\n\`\`\`\n${fallback_plan_output}\n\`\`\`\n\n"
-              else
-                echo "⚠️ Plan generation: WARNING (dependency issues detected)"
-                VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan\n⚠️ **WARNING - Dependency Issues**\n\`\`\`\nPrimary: ${plan_output}\n\nFallback: ${fallback_plan_output}\n\`\`\`\n\n"
-              fi
-            fi
+            echo "🔄 Backend available - attempting plan with remote state using Leverage CLI..."
+            run_validation "leverage $TF_COMMAND plan -no-color -var-file=$ACCOUNT_CONFIG" "Terraform Plan Generation"
           else
             echo "⚠️ Backend not initialized - skipping plan generation (dependencies missing)"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan\n⚠️ **SKIPPED - Missing Dependencies**\n\`\`\`\nBackend initialization failed due to missing remote state dependencies.\nThis is expected for layers that depend on other layers being deployed first.\nSyntax validation was performed successfully.\n\`\`\`\n\n"
