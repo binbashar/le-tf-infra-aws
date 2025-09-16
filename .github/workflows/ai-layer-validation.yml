@@ -503,13 +503,18 @@ jobs:
             fi
           }
 
+          # Determine backend configuration paths
+          ACCOUNT_PATH="${{ steps.layer-info.outputs.account }}"
+          BACKEND_CONFIG="../../config/backend.tfvars"
+          ACCOUNT_CONFIG="../../config/account.tfvars"
+
           run_validation_with_fallback "leverage $TF_COMMAND fmt -check" "Terraform Format Check" "terraform fmt -check"
-          run_validation_with_fallback "leverage $TF_COMMAND init -no-color" "Terraform Initialization" "terraform init -no-color"
-          run_validation "leverage $TF_COMMAND validate" "Terraform Validation"
+          run_validation_with_fallback "leverage $TF_COMMAND init -no-color -backend-config=$BACKEND_CONFIG" "Terraform Initialization" "terraform init -no-color -backend-config=$BACKEND_CONFIG"
+          run_validation_with_fallback "leverage $TF_COMMAND validate" "Terraform Validation" "terraform validate"
 
           # Generate execution plan (non-blocking)
           echo "📋 Generating execution plan with ${{ steps.tf-compat.outputs.tf-binary }}..."
-          if plan_output=$(timeout 600 leverage $TF_COMMAND plan -no-color 2>&1); then
+          if plan_output=$(timeout 600 leverage $TF_COMMAND plan -no-color -var-file=$ACCOUNT_CONFIG 2>&1); then
             echo "✅ Plan generation: PASSED"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan\n✅ **GENERATED**\n\`\`\`\n${plan_output}\n\`\`\`\n\n"
           else
