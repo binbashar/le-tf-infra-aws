@@ -1,5 +1,6 @@
 #!/bin/bash
-set -e
+set -Eeuo pipefail
+IFS=$'\n\t'
 
 # Environment variables passed from Terraform
 AGENT_ID="${AGENT_ID}"
@@ -25,7 +26,7 @@ if [ "${FIND_GROUPS}" == "true" ]; then
         --output json 2>/dev/null | jq -r '.[]' 2>/dev/null || echo "")
 
     if [ -n "${ACTION_GROUP_IDS}" ]; then
-        ACTION_GROUP_IDS=(${ACTION_GROUP_IDS})
+        mapfile -t ACTION_GROUP_IDS <<< "${ACTION_GROUP_IDS}"
         echo "Found ${#ACTION_GROUP_IDS[@]} action group(s)"
     else
         ACTION_GROUP_IDS=()
@@ -33,7 +34,7 @@ if [ "${FIND_GROUPS}" == "true" ]; then
     fi
 else
     # Parse action groups JSON array from environment
-    ACTION_GROUP_IDS=($(echo "${ACTION_GROUPS}" | jq -r '.[]' 2>/dev/null || echo ""))
+    mapfile -t ACTION_GROUP_IDS < <(echo "${ACTION_GROUPS}" | jq -r '.[]' 2>/dev/null || echo "")
 fi
 
 # Function to delete action group with retries

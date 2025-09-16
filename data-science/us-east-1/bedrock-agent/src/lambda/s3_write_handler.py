@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timezone
 
 import boto3
+from botocore.exceptions import ClientError
 from bedrock_agent_utils import (
     format_error,
     format_response,
@@ -134,15 +135,18 @@ def handle_write_request(request, logger):
             request["http_method"],
         )
 
-    except s3_client.exceptions.NoSuchBucket:
-        logger.warning("s3_bucket_not_found", bucket=bucket)
-        return format_error(
-            Exception(f"Bucket not found: {bucket}"),
-            404,
-            request["action_group"],
-            request["api_path"],
-            request["http_method"],
-        )
+    except ClientError as e:
+        code = e.response.get("Error", {}).get("Code")
+        if code in ("NoSuchBucket", "NoSuchKey"):
+            logger.warning("s3_resource_not_found", code=code, bucket=bucket, key=key)
+            return format_error(
+                Exception(f"{code}: {bucket}/{key}"),
+                404,
+                request["action_group"],
+                request["api_path"],
+                request["http_method"],
+            )
+        raise
     except Exception as e:
         logger.error(
             "s3_operation_failed",
