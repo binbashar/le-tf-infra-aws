@@ -3,15 +3,15 @@ info:
   title: S3 Read API
   version: 1.0.0
 paths:
-  /read/{key}:
+  /read:
     get:
       description: Read file from S3
       operationId: readS3File
       parameters:
         - name: key
-          in: path
+          in: query
           required: true
-          description: S3 object key
+          description: S3 object key (supports paths with slashes)
           schema:
             type: string
       responses:
