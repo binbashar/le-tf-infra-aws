@@ -4,9 +4,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - 'apps-devstg/us-east-1/k8s-eks-demoapps/secrets/**/*.tf'
-      - 'apps-devstg/us-east-1/k8s-eks-demoapps/secrets/**/*.tfvars'
-      - 'apps-devstg/us-east-1/k8s-eks-demoapps/secrets/**/*.hcl'
+      - 'apps-devstg/us-east-1/secrets-manager/**/*.tf'
+      - 'apps-devstg/us-east-1/secrets-manager/**/*.tfvars'
+      - 'apps-devstg/us-east-1/secrets-manager/**/*.hcl'
   issue_comment:
     types: [created]
 
@@ -460,8 +460,8 @@ jobs:
           echo "🔍 AWS Configuration verification:"
           aws configure list || echo "AWS CLI not configured"
           aws sts get-caller-identity || echo "AWS credentials test failed"
-          run_validation "leverage $TF_COMMAND fmt -check -diff" "Terraform Format Check"
-          run_validation "leverage $TF_COMMAND init" "Terraform Initialization"
+          run_validation "leverage $TF_COMMAND fmt -check" "Terraform Format Check"
+          run_validation "leverage $TF_COMMAND init -no-color" "Terraform Initialization"
           run_validation "leverage $TF_COMMAND validate" "Terraform Validation"
 
           # Generate execution plan (non-blocking)
