@@ -109,6 +109,26 @@ jobs:
           pip install --upgrade leverage
           leverage --version
 
+      - name: Install fallback Terraform/OpenTofu binaries
+        run: |
+          echo "🔧 Installing fallback Terraform and OpenTofu binaries for container-less execution"
+
+          # Install OpenTofu
+          echo "📦 Installing OpenTofu..."
+          curl -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh
+          chmod +x install-opentofu.sh
+          sudo ./install-opentofu.sh --install-method deb
+          tofu version || echo "OpenTofu installation failed"
+
+          # Install Terraform as additional fallback
+          echo "📦 Installing Terraform..."
+          wget -qO terraform.zip https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip
+          unzip terraform.zip
+          sudo mv terraform /usr/local/bin/
+          terraform version || echo "Terraform installation failed"
+
+          echo "✅ Fallback binaries installed"
+
       - name: Configure AWS credentials
         id: aws-config
         run: |
@@ -167,19 +187,16 @@ jobs:
           echo "AWS_DEFAULT_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
           echo "✅ AWS credentials configured for account: $ACCOUNT"
 
-      - name: Setup AWS CLI profiles
+      - name: Setup AWS environment for containers
         id: aws-profiles
         run: |
-          # Parse layer information to determine profile name
+          # Parse layer information to determine account
           LAYER_PATH="${{ matrix.layer }}"
           ACCOUNT=$(echo "$LAYER_PATH" | cut -d'/' -f1)
 
-          echo "🔧 Setting up AWS CLI profiles for Leverage compatibility..."
+          echo "🔧 Setting up simplified AWS environment for container compatibility..."
 
-          # Create AWS credentials directory
-          mkdir -p ~/.aws
-
-          # Determine profile name based on account (matching Leverage conventions)
+          # Determine profile name for reference (but use env vars for containers)
           case "$ACCOUNT" in
             "apps-devstg")
               PROFILE_NAME="bb-apps-devstg-devops"
@@ -207,26 +224,24 @@ jobs:
               ;;
           esac
 
-          # Create AWS credentials file
-          echo "Creating AWS credentials file..."
-          echo "[$PROFILE_NAME]" > ~/.aws/credentials
+          # Create minimal AWS configuration for host CLI (but rely on env vars for containers)
+          mkdir -p ~/.aws
+          echo "[default]" > ~/.aws/credentials
           echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
           echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
           echo "region = ${{ env.AWS_REGION }}" >> ~/.aws/credentials
 
-          # Create AWS config file
-          echo "Creating AWS config file..."
-          echo "[profile $PROFILE_NAME]" > ~/.aws/config
+          echo "[default]" > ~/.aws/config
           echo "region = ${{ env.AWS_REGION }}" >> ~/.aws/config
           echo "output = json" >> ~/.aws/config
 
-          # Set AWS profile for Leverage CLI
-          echo "AWS_PROFILE=$PROFILE_NAME" >> $GITHUB_ENV
+          # Set environment variables for container usage
+          echo "AWS_PROFILE=default" >> $GITHUB_ENV
           echo "aws-profile=$PROFILE_NAME" >> $GITHUB_OUTPUT
 
-          echo "✅ AWS CLI profile configured: $PROFILE_NAME"
-          echo "🔍 Profile verification:"
-          aws configure list --profile "$PROFILE_NAME" || echo "Profile setup completed"
+          echo "✅ AWS environment configured for containers with profile reference: $PROFILE_NAME"
+          echo "🔍 AWS configuration verification:"
+          aws configure list || echo "AWS CLI not accessible"
 
       - name: Parse layer information
         id: layer-info
@@ -372,6 +387,13 @@ jobs:
           echo "MFA_ENABLED=$MFA_ENABLED" >> $GITHUB_ENV
           echo "TERRAFORM_IMAGE_TAG=$TERRAFORM_IMAGE_TAG" >> $GITHUB_ENV
 
+          # Configure additional environment variables for container compatibility
+          echo "DOCKER_DEFAULT_PLATFORM=linux/amd64" >> $GITHUB_ENV
+
+          # Ensure AWS environment variables are properly set for container usage
+          echo "🔐 Configuring container environment variables..."
+          env | grep -E '^AWS_' || echo "No AWS environment variables found"
+
           echo "✅ Leverage environment configured with image: $TERRAFORM_IMAGE_TAG"
 
       - name: Pre-pull Docker image
@@ -465,16 +487,68 @@ jobs:
           aws configure list || echo "AWS CLI not configured"
           aws sts get-caller-identity || echo "AWS credentials test failed"
 
-          # Debug leverage environment
+          # Enhanced Docker and Leverage environment debugging
           echo "🐳 Docker and Leverage environment debugging:"
           echo "Current working directory: $(pwd)"
           echo "Files in directory: $(ls -la)"
           echo "Build.env file:"
           cat build.env || echo "No build.env found"
-          echo "Docker images:"
+
+          # Docker service verification
+          echo "🔍 Docker service status:"
+          docker info || echo "Docker daemon not accessible"
+          docker version || echo "Docker version check failed"
+
+          # Container image verification
+          echo "🖼️ Docker images available:"
           docker images | grep leverage || echo "No leverage images found"
-          echo "Leverage CLI test:"
+          docker images "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" || echo "Target image not found"
+
+          # Test container execution
+          echo "🧪 Testing container execution:"
+          if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" which terraform; then
+            echo "✅ terraform binary found in container"
+          else
+            echo "❌ terraform binary not found in container"
+          fi
+
+          if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" which tofu; then
+            echo "✅ tofu binary found in container"
+          else
+            echo "❌ tofu binary not found in container"
+          fi
+
+          # Test Leverage CLI
+          echo "🔧 Leverage CLI test:"
           leverage --version || echo "Leverage CLI not accessible"
+
+          # Test container with environment variables and volume mounting
+          echo "🔐 Testing container with AWS environment and volume mounting:"
+          docker run --rm \
+            -e AWS_ACCESS_KEY_ID \
+            -e AWS_SECRET_ACCESS_KEY \
+            -e AWS_DEFAULT_REGION \
+            -e AWS_REGION \
+            -v "$(pwd):/workspace" \
+            -w "/workspace" \
+            "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" \
+            aws sts get-caller-identity || echo "AWS credentials test in container failed"
+
+          # Test Leverage CLI container orchestration
+          echo "🎯 Testing Leverage CLI container orchestration:"
+          if leverage --version --verbose; then
+            echo "✅ Leverage CLI basic operation successful"
+          else
+            echo "❌ Leverage CLI basic operation failed"
+          fi
+
+          # Test if Leverage CLI can access containers properly
+          echo "🔧 Testing Leverage CLI Terraform access:"
+          if timeout 60 leverage tf version; then
+            echo "✅ Leverage CLI can execute terraform in container"
+          else
+            echo "❌ Leverage CLI cannot execute terraform in container"
+          fi
 
           # Enhanced validation with fallback
           run_validation_with_fallback() {
@@ -508,18 +582,46 @@ jobs:
           BACKEND_CONFIG="../../config/backend.tfvars"
           ACCOUNT_CONFIG="../../config/account.tfvars"
 
-          run_validation_with_fallback "leverage $TF_COMMAND fmt -check" "Terraform Format Check" "terraform fmt -check"
-          run_validation_with_fallback "leverage $TF_COMMAND init -no-color -backend-config=$BACKEND_CONFIG" "Terraform Initialization" "terraform init -no-color -backend-config=$BACKEND_CONFIG"
-          run_validation_with_fallback "leverage $TF_COMMAND validate" "Terraform Validation" "terraform validate"
+          # Ensure build.env is accessible from current layer directory
+          REPO_ROOT=$(git rev-parse --show-toplevel)
+          if [[ ! -f "build.env" && -f "$REPO_ROOT/build.env" ]]; then
+            echo "📎 Linking build.env from repository root..."
+            ln -s "$REPO_ROOT/build.env" build.env
+          fi
 
-          # Generate execution plan (non-blocking)
+          # Verify configuration files exist
+          echo "📋 Configuration file verification:"
+          echo "Backend config: $(ls -la $BACKEND_CONFIG 2>/dev/null || echo 'NOT FOUND')"
+          echo "Account config: $(ls -la $ACCOUNT_CONFIG 2>/dev/null || echo 'NOT FOUND')"
+          echo "Build env: $(ls -la build.env 2>/dev/null || echo 'NOT FOUND')"
+
+          # Determine fallback binary based on layer type
+          if [[ "$TF_COMMAND" == "tf" ]]; then
+            FALLBACK_BINARY="tofu"  # Modern layers use OpenTofu
+          else
+            FALLBACK_BINARY="terraform"  # Legacy layers use Terraform
+          fi
+
+          echo "🔄 Using fallback binary: $FALLBACK_BINARY for layer type: $TF_COMMAND"
+
+          run_validation_with_fallback "leverage $TF_COMMAND fmt -check" "Terraform Format Check" "$FALLBACK_BINARY fmt -check"
+          run_validation_with_fallback "leverage $TF_COMMAND init -no-color -backend-config=$BACKEND_CONFIG" "Terraform Initialization" "$FALLBACK_BINARY init -no-color -backend-config=$BACKEND_CONFIG"
+          run_validation_with_fallback "leverage $TF_COMMAND validate" "Terraform Validation" "$FALLBACK_BINARY validate"
+
+          # Generate execution plan (non-blocking) with fallback
           echo "📋 Generating execution plan with ${{ steps.tf-compat.outputs.tf-binary }}..."
           if plan_output=$(timeout 600 leverage $TF_COMMAND plan -no-color -var-file=$ACCOUNT_CONFIG 2>&1); then
             echo "✅ Plan generation: PASSED"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan\n✅ **GENERATED**\n\`\`\`\n${plan_output}\n\`\`\`\n\n"
           else
-            echo "⚠️ Plan generation: WARNING"
-            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan\n⚠️ **WARNING**\n\`\`\`\n${plan_output}\n\`\`\`\n\n"
+            echo "⚠️ Leverage plan failed, trying fallback with $FALLBACK_BINARY..."
+            if fallback_plan_output=$(timeout 600 $FALLBACK_BINARY plan -no-color -var-file=$ACCOUNT_CONFIG 2>&1); then
+              echo "✅ Plan generation (fallback): PASSED"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan (fallback)\n✅ **GENERATED**\n\`\`\`\n${fallback_plan_output}\n\`\`\`\n\n"
+            else
+              echo "⚠️ Plan generation: WARNING (both primary and fallback failed)"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan\n⚠️ **WARNING**\n\`\`\`\nPrimary: ${plan_output}\n\nFallback: ${fallback_plan_output}\n\`\`\`\n\n"
+            fi
           fi
 
           # Save results to file for next job
