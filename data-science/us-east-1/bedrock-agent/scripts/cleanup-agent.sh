@@ -23,7 +23,7 @@ if [ "${FIND_GROUPS}" == "true" ]; then
         --profile "${AWS_PROFILE}" \
         --query 'actionGroupSummaries[].actionGroupId' \
         --output json 2>/dev/null | jq -r '.[]' 2>/dev/null || echo "")
-    
+
     if [ -n "${ACTION_GROUP_IDS}" ]; then
         ACTION_GROUP_IDS=(${ACTION_GROUP_IDS})
         echo "Found ${#ACTION_GROUP_IDS[@]} action group(s)"
@@ -43,7 +43,7 @@ delete_action_group() {
         echo "Skipping empty action group ID"
         return 0
     fi
-    
+
     echo "Deleting action group: ${ag_id}"
     for attempt in 1 2 3; do
         if aws bedrock-agent delete-agent-action-group \

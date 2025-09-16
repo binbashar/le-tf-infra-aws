@@ -19,19 +19,19 @@ This **streamlined** implementation provides:
 ```mermaid
 graph LR
     User[User] -->|Natural Language| Agent[Bedrock Agent<br/>Claude 3 Haiku]
-    
+
     Agent -->|Invokes| Read[S3 Read Lambda]
     Agent -->|Invokes| Write[S3 Write Lambda]
-    
+
     Read -->|Uses| Layer[Lambda Layer<br/>structlog + utils]
     Write -->|Uses| Layer
-    
+
     Read -->|Read/List| S3[S3 Documents<br/>Bucket]
     Write -->|Write/Delete| S3
-    
+
     Read -->|Logs| CW[CloudWatch<br/>JSON Logs]
     Write -->|Logs| CW
-    
+
     style Agent fill:#f9f,stroke:#333,stroke-width:2px
     style Layer fill:#bbf,stroke:#333,stroke-width:2px
     style CW fill:#bfb,stroke:#333,stroke-width:2px
@@ -100,7 +100,7 @@ leverage tf apply
 Key variables (see `variables.tf` for all):
 - `agent_foundation_model`: Claude 3 Haiku (default) or other Bedrock models
 - `lambda_timeout`: 60s default
-- `lambda_memory_size`: 512MB default  
+- `lambda_memory_size`: 512MB default
 - `enable_encryption`: false default (set true for production)
 - `LOG_LEVEL`: INFO/DEBUG/WARNING/ERROR for Lambda logging
 

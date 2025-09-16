@@ -12,7 +12,7 @@ module "bedrock_agent" {
   foundation_model = var.foundation_model
   instruction      = local.agent_instruction
 
-  # IAM configuration - let module create the role 
+  # IAM configuration - let module create the role
   agent_resource_role_arn = null
 
   # Create agent without action groups first

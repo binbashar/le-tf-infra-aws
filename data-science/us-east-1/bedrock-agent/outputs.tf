@@ -52,3 +52,4 @@ output "bedrock_agent_layer_version" {
   description = "Version of the Bedrock Agent utilities Lambda layer"
   value       = aws_lambda_layer_version.bedrock_agent_utils.version
 }
+
