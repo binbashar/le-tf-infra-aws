@@ -27,7 +27,7 @@ variable "lambda_memory_size" {
 variable "enable_encryption" {
   description = "Enable KMS encryption for resources"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "foundation_model" {

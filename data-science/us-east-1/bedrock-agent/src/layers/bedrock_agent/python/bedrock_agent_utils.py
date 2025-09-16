@@ -61,20 +61,12 @@ def _extract_parameters(event: Dict[str, Any]) -> Dict[str, Any]:
         content = event.get("requestBody", {}).get("content", {})
         if "application/json" in content:
             json_content = content["application/json"]
-            # Properties form
-            if isinstance(json_content.get("properties"), list):
+            if "properties" in json_content and isinstance(
+                json_content["properties"], list
+            ):
                 for prop in json_content["properties"]:
                     if isinstance(prop, dict) and "name" in prop and "value" in prop:
                         parameters[prop["name"]] = prop["value"]
-            # Body string form
-            body = json_content.get("body")
-            if isinstance(body, str):
-                try:
-                    parsed = json.loads(body)
-                    if isinstance(parsed, dict):
-                        parameters.update(parsed)
-                except Exception:
-                    pass
 
     return parameters
 
