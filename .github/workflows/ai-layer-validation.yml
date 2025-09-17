@@ -195,13 +195,13 @@ jobs:
         working-directory: ${{ matrix.layer }}
         run: |
           # Setup Leverage environment with comprehensive Docker bind mount fixes
-          .github/scripts/setup-leverage-environment.sh
+          ${GITHUB_WORKSPACE}/.github/scripts/setup-leverage-environment.sh
 
           # Validate and fix mount sources
-          .github/scripts/validate-mount-sources.sh
+          ${GITHUB_WORKSPACE}/.github/scripts/validate-mount-sources.sh
 
           # Test Docker mount configurations
-          .github/scripts/test-docker-mounts.sh
+          ${GITHUB_WORKSPACE}/.github/scripts/test-docker-mounts.sh
 
       - name: Detect optimal validation strategy
         working-directory: ${{ matrix.layer }}
@@ -210,7 +210,7 @@ jobs:
           source ~/.leverage-venv/bin/activate
 
           # Detect the best validation strategy for this environment
-          .github/scripts/detect-validation-strategy.sh
+          ${GITHUB_WORKSPACE}/.github/scripts/detect-validation-strategy.sh
 
       - name: Run Leverage CLI validations
         working-directory: ${{ matrix.layer }}
@@ -221,7 +221,7 @@ jobs:
           source ~/.leverage-venv/bin/activate
 
           # Source validation strategies
-          source .github/scripts/run-validation-strategies.sh
+          source ${GITHUB_WORKSPACE}/.github/scripts/run-validation-strategies.sh
 
           # Configuration paths
           BACKEND_CONFIG="../../config/backend.tfvars"
