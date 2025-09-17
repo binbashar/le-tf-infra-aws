@@ -280,51 +280,80 @@ jobs:
           echo "DOCKER_HOST=unix:///var/run/docker.sock" >> $GITHUB_ENV
           echo "✅ DOCKER_HOST set to: $DOCKER_HOST"
 
-          # CREATE MISSING CONFIGURATION FILES (Fix for bind mount error)
-          echo "🔧 Creating missing configuration files that Leverage CLI expects to mount..."
+          # CREATE CONFIGURATION FILES IN RUNNER TEMP (Fix for GitHub Actions mount restrictions)
+          echo "🔧 Creating configuration files in runner.temp to fix GitHub Actions mount restrictions..."
 
-          # Create minimal .gitconfig file
-          mkdir -p $HOME
-          echo "[user]" > $HOME/.gitconfig
-          echo "	name = GitHub Actions" >> $HOME/.gitconfig
-          echo "	email = actions@github.com" >> $HOME/.gitconfig
-          echo "[init]" >> $HOME/.gitconfig
-          echo "	defaultBranch = main" >> $HOME/.gitconfig
-          echo "[safe]" >> $HOME/.gitconfig
-          echo "	directory = *" >> $HOME/.gitconfig
-          echo "✅ Created .gitconfig at $HOME/.gitconfig"
+          # Use runner.temp for all configuration files (GitHub Actions approved mount location)
+          CONFIG_DIR="${{ runner.temp }}/leverage-config"
+          mkdir -p "$CONFIG_DIR"
 
-          # Create minimal SSH config directory and files
-          mkdir -p $HOME/.ssh
-          chmod 700 $HOME/.ssh
+          # Create minimal .gitconfig file in runner.temp
+          GITCONFIG_DIR="$CONFIG_DIR/.gitconfig"
+          mkdir -p "$(dirname "$GITCONFIG_DIR")"
+          echo "[user]" > "$GITCONFIG_DIR"
+          echo "	name = GitHub Actions" >> "$GITCONFIG_DIR"
+          echo "	email = actions@github.com" >> "$GITCONFIG_DIR"
+          echo "[init]" >> "$GITCONFIG_DIR"
+          echo "	defaultBranch = main" >> "$GITCONFIG_DIR"
+          echo "[safe]" >> "$GITCONFIG_DIR"
+          echo "	directory = *" >> "$GITCONFIG_DIR"
+          echo "✅ Created .gitconfig at $GITCONFIG_DIR"
+
+          # Create SSH config directory and files in runner.temp
+          SSH_DIR="$CONFIG_DIR/.ssh"
+          mkdir -p "$SSH_DIR"
+          chmod 700 "$SSH_DIR"
 
           # Create empty SSH config file
-          touch $HOME/.ssh/config
-          chmod 600 $HOME/.ssh/config
+          touch "$SSH_DIR/config"
+          chmod 600 "$SSH_DIR/config"
 
           # Create empty known_hosts file
-          touch $HOME/.ssh/known_hosts
-          chmod 600 $HOME/.ssh/known_hosts
+          touch "$SSH_DIR/known_hosts"
+          chmod 600 "$SSH_DIR/known_hosts"
 
-          echo "✅ Created SSH configuration directory and files"
+          echo "✅ Created SSH configuration directory and files at $SSH_DIR"
 
-          # Create empty AWS config directory (if it doesn't exist)
-          mkdir -p $HOME/.aws
-          touch $HOME/.aws/config
-          touch $HOME/.aws/credentials
-          chmod 600 $HOME/.aws/config $HOME/.aws/credentials
-          echo "✅ Created AWS configuration directory and files"
+          # Create AWS config directory in runner.temp
+          AWS_DIR="$CONFIG_DIR/.aws"
+          mkdir -p "$AWS_DIR"
+          touch "$AWS_DIR/config"
+          touch "$AWS_DIR/credentials"
+          chmod 600 "$AWS_DIR/config" "$AWS_DIR/credentials"
+          echo "✅ Created AWS configuration directory and files at $AWS_DIR"
+
+          # Set environment variables for mount paths (GitHub Actions compatible)
+          echo "LEVERAGE_CONFIG_DIR=$CONFIG_DIR" >> $GITHUB_ENV
+          echo "LEVERAGE_GITCONFIG=$GITCONFIG_DIR" >> $GITHUB_ENV
+          echo "LEVERAGE_SSH_DIR=$SSH_DIR" >> $GITHUB_ENV
+          echo "LEVERAGE_AWS_DIR=$AWS_DIR" >> $GITHUB_ENV
+
+          # Also create symlinks in HOME for compatibility (fallback)
+          echo "🔗 Creating compatibility symlinks in HOME directory..."
+          mkdir -p "$HOME"
+          ln -sf "$GITCONFIG_DIR" "$HOME/.gitconfig" || echo "Could not create gitconfig symlink"
+          ln -sf "$SSH_DIR" "$HOME/.ssh" || echo "Could not create SSH symlink"
+          ln -sf "$AWS_DIR" "$HOME/.aws" || echo "Could not create AWS symlink"
+          echo "✅ Created compatibility symlinks"
 
           # List created files for verification
           echo "📁 Created configuration files:"
-          echo "Git config: $(ls -la $HOME/.gitconfig 2>/dev/null || echo 'NOT FOUND')"
-          echo "SSH directory: $(ls -la $HOME/.ssh 2>/dev/null || echo 'NOT FOUND')"
-          echo "AWS directory: $(ls -la $HOME/.aws 2>/dev/null || echo 'NOT FOUND')"
+          echo "Runner temp config dir: $(ls -la $CONFIG_DIR 2>/dev/null || echo 'NOT FOUND')"
+          echo "Git config (runner.temp): $(ls -la $GITCONFIG_DIR 2>/dev/null || echo 'NOT FOUND')"
+          echo "SSH directory (runner.temp): $(ls -la $SSH_DIR 2>/dev/null || echo 'NOT FOUND')"
+          echo "AWS directory (runner.temp): $(ls -la $AWS_DIR 2>/dev/null || echo 'NOT FOUND')"
+          echo "Git config (HOME symlink): $(ls -la $HOME/.gitconfig 2>/dev/null || echo 'NOT FOUND')"
+          echo "SSH directory (HOME symlink): $(ls -la $HOME/.ssh 2>/dev/null || echo 'NOT FOUND')"
+          echo "AWS directory (HOME symlink): $(ls -la $HOME/.aws 2>/dev/null || echo 'NOT FOUND')"
 
           # Verify environment variables are set correctly
           echo "🔍 Environment variable verification:"
           echo "SSH_AUTH_SOCK: '$SSH_AUTH_SOCK' (should be empty)"
           echo "DOCKER_HOST: '$DOCKER_HOST'"
+          echo "LEVERAGE_CONFIG_DIR: '$CONFIG_DIR'"
+          echo "LEVERAGE_GITCONFIG: '$GITCONFIG_DIR'"
+          echo "LEVERAGE_SSH_DIR: '$SSH_DIR'"
+          echo "LEVERAGE_AWS_DIR: '$AWS_DIR'"
 
           # Test Docker connectivity
           echo "🔍 Testing Docker daemon connectivity..."
@@ -340,6 +369,42 @@ jobs:
           fi
 
           echo "✅ Docker environment setup complete with official troubleshooting fixes and configuration files"
+
+      - name: Pre-pull Leverage CLI Docker images
+        run: |
+          echo "🐳 Pre-pulling Leverage CLI Docker images to prevent build issues..."
+
+          # Get the image tag from environment
+          IMAGE_TAG="${TERRAFORM_IMAGE_TAG:-1.9.1-tofu-0.3.0}"
+          LEVERAGE_IMAGE="binbash/leverage-toolbox:${IMAGE_TAG}"
+
+          echo "📦 Pulling image: $LEVERAGE_IMAGE"
+
+          # Pull the image with retry logic
+          for i in {1..3}; do
+            if docker pull "$LEVERAGE_IMAGE"; then
+              echo "✅ Successfully pulled $LEVERAGE_IMAGE"
+              break
+            else
+              echo "⚠️ Pull attempt $i failed, retrying..."
+              sleep 5
+            fi
+          done
+
+          # Verify the image was pulled successfully
+          if docker images | grep -q "binbash/leverage-toolbox"; then
+            echo "✅ Leverage CLI Docker image verified"
+            docker images | grep "binbash/leverage-toolbox"
+          else
+            echo "❌ Failed to pull Leverage CLI Docker image"
+            exit 1
+          fi
+
+          # Pre-pull any additional base images that might be needed
+          echo "📦 Pre-pulling additional base images..."
+          docker pull alpine:latest || echo "⚠️ Could not pull alpine:latest"
+
+          echo "✅ Docker image pre-pulling complete"
 
       - name: Run Leverage CLI validations with debugging
         id: validation
@@ -450,50 +515,162 @@ jobs:
             echo "❌ build.env not accessible in container"
           fi
 
-          # Test common configuration file mounts that Leverage CLI typically uses
-          echo "🔗 Testing configuration file mounts (fixing bind mount errors):"
+          # Test configuration file mounts using runner.temp (GitHub Actions compatible)
+          echo "🔗 Testing configuration file mounts with runner.temp paths (fixing GitHub Actions restrictions):"
 
-          # Test Git config mount
-          echo "Git config mount test:"
-          if docker run --rm -v "$HOME/.gitconfig:/home/leverage/.gitconfig:ro" alpine:latest ls -la /home/leverage/.gitconfig; then
-            echo "✅ Git config mount successful"
+          # Test Git config mount using runner.temp
+          echo "Git config mount test (runner.temp):"
+          if docker run --rm -v "$LEVERAGE_GITCONFIG:/home/leverage/.gitconfig:ro,z" alpine:latest ls -la /home/leverage/.gitconfig; then
+            echo "✅ Git config mount successful with runner.temp"
           else
             echo "❌ Git config mount failed - checking if file exists:"
-            ls -la "$HOME/.gitconfig" || echo "Git config file does not exist"
+            ls -la "$LEVERAGE_GITCONFIG" || echo "Git config file does not exist in runner.temp"
           fi
 
-          # Test SSH config mount
-          echo "SSH config mount test:"
-          if docker run --rm -v "$HOME/.ssh:/home/leverage/.ssh:ro" alpine:latest ls -la /home/leverage/.ssh; then
-            echo "✅ SSH config mount successful"
+          # Test SSH config mount using runner.temp
+          echo "SSH config mount test (runner.temp):"
+          if docker run --rm -v "$LEVERAGE_SSH_DIR:/home/leverage/.ssh:ro,z" alpine:latest ls -la /home/leverage/.ssh; then
+            echo "✅ SSH config mount successful with runner.temp"
           else
             echo "❌ SSH config mount failed - checking if directory exists:"
-            ls -la "$HOME/.ssh" || echo "SSH config directory does not exist"
+            ls -la "$LEVERAGE_SSH_DIR" || echo "SSH config directory does not exist in runner.temp"
           fi
 
-          # Test AWS config mount
-          echo "AWS config mount test:"
-          if docker run --rm -v "$HOME/.aws:/home/leverage/.aws:ro" alpine:latest ls -la /home/leverage/.aws; then
-            echo "✅ AWS config mount successful"
+          # Test AWS config mount using runner.temp
+          echo "AWS config mount test (runner.temp):"
+          if docker run --rm -v "$LEVERAGE_AWS_DIR:/home/leverage/.aws:ro,z" alpine:latest ls -la /home/leverage/.aws; then
+            echo "✅ AWS config mount successful with runner.temp"
           else
             echo "❌ AWS config mount failed - checking if directory exists:"
-            ls -la "$HOME/.aws" || echo "AWS config directory does not exist"
+            ls -la "$LEVERAGE_AWS_DIR" || echo "AWS config directory does not exist in runner.temp"
+          fi
+
+          # Test fallback mounts using HOME symlinks (compatibility test)
+          echo "Testing fallback mounts using HOME symlinks:"
+          echo "Git config fallback test:"
+          if docker run --rm -v "$HOME/.gitconfig:/home/leverage/.gitconfig:ro,z" alpine:latest ls -la /home/leverage/.gitconfig 2>/dev/null; then
+            echo "✅ Git config fallback mount successful"
+          else
+            echo "⚠️ Git config fallback mount failed (expected if symlinks don't work in containers)"
           fi
 
           # Enhanced Docker API debugging with mount inspection
-          echo "🔍 Enhanced Docker mount debugging..."
+          echo "🔍 Enhanced Docker mount debugging with runner.temp paths..."
 
-          # Test the exact mount pattern Leverage CLI is likely using
-          echo "Testing Leverage CLI mount pattern simulation:"
+          # Test the exact mount pattern Leverage CLI is likely using (updated for runner.temp)
+          echo "Testing Leverage CLI mount pattern simulation with runner.temp:"
           docker run --rm \
-            -v "$CURRENT_DIR:/workspace" \
-            -v "$HOME/.gitconfig:/home/leverage/.gitconfig:ro" \
-            -v "$HOME/.ssh:/home/leverage/.ssh:ro" \
-            -v "$HOME/.aws:/home/leverage/.aws:ro" \
+            -v "$CURRENT_DIR:/workspace:z" \
+            -v "$LEVERAGE_GITCONFIG:/home/leverage/.gitconfig:ro,z" \
+            -v "$LEVERAGE_SSH_DIR:/home/leverage/.ssh:ro,z" \
+            -v "$LEVERAGE_AWS_DIR:/home/leverage/.aws:ro,z" \
             -w /workspace \
             alpine:latest \
-            sh -c "echo 'Mount test successful'; ls -la /home/leverage/; ls -la /workspace" || \
-            echo "❌ Full mount pattern test failed"
+            sh -c "echo 'Mount test successful with runner.temp'; ls -la /home/leverage/; ls -la /workspace" || \
+            echo "❌ Full mount pattern test failed with runner.temp"
+
+          # Phase 3: Comprehensive mount source validation and permission fixing
+          echo "🔧 Phase 3: Comprehensive mount source validation and permission fixing..."
+
+          # Function to validate and fix mount source
+          validate_mount_source() {
+            local source_path="$1"
+            local source_type="$2"
+            local description="$3"
+
+            echo "Validating $description: $source_path"
+
+            if [[ ! -e "$source_path" ]]; then
+              echo "❌ $description does not exist, creating..."
+              if [[ "$source_type" == "file" ]]; then
+                mkdir -p "$(dirname "$source_path")"
+                touch "$source_path"
+              else
+                mkdir -p "$source_path"
+              fi
+            fi
+
+            # Check if source exists after creation
+            if [[ -e "$source_path" ]]; then
+              echo "✅ $description exists: $(ls -la "$source_path")"
+
+              # Fix permissions based on type
+              if [[ "$source_type" == "file" ]]; then
+                chmod 644 "$source_path"
+              else
+                chmod 755 "$source_path"
+                # For directories, also fix contents
+                find "$source_path" -type f -exec chmod 644 {} \; 2>/dev/null || true
+                find "$source_path" -type d -exec chmod 755 {} \; 2>/dev/null || true
+              fi
+
+              echo "✅ $description permissions fixed"
+              return 0
+            else
+              echo "❌ Failed to create $description"
+              return 1
+            fi
+          }
+
+          # Validate all mount sources
+          MOUNT_VALIDATION_FAILED=false
+
+          echo "📋 Validating all mount sources..."
+
+          # Validate current working directory
+          validate_mount_source "$CURRENT_DIR" "directory" "Current working directory" || MOUNT_VALIDATION_FAILED=true
+
+          # Validate runner.temp configuration files
+          validate_mount_source "$LEVERAGE_GITCONFIG" "file" "Git configuration file (runner.temp)" || MOUNT_VALIDATION_FAILED=true
+          validate_mount_source "$LEVERAGE_SSH_DIR" "directory" "SSH configuration directory (runner.temp)" || MOUNT_VALIDATION_FAILED=true
+          validate_mount_source "$LEVERAGE_AWS_DIR" "directory" "AWS configuration directory (runner.temp)" || MOUNT_VALIDATION_FAILED=true
+
+          # Ensure SSH directory has required files
+          validate_mount_source "$LEVERAGE_SSH_DIR/config" "file" "SSH config file" || MOUNT_VALIDATION_FAILED=true
+          validate_mount_source "$LEVERAGE_SSH_DIR/known_hosts" "file" "SSH known_hosts file" || MOUNT_VALIDATION_FAILED=true
+
+          # Ensure AWS directory has required files
+          validate_mount_source "$LEVERAGE_AWS_DIR/config" "file" "AWS config file" || MOUNT_VALIDATION_FAILED=true
+          validate_mount_source "$LEVERAGE_AWS_DIR/credentials" "file" "AWS credentials file" || MOUNT_VALIDATION_FAILED=true
+
+          # Validate build.env and config files
+          validate_mount_source "./build.env" "file" "build.env file" || MOUNT_VALIDATION_FAILED=true
+
+          # Check for backend and account config files
+          BACKEND_CONFIG="../../config/backend.tfvars"
+          ACCOUNT_CONFIG="../../config/account.tfvars"
+          if [[ -f "$BACKEND_CONFIG" ]]; then
+            validate_mount_source "$BACKEND_CONFIG" "file" "Backend configuration file" || MOUNT_VALIDATION_FAILED=true
+          else
+            echo "⚠️ Backend config file not found: $BACKEND_CONFIG (this may be expected)"
+          fi
+
+          if [[ -f "$ACCOUNT_CONFIG" ]]; then
+            validate_mount_source "$ACCOUNT_CONFIG" "file" "Account configuration file" || MOUNT_VALIDATION_FAILED=true
+          else
+            echo "⚠️ Account config file not found: $ACCOUNT_CONFIG (this may be expected)"
+          fi
+
+          # Final validation summary
+          if [[ "$MOUNT_VALIDATION_FAILED" == "true" ]]; then
+            echo "⚠️ Some mount source validations failed, but continuing with available sources"
+          else
+            echo "✅ All mount sources validated and prepared successfully"
+          fi
+
+          # Test final mount verification with validated sources
+          echo "🔗 Final mount verification test with validated sources:"
+          docker run --rm \
+            -v "$CURRENT_DIR:/workspace:z" \
+            -v "$LEVERAGE_GITCONFIG:/home/leverage/.gitconfig:ro,z" \
+            -v "$LEVERAGE_SSH_DIR:/home/leverage/.ssh:ro,z" \
+            -v "$LEVERAGE_AWS_DIR:/home/leverage/.aws:ro,z" \
+            -w /workspace \
+            alpine:latest \
+            sh -c "echo 'All validated mounts working:'; ls -la /workspace/build.env; ls -la /home/leverage/.gitconfig; ls -la /home/leverage/.ssh/; ls -la /home/leverage/.aws/" || \
+            echo "⚠️ Final mount verification failed, but proceeding with Leverage CLI test"
+
+          echo "✅ Phase 3: Mount source validation and permission fixing complete"
 
           # Test Leverage CLI can access Docker (now with verified mounts)
           echo "Testing Leverage CLI Docker access with verbose output:"
@@ -518,36 +695,202 @@ jobs:
             # Test with Docker API debug
             echo "🔍 Docker API debugging - testing container creation:"
             DOCKER_BUILDKIT=0 docker run --rm -v "$CURRENT_DIR:/workspace" alpine:latest ls -la /workspace || echo "Docker API debug test failed"
+
+            # Phase 4: Alternative local validation approach with explicit mount control
+            echo "🔧 Phase 4: Attempting alternative validation approaches..."
+
+            # Try using Leverage CLI with explicit mount and environment variable control
+            echo "🧪 Testing Leverage CLI with explicit mount control..."
+
+            # Use explicit mount syntax to bypass automatic mount detection
+            if timeout 60 leverage \
+              --mount "$CURRENT_DIR" "/workspace" \
+              --mount "$LEVERAGE_GITCONFIG" "/home/leverage/.gitconfig" \
+              --mount "$LEVERAGE_SSH_DIR" "/home/leverage/.ssh" \
+              --mount "$LEVERAGE_AWS_DIR" "/home/leverage/.aws" \
+              --env-var "AWS_ACCESS_KEY_ID" "$AWS_ACCESS_KEY_ID" \
+              --env-var "AWS_SECRET_ACCESS_KEY" "$AWS_SECRET_ACCESS_KEY" \
+              --env-var "AWS_DEFAULT_REGION" "$AWS_DEFAULT_REGION" \
+              --verbose tf version 2>&1; then
+              echo "✅ Explicit mount control approach successful"
+              USE_EXPLICIT_MOUNTS=true
+            else
+              echo "⚠️ Explicit mount control approach failed"
+              USE_EXPLICIT_MOUNTS=false
+
+              # Try minimal containerless approach (if available)
+              echo "🧪 Testing minimal validation without problematic mounts..."
+
+              # Check if we can run basic terraform commands directly
+              if command -v terraform >/dev/null 2>&1; then
+                echo "✅ Found local terraform installation, attempting direct validation"
+                echo "Terraform version: $(terraform version)"
+
+                # Try basic terraform operations without Leverage CLI
+                echo "Testing direct terraform fmt..."
+                if terraform fmt -check -diff .; then
+                  echo "✅ Direct terraform format check successful"
+                  USE_DIRECT_TERRAFORM=true
+                else
+                  echo "⚠️ Direct terraform format check failed (files need formatting)"
+                  USE_DIRECT_TERRAFORM=true # Still usable, just needs formatting
+                fi
+              else
+                echo "⚠️ No local terraform installation found"
+                USE_DIRECT_TERRAFORM=false
+              fi
+
+              # Try with simplified mount pattern (only essential mounts)
+              echo "🧪 Testing simplified mount pattern..."
+              if timeout 60 leverage \
+                --mount "$CURRENT_DIR" "/workspace" \
+                --env-var "AWS_DEFAULT_REGION" "$AWS_DEFAULT_REGION" \
+                --verbose tf version 2>&1; then
+                echo "✅ Simplified mount pattern successful"
+                USE_SIMPLIFIED_MOUNTS=true
+              else
+                echo "⚠️ Simplified mount pattern failed"
+                USE_SIMPLIFIED_MOUNTS=false
+              fi
+            fi
+
+            echo "✅ Phase 4: Alternative validation approaches tested"
+
+            # Set fallback strategy based on what worked
+            if [[ "$USE_EXPLICIT_MOUNTS" == "true" ]]; then
+              echo "🎯 Using explicit mount control strategy"
+              VALIDATION_STRATEGY="explicit_mounts"
+            elif [[ "$USE_SIMPLIFIED_MOUNTS" == "true" ]]; then
+              echo "🎯 Using simplified mount strategy"
+              VALIDATION_STRATEGY="simplified_mounts"
+            elif [[ "$USE_DIRECT_TERRAFORM" == "true" ]]; then
+              echo "🎯 Using direct terraform strategy (fallback)"
+              VALIDATION_STRATEGY="direct_terraform"
+            else
+              echo "🎯 Using default strategy (may have mount issues)"
+              VALIDATION_STRATEGY="default"
+            fi
+
+            echo "VALIDATION_STRATEGY=$VALIDATION_STRATEGY" >> $GITHUB_ENV
           fi
 
           # Initialize validation results
           VALIDATION_RESULTS=""
           VALIDATION_STATUS="success"
 
-          # Function to capture command output with proper error handling
+          # Enhanced function with strategy-based validation and fallbacks
           run_validation() {
-            local cmd="$1"
+            local base_cmd="$1"
             local description="$2"
+            local strategy="${VALIDATION_STRATEGY:-default}"
 
-            echo "⚡ Running: $description"
-            echo "Command: $cmd"
+            echo "⚡ Running: $description (Strategy: $strategy)"
 
             # Ensure virtual environment is active for each command
             source ~/.leverage-venv/bin/activate
 
+            # Build command based on strategy
+            local cmd=""
+            case "$strategy" in
+              "explicit_mounts")
+                echo "🎯 Using explicit mount control strategy"
+                if [[ "$base_cmd" == *"leverage"* ]]; then
+                  # Replace leverage command with explicit mount version
+                  local tf_subcmd=$(echo "$base_cmd" | sed 's/.*leverage[^a-z]*tf[^a-z]*//')
+                  cmd="leverage --mount \"$CURRENT_DIR\" \"/workspace\" --mount \"$LEVERAGE_GITCONFIG\" \"/home/leverage/.gitconfig\" --mount \"$LEVERAGE_SSH_DIR\" \"/home/leverage/.ssh\" --mount \"$LEVERAGE_AWS_DIR\" \"/home/leverage/.aws\" --env-var \"AWS_ACCESS_KEY_ID\" \"$AWS_ACCESS_KEY_ID\" --env-var \"AWS_SECRET_ACCESS_KEY\" \"$AWS_SECRET_ACCESS_KEY\" --env-var \"AWS_DEFAULT_REGION\" \"$AWS_DEFAULT_REGION\" --verbose tf $tf_subcmd"
+                else
+                  cmd="$base_cmd"
+                fi
+                ;;
+              "simplified_mounts")
+                echo "🎯 Using simplified mount strategy"
+                if [[ "$base_cmd" == *"leverage"* ]]; then
+                  local tf_subcmd=$(echo "$base_cmd" | sed 's/.*leverage[^a-z]*tf[^a-z]*//')
+                  cmd="leverage --mount \"$CURRENT_DIR\" \"/workspace\" --env-var \"AWS_DEFAULT_REGION\" \"$AWS_DEFAULT_REGION\" --verbose tf $tf_subcmd"
+                else
+                  cmd="$base_cmd"
+                fi
+                ;;
+              "direct_terraform")
+                echo "🎯 Using direct terraform strategy (fallback)"
+                if [[ "$base_cmd" == *"leverage"* ]]; then
+                  # Convert leverage command to direct terraform
+                  local tf_subcmd=$(echo "$base_cmd" | sed 's/.*leverage[^a-z]*tf[^a-z]*//')
+                  cmd="terraform $tf_subcmd"
+                else
+                  cmd="$base_cmd"
+                fi
+                ;;
+              *)
+                echo "🎯 Using default strategy"
+                cmd="$base_cmd"
+                ;;
+            esac
+
+            echo "Executing command: $cmd"
+
+            # Try primary strategy
             if output=$(timeout 300 $cmd 2>&1); then
               echo "✅ $description: PASSED"
-              VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED**\n\`\`\`\n${output}\n\`\`\`\n\n"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED** (Strategy: $strategy)\n\`\`\`\n${output}\n\`\`\`\n\n"
+              return 0
             else
-              echo "❌ $description: FAILED"
+              echo "❌ $description: FAILED with $strategy strategy"
               echo "Failed output: $output"
-              VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n❌ **FAILED**\n\`\`\`\n${output}\n\`\`\`\n\n"
-              VALIDATION_STATUS="failed"
+
+              # Phase 5: Enhanced debugging and fallback attempts
+              echo "🔧 Phase 5: Enhanced debugging and fallback attempts..."
 
               # Additional debugging for failed commands
               echo "🔍 Debugging failed command: $cmd"
+              echo "Current strategy: $strategy"
+              echo "Current directory: $(pwd)"
+              echo "Working directory contents: $(ls -la)"
               echo "Environment variables:"
-              env | grep -E "(DOCKER|LEVERAGE|VIRTUAL|PATH)" | head -10
+              env | grep -E "(DOCKER|LEVERAGE|VIRTUAL|PATH|VALIDATION)" | head -15
+
+              # Attempt fallback strategies if primary failed
+              if [[ "$strategy" != "direct_terraform" ]] && command -v terraform >/dev/null 2>&1; then
+                echo "🔄 Attempting direct terraform fallback..."
+                if [[ "$base_cmd" == *"leverage"* ]]; then
+                  local tf_subcmd=$(echo "$base_cmd" | sed 's/.*leverage[^a-z]*tf[^a-z]*//')
+                  local fallback_cmd="terraform $tf_subcmd"
+                  echo "Fallback command: $fallback_cmd"
+
+                  if fallback_output=$(timeout 300 $fallback_cmd 2>&1); then
+                    echo "✅ $description: PASSED with direct terraform fallback"
+                    VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED** (Fallback: direct terraform)\n\`\`\`\n${fallback_output}\n\`\`\`\n\n"
+                    return 0
+                  else
+                    echo "❌ Direct terraform fallback also failed"
+                    echo "Fallback output: $fallback_output"
+                  fi
+                fi
+              fi
+
+              # If simplified strategy didn't work, try with minimal mounts
+              if [[ "$strategy" != "simplified_mounts" ]] && [[ "$base_cmd" == *"leverage"* ]]; then
+                echo "🔄 Attempting simplified mount fallback..."
+                local tf_subcmd=$(echo "$base_cmd" | sed 's/.*leverage[^a-z]*tf[^a-z]*//')
+                local simplified_cmd="leverage --mount \"$CURRENT_DIR\" \"/workspace\" --verbose tf $tf_subcmd"
+                echo "Simplified fallback command: $simplified_cmd"
+
+                if simplified_output=$(timeout 300 $simplified_cmd 2>&1); then
+                  echo "✅ $description: PASSED with simplified mount fallback"
+                  VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED** (Fallback: simplified mounts)\n\`\`\`\n${simplified_output}\n\`\`\`\n\n"
+                  return 0
+                else
+                  echo "❌ Simplified mount fallback also failed"
+                  echo "Simplified fallback output: $simplified_output"
+                fi
+              fi
+
+              # Record final failure with all attempted strategies
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n❌ **FAILED** (Tried: $strategy, fallbacks attempted)\n\`\`\`\nPrimary output:\n${output}\n\`\`\`\n\n"
+              VALIDATION_STATUS="failed"
+
+              echo "❌ All strategies failed for: $description"
+              return 1
             fi
           }
 
