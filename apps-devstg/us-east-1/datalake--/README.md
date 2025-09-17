@@ -42,7 +42,7 @@ leverage tf apply
 ## Data Flow
 
 ```
-DynamoDB (apps-devstg) 
+DynamoDB (apps-devstg)
     ↓ [CDC via Kinesis Streaming]
 Kinesis Data Stream (apps-devstg)
     ↓ [Firehose Delivery]
