@@ -340,7 +340,7 @@ jobs:
       - name: Upload validation results
         uses: actions/upload-artifact@v4
         with:
-          name: validation-results-${{ matrix.layer }}
+          name: validation-results-${{ matrix.layer | replace('/', '-') }}
           path: /tmp/validation-results/
           retention-days: 1
           if-no-files-found: warn
