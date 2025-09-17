@@ -25,27 +25,13 @@ run_validation() {
     local LEVERAGE_SSH_DIR="${LEVERAGE_SSH_DIR:-$HOME/.ssh}"
     local LEVERAGE_AWS_DIR="${LEVERAGE_AWS_DIR:-$HOME/.aws}"
 
-    # Build command based on strategy
+    # Build command based on strategy - simplified for Leverage CLI 2.1.1 compatibility
     local cmd=""
     case "$strategy" in
-        "explicit_mounts")
-            echo "🎯 Using explicit mount control strategy"
-            if [[ "$base_cmd" == *"leverage"* ]]; then
-                # Replace leverage command with explicit mount version
-                local tf_subcmd=$(echo "$base_cmd" | sed 's/.*leverage[^a-z]*tf[^a-z]*//')
-                cmd="leverage --mount \"$CURRENT_DIR\" \"/workspace\" --mount \"$LEVERAGE_GITCONFIG\" \"/home/leverage/.gitconfig\" --mount \"$LEVERAGE_SSH_DIR\" \"/home/leverage/.ssh\" --mount \"$LEVERAGE_AWS_DIR\" \"/home/leverage/.aws\" --env-var \"AWS_ACCESS_KEY_ID\" \"$AWS_ACCESS_KEY_ID\" --env-var \"AWS_SECRET_ACCESS_KEY\" \"$AWS_SECRET_ACCESS_KEY\" --env-var \"AWS_DEFAULT_REGION\" \"$AWS_DEFAULT_REGION\" --verbose tf $tf_subcmd"
-            else
-                cmd="$base_cmd"
-            fi
-            ;;
-        "simplified_mounts")
-            echo "🎯 Using simplified mount strategy"
-            if [[ "$base_cmd" == *"leverage"* ]]; then
-                local tf_subcmd=$(echo "$base_cmd" | sed 's/.*leverage[^a-z]*tf[^a-z]*//')
-                cmd="leverage --mount \"$CURRENT_DIR\" \"/workspace\" --env-var \"AWS_DEFAULT_REGION\" \"$AWS_DEFAULT_REGION\" --verbose tf $tf_subcmd"
-            else
-                cmd="$base_cmd"
-            fi
+        "leverage_standard"|"explicit_mounts"|"simplified_mounts"|"default")
+            echo "🎯 Using standard Leverage CLI strategy (v2.1.1 compatible)"
+            # Use standard leverage commands - the Docker mount configuration is handled by Leverage CLI automatically
+            cmd="$base_cmd"
             ;;
         "direct_terraform")
             echo "🎯 Using direct terraform strategy (fallback)"
@@ -58,7 +44,7 @@ run_validation() {
             fi
             ;;
         *)
-            echo "🎯 Using default strategy"
+            echo "🎯 Using default Leverage CLI strategy"
             cmd="$base_cmd"
             ;;
     esac
@@ -104,20 +90,18 @@ run_validation() {
             fi
         fi
 
-        # If simplified strategy didn't work, try with minimal mounts
-        if [[ "$strategy" != "simplified_mounts" ]] && [[ "$base_cmd" == *"leverage"* ]]; then
-            echo "🔄 Attempting simplified mount fallback..."
-            local tf_subcmd=$(echo "$base_cmd" | sed 's/.*leverage[^a-z]*tf[^a-z]*//')
-            local simplified_cmd="leverage --mount \"$CURRENT_DIR\" \"/workspace\" --verbose tf $tf_subcmd"
-            echo "Simplified fallback command: $simplified_cmd"
+        # Additional fallback: try with basic Leverage CLI command (no mount options)
+        if [[ "$strategy" != "default" ]] && [[ "$base_cmd" == *"leverage"* ]]; then
+            echo "🔄 Attempting basic Leverage CLI fallback..."
+            echo "Basic fallback command: $base_cmd"
 
-            if simplified_output=$(timeout 300 $simplified_cmd 2>&1); then
-                echo "✅ $description: PASSED with simplified mount fallback"
-                VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED** (Fallback: simplified mounts)\n\`\`\`\n${simplified_output}\n\`\`\`\n\n"
+            if basic_output=$(timeout 300 $base_cmd 2>&1); then
+                echo "✅ $description: PASSED with basic Leverage CLI fallback"
+                VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED** (Fallback: basic Leverage CLI)\n\`\`\`\n${basic_output}\n\`\`\`\n\n"
                 return 0
             else
-                echo "❌ Simplified mount fallback also failed"
-                echo "Simplified fallback output: $simplified_output"
+                echo "❌ Basic Leverage CLI fallback also failed"
+                echo "Basic fallback output: $basic_output"
             fi
         fi
 
