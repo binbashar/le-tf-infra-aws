@@ -561,9 +561,16 @@ jobs:
           echo "Backend config: $(ls -la $BACKEND_CONFIG 2>/dev/null || echo 'NOT FOUND')"
           echo "Account config: $(ls -la $ACCOUNT_CONFIG 2>/dev/null || echo 'NOT FOUND')"
 
+          # Verify Leverage CLI command availability (debugging aid)
+          echo "🔍 Leverage CLI command availability check:"
+          source ~/.leverage-venv/bin/activate
+          echo "Available tf subcommands:"
+          leverage tf --help 2>&1 | grep -A 20 "Commands:" || echo "Could not get tf subcommands"
+          echo "Leverage CLI version: $(leverage --version 2>&1 || echo 'Could not get version')"
+
           # Run format check with verbose logging (official recommendation)
           echo "⚡ Running format check with verbose logging..."
-          run_validation "leverage --verbose tf fmt -check" "Terraform Format Check (Verbose)"
+          run_validation "leverage --verbose tf format -check" "Terraform Format Check (Verbose)"
 
           # Backend initialization with fallback and verbose logging
           echo "⚡ Initializing with backend (verbose mode)..."
