@@ -69,6 +69,12 @@ echo "LEVERAGE_GITCONFIG=$GITCONFIG_FILE" >> "$GITHUB_ENV"
 echo "LEVERAGE_SSH_DIR=$SSH_DIR" >> "$GITHUB_ENV"
 echo "LEVERAGE_AWS_DIR=$AWS_DIR" >> "$GITHUB_ENV"
 
+# Export variables for current script execution
+export LEVERAGE_CONFIG_DIR="$CONFIG_DIR"
+export LEVERAGE_GITCONFIG="$GITCONFIG_FILE"
+export LEVERAGE_SSH_DIR="$SSH_DIR"
+export LEVERAGE_AWS_DIR="$AWS_DIR"
+
 # Also create symlinks in HOME for compatibility (fallback)
 echo "🔗 Creating compatibility symlinks in HOME directory..."
 mkdir -p "$HOME"

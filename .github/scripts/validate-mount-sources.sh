@@ -52,6 +52,13 @@ LEVERAGE_GITCONFIG="${LEVERAGE_GITCONFIG:-$HOME/.gitconfig}"
 LEVERAGE_SSH_DIR="${LEVERAGE_SSH_DIR:-$HOME/.ssh}"
 LEVERAGE_AWS_DIR="${LEVERAGE_AWS_DIR:-$HOME/.aws}"
 
+# Debug output for environment variables
+echo "🔍 Environment variables for mount sources:"
+echo "LEVERAGE_GITCONFIG: ${LEVERAGE_GITCONFIG}"
+echo "LEVERAGE_SSH_DIR: ${LEVERAGE_SSH_DIR}"
+echo "LEVERAGE_AWS_DIR: ${LEVERAGE_AWS_DIR}"
+echo "CURRENT_DIR: ${CURRENT_DIR}"
+
 # Validate all mount sources
 MOUNT_VALIDATION_FAILED=false
 
