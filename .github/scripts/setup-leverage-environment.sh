@@ -89,8 +89,8 @@ echo "AWS directory (HOME symlink): $(ls -la "$HOME/.aws" 2>/dev/null || echo 'N
 
 # Verify environment variables are set correctly
 echo "🔍 Environment variable verification:"
-echo "SSH_AUTH_SOCK: '$SSH_AUTH_SOCK' (should be empty)"
-echo "DOCKER_HOST: '$DOCKER_HOST'"
+echo "SSH_AUTH_SOCK: '${SSH_AUTH_SOCK:-unset}' (should be empty)"
+echo "DOCKER_HOST: '${DOCKER_HOST:-unset}'"
 echo "LEVERAGE_CONFIG_DIR: '$CONFIG_DIR'"
 echo "LEVERAGE_GITCONFIG: '$GITCONFIG_FILE'"
 echo "LEVERAGE_SSH_DIR: '$SSH_DIR'"
