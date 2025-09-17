@@ -9,22 +9,27 @@ echo "🔧 Setting up Leverage CLI environment with comprehensive Docker bind mo
 # Apply official Leverage CLI troubleshooting fixes
 echo "🔧 Applying official troubleshooting environment variables..."
 
-# OFFICIAL FIX: Unset SSH_AUTH_SOCK (from troubleshooting guide)
-unset SSH_AUTH_SOCK || true
-echo "SSH_AUTH_SOCK=" >> "$GITHUB_ENV"
-echo "✅ SSH_AUTH_SOCK unset (official troubleshooting fix)"
+# SSH_AUTH_SOCK fix: Create dummy socket instead of unsetting to prevent empty mount errors
+echo "🔧 Managing SSH_AUTH_SOCK for Leverage CLI Docker compatibility..."
 
 # Set Docker environment variables (mirroring local setup + official guidance)
 export DOCKER_HOST=unix:///var/run/docker.sock
 echo "DOCKER_HOST=unix:///var/run/docker.sock" >> "$GITHUB_ENV"
 echo "✅ DOCKER_HOST set to: $DOCKER_HOST"
 
-# CREATE CONFIGURATION FILES IN RUNNER TEMP (Fix for GitHub Actions mount restrictions)
-echo "🔧 Creating configuration files in runner.temp to fix GitHub Actions mount restrictions..."
-
-# Use runner.temp for all configuration files (GitHub Actions approved mount location)
+# CREATE CONFIGURATION DIRECTORY FIRST
 CONFIG_DIR="${RUNNER_TEMP}/leverage-config"
 mkdir -p "$CONFIG_DIR"
+
+# Create dummy SSH agent socket early to prevent empty mount error
+SSH_AGENT_SOCK="$CONFIG_DIR/ssh-agent.sock"
+touch "$SSH_AGENT_SOCK"
+export SSH_AUTH_SOCK="$SSH_AGENT_SOCK"
+echo "SSH_AUTH_SOCK=$SSH_AGENT_SOCK" >> "$GITHUB_ENV"
+echo "✅ Created SSH agent socket: $SSH_AGENT_SOCK"
+
+# CREATE CONFIGURATION FILES IN RUNNER TEMP (Fix for GitHub Actions mount restrictions)
+echo "🔧 Creating configuration files in runner.temp to fix GitHub Actions mount restrictions..."
 
 # Create minimal .gitconfig file in runner.temp
 GITCONFIG_FILE="$CONFIG_DIR/.gitconfig"
@@ -75,12 +80,7 @@ export LEVERAGE_GITCONFIG="$GITCONFIG_FILE"
 export LEVERAGE_SSH_DIR="$SSH_DIR"
 export LEVERAGE_AWS_DIR="$AWS_DIR"
 
-# Create dummy SSH agent socket to prevent empty mount error
-SSH_AGENT_SOCK="$CONFIG_DIR/ssh-agent.sock"
-touch "$SSH_AGENT_SOCK"
-export SSH_AUTH_SOCK="$SSH_AGENT_SOCK"
-echo "SSH_AUTH_SOCK=$SSH_AGENT_SOCK" >> "$GITHUB_ENV"
-echo "✅ Created dummy SSH agent socket: $SSH_AGENT_SOCK"
+# SSH agent socket already created earlier
 
 # Create files directly in HOME for Leverage CLI compatibility (primary approach)
 echo "🔗 Creating Leverage CLI compatible configuration in HOME directory..."
