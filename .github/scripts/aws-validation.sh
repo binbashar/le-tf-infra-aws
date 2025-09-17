@@ -56,8 +56,15 @@ echo "Testing AWS connectivity through Leverage toolbox: $LEVERAGE_IMAGE"
 if docker images | grep -q "binbash/leverage-toolbox"; then
     echo "Testing AWS credentials in container..."
 
-    # Create a simple AWS test in container
-    test_aws_command "docker run --rm -e AWS_ACCESS_KEY_ID=\"\$AWS_ACCESS_KEY_ID\" -e AWS_SECRET_ACCESS_KEY=\"\$AWS_SECRET_ACCESS_KEY\" -e AWS_DEFAULT_REGION=\"\$AWS_DEFAULT_REGION\" $LEVERAGE_IMAGE aws sts get-caller-identity --no-cli-pager" "Container AWS STS Test"
+    # Note: The leverage toolbox contains OpenTofu but may not have AWS CLI
+    # Test if AWS CLI is available in the container first
+    if docker run --rm $LEVERAGE_IMAGE which aws >/dev/null 2>&1; then
+        echo "AWS CLI found in container, testing credentials..."
+        test_aws_command "docker run --rm -e AWS_ACCESS_KEY_ID=\"\$AWS_ACCESS_KEY_ID\" -e AWS_SECRET_ACCESS_KEY=\"\$AWS_SECRET_ACCESS_KEY\" -e AWS_DEFAULT_REGION=\"\$AWS_DEFAULT_REGION\" $LEVERAGE_IMAGE aws sts get-caller-identity --no-cli-pager" "Container AWS STS Test"
+    else
+        echo "⚠️ AWS CLI not available in leverage toolbox container (this is expected)"
+        echo "✅ Skipping container AWS credential test - will rely on Leverage CLI for AWS access"
+    fi
 else
     echo "Leverage toolbox image not available for testing"
 fi
