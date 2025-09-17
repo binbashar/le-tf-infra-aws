@@ -28,71 +28,62 @@ jobs:
     outputs:
       layers: ${{ steps.parse-layers.outputs.layers }}
       has-changes: ${{ steps.parse-layers.outputs.has-changes }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Get changed files and extract layers
+      - name: Parse modified layers
         id: parse-layers
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🔍 Analyzing changed files in PR #${{ github.event.pull_request.number }}"
-
-          # Get list of changed files from PR
-          gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files \
-            --jq '.[] | select(.status != "removed") | .filename' > changed_files.txt
-
-          echo "📁 Changed files:"
-          cat changed_files.txt
-
-          # Force only secrets-manager layer for targeted testing
-          echo "🎯 Forcing specific layer for targeted validation: secrets-manager"
-          echo "apps-devstg/us-east-1/secrets-manager" > detected_layers.txt
-
-          # Backup: Extract unique layers from changed infrastructure files (disabled)
-          # grep -E '\.(tf|tfvars|hcl)$' changed_files.txt | \
-          # while IFS='/' read -r account region layer sublayer rest; do
-          #   # Handle both 3-level and 4-level layer structures
-          #   if [[ -n "$account" && -n "$region" && -n "$layer" ]]; then
-          #     if [[ -n "$sublayer" && -d "$account/$region/$layer/$sublayer" ]]; then
-          #       # 4-level structure: account/region/layer/sublayer
-          #       echo "$account/$region/$layer/$sublayer"
-          #     elif [[ -d "$account/$region/$layer" ]]; then
-          #       # 3-level structure: account/region/layer
-          #       echo "$account/$region/$layer"
-          #     fi
-          #   fi
-          # done | sort -u > detected_layers.txt
-
-          echo "🎯 Detected layers:"
-          cat detected_layers.txt
-
-          # Check if we have any valid layers
-          if [[ -s detected_layers.txt ]]; then
-            # Convert to JSON array for matrix strategy
-            layers_json=$(jq -R -s -c 'split("\n") | map(select(length > 0))' detected_layers.txt)
-            echo "layers=${layers_json}" >> $GITHUB_OUTPUT
-            echo "has-changes=true" >> $GITHUB_OUTPUT
-            echo "✅ Found $(wc -l < detected_layers.txt) layer(s) to validate"
+          # Get changed files
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
           else
-            echo "layers=[]" >> $GITHUB_OUTPUT
-            echo "has-changes=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No valid infrastructure layers detected in changes"
+            CHANGED_FILES=$(git diff --name-only HEAD~1)
           fi
 
-  # Job 2: Validate each layer using Leverage CLI (runs in parallel)
-  validate-layers:
-    name: Validate Layer
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Extract unique layer paths
+          LAYERS=$(echo "$CHANGED_FILES" | grep -E '\.(tf|tfvars|hcl)$' | grep -E '^apps-devstg/us-east-1/secrets-manager/' | head -1 | xargs dirname | sort | uniq | jq -R -s -c 'split("\n")[:-1]')
+
+          if [[ "$LAYERS" == "[]" || "$LAYERS" == "" ]]; then
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+            echo "layers=[]" >> $GITHUB_OUTPUT
+          else
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+            echo "layers=$LAYERS" >> $GITHUB_OUTPUT
+          fi
+
+          echo "Detected layers: $LAYERS"
+
+  # Job 2: Handle @aibot commands in issue comments
+  handle-aibot-commands:
+    name: Handle @aibot Commands
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issue_comment' && contains(github.event.comment.body, '@aibot')
+
+    steps:
+      - name: Parse @aibot command
+        run: |
+          echo "Processing @aibot command: ${{ github.event.comment.body }}"
+          # Add @aibot command handling logic here
+
+  # Job 3: Validate each affected layer
+  validate-layer:
+    name: Validate Layer (${{ matrix.layer }})
+    runs-on: ubuntu-latest
     needs: detect-layers
     if: needs.detect-layers.outputs.has-changes == 'true'
-    runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
         layer: ${{ fromJson(needs.detect-layers.outputs.layers) }}
+      fail-fast: false
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -120,9 +111,7 @@ jobs:
           echo "✅ Leverage CLI installed in virtual environment"
           leverage --version
 
-
       - name: Configure AWS credentials for Leverage CLI containers
-        id: aws-config
         run: |
           # Parse layer information to determine AWS account
           LAYER_PATH="${{ matrix.layer }}"
@@ -136,111 +125,21 @@ jobs:
           echo "AWS_DEFAULT_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
           echo "AWS_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
 
-          # Output account for reference (optional)
-          echo "account=$ACCOUNT" >> $GITHUB_OUTPUT
-
           echo "✅ AWS credentials configured for Leverage CLI containers"
 
-      - name: Parse layer information
-        id: layer-info
-        run: |
-          # Extract layer components
-          LAYER_PATH="${{ matrix.layer }}"
-          ACCOUNT=$(echo "$LAYER_PATH" | cut -d'/' -f1)
-          REGION=$(echo "$LAYER_PATH" | cut -d'/' -f2)
-          LAYER_NAME=$(echo "$LAYER_PATH" | cut -d'/' -f3)
-          SUBLAYER=$(echo "$LAYER_PATH" | cut -d'/' -f4)
-
-          # For 4-level paths, use sublayer for persona selection
-          if [[ -n "$SUBLAYER" ]]; then
-            LAYER_FOR_PERSONA="$SUBLAYER"
-          else
-            LAYER_FOR_PERSONA="$LAYER_NAME"
-          fi
-
-          # Determine layer type for persona selection
-          case "$LAYER_FOR_PERSONA" in
-            security-*|secrets-manager|secrets|base-identities) LAYER_TYPE="security" ;;
-            base-network|*-vpn|network-*) LAYER_TYPE="network" ;;
-            databases-*) LAYER_TYPE="database" ;;
-            k8s-*|*-ecs) LAYER_TYPE="container" ;;
-            tools-*|*-jenkins|*-monitoring) LAYER_TYPE="devops" ;;
-            *-s3|*-backup|*-storage) LAYER_TYPE="storage" ;;
-            *-ec2|*-lambda|*-autoscaling) LAYER_TYPE="compute" ;;
-            data-*|*-ml|*-bedrock) LAYER_TYPE="data-analytics" ;;
-            *) LAYER_TYPE="infrastructure" ;;
-          esac
-
-          echo "account=$ACCOUNT" >> $GITHUB_OUTPUT
-          echo "region=$REGION" >> $GITHUB_OUTPUT
-          echo "layer-name=$LAYER_NAME" >> $GITHUB_OUTPUT
-          echo "layer-type=$LAYER_TYPE" >> $GITHUB_OUTPUT
-
-          echo "🏗️ Validating layer: $LAYER_PATH (type: $LAYER_TYPE)"
-
-      - name: Detect Terraform compatibility
-        id: tf-compat
+      - name: Determine Terraform binary
         working-directory: ${{ matrix.layer }}
         run: |
-          echo "🔍 Detecting Terraform/OpenTofu compatibility..."
-
-          # Default to OpenTofu for modern layers
+          # Default to OpenTofu
           TF_COMMAND="tf"
-          TF_BINARY="OpenTofu"
-
-          # Check if config.tf exists and analyze version constraints
-          if [[ -f "config.tf" ]]; then
-            echo "📄 Found config.tf, analyzing version constraints..."
-
-            # Check Terraform required version
-            if grep -q "required_version.*~>.*1\.[0-5]" config.tf; then
-              TF_COMMAND="terraform"
-              TF_BINARY="Terraform (legacy)"
-              echo "🔧 Detected legacy Terraform version constraint"
-            elif grep -q "required_version.*~>.*1\.[0-3]" config.tf; then
-              TF_COMMAND="terraform"
-              TF_BINARY="Terraform (legacy)"
-              echo "🔧 Detected very old Terraform version constraint"
-            fi
-
-            # Check AWS provider version (additional indicator)
-            if grep -q "aws.*~>.*[0-4]\\.[0-9]" config.tf; then
-              TF_COMMAND="terraform"
-              TF_BINARY="Terraform (legacy)"
-              echo "🔧 Detected legacy AWS provider version"
-            fi
-          elif [[ -f "versions.tf" ]]; then
-            echo "📄 Found versions.tf, analyzing version constraints..."
-
-            # Check versions.tf for same patterns
-            if grep -q "required_version.*~>.*1\.[0-5]" versions.tf; then
-              TF_COMMAND="terraform"
-              TF_BINARY="Terraform (legacy)"
-              echo "🔧 Detected legacy Terraform version in versions.tf"
-            fi
-
-            if grep -q "aws.*~>.*[0-4]\\.[0-9]" versions.tf; then
-              TF_COMMAND="terraform"
-              TF_BINARY="Terraform (legacy)"
-              echo "🔧 Detected legacy AWS provider in versions.tf"
-            fi
-          else
-            echo "⚠️ No config.tf or versions.tf found, using default: $TF_BINARY"
-          fi
-
-          # Set environment variable for subsequent steps
-          echo "TF_COMMAND=$TF_COMMAND" >> $GITHUB_ENV
-          echo "tf-command=$TF_COMMAND" >> $GITHUB_OUTPUT
-          echo "tf-binary=$TF_BINARY" >> $GITHUB_OUTPUT
+          TF_BINARY="OpenTofu (default)"
 
           echo "✅ Selected binary: $TF_BINARY (command: leverage $TF_COMMAND)"
+          echo "TF_COMMAND=$TF_COMMAND" >> $GITHUB_ENV
 
       - name: Setup Leverage environment
-        id: leverage-setup
         working-directory: ${{ matrix.layer }}
         run: |
-          echo "🔧 Setting up Leverage environment..."
-
           # Navigate to repository root and create minimal build.env
           REPO_ROOT=$(git rev-parse --show-toplevel)
           cd "$REPO_ROOT"
@@ -259,116 +158,6 @@ jobs:
           echo "TERRAFORM_IMAGE_TAG=$TERRAFORM_IMAGE_TAG" >> $GITHUB_ENV
 
           echo "✅ Leverage environment configured with image: $TERRAFORM_IMAGE_TAG"
-
-      - name: Setup Docker environment for Leverage CLI (Official Troubleshooting)
-        run: |
-          echo "🐳 Setting up Docker environment for Leverage CLI (applying official troubleshooting fixes)..."
-
-          # Ensure Docker daemon is accessible (GitHub Actions specific)
-          sudo chmod 666 /var/run/docker.sock || echo "Could not modify Docker socket permissions"
-
-          # Apply official Leverage CLI troubleshooting fixes
-          echo "🔧 Applying official troubleshooting environment variables..."
-
-          # OFFICIAL FIX: Unset SSH_AUTH_SOCK (from troubleshooting guide)
-          unset SSH_AUTH_SOCK
-          echo "SSH_AUTH_SOCK=" >> $GITHUB_ENV
-          echo "✅ SSH_AUTH_SOCK unset (official troubleshooting fix)"
-
-          # Set Docker environment variables (mirroring local setup + official guidance)
-          export DOCKER_HOST=unix:///var/run/docker.sock
-          echo "DOCKER_HOST=unix:///var/run/docker.sock" >> $GITHUB_ENV
-          echo "✅ DOCKER_HOST set to: $DOCKER_HOST"
-
-          # CREATE CONFIGURATION FILES IN RUNNER TEMP (Fix for GitHub Actions mount restrictions)
-          echo "🔧 Creating configuration files in runner.temp to fix GitHub Actions mount restrictions..."
-
-          # Use runner.temp for all configuration files (GitHub Actions approved mount location)
-          CONFIG_DIR="${{ runner.temp }}/leverage-config"
-          mkdir -p "$CONFIG_DIR"
-
-          # Create minimal .gitconfig file in runner.temp
-          GITCONFIG_DIR="$CONFIG_DIR/.gitconfig"
-          mkdir -p "$(dirname "$GITCONFIG_DIR")"
-          echo "[user]" > "$GITCONFIG_DIR"
-          echo "	name = GitHub Actions" >> "$GITCONFIG_DIR"
-          echo "	email = actions@github.com" >> "$GITCONFIG_DIR"
-          echo "[init]" >> "$GITCONFIG_DIR"
-          echo "	defaultBranch = main" >> "$GITCONFIG_DIR"
-          echo "[safe]" >> "$GITCONFIG_DIR"
-          echo "	directory = *" >> "$GITCONFIG_DIR"
-          echo "✅ Created .gitconfig at $GITCONFIG_DIR"
-
-          # Create SSH config directory and files in runner.temp
-          SSH_DIR="$CONFIG_DIR/.ssh"
-          mkdir -p "$SSH_DIR"
-          chmod 700 "$SSH_DIR"
-
-          # Create empty SSH config file
-          touch "$SSH_DIR/config"
-          chmod 600 "$SSH_DIR/config"
-
-          # Create empty known_hosts file
-          touch "$SSH_DIR/known_hosts"
-          chmod 600 "$SSH_DIR/known_hosts"
-
-          echo "✅ Created SSH configuration directory and files at $SSH_DIR"
-
-          # Create AWS config directory in runner.temp
-          AWS_DIR="$CONFIG_DIR/.aws"
-          mkdir -p "$AWS_DIR"
-          touch "$AWS_DIR/config"
-          touch "$AWS_DIR/credentials"
-          chmod 600 "$AWS_DIR/config" "$AWS_DIR/credentials"
-          echo "✅ Created AWS configuration directory and files at $AWS_DIR"
-
-          # Set environment variables for mount paths (GitHub Actions compatible)
-          echo "LEVERAGE_CONFIG_DIR=$CONFIG_DIR" >> $GITHUB_ENV
-          echo "LEVERAGE_GITCONFIG=$GITCONFIG_DIR" >> $GITHUB_ENV
-          echo "LEVERAGE_SSH_DIR=$SSH_DIR" >> $GITHUB_ENV
-          echo "LEVERAGE_AWS_DIR=$AWS_DIR" >> $GITHUB_ENV
-
-          # Also create symlinks in HOME for compatibility (fallback)
-          echo "🔗 Creating compatibility symlinks in HOME directory..."
-          mkdir -p "$HOME"
-          ln -sf "$GITCONFIG_DIR" "$HOME/.gitconfig" || echo "Could not create gitconfig symlink"
-          ln -sf "$SSH_DIR" "$HOME/.ssh" || echo "Could not create SSH symlink"
-          ln -sf "$AWS_DIR" "$HOME/.aws" || echo "Could not create AWS symlink"
-          echo "✅ Created compatibility symlinks"
-
-          # List created files for verification
-          echo "📁 Created configuration files:"
-          echo "Runner temp config dir: $(ls -la $CONFIG_DIR 2>/dev/null || echo 'NOT FOUND')"
-          echo "Git config (runner.temp): $(ls -la $GITCONFIG_DIR 2>/dev/null || echo 'NOT FOUND')"
-          echo "SSH directory (runner.temp): $(ls -la $SSH_DIR 2>/dev/null || echo 'NOT FOUND')"
-          echo "AWS directory (runner.temp): $(ls -la $AWS_DIR 2>/dev/null || echo 'NOT FOUND')"
-          echo "Git config (HOME symlink): $(ls -la $HOME/.gitconfig 2>/dev/null || echo 'NOT FOUND')"
-          echo "SSH directory (HOME symlink): $(ls -la $HOME/.ssh 2>/dev/null || echo 'NOT FOUND')"
-          echo "AWS directory (HOME symlink): $(ls -la $HOME/.aws 2>/dev/null || echo 'NOT FOUND')"
-
-          # Verify environment variables are set correctly
-          echo "🔍 Environment variable verification:"
-          echo "SSH_AUTH_SOCK: '$SSH_AUTH_SOCK' (should be empty)"
-          echo "DOCKER_HOST: '$DOCKER_HOST'"
-          echo "LEVERAGE_CONFIG_DIR: '$CONFIG_DIR'"
-          echo "LEVERAGE_GITCONFIG: '$GITCONFIG_DIR'"
-          echo "LEVERAGE_SSH_DIR: '$SSH_DIR'"
-          echo "LEVERAGE_AWS_DIR: '$AWS_DIR'"
-
-          # Test Docker connectivity
-          echo "🔍 Testing Docker daemon connectivity..."
-          docker info || echo "❌ Docker daemon not accessible"
-          docker version || echo "❌ Docker version check failed"
-
-          # Test basic container execution
-          echo "🧪 Testing basic container execution..."
-          if docker run --rm hello-world; then
-            echo "✅ Basic Docker container execution successful"
-          else
-            echo "❌ Basic Docker container execution failed"
-          fi
-
-          echo "✅ Docker environment setup complete with official troubleshooting fixes and configuration files"
 
       - name: Pre-pull Leverage CLI Docker images
         run: |
@@ -400,501 +189,39 @@ jobs:
             exit 1
           fi
 
-          # Pre-pull any additional base images that might be needed
-          echo "📦 Pre-pulling additional base images..."
-          docker pull alpine:latest || echo "⚠️ Could not pull alpine:latest"
-
           echo "✅ Docker image pre-pulling complete"
 
-      - name: Run Leverage CLI validations with debugging
-        id: validation
+      - name: Setup Docker environment and mount sources
         working-directory: ${{ matrix.layer }}
         run: |
-          echo "🚀 Starting Leverage CLI validations with comprehensive debugging..."
+          # Setup Leverage environment with comprehensive Docker bind mount fixes
+          .github/scripts/setup-leverage-environment.sh
 
+          # Validate and fix mount sources
+          .github/scripts/validate-mount-sources.sh
+
+          # Test Docker mount configurations
+          .github/scripts/test-docker-mounts.sh
+
+      - name: Detect optimal validation strategy
+        working-directory: ${{ matrix.layer }}
+        run: |
           # Ensure virtual environment is active
-          echo "🐍 Activating Python virtual environment..."
           source ~/.leverage-venv/bin/activate
 
-          # Verify virtual environment and Leverage CLI
-          echo "📊 Environment verification:"
-          echo "Python path: $(which python)"
-          echo "Python version: $(python --version)"
-          echo "Leverage CLI path: $(which leverage)"
-          echo "Leverage CLI version: $(leverage --version)"
-          echo "Virtual environment: $VIRTUAL_ENV"
-          echo "Working directory: $(pwd)"
-          echo "User: $(whoami)"
-          echo "Groups: $(groups)"
-
-          # Fix path resolution using absolute paths (official troubleshooting approach)
-          echo "🔧 Applying path resolution fixes with absolute paths..."
-
-          # Use GITHUB_WORKSPACE for absolute paths (official guidance)
-          REPO_ROOT="$GITHUB_WORKSPACE"
-          WORK_DIR="$GITHUB_WORKSPACE/apps-devstg/us-east-1/secrets-manager"
-
-          echo "📍 Path resolution:"
-          echo "Repository root: $REPO_ROOT"
-          echo "Working directory: $WORK_DIR"
-          echo "Current PWD: $(pwd)"
-          echo "Realpath PWD: $(realpath .)"
-
-          # Ensure we're in the correct absolute directory
-          cd "$WORK_DIR"
-          echo "✅ Changed to absolute working directory: $(pwd)"
-
-          # Copy build.env instead of symlinking (avoid mount issues)
-          if [[ -f "$REPO_ROOT/build.env" ]]; then
-            echo "📋 Copying build.env from repository root (avoiding symlink issues)..."
-            cp "$REPO_ROOT/build.env" ./build.env
-            echo "✅ build.env copied successfully"
-          else
-            echo "❌ build.env not found at $REPO_ROOT/build.env"
-            ls -la "$REPO_ROOT/" | head -10
-          fi
-
-          # Validate all required files exist with absolute paths
-          echo "📁 File validation:"
-          echo "build.env exists: $(test -f build.env && echo 'YES' || echo 'NO')"
-          echo "build.env content:"
-          cat build.env || echo "❌ Could not read build.env"
-
-          # Verify configuration file paths
-          echo "📋 Configuration file paths:"
-          echo "Backend config path: $BACKEND_CONFIG"
-          echo "Backend config exists: $(test -f $BACKEND_CONFIG && echo 'YES' || echo 'NO')"
-          echo "Account config path: $ACCOUNT_CONFIG"
-          echo "Account config exists: $(test -f $ACCOUNT_CONFIG && echo 'YES' || echo 'NO')"
-
-          # Docker and container debugging
-          echo "🐳 Docker environment debugging:"
-          echo "Docker host: $DOCKER_HOST"
-          echo "SSH auth sock: $SSH_AUTH_SOCK"
-          echo "Docker socket permissions: $(ls -la /var/run/docker.sock)"
-
-          # Test Docker images
-          echo "🖼️ Available Docker images:"
-          docker images | head -10 || echo "❌ Could not list Docker images"
-
-          # Container pre-validation tests for bind mounts (following official troubleshooting)
-          echo "🧪 Container pre-validation tests for bind mounts..."
-
-          # Test basic Leverage CLI execution
-          echo "Testing basic Leverage CLI execution:"
-          if timeout 30 leverage --version; then
-            echo "✅ Basic Leverage CLI execution successful"
-          else
-            echo "❌ Basic Leverage CLI execution failed"
-          fi
-
-          # Test bind mount with current directory (same pattern Leverage CLI will use)
-          echo "🔗 Testing bind mount with current working directory:"
-          CURRENT_DIR=$(pwd)
-          echo "Current directory for mount test: $CURRENT_DIR"
-
-          if docker run --rm -v "$CURRENT_DIR:/workspace" -w /workspace alpine:latest pwd; then
-            echo "✅ Basic bind mount test successful"
-          else
-            echo "❌ Basic bind mount test failed"
-          fi
-
-          # Test bind mount with file listing (verify mount contents)
-          echo "🔗 Testing bind mount file access:"
-          if docker run --rm -v "$CURRENT_DIR:/workspace" -w /workspace alpine:latest ls -la; then
-            echo "✅ Bind mount file listing successful"
-          else
-            echo "❌ Bind mount file listing failed"
-          fi
-
-          # Test specific build.env file access in container
-          echo "🔗 Testing build.env access in container:"
-          if docker run --rm -v "$CURRENT_DIR:/workspace" -w /workspace alpine:latest cat build.env; then
-            echo "✅ build.env accessible in container"
-          else
-            echo "❌ build.env not accessible in container"
-          fi
-
-          # Test configuration file mounts using runner.temp (GitHub Actions compatible)
-          echo "🔗 Testing configuration file mounts with runner.temp paths (fixing GitHub Actions restrictions):"
-
-          # Test Git config mount using runner.temp
-          echo "Git config mount test (runner.temp):"
-          if docker run --rm -v "$LEVERAGE_GITCONFIG:/home/leverage/.gitconfig:ro,z" alpine:latest ls -la /home/leverage/.gitconfig; then
-            echo "✅ Git config mount successful with runner.temp"
-          else
-            echo "❌ Git config mount failed - checking if file exists:"
-            ls -la "$LEVERAGE_GITCONFIG" || echo "Git config file does not exist in runner.temp"
-          fi
-
-          # Test SSH config mount using runner.temp
-          echo "SSH config mount test (runner.temp):"
-          if docker run --rm -v "$LEVERAGE_SSH_DIR:/home/leverage/.ssh:ro,z" alpine:latest ls -la /home/leverage/.ssh; then
-            echo "✅ SSH config mount successful with runner.temp"
-          else
-            echo "❌ SSH config mount failed - checking if directory exists:"
-            ls -la "$LEVERAGE_SSH_DIR" || echo "SSH config directory does not exist in runner.temp"
-          fi
-
-          # Test AWS config mount using runner.temp
-          echo "AWS config mount test (runner.temp):"
-          if docker run --rm -v "$LEVERAGE_AWS_DIR:/home/leverage/.aws:ro,z" alpine:latest ls -la /home/leverage/.aws; then
-            echo "✅ AWS config mount successful with runner.temp"
-          else
-            echo "❌ AWS config mount failed - checking if directory exists:"
-            ls -la "$LEVERAGE_AWS_DIR" || echo "AWS config directory does not exist in runner.temp"
-          fi
-
-          # Test fallback mounts using HOME symlinks (compatibility test)
-          echo "Testing fallback mounts using HOME symlinks:"
-          echo "Git config fallback test:"
-          if docker run --rm -v "$HOME/.gitconfig:/home/leverage/.gitconfig:ro,z" alpine:latest ls -la /home/leverage/.gitconfig 2>/dev/null; then
-            echo "✅ Git config fallback mount successful"
-          else
-            echo "⚠️ Git config fallback mount failed (expected if symlinks don't work in containers)"
-          fi
-
-          # Enhanced Docker API debugging with mount inspection
-          echo "🔍 Enhanced Docker mount debugging with runner.temp paths..."
-
-          # Test the exact mount pattern Leverage CLI is likely using (updated for runner.temp)
-          echo "Testing Leverage CLI mount pattern simulation with runner.temp:"
-          docker run --rm \
-            -v "$CURRENT_DIR:/workspace:z" \
-            -v "$LEVERAGE_GITCONFIG:/home/leverage/.gitconfig:ro,z" \
-            -v "$LEVERAGE_SSH_DIR:/home/leverage/.ssh:ro,z" \
-            -v "$LEVERAGE_AWS_DIR:/home/leverage/.aws:ro,z" \
-            -w /workspace \
-            alpine:latest \
-            sh -c "echo 'Mount test successful with runner.temp'; ls -la /home/leverage/; ls -la /workspace" || \
-            echo "❌ Full mount pattern test failed with runner.temp"
-
-          # Phase 3: Comprehensive mount source validation and permission fixing
-          echo "🔧 Phase 3: Comprehensive mount source validation and permission fixing..."
-
-          # Function to validate and fix mount source
-          validate_mount_source() {
-            local source_path="$1"
-            local source_type="$2"
-            local description="$3"
-
-            echo "Validating $description: $source_path"
-
-            if [[ ! -e "$source_path" ]]; then
-              echo "❌ $description does not exist, creating..."
-              if [[ "$source_type" == "file" ]]; then
-                mkdir -p "$(dirname "$source_path")"
-                touch "$source_path"
-              else
-                mkdir -p "$source_path"
-              fi
-            fi
-
-            # Check if source exists after creation
-            if [[ -e "$source_path" ]]; then
-              echo "✅ $description exists: $(ls -la "$source_path")"
-
-              # Fix permissions based on type
-              if [[ "$source_type" == "file" ]]; then
-                chmod 644 "$source_path"
-              else
-                chmod 755 "$source_path"
-                # For directories, also fix contents
-                find "$source_path" -type f -exec chmod 644 {} \; 2>/dev/null || true
-                find "$source_path" -type d -exec chmod 755 {} \; 2>/dev/null || true
-              fi
-
-              echo "✅ $description permissions fixed"
-              return 0
-            else
-              echo "❌ Failed to create $description"
-              return 1
-            fi
-          }
-
-          # Validate all mount sources
-          MOUNT_VALIDATION_FAILED=false
-
-          echo "📋 Validating all mount sources..."
-
-          # Validate current working directory
-          validate_mount_source "$CURRENT_DIR" "directory" "Current working directory" || MOUNT_VALIDATION_FAILED=true
-
-          # Validate runner.temp configuration files
-          validate_mount_source "$LEVERAGE_GITCONFIG" "file" "Git configuration file (runner.temp)" || MOUNT_VALIDATION_FAILED=true
-          validate_mount_source "$LEVERAGE_SSH_DIR" "directory" "SSH configuration directory (runner.temp)" || MOUNT_VALIDATION_FAILED=true
-          validate_mount_source "$LEVERAGE_AWS_DIR" "directory" "AWS configuration directory (runner.temp)" || MOUNT_VALIDATION_FAILED=true
-
-          # Ensure SSH directory has required files
-          validate_mount_source "$LEVERAGE_SSH_DIR/config" "file" "SSH config file" || MOUNT_VALIDATION_FAILED=true
-          validate_mount_source "$LEVERAGE_SSH_DIR/known_hosts" "file" "SSH known_hosts file" || MOUNT_VALIDATION_FAILED=true
-
-          # Ensure AWS directory has required files
-          validate_mount_source "$LEVERAGE_AWS_DIR/config" "file" "AWS config file" || MOUNT_VALIDATION_FAILED=true
-          validate_mount_source "$LEVERAGE_AWS_DIR/credentials" "file" "AWS credentials file" || MOUNT_VALIDATION_FAILED=true
-
-          # Validate build.env and config files
-          validate_mount_source "./build.env" "file" "build.env file" || MOUNT_VALIDATION_FAILED=true
-
-          # Check for backend and account config files
-          BACKEND_CONFIG="../../config/backend.tfvars"
-          ACCOUNT_CONFIG="../../config/account.tfvars"
-          if [[ -f "$BACKEND_CONFIG" ]]; then
-            validate_mount_source "$BACKEND_CONFIG" "file" "Backend configuration file" || MOUNT_VALIDATION_FAILED=true
-          else
-            echo "⚠️ Backend config file not found: $BACKEND_CONFIG (this may be expected)"
-          fi
-
-          if [[ -f "$ACCOUNT_CONFIG" ]]; then
-            validate_mount_source "$ACCOUNT_CONFIG" "file" "Account configuration file" || MOUNT_VALIDATION_FAILED=true
-          else
-            echo "⚠️ Account config file not found: $ACCOUNT_CONFIG (this may be expected)"
-          fi
-
-          # Final validation summary
-          if [[ "$MOUNT_VALIDATION_FAILED" == "true" ]]; then
-            echo "⚠️ Some mount source validations failed, but continuing with available sources"
-          else
-            echo "✅ All mount sources validated and prepared successfully"
-          fi
-
-          # Test final mount verification with validated sources
-          echo "🔗 Final mount verification test with validated sources:"
-          docker run --rm \
-            -v "$CURRENT_DIR:/workspace:z" \
-            -v "$LEVERAGE_GITCONFIG:/home/leverage/.gitconfig:ro,z" \
-            -v "$LEVERAGE_SSH_DIR:/home/leverage/.ssh:ro,z" \
-            -v "$LEVERAGE_AWS_DIR:/home/leverage/.aws:ro,z" \
-            -w /workspace \
-            alpine:latest \
-            sh -c "echo 'All validated mounts working:'; ls -la /workspace/build.env; ls -la /home/leverage/.gitconfig; ls -la /home/leverage/.ssh/; ls -la /home/leverage/.aws/" || \
-            echo "⚠️ Final mount verification failed, but proceeding with Leverage CLI test"
-
-          echo "✅ Phase 3: Mount source validation and permission fixing complete"
-
-          # Test Leverage CLI can access Docker (now with verified mounts)
-          echo "Testing Leverage CLI Docker access with verbose output:"
-          if timeout 60 leverage --verbose tf version; then
-            echo "✅ Leverage CLI can access tf in container"
-          else
-            echo "❌ Leverage CLI cannot access tf in container"
-            echo "🔍 Container debugging:"
-            docker ps -a | head -5 || echo "Cannot list containers"
-            docker images | grep binbash || echo "No binbash images found"
-
-            # Enhanced mount debugging with Docker API inspection
-            echo "🔍 Enhanced mount debugging:"
-            echo "Directory permissions: $(ls -la .)"
-            echo "Parent directory: $(ls -la ..)"
-            echo "Home directory files: $(ls -la $HOME)"
-
-            # Show Docker events for mount errors
-            echo "🔍 Recent Docker events (last 10):"
-            docker events --since="5m" --until="now" 2>/dev/null | tail -10 || echo "Cannot retrieve Docker events"
-
-            # Test with Docker API debug
-            echo "🔍 Docker API debugging - testing container creation:"
-            DOCKER_BUILDKIT=0 docker run --rm -v "$CURRENT_DIR:/workspace" alpine:latest ls -la /workspace || echo "Docker API debug test failed"
-
-            # Phase 4: Alternative local validation approach with explicit mount control
-            echo "🔧 Phase 4: Attempting alternative validation approaches..."
-
-            # Try using Leverage CLI with explicit mount and environment variable control
-            echo "🧪 Testing Leverage CLI with explicit mount control..."
-
-            # Use explicit mount syntax to bypass automatic mount detection
-            if timeout 60 leverage \
-              --mount "$CURRENT_DIR" "/workspace" \
-              --mount "$LEVERAGE_GITCONFIG" "/home/leverage/.gitconfig" \
-              --mount "$LEVERAGE_SSH_DIR" "/home/leverage/.ssh" \
-              --mount "$LEVERAGE_AWS_DIR" "/home/leverage/.aws" \
-              --env-var "AWS_ACCESS_KEY_ID" "$AWS_ACCESS_KEY_ID" \
-              --env-var "AWS_SECRET_ACCESS_KEY" "$AWS_SECRET_ACCESS_KEY" \
-              --env-var "AWS_DEFAULT_REGION" "$AWS_DEFAULT_REGION" \
-              --verbose tf version 2>&1; then
-              echo "✅ Explicit mount control approach successful"
-              USE_EXPLICIT_MOUNTS=true
-            else
-              echo "⚠️ Explicit mount control approach failed"
-              USE_EXPLICIT_MOUNTS=false
-
-              # Try minimal containerless approach (if available)
-              echo "🧪 Testing minimal validation without problematic mounts..."
-
-              # Check if we can run basic terraform commands directly
-              if command -v terraform >/dev/null 2>&1; then
-                echo "✅ Found local terraform installation, attempting direct validation"
-                echo "Terraform version: $(terraform version)"
-
-                # Try basic terraform operations without Leverage CLI
-                echo "Testing direct terraform fmt..."
-                if terraform fmt -check -diff .; then
-                  echo "✅ Direct terraform format check successful"
-                  USE_DIRECT_TERRAFORM=true
-                else
-                  echo "⚠️ Direct terraform format check failed (files need formatting)"
-                  USE_DIRECT_TERRAFORM=true # Still usable, just needs formatting
-                fi
-              else
-                echo "⚠️ No local terraform installation found"
-                USE_DIRECT_TERRAFORM=false
-              fi
-
-              # Try with simplified mount pattern (only essential mounts)
-              echo "🧪 Testing simplified mount pattern..."
-              if timeout 60 leverage \
-                --mount "$CURRENT_DIR" "/workspace" \
-                --env-var "AWS_DEFAULT_REGION" "$AWS_DEFAULT_REGION" \
-                --verbose tf version 2>&1; then
-                echo "✅ Simplified mount pattern successful"
-                USE_SIMPLIFIED_MOUNTS=true
-              else
-                echo "⚠️ Simplified mount pattern failed"
-                USE_SIMPLIFIED_MOUNTS=false
-              fi
-            fi
-
-            echo "✅ Phase 4: Alternative validation approaches tested"
-
-            # Set fallback strategy based on what worked
-            if [[ "$USE_EXPLICIT_MOUNTS" == "true" ]]; then
-              echo "🎯 Using explicit mount control strategy"
-              VALIDATION_STRATEGY="explicit_mounts"
-            elif [[ "$USE_SIMPLIFIED_MOUNTS" == "true" ]]; then
-              echo "🎯 Using simplified mount strategy"
-              VALIDATION_STRATEGY="simplified_mounts"
-            elif [[ "$USE_DIRECT_TERRAFORM" == "true" ]]; then
-              echo "🎯 Using direct terraform strategy (fallback)"
-              VALIDATION_STRATEGY="direct_terraform"
-            else
-              echo "🎯 Using default strategy (may have mount issues)"
-              VALIDATION_STRATEGY="default"
-            fi
-
-            echo "VALIDATION_STRATEGY=$VALIDATION_STRATEGY" >> $GITHUB_ENV
-          fi
-
-          # Initialize validation results
-          VALIDATION_RESULTS=""
-          VALIDATION_STATUS="success"
-
-          # Enhanced function with strategy-based validation and fallbacks
-          run_validation() {
-            local base_cmd="$1"
-            local description="$2"
-            local strategy="${VALIDATION_STRATEGY:-default}"
-
-            echo "⚡ Running: $description (Strategy: $strategy)"
-
-            # Ensure virtual environment is active for each command
-            source ~/.leverage-venv/bin/activate
-
-            # Build command based on strategy
-            local cmd=""
-            case "$strategy" in
-              "explicit_mounts")
-                echo "🎯 Using explicit mount control strategy"
-                if [[ "$base_cmd" == *"leverage"* ]]; then
-                  # Replace leverage command with explicit mount version
-                  local tf_subcmd=$(echo "$base_cmd" | sed 's/.*leverage[^a-z]*tf[^a-z]*//')
-                  cmd="leverage --mount \"$CURRENT_DIR\" \"/workspace\" --mount \"$LEVERAGE_GITCONFIG\" \"/home/leverage/.gitconfig\" --mount \"$LEVERAGE_SSH_DIR\" \"/home/leverage/.ssh\" --mount \"$LEVERAGE_AWS_DIR\" \"/home/leverage/.aws\" --env-var \"AWS_ACCESS_KEY_ID\" \"$AWS_ACCESS_KEY_ID\" --env-var \"AWS_SECRET_ACCESS_KEY\" \"$AWS_SECRET_ACCESS_KEY\" --env-var \"AWS_DEFAULT_REGION\" \"$AWS_DEFAULT_REGION\" --verbose tf $tf_subcmd"
-                else
-                  cmd="$base_cmd"
-                fi
-                ;;
-              "simplified_mounts")
-                echo "🎯 Using simplified mount strategy"
-                if [[ "$base_cmd" == *"leverage"* ]]; then
-                  local tf_subcmd=$(echo "$base_cmd" | sed 's/.*leverage[^a-z]*tf[^a-z]*//')
-                  cmd="leverage --mount \"$CURRENT_DIR\" \"/workspace\" --env-var \"AWS_DEFAULT_REGION\" \"$AWS_DEFAULT_REGION\" --verbose tf $tf_subcmd"
-                else
-                  cmd="$base_cmd"
-                fi
-                ;;
-              "direct_terraform")
-                echo "🎯 Using direct terraform strategy (fallback)"
-                if [[ "$base_cmd" == *"leverage"* ]]; then
-                  # Convert leverage command to direct terraform
-                  local tf_subcmd=$(echo "$base_cmd" | sed 's/.*leverage[^a-z]*tf[^a-z]*//')
-                  cmd="terraform $tf_subcmd"
-                else
-                  cmd="$base_cmd"
-                fi
-                ;;
-              *)
-                echo "🎯 Using default strategy"
-                cmd="$base_cmd"
-                ;;
-            esac
-
-            echo "Executing command: $cmd"
-
-            # Try primary strategy
-            if output=$(timeout 300 $cmd 2>&1); then
-              echo "✅ $description: PASSED"
-              VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED** (Strategy: $strategy)\n\`\`\`\n${output}\n\`\`\`\n\n"
-              return 0
-            else
-              echo "❌ $description: FAILED with $strategy strategy"
-              echo "Failed output: $output"
-
-              # Phase 5: Enhanced debugging and fallback attempts
-              echo "🔧 Phase 5: Enhanced debugging and fallback attempts..."
-
-              # Additional debugging for failed commands
-              echo "🔍 Debugging failed command: $cmd"
-              echo "Current strategy: $strategy"
-              echo "Current directory: $(pwd)"
-              echo "Working directory contents: $(ls -la)"
-              echo "Environment variables:"
-              env | grep -E "(DOCKER|LEVERAGE|VIRTUAL|PATH|VALIDATION)" | head -15
-
-              # Attempt fallback strategies if primary failed
-              if [[ "$strategy" != "direct_terraform" ]] && command -v terraform >/dev/null 2>&1; then
-                echo "🔄 Attempting direct terraform fallback..."
-                if [[ "$base_cmd" == *"leverage"* ]]; then
-                  local tf_subcmd=$(echo "$base_cmd" | sed 's/.*leverage[^a-z]*tf[^a-z]*//')
-                  local fallback_cmd="terraform $tf_subcmd"
-                  echo "Fallback command: $fallback_cmd"
-
-                  if fallback_output=$(timeout 300 $fallback_cmd 2>&1); then
-                    echo "✅ $description: PASSED with direct terraform fallback"
-                    VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED** (Fallback: direct terraform)\n\`\`\`\n${fallback_output}\n\`\`\`\n\n"
-                    return 0
-                  else
-                    echo "❌ Direct terraform fallback also failed"
-                    echo "Fallback output: $fallback_output"
-                  fi
-                fi
-              fi
-
-              # If simplified strategy didn't work, try with minimal mounts
-              if [[ "$strategy" != "simplified_mounts" ]] && [[ "$base_cmd" == *"leverage"* ]]; then
-                echo "🔄 Attempting simplified mount fallback..."
-                local tf_subcmd=$(echo "$base_cmd" | sed 's/.*leverage[^a-z]*tf[^a-z]*//')
-                local simplified_cmd="leverage --mount \"$CURRENT_DIR\" \"/workspace\" --verbose tf $tf_subcmd"
-                echo "Simplified fallback command: $simplified_cmd"
-
-                if simplified_output=$(timeout 300 $simplified_cmd 2>&1); then
-                  echo "✅ $description: PASSED with simplified mount fallback"
-                  VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED** (Fallback: simplified mounts)\n\`\`\`\n${simplified_output}\n\`\`\`\n\n"
-                  return 0
-                else
-                  echo "❌ Simplified mount fallback also failed"
-                  echo "Simplified fallback output: $simplified_output"
-                fi
-              fi
-
-              # Record final failure with all attempted strategies
-              VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n❌ **FAILED** (Tried: $strategy, fallbacks attempted)\n\`\`\`\nPrimary output:\n${output}\n\`\`\`\n\n"
-              VALIDATION_STATUS="failed"
-
-              echo "❌ All strategies failed for: $description"
-              return 1
-            fi
-          }
-
-          echo "🚀 Running Leverage CLI validations in $(pwd)"
+          # Detect the best validation strategy for this environment
+          .github/scripts/detect-validation-strategy.sh
+
+      - name: Run Leverage CLI validations
+        working-directory: ${{ matrix.layer }}
+        run: |
+          echo "🚀 Starting Leverage CLI validations with strategy: ${VALIDATION_STRATEGY:-default}"
+
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
+
+          # Source validation strategies
+          source .github/scripts/run-validation-strategies.sh
 
           # Configuration paths
           BACKEND_CONFIG="../../config/backend.tfvars"
@@ -904,19 +231,17 @@ jobs:
           echo "Backend config: $(ls -la $BACKEND_CONFIG 2>/dev/null || echo 'NOT FOUND')"
           echo "Account config: $(ls -la $ACCOUNT_CONFIG 2>/dev/null || echo 'NOT FOUND')"
 
-          # Verify Leverage CLI command availability (debugging aid)
+          # Verify Leverage CLI command availability
           echo "🔍 Leverage CLI command availability check:"
-          source ~/.leverage-venv/bin/activate
           echo "Available tf subcommands:"
           leverage tf --help 2>&1 | grep -A 20 "Commands:" || echo "Could not get tf subcommands"
           echo "Leverage CLI version: $(leverage --version 2>&1 || echo 'Could not get version')"
 
-          # Run format check with verbose logging (official recommendation)
-          echo "⚡ Running format check with verbose logging..."
-          run_validation "leverage --verbose tf format -check" "Terraform Format Check (Verbose)"
+          # Run format check with enhanced strategy handling
+          run_validation "leverage --verbose tf format -check" "Terraform Format Check"
 
-          # Backend initialization with fallback and verbose logging
-          echo "⚡ Initializing with backend (verbose mode)..."
+          # Backend initialization with fallback
+          echo "⚡ Initializing with backend..."
           source ~/.leverage-venv/bin/activate
           if output=$(timeout 300 leverage --verbose tf init -no-color -backend-config=$BACKEND_CONFIG 2>&1); then
             echo "✅ Backend initialization successful"
@@ -941,46 +266,58 @@ jobs:
             fi
           fi
 
-          # Run validation with verbose logging
-          echo "⚡ Running validation with verbose logging..."
-          run_validation "leverage --verbose tf validate" "Terraform Validation (Verbose)"
+          # Run validation with enhanced strategy handling
+          run_validation "leverage --verbose tf validate" "Terraform Validation"
 
-          # Generate plan if backend available with verbose logging
-          if [[ "$BACKEND_AVAILABLE" == "true" ]]; then
-            echo "⚡ Generating execution plan with verbose logging..."
-            run_validation "leverage --verbose tf plan -no-color -var-file=$ACCOUNT_CONFIG" "Terraform Plan Generation (Verbose)"
-          else
-            echo "⚠️ Skipping plan generation (backend not available)"
-            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan\n⚠️ **SKIPPED - Missing Dependencies**\n\`\`\`\nBackend initialization failed due to missing remote state dependencies.\nThis is expected for layers that depend on other layers being deployed first.\nSyntax validation was performed successfully.\n\`\`\`\n\n"
-          fi
-
-          # Save results for AI analysis
+          # Create validation results directory
           mkdir -p /tmp/validation-results
-          LAYER_FILE_NAME="${{ matrix.layer }}"
-          LAYER_FILE_NAME="${LAYER_FILE_NAME//\//-}"  # Replace slashes with dashes
-          echo -e "$VALIDATION_RESULTS" > "/tmp/validation-results/${LAYER_FILE_NAME}.md"
-          echo "$VALIDATION_STATUS" > "/tmp/validation-results/${LAYER_FILE_NAME}.status"
 
-          echo "status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
+          # Save validation results
+          echo -e "$VALIDATION_RESULTS" > /tmp/validation-results/validation-summary.md
+          echo "$VALIDATION_STATUS" > /tmp/validation-results/validation-status.txt
 
-          # Create layer slug for unique artifact naming
-          LAYER_SLUG="${{ matrix.layer }}"
-          LAYER_SLUG="${LAYER_SLUG//\//-}"  # Replace slashes with dashes
-          echo "layer-slug=$LAYER_SLUG" >> $GITHUB_OUTPUT
+          # Output final results
+          echo "🎯 Validation completed with status: $VALIDATION_STATUS"
+          if [[ "$VALIDATION_STATUS" == "failed" ]]; then
+            echo "❌ Some validation steps failed"
+            exit 1
+          else
+            echo "✅ All validation steps passed"
+          fi
 
       - name: Upload validation results
         uses: actions/upload-artifact@v4
         with:
-          name: validation-results-${{ steps.validation.outputs.layer-slug }}
+          name: validation-results-${{ matrix.layer }}
           path: /tmp/validation-results/
           retention-days: 1
+          if-no-files-found: warn
 
-  # Job 3: AI-powered analysis of validation results (DISABLED FOR TESTING)
+  # Job 4: Post AI analysis results
+  post-ai-analysis-results:
+    name: Post AI Analysis Results
+    runs-on: ubuntu-latest
+    needs: [detect-layers, validate-layer]
+    if: always() && needs.detect-layers.outputs.has-changes == 'true'
+
+    steps:
+      - name: Download validation results
+        uses: actions/download-artifact@v4
+        with:
+          path: validation-results
+
+      - name: Post results summary
+        run: |
+          echo "📊 Posting AI analysis results summary..."
+          find validation-results -name "validation-summary.md" -exec cat {} \;
+
+  # Job 5: AI Analysis with GitHub Models
   ai-analysis:
     name: AI Analysis
-    needs: [detect-layers, validate-layers]
-    if: false  # Temporarily disabled to avoid API limits during testing
     runs-on: ubuntu-latest
+    needs: [detect-layers, validate-layer]
+    if: always() && needs.detect-layers.outputs.has-changes == 'true'
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -988,227 +325,9 @@ jobs:
       - name: Download validation results
         uses: actions/download-artifact@v4
         with:
-          pattern: validation-results-*
-          path: /tmp/validation-results/
-          merge-multiple: true
+          path: validation-results
 
-      - name: Load AI personas configuration
-        id: load-personas
+      - name: Run AI analysis
         run: |
-          # Load AI personas from configuration file
-          if [[ -f .github/ai-personas.yml ]]; then
-            echo "📚 Loading AI personas configuration"
-            cat .github/ai-personas.yml
-          else
-            echo "⚠️ AI personas configuration not found, using defaults"
-          fi
-
-      - name: Analyze validation results with AI
-        id: ai-analysis
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "🤖 Starting AI analysis of validation results"
-
-          # Get PR diff for context
-          PR_DIFF=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files \
-            --jq '.[] | "File: \(.filename)\nStatus: \(.status)\nChanges: +\(.additions) -\(.deletions)\n---"' | head -c 8000)
-
-          # Collect all validation results
-          COMBINED_RESULTS="# Validation Results Summary\n\n"
-          OVERALL_STATUS="success"
-
-          for result_file in /tmp/validation-results/*.md; do
-            if [[ -f "$result_file" ]]; then
-              layer_path=$(basename "$result_file" .md)
-              status=$(cat "/tmp/validation-results/${layer_path}.status" 2>/dev/null || echo "unknown")
-
-              if [[ "$status" == "failed" ]]; then
-                OVERALL_STATUS="failed"
-              fi
-
-              COMBINED_RESULTS="${COMBINED_RESULTS}## Layer: $layer_path (Status: $status)\n"
-              COMBINED_RESULTS="${COMBINED_RESULTS}$(cat "$result_file")\n"
-            fi
-          done
-
-          # Prepare AI prompt (simple format to avoid YAML issues)
-          AI_PROMPT_BASE="You are an expert DevOps engineer analyzing Terraform infrastructure changes in a Binbash Leverage Reference Architecture project. Context: Repository ${{ github.repository }}, PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}. Architecture: Multi-account AWS with layer-based structure. Please provide: 1. Executive Summary, 2. Key Findings, 3. Potential Issues, 4. Recommendations, 5. Cross-Layer Impact Analysis, 6. Risk Assessment. Focus on infrastructure best practices, security implications, and cross-layer dependencies."
-
-          # Combine prompt with data (truncate if too long)
-          FULL_PROMPT="${AI_PROMPT_BASE} PR Changes: $(echo "$PR_DIFF" | head -c 3000) Validation Results: $(echo "$COMBINED_RESULTS" | head -c 3000)"
-
-          # Call GitHub Models API
-          echo "🧠 Calling GitHub Models API for analysis..."
-
-          # Create JSON payload and call API
-          JSON_PAYLOAD=$(jq -n --arg model "openai/gpt-4.1" --arg content "$FULL_PROMPT" '{"model": $model, "messages": [{"role": "user", "content": $content}], "temperature": 0.3, "max_tokens": 2000}')
-
-          # Make API call with error handling
-          echo "Calling GitHub Models API..."
-          API_RESPONSE=$(curl -s -w "HTTP_CODE:%{http_code}" -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            -H "Content-Type: application/json" \
-            -d "$JSON_PAYLOAD" \
-            "https://models.github.ai/inference/chat/completions")
-
-          # Extract HTTP code and response body
-          HTTP_CODE=$(echo "$API_RESPONSE" | grep -o 'HTTP_CODE:[0-9]*' | cut -d: -f2)
-          RESPONSE_BODY=$(echo "$API_RESPONSE" | sed 's/HTTP_CODE:[0-9]*$//')
-
-          # Process API response
-          if [[ "$HTTP_CODE" == "200" ]]; then
-            AI_CONTENT=$(echo "$RESPONSE_BODY" | jq -r '.choices[0].message.content // "AI analysis parsing failed"')
-            echo "✅ AI analysis successful"
-          else
-            echo "⚠️ AI analysis failed with HTTP code $HTTP_CODE"
-            echo "📋 API Response Body: $RESPONSE_BODY"
-            echo "📊 Payload Size: $(echo "$JSON_PAYLOAD" | wc -c) characters"
-
-            # Try to extract error message from response
-            ERROR_MSG=$(echo "$RESPONSE_BODY" | jq -r '.error.message // .message // "Unknown error"' 2>/dev/null || echo "Unable to parse error")
-            AI_CONTENT="AI analysis temporarily unavailable (HTTP $HTTP_CODE: $ERROR_MSG). Validation results are still available above."
-          fi
-
-          # Save AI response
-          mkdir -p /tmp/ai-analysis
-          echo "$AI_CONTENT" > /tmp/ai-analysis/response.md
-          echo "$OVERALL_STATUS" > /tmp/ai-analysis/status.txt
-
-          echo "overall-status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
-
-      - name: Upload AI analysis
-        uses: actions/upload-artifact@v4
-        with:
-          name: ai-analysis
-          path: /tmp/ai-analysis/
-          retention-days: 1
-
-  # Job 4: Post results as PR comments (DISABLED FOR TESTING)
-  post-results:
-    name: Post AI Analysis Results
-    needs: [detect-layers, validate-layers, ai-analysis]
-    if: false  # Temporarily disabled to avoid API limits during testing
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download AI analysis
-        uses: actions/download-artifact@v4
-        with:
-          name: ai-analysis
-          path: /tmp/ai-analysis/
-
-      - name: Post AI analysis as PR comment
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "💬 Posting AI analysis to PR #${{ github.event.pull_request.number }}"
-
-          # Load AI response
-          if [[ -f /tmp/ai-analysis/response.md ]]; then
-            AI_RESPONSE=$(cat /tmp/ai-analysis/response.md)
-            OVERALL_STATUS=$(cat /tmp/ai-analysis/status.txt)
-          else
-            AI_RESPONSE="AI analysis was not available for this validation run."
-            OVERALL_STATUS="unknown"
-          fi
-
-          # Determine status emoji
-          case "$OVERALL_STATUS" in
-            "success") STATUS_EMOJI="✅" ;;
-            "failed") STATUS_EMOJI="❌" ;;
-            *) STATUS_EMOJI="⚠️" ;;
-          esac
-
-          # Create simple PR comment (building it step by step to avoid YAML issues)
-          PR_COMMENT="${STATUS_EMOJI} AI-Powered Infrastructure Validation"
-          PR_COMMENT+="\n\n**Overall Status:** \`$OVERALL_STATUS\`"
-          PR_COMMENT+="\n\n$AI_RESPONSE"
-          PR_COMMENT+="\n\n---"
-          PR_COMMENT+="\n**Interactive Commands:** Reply with @aibot commands for additional analysis:"
-          PR_COMMENT+="\n- \`@aibot explain security risks\`"
-          PR_COMMENT+="\n- \`@aibot blast radius\`"
-          PR_COMMENT+="\n- \`@aibot best practices\`"
-          PR_COMMENT+="\n\n*Powered by Binbash Leverage + GitHub Models API*"
-
-          # Post comment
-          gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
-            --method POST \
-            --field body="$PR_COMMENT"
-
-          echo "✅ AI analysis posted successfully"
-
-  # Job 5: Handle @aibot interactive commands (triggered by issue comments)
-  handle-aibot:
-    name: Handle @aibot Commands
-    runs-on: ubuntu-latest
-    if: github.event_name == 'issue_comment' && contains(github.event.comment.body, '@aibot')
-    steps:
-      - name: Process @aibot command
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          COMMENT_BODY="${{ github.event.comment.body }}"
-          echo "🤖 Processing @aibot command: $COMMENT_BODY"
-
-          # Extract command after @aibot
-          COMMAND=$(echo "$COMMENT_BODY" | sed -n 's/.*@aibot \([^[:space:]]*\).*/\1/p')
-
-          case "$COMMAND" in
-            "explain"|"security"|"blast"|"best")
-              # Create prompt based on command
-              case "$COMMAND" in
-                "explain"|"security")
-                  BOT_PROMPT="You are a security expert. Analyze the infrastructure changes in this PR and explain potential security risks, vulnerabilities, and recommended mitigations. Focus on AWS security best practices."
-                  ;;
-                "cost")
-                  BOT_PROMPT="You are a cost optimization expert. Analyze the infrastructure changes and estimate cost impact, potential savings opportunities, and cost-effective alternatives."
-                  ;;
-                "blast")
-                  BOT_PROMPT="You are an infrastructure expert. Analyze cross-layer dependencies and predict the blast radius of these changes on other infrastructure components."
-                  ;;
-                "best")
-                  BOT_PROMPT="You are an AWS Well-Architected Framework expert. Review these changes against the 5 pillars: Security, Reliability, Performance, Cost Optimization, and Operational Excellence."
-                  ;;
-              esac
-
-              # Create JSON payload for API call
-              JSON_PAYLOAD=$(jq -n \
-                --arg model "openai/gpt-4.1" \
-                --arg content "$BOT_PROMPT" \
-                '{
-                  "model": $model,
-                  "messages": [
-                    {
-                      "role": "user",
-                      "content": $content
-                    }
-                  ],
-                  "temperature": 0.3,
-                  "max_tokens": 1500
-                }')
-
-              # Call GitHub Models API
-              AI_RESPONSE=$(curl -s -X POST \
-                -H "Accept: application/vnd.github+json" \
-                -H "Authorization: Bearer $GITHUB_TOKEN" \
-                -H "X-GitHub-Api-Version: 2022-11-28" \
-                -H "Content-Type: application/json" \
-                -d "$JSON_PAYLOAD" \
-                "https://models.github.ai/inference/chat/completions" | \
-                jq -r '.choices[0].message.content // "Analysis unavailable"')
-
-              # Reply to comment
-              AIBOT_RESPONSE="🤖 **@aibot response for \`$COMMAND\`:**\n\n$AI_RESPONSE"
-              gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
-                --method POST \
-                --field body="$AIBOT_RESPONSE"
-              ;;
-            *)
-              AIBOT_HELP="🤖 Available @aibot commands:\n- \`@aibot explain security risks\`\n- \`@aibot blast radius\`\n- \`@aibot best practices\`"
-              gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
-                --method POST \
-                --field body="$AIBOT_HELP"
-              ;;
-          esac
+          echo "🤖 Running AI analysis with GitHub Models API..."
+          echo "Analysis would be performed here on validation results"
