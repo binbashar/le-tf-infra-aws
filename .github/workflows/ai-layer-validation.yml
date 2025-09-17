@@ -280,6 +280,49 @@ jobs:
           echo "DOCKER_HOST=unix:///var/run/docker.sock" >> $GITHUB_ENV
           echo "✅ DOCKER_HOST set to: $DOCKER_HOST"
 
+          # CREATE MISSING CONFIGURATION FILES (Fix for bind mount error)
+          echo "🔧 Creating missing configuration files that Leverage CLI expects to mount..."
+
+          # Create minimal .gitconfig file
+          mkdir -p $HOME
+          cat > $HOME/.gitconfig << 'EOF'
+[user]
+	name = GitHub Actions
+	email = actions@github.com
+[init]
+	defaultBranch = main
+[safe]
+	directory = *
+EOF
+          echo "✅ Created .gitconfig at $HOME/.gitconfig"
+
+          # Create minimal SSH config directory and files
+          mkdir -p $HOME/.ssh
+          chmod 700 $HOME/.ssh
+
+          # Create empty SSH config file
+          touch $HOME/.ssh/config
+          chmod 600 $HOME/.ssh/config
+
+          # Create empty known_hosts file
+          touch $HOME/.ssh/known_hosts
+          chmod 600 $HOME/.ssh/known_hosts
+
+          echo "✅ Created SSH configuration directory and files"
+
+          # Create empty AWS config directory (if it doesn't exist)
+          mkdir -p $HOME/.aws
+          touch $HOME/.aws/config
+          touch $HOME/.aws/credentials
+          chmod 600 $HOME/.aws/config $HOME/.aws/credentials
+          echo "✅ Created AWS configuration directory and files"
+
+          # List created files for verification
+          echo "📁 Created configuration files:"
+          echo "Git config: $(ls -la $HOME/.gitconfig 2>/dev/null || echo 'NOT FOUND')"
+          echo "SSH directory: $(ls -la $HOME/.ssh 2>/dev/null || echo 'NOT FOUND')"
+          echo "AWS directory: $(ls -la $HOME/.aws 2>/dev/null || echo 'NOT FOUND')"
+
           # Verify environment variables are set correctly
           echo "🔍 Environment variable verification:"
           echo "SSH_AUTH_SOCK: '$SSH_AUTH_SOCK' (should be empty)"
@@ -298,7 +341,7 @@ jobs:
             echo "❌ Basic Docker container execution failed"
           fi
 
-          echo "✅ Docker environment setup complete with official troubleshooting fixes"
+          echo "✅ Docker environment setup complete with official troubleshooting fixes and configuration files"
 
       - name: Run Leverage CLI validations with debugging
         id: validation
@@ -409,6 +452,51 @@ jobs:
             echo "❌ build.env not accessible in container"
           fi
 
+          # Test common configuration file mounts that Leverage CLI typically uses
+          echo "🔗 Testing configuration file mounts (fixing bind mount errors):"
+
+          # Test Git config mount
+          echo "Git config mount test:"
+          if docker run --rm -v "$HOME/.gitconfig:/home/leverage/.gitconfig:ro" alpine:latest ls -la /home/leverage/.gitconfig; then
+            echo "✅ Git config mount successful"
+          else
+            echo "❌ Git config mount failed - checking if file exists:"
+            ls -la "$HOME/.gitconfig" || echo "Git config file does not exist"
+          fi
+
+          # Test SSH config mount
+          echo "SSH config mount test:"
+          if docker run --rm -v "$HOME/.ssh:/home/leverage/.ssh:ro" alpine:latest ls -la /home/leverage/.ssh; then
+            echo "✅ SSH config mount successful"
+          else
+            echo "❌ SSH config mount failed - checking if directory exists:"
+            ls -la "$HOME/.ssh" || echo "SSH config directory does not exist"
+          fi
+
+          # Test AWS config mount
+          echo "AWS config mount test:"
+          if docker run --rm -v "$HOME/.aws:/home/leverage/.aws:ro" alpine:latest ls -la /home/leverage/.aws; then
+            echo "✅ AWS config mount successful"
+          else
+            echo "❌ AWS config mount failed - checking if directory exists:"
+            ls -la "$HOME/.aws" || echo "AWS config directory does not exist"
+          fi
+
+          # Enhanced Docker API debugging with mount inspection
+          echo "🔍 Enhanced Docker mount debugging..."
+
+          # Test the exact mount pattern Leverage CLI is likely using
+          echo "Testing Leverage CLI mount pattern simulation:"
+          docker run --rm \
+            -v "$CURRENT_DIR:/workspace" \
+            -v "$HOME/.gitconfig:/home/leverage/.gitconfig:ro" \
+            -v "$HOME/.ssh:/home/leverage/.ssh:ro" \
+            -v "$HOME/.aws:/home/leverage/.aws:ro" \
+            -w /workspace \
+            alpine:latest \
+            sh -c "echo 'Mount test successful'; ls -la /home/leverage/; ls -la /workspace" || \
+            echo "❌ Full mount pattern test failed"
+
           # Test Leverage CLI can access Docker (now with verified mounts)
           echo "Testing Leverage CLI Docker access with verbose output:"
           if timeout 60 leverage --verbose tf version; then
@@ -419,12 +507,19 @@ jobs:
             docker ps -a | head -5 || echo "Cannot list containers"
             docker images | grep binbash || echo "No binbash images found"
 
-            # Additional mount debugging
-            echo "🔍 Mount debugging:"
+            # Enhanced mount debugging with Docker API inspection
+            echo "🔍 Enhanced mount debugging:"
             echo "Directory permissions: $(ls -la .)"
             echo "Parent directory: $(ls -la ..)"
-            echo "Mount test with verbose Docker:"
-            docker run --rm -v "$CURRENT_DIR:/workspace" alpine:latest ls -la /workspace || echo "Verbose mount test failed"
+            echo "Home directory files: $(ls -la $HOME)"
+
+            # Show Docker events for mount errors
+            echo "🔍 Recent Docker events (last 10):"
+            docker events --since="5m" --until="now" 2>/dev/null | tail -10 || echo "Cannot retrieve Docker events"
+
+            # Test with Docker API debug
+            echo "🔍 Docker API debugging - testing container creation:"
+            DOCKER_BUILDKIT=0 docker run --rm -v "$CURRENT_DIR:/workspace" alpine:latest ls -la /workspace || echo "Docker API debug test failed"
           fi
 
           # Initialize validation results
