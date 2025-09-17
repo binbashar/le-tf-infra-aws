@@ -285,15 +285,13 @@ jobs:
 
           # Create minimal .gitconfig file
           mkdir -p $HOME
-          cat > $HOME/.gitconfig << 'EOF'
-[user]
-	name = GitHub Actions
-	email = actions@github.com
-[init]
-	defaultBranch = main
-[safe]
-	directory = *
-EOF
+          echo "[user]" > $HOME/.gitconfig
+          echo "	name = GitHub Actions" >> $HOME/.gitconfig
+          echo "	email = actions@github.com" >> $HOME/.gitconfig
+          echo "[init]" >> $HOME/.gitconfig
+          echo "	defaultBranch = main" >> $HOME/.gitconfig
+          echo "[safe]" >> $HOME/.gitconfig
+          echo "	directory = *" >> $HOME/.gitconfig
           echo "✅ Created .gitconfig at $HOME/.gitconfig"
 
           # Create minimal SSH config directory and files
