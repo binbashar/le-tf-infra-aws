@@ -1,5 +1,5 @@
 module "s3_bucket_data_raw" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.2.1"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.11.0"
 
   bucket        = "${local.name}-data-raw-bucket"
   acl           = null
@@ -87,7 +87,7 @@ data "aws_iam_policy_document" "s3_raw_bucket_policy" {
 }
 
 module "s3_bucket_data_processed" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.2.1"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.11.0"
 
   bucket        = "${local.name}-data-processed-bucket"
   acl           = null

@@ -258,7 +258,7 @@ module "glue_trigger_crawler_on_demand" {
 ###########################################################################
 
 module "s3_bucket_glue_script_storage" {
-  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.2.1"
+  source = "github.com/binbashar/terraform-aws-s3-bucket.git?ref=v4.11.0"
 
   bucket        = "${local.name}-glue-script"
   acl           = null
