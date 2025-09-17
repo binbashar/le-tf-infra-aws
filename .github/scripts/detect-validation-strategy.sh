@@ -12,25 +12,17 @@ LEVERAGE_GITCONFIG="${LEVERAGE_GITCONFIG:-$HOME/.gitconfig}"
 LEVERAGE_SSH_DIR="${LEVERAGE_SSH_DIR:-$HOME/.ssh}"
 LEVERAGE_AWS_DIR="${LEVERAGE_AWS_DIR:-$HOME/.aws}"
 
-# Try using Leverage CLI with explicit mount and environment variable control
-echo "🧪 Testing Leverage CLI with explicit mount control..."
+# Try using basic Leverage CLI commands (v2.1.1 compatible)
+echo "🧪 Testing basic Leverage CLI functionality..."
 
-# Use explicit mount syntax to bypass automatic mount detection
-if timeout 60 leverage \
-    --mount "$CURRENT_DIR" "/workspace" \
-    --mount "$LEVERAGE_GITCONFIG" "/home/leverage/.gitconfig" \
-    --mount "$LEVERAGE_SSH_DIR" "/home/leverage/.ssh" \
-    --mount "$LEVERAGE_AWS_DIR" "/home/leverage/.aws" \
-    --env-var "AWS_ACCESS_KEY_ID" "$AWS_ACCESS_KEY_ID" \
-    --env-var "AWS_SECRET_ACCESS_KEY" "$AWS_SECRET_ACCESS_KEY" \
-    --env-var "AWS_DEFAULT_REGION" "$AWS_DEFAULT_REGION" \
-    --verbose tf version 2>&1; then
-    echo "✅ Explicit mount control approach successful"
-    echo "VALIDATION_STRATEGY=explicit_mounts" >> "$GITHUB_ENV"
+# Test basic leverage tf command without mount options
+if timeout 60 leverage --verbose tf version 2>&1; then
+    echo "✅ Basic Leverage CLI approach successful"
+    echo "VALIDATION_STRATEGY=leverage_standard" >> "$GITHUB_ENV"
     exit 0
+else
+    echo "⚠️ Basic Leverage CLI approach failed"
 fi
-
-echo "⚠️ Explicit mount control approach failed"
 
 # Try minimal containerless approach (if available)
 echo "🧪 Testing minimal validation without problematic mounts..."
@@ -55,18 +47,5 @@ else
     echo "⚠️ No local terraform installation found"
 fi
 
-# Try with simplified mount pattern (only essential mounts)
-echo "🧪 Testing simplified mount pattern..."
-if timeout 60 leverage \
-    --mount "$CURRENT_DIR" "/workspace" \
-    --env-var "AWS_DEFAULT_REGION" "$AWS_DEFAULT_REGION" \
-    --verbose tf version 2>&1; then
-    echo "✅ Simplified mount pattern successful"
-    echo "VALIDATION_STRATEGY=simplified_mounts" >> "$GITHUB_ENV"
-    exit 0
-else
-    echo "⚠️ Simplified mount pattern failed"
-fi
-
-echo "🎯 Using default strategy (may have mount issues)"
+echo "🎯 Using default Leverage CLI strategy"
 echo "VALIDATION_STRATEGY=default" >> "$GITHUB_ENV"
