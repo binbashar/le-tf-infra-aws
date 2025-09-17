@@ -69,7 +69,33 @@ run_validation() {
         echo "Current directory: $(pwd)"
         echo "Working directory contents: $(ls -la)"
         echo "Environment variables:"
-        env | grep -E "(DOCKER|LEVERAGE|VIRTUAL|PATH|VALIDATION)" | head -15
+        env | grep -E "(DOCKER|LEVERAGE|VIRTUAL|PATH|VALIDATION|AWS)" | head -20
+
+        # Enhanced Docker container debugging
+        echo "🐳 Docker container debugging:"
+        echo "Docker version: $(docker --version 2>&1 || echo 'Docker not available')"
+        echo "Docker info: $(docker info 2>&1 | head -10 || echo 'Docker info failed')"
+        echo "Running containers: $(docker ps --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}' 2>&1 || echo 'No containers')"
+
+        # AWS credentials debugging (safe - no secret exposure)
+        echo "🔑 AWS credentials debugging:"
+        echo "AWS_ACCESS_KEY_ID set: ${AWS_ACCESS_KEY_ID:+yes}"
+        echo "AWS_SECRET_ACCESS_KEY set: ${AWS_SECRET_ACCESS_KEY:+yes}"
+        echo "AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-not set}"
+
+        # Leverage CLI specific debugging
+        if [[ "$cmd" == *"leverage"* ]]; then
+            echo "🛠️ Leverage CLI debugging:"
+            echo "Leverage CLI path: $(which leverage 2>&1 || echo 'not found')"
+            echo "Leverage CLI config: $(leverage --help 2>&1 | head -5 || echo 'help failed')"
+
+            # Try to get more detailed error information
+            echo "🔍 Attempting verbose Leverage CLI execution:"
+            local debug_cmd="${cmd} --help"
+            echo "Debug command: $debug_cmd"
+            local debug_output=$(timeout 60 $debug_cmd 2>&1 || echo "Debug command failed")
+            echo "Debug output: $debug_output"
+        fi
 
         # Attempt fallback strategies if primary failed
         if [[ "$strategy" != "direct_terraform" ]] && command -v terraform >/dev/null 2>&1; then
