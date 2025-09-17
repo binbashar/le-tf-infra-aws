@@ -337,13 +337,20 @@ jobs:
             exit 0
           fi
 
+      - name: Set artifact name
+        run: |
+          # Replace forward slashes with hyphens for artifact name
+          ARTIFACT_NAME="validation-results-$(echo '${{ matrix.layer }}' | sed 's|/|-|g')"
+          echo "ARTIFACT_NAME=$ARTIFACT_NAME" >> $GITHUB_ENV
+
       - name: Upload validation results
         uses: actions/upload-artifact@v4
         with:
-          name: validation-results-${{ matrix.layer | replace('/', '-') }}
+          name: ${{ env.ARTIFACT_NAME }}
           path: /tmp/validation-results/
           retention-days: 1
           if-no-files-found: warn
+        continue-on-error: true
 
   # Job 4: Post AI analysis results
   post-ai-analysis-results:
