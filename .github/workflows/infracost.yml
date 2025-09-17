@@ -16,6 +16,7 @@ env:
 
 jobs:
   Infracost:
+    if: ${{ !github.event.pull_request.draft }}
     name: Infracost
     runs-on: ubuntu-latest
     env:
