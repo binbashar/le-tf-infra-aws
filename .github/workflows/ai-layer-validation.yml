@@ -260,18 +260,30 @@ jobs:
 
           echo "✅ Leverage environment configured with image: $TERRAFORM_IMAGE_TAG"
 
-      - name: Setup Docker environment for Leverage CLI
+      - name: Setup Docker environment for Leverage CLI (Official Troubleshooting)
         run: |
-          echo "🐳 Setting up Docker environment for Leverage CLI..."
+          echo "🐳 Setting up Docker environment for Leverage CLI (applying official troubleshooting fixes)..."
 
           # Ensure Docker daemon is accessible (GitHub Actions specific)
           sudo chmod 666 /var/run/docker.sock || echo "Could not modify Docker socket permissions"
 
-          # Set Docker environment variables (mirroring local setup)
-          echo "DOCKER_HOST=unix:///var/run/docker.sock" >> $GITHUB_ENV
+          # Apply official Leverage CLI troubleshooting fixes
+          echo "🔧 Applying official troubleshooting environment variables..."
 
-          # Unset SSH_AUTH_SOCK (like local setup)
+          # OFFICIAL FIX: Unset SSH_AUTH_SOCK (from troubleshooting guide)
+          unset SSH_AUTH_SOCK
           echo "SSH_AUTH_SOCK=" >> $GITHUB_ENV
+          echo "✅ SSH_AUTH_SOCK unset (official troubleshooting fix)"
+
+          # Set Docker environment variables (mirroring local setup + official guidance)
+          export DOCKER_HOST=unix:///var/run/docker.sock
+          echo "DOCKER_HOST=unix:///var/run/docker.sock" >> $GITHUB_ENV
+          echo "✅ DOCKER_HOST set to: $DOCKER_HOST"
+
+          # Verify environment variables are set correctly
+          echo "🔍 Environment variable verification:"
+          echo "SSH_AUTH_SOCK: '$SSH_AUTH_SOCK' (should be empty)"
+          echo "DOCKER_HOST: '$DOCKER_HOST'"
 
           # Test Docker connectivity
           echo "🔍 Testing Docker daemon connectivity..."
@@ -286,7 +298,7 @@ jobs:
             echo "❌ Basic Docker container execution failed"
           fi
 
-          echo "✅ Docker environment setup complete"
+          echo "✅ Docker environment setup complete with official troubleshooting fixes"
 
       - name: Run Leverage CLI validations with debugging
         id: validation
@@ -309,15 +321,45 @@ jobs:
           echo "User: $(whoami)"
           echo "Groups: $(groups)"
 
-          # Ensure build.env is accessible from current layer directory
-          REPO_ROOT=$(git rev-parse --show-toplevel)
-          if [[ ! -f "build.env" ]]; then
-            echo "📎 Linking build.env from repository root..."
-            ln -s "$REPO_ROOT/build.env" build.env
+          # Fix path resolution using absolute paths (official troubleshooting approach)
+          echo "🔧 Applying path resolution fixes with absolute paths..."
+
+          # Use GITHUB_WORKSPACE for absolute paths (official guidance)
+          REPO_ROOT="$GITHUB_WORKSPACE"
+          WORK_DIR="$GITHUB_WORKSPACE/apps-devstg/us-east-1/secrets-manager"
+
+          echo "📍 Path resolution:"
+          echo "Repository root: $REPO_ROOT"
+          echo "Working directory: $WORK_DIR"
+          echo "Current PWD: $(pwd)"
+          echo "Realpath PWD: $(realpath .)"
+
+          # Ensure we're in the correct absolute directory
+          cd "$WORK_DIR"
+          echo "✅ Changed to absolute working directory: $(pwd)"
+
+          # Copy build.env instead of symlinking (avoid mount issues)
+          if [[ -f "$REPO_ROOT/build.env" ]]; then
+            echo "📋 Copying build.env from repository root (avoiding symlink issues)..."
+            cp "$REPO_ROOT/build.env" ./build.env
+            echo "✅ build.env copied successfully"
+          else
+            echo "❌ build.env not found at $REPO_ROOT/build.env"
+            ls -la "$REPO_ROOT/" | head -10
           fi
 
-          echo "📁 Build.env content:"
+          # Validate all required files exist with absolute paths
+          echo "📁 File validation:"
+          echo "build.env exists: $(test -f build.env && echo 'YES' || echo 'NO')"
+          echo "build.env content:"
           cat build.env || echo "❌ Could not read build.env"
+
+          # Verify configuration file paths
+          echo "📋 Configuration file paths:"
+          echo "Backend config path: $BACKEND_CONFIG"
+          echo "Backend config exists: $(test -f $BACKEND_CONFIG && echo 'YES' || echo 'NO')"
+          echo "Account config path: $ACCOUNT_CONFIG"
+          echo "Account config exists: $(test -f $ACCOUNT_CONFIG && echo 'YES' || echo 'NO')"
 
           # Docker and container debugging
           echo "🐳 Docker environment debugging:"
@@ -329,8 +371,8 @@ jobs:
           echo "🖼️ Available Docker images:"
           docker images | head -10 || echo "❌ Could not list Docker images"
 
-          # Test Leverage CLI container orchestration
-          echo "🧪 Testing Leverage CLI container orchestration..."
+          # Container pre-validation tests for bind mounts (following official troubleshooting)
+          echo "🧪 Container pre-validation tests for bind mounts..."
 
           # Test basic Leverage CLI execution
           echo "Testing basic Leverage CLI execution:"
@@ -340,15 +382,49 @@ jobs:
             echo "❌ Basic Leverage CLI execution failed"
           fi
 
-          # Test Leverage CLI can access Docker
-          echo "Testing Leverage CLI Docker access:"
-          if timeout 60 leverage tf version; then
+          # Test bind mount with current directory (same pattern Leverage CLI will use)
+          echo "🔗 Testing bind mount with current working directory:"
+          CURRENT_DIR=$(pwd)
+          echo "Current directory for mount test: $CURRENT_DIR"
+
+          if docker run --rm -v "$CURRENT_DIR:/workspace" -w /workspace alpine:latest pwd; then
+            echo "✅ Basic bind mount test successful"
+          else
+            echo "❌ Basic bind mount test failed"
+          fi
+
+          # Test bind mount with file listing (verify mount contents)
+          echo "🔗 Testing bind mount file access:"
+          if docker run --rm -v "$CURRENT_DIR:/workspace" -w /workspace alpine:latest ls -la; then
+            echo "✅ Bind mount file listing successful"
+          else
+            echo "❌ Bind mount file listing failed"
+          fi
+
+          # Test specific build.env file access in container
+          echo "🔗 Testing build.env access in container:"
+          if docker run --rm -v "$CURRENT_DIR:/workspace" -w /workspace alpine:latest cat build.env; then
+            echo "✅ build.env accessible in container"
+          else
+            echo "❌ build.env not accessible in container"
+          fi
+
+          # Test Leverage CLI can access Docker (now with verified mounts)
+          echo "Testing Leverage CLI Docker access with verbose output:"
+          if timeout 60 leverage --verbose tf version; then
             echo "✅ Leverage CLI can access tf in container"
           else
             echo "❌ Leverage CLI cannot access tf in container"
             echo "🔍 Container debugging:"
             docker ps -a | head -5 || echo "Cannot list containers"
             docker images | grep binbash || echo "No binbash images found"
+
+            # Additional mount debugging
+            echo "🔍 Mount debugging:"
+            echo "Directory permissions: $(ls -la .)"
+            echo "Parent directory: $(ls -la ..)"
+            echo "Mount test with verbose Docker:"
+            docker run --rm -v "$CURRENT_DIR:/workspace" alpine:latest ls -la /workspace || echo "Verbose mount test failed"
           fi
 
           # Initialize validation results
@@ -392,14 +468,14 @@ jobs:
           echo "Backend config: $(ls -la $BACKEND_CONFIG 2>/dev/null || echo 'NOT FOUND')"
           echo "Account config: $(ls -la $ACCOUNT_CONFIG 2>/dev/null || echo 'NOT FOUND')"
 
-          # Run format check
-          echo "⚡ Running format check..."
-          run_validation "leverage tf fmt -check" "Terraform Format Check"
+          # Run format check with verbose logging (official recommendation)
+          echo "⚡ Running format check with verbose logging..."
+          run_validation "leverage --verbose tf fmt -check" "Terraform Format Check (Verbose)"
 
-          # Backend initialization with fallback
-          echo "⚡ Initializing with backend..."
+          # Backend initialization with fallback and verbose logging
+          echo "⚡ Initializing with backend (verbose mode)..."
           source ~/.leverage-venv/bin/activate
-          if output=$(timeout 300 leverage tf init -no-color -backend-config=$BACKEND_CONFIG 2>&1); then
+          if output=$(timeout 300 leverage --verbose tf init -no-color -backend-config=$BACKEND_CONFIG 2>&1); then
             echo "✅ Backend initialization successful"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Backend Initialization\n✅ **PASSED**\n\`\`\`\n${output}\n\`\`\`\n\n"
             BACKEND_AVAILABLE=true
@@ -409,7 +485,7 @@ jobs:
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Backend Initialization\n⚠️ **FAILED (trying syntax-only validation)**\n\`\`\`\n${output}\n\`\`\`\n\n"
 
             source ~/.leverage-venv/bin/activate
-            if fallback_output=$(timeout 300 leverage tf init -no-color -backend=false 2>&1); then
+            if fallback_output=$(timeout 300 leverage --verbose tf init -no-color -backend=false 2>&1); then
               echo "✅ Syntax-only initialization successful"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n✅ **PASSED**\n\`\`\`\n${fallback_output}\n\`\`\`\n\n"
               BACKEND_AVAILABLE=false
@@ -422,14 +498,14 @@ jobs:
             fi
           fi
 
-          # Run validation
-          echo "⚡ Running validation..."
-          run_validation "leverage tf validate" "Terraform Validation"
+          # Run validation with verbose logging
+          echo "⚡ Running validation with verbose logging..."
+          run_validation "leverage --verbose tf validate" "Terraform Validation (Verbose)"
 
-          # Generate plan if backend available
+          # Generate plan if backend available with verbose logging
           if [[ "$BACKEND_AVAILABLE" == "true" ]]; then
-            echo "⚡ Generating execution plan..."
-            run_validation "leverage tf plan -no-color -var-file=$ACCOUNT_CONFIG" "Terraform Plan Generation"
+            echo "⚡ Generating execution plan with verbose logging..."
+            run_validation "leverage --verbose tf plan -no-color -var-file=$ACCOUNT_CONFIG" "Terraform Plan Generation (Verbose)"
           else
             echo "⚠️ Skipping plan generation (backend not available)"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan\n⚠️ **SKIPPED - Missing Dependencies**\n\`\`\`\nBackend initialization failed due to missing remote state dependencies.\nThis is expected for layers that depend on other layers being deployed first.\nSyntax validation was performed successfully.\n\`\`\`\n\n"
