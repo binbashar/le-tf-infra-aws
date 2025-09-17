@@ -103,126 +103,43 @@ jobs:
           python-version: '3.13'
           cache: 'pip'
 
-      - name: Install Leverage CLI
+      - name: Setup Python virtual environment and Install Leverage CLI
         run: |
-          echo "📦 Installing latest Leverage CLI"
-          pip install --upgrade leverage
+          echo "🐍 Creating Python virtual environment (mirroring local setup)"
+          python3 -m venv ~/.leverage-venv
+          source ~/.leverage-venv/bin/activate
+
+          echo "📦 Installing latest Leverage CLI in virtual environment"
+          pip install --upgrade pip
+          pip install leverage
+
+          echo "🔧 Configuring environment for subsequent steps"
+          echo "VIRTUAL_ENV=$HOME/.leverage-venv" >> $GITHUB_ENV
+          echo "$HOME/.leverage-venv/bin" >> $GITHUB_PATH
+
+          echo "✅ Leverage CLI installed in virtual environment"
           leverage --version
 
 
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials for Leverage CLI containers
         id: aws-config
         run: |
           # Parse layer information to determine AWS account
           LAYER_PATH="${{ matrix.layer }}"
           ACCOUNT=$(echo "$LAYER_PATH" | cut -d'/' -f1)
 
-          echo "🔑 Configuring AWS credentials for account: $ACCOUNT"
+          echo "🔑 Configuring AWS credentials for Leverage CLI containers - Account: $ACCOUNT"
 
-          # Map account directories to credential secrets
-          case "$ACCOUNT" in
-            "apps-devstg")
-              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-              echo "account-id=${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
-              ;;
-            "shared")
-              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-              echo "account-id=${{ secrets.AWS_SHARED_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
-              ;;
-            "security")
-              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-              echo "account-id=${{ secrets.AWS_SECURITY_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
-              ;;
-            "network")
-              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-              echo "account-id=${{ secrets.AWS_NETWORK_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
-              ;;
-            "apps-prd")
-              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-              echo "account-id=${{ secrets.AWS_PRD_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
-              ;;
-            "data-science")
-              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-              echo "account-id=${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
-              ;;
-            "management")
-              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-              echo "account-id=${{ secrets.AWS_ROOT_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
-              ;;
-            *)
-              echo "⚠️ Unknown account directory: $ACCOUNT, using default credentials"
-              echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-              echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-              echo "account-id=unknown" >> $GITHUB_OUTPUT
-              ;;
-          esac
-
-          # Set AWS region
+          # Simple environment variable setup for Leverage CLI containers
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
           echo "AWS_DEFAULT_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
-          echo "✅ AWS credentials configured for account: $ACCOUNT"
+          echo "AWS_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
 
-      - name: Setup AWS environment for containers
-        id: aws-profiles
-        run: |
-          # Parse layer information to determine account
-          LAYER_PATH="${{ matrix.layer }}"
-          ACCOUNT=$(echo "$LAYER_PATH" | cut -d'/' -f1)
+          # Output account for reference (optional)
+          echo "account=$ACCOUNT" >> $GITHUB_OUTPUT
 
-          echo "🔧 Setting up simplified AWS environment for container compatibility..."
-
-          # Determine profile name for reference (but use env vars for containers)
-          case "$ACCOUNT" in
-            "apps-devstg")
-              PROFILE_NAME="bb-apps-devstg-devops"
-              ;;
-            "shared")
-              PROFILE_NAME="bb-shared-devops"
-              ;;
-            "security")
-              PROFILE_NAME="bb-security-devops"
-              ;;
-            "network")
-              PROFILE_NAME="bb-network-devops"
-              ;;
-            "apps-prd")
-              PROFILE_NAME="bb-apps-prd-devops"
-              ;;
-            "data-science")
-              PROFILE_NAME="bb-data-science-devops"
-              ;;
-            "management")
-              PROFILE_NAME="bb-management-devops"
-              ;;
-            *)
-              PROFILE_NAME="bb-${ACCOUNT}-devops"
-              ;;
-          esac
-
-          # Create minimal AWS configuration for host CLI (but rely on env vars for containers)
-          mkdir -p ~/.aws
-          echo "[default]" > ~/.aws/credentials
-          echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
-          echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
-          echo "region = ${{ env.AWS_REGION }}" >> ~/.aws/credentials
-
-          echo "[default]" > ~/.aws/config
-          echo "region = ${{ env.AWS_REGION }}" >> ~/.aws/config
-          echo "output = json" >> ~/.aws/config
-
-          # Set environment variables for container usage
-          echo "AWS_PROFILE=default" >> $GITHUB_ENV
-          echo "aws-profile=$PROFILE_NAME" >> $GITHUB_OUTPUT
-
-          echo "✅ AWS environment configured for containers with profile reference: $PROFILE_NAME"
-          echo "🔍 AWS configuration verification:"
-          aws configure list || echo "AWS CLI not accessible"
+          echo "✅ AWS credentials configured for Leverage CLI containers"
 
       - name: Parse layer information
         id: layer-info
@@ -324,118 +241,40 @@ jobs:
         run: |
           echo "🔧 Setting up Leverage environment..."
 
-          # Navigate to repository root to find/create build.env
+          # Navigate to repository root and create minimal build.env
           REPO_ROOT=$(git rev-parse --show-toplevel)
           cd "$REPO_ROOT"
 
-          # Ensure build.env exists with proper configuration
-          if [[ ! -f "build.env" ]]; then
-            echo "📝 Creating build.env file..."
-            echo "# Project settings" > build.env
-            echo "PROJECT=bb" >> build.env
-            echo "" >> build.env
-            echo "# General" >> build.env
-            echo "MFA_ENABLED=false" >> build.env
-            echo "" >> build.env
-            echo "# Terraform" >> build.env
-            echo "TERRAFORM_IMAGE_TAG=1.9.1-tofu-0.3.0" >> build.env
-          else
-            echo "✅ Found existing build.env file"
-          fi
+          # Create minimal build.env configuration
+          cat > build.env << EOF
+          PROJECT=bb
+          MFA_ENABLED=false
+          TERRAFORM_IMAGE_TAG=1.9.1-tofu-0.3.0
+          EOF
 
-          # Determine appropriate Docker image based on binary selection with fallbacks
-          if [[ "${{ steps.tf-compat.outputs.tf-command }}" == "terraform" ]]; then
-            # Legacy layers - use pure Terraform image with fallbacks
-            DOCKER_IMAGE_CANDIDATES=("1.6.6-latest" "1.5.7-latest" "1.3.5-latest")
-            DOCKER_IMAGE_TAG="1.6.6-latest"  # Default for legacy
-            echo "🐳 Using legacy Terraform Docker image: $DOCKER_IMAGE_TAG"
-          else
-            # Modern layers - use verified OpenTofu images (fallback to original build.env image)
-            DOCKER_IMAGE_CANDIDATES=("1.9.1-tofu-0.3.0" "1.6.6-latest" "1.5.7-latest")
-            DOCKER_IMAGE_TAG="1.9.1-tofu-0.3.0"  # Original build.env OpenTofu version
-            echo "🚀 Using modern OpenTofu Docker image: $DOCKER_IMAGE_TAG"
-          fi
-
-          # Export fallback candidates for the pre-pull step
-          echo "DOCKER_IMAGE_CANDIDATES=${DOCKER_IMAGE_CANDIDATES[*]}" >> $GITHUB_ENV
-
-          # Update TERRAFORM_IMAGE_TAG in build.env
-          sed -i "s/TERRAFORM_IMAGE_TAG=.*/TERRAFORM_IMAGE_TAG=$DOCKER_IMAGE_TAG/" build.env
-
-          # Source the environment for subsequent steps
+          # Source environment for subsequent steps
           source build.env
           echo "PROJECT=$PROJECT" >> $GITHUB_ENV
           echo "MFA_ENABLED=$MFA_ENABLED" >> $GITHUB_ENV
           echo "TERRAFORM_IMAGE_TAG=$TERRAFORM_IMAGE_TAG" >> $GITHUB_ENV
 
-          # Configure additional environment variables for container compatibility
-          echo "DOCKER_DEFAULT_PLATFORM=linux/amd64" >> $GITHUB_ENV
-
-          # Ensure AWS environment variables are properly set for container usage
-          echo "🔐 Configuring container environment variables..."
-          env | grep -E '^AWS_' || echo "No AWS environment variables found"
-
           echo "✅ Leverage environment configured with image: $TERRAFORM_IMAGE_TAG"
-
-      - name: Pre-pull Docker image
-        id: docker-pull
-        run: |
-          echo "🐳 Pre-pulling Leverage toolbox Docker image..."
-          echo "Image: binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG"
-
-          # Try primary image first, then fallbacks
-          SUCCESSFUL_IMAGE=""
-
-          # Convert space-separated string back to array
-          IFS=' ' read -ra CANDIDATES <<< "$DOCKER_IMAGE_CANDIDATES"
-
-          echo "🔄 Available fallback images: ${CANDIDATES[*]}"
-
-          for candidate in "${CANDIDATES[@]}"; do
-            echo "📋 Trying Docker image: binbash/leverage-toolbox:$candidate"
-
-            # Try pulling with 2 attempts per candidate
-            for attempt in {1..2}; do
-              if docker pull "binbash/leverage-toolbox:$candidate"; then
-                echo "✅ Successfully pulled: binbash/leverage-toolbox:$candidate (attempt $attempt)"
-                SUCCESSFUL_IMAGE="$candidate"
-                break 2  # Break out of both loops
-              else
-                echo "⚠️ Failed to pull $candidate on attempt $attempt"
-                sleep 3
-              fi
-            done
-          done
-
-          if [[ -z "$SUCCESSFUL_IMAGE" ]]; then
-            echo "❌ Failed to pull any Docker images from candidates: ${CANDIDATES[*]}"
-            echo "🚨 This may be a Docker Hub connectivity issue"
-            exit 1
-          fi
-
-          # Update TERRAFORM_IMAGE_TAG to the successful image
-          echo "TERRAFORM_IMAGE_TAG=$SUCCESSFUL_IMAGE" >> $GITHUB_ENV
-          echo "✅ Using Docker image: binbash/leverage-toolbox:$SUCCESSFUL_IMAGE"
-
-          # Verify image exists locally
-          if docker images "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" --format "table {{.Repository}}:{{.Tag}}" | grep -q "$TERRAFORM_IMAGE_TAG"; then
-            echo "✅ Docker image verified locally"
-          else
-            echo "❌ Docker image not found locally after pull"
-            exit 1
-          fi
 
       - name: Run Leverage CLI validations
         id: validation
         working-directory: ${{ matrix.layer }}
         run: |
-          echo "🚀 Running validations in $(pwd)"
+          # Ensure build.env is accessible from current layer directory
+          REPO_ROOT=$(git rev-parse --show-toplevel)
+          if [[ ! -f "build.env" ]]; then
+            ln -s "$REPO_ROOT/build.env" build.env
+          fi
 
           # Initialize validation results
           VALIDATION_RESULTS=""
           VALIDATION_STATUS="success"
 
-          # Function to capture command output
+          # Function to capture command output with proper error handling
           run_validation() {
             local cmd="$1"
             local description="$2"
@@ -451,210 +290,52 @@ jobs:
             fi
           }
 
-          # Run validation commands using detected binary and configured environment
-          echo "🔧 Using Terraform binary: ${{ steps.tf-compat.outputs.tf-binary }}"
-          echo "🐳 Using Docker image: binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG"
-          echo "📁 Working directory: $(pwd)"
-          echo "🔍 Repository root: $(git rev-parse --show-toplevel)"
-          echo "🔑 AWS Profile: ${{ steps.aws-profiles.outputs.aws-profile }}"
-          echo "🌍 AWS Region: $AWS_DEFAULT_REGION"
+          echo "🚀 Running Leverage CLI validations in $(pwd)"
 
-          # Let Leverage CLI handle binary detection natively
-          echo "🔍 Trusting Leverage CLI to handle OpenTofu/Terraform binary detection"
-          echo "✅ Using detected command: ${{ steps.tf-compat.outputs.tf-command }}"
-
-          # Verify AWS configuration
-          echo "🔍 AWS Configuration verification:"
-          aws configure list || echo "AWS CLI not configured"
-          aws sts get-caller-identity || echo "AWS credentials test failed"
-
-          # Enhanced Docker and Leverage environment debugging
-          echo "🐳 Docker and Leverage environment debugging:"
-          echo "Current working directory: $(pwd)"
-          echo "Files in directory: $(ls -la)"
-          echo "Build.env file:"
-          cat build.env || echo "No build.env found"
-
-          # Docker service verification
-          echo "🔍 Docker service status:"
-          docker info || echo "Docker daemon not accessible"
-          docker version || echo "Docker version check failed"
-
-          # Container image verification
-          echo "🖼️ Docker images available:"
-          docker images | grep leverage || echo "No leverage images found"
-          docker images "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" || echo "Target image not found"
-
-          # Test Leverage CLI container orchestration
-          echo "🧪 Testing Leverage CLI container orchestration:"
-
-          # Test basic container functionality
-          if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" echo "Container test successful"; then
-            echo "✅ Basic container execution working"
-          else
-            echo "❌ Basic container execution failed"
-          fi
-
-          # Test Leverage CLI
-          echo "🔧 Leverage CLI test:"
-          leverage --version || echo "Leverage CLI not accessible"
-
-          # Test container with environment variables and volume mounting
-          echo "🔐 Testing container with AWS environment and volume mounting:"
-
-          # First test basic AWS CLI availability in container
-          if docker run --rm "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" aws --version; then
-            echo "✅ AWS CLI available in container"
-          else
-            echo "❌ AWS CLI not available in container"
-          fi
-
-          # Test with environment variables and volume mounting
-          if docker run --rm \
-            -e AWS_ACCESS_KEY_ID \
-            -e AWS_SECRET_ACCESS_KEY \
-            -e AWS_DEFAULT_REGION \
-            -e AWS_REGION \
-            -v "$(pwd):/workspace" \
-            -w "/workspace" \
-            "binbash/leverage-toolbox:$TERRAFORM_IMAGE_TAG" \
-            aws sts get-caller-identity; then
-            echo "✅ AWS credentials test in container successful"
-          else
-            echo "❌ AWS credentials test in container failed"
-          fi
-
-          # Test Leverage CLI container orchestration
-          echo "🎯 Testing Leverage CLI container orchestration:"
-          if leverage --version; then
-            echo "✅ Leverage CLI basic operation successful"
-          else
-            echo "❌ Leverage CLI basic operation failed"
-          fi
-
-          # Test Leverage CLI Terraform command execution
-          echo "🔧 Testing Leverage CLI Terraform command execution:"
-
-          # Test leverage tf version
-          if timeout 60 leverage tf version 2>&1; then
-            echo "✅ Leverage CLI can execute tf version in container"
-          else
-            echo "❌ Leverage CLI cannot execute tf version in container"
-          fi
-
-          # Test leverage tf help
-          if timeout 30 leverage tf --help >/dev/null 2>&1; then
-            echo "✅ Leverage CLI can access tf help in container"
-          else
-            echo "❌ Leverage CLI cannot access tf help in container"
-          fi
-
-          # Test leverage tf init help (without actually running init)
-          if timeout 30 leverage tf init --help >/dev/null 2>&1; then
-            echo "✅ Leverage CLI can access tf init help in container"
-          else
-            echo "❌ Leverage CLI cannot access tf init help in container"
-            echo "🔍 Debugging Leverage CLI container issues..."
-
-            # Additional debugging
-            echo "Container processes:"
-            docker ps -a | grep leverage || echo "No leverage containers found"
-
-            echo "Available Docker images:"
-            docker images | grep binbash || echo "No binbash images found"
-          fi
-
-          # Leverage CLI only validation function
-          run_validation() {
-            local cmd="$1"
-            local description="$2"
-
-            echo "⚡ Running: $description"
-            if output=$(timeout 300 $cmd 2>&1); then
-              echo "✅ $description: PASSED"
-              VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED**\n\`\`\`\n${output}\n\`\`\`\n\n"
-            else
-              echo "❌ $description: FAILED"
-              VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n❌ **FAILED**\n\`\`\`\n${output}\n\`\`\`\n\n"
-              VALIDATION_STATUS="failed"
-
-              # Enhanced error reporting for Leverage CLI issues
-              echo "🔍 Leverage CLI debugging for failed command: $cmd"
-              echo "Container status:"
-              docker ps -a | head -5 || echo "Cannot list containers"
-              echo "Recent container logs:"
-              docker logs $(docker ps -lq) 2>/dev/null | tail -10 || echo "No recent container logs"
-            fi
-          }
-
-          # Determine backend configuration paths
-          ACCOUNT_PATH="${{ steps.layer-info.outputs.account }}"
+          # Configuration paths
           BACKEND_CONFIG="../../config/backend.tfvars"
           ACCOUNT_CONFIG="../../config/account.tfvars"
 
-          # Ensure build.env is accessible from current layer directory
-          REPO_ROOT=$(git rev-parse --show-toplevel)
-          if [[ ! -f "build.env" && -f "$REPO_ROOT/build.env" ]]; then
-            echo "📎 Linking build.env from repository root..."
-            ln -s "$REPO_ROOT/build.env" build.env
-          fi
+          # Run format check
+          echo "⚡ Running format check..."
+          run_validation "leverage tf fmt -check" "Terraform Format Check"
 
-          # Verify configuration files exist
-          echo "📋 Configuration file verification:"
-          echo "Backend config: $(ls -la $BACKEND_CONFIG 2>/dev/null || echo 'NOT FOUND')"
-          echo "Account config: $(ls -la $ACCOUNT_CONFIG 2>/dev/null || echo 'NOT FOUND')"
-          echo "Build env: $(ls -la build.env 2>/dev/null || echo 'NOT FOUND')"
-
-
-          # Test Leverage CLI with AWS credentials
-          echo "🔐 Testing Leverage CLI with AWS credentials integration..."
-          if timeout 60 leverage aws sts get-caller-identity 2>/dev/null; then
-            echo "✅ Leverage CLI AWS credential integration working"
-          else
-            echo "⚠️ Leverage CLI AWS credential integration has issues (this might affect tf commands)"
-          fi
-
-          # Run validations using only Leverage CLI
-          run_validation "leverage $TF_COMMAND fmt -check" "Terraform Format Check"
-
-          # Try full backend init first, then fallback to backend=false if dependencies missing
-          echo "🔄 Attempting full backend initialization with dependencies..."
-          if output=$(timeout 300 leverage $TF_COMMAND init -no-color -backend-config=$BACKEND_CONFIG 2>&1); then
-            echo "✅ Full backend initialization: PASSED"
+          # Backend initialization with fallback
+          echo "⚡ Initializing with backend..."
+          if output=$(timeout 300 leverage tf init -no-color -backend-config=$BACKEND_CONFIG 2>&1); then
+            echo "✅ Backend initialization successful"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Backend Initialization\n✅ **PASSED**\n\`\`\`\n${output}\n\`\`\`\n\n"
-            BACKEND_INITIALIZED=true
+            BACKEND_AVAILABLE=true
           else
-            echo "⚠️ Full backend initialization failed, trying without backend for syntax validation..."
+            echo "⚠️ Backend init failed, trying syntax-only validation..."
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Backend Initialization\n⚠️ **FAILED (trying syntax-only validation)**\n\`\`\`\n${output}\n\`\`\`\n\n"
 
-            # Try init without backend for syntax validation
-            if fallback_output=$(timeout 300 leverage $TF_COMMAND init -no-color -backend=false 2>&1); then
-              echo "✅ Syntax-only initialization: PASSED"
+            if fallback_output=$(timeout 300 leverage tf init -no-color -backend=false 2>&1); then
+              echo "✅ Syntax-only initialization successful"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n✅ **PASSED**\n\`\`\`\n${fallback_output}\n\`\`\`\n\n"
-              BACKEND_INITIALIZED=false
+              BACKEND_AVAILABLE=false
             else
-              echo "❌ Even syntax-only initialization failed"
+              echo "❌ Syntax-only initialization failed"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n❌ **FAILED**\n\`\`\`\n${fallback_output}\n\`\`\`\n\n"
               VALIDATION_STATUS="failed"
-              BACKEND_INITIALIZED=false
+              BACKEND_AVAILABLE=false
             fi
           fi
 
-          # Validate syntax (should work regardless of backend)
-          run_validation "leverage $TF_COMMAND validate" "Terraform Validation"
+          # Run validation
+          echo "⚡ Running validation..."
+          run_validation "leverage tf validate" "Terraform Validation"
 
-          # Generate execution plan (dependency-aware)
-          echo "📋 Generating execution plan with ${{ steps.tf-compat.outputs.tf-binary }}..."
-
-          if [[ "$BACKEND_INITIALIZED" == "true" ]]; then
-            echo "🔄 Backend available - attempting plan with remote state using Leverage CLI..."
-            run_validation "leverage $TF_COMMAND plan -no-color -var-file=$ACCOUNT_CONFIG" "Terraform Plan Generation"
+          # Generate plan if backend available
+          if [[ "$BACKEND_AVAILABLE" == "true" ]]; then
+            echo "⚡ Generating execution plan..."
+            run_validation "leverage tf plan -no-color -var-file=$ACCOUNT_CONFIG" "Terraform Plan Generation"
           else
-            echo "⚠️ Backend not initialized - skipping plan generation (dependencies missing)"
+            echo "⚠️ Skipping plan generation (backend not available)"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Plan\n⚠️ **SKIPPED - Missing Dependencies**\n\`\`\`\nBackend initialization failed due to missing remote state dependencies.\nThis is expected for layers that depend on other layers being deployed first.\nSyntax validation was performed successfully.\n\`\`\`\n\n"
           fi
 
-          # Save results to file for next job
+          # Save results for AI analysis
           mkdir -p /tmp/validation-results
           LAYER_FILE_NAME="${{ matrix.layer }}"
           LAYER_FILE_NAME="${LAYER_FILE_NAME//\//-}"  # Replace slashes with dashes
