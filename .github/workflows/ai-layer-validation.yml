@@ -260,14 +260,95 @@ jobs:
 
           echo "✅ Leverage environment configured with image: $TERRAFORM_IMAGE_TAG"
 
-      - name: Run Leverage CLI validations
+      - name: Setup Docker environment for Leverage CLI
+        run: |
+          echo "🐳 Setting up Docker environment for Leverage CLI..."
+
+          # Ensure Docker daemon is accessible (GitHub Actions specific)
+          sudo chmod 666 /var/run/docker.sock || echo "Could not modify Docker socket permissions"
+
+          # Set Docker environment variables (mirroring local setup)
+          echo "DOCKER_HOST=unix:///var/run/docker.sock" >> $GITHUB_ENV
+
+          # Unset SSH_AUTH_SOCK (like local setup)
+          echo "SSH_AUTH_SOCK=" >> $GITHUB_ENV
+
+          # Test Docker connectivity
+          echo "🔍 Testing Docker daemon connectivity..."
+          docker info || echo "❌ Docker daemon not accessible"
+          docker version || echo "❌ Docker version check failed"
+
+          # Test basic container execution
+          echo "🧪 Testing basic container execution..."
+          if docker run --rm hello-world; then
+            echo "✅ Basic Docker container execution successful"
+          else
+            echo "❌ Basic Docker container execution failed"
+          fi
+
+          echo "✅ Docker environment setup complete"
+
+      - name: Run Leverage CLI validations with debugging
         id: validation
         working-directory: ${{ matrix.layer }}
         run: |
+          echo "🚀 Starting Leverage CLI validations with comprehensive debugging..."
+
+          # Ensure virtual environment is active
+          echo "🐍 Activating Python virtual environment..."
+          source ~/.leverage-venv/bin/activate
+
+          # Verify virtual environment and Leverage CLI
+          echo "📊 Environment verification:"
+          echo "Python path: $(which python)"
+          echo "Python version: $(python --version)"
+          echo "Leverage CLI path: $(which leverage)"
+          echo "Leverage CLI version: $(leverage --version)"
+          echo "Virtual environment: $VIRTUAL_ENV"
+          echo "Working directory: $(pwd)"
+          echo "User: $(whoami)"
+          echo "Groups: $(groups)"
+
           # Ensure build.env is accessible from current layer directory
           REPO_ROOT=$(git rev-parse --show-toplevel)
           if [[ ! -f "build.env" ]]; then
+            echo "📎 Linking build.env from repository root..."
             ln -s "$REPO_ROOT/build.env" build.env
+          fi
+
+          echo "📁 Build.env content:"
+          cat build.env || echo "❌ Could not read build.env"
+
+          # Docker and container debugging
+          echo "🐳 Docker environment debugging:"
+          echo "Docker host: $DOCKER_HOST"
+          echo "SSH auth sock: $SSH_AUTH_SOCK"
+          echo "Docker socket permissions: $(ls -la /var/run/docker.sock)"
+
+          # Test Docker images
+          echo "🖼️ Available Docker images:"
+          docker images | head -10 || echo "❌ Could not list Docker images"
+
+          # Test Leverage CLI container orchestration
+          echo "🧪 Testing Leverage CLI container orchestration..."
+
+          # Test basic Leverage CLI execution
+          echo "Testing basic Leverage CLI execution:"
+          if timeout 30 leverage --version; then
+            echo "✅ Basic Leverage CLI execution successful"
+          else
+            echo "❌ Basic Leverage CLI execution failed"
+          fi
+
+          # Test Leverage CLI can access Docker
+          echo "Testing Leverage CLI Docker access:"
+          if timeout 60 leverage tf version; then
+            echo "✅ Leverage CLI can access tf in container"
+          else
+            echo "❌ Leverage CLI cannot access tf in container"
+            echo "🔍 Container debugging:"
+            docker ps -a | head -5 || echo "Cannot list containers"
+            docker images | grep binbash || echo "No binbash images found"
           fi
 
           # Initialize validation results
@@ -280,13 +361,24 @@ jobs:
             local description="$2"
 
             echo "⚡ Running: $description"
+            echo "Command: $cmd"
+
+            # Ensure virtual environment is active for each command
+            source ~/.leverage-venv/bin/activate
+
             if output=$(timeout 300 $cmd 2>&1); then
               echo "✅ $description: PASSED"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n✅ **PASSED**\n\`\`\`\n${output}\n\`\`\`\n\n"
             else
               echo "❌ $description: FAILED"
+              echo "Failed output: $output"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## $description\n❌ **FAILED**\n\`\`\`\n${output}\n\`\`\`\n\n"
               VALIDATION_STATUS="failed"
+
+              # Additional debugging for failed commands
+              echo "🔍 Debugging failed command: $cmd"
+              echo "Environment variables:"
+              env | grep -E "(DOCKER|LEVERAGE|VIRTUAL|PATH)" | head -10
             fi
           }
 
@@ -296,26 +388,34 @@ jobs:
           BACKEND_CONFIG="../../config/backend.tfvars"
           ACCOUNT_CONFIG="../../config/account.tfvars"
 
+          echo "📋 Configuration files:"
+          echo "Backend config: $(ls -la $BACKEND_CONFIG 2>/dev/null || echo 'NOT FOUND')"
+          echo "Account config: $(ls -la $ACCOUNT_CONFIG 2>/dev/null || echo 'NOT FOUND')"
+
           # Run format check
           echo "⚡ Running format check..."
           run_validation "leverage tf fmt -check" "Terraform Format Check"
 
           # Backend initialization with fallback
           echo "⚡ Initializing with backend..."
+          source ~/.leverage-venv/bin/activate
           if output=$(timeout 300 leverage tf init -no-color -backend-config=$BACKEND_CONFIG 2>&1); then
             echo "✅ Backend initialization successful"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Backend Initialization\n✅ **PASSED**\n\`\`\`\n${output}\n\`\`\`\n\n"
             BACKEND_AVAILABLE=true
           else
             echo "⚠️ Backend init failed, trying syntax-only validation..."
+            echo "Backend init error output: $output"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Backend Initialization\n⚠️ **FAILED (trying syntax-only validation)**\n\`\`\`\n${output}\n\`\`\`\n\n"
 
+            source ~/.leverage-venv/bin/activate
             if fallback_output=$(timeout 300 leverage tf init -no-color -backend=false 2>&1); then
               echo "✅ Syntax-only initialization successful"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n✅ **PASSED**\n\`\`\`\n${fallback_output}\n\`\`\`\n\n"
               BACKEND_AVAILABLE=false
             else
               echo "❌ Syntax-only initialization failed"
+              echo "Syntax-only error output: $fallback_output"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n❌ **FAILED**\n\`\`\`\n${fallback_output}\n\`\`\`\n\n"
               VALIDATION_STATUS="failed"
               BACKEND_AVAILABLE=false
@@ -356,11 +456,11 @@ jobs:
           path: /tmp/validation-results/
           retention-days: 1
 
-  # Job 3: AI-powered analysis of validation results
+  # Job 3: AI-powered analysis of validation results (DISABLED FOR TESTING)
   ai-analysis:
     name: AI Analysis
     needs: [detect-layers, validate-layers]
-    if: needs.detect-layers.outputs.has-changes == 'true'
+    if: false  # Temporarily disabled to avoid API limits during testing
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -467,11 +567,11 @@ jobs:
           path: /tmp/ai-analysis/
           retention-days: 1
 
-  # Job 4: Post results as PR comments
+  # Job 4: Post results as PR comments (DISABLED FOR TESTING)
   post-results:
     name: Post AI Analysis Results
     needs: [detect-layers, validate-layers, ai-analysis]
-    if: always() && needs.detect-layers.outputs.has-changes == 'true'
+    if: false  # Temporarily disabled to avoid API limits during testing
     runs-on: ubuntu-latest
     steps:
       - name: Download AI analysis
