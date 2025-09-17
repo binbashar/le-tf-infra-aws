@@ -75,13 +75,23 @@ export LEVERAGE_GITCONFIG="$GITCONFIG_FILE"
 export LEVERAGE_SSH_DIR="$SSH_DIR"
 export LEVERAGE_AWS_DIR="$AWS_DIR"
 
-# Also create symlinks in HOME for compatibility (fallback)
-echo "🔗 Creating compatibility symlinks in HOME directory..."
+# Create files directly in HOME for Leverage CLI compatibility (primary approach)
+echo "🔗 Creating Leverage CLI compatible configuration in HOME directory..."
 mkdir -p "$HOME"
-ln -sf "$GITCONFIG_FILE" "$HOME/.gitconfig" || echo "Could not create gitconfig symlink"
-ln -sf "$SSH_DIR" "$HOME/.ssh" || echo "Could not create SSH symlink"
-ln -sf "$AWS_DIR" "$HOME/.aws" || echo "Could not create AWS symlink"
-echo "✅ Created compatibility symlinks"
+
+# Copy (not symlink) files to HOME for direct access
+cp "$GITCONFIG_FILE" "$HOME/.gitconfig" 2>/dev/null || echo "Could not copy gitconfig"
+cp -r "$SSH_DIR" "$HOME/.ssh" 2>/dev/null || echo "Could not copy SSH directory"
+cp -r "$AWS_DIR" "$HOME/.aws" 2>/dev/null || echo "Could not copy AWS directory"
+
+# Ensure proper permissions in HOME
+chmod 600 "$HOME/.gitconfig" 2>/dev/null || true
+chmod 700 "$HOME/.ssh" 2>/dev/null || true
+chmod 600 "$HOME/.ssh/config" "$HOME/.ssh/known_hosts" 2>/dev/null || true
+chmod 700 "$HOME/.aws" 2>/dev/null || true
+chmod 600 "$HOME/.aws/config" "$HOME/.aws/credentials" 2>/dev/null || true
+
+echo "✅ Created Leverage CLI compatible configuration"
 
 # List created files for verification
 echo "📁 Created configuration files:"
