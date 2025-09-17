@@ -75,6 +75,13 @@ export LEVERAGE_GITCONFIG="$GITCONFIG_FILE"
 export LEVERAGE_SSH_DIR="$SSH_DIR"
 export LEVERAGE_AWS_DIR="$AWS_DIR"
 
+# Create dummy SSH agent socket to prevent empty mount error
+SSH_AGENT_SOCK="$CONFIG_DIR/ssh-agent.sock"
+touch "$SSH_AGENT_SOCK"
+export SSH_AUTH_SOCK="$SSH_AGENT_SOCK"
+echo "SSH_AUTH_SOCK=$SSH_AGENT_SOCK" >> "$GITHUB_ENV"
+echo "✅ Created dummy SSH agent socket: $SSH_AGENT_SOCK"
+
 # Create files directly in HOME for Leverage CLI compatibility (primary approach)
 echo "🔗 Creating Leverage CLI compatible configuration in HOME directory..."
 mkdir -p "$HOME"
