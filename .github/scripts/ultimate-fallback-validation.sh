@@ -30,7 +30,7 @@ VALIDATION_STATUS="success"
 
 # Test 1: Basic file validation
 echo "=== Phase 1: Basic File Validation ==="
-if safe_validate "Terraform files syntax check" "find . -name '*.tf' -exec head -1 {} \;"; then
+if safe_validate "Terraform files syntax check" "find . -name '*.tf' -exec head -1 {} +"; then
     VALIDATION_RESULTS="${VALIDATION_RESULTS}## File Structure Validation\n✅ **PASSED**\n\`\`\`\nTerraform files found and readable\n\`\`\`\n\n"
 else
     VALIDATION_RESULTS="${VALIDATION_RESULTS}## File Structure Validation\n❌ **FAILED**\n\`\`\`\nTerraform files not accessible\n\`\`\`\n\n"
