@@ -69,6 +69,6 @@ LEVERAGE_IMAGE="binbash/leverage-toolbox:${IMAGE_TAG}"
 
 echo "Testing Leverage toolbox image: $LEVERAGE_IMAGE"
 safe_execute "docker pull $LEVERAGE_IMAGE" "Pull Leverage toolbox image"
-safe_execute "docker run --rm $LEVERAGE_IMAGE tofu version" "Test OpenTofu in container"
+safe_execute "docker run --rm $LEVERAGE_IMAGE tofu --version" "Test OpenTofu in container"
 
 echo "🏥 Container Health Check Complete"
