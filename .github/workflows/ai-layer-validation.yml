@@ -159,182 +159,78 @@ jobs:
 
           echo "✅ Leverage environment configured with image: $TERRAFORM_IMAGE_TAG"
 
-      - name: Pre-pull Leverage CLI Docker images
-        run: |
-          echo "🐳 Pre-pulling Leverage CLI Docker images to prevent build issues..."
-
-          # Get the image tag from environment
-          IMAGE_TAG="${TERRAFORM_IMAGE_TAG:-1.9.1-tofu-0.3.0}"
-          LEVERAGE_IMAGE="binbash/leverage-toolbox:${IMAGE_TAG}"
-
-          echo "📦 Pulling image: $LEVERAGE_IMAGE"
-
-          # Pull the image with retry logic
-          for i in {1..3}; do
-            if docker pull "$LEVERAGE_IMAGE"; then
-              echo "✅ Successfully pulled $LEVERAGE_IMAGE"
-              break
-            else
-              echo "⚠️ Pull attempt $i failed, retrying..."
-              sleep 5
-            fi
-          done
-
-          # Verify the image was pulled successfully
-          if docker images | grep -q "binbash/leverage-toolbox"; then
-            echo "✅ Leverage CLI Docker image verified"
-            docker images | grep "binbash/leverage-toolbox"
-          else
-            echo "❌ Failed to pull Leverage CLI Docker image"
-            exit 1
-          fi
-
-          echo "✅ Docker image pre-pulling complete"
-
-      - name: Setup Docker environment and mount sources
+      - name: Setup Leverage environment
         working-directory: ${{ matrix.layer }}
         run: |
-          # Setup Leverage environment with comprehensive Docker bind mount fixes
+          # Setup Leverage environment with SSH agent socket fix
           ${GITHUB_WORKSPACE}/.github/scripts/setup-leverage-environment.sh
 
-          # Validate and fix mount sources
-          ${GITHUB_WORKSPACE}/.github/scripts/validate-mount-sources.sh
-
-          # Test Docker mount configurations
-          ${GITHUB_WORKSPACE}/.github/scripts/test-docker-mounts.sh
-
-      - name: Detect optimal validation strategy
+      - name: Run Terraform validation
         working-directory: ${{ matrix.layer }}
         run: |
-          # Ensure virtual environment is active
-          source ~/.leverage-venv/bin/activate
-
-          # Detect the best validation strategy for this environment
-          ${GITHUB_WORKSPACE}/.github/scripts/detect-validation-strategy.sh
-
-      - name: Container Health Check and Debugging
-        working-directory: ${{ matrix.layer }}
-        run: |
-          # Ensure virtual environment is active
-          source ~/.leverage-venv/bin/activate
-
-          # Run comprehensive container health check
-          ${GITHUB_WORKSPACE}/.github/scripts/container-health-check.sh
-
-      - name: AWS Credentials and Connectivity Validation
-        working-directory: ${{ matrix.layer }}
-        run: |
-          # Ensure virtual environment is active
-          source ~/.leverage-venv/bin/activate
-
-          # Run AWS connectivity validation
-          ${GITHUB_WORKSPACE}/.github/scripts/aws-validation.sh
-
-      - name: Run Leverage CLI validations
-        working-directory: ${{ matrix.layer }}
-        run: |
-          echo "🚀 Starting Leverage CLI validations with strategy: ${VALIDATION_STRATEGY:-default}"
+          echo "🚀 Starting Terraform validation for layer: ${{ matrix.layer }}"
 
           # Ensure virtual environment is active
           source ~/.leverage-venv/bin/activate
-
-          # Source validation strategies
-          source ${GITHUB_WORKSPACE}/.github/scripts/run-validation-strategies.sh
 
           # Configuration paths
           BACKEND_CONFIG="../../config/backend.tfvars"
-          ACCOUNT_CONFIG="../../config/account.tfvars"
+          VALIDATION_RESULTS=""
+          VALIDATION_STATUS="success"
 
-          echo "📋 Configuration files:"
-          echo "Backend config: $(ls -la $BACKEND_CONFIG 2>/dev/null || echo 'NOT FOUND')"
-          echo "Account config: $(ls -la $ACCOUNT_CONFIG 2>/dev/null || echo 'NOT FOUND')"
+          # Run format check
+          echo "📝 Running format check..."
+          if output=$(leverage tf fmt -check 2>&1); then
+            echo "✅ Format check passed"
+            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Format Check\n✅ **PASSED**\n\n"
+          else
+            echo "⚠️ Format check failed"
+            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Format Check\n⚠️ **FAILED**\n\`\`\`\n${output}\n\`\`\`\n\n"
+          fi
 
-          # Verify Leverage CLI command availability
-          echo "🔍 Leverage CLI command availability check:"
-          echo "Available tf subcommands:"
-          leverage tf --help 2>&1 | grep -A 20 "Commands:" || echo "Could not get tf subcommands"
-          echo "Leverage CLI version: $(leverage --version 2>&1 || echo 'Could not get version')"
-
-          # Phase 1: Container Health Validation
-          echo "🏥 Container Health Validation"
-          echo "Docker status: $(docker --version 2>&1 || echo 'Docker not available')"
-          echo "Docker containers: $(docker ps --format 'table {{.Names}}\t{{.Status}}' 2>&1 || echo 'No containers')"
-
-          # Phase 2: AWS Credentials Validation
-          echo "🔑 AWS Credentials Validation"
-          echo "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:+configured}"
-          echo "AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:+configured}"
-          echo "AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-not set}"
-
-          # Phase 3: Progressive Leverage CLI Testing
-          echo "🧪 Progressive Leverage CLI Testing"
-
-          # Test 1: Basic help command (no container needed)
-          run_validation "leverage --help" "Leverage CLI Help Test" || echo "⚠️ Help test failed, continuing..."
-
-          # Test 2: Leverage CLI version (may use container)
-          run_validation "leverage --version" "Leverage CLI Version Test" || echo "⚠️ Version test failed, continuing..."
-
-          # Test 3: Terraform version through Leverage (requires container)
-          run_validation "leverage --verbose tf version" "Leverage CLI Docker Integration Test" || echo "⚠️ Docker integration test failed, continuing..."
-
-          # Test 4: Terraform format (if container integration works)
-          run_validation "leverage --verbose tf format" "Terraform Format Test" || echo "⚠️ Format test failed, continuing..."
-
-          # Backend initialization with fallback
-          echo "⚡ Initializing with backend..."
-          source ~/.leverage-venv/bin/activate
-          if output=$(timeout 300 leverage --verbose tf init -no-color -backend-config=$BACKEND_CONFIG 2>&1); then
-            echo "✅ Backend initialization successful"
-            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Backend Initialization\n✅ **PASSED**\n\`\`\`\n${output}\n\`\`\`\n\n"
-            BACKEND_AVAILABLE=true
+          # Initialize Terraform
+          echo "⚡ Initializing Terraform..."
+          if output=$(leverage tf init -no-color -backend-config=$BACKEND_CONFIG 2>&1); then
+            echo "✅ Initialization successful"
+            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Initialization\n✅ **PASSED**\n\n"
           else
             echo "⚠️ Backend init failed, trying syntax-only validation..."
-            echo "Backend init error output: $output"
-            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Backend Initialization\n⚠️ **FAILED (trying syntax-only validation)**\n\`\`\`\n${output}\n\`\`\`\n\n"
+            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Initialization\n⚠️ **BACKEND FAILED** - trying syntax-only\n\`\`\`\n${output}\n\`\`\`\n\n"
 
-            source ~/.leverage-venv/bin/activate
-            if fallback_output=$(timeout 300 leverage --verbose tf init -no-color -backend=false 2>&1); then
+            if fallback_output=$(leverage tf init -no-color -backend=false 2>&1); then
               echo "✅ Syntax-only initialization successful"
-              VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n✅ **PASSED**\n\`\`\`\n${fallback_output}\n\`\`\`\n\n"
-              BACKEND_AVAILABLE=false
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n✅ **PASSED**\n\n"
             else
               echo "❌ Syntax-only initialization failed"
-              echo "Syntax-only error output: $fallback_output"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n❌ **FAILED**\n\`\`\`\n${fallback_output}\n\`\`\`\n\n"
               VALIDATION_STATUS="failed"
-              BACKEND_AVAILABLE=false
             fi
           fi
 
-          # Run validation with enhanced strategy handling
-          run_validation "leverage --verbose tf validate" "Terraform Validation" || echo "⚠️ Terraform validation failed, will try ultimate fallback..."
+          # Run validation
+          echo "🔍 Running Terraform validation..."
+          if [[ "$VALIDATION_STATUS" != "failed" ]]; then
+            if output=$(leverage tf validate 2>&1); then
+              echo "✅ Validation successful"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Validation\n✅ **PASSED**\n\n"
+            else
+              echo "❌ Validation failed"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Validation\n❌ **FAILED**\n\`\`\`\n${output}\n\`\`\`\n\n"
+              VALIDATION_STATUS="failed"
+            fi
+          fi
 
-          # Create validation results directory
+          # Create validation results
           mkdir -p /tmp/validation-results
-
-          # Save validation results
           echo -e "$VALIDATION_RESULTS" > /tmp/validation-results/validation-summary.md
           echo "$VALIDATION_STATUS" > /tmp/validation-results/validation-status.txt
 
-          # Output final results
           echo "🎯 Validation completed with status: $VALIDATION_STATUS"
           if [[ "$VALIDATION_STATUS" == "failed" ]]; then
-            echo "❌ Primary validation failed - attempting ultimate fallback validation"
-
-            # Run ultimate fallback validation
-            source ~/.leverage-venv/bin/activate
-            if ${GITHUB_WORKSPACE}/.github/scripts/ultimate-fallback-validation.sh; then
-              echo "✅ Ultimate fallback validation successful"
-              echo "⚠️ Note: Primary Leverage CLI validation failed, but basic infrastructure validation passed"
-              exit 0
-            else
-              echo "❌ Both primary and fallback validation failed"
-              exit 1
-            fi
+            echo "❌ Validation failed"
+            exit 1
           else
             echo "✅ All validation steps passed"
-            exit 0
           fi
 
       - name: Set artifact name
