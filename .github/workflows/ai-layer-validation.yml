@@ -3,7 +3,9 @@ name: AI-Powered Infrastructure Validation
 # Usage:
 # 1. Automatic: Triggers on PR changes to secrets-manager layer
 # 2. Manual: Run via workflow_dispatch with enable_ai_analysis=false to skip AI analysis
-# 3. Environment: Set ENABLE_AI_ANALYSIS=false to disable AI analysis globally
+# 3. PR Control: Add 'skip-ai-analysis' or 'no-ai' label to PR to disable AI analysis
+#    - Validation (format, init, validate) still runs
+#    - Only AI analysis and PR comments are skipped
 
 on:
   pull_request:
@@ -36,10 +38,35 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   AWS_REGION: us-east-1
   # AI Analysis control - can be disabled to avoid API limits
-  ENABLE_AI_ANALYSIS: ${{ github.event_name == 'workflow_dispatch' && inputs.enable_ai_analysis || true }}
+  # For workflow_dispatch: respects enable_ai_analysis input (default: true)
+  # For pull_request: checks for 'skip-ai-analysis' label (default: enabled)
+  ENABLE_AI_ANALYSIS: ${{ github.event_name == 'workflow_dispatch' && inputs.enable_ai_analysis || github.event_name != 'workflow_dispatch' }}
 
 jobs:
-  # Job 1: Detect affected layers from changed files
+  # Job 1: Check PR labels for AI analysis control
+  check-ai-control:
+    name: Check AI Analysis Control
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    outputs:
+      skip-ai-analysis: ${{ steps.check-labels.outputs.skip-ai-analysis }}
+
+    steps:
+      - name: Check for skip-ai-analysis label
+        id: check-labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(label => label.name);
+            const skipAI = labels.includes('skip-ai-analysis') || labels.includes('no-ai');
+
+            console.log('PR Labels:', labels);
+            console.log('Skip AI Analysis:', skipAI);
+
+            core.setOutput('skip-ai-analysis', skipAI);
+            return skipAI;
+
+  # Job 2: Detect affected layers from changed files
   detect-layers:
     name: Detect Modified Layers
     runs-on: ubuntu-latest
@@ -80,11 +107,11 @@ jobs:
           echo "Detected layers: $LAYERS"
 
 
-  # Job 2: Validate each affected layer
+  # Job 3: Validate each affected layer
   validate-layer:
     name: Validate Layer (${{ matrix.layer }})
     runs-on: ubuntu-latest
-    needs: detect-layers
+    needs: [detect-layers]
     if: needs.detect-layers.outputs.has-changes == 'true'
     strategy:
       matrix:
@@ -256,7 +283,7 @@ jobs:
         continue-on-error: true
 
 
-  # Job 3: AI Analysis Status Check
+  # Job 4: AI Analysis Status Check
   ai-analysis-status:
     name: AI Analysis Status
     runs-on: ubuntu-latest
@@ -266,22 +293,36 @@ jobs:
     steps:
       - name: Check AI Analysis Status
         run: |
-          if [[ "${{ env.ENABLE_AI_ANALYSIS }}" == "true" ]]; then
+          # Check if AI analysis should be skipped due to PR label
+          WORKFLOW_SETTING="${{ env.ENABLE_AI_ANALYSIS }}"
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # For PRs, we need to check if the label exists (check-ai-control job runs only for PRs)
+            echo "🔍 Checking PR for AI analysis control labels..."
+            echo "Event: Pull Request"
+          fi
+
+          if [[ "$WORKFLOW_SETTING" == "true" ]]; then
             echo "✅ AI Analysis is enabled - proceeding with analysis"
+            echo "To disable: Add 'skip-ai-analysis' or 'no-ai' label to PR"
           else
             echo "⚠️ AI Analysis is disabled - skipping to avoid API limits"
             echo "To enable AI analysis:"
-            echo "1. Set ENABLE_AI_ANALYSIS=true environment variable"
-            echo "2. Use workflow_dispatch with enable_ai_analysis=true"
+            echo "1. Use workflow_dispatch with enable_ai_analysis=true"
+            echo "2. For PRs: Remove skip-ai-analysis or no-ai labels"
           fi
 
 
-  # Job 4: AI Analysis and PR Comment (can be disabled to avoid GitHub Models API limits)
+  # Job 5: AI Analysis and PR Comment (can be disabled to avoid GitHub Models API limits)
   ai-analysis-and-comment:
     name: AI Analysis and PR Comment
     runs-on: ubuntu-latest
-    needs: [detect-layers, validate-layer]
-    if: always() && needs.detect-layers.outputs.has-changes == 'true' && env.ENABLE_AI_ANALYSIS == 'true'
+    needs: [detect-layers, validate-layer, check-ai-control]
+    if: |
+      always() &&
+      needs.detect-layers.outputs.has-changes == 'true' &&
+      env.ENABLE_AI_ANALYSIS == 'true' &&
+      (github.event_name != 'pull_request' || needs.check-ai-control.outputs.skip-ai-analysis != 'true')
 
     steps:
       - name: Checkout repository
