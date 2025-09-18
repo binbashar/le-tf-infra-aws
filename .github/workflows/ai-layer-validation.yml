@@ -297,6 +297,65 @@ jobs:
           # Setup Leverage environment with SSH agent socket fix
           ${GITHUB_WORKSPACE}/.github/scripts/setup-leverage-environment.sh
 
+      - name: Generate minimal common.tfvars (no sensitive data)
+        working-directory: ${{ matrix.layer }}
+        run: |
+          echo "📝 Creating minimal common.tfvars for CI/CD environment..."
+
+          # Navigate to repository root to create config
+          REPO_ROOT=$(git rev-parse --show-toplevel)
+          cd "$REPO_ROOT"
+
+          # Create minimal common.tfvars with dummy values (no sensitive data)
+          cat << EOF > ./config/common.tfvars
+          # Generated for CI/CD - contains no sensitive data
+          project = "bb"
+          project_long = "binbash"
+          region_primary = "us-east-1"
+          region_secondary = "us-east-2"
+          regions_allowed = ["us-east-1", "us-east-2", "us-west-2"]
+
+          # SSO disabled for CI/CD environment
+          sso_enabled = false
+          sso_start_url = "https://example.com"
+          sso_region = "us-east-1"
+
+          # Dummy account structure - no real IDs exposed
+          accounts = {
+            management = {
+              email = "ci-placeholder@example.com"
+              id    = "000000000000"
+            }
+            security = {
+              email = "ci-placeholder@example.com"
+              id    = "000000000000"
+            }
+            shared = {
+              email = "ci-placeholder@example.com"
+              id    = "000000000000"
+            }
+            network = {
+              email = "ci-placeholder@example.com"
+              id    = "000000000000"
+            }
+            apps-devstg = {
+              email = "ci-placeholder@example.com"
+              id    = "000000000000"
+            }
+            apps-prd = {
+              email = "ci-placeholder@example.com"
+              id    = "000000000000"
+            }
+            data-science = {
+              email = "ci-placeholder@example.com"
+              id    = "000000000000"
+            }
+          }
+          EOF
+
+          echo "✅ Minimal common.tfvars created with dummy values"
+          echo "🔒 No sensitive account data exposed"
+
       - name: Run enhanced Terraform validation with debugging
         working-directory: ${{ matrix.layer }}
         run: |
@@ -304,6 +363,22 @@ jobs:
 
           # Ensure virtual environment is active
           source ~/.leverage-venv/bin/activate
+
+          # Container health check - verify OpenTofu is accessible
+          echo "🔍 Verifying OpenTofu container environment..."
+          if ! leverage tofu version 2>/dev/null; then
+            echo "❌ OpenTofu container not accessible - this may indicate:"
+            echo "  - Docker daemon not running"
+            echo "  - Leverage CLI version compatibility issue"
+            echo "  - Container image not available"
+            echo "  - Permission issues with Docker socket"
+            echo "🔧 Attempting to get more debug information..."
+            leverage --version
+            docker --version || echo "Docker CLI not available"
+            echo "🚨 Continuing with validation attempt..."
+          else
+            echo "✅ OpenTofu container verified and accessible"
+          fi
 
           # Configuration paths and context
           BACKEND_CONFIG="../../config/backend.tfvars"
@@ -357,7 +432,7 @@ jobs:
 
           # Run format check with enhanced error handling
           echo "📝 Running format check..."
-          if output=$(leverage tf format -check $LEVERAGE_VERBOSE 2>&1); then
+          if output=$(leverage tofu format -check $LEVERAGE_VERBOSE 2>&1); then
             echo "✅ Format check passed"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Format Check\n✅ **PASSED**\n\n"
           else
@@ -368,7 +443,7 @@ jobs:
 
           # Initialize Terraform with enhanced debugging
           echo "⚡ Initializing Terraform..."
-          if output=$(leverage tf init -no-color -backend-config=$BACKEND_CONFIG $LEVERAGE_VERBOSE 2>&1); then
+          if output=$(leverage tofu init -no-color -backend-config=$BACKEND_CONFIG $LEVERAGE_VERBOSE 2>&1); then
             echo "✅ Initialization successful"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Initialization\n✅ **PASSED**\n\n"
           else
@@ -376,7 +451,7 @@ jobs:
             handle_error "Backend initialization" "$output" "$?"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Initialization\n⚠️ **BACKEND FAILED** - trying syntax-only\n\`\`\`\n${output}\n\`\`\`\n\n"
 
-            if fallback_output=$(leverage tf init -no-color -backend=false $LEVERAGE_VERBOSE 2>&1); then
+            if fallback_output=$(leverage tofu init -no-color -backend=false $LEVERAGE_VERBOSE 2>&1); then
               echo "✅ Syntax-only initialization successful"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n✅ **PASSED**\n\n"
             else
@@ -390,7 +465,7 @@ jobs:
           # Run validation with enhanced debugging
           echo "🔍 Running Terraform validation..."
           if [[ "$VALIDATION_STATUS" != "failed" ]]; then
-            if output=$(leverage tf validate $LEVERAGE_VERBOSE 2>&1); then
+            if output=$(leverage tofu validate $LEVERAGE_VERBOSE 2>&1); then
               echo "✅ Validation successful"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Validation\n✅ **PASSED**\n\n"
             else
