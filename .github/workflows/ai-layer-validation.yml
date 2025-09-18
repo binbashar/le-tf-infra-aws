@@ -1,5 +1,10 @@
 name: AI-Powered Infrastructure Validation
 
+# Usage:
+# 1. Automatic: Triggers on PR changes to secrets-manager layer
+# 2. Manual: Run via workflow_dispatch with enable_ai_analysis=false to skip AI analysis
+# 3. Environment: Set ENABLE_AI_ANALYSIS=false to disable AI analysis globally
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -9,6 +14,17 @@ on:
       - 'apps-devstg/us-east-1/secrets-manager/**/*.hcl'
   issue_comment:
     types: [created]
+  workflow_dispatch:
+    inputs:
+      enable_ai_analysis:
+        description: 'Enable AI analysis (set to false to avoid API limits)'
+        type: boolean
+        default: true
+        required: false
+      target_layer:
+        description: 'Specific layer to validate (optional)'
+        type: string
+        required: false
 
 permissions:
   contents: read       # Required to read repository contents
@@ -19,6 +35,8 @@ permissions:
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   AWS_REGION: us-east-1
+  # AI Analysis control - can be disabled to avoid API limits
+  ENABLE_AI_ANALYSIS: ${{ github.event_name == 'workflow_dispatch' && inputs.enable_ai_analysis || true }}
 
 jobs:
   # Job 1: Detect affected layers from changed files
@@ -238,12 +256,32 @@ jobs:
         continue-on-error: true
 
 
-  # Job 3: AI Analysis and PR Comment
+  # Job 3: AI Analysis Status Check
+  ai-analysis-status:
+    name: AI Analysis Status
+    runs-on: ubuntu-latest
+    needs: [detect-layers, validate-layer]
+    if: always() && needs.detect-layers.outputs.has-changes == 'true'
+
+    steps:
+      - name: Check AI Analysis Status
+        run: |
+          if [[ "${{ env.ENABLE_AI_ANALYSIS }}" == "true" ]]; then
+            echo "✅ AI Analysis is enabled - proceeding with analysis"
+          else
+            echo "⚠️ AI Analysis is disabled - skipping to avoid API limits"
+            echo "To enable AI analysis:"
+            echo "1. Set ENABLE_AI_ANALYSIS=true environment variable"
+            echo "2. Use workflow_dispatch with enable_ai_analysis=true"
+          fi
+
+
+  # Job 4: AI Analysis and PR Comment (can be disabled to avoid GitHub Models API limits)
   ai-analysis-and-comment:
     name: AI Analysis and PR Comment
     runs-on: ubuntu-latest
     needs: [detect-layers, validate-layer]
-    if: always() && needs.detect-layers.outputs.has-changes == 'true'
+    if: always() && needs.detect-layers.outputs.has-changes == 'true' && env.ENABLE_AI_ANALYSIS == 'true'
 
     steps:
       - name: Checkout repository
