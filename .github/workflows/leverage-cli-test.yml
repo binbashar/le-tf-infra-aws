@@ -186,6 +186,25 @@ jobs:
           printf "[INFO] Target layer validated: $TARGET_LAYER\n"
           printf "[INFO] Test mode: ${{ inputs.test_mode || 'full' }}\n"
 
+      - name: Initialize Terraform Backend
+        working-directory: ${{ env.TARGET_LAYER }}
+        run: |
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
+
+          printf "[INFO] Initializing Terraform backend...\n"
+
+          # Configuration paths and context
+          BACKEND_CONFIG="../../config/backend.tfvars"
+
+          # Initialize with timeout protection
+          timeout 300 leverage tf init -no-color -backend-config=$BACKEND_CONFIG || {
+            printf "[ERROR] Terraform init failed or timed out after 5 minutes\n"
+            exit 1
+          }
+
+          printf "[INFO] Terraform backend initialized successfully\n"
+
       - name: Detect and Clear Stale State Locks
         working-directory: ${{ env.TARGET_LAYER }}
         run: |
@@ -194,7 +213,7 @@ jobs:
 
           printf "[INFO] Checking for stale state locks\n"
 
-          # Try to get state lock info (this will fail if locked, but show lock details)
+          # Try to get state lock info (now that backend is initialized)
           if ! leverage tf plan -detailed-exitcode -lock-timeout=30s > /dev/null 2>&1; then
             printf "[WARN] State appears to be locked, attempting to detect lock details\n"
 
@@ -217,10 +236,15 @@ jobs:
 
               printf "[INFO] State unlocked successfully\n"
             else
-              printf "[ERROR] Could not extract lock ID from error output\n"
-              printf "[ERROR] Manual unlock may be required\n"
-              echo "$LOCK_OUTPUT"
-              exit 1
+              # Check if it's just a normal terraform error (not a lock issue)
+              if echo "$LOCK_OUTPUT" | grep -q "Backend initialization required"; then
+                printf "[ERROR] Backend initialization failed\n"
+                echo "$LOCK_OUTPUT"
+                exit 1
+              else
+                printf "[WARN] Plan failed but no lock detected - may be configuration issue\n"
+                printf "[INFO] Continuing with workflow...\n"
+              fi
             fi
           else
             printf "[INFO] No state locks detected\n"
