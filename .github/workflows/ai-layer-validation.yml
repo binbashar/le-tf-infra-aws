@@ -61,19 +61,8 @@ jobs:
 
           echo "Detected layers: $LAYERS"
 
-  # Job 2: Handle @aibot commands in issue comments
-  handle-aibot-commands:
-    name: Handle @aibot Commands
-    runs-on: ubuntu-latest
-    if: github.event_name == 'issue_comment' && contains(github.event.comment.body, '@aibot')
 
-    steps:
-      - name: Parse @aibot command
-        run: |
-          echo "Processing @aibot command: ${{ github.event.comment.body }}"
-          # Add @aibot command handling logic here
-
-  # Job 3: Validate each affected layer
+  # Job 2: Validate each affected layer
   validate-layer:
     name: Validate Layer (${{ matrix.layer }})
     runs-on: ubuntu-latest
@@ -248,27 +237,10 @@ jobs:
           if-no-files-found: warn
         continue-on-error: true
 
-  # Job 4: Post AI analysis results
-  post-ai-analysis-results:
-    name: Post AI Analysis Results
-    runs-on: ubuntu-latest
-    needs: [detect-layers, validate-layer]
-    if: always() && needs.detect-layers.outputs.has-changes == 'true'
 
-    steps:
-      - name: Download validation results
-        uses: actions/download-artifact@v4
-        with:
-          path: validation-results
-
-      - name: Post results summary
-        run: |
-          echo "📊 Posting AI analysis results summary..."
-          find validation-results -name "validation-summary.md" -exec cat {} \;
-
-  # Job 5: AI Analysis with GitHub Models
-  ai-analysis:
-    name: AI Analysis
+  # Job 3: AI Analysis and PR Comment
+  ai-analysis-and-comment:
+    name: AI Analysis and PR Comment
     runs-on: ubuntu-latest
     needs: [detect-layers, validate-layer]
     if: always() && needs.detect-layers.outputs.has-changes == 'true'
@@ -282,7 +254,127 @@ jobs:
         with:
           path: validation-results
 
-      - name: Run AI analysis
+      - name: Load personas configuration
+        id: load-personas
         run: |
-          echo "🤖 Running AI analysis with GitHub Models API..."
-          echo "Analysis would be performed here on validation results"
+          echo "Loading AI personas from configuration..."
+          if [[ -f ".github/ai-personas.yml" ]]; then
+            echo "personas-available=true" >> $GITHUB_OUTPUT
+            echo "✅ Personas configuration found"
+          else
+            echo "personas-available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No personas configuration found, using default prompts"
+          fi
+
+      - name: Select appropriate AI persona
+        id: select-persona
+        run: |
+          # Get the first layer from the validation results for persona selection
+          FIRST_LAYER=$(find validation-results -name "validation-summary.md" | head -1 | xargs dirname | xargs basename | sed 's/validation-results-//' | sed 's/-/\//g')
+          echo "Analyzing layer: $FIRST_LAYER"
+
+          # Simple persona selection based on layer patterns
+          if [[ "$FIRST_LAYER" =~ (security|secrets|identities|iam) ]]; then
+            PERSONA="Security Expert 🔐"
+            SYSTEM_PROMPT="You are a specialized AWS Security Expert focusing on IAM, KMS encryption, secrets management, and security compliance. Analyze the following Terraform validation results and provide security-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (network|vpc|vpn) ]]; then
+            PERSONA="Network Specialist 🌐"
+            SYSTEM_PROMPT="You are a specialized AWS Network Expert focusing on VPC design, routing, load balancing, and network security. Analyze the following Terraform validation results and provide network-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (database|rds|aurora|dynamodb) ]]; then
+            PERSONA="Database Administrator 🗄️"
+            SYSTEM_PROMPT="You are a specialized AWS Database Expert focusing on RDS, Aurora, DynamoDB, and database security. Analyze the following Terraform validation results and provide database-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (k8s|eks|ecs|container) ]]; then
+            PERSONA="Container Expert 🐳"
+            SYSTEM_PROMPT="You are a specialized AWS Container Expert focusing on EKS, ECS, container security, and orchestration. Analyze the following Terraform validation results and provide container-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (tools|monitoring|observability) ]]; then
+            PERSONA="DevOps Specialist ⚙️"
+            SYSTEM_PROMPT="You are a specialized DevOps Expert focusing on monitoring, observability, CI/CD, and operational tools. Analyze the following Terraform validation results and provide DevOps-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (s3|backup|storage) ]]; then
+            PERSONA="Storage Expert 💾"
+            SYSTEM_PROMPT="You are a specialized AWS Storage Expert focusing on S3, backup strategies, and data lifecycle management. Analyze the following Terraform validation results and provide storage-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (ec2|lambda|compute) ]]; then
+            PERSONA="Compute Expert ⚡"
+            SYSTEM_PROMPT="You are a specialized AWS Compute Expert focusing on EC2, Lambda, auto-scaling, and compute optimization. Analyze the following Terraform validation results and provide compute-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (data|analytics|bedrock|ml) ]]; then
+            PERSONA="Data Analytics Expert 📊"
+            SYSTEM_PROMPT="You are a specialized AWS Data & Analytics Expert focusing on data lakes, ML/AI services, and Bedrock integration. Analyze the following Terraform validation results and provide data-focused recommendations."
+          else
+            PERSONA="Infrastructure Generalist 🏗️"
+            SYSTEM_PROMPT="You are an AWS Infrastructure Expert with broad knowledge across all AWS services. Analyze the following Terraform validation results and provide comprehensive infrastructure recommendations."
+          fi
+
+          echo "Selected persona: $PERSONA"
+          echo "persona=$PERSONA" >> $GITHUB_OUTPUT
+          echo "system_prompt=$SYSTEM_PROMPT" >> $GITHUB_OUTPUT
+
+      - name: Prepare validation summary
+        id: prepare-summary
+        run: |
+          echo "📋 Preparing validation summary for AI analysis..."
+
+          # Combine all validation results
+          SUMMARY=""
+          for file in $(find validation-results -name "validation-summary.md"); do
+            LAYER_NAME=$(echo "$file" | xargs dirname | xargs basename | sed 's/validation-results-//' | sed 's/-/\//g')
+            echo "## Layer: $LAYER_NAME" >> combined-summary.md
+            cat "$file" >> combined-summary.md
+            echo "" >> combined-summary.md
+          done
+
+          # Read the combined summary
+          if [[ -f "combined-summary.md" ]]; then
+            SUMMARY=$(cat combined-summary.md)
+            echo "✅ Validation summary prepared"
+          else
+            SUMMARY="No validation results found"
+            echo "⚠️ No validation results available"
+          fi
+
+          # Save to output (truncate if too long for GitHub)
+          echo "validation_summary<<EOF" >> $GITHUB_OUTPUT
+          echo "$SUMMARY" | head -c 8000 >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Run AI analysis
+        id: ai-analysis
+        uses: actions/ai-inference@v1
+        with:
+          model: 'gpt-4o'
+          system-prompt: ${{ steps.select-persona.outputs.system_prompt }}
+          user-prompt: |
+            Analyze the following Terraform validation results for infrastructure layer(s):
+
+            ${{ steps.prepare-summary.outputs.validation_summary }}
+
+            Please provide:
+            1. **Overall Assessment**: Summary of validation status
+            2. **Key Findings**: Important issues or successes identified
+            3. **Recommendations**: Specific actions to improve the infrastructure
+            4. **Security Considerations**: Any security implications (if applicable)
+            5. **Best Practices**: Suggestions for following AWS/Terraform best practices
+
+            Format your response in clear markdown with appropriate sections.
+
+      - name: Post AI analysis to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const persona = '${{ steps.select-persona.outputs.persona }}';
+            const aiAnalysis = '${{ steps.ai-analysis.outputs.response }}';
+
+            const comment = `## 🤖 AI Infrastructure Analysis
+
+            **Analyzed by**: ${persona}
+
+            ${aiAnalysis}
+
+            ---
+            *This analysis was generated by AI using the GitHub Models API. Please review recommendations carefully before implementing.*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
