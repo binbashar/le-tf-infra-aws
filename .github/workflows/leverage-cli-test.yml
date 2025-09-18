@@ -19,6 +19,19 @@ on:
         required: false
         type: string
         default: 1.9.1-tofu-0.3.0
+      target_layer:
+        description: "Layer to test (relative to repo root, e.g., 'apps-devstg/global/cli-test-layer')"
+        required: false
+        type: string
+        default: "apps-devstg/global/cli-test-layer"
+      test_mode:
+        description: "Test mode: 'full' (init+plan+apply+destroy) or 'plan-only' (init+plan)"
+        required: false
+        type: choice
+        options:
+          - "full"
+          - "plan-only"
+        default: "full"
 
 jobs:
   test_leverage:
@@ -138,7 +151,83 @@ jobs:
           echo "[INFO] Disable MFA\n"
           sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env
 
-      - name: Test Reference Architecture
+      - name: Setup AWS Environment Variables
+        run: |
+          # Set AWS configuration to use the bb directory (magic recipe)
+          echo "AWS_CONFIG_FILE=$HOME/.aws/bb/config" >> $GITHUB_ENV
+          echo "AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/bb/credentials" >> $GITHUB_ENV
+          echo "AWS_PROFILE=bb-apps-devstg-devops" >> $GITHUB_ENV
+
+          printf "[INFO] AWS Environment configured\n"
+          printf "Config file: $HOME/.aws/bb/config\n"
+          printf "Credentials file: $HOME/.aws/bb/credentials\n"
+          printf "Profile: bb-apps-devstg-devops\n"
+
+      - name: Validate Target Layer
+        run: |
+          TARGET_LAYER="${{ inputs.target_layer || 'apps-devstg/global/cli-test-layer' }}"
+          echo "TARGET_LAYER=$TARGET_LAYER" >> $GITHUB_ENV
+
+          printf "[INFO] Validating target layer: $TARGET_LAYER\n"
+
+          if [[ ! -d "$TARGET_LAYER" ]]; then
+            printf "[ERROR] Target layer directory does not exist: $TARGET_LAYER\n"
+            printf "[ERROR] Available layers in apps-devstg/global:\n"
+            find apps-devstg/global -type d -maxdepth 1 -name "*-*" | sort
+            exit 1
+          fi
+
+          if [[ ! -f "$TARGET_LAYER/config.tf" ]]; then
+            printf "[ERROR] Target layer does not contain config.tf: $TARGET_LAYER\n"
+            printf "[ERROR] This does not appear to be a valid Terraform layer\n"
+            exit 1
+          fi
+
+          printf "[INFO] Target layer validated: $TARGET_LAYER\n"
+          printf "[INFO] Test mode: ${{ inputs.test_mode || 'full' }}\n"
+
+      - name: Detect and Clear Stale State Locks
+        working-directory: ${{ env.TARGET_LAYER }}
+        run: |
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
+
+          printf "[INFO] Checking for stale state locks\n"
+
+          # Try to get state lock info (this will fail if locked, but show lock details)
+          if ! leverage tf plan -detailed-exitcode -lock-timeout=30s > /dev/null 2>&1; then
+            printf "[WARN] State appears to be locked, attempting to detect lock details\n"
+
+            # Try to run plan to get lock error details
+            LOCK_OUTPUT=$(leverage tf plan 2>&1 || true)
+
+            # Extract lock ID if present
+            LOCK_ID=$(echo "$LOCK_OUTPUT" | grep -o 'ID:[[:space:]]*[a-f0-9-]*' | cut -d':' -f2 | tr -d ' ' || echo "")
+
+            if [[ -n "$LOCK_ID" ]]; then
+              printf "[INFO] Found stale lock ID: $LOCK_ID\n"
+              printf "[INFO] Attempting to force unlock\n"
+
+              # Force unlock the stale lock
+              echo "tofu force-unlock -force $LOCK_ID" | leverage tf shell || {
+                printf "[ERROR] Failed to unlock state. Manual intervention required.\n"
+                printf "[ERROR] Lock ID: $LOCK_ID\n"
+                exit 1
+              }
+
+              printf "[INFO] State unlocked successfully\n"
+            else
+              printf "[ERROR] Could not extract lock ID from error output\n"
+              printf "[ERROR] Manual unlock may be required\n"
+              echo "$LOCK_OUTPUT"
+              exit 1
+            fi
+          else
+            printf "[INFO] No state locks detected\n"
+          fi
+
+      - name: Test Infrastructure Layer
+        working-directory: ${{ env.TARGET_LAYER }}
         run: |
           # These are later mounted in the container
           mkdir -p ~/.ssh && touch ~/.gitconfig
@@ -146,20 +235,58 @@ jobs:
           # Ensure virtual environment is active
           source ~/.leverage-venv/bin/activate
 
-          printf "[INFO] Initializing layer\n"
-          leverage tf init
+          TEST_MODE="${{ inputs.test_mode || 'full' }}"
+          printf "[INFO] Starting test for layer: ${{ env.TARGET_LAYER }}\n"
+          printf "[INFO] Test mode: $TEST_MODE\n"
 
-          printf "[INFO] Generating plan\n"
-          leverage tf plan
+          # Phase 1: Initialize (always required)
+          printf "[INFO] Initializing layer with timeout protection\n"
+          timeout 300 leverage tf init || {
+            printf "[ERROR] Terraform init timed out after 5 minutes\n"
+            exit 1
+          }
 
-          printf "[INFO] Applying changes\n"
-          leverage tf apply -auto-approve
+          # Phase 2: Plan (always required)
+          printf "[INFO] Generating plan with lock timeout\n"
+          timeout 600 leverage tf plan -lock-timeout=10m || {
+            printf "[ERROR] Terraform plan timed out or failed\n"
+            exit 1
+          }
 
-          printf "[INFO] Checking if all changes were applied\n"
-          leverage tf plan -detailed-exitcode
-          [[ $? -eq 2 ]] && printf "[WARN] There are still remaining changes\n"
-          [[ $? -eq 0 ]] && printf "[INFO] Apply checks out\n"
+          # Phase 3: Apply/Destroy (only in full mode)
+          if [[ "$TEST_MODE" == "full" ]]; then
+            printf "[INFO] Running full test mode (apply + destroy)\n"
 
-          printf "[INFO] Destroying all generated created resources\n"
-          leverage tf destroy -auto-approve
-        working-directory: ./apps-devstg/global/cli-test-layer
+            printf "[INFO] Applying changes with timeout protection\n"
+            timeout 1200 leverage tf apply -auto-approve -lock-timeout=10m || {
+              printf "[ERROR] Terraform apply timed out after 20 minutes\n"
+              printf "[WARN] State may be locked - manual cleanup required\n"
+              exit 1
+            }
+
+            printf "[INFO] Checking if all changes were applied\n"
+            leverage tf plan -detailed-exitcode -lock-timeout=5m
+            PLAN_EXIT_CODE=$?
+            [[ $PLAN_EXIT_CODE -eq 2 ]] && printf "[WARN] There are still remaining changes\n"
+            [[ $PLAN_EXIT_CODE -eq 0 ]] && printf "[INFO] Apply checks out\n"
+
+            printf "[INFO] Destroying all generated created resources\n"
+            timeout 1200 leverage tf destroy -auto-approve -lock-timeout=10m || {
+              printf "[ERROR] Terraform destroy timed out or failed\n"
+              printf "[WARN] Resources may still exist - manual cleanup required\n"
+              exit 1
+            }
+
+            printf "[INFO] Final verification - state should be clean\n"
+            leverage tf plan -detailed-exitcode -lock-timeout=5m
+            FINAL_EXIT_CODE=$?
+            [[ $FINAL_EXIT_CODE -eq 0 ]] && printf "[INFO] State is clean - no resources remain\n"
+            [[ $FINAL_EXIT_CODE -eq 2 ]] && printf "[WARN] Some resources may still exist\n"
+
+          else
+            printf "[INFO] Plan-only mode completed successfully\n"
+            printf "[INFO] Skipping apply/destroy operations\n"
+            printf "[INFO] Layer configuration validated successfully\n"
+          fi
+
+          printf "[INFO] Test completed for layer: ${{ env.TARGET_LAYER }}\n"
