@@ -360,8 +360,8 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const persona = '${{ steps.select-persona.outputs.persona }}';
-            const aiAnalysis = '${{ steps.ai-analysis.outputs.response }}';
+            const persona = ${{ toJSON(steps.select-persona.outputs.persona) }};
+            const aiAnalysis = ${{ toJSON(steps.ai-analysis.outputs.response) }};
 
             const comment = `## 🤖 AI Infrastructure Analysis
 
