@@ -43,11 +43,14 @@ Once we run `leverage terraform apply`, the following components are **automatic
    - The **MySQL database** (data-science account) is populated with **sock products**.
    - The **PostgreSQL database** (apps-devstg account) is populated with **orders** (buys referencing the MySQL product table).
 
-2. **Data Movement & Processing**:
-   - **AWS DMS** reads from both databases and stores the data in **S3**.
+2. **Raw Data Storage (S3 Raw Bucket)**:
+   - **AWS DMS** reads from both databases and stores the raw data in the **S3 raw bucket**.
+   - **Amazon Kinesis** streams data from **DynamoDB tables** directly to the raw bucket for real-time data ingestion.
+
+3. **Data Movement & Processing**:
    - **ETL processes** transform and combine the data from both sources, creating a new layer that relates each **product** to the **sum of its orders**.
 
-3. **Data Querying**:
+4. **Data Querying**:
    - **Amazon Redshift** queries the data from the external schema **'awsdatacatalog'** (**'sales'** database), reading directly from **S3**.
 
 ## Notes
