@@ -14,16 +14,20 @@ The AI validation system provides intelligent analysis of Terraform infrastructu
 
 ```mermaid
 graph TD
-    A[PR Created/Updated] --> B[Detect Layers Job]
+    A[PR Created/Updated] --> A1[Check AI Control Job]
+    A1 --> B[Detect Layers Job]
     B --> C[Matrix: Validate Layers]
-    C --> D[AI Analysis & PR Comment Job]
-    D --> E[PR Comments with Persona-Based Feedback]
+    C --> D[AI Analysis Status Job]
+    D --> E[AI Analysis & PR Comment Job]
+    E --> F[PR Comments with Persona-Based Feedback]
 
+    A2[PR Label Detection<br/>skip-ai-analysis] --> A1
     B1[Layer Detection<br/>Shell Parsing] --> B
     C1[Leverage CLI<br/>Format + Init + Validate] --> C
-    D1[GitHub Models API<br/>actions/ai-inference@v1] --> D
-    D2[9 Specialized AI Personas<br/>Dynamic Selection] --> D
-    E1[JSON-Encoded Content<br/>Safe JavaScript Injection] --> E
+    D1[Status Check<br/>AI Enable/Disable Logic] --> D
+    E1[GitHub Models API<br/>actions/ai-inference@v1] --> E
+    E2[9 Specialized AI Personas<br/>Dynamic Selection] --> E
+    F1[JSON-Encoded Content<br/>Safe JavaScript Injection] --> F
 ```
 
 ## 🔄 Workflow Process Flow
@@ -69,19 +73,22 @@ The AI validation workflow is **fully operational** with the following working c
 - **AI Analysis**: Working integration with GitHub Models API using `actions/ai-inference@v1`
 - **Persona Selection**: Dynamic selection of appropriate AI expert based on layer patterns
 - **PR Comments**: Automated posting of AI analysis results to pull requests
+- **AI Control**: PR label-based disable functionality to avoid API limits (`skip-ai-analysis`, `no-ai`)
 
 #### Recent Fixes Applied ✅
 - **Parameter Fix**: Corrected `user-prompt` → `prompt` for `actions/ai-inference@v1` compatibility
 - **Command Fix**: Updated `leverage tf fmt` → `leverage tf format` for proper Leverage CLI usage
 - **JavaScript Fix**: Implemented `toJSON()` encoding to prevent syntax errors in PR comments
 - **Workflow Simplification**: Reduced from 5 jobs to 3 jobs (40% complexity reduction)
+- **AI Control**: Added PR label-based disable to avoid GitHub Models API limits
 
 #### Technical Specifications ✅
-- **Architecture**: 3-job workflow (detect-layers → validate-layer → ai-analysis-and-comment)
+- **Architecture**: 5-job workflow (check-ai-control → detect-layers → validate-layer → ai-analysis-status → ai-analysis-and-comment)
 - **Official Actions**: 100% GitHub official actions (`actions/ai-inference@v1`, `actions/github-script@v7`)
 - **Personas**: 9 specialized AI experts with intelligent pattern matching
 - **Error Handling**: Comprehensive fallbacks for backend initialization and validation failures
 - **SSH Socket Fix**: Resolved Docker bind mount issues for container execution
+- **API Limit Control**: PR label-based AI disable without affecting Terraform validation
 
 ### 🎯 Validation Scope
 
@@ -94,6 +101,45 @@ The AI validation workflow is **fully operational** with the following working c
 - Patterns defined for security, network, database, container, storage, compute, data analytics
 - Infrastructure generalist as fallback for unmatched layers
 
+### 🎛️ AI Analysis Control
+
+**Problem Solved**: Avoid hitting GitHub Models API limits during development and testing.
+
+#### 🏷️ PR Label Control (Recommended)
+
+**For Pull Requests**: Add labels to disable AI analysis while keeping Terraform validation:
+
+| Label | Effect |
+|-------|--------|
+| `skip-ai-analysis` | Disables AI analysis for the PR |
+| `no-ai` | Alternative label with same effect |
+
+**Usage**:
+1. Open your PR
+2. Click "Labels" in the right sidebar
+3. Add `skip-ai-analysis` or `no-ai` label
+4. AI analysis will be skipped on subsequent commits
+
+**What Still Runs**: All Terraform validation (format, init, validate) continues normally.
+
+#### ⚙️ Manual Run Control
+
+**For workflow_dispatch**: Control AI analysis in manual runs:
+
+1. Go to Actions → AI-Powered Infrastructure Validation
+2. Click "Run workflow"
+3. Set "Enable AI analysis" to `false`
+4. Click "Run workflow"
+
+#### 📊 Behavior Summary
+
+| Trigger Type | AI Control Method | Terraform Validation | AI Analysis |
+|--------------|-------------------|---------------------|-------------|
+| **PR with label** | `skip-ai-analysis` or `no-ai` | ✅ Runs | ❌ Skipped |
+| **PR without label** | Default | ✅ Runs | ✅ Runs |
+| **Manual (disabled)** | `enable_ai_analysis=false` | ✅ Runs | ❌ Skipped |
+| **Manual (enabled)** | `enable_ai_analysis=true` | ✅ Runs | ✅ Runs |
+
 ## 🔄 Validation Pipeline Sequence
 
 ```mermaid
@@ -104,16 +150,27 @@ sequenceDiagram
     participant AI as GitHub Models API
     participant PR as Pull Request
 
+    Note over GHA: Check PR Labels
+    GHA->>PR: Check for skip-ai-analysis/no-ai labels
+    PR-->>GHA: Label status
+
+    Note over GHA: Terraform Validation (Always Runs)
     GHA->>LC: leverage tf init
     LC->>AWS: Initialize backend
     GHA->>LC: leverage tf validate
     LC-->>GHA: Validation results
-    GHA->>LC: leverage tf plan
-    LC->>AWS: Generate plan
-    LC-->>GHA: Plan output
-    GHA->>AI: Send validation + plan data
-    AI-->>GHA: AI analysis response
-    GHA->>PR: Post intelligent feedback
+
+    Note over GHA: AI Analysis (Conditional)
+    alt No skip labels found
+        GHA->>LC: leverage tf plan
+        LC->>AWS: Generate plan
+        LC-->>GHA: Plan output
+        GHA->>AI: Send validation + plan data
+        AI-->>GHA: AI analysis response
+        GHA->>PR: Post intelligent feedback
+    else Skip labels present
+        GHA->>PR: Post "AI analysis skipped" message
+    end
 ```
 
 ## 🤖 Interactive Bot State Machine
