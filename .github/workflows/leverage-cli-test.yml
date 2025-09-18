@@ -46,17 +46,27 @@ jobs:
           path: /home/runner/.local/share/virtualenvs
           key: ${{ runner.os }}-pipenv-${{ github.run_id }}
 
-      - name: Installing Leverage CLI
+      - name: Setup Python virtual environment and Install Leverage CLI
         run: |
+          printf "[INFO] Setting up Python virtual environment\n"
+          python3 -m venv ~/.leverage-venv
+          source ~/.leverage-venv/bin/activate
+
           printf "[INFO] Installing Leverage CLI\n"
+          pip install --upgrade pip
           if [[  "${{ inputs.leverage_version }}" == "" ]] || [[  "${{ inputs.leverage_repo }}" == "" ]];
           then
-              echo "Installing https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}"
-              python -m pipenv install -i https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}
+              echo "Installing latest leverage from ${LEVERAGE_REPO}"
+              pip install leverage
           else
-              echo "Installing https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}"
-              python -m pipenv install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
+              echo "Installing leverage==${{ inputs.leverage_version }} from ${{ inputs.leverage_repo }}"
+              pip install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
           fi
+
+          echo "VIRTUAL_ENV=$HOME/.leverage-venv" >> $GITHUB_ENV
+          echo "$HOME/.leverage-venv/bin" >> $GITHUB_PATH
+
+          leverage --version
         working-directory: ./apps-devstg/global/cli-test-layer
 
 #      - name: patch_dependencies
@@ -118,22 +128,25 @@ jobs:
       - name: Test Reference Architecture
         run: |
           # These are later mounted in the container
-          mkdir ~/.ssh && touch ~/.gitconfig
+          mkdir -p ~/.ssh && touch ~/.gitconfig
+
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
 
           printf "[INFO] Initializing layer\n"
-          python -m pipenv run leverage tf init
+          leverage tf init
 
           printf "[INFO] Generating plan\n"
-          python -m pipenv run leverage tf plan
+          leverage tf plan
 
           printf "[INFO] Applying changes\n"
-          python -m pipenv run leverage tf apply -auto-approve
+          leverage tf apply -auto-approve
 
           printf "[INFO] Checking if all changes were applied\n"
-          python -m pipenv run leverage tf plan -detailed-exitcode
+          leverage tf plan -detailed-exitcode
           [[ $? -eq 2 ]] && printf "[WARN] There are still remaining changes\n"
           [[ $? -eq 0 ]] && printf "[INFO] Apply checks out\n"
 
           printf "[INFO] Destroying all generated created resources\n"
-          python -m pipenv run leverage tf destroy -auto-approve
+          leverage tf destroy -auto-approve
         working-directory: ./apps-devstg/global/cli-test-layer
