@@ -169,7 +169,7 @@ jobs:
 
           # Run format check
           echo "📝 Running format check..."
-          if output=$(leverage tf fmt -check 2>&1); then
+          if output=$(leverage tf format -check 2>&1); then
             echo "✅ Format check passed"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Format Check\n✅ **PASSED**\n\n"
           else
@@ -341,7 +341,7 @@ jobs:
         with:
           model: 'gpt-4o'
           system-prompt: ${{ steps.select-persona.outputs.system_prompt }}
-          user-prompt: |
+          prompt: |
             Analyze the following Terraform validation results for infrastructure layer(s):
 
             ${{ steps.prepare-summary.outputs.validation_summary }}
