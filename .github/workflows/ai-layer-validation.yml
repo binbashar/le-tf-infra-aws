@@ -259,12 +259,36 @@ jobs:
           echo "🏢 Current account: $ACCOUNT ($CURRENT_ACCOUNT_ID)"
           echo "📁 Available profiles: ${!ACCOUNT_PROFILES[@]}"
 
-      - name: Determine Terraform binary
+      - name: Determine available Terraform binary
         working-directory: ${{ matrix.layer }}
         run: |
-          # Default to OpenTofu
-          TF_COMMAND="tf"
-          TF_BINARY="OpenTofu (default)"
+          echo "🔍 Detecting available Terraform binary in container..."
+
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
+
+          # Test which binary is available in the container
+          TF_COMMAND="tofu"
+          TF_BINARY="OpenTofu"
+
+          # Test if OpenTofu (tofu) is available
+          if leverage tofu version >/dev/null 2>&1; then
+            TF_COMMAND="tofu"
+            TF_BINARY="OpenTofu"
+            echo "✅ OpenTofu (tofu) binary detected and working"
+          # Fallback to terraform if tofu is not available
+          elif leverage tf version >/dev/null 2>&1; then
+            TF_COMMAND="tf"
+            TF_BINARY="Terraform (fallback)"
+            echo "⚠️ OpenTofu not available, falling back to Terraform (tf)"
+          else
+            echo "❌ Neither OpenTofu nor Terraform binary available in container"
+            echo "🔍 Container diagnostics:"
+            leverage --version
+            echo "🚨 Will attempt to use 'tf' command as last resort"
+            TF_COMMAND="tf"
+            TF_BINARY="Terraform (forced fallback)"
+          fi
 
           echo "✅ Selected binary: $TF_BINARY (command: leverage $TF_COMMAND)"
           echo "TF_COMMAND=$TF_COMMAND" >> $GITHUB_ENV
@@ -291,70 +315,48 @@ jobs:
 
           echo "✅ Leverage environment configured with image: $TERRAFORM_IMAGE_TAG"
 
-      - name: Setup Leverage environment
+      - name: Setup SSH and Git configuration for container
         working-directory: ${{ matrix.layer }}
         run: |
-          # Setup Leverage environment with SSH agent socket fix
-          ${GITHUB_WORKSPACE}/.github/scripts/setup-leverage-environment.sh
+          echo "🔧 Setting up SSH and Git configuration for container mounting..."
+
+          # Create SSH directory and placeholder files for container mounting
+          mkdir -p ~/.ssh
+          touch ~/.ssh/config
+          touch ~/.gitconfig
+
+          echo "✅ SSH and Git configuration prepared for container mounting"
 
       - name: Generate minimal common.tfvars (no sensitive data)
         working-directory: ${{ matrix.layer }}
         run: |
-          echo "📝 Creating minimal common.tfvars for CI/CD environment..."
+          echo "📝 Creating minimal common.tfvars following leverage-cli-test.yml pattern..."
 
           # Navigate to repository root to create config
           REPO_ROOT=$(git rev-parse --show-toplevel)
           cd "$REPO_ROOT"
 
-          # Create minimal common.tfvars with dummy values (no sensitive data)
+          # Create minimal common.tfvars following leverage-cli-test.yml pattern
           cat << EOF > ./config/common.tfvars
-          # Generated for CI/CD - contains no sensitive data
           project = "bb"
           project_long = "binbash"
           region_primary = "us-east-1"
           region_secondary = "us-east-2"
-          regions_allowed = ["us-east-1", "us-east-2", "us-west-2"]
-
-          # SSO disabled for CI/CD environment
-          sso_enabled = false
-          sso_start_url = "https://example.com"
+          vault_address = "vault_trash"
+          vault_token = "vault_trash"
           sso_region = "us-east-1"
+          sso_enabled = false
+          sso_start_url = "sso_trash"
 
-          # Dummy account structure - no real IDs exposed
           accounts = {
-            management = {
-              email = "ci-placeholder@example.com"
-              id    = "000000000000"
-            }
             security = {
-              email = "ci-placeholder@example.com"
-              id    = "000000000000"
-            }
-            shared = {
-              email = "ci-placeholder@example.com"
-              id    = "000000000000"
-            }
-            network = {
-              email = "ci-placeholder@example.com"
-              id    = "000000000000"
-            }
-            apps-devstg = {
-              email = "ci-placeholder@example.com"
-              id    = "000000000000"
-            }
-            apps-prd = {
-              email = "ci-placeholder@example.com"
-              id    = "000000000000"
-            }
-            data-science = {
-              email = "ci-placeholder@example.com"
-              id    = "000000000000"
+              id = ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
             }
           }
           EOF
 
-          echo "✅ Minimal common.tfvars created with dummy values"
-          echo "🔒 No sensitive account data exposed"
+          echo "✅ Minimal common.tfvars created following established CI/CD pattern"
+          echo "🔒 SSO disabled for GitHub Actions environment"
 
       - name: Run enhanced Terraform validation with debugging
         working-directory: ${{ matrix.layer }}
@@ -364,21 +366,40 @@ jobs:
           # Ensure virtual environment is active
           source ~/.leverage-venv/bin/activate
 
-          # Container health check - verify OpenTofu is accessible
-          echo "🔍 Verifying OpenTofu container environment..."
-          if ! leverage tofu version 2>/dev/null; then
-            echo "❌ OpenTofu container not accessible - this may indicate:"
-            echo "  - Docker daemon not running"
-            echo "  - Leverage CLI version compatibility issue"
-            echo "  - Container image not available"
-            echo "  - Permission issues with Docker socket"
-            echo "🔧 Attempting to get more debug information..."
-            leverage --version
-            docker --version || echo "Docker CLI not available"
-            echo "🚨 Continuing with validation attempt..."
+          # Enhanced container diagnostics
+          echo "🔍 Running comprehensive container diagnostics..."
+          echo "📋 Environment Information:"
+          echo "  - Leverage CLI: $(leverage --version 2>/dev/null || echo 'Not available')"
+          echo "  - Docker version: $(docker --version 2>/dev/null || echo 'Not available')"
+          echo "  - Container image: ${{ env.TERRAFORM_IMAGE_TAG }}"
+          echo "  - Detected binary: $TF_COMMAND"
+          echo ""
+
+          # Container health check using detected binary
+          echo "🔍 Verifying container environment with detected binary: $TF_COMMAND"
+          if ! leverage $TF_COMMAND version 2>/dev/null; then
+            echo "❌ Container not accessible with $TF_COMMAND"
+            echo ""
+            echo "📊 Diagnostic Analysis:"
+            echo "  - Docker daemon status: $(systemctl is-active docker 2>/dev/null || echo 'Unknown (not systemd)')"
+            echo "  - Docker socket: $(ls -la /var/run/docker.sock 2>/dev/null || echo 'Not found')"
+            echo "  - Container image tag: ${{ env.TERRAFORM_IMAGE_TAG }}"
+            echo ""
+            echo "🔧 Potential Issues:"
+            echo "  1. Container image may not contain the expected binary path"
+            echo "  2. Docker daemon connectivity issues"
+            echo "  3. Leverage CLI container configuration mismatch"
+            echo "  4. Image tag compatibility with binary detection"
+            echo ""
+            echo "🚨 Continuing with validation attempt despite connectivity issues..."
           else
-            echo "✅ OpenTofu container verified and accessible"
+            echo "✅ Container verified and accessible with $TF_COMMAND"
+            # Get version info for successful connections
+            VERSION_INFO=$(leverage $TF_COMMAND version 2>/dev/null | head -3)
+            echo "📋 Version details:"
+            echo "$VERSION_INFO" | sed 's/^/  /'
           fi
+          echo ""
 
           # Configuration paths and context
           BACKEND_CONFIG="../../config/backend.tfvars"
@@ -432,7 +453,7 @@ jobs:
 
           # Run format check with enhanced error handling
           echo "📝 Running format check..."
-          if output=$(leverage tofu format -check $LEVERAGE_VERBOSE 2>&1); then
+          if output=$(leverage $TF_COMMAND format -check $LEVERAGE_VERBOSE 2>&1); then
             echo "✅ Format check passed"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Format Check\n✅ **PASSED**\n\n"
           else
@@ -443,7 +464,7 @@ jobs:
 
           # Initialize Terraform with enhanced debugging
           echo "⚡ Initializing Terraform..."
-          if output=$(leverage tofu init -no-color -backend-config=$BACKEND_CONFIG $LEVERAGE_VERBOSE 2>&1); then
+          if output=$(leverage $TF_COMMAND init -no-color -backend-config=$BACKEND_CONFIG $LEVERAGE_VERBOSE 2>&1); then
             echo "✅ Initialization successful"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Initialization\n✅ **PASSED**\n\n"
           else
@@ -451,7 +472,7 @@ jobs:
             handle_error "Backend initialization" "$output" "$?"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Initialization\n⚠️ **BACKEND FAILED** - trying syntax-only\n\`\`\`\n${output}\n\`\`\`\n\n"
 
-            if fallback_output=$(leverage tofu init -no-color -backend=false $LEVERAGE_VERBOSE 2>&1); then
+            if fallback_output=$(leverage $TF_COMMAND init -no-color -backend=false $LEVERAGE_VERBOSE 2>&1); then
               echo "✅ Syntax-only initialization successful"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n✅ **PASSED**\n\n"
             else
@@ -465,7 +486,7 @@ jobs:
           # Run validation with enhanced debugging
           echo "🔍 Running Terraform validation..."
           if [[ "$VALIDATION_STATUS" != "failed" ]]; then
-            if output=$(leverage tofu validate $LEVERAGE_VERBOSE 2>&1); then
+            if output=$(leverage $TF_COMMAND validate $LEVERAGE_VERBOSE 2>&1); then
               echo "✅ Validation successful"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Validation\n✅ **PASSED**\n\n"
             else
