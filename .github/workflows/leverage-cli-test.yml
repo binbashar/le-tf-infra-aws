@@ -36,6 +36,7 @@ on:
 jobs:
   test_leverage:
     runs-on: ubuntu-latest
+    timeout-minutes: 45  # Overall workflow timeout to prevent infinite hangs
     env:
       LEVERAGE_VERSION: 2.1.1
       LEVERAGE_REPO: pypi.org
@@ -163,6 +164,39 @@ jobs:
           printf "Credentials file: $HOME/.aws/bb/credentials\n"
           printf "Profile: bb-apps-devstg-devops\n"
 
+      - name: Container Health Check and Binary Detection
+        run: |
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
+
+          printf "[INFO] Testing container health and binary availability\n"
+
+          # Test container startup and binary detection
+          if ! timeout 60 leverage tf shell -c "echo 'Container health check passed'" 2>/dev/null; then
+            printf "[ERROR] Container failed to start or respond within 60 seconds\n"
+            printf "[ERROR] This suggests container runtime or image issues\n"
+            exit 1
+          fi
+
+          # Detect available binary in container
+          printf "[INFO] Detecting available Terraform binary in container\n"
+          TOFU_AVAILABLE=$(timeout 30 leverage tf shell -c "command -v tofu" 2>/dev/null || echo "")
+          TF_AVAILABLE=$(timeout 30 leverage tf shell -c "command -v terraform" 2>/dev/null || echo "")
+
+          if [[ -n "$TOFU_AVAILABLE" ]]; then
+            printf "[INFO] OpenTofu binary detected: $TOFU_AVAILABLE\n"
+            echo "TERRAFORM_BINARY=tofu" >> $GITHUB_ENV
+          elif [[ -n "$TF_AVAILABLE" ]]; then
+            printf "[INFO] Terraform binary detected: $TF_AVAILABLE\n"
+            echo "TERRAFORM_BINARY=terraform" >> $GITHUB_ENV
+          else
+            printf "[ERROR] No Terraform binary found in container\n"
+            printf "[ERROR] Container image may be corrupted or incompatible\n"
+            exit 1
+          fi
+
+          printf "[INFO] Container health check completed successfully\n"
+
       - name: Validate Target Layer
         run: |
           TARGET_LAYER="${{ inputs.target_layer || 'apps-devstg/global/cli-test-layer' }}"
@@ -197,9 +231,9 @@ jobs:
           # Configuration paths and context
           BACKEND_CONFIG="../../config/backend.tfvars"
 
-          # Initialize with timeout protection
-          timeout 300 leverage tf init -no-color -backend-config=$BACKEND_CONFIG || {
-            printf "[ERROR] Terraform init failed or timed out after 5 minutes\n"
+          # Initialize with timeout protection (reduced for faster failure detection)
+          timeout 120 leverage tf init -no-color -backend-config=$BACKEND_CONFIG || {
+            printf "[ERROR] Terraform init failed or timed out after 2 minutes\n"
             exit 1
           }
 
@@ -211,40 +245,35 @@ jobs:
           # Ensure virtual environment is active
           source ~/.leverage-venv/bin/activate
 
-          printf "[INFO] Checking for stale state locks\n"
+          printf "[INFO] Checking for stale state locks (with timeout protection)\n"
 
-          # Try to get state lock info (now that backend is initialized)
-          if ! leverage tf plan -detailed-exitcode -lock-timeout=30s > /dev/null 2>&1; then
-            printf "[WARN] State appears to be locked, attempting to detect lock details\n"
+          # Quick lock check with short timeout to avoid hanging
+          if ! timeout 60 leverage tf plan -detailed-exitcode -lock-timeout=30s > /dev/null 2>&1; then
+            printf "[WARN] State appears to be locked or has issues, investigating...\n"
 
-            # Try to run plan to get lock error details
-            LOCK_OUTPUT=$(leverage tf plan 2>&1 || true)
+            # Get lock error details with timeout
+            LOCK_OUTPUT=$(timeout 30 leverage tf plan 2>&1 || echo "Lock detection timed out")
 
             # Extract lock ID if present
             LOCK_ID=$(echo "$LOCK_OUTPUT" | grep -o 'ID:[[:space:]]*[a-f0-9-]*' | cut -d':' -f2 | tr -d ' ' || echo "")
 
-            if [[ -n "$LOCK_ID" ]]; then
+            if [[ -n "$LOCK_ID" && "$LOCK_ID" != "Lock" ]]; then
               printf "[INFO] Found stale lock ID: $LOCK_ID\n"
               printf "[INFO] Attempting to force unlock\n"
 
-              # Force unlock the stale lock
-              echo "tofu force-unlock -force $LOCK_ID" | leverage tf shell || {
-                printf "[ERROR] Failed to unlock state. Manual intervention required.\n"
-                printf "[ERROR] Lock ID: $LOCK_ID\n"
-                exit 1
-              }
-
-              printf "[INFO] State unlocked successfully\n"
-            else
-              # Check if it's just a normal terraform error (not a lock issue)
-              if echo "$LOCK_OUTPUT" | grep -q "Backend initialization required"; then
-                printf "[ERROR] Backend initialization failed\n"
-                echo "$LOCK_OUTPUT"
-                exit 1
+              # Force unlock with timeout protection
+              if timeout 30 bash -c "echo 'tofu force-unlock -force $LOCK_ID' | leverage tf shell"; then
+                printf "[INFO] State unlocked successfully\n"
               else
-                printf "[WARN] Plan failed but no lock detected - may be configuration issue\n"
-                printf "[INFO] Continuing with workflow...\n"
+                printf "[ERROR] Failed to unlock state within timeout\n"
+                printf "[ERROR] Lock ID: $LOCK_ID\n"
+                printf "[ERROR] Manual intervention may be required\n"
+                exit 1
               fi
+            else
+              printf "[WARN] No valid lock ID found, may be configuration issue\n"
+              printf "[INFO] Lock output: $LOCK_OUTPUT\n"
+              printf "[INFO] Continuing with workflow...\n"
             fi
           else
             printf "[INFO] No state locks detected\n"
@@ -263,17 +292,16 @@ jobs:
           printf "[INFO] Starting test for layer: ${{ env.TARGET_LAYER }}\n"
           printf "[INFO] Test mode: $TEST_MODE\n"
 
-          # Phase 1: Initialize (always required)
-          printf "[INFO] Initializing layer with timeout protection\n"
-          timeout 300 leverage tf init || {
-            printf "[ERROR] Terraform init timed out after 5 minutes\n"
-            exit 1
-          }
-
-          # Phase 2: Plan (always required)
+          # Backend already initialized in previous step, proceeding to plan
+          # Phase 1: Plan (always required)
           printf "[INFO] Generating plan with lock timeout\n"
-          timeout 600 leverage tf plan -lock-timeout=10m || {
-            printf "[ERROR] Terraform plan timed out or failed\n"
+          timeout 300 leverage tf plan -lock-timeout=5m || {
+            printf "[ERROR] Terraform plan timed out or failed after 5 minutes\n"
+            printf "[ERROR] This could indicate:\n"
+            printf "[ERROR] - Network connectivity issues\n"
+            printf "[ERROR] - AWS authentication problems\n"
+            printf "[ERROR] - State lock issues\n"
+            printf "[ERROR] - Container runtime problems\n"
             exit 1
           }
 
@@ -282,8 +310,8 @@ jobs:
             printf "[INFO] Running full test mode (apply + destroy)\n"
 
             printf "[INFO] Applying changes with timeout protection\n"
-            timeout 1200 leverage tf apply -auto-approve -lock-timeout=10m || {
-              printf "[ERROR] Terraform apply timed out after 20 minutes\n"
+            timeout 600 leverage tf apply -auto-approve -lock-timeout=5m || {
+              printf "[ERROR] Terraform apply timed out after 10 minutes\n"
               printf "[WARN] State may be locked - manual cleanup required\n"
               exit 1
             }
@@ -295,8 +323,8 @@ jobs:
             [[ $PLAN_EXIT_CODE -eq 0 ]] && printf "[INFO] Apply checks out\n"
 
             printf "[INFO] Destroying all generated created resources\n"
-            timeout 1200 leverage tf destroy -auto-approve -lock-timeout=10m || {
-              printf "[ERROR] Terraform destroy timed out or failed\n"
+            timeout 600 leverage tf destroy -auto-approve -lock-timeout=5m || {
+              printf "[ERROR] Terraform destroy timed out after 10 minutes\n"
               printf "[WARN] Resources may still exist - manual cleanup required\n"
               exit 1
             }
@@ -314,3 +342,32 @@ jobs:
           fi
 
           printf "[INFO] Test completed for layer: ${{ env.TARGET_LAYER }}\n"
+
+      - name: Cleanup on Failure
+        if: failure()
+        working-directory: ${{ env.TARGET_LAYER }}
+        run: |
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
+
+          printf "[WARN] Workflow failed, attempting cleanup\n"
+
+          # Try to unlock any remaining state locks
+          LOCK_OUTPUT=$(timeout 30 leverage tf plan 2>&1 || echo "No lock info available")
+          LOCK_ID=$(echo "$LOCK_OUTPUT" | grep -o 'ID:[[:space:]]*[a-f0-9-]*' | cut -d':' -f2 | tr -d ' ' || echo "")
+
+          if [[ -n "$LOCK_ID" && "$LOCK_ID" != "Lock" ]]; then
+            printf "[INFO] Attempting to unlock remaining state lock: $LOCK_ID\n"
+            timeout 30 bash -c "echo 'tofu force-unlock -force $LOCK_ID' | leverage tf shell" || true
+          fi
+
+          # Attempt emergency destroy if in full mode
+          if [[ "${{ inputs.test_mode || 'full' }}" == "full" ]]; then
+            printf "[WARN] Attempting emergency resource cleanup\n"
+            timeout 300 leverage tf destroy -auto-approve -lock-timeout=2m || {
+              printf "[ERROR] Emergency cleanup failed - manual intervention required\n"
+              printf "[ERROR] Please check AWS console for remaining resources\n"
+            }
+          fi
+
+          printf "[INFO] Cleanup attempt completed\n"
