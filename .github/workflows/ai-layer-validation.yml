@@ -2,10 +2,14 @@ name: AI-Powered Infrastructure Validation
 
 # Usage:
 # 1. Automatic: Triggers on PR changes to secrets-manager layer
-# 2. Manual: Run via workflow_dispatch with enable_ai_analysis=false to skip AI analysis
+# 2. Manual: Run via workflow_dispatch with options:
+#    - enable_ai_analysis: false to skip AI analysis and avoid API limits
+#    - debug_level: normal/verbose/extra-verbose for Leverage CLI debugging
+#    - target_layer: specific layer to validate (optional)
 # 3. PR Control: Add 'skip-ai-analysis' or 'no-ai' label to PR to disable AI analysis
-#    - Validation (format, init, validate) still runs
+#    - Validation (format, init, validate) still runs with full cross-account support
 #    - Only AI analysis and PR comments are skipped
+# 4. Cross-Account: Automatically configures ALL 7 AWS account profiles for comprehensive access
 
 on:
   pull_request:
@@ -22,6 +26,15 @@ on:
         description: 'Enable AI analysis (set to false to avoid API limits)'
         type: boolean
         default: true
+        required: false
+      debug_level:
+        description: 'Debug verbosity level for Leverage CLI commands'
+        type: choice
+        options:
+          - 'normal'
+          - 'verbose'
+          - 'extra-verbose'
+        default: 'normal'
         required: false
       target_layer:
         description: 'Specific layer to validate (optional)'
@@ -145,21 +158,106 @@ jobs:
           echo "✅ Leverage CLI installed in virtual environment"
           leverage --version
 
-      - name: Configure AWS credentials for Leverage CLI containers
+      - name: Configure comprehensive cross-account AWS profiles
         run: |
           # Parse layer information to determine AWS account
           LAYER_PATH="${{ matrix.layer }}"
           ACCOUNT=$(echo "$LAYER_PATH" | cut -d'/' -f1)
 
-          echo "🔑 Configuring AWS credentials for Leverage CLI containers - Account: $ACCOUNT"
+          echo "🔑 Setting up comprehensive cross-account AWS profiles for account: $ACCOUNT"
 
-          # Simple environment variable setup for Leverage CLI containers
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+          # Account mapping arrays
+          declare -A ACCOUNT_PROFILES=(
+            ["apps-devstg"]="bb-apps-devstg-devops"
+            ["apps-prd"]="bb-apps-prd-devops"
+            ["shared"]="bb-shared-devops"
+            ["security"]="bb-security-devops"
+            ["network"]="bb-network-devops"
+            ["data-science"]="bb-data-science-devops"
+            ["management"]="bb-management-oaar"
+          )
+
+          declare -A ACCOUNT_IDS=(
+            ["apps-devstg"]="${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}"
+            ["apps-prd"]="${{ secrets.AWS_PRD_ACCOUNT_ID }}"
+            ["shared"]="${{ secrets.AWS_SHARED_ACCOUNT_ID }}"
+            ["security"]="${{ secrets.AWS_SECURITY_ACCOUNT_ID }}"
+            ["network"]="${{ secrets.AWS_NETWORK_ACCOUNT_ID }}"
+            ["data-science"]="${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}"
+            ["management"]="${{ secrets.AWS_ROOT_ACCOUNT_ID }}"
+          )
+
+          # Create AWS directories for Leverage CLI container mounting
+          mkdir -p ~/.aws/bb
+
+          # Create base credentials file with deployment master profile
+          cat << EOF > ~/.aws/credentials
+          [bb-deploymaster]
+          aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          EOF
+
+          # Create comprehensive config file with ALL account profiles
+          cat << EOF > ~/.aws/config
+          [profile bb-apps-devstg-devops]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+
+          [profile bb-apps-prd-devops]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_PRD_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+
+          [profile bb-shared-devops]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_SHARED_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+
+          [profile bb-security-devops]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_SECURITY_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+
+          [profile bb-network-devops]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_NETWORK_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+
+          [profile bb-data-science-devops]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+
+          [profile bb-management-oaar]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_ROOT_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+          EOF
+
+          # Copy profiles for Leverage CLI container mounting
+          cp ~/.aws/credentials ~/.aws/bb/
+          cp ~/.aws/config ~/.aws/bb/
+
+          # Set the correct AWS profile for this layer's account
+          CURRENT_PROFILE="${ACCOUNT_PROFILES[$ACCOUNT]}"
+          CURRENT_ACCOUNT_ID="${ACCOUNT_IDS[$ACCOUNT]}"
+
+          echo "AWS_PROFILE=$CURRENT_PROFILE" >> $GITHUB_ENV
           echo "AWS_DEFAULT_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
           echo "AWS_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
 
-          echo "✅ AWS credentials configured for Leverage CLI containers"
+          echo "✅ AWS profiles configured for ALL accounts"
+          echo "🎯 Current layer profile: $CURRENT_PROFILE"
+          echo "🏢 Current account: $ACCOUNT ($CURRENT_ACCOUNT_ID)"
+          echo "📁 Available profiles: ${!ACCOUNT_PROFILES[@]}"
 
       - name: Determine Terraform binary
         working-directory: ${{ matrix.layer }}
@@ -199,72 +297,129 @@ jobs:
           # Setup Leverage environment with SSH agent socket fix
           ${GITHUB_WORKSPACE}/.github/scripts/setup-leverage-environment.sh
 
-      - name: Run Terraform validation
+      - name: Run enhanced Terraform validation with debugging
         working-directory: ${{ matrix.layer }}
         run: |
-          echo "🚀 Starting Terraform validation for layer: ${{ matrix.layer }}"
+          echo "🚀 Starting enhanced Terraform validation for layer: ${{ matrix.layer }}"
 
           # Ensure virtual environment is active
           source ~/.leverage-venv/bin/activate
 
-          # Configuration paths
+          # Configuration paths and context
           BACKEND_CONFIG="../../config/backend.tfvars"
           VALIDATION_RESULTS=""
           VALIDATION_STATUS="success"
+          LAYER_PATH="${{ matrix.layer }}"
+          ACCOUNT=$(echo "$LAYER_PATH" | cut -d'/' -f1)
 
-          # Run format check
+          # Set verbosity level based on workflow input
+          DEBUG_LEVEL="${{ inputs.debug_level }}"
+          case "$DEBUG_LEVEL" in
+            "verbose")
+              LEVERAGE_VERBOSE="-v"
+              echo "🔍 Debug level: Verbose (-v)"
+              ;;
+            "extra-verbose")
+              LEVERAGE_VERBOSE="-vv"
+              echo "🔍 Debug level: Extra verbose (-vv)"
+              ;;
+            *)
+              LEVERAGE_VERBOSE=""
+              echo "🔍 Debug level: Normal"
+              ;;
+          esac
+
+          # Enhanced context logging
+          echo "🏗️ ===== VALIDATION CONTEXT ====="
+          echo "🎯 Layer: ${{ matrix.layer }}"
+          echo "🏢 Account: $ACCOUNT"
+          echo "🌍 Region: ${{ env.AWS_REGION }}"
+          echo "🔑 AWS Profile: ${{ env.AWS_PROFILE }}"
+          echo "📁 Backend Config: $BACKEND_CONFIG"
+          echo "🐳 Leverage Image: ${{ env.TERRAFORM_IMAGE_TAG }}"
+          echo "==============================="
+
+          # Enhanced error reporting function
+          handle_error() {
+            local command="$1"
+            local output="$2"
+            local exit_code="$3"
+
+            echo "❌ $command failed (exit code: $exit_code)"
+            echo "🔍 Error context:"
+            echo "  - AWS Profile: ${{ env.AWS_PROFILE }}"
+            echo "  - Account: $ACCOUNT"
+            echo "  - Layer: ${{ matrix.layer }}"
+            echo "  - Debug level: $DEBUG_LEVEL"
+            echo "📋 Error output:"
+            echo "$output"
+          }
+
+          # Run format check with enhanced error handling
           echo "📝 Running format check..."
-          if output=$(leverage tf format -check 2>&1); then
+          if output=$(leverage tf format -check $LEVERAGE_VERBOSE 2>&1); then
             echo "✅ Format check passed"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Format Check\n✅ **PASSED**\n\n"
           else
             echo "⚠️ Format check failed"
+            handle_error "Format check" "$output" "$?"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Format Check\n⚠️ **FAILED**\n\`\`\`\n${output}\n\`\`\`\n\n"
           fi
 
-          # Initialize Terraform
+          # Initialize Terraform with enhanced debugging
           echo "⚡ Initializing Terraform..."
-          if output=$(leverage tf init -no-color -backend-config=$BACKEND_CONFIG 2>&1); then
+          if output=$(leverage tf init -no-color -backend-config=$BACKEND_CONFIG $LEVERAGE_VERBOSE 2>&1); then
             echo "✅ Initialization successful"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Initialization\n✅ **PASSED**\n\n"
           else
             echo "⚠️ Backend init failed, trying syntax-only validation..."
+            handle_error "Backend initialization" "$output" "$?"
             VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Initialization\n⚠️ **BACKEND FAILED** - trying syntax-only\n\`\`\`\n${output}\n\`\`\`\n\n"
 
-            if fallback_output=$(leverage tf init -no-color -backend=false 2>&1); then
+            if fallback_output=$(leverage tf init -no-color -backend=false $LEVERAGE_VERBOSE 2>&1); then
               echo "✅ Syntax-only initialization successful"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n✅ **PASSED**\n\n"
             else
               echo "❌ Syntax-only initialization failed"
+              handle_error "Syntax-only initialization" "$fallback_output" "$?"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n❌ **FAILED**\n\`\`\`\n${fallback_output}\n\`\`\`\n\n"
               VALIDATION_STATUS="failed"
             fi
           fi
 
-          # Run validation
+          # Run validation with enhanced debugging
           echo "🔍 Running Terraform validation..."
           if [[ "$VALIDATION_STATUS" != "failed" ]]; then
-            if output=$(leverage tf validate 2>&1); then
+            if output=$(leverage tf validate $LEVERAGE_VERBOSE 2>&1); then
               echo "✅ Validation successful"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Validation\n✅ **PASSED**\n\n"
             else
               echo "❌ Validation failed"
+              handle_error "Terraform validation" "$output" "$?"
               VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Validation\n❌ **FAILED**\n\`\`\`\n${output}\n\`\`\`\n\n"
               VALIDATION_STATUS="failed"
             fi
           fi
 
-          # Create validation results
+          # Create enhanced validation results
           mkdir -p /tmp/validation-results
           echo -e "$VALIDATION_RESULTS" > /tmp/validation-results/validation-summary.md
           echo "$VALIDATION_STATUS" > /tmp/validation-results/validation-status.txt
 
-          echo "🎯 Validation completed with status: $VALIDATION_STATUS"
+          # Final status report
+          echo "🎯 ===== VALIDATION SUMMARY ====="
+          echo "Status: $VALIDATION_STATUS"
+          echo "Layer: ${{ matrix.layer }}"
+          echo "Account: $ACCOUNT"
+          echo "Profile: ${{ env.AWS_PROFILE }}"
+          echo "Debug Level: $DEBUG_LEVEL"
+          echo "==============================="
+
           if [[ "$VALIDATION_STATUS" == "failed" ]]; then
-            echo "❌ Validation failed"
+            echo "❌ Validation failed - check error context above"
             exit 1
           else
-            echo "✅ All validation steps passed"
+            echo "✅ All validation steps passed successfully"
           fi
 
       - name: Set artifact name
