@@ -81,6 +81,7 @@ The AI validation workflow is **fully operational** with the following working c
 - **JavaScript Fix**: Implemented `toJSON()` encoding to prevent syntax errors in PR comments
 - **Workflow Simplification**: Reduced from 5 jobs to 3 jobs (40% complexity reduction)
 - **AI Control**: Added PR label-based disable to avoid GitHub Models API limits
+- **Workflow Stalling Prevention**: Comprehensive fixes to prevent infinite hangs and improve reliability
 
 #### Technical Specifications ✅
 - **Architecture**: 5-job workflow (check-ai-control → detect-layers → validate-layer → ai-analysis-status → ai-analysis-and-comment)
@@ -89,6 +90,33 @@ The AI validation workflow is **fully operational** with the following working c
 - **Error Handling**: Comprehensive fallbacks for backend initialization and validation failures
 - **SSH Socket Fix**: Resolved Docker bind mount issues for container execution
 - **API Limit Control**: PR label-based AI disable without affecting Terraform validation
+
+#### 🔧 Workflow Stalling Prevention Fixes ✅
+Recent comprehensive improvements to prevent workflow hangs and ensure reliable execution:
+
+**Container Health & Binary Detection:**
+- **Container Health Check**: Automatic testing of container startup before operations (60-second timeout)
+- **Binary Detection**: Dynamic detection of available binaries (`tofu` vs `terraform`) with automatic fallback
+- **Early Failure Detection**: Container issues caught immediately rather than causing hangs
+
+**Timeout Optimization:**
+- **Reduced Timeouts**: Faster failure detection with optimized timeout values:
+  - Backend Init: 5min → 2min
+  - Plan Operations: 10min → 5min
+  - Apply/Destroy: 20min → 10min
+- **Workflow Timeout**: 45-minute maximum runtime to prevent runaway processes
+- **Operation Timeouts**: All operations have timeout protection to prevent infinite hangs
+
+**State Lock Management:**
+- **Automatic Lock Detection**: Proactive detection of stale DynamoDB state locks
+- **Timeout-Protected Cleanup**: Force unlock operations with 30-second timeout limits
+- **Lock Prevention**: Simplified logic to avoid edge cases that cause lock hangs
+
+**Emergency Safeguards:**
+- **Redundancy Removal**: Eliminated duplicate initialization steps that caused conflicts
+- **Automatic Cleanup**: Emergency resource cleanup on workflow failure
+- **Error Reporting**: Enhanced diagnostic information for troubleshooting
+- **Graceful Degradation**: Workflows continue with warnings rather than hanging on non-critical errors
 
 ### 🎯 Validation Scope
 
@@ -448,6 +476,30 @@ Changes may affect: `databases-aurora`, `databases-pgsql` layers
 - Ensure PR contains actual Terraform file changes
 - Verify repository has Actions enabled in Settings
 
+#### 1.1. Workflow Stalling or Hanging
+
+**Symptoms**: Workflows start but never complete, appear to hang indefinitely
+
+**Solutions (Recently Implemented)**:
+- ✅ **Container Health Check**: Workflows now test container startup before operations
+- ✅ **Automatic Binary Detection**: Dynamic detection of `tofu` vs `terraform` binaries
+- ✅ **Timeout Protection**: All operations have timeout limits (2-10 minutes)
+- ✅ **State Lock Cleanup**: Automatic detection and cleanup of stale locks
+- ✅ **Emergency Cleanup**: Automatic resource cleanup on workflow failure
+- ✅ **Workflow Timeout**: 45-minute maximum runtime prevents runaway processes
+
+**Manual Checks**:
+```bash
+# Test container health manually
+leverage tf shell -c "echo 'Container health check passed'"
+
+# Check for stale state locks
+leverage tf plan -lock-timeout=30s
+
+# Force unlock if needed (use with caution)
+echo "tofu force-unlock -force <LOCK_ID>" | leverage tf shell
+```
+
 #### 2. AWS Authentication Failures
 
 **Symptoms**: `Error: could not retrieve credentials` or `Access Denied`
@@ -470,6 +522,33 @@ Changes may affect: `databases-aurora`, `databases-pgsql` layers
 - Verify pip cache is working correctly
 - Try running workflow with different runner OS
 - Check for conflicts with other Python dependencies
+
+#### 3.1. Leverage CLI Testing Workflow Issues
+
+**New Comprehensive Testing Workflow** (`leverage-cli-test.yml`):
+The repository now includes a dedicated workflow for testing Leverage CLI functionality with enhanced reliability:
+
+**Features**:
+- **Parameterized Testing**: Test any layer with custom parameters
+- **Container Health Checks**: Automatic binary detection and health validation
+- **State Lock Management**: Automatic cleanup of stale locks
+- **Emergency Cleanup**: Resource cleanup on failure
+- **Timeout Protection**: Prevents infinite hangs
+
+**Manual Workflow Trigger**:
+```bash
+# Test specific layer with parameters
+gh workflow run leverage-cli-test.yml \
+  -f target_layer="apps-devstg/us-east-1/secrets-manager" \
+  -f test_mode="plan-only" \
+  -f leverage_version="latest"
+```
+
+**Workflow Parameters**:
+- `target_layer`: Layer to test (default: apps-devstg/global/cli-test-layer)
+- `test_mode`: "full" (apply+destroy) or "plan-only" (default: full)
+- `leverage_version`: CLI version (default: latest)
+- `leverage_toolbox_version`: Container version (default: 1.9.1-tofu-0.3.0)
 
 #### 4. Layer Detection Not Working
 
@@ -534,6 +613,56 @@ curl -X POST -H "Authorization: Bearer $GITHUB_TOKEN" \
   "https://models.github.ai/inference/chat/completions" \
   -d '{"model":"openai/gpt-4o","messages":[{"role":"user","content":"Test"}]}'
 ```
+
+### 🛡️ Workflow Safeguards and Emergency Procedures
+
+**Automatic Safeguards** (Implemented in leverage-cli-test.yml):
+
+1. **Container Health Check**:
+   - Tests container startup before any operations
+   - Detects available binaries (`tofu` vs `terraform`)
+   - 60-second timeout prevents indefinite hangs
+
+2. **State Lock Protection**:
+   - Automatic detection of stale DynamoDB locks
+   - Timeout-protected force unlock operations
+   - Prevents lock-related workflow hangs
+
+3. **Emergency Cleanup on Failure**:
+   ```yaml
+   - name: Cleanup on Failure
+     if: failure()
+     run: |
+       # Automatic state lock cleanup
+       # Emergency resource destruction
+       # Timeout-protected operations
+   ```
+
+4. **Timeout Hierarchy**:
+   - **Workflow Level**: 45-minute maximum runtime
+   - **Operation Level**: 2-10 minute timeouts per operation
+   - **API Level**: 30-second timeouts for lock detection
+
+**Manual Emergency Procedures**:
+```bash
+# Emergency state unlock (use with extreme caution)
+cd target-layer-directory
+LOCK_OUTPUT=$(leverage tf plan 2>&1 || true)
+LOCK_ID=$(echo "$LOCK_OUTPUT" | grep -o 'ID:[[:space:]]*[a-f0-9-]*' | cut -d':' -f2 | tr -d ' ')
+if [[ -n "$LOCK_ID" ]]; then
+  echo "tofu force-unlock -force $LOCK_ID" | leverage tf shell
+fi
+
+# Emergency resource cleanup
+timeout 300 leverage tf destroy -auto-approve -lock-timeout=2m
+```
+
+**Best Practices for Workflow Safety**:
+1. Always use `plan-only` mode for production-like layers
+2. Monitor workflow logs for container health check results
+3. Review emergency cleanup logs after failures
+4. Check for remaining resources after destroy operations
+5. Use manual workflow triggers with appropriate parameters
 
 ## 🎨 Customization
 
