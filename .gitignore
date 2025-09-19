@@ -87,6 +87,7 @@ Thumbs.db
 *.pgpass
 *.vagrant
 *rclone.conf
+CLAUDE.local.md
 
 # Project files #
 ####################
