@@ -1,0 +1,37 @@
+openapi: 3.0.0
+info:
+  title: S3 Write API
+  version: 1.0.0
+paths:
+  /write:
+    post:
+      description: Write content to S3
+      operationId: writeS3File
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                  description: S3 object key (supports paths with slashes)
+                content:
+                  type: string
+                  description: Content to write to the file
+              required:
+                - key
+                - content
+      responses:
+        "200":
+          description: File written successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  key:
+                    type: string
