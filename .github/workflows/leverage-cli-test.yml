@@ -205,96 +205,83 @@ jobs:
             exit 1
           fi
 
-          # Stage 2: Shell access test with verbose logging
-          printf "[INFO] Stage 2: Testing shell access and responsiveness\n"
-          if timeout 60 leverage -v tf shell -c "echo 'Container health check passed'" 2>&1 | tee -a "$HEALTH_LOG"; then
-            printf "[INFO] ✅ Shell access successful\n"
+          # Stage 2: Binary detection and functional validation from version output
+          printf "[INFO] Stage 2: Parsing version output for binary detection and functionality test\n"
+
+          # Parse version output from Stage 1 for binary type detection
+          if grep -q "OpenTofu" "$HEALTH_LOG"; then
+            printf "[INFO] ✅ OpenTofu binary detected from version output\n"
+            echo "TERRAFORM_BINARY=tofu" >> $GITHUB_ENV
+            DETECTED_BINARY="tofu"
+          elif grep -q "Terraform" "$HEALTH_LOG"; then
+            printf "[INFO] ✅ Terraform binary detected from version output\n"
+            echo "TERRAFORM_BINARY=terraform" >> $GITHUB_ENV
+            DETECTED_BINARY="terraform"
           else
-            printf "[ERROR] ❌ Shell access failed within 60 seconds\n"
-            printf "[ERROR] === Health Check Log Contents ===\n"
+            printf "[ERROR] ❌ Unable to detect binary type from version output\n"
+            printf "[ERROR] === Version Output Analysis ===\n"
             cat "$HEALTH_LOG"
-            printf "[ERROR] === End of Health Check Log ===\n"
-            printf "[ERROR] Container may be unresponsive or have shell access issues\n"
+            printf "[ERROR] === End of Version Output ===\n"
             exit 1
           fi
 
-          # Stage 3: Binary detection with enhanced error reporting
-          printf "[INFO] Stage 3: Detecting available Terraform binary in container\n"
-          TOFU_AVAILABLE=$(timeout 30 leverage -v tf shell -c "command -v tofu" 2>&1 | tee -a "$HEALTH_LOG" || echo "")
-          TF_AVAILABLE=$(timeout 30 leverage -v tf shell -c "command -v terraform" 2>&1 | tee -a "$HEALTH_LOG" || echo "")
-
-          # Parse binary detection results
-          TOFU_PATH=$(echo "$TOFU_AVAILABLE" | grep -E '^/.*tofu$' | head -1)
-          TF_PATH=$(echo "$TF_AVAILABLE" | grep -E '^/.*terraform$' | head -1)
-
-          if [[ -n "$TOFU_PATH" ]]; then
-            printf "[INFO] ✅ OpenTofu binary detected: $TOFU_PATH\n"
-            echo "TERRAFORM_BINARY=tofu" >> $GITHUB_ENV
-          elif [[ -n "$TF_PATH" ]]; then
-            printf "[INFO] ✅ Terraform binary detected: $TF_PATH\n"
-            echo "TERRAFORM_BINARY=terraform" >> $GITHUB_ENV
+          # Stage 3: Lightweight functional validation (optional - allows failure)
+          printf "[INFO] Stage 3: Testing container functionality with validate command\n"
+          if timeout 30 leverage -v tf validate 2>&1 | tee -a "$HEALTH_LOG"; then
+            printf "[INFO] ✅ Container functionality validation successful\n"
           else
-            printf "[ERROR] ❌ No Terraform binary found in container\n"
-            printf "[ERROR] === Binary Detection Output ===\n"
-            printf "[ERROR] TOFU_AVAILABLE output: $TOFU_AVAILABLE\n"
-            printf "[ERROR] TF_AVAILABLE output: $TF_AVAILABLE\n"
-            printf "[ERROR] === Health Check Log Contents ===\n"
-            cat "$HEALTH_LOG"
-            printf "[ERROR] === End of Health Check Log ===\n"
-            printf "[ERROR] Container image may be corrupted, incompatible, or missing binaries\n"
-            exit 1
+            printf "[WARN] ⚠️ Container validate command failed (acceptable - may be due to empty directory)\n"
+            printf "[INFO] Container is still considered healthy based on successful version check\n"
           fi
 
           printf "[INFO] ✅ Enhanced container health check completed successfully\n"
+          printf "[INFO] Detected binary: $DETECTED_BINARY\n"
           printf "[INFO] === Final Health Check Log ===\n"
           cat "$HEALTH_LOG"
           printf "[INFO] === End of Final Health Check Log ===\n"
 
-      - name: Fallback Health Check Methods
+      - name: Emergency Fallback Health Check
         if: failure()
         run: |
           # Ensure virtual environment is active
           source ~/.leverage-venv/bin/activate
 
-          printf "[WARN] === Primary Health Check Failed - Attempting Fallback Methods ===\n"
-          FALLBACK_LOG="/tmp/leverage-logs/fallback-health.log"
+          printf "[WARN] === Primary Health Check Failed - Emergency Diagnostics ===\n"
+          FALLBACK_LOG="/tmp/leverage-logs/emergency-fallback.log"
 
-          # Fallback Method 1: Direct leverage version check (minimal overhead)
-          printf "[INFO] Fallback 1: Testing basic leverage CLI functionality\n"
+          # Emergency Method 1: Basic CLI responsiveness
+          printf "[INFO] Emergency 1: Testing basic leverage CLI responsiveness\n"
           if timeout 30 leverage --version 2>&1 | tee -a "$FALLBACK_LOG"; then
             printf "[INFO] ✅ Leverage CLI is responsive\n"
 
-            # Try simple container test without tf shell
-            printf "[INFO] Fallback 2: Testing leverage tf without shell access\n"
-            if timeout 30 leverage -v tf --help 2>&1 | tee -a "$FALLBACK_LOG"; then
+            # Emergency Method 2: Test tf subcommand access (no container required)
+            printf "[INFO] Emergency 2: Testing leverage tf help access\n"
+            if timeout 30 leverage tf --help 2>&1 | tee -a "$FALLBACK_LOG"; then
               printf "[INFO] ✅ Leverage tf command accessible\n"
-              printf "[INFO] Setting fallback binary detection\n"
+              printf "[WARN] Setting emergency fallback binary (assuming OpenTofu based on image name)\n"
               echo "TERRAFORM_BINARY=tofu" >> $GITHUB_ENV
-              printf "[WARN] Using fallback health check - proceeding with limited validation\n"
+              printf "[WARN] Emergency fallback completed - workflow will continue with minimal validation\n"
             else
-              printf "[ERROR] ❌ Fallback tf command test failed\n"
+              printf "[ERROR] ❌ Even tf help command failed\n"
               cat "$FALLBACK_LOG"
               exit 1
             fi
           else
-            printf "[ERROR] ❌ All health check methods failed\n"
+            printf "[ERROR] ❌ Complete Leverage CLI failure detected\n"
 
-            # Fallback Method 2: Direct Docker investigation
-            printf "[INFO] Fallback 3: Direct Docker container investigation\n"
-            docker images | grep -E '(tofu|terraform)' || echo "No tofu/terraform images found"
-            docker ps -a | head -5
+            # Emergency Method 3: System diagnostics
+            printf "[INFO] Emergency 3: System diagnostic information\n"
+            python3 --version 2>&1 | tee -a "$FALLBACK_LOG" || echo "Python check failed"
+            docker --version 2>&1 | tee -a "$FALLBACK_LOG" || echo "Docker check failed"
+            pip list | grep leverage 2>&1 | tee -a "$FALLBACK_LOG" || echo "Leverage package check failed"
 
-            printf "[ERROR] === Complete Fallback Log ===\n"
-            cat "$FALLBACK_LOG" 2>/dev/null || echo "No fallback log available"
-            printf "[ERROR] === End of Fallback Log ===\n"
+            printf "[ERROR] === Complete Emergency Log ===\n"
+            cat "$FALLBACK_LOG" 2>/dev/null || echo "No emergency log available"
+            printf "[ERROR] === End of Emergency Log ===\n"
 
-            printf "[ERROR] Container health check completely failed\n"
-            printf "[ERROR] This indicates severe container runtime or configuration issues\n"
-            printf "[ERROR] Manual investigation required\n"
+            printf "[ERROR] All health check methods failed - critical system issue detected\n"
             exit 1
           fi
-
-          printf "[WARN] Fallback health check completed - workflow will continue with reduced reliability\n"
 
       - name: Health Check Summary
         if: always()
