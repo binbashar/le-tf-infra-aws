@@ -7,6 +7,7 @@ data "aws_iam_policy_document" "devops" {
     actions = [
       "access-analyzer:*",
       "acm:*",
+      "airflow:*",
       "amplify:*",
       "aoss:*",
       "apigateway:*",
@@ -225,6 +226,7 @@ data "aws_iam_policy_document" "data_scientist" {
   statement {
     sid = "Default"
     actions = [
+      "airflow:*",
       "athena:*",
       "apigateway:*",
       "aoss:*",
