@@ -47,7 +47,9 @@ resource "aws_iam_policy" "lambda_s3_policy" {
       ], var.enable_encryption ? [{
         Effect = "Allow"
         Action = [
+          "kms:Encrypt",
           "kms:Decrypt",
+          "kms:GenerateDataKey",
           "kms:DescribeKey"
         ]
         Resource = [
@@ -70,19 +72,28 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_policy" {
 }
 
 #================================
+# Data sources
+#================================
+data "aws_caller_identity" "current" {}
+
+#================================
 # Resource-based policies
 #================================
 
 resource "aws_lambda_permission" "allow_bedrock_s3_read" {
-  statement_id  = "AllowBedrockInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.s3_read.function_name
-  principal     = "bedrock.amazonaws.com"
+  statement_id   = "AllowBedrockInvokeS3Read"
+  action         = "lambda:InvokeFunction"
+  function_name  = aws_lambda_function.s3_read.function_name
+  principal      = "bedrock.amazonaws.com"
+  source_arn     = module.bedrock_agent.bedrock_agent[0].agent_arn
+  source_account = data.aws_caller_identity.current.account_id
 }
 
 resource "aws_lambda_permission" "allow_bedrock_s3_write" {
-  statement_id  = "AllowBedrockInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.s3_write.function_name
-  principal     = "bedrock.amazonaws.com"
+  statement_id   = "AllowBedrockInvokeS3Write"
+  action         = "lambda:InvokeFunction"
+  function_name  = aws_lambda_function.s3_write.function_name
+  principal      = "bedrock.amazonaws.com"
+  source_arn     = module.bedrock_agent.bedrock_agent[0].agent_arn
+  source_account = data.aws_caller_identity.current.account_id
 }
