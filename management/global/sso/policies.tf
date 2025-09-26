@@ -7,6 +7,7 @@ data "aws_iam_policy_document" "devops" {
     actions = [
       "access-analyzer:*",
       "acm:*",
+      "airflow:*",
       "amplify:*",
       "aoss:*",
       "apigateway:*",
@@ -225,6 +226,7 @@ data "aws_iam_policy_document" "data_scientist" {
   statement {
     sid = "Default"
     actions = [
+      "airflow:*",
       "athena:*",
       "apigateway:*",
       "aoss:*",
@@ -232,12 +234,14 @@ data "aws_iam_policy_document" "data_scientist" {
       "aws-marketplace:*",
       "aws-portal:*",
       "bedrock:*",
+      "bedrock-agentcore:*",
       "ce:*",
       "cloudformation:*",
       "cloudwatch:*",
       "cognito-identity:*",
       "cognito-idp:*",
       "config:*",
+      "ds:*",
       "dynamodb:*",
       "ec2:*",
       "ecr:*",
