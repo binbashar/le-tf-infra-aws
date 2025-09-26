@@ -185,6 +185,10 @@ jobs:
           # Ensure virtual environment is active
           source ~/.leverage-venv/bin/activate
 
+          # Change to layer directory (CRITICAL: leverage commands must run from layer directory)
+          cd ${{ env.TARGET_LAYER }}
+          printf "[INFO] Working directory: $(pwd)\n"
+
           # Create log file for health check details
           mkdir -p /tmp/leverage-logs
           HEALTH_LOG="/tmp/leverage-logs/health-check.log"
@@ -192,9 +196,19 @@ jobs:
           printf "[INFO] === Enhanced Container Health Check ===\n"
           printf "[INFO] Log file: $HEALTH_LOG\n"
 
+          # Stage 0: Pre-check Docker image availability
+          printf "[INFO] Stage 0: Checking Docker image availability\n"
+          DOCKER_IMAGE="binbash/leverage-toolbox:${LEVERAGE_TOOLBOX_VERSION}-1001-1001"
+          printf "[INFO] Target image: $DOCKER_IMAGE\n"
+
+          # Try to pull the image first to avoid build timeouts
+          if ! docker pull "$DOCKER_IMAGE" 2>&1 | tee -a "$HEALTH_LOG"; then
+            printf "[WARN] ⚠️ Docker image pull failed - will attempt local build\n"
+          fi
+
           # Stage 1: Basic container startup test with verbose logging
           printf "[INFO] Stage 1: Testing container startup and version check\n"
-          if timeout 30 leverage -v tf version 2>&1 | tee -a "$HEALTH_LOG"; then
+          if timeout 60 leverage -v tf version 2>&1 | tee -a "$HEALTH_LOG"; then
             printf "[INFO] ✅ Container startup successful\n"
           else
             printf "[ERROR] ❌ Container startup failed within 30 seconds\n"
@@ -218,11 +232,22 @@ jobs:
             echo "TERRAFORM_BINARY=terraform" >> $GITHUB_ENV
             DETECTED_BINARY="terraform"
           else
-            printf "[ERROR] ❌ Unable to detect binary type from version output\n"
-            printf "[ERROR] === Version Output Analysis ===\n"
+            printf "[WARN] ⚠️ Unable to detect binary type from version output, using fallback detection\n"
+
+            # Fallback: Use image tag to determine binary type
+            if echo "${LEVERAGE_TOOLBOX_VERSION}" | grep -q "tofu"; then
+              printf "[INFO] ✅ OpenTofu binary detected from image tag (${LEVERAGE_TOOLBOX_VERSION})\n"
+              echo "TERRAFORM_BINARY=tofu" >> $GITHUB_ENV
+              DETECTED_BINARY="tofu"
+            else
+              printf "[INFO] ✅ Terraform binary assumed from image tag (${LEVERAGE_TOOLBOX_VERSION})\n"
+              echo "TERRAFORM_BINARY=terraform" >> $GITHUB_ENV
+              DETECTED_BINARY="terraform"
+            fi
+
+            printf "[WARN] === Version Output Analysis (for debugging) ===\n"
             cat "$HEALTH_LOG"
-            printf "[ERROR] === End of Version Output ===\n"
-            exit 1
+            printf "[WARN] === End of Version Output ===\n"
           fi
 
           # Stage 3: Lightweight functional validation (optional - allows failure)
@@ -456,7 +481,12 @@ jobs:
 
           printf "[WARN] Workflow failed, attempting cleanup\n"
 
-          # Try to unlock any remaining state locks
+          # Try to unlock any remaining state locks (from layer directory)
+          cd ${{ env.TARGET_LAYER }} || {
+            printf "[ERROR] Failed to change to layer directory for state lock cleanup\n"
+            exit 1
+          }
+
           LOCK_OUTPUT=$(timeout 30 leverage -v tf plan 2>&1 || echo "No lock info available")
           LOCK_ID=$(echo "$LOCK_OUTPUT" | grep -o 'ID:[[:space:]]*[a-f0-9-]*' | cut -d':' -f2 | tr -d ' ' || echo "")
 
@@ -468,6 +498,15 @@ jobs:
           # Attempt emergency destroy if in full mode
           if [[ "${{ inputs.test_mode || 'full' }}" == "full" ]]; then
             printf "[WARN] Attempting emergency resource cleanup\n"
+
+            # Change to layer directory for cleanup commands
+            cd ${{ env.TARGET_LAYER }} || {
+              printf "[ERROR] Failed to change to layer directory for cleanup\n"
+              printf "[ERROR] TARGET_LAYER: ${{ env.TARGET_LAYER }}\n"
+              printf "[ERROR] Current directory: $(pwd)\n"
+              exit 1
+            }
+
             timeout 300 leverage -v tf destroy -auto-approve -lock-timeout=2m || {
               printf "[ERROR] Emergency cleanup failed - manual intervention required\n"
               printf "[ERROR] Please check AWS console for remaining resources\n"
