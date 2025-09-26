@@ -381,7 +381,7 @@ jobs:
             printf "[WARN] State appears to be locked or has issues, investigating...\n"
 
             # Get lock error details with timeout and verbose logging
-            LOCK_OUTPUT=$(timeout 30 leverage -v tf plan 2>&1 || echo "Lock detection timed out")
+            LOCK_OUTPUT=$(timeout 30 leverage -v tf plan -var-file="../../config/common.tfvars" -var-file="../config/account.tfvars" -input=false 2>&1 || echo "Lock detection timed out")
 
             # Extract lock ID if present
             LOCK_ID=$(echo "$LOCK_OUTPUT" | grep -o 'ID:[[:space:]]*[a-f0-9-]*' | cut -d':' -f2 | tr -d ' ' || echo "")
@@ -424,7 +424,7 @@ jobs:
           # Backend already initialized in previous step, proceeding to plan
           # Phase 1: Plan (always required)
           printf "[INFO] Generating plan with lock timeout and verbose logging\n"
-          timeout 300 leverage -v tf plan -lock-timeout=5m || {
+          timeout 300 leverage -v tf plan -var-file="../../config/common.tfvars" -var-file="../config/account.tfvars" -input=false -lock-timeout=5m || {
             printf "[ERROR] Terraform plan timed out or failed after 5 minutes\n"
             printf "[ERROR] This could indicate:\n"
             printf "[ERROR] - Network connectivity issues\n"
@@ -439,27 +439,27 @@ jobs:
             printf "[INFO] Running full test mode (apply + destroy)\n"
 
             printf "[INFO] Applying changes with timeout protection and verbose logging\n"
-            timeout 600 leverage -v tf apply -auto-approve -lock-timeout=5m || {
+            timeout 600 leverage -v tf apply -var-file="../../config/common.tfvars" -var-file="../config/account.tfvars" -input=false -auto-approve -lock-timeout=5m || {
               printf "[ERROR] Terraform apply timed out after 10 minutes\n"
               printf "[WARN] State may be locked - manual cleanup required\n"
               exit 1
             }
 
             printf "[INFO] Checking if all changes were applied\n"
-            leverage -v tf plan -detailed-exitcode -lock-timeout=5m
+            leverage -v tf plan -var-file="../../config/common.tfvars" -var-file="../config/account.tfvars" -input=false -detailed-exitcode -lock-timeout=5m
             PLAN_EXIT_CODE=$?
             [[ $PLAN_EXIT_CODE -eq 2 ]] && printf "[WARN] There are still remaining changes\n"
             [[ $PLAN_EXIT_CODE -eq 0 ]] && printf "[INFO] Apply checks out\n"
 
             printf "[INFO] Destroying all generated created resources\n"
-            timeout 600 leverage -v tf destroy -auto-approve -lock-timeout=5m || {
+            timeout 600 leverage -v tf destroy -var-file="../../config/common.tfvars" -var-file="../config/account.tfvars" -input=false -auto-approve -lock-timeout=5m || {
               printf "[ERROR] Terraform destroy timed out after 10 minutes\n"
               printf "[WARN] Resources may still exist - manual cleanup required\n"
               exit 1
             }
 
             printf "[INFO] Final verification - state should be clean\n"
-            leverage -v tf plan -detailed-exitcode -lock-timeout=5m
+            leverage -v tf plan -var-file="../../config/common.tfvars" -var-file="../config/account.tfvars" -input=false -detailed-exitcode -lock-timeout=5m
             FINAL_EXIT_CODE=$?
             [[ $FINAL_EXIT_CODE -eq 0 ]] && printf "[INFO] State is clean - no resources remain\n"
             [[ $FINAL_EXIT_CODE -eq 2 ]] && printf "[WARN] Some resources may still exist\n"
@@ -481,13 +481,10 @@ jobs:
 
           printf "[WARN] Workflow failed, attempting cleanup\n"
 
-          # Try to unlock any remaining state locks (from layer directory)
-          cd ${{ env.TARGET_LAYER }} || {
-            printf "[ERROR] Failed to change to layer directory for state lock cleanup\n"
-            exit 1
-          }
+          # Try to unlock any remaining state locks (already in layer directory via working-directory)
+          printf "[INFO] Currently in directory: $(pwd)\n"
 
-          LOCK_OUTPUT=$(timeout 30 leverage -v tf plan 2>&1 || echo "No lock info available")
+          LOCK_OUTPUT=$(timeout 30 leverage -v tf plan -var-file="../../config/common.tfvars" -var-file="../config/account.tfvars" -input=false 2>&1 || echo "No lock info available")
           LOCK_ID=$(echo "$LOCK_OUTPUT" | grep -o 'ID:[[:space:]]*[a-f0-9-]*' | cut -d':' -f2 | tr -d ' ' || echo "")
 
           if [[ -n "$LOCK_ID" && "$LOCK_ID" != "Lock" ]]; then
@@ -499,15 +496,10 @@ jobs:
           if [[ "${{ inputs.test_mode || 'full' }}" == "full" ]]; then
             printf "[WARN] Attempting emergency resource cleanup\n"
 
-            # Change to layer directory for cleanup commands
-            cd ${{ env.TARGET_LAYER }} || {
-              printf "[ERROR] Failed to change to layer directory for cleanup\n"
-              printf "[ERROR] TARGET_LAYER: ${{ env.TARGET_LAYER }}\n"
-              printf "[ERROR] Current directory: $(pwd)\n"
-              exit 1
-            }
+            # Already in layer directory via working-directory
+            printf "[INFO] Emergency cleanup from directory: $(pwd)\n"
 
-            timeout 300 leverage -v tf destroy -auto-approve -lock-timeout=2m || {
+            timeout 300 leverage -v tf destroy -var-file="../../config/common.tfvars" -var-file="../config/account.tfvars" -input=false -auto-approve -lock-timeout=2m || {
               printf "[ERROR] Emergency cleanup failed - manual intervention required\n"
               printf "[ERROR] Please check AWS console for remaining resources\n"
             }
