@@ -186,3 +186,7 @@ This GitHub Action complements the local Claude Code CLI experience:
 - Document prompts with `save-prompts.md` command
 
 The combination provides a complete AI-assisted infrastructure development workflow.
+
+## Workflow Testing
+
+This integration includes comprehensive CI/CD testing with the leverage-cli-test workflow to ensure reliability and proper functionality across different scenarios.
