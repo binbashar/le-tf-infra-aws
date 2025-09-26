@@ -351,8 +351,8 @@ jobs:
 
           printf "[INFO] Checking for stale state locks (with timeout protection)\n"
 
-          # Quick lock check with short timeout to avoid hanging
-          if ! timeout 60 leverage -v tf plan -detailed-exitcode -lock-timeout=30s > /dev/null 2>&1; then
+          # Quick health check without state access to avoid locks
+          if ! timeout 30 leverage -v tf version > /dev/null 2>&1; then
             printf "[WARN] State appears to be locked or has issues, investigating...\n"
 
             # Get lock error details with timeout and verbose logging
@@ -366,7 +366,7 @@ jobs:
               printf "[INFO] Attempting to force unlock\n"
 
               # Force unlock with timeout protection and verbose logging
-              if timeout 30 bash -c "echo 'tofu force-unlock -force $LOCK_ID' | leverage -v tf shell"; then
+              if timeout 30 leverage -v tf force-unlock -force $LOCK_ID; then
                 printf "[INFO] State unlocked successfully\n"
               else
                 printf "[ERROR] Failed to unlock state within timeout\n"
@@ -462,7 +462,7 @@ jobs:
 
           if [[ -n "$LOCK_ID" && "$LOCK_ID" != "Lock" ]]; then
             printf "[INFO] Attempting to unlock remaining state lock: $LOCK_ID\n"
-            timeout 30 bash -c "echo 'tofu force-unlock -force $LOCK_ID' | leverage -v tf shell" || true
+            timeout 30 leverage -v tf force-unlock -force $LOCK_ID || true
           fi
 
           # Attempt emergency destroy if in full mode
