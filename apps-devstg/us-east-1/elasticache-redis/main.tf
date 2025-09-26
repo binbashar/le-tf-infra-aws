@@ -2,7 +2,7 @@
 # Check out the README.md file for implementation details.
 #==============================================================
 module "elasticache_redis" {
-  source = "github.com/binbashar/terraform-aws-elasticache-redis.git?ref=v1.9.2"
+  source = "github.com/binbashar/terraform-aws-elasticache-redis.git?ref=v1.10.0"
 
   #-------------------------------
   # Cluster
