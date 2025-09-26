@@ -1,5 +1,5 @@
 module "alb" {
-  source = "github.com/binbashar/terraform-aws-alb.git?ref=v9.9.0"
+  source = "github.com/binbashar/terraform-aws-alb.git?ref=v9.17.0"
 
   name = "${var.project}-${var.environment}-genai-llm"
 

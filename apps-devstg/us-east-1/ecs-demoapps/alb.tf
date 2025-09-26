@@ -45,7 +45,7 @@ resource "aws_security_group_rule" "allow_https_port" {
 # Apps-devstg Application Load Balancer for Demoapps ECS Cluster
 #
 module "apps_devstg_alb_ecs_demoapps" {
-  source = "github.com/binbashar/terraform-aws-alb.git?ref=v9.9.0"
+  source = "github.com/binbashar/terraform-aws-alb.git?ref=v9.17.0"
 
   name = "${local.name}-alb"
 
