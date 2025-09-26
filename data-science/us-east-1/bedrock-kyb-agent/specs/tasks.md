@@ -4,7 +4,7 @@
 
 This document outlines the implementation tasks for the KYB Agent layer following spec-driven development methodology. Each task references specific requirements and includes concrete implementation steps.
 
-## T-001: Layer Infrastructure Setup
+## [x] T-001: Layer Infrastructure Setup
 **Requirements**: All use cases
 **Dependencies**: None
 **Purpose**: Create the basic layer structure and configuration files
@@ -17,7 +17,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-001.5: Create `outputs.tf` with layer outputs structure
 - T-001.6: Create `common-variables.tf` symlink
 
-## T-002: S3 Buckets Implementation
+## [ ] T-002: S3 Buckets Implementation
 **Requirements**: REQ-001, REQ-003, REQ-004
 **Dependencies**: T-001
 **Purpose**: Create the three S3 buckets for the document pipeline
@@ -31,7 +31,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-002.6: Configure lifecycle management
 - T-002.7: Add S3 bucket outputs to `outputs.tf`
 
-## T-003: Bedrock Data Automation Setup
+## [ ] T-003: Bedrock Data Automation Setup
 **Requirements**: REQ-002
 **Dependencies**: T-002
 **Purpose**: Create BDA project with standard output configuration
@@ -43,7 +43,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-003.4: Set proper encryption and tagging
 - T-003.5: Add BDA project outputs to `outputs.tf`
 
-## T-004: EventBridge Rules Configuration
+## [ ] T-004: EventBridge Rules Configuration
 **Requirements**: REQ-001, REQ-002
 **Dependencies**: T-002, T-005
 **Purpose**: Create EventBridge rules to trigger Lambda functions
@@ -55,7 +55,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-004.4: Configure event targets and retry policies
 - T-004.5: Add dead letter queue for failed events
 
-## T-005: Lambda Functions Implementation
+## [ ] T-005: Lambda Functions Implementation
 **Requirements**: REQ-001, REQ-002, REQ-003, REQ-004
 **Dependencies**: T-001, T-003
 **Purpose**: Create all Lambda functions for the pipeline
@@ -68,7 +68,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-005.5: Package Lambda source code files
 - T-005.6: Add Lambda function outputs to `outputs.tf`
 
-## T-006: BDA Invoker Lambda Code
+## [ ] T-006: BDA Invoker Lambda Code
 **Requirements**: REQ-001, REQ-002
 **Dependencies**: T-005
 **Purpose**: Implement Lambda that triggers BDA processing
@@ -80,7 +80,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-006.4: Invoke BDA with standard output configuration
 - T-006.5: Store processing metadata
 
-## T-007: Agent Invoker Lambda Code
+## [ ] T-007: Agent Invoker Lambda Code
 **Requirements**: REQ-002, REQ-003
 **Dependencies**: T-005, T-009
 **Purpose**: Implement Lambda that triggers Bedrock Agent
@@ -92,7 +92,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-007.4: Invoke Bedrock Agent with session parameters
 - T-007.5: Pass output_type="Standard" parameter
 
-## T-008: GetDocuments Action Group
+## [ ] T-008: GetDocuments Action Group
 **Requirements**: REQ-003
 **Dependencies**: T-005, T-009
 **Purpose**: Implement action group to retrieve BDA output
@@ -104,7 +104,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-008.4: Retrieve documents from processing bucket using standard output structure
 - T-008.5: Return structured JSON response
 
-## T-009: Bedrock Agent Configuration
+## [ ] T-009: Bedrock Agent Configuration
 **Requirements**: REQ-003, REQ-004
 **Dependencies**: T-003
 **Purpose**: Create Bedrock Agent with action groups
@@ -117,7 +117,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-009.5: Set agent instructions for document bypass processing
 - T-009.6: Add Bedrock Agent outputs to `outputs.tf`
 
-## T-010: SaveDocument Action Group
+## [ ] T-010: SaveDocument Action Group
 **Requirements**: REQ-004
 **Dependencies**: T-005, T-009
 **Purpose**: Implement action group to save processed results
@@ -129,7 +129,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-010.4: Save results to output bucket
 - T-010.5: Maintain correlation ID in metadata
 
-## T-011: IAM Permissions Setup
+## [ ] T-011: IAM Permissions Setup
 **Requirements**: All use cases
 **Dependencies**: T-002, T-003, T-005, T-009
 **Purpose**: Configure IAM roles and policies
@@ -143,7 +143,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-011.6: Create EventBridge invocation permissions
 - T-011.7: Add IAM role outputs to `outputs.tf`
 
-## T-012: Deployment and Verification
+## [ ] T-012: Deployment and Verification
 **Requirements**: All use cases
 **Dependencies**: All previous tasks
 **Purpose**: Deploy and verify the complete pipeline

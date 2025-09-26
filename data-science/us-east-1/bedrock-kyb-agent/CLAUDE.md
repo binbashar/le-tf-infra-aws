@@ -37,6 +37,13 @@ leverage tf plan -target=aws_lambda_function.bda_invoker -target=aws_lambda_func
 leverage tf apply -target=aws_lambda_function.bda_invoker -target=aws_lambda_function.agent_invoker -auto-approve
 ```
 
+### Git Commit Guidelines
+- **Clean commit messages**: Use standard conventional commit format
+- **No AI watermarks**: Never add "Co-Authored-By: Claude" or "Generated with Claude Code" signatures
+- **No Claude Code references**: Avoid any mentions of Claude Code, AI assistance, or copilot signatures
+- **Professional format**: Commit messages should appear as if written by human developers
+- **Focus on changes**: Describe what was implemented, not how it was created
+
 ## Architecture Overview
 
 ### Event-Driven Pipeline
