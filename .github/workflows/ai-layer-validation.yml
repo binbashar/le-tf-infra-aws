@@ -1,0 +1,710 @@
+name: AI-Powered Infrastructure Validation
+
+# Usage:
+# 1. Automatic: Triggers on PR changes to secrets-manager layer
+# 2. Manual: Run via workflow_dispatch with options:
+#    - enable_ai_analysis: false to skip AI analysis and avoid API limits
+#    - debug_level: normal/verbose/extra-verbose for Leverage CLI debugging
+#    - target_layer: specific layer to validate (optional)
+# 3. PR Control: Add 'skip-ai-analysis' or 'no-ai' label to PR to disable AI analysis
+#    - Validation (format, init, validate) still runs with full cross-account support
+#    - Only AI analysis and PR comments are skipped
+# 4. Cross-Account: Automatically configures ALL 7 AWS account profiles for comprehensive access
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'apps-devstg/us-east-1/secrets-manager/**/*.tf'
+      - 'apps-devstg/us-east-1/secrets-manager/**/*.tfvars'
+      - 'apps-devstg/us-east-1/secrets-manager/**/*.hcl'
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      enable_ai_analysis:
+        description: 'Enable AI analysis (set to false to avoid API limits)'
+        type: boolean
+        default: true
+        required: false
+      debug_level:
+        description: 'Debug verbosity level for Leverage CLI commands'
+        type: choice
+        options:
+          - 'normal'
+          - 'verbose'
+          - 'extra-verbose'
+        default: 'normal'
+        required: false
+      target_layer:
+        description: 'Specific layer to validate (optional)'
+        type: string
+        required: false
+
+permissions:
+  contents: read       # Required to read repository contents
+  pull-requests: write # Required to post PR comments
+  issues: write        # Required for @aibot interactions
+  models: read         # Required for GitHub Models API
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  AWS_REGION: us-east-1
+  # AI Analysis control - can be disabled to avoid API limits
+  # For workflow_dispatch: respects enable_ai_analysis input (default: true)
+  # For pull_request: checks for 'skip-ai-analysis' label (default: enabled)
+  ENABLE_AI_ANALYSIS: ${{ github.event_name == 'workflow_dispatch' && inputs.enable_ai_analysis || github.event_name != 'workflow_dispatch' }}
+
+jobs:
+  # Job 1: Check PR labels for AI analysis control
+  check-ai-control:
+    name: Check AI Analysis Control
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    outputs:
+      skip-ai-analysis: ${{ steps.check-labels.outputs.skip-ai-analysis }}
+
+    steps:
+      - name: Check for skip-ai-analysis label
+        id: check-labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(label => label.name);
+            const skipAI = labels.includes('skip-ai-analysis') || labels.includes('no-ai');
+
+            console.log('PR Labels:', labels);
+            console.log('Skip AI Analysis:', skipAI);
+
+            core.setOutput('skip-ai-analysis', skipAI);
+            return skipAI;
+
+  # Job 2: Detect affected layers from changed files
+  detect-layers:
+    name: Detect Modified Layers
+    runs-on: ubuntu-latest
+    outputs:
+      layers: ${{ steps.parse-layers.outputs.layers }}
+      has-changes: ${{ steps.parse-layers.outputs.has-changes }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse modified layers
+        id: parse-layers
+        run: |
+          # Get changed files
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1)
+          fi
+
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Extract unique layer paths
+          LAYERS=$(echo "$CHANGED_FILES" | grep -E '\.(tf|tfvars|hcl)$' | grep -E '^apps-devstg/us-east-1/secrets-manager/' | head -1 | xargs dirname | sort | uniq | jq -R -s -c 'split("\n")[:-1]')
+
+          if [[ "$LAYERS" == "[]" || "$LAYERS" == "" ]]; then
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+            echo "layers=[]" >> $GITHUB_OUTPUT
+          else
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+            echo "layers=$LAYERS" >> $GITHUB_OUTPUT
+          fi
+
+          echo "Detected layers: $LAYERS"
+
+
+  # Job 3: Validate each affected layer
+  validate-layer:
+    name: Validate Layer (${{ matrix.layer }})
+    runs-on: ubuntu-latest
+    needs: [detect-layers]
+    if: needs.detect-layers.outputs.has-changes == 'true'
+    strategy:
+      matrix:
+        layer: ${{ fromJson(needs.detect-layers.outputs.layers) }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Setup Python virtual environment and Install Leverage CLI
+        run: |
+          echo "🐍 Creating Python virtual environment (mirroring local setup)"
+          python3 -m venv ~/.leverage-venv
+          source ~/.leverage-venv/bin/activate
+
+          echo "📦 Installing latest Leverage CLI in virtual environment"
+          pip install --upgrade pip
+          pip install leverage
+
+          echo "🔧 Configuring environment for subsequent steps"
+          echo "VIRTUAL_ENV=$HOME/.leverage-venv" >> $GITHUB_ENV
+          echo "$HOME/.leverage-venv/bin" >> $GITHUB_PATH
+
+          echo "✅ Leverage CLI installed in virtual environment"
+          leverage --version
+
+      - name: Configure comprehensive cross-account AWS profiles
+        run: |
+          # Parse layer information to determine AWS account
+          LAYER_PATH="${{ matrix.layer }}"
+          ACCOUNT=$(echo "$LAYER_PATH" | cut -d'/' -f1)
+
+          echo "🔑 Setting up comprehensive cross-account AWS profiles for account: $ACCOUNT"
+
+          # Account mapping arrays
+          declare -A ACCOUNT_PROFILES=(
+            ["apps-devstg"]="bb-apps-devstg-devops"
+            ["apps-prd"]="bb-apps-prd-devops"
+            ["shared"]="bb-shared-devops"
+            ["security"]="bb-security-devops"
+            ["network"]="bb-network-devops"
+            ["data-science"]="bb-data-science-devops"
+            ["management"]="bb-management-oaar"
+          )
+
+          declare -A ACCOUNT_IDS=(
+            ["apps-devstg"]="${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}"
+            ["apps-prd"]="${{ secrets.AWS_PRD_ACCOUNT_ID }}"
+            ["shared"]="${{ secrets.AWS_SHARED_ACCOUNT_ID }}"
+            ["security"]="${{ secrets.AWS_SECURITY_ACCOUNT_ID }}"
+            ["network"]="${{ secrets.AWS_NETWORK_ACCOUNT_ID }}"
+            ["data-science"]="${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}"
+            ["management"]="${{ secrets.AWS_ROOT_ACCOUNT_ID }}"
+          )
+
+          # Create AWS directories for Leverage CLI container mounting
+          mkdir -p ~/.aws/bb
+
+          # Create base credentials file with deployment master profile
+          cat << EOF > ~/.aws/credentials
+          [bb-deploymaster]
+          aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          EOF
+
+          # Create comprehensive config file with ALL account profiles
+          cat << EOF > ~/.aws/config
+          [profile bb-apps-devstg-devops]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+
+          [profile bb-apps-prd-devops]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_PRD_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+
+          [profile bb-shared-devops]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_SHARED_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+
+          [profile bb-security-devops]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_SECURITY_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+
+          [profile bb-network-devops]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_NETWORK_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+
+          [profile bb-data-science-devops]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+
+          [profile bb-management-oaar]
+          region = us-east-1
+          output = json
+          role_arn = arn:aws:iam::${{ secrets.AWS_ROOT_ACCOUNT_ID }}:role/DeployMaster
+          source_profile = bb-deploymaster
+          EOF
+
+          # Copy profiles for Leverage CLI container mounting
+          cp ~/.aws/credentials ~/.aws/bb/
+          cp ~/.aws/config ~/.aws/bb/
+
+          # Set the correct AWS profile for this layer's account
+          CURRENT_PROFILE="${ACCOUNT_PROFILES[$ACCOUNT]}"
+          CURRENT_ACCOUNT_ID="${ACCOUNT_IDS[$ACCOUNT]}"
+
+          echo "AWS_PROFILE=$CURRENT_PROFILE" >> $GITHUB_ENV
+          echo "AWS_DEFAULT_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
+          echo "AWS_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
+
+          echo "✅ AWS profiles configured for ALL accounts"
+          echo "🎯 Current layer profile: $CURRENT_PROFILE"
+          echo "🏢 Current account: $ACCOUNT ($CURRENT_ACCOUNT_ID)"
+          echo "📁 Available profiles: ${!ACCOUNT_PROFILES[@]}"
+
+      - name: Determine available Terraform binary
+        working-directory: ${{ matrix.layer }}
+        run: |
+          echo "🔍 Detecting available Terraform binary in container..."
+
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
+
+          # Test which binary is available in the container
+          TF_COMMAND="tofu"
+          TF_BINARY="OpenTofu"
+
+          # Test if OpenTofu (tofu) is available
+          if leverage tofu version >/dev/null 2>&1; then
+            TF_COMMAND="tofu"
+            TF_BINARY="OpenTofu"
+            echo "✅ OpenTofu (tofu) binary detected and working"
+          # Fallback to terraform if tofu is not available
+          elif leverage tf version >/dev/null 2>&1; then
+            TF_COMMAND="tf"
+            TF_BINARY="Terraform (fallback)"
+            echo "⚠️ OpenTofu not available, falling back to Terraform (tf)"
+          else
+            echo "❌ Neither OpenTofu nor Terraform binary available in container"
+            echo "🔍 Container diagnostics:"
+            leverage --version
+            echo "🚨 Will attempt to use 'tf' command as last resort"
+            TF_COMMAND="tf"
+            TF_BINARY="Terraform (forced fallback)"
+          fi
+
+          echo "✅ Selected binary: $TF_BINARY (command: leverage $TF_COMMAND)"
+          echo "TF_COMMAND=$TF_COMMAND" >> $GITHUB_ENV
+
+      - name: Setup Leverage environment
+        working-directory: ${{ matrix.layer }}
+        run: |
+          # Navigate to repository root and create minimal build.env
+          REPO_ROOT=$(git rev-parse --show-toplevel)
+          cd "$REPO_ROOT"
+
+          # Create minimal build.env configuration
+          cat > build.env << EOF
+          PROJECT=bb
+          MFA_ENABLED=false
+          TERRAFORM_IMAGE_TAG=1.9.1-tofu-0.3.0
+          EOF
+
+          # Source environment for subsequent steps
+          source build.env
+          echo "PROJECT=$PROJECT" >> $GITHUB_ENV
+          echo "MFA_ENABLED=$MFA_ENABLED" >> $GITHUB_ENV
+          echo "TERRAFORM_IMAGE_TAG=$TERRAFORM_IMAGE_TAG" >> $GITHUB_ENV
+
+          echo "✅ Leverage environment configured with image: $TERRAFORM_IMAGE_TAG"
+
+      - name: Setup SSH and Git configuration for container
+        working-directory: ${{ matrix.layer }}
+        run: |
+          echo "🔧 Setting up SSH and Git configuration for container mounting..."
+
+          # Create SSH directory and placeholder files for container mounting
+          mkdir -p ~/.ssh
+          touch ~/.ssh/config
+          touch ~/.gitconfig
+
+          echo "✅ SSH and Git configuration prepared for container mounting"
+
+      - name: Generate minimal common.tfvars (no sensitive data)
+        working-directory: ${{ matrix.layer }}
+        run: |
+          echo "📝 Creating minimal common.tfvars following leverage-cli-test.yml pattern..."
+
+          # Navigate to repository root to create config
+          REPO_ROOT=$(git rev-parse --show-toplevel)
+          cd "$REPO_ROOT"
+
+          # Create minimal common.tfvars following leverage-cli-test.yml pattern
+          cat << EOF > ./config/common.tfvars
+          project = "bb"
+          project_long = "binbash"
+          region_primary = "us-east-1"
+          region_secondary = "us-east-2"
+          vault_address = "vault_trash"
+          vault_token = "vault_trash"
+          sso_region = "us-east-1"
+          sso_enabled = false
+          sso_start_url = "sso_trash"
+
+          accounts = {
+            security = {
+              id = ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+            }
+          }
+          EOF
+
+          echo "✅ Minimal common.tfvars created following established CI/CD pattern"
+          echo "🔒 SSO disabled for GitHub Actions environment"
+
+      - name: Run enhanced Terraform validation with debugging
+        working-directory: ${{ matrix.layer }}
+        run: |
+          echo "🚀 Starting enhanced Terraform validation for layer: ${{ matrix.layer }}"
+
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
+
+          # Enhanced container diagnostics
+          echo "🔍 Running comprehensive container diagnostics..."
+          echo "📋 Environment Information:"
+          echo "  - Leverage CLI: $(leverage --version 2>/dev/null || echo 'Not available')"
+          echo "  - Docker version: $(docker --version 2>/dev/null || echo 'Not available')"
+          echo "  - Container image: ${{ env.TERRAFORM_IMAGE_TAG }}"
+          echo "  - Detected binary: $TF_COMMAND"
+          echo ""
+
+          # Container health check using detected binary
+          echo "🔍 Verifying container environment with detected binary: $TF_COMMAND"
+          if ! leverage $TF_COMMAND version 2>/dev/null; then
+            echo "❌ Container not accessible with $TF_COMMAND"
+            echo ""
+            echo "📊 Diagnostic Analysis:"
+            echo "  - Docker daemon status: $(systemctl is-active docker 2>/dev/null || echo 'Unknown (not systemd)')"
+            echo "  - Docker socket: $(ls -la /var/run/docker.sock 2>/dev/null || echo 'Not found')"
+            echo "  - Container image tag: ${{ env.TERRAFORM_IMAGE_TAG }}"
+            echo ""
+            echo "🔧 Potential Issues:"
+            echo "  1. Container image may not contain the expected binary path"
+            echo "  2. Docker daemon connectivity issues"
+            echo "  3. Leverage CLI container configuration mismatch"
+            echo "  4. Image tag compatibility with binary detection"
+            echo ""
+            echo "🚨 Continuing with validation attempt despite connectivity issues..."
+          else
+            echo "✅ Container verified and accessible with $TF_COMMAND"
+            # Get version info for successful connections
+            VERSION_INFO=$(leverage $TF_COMMAND version 2>/dev/null | head -3)
+            echo "📋 Version details:"
+            echo "$VERSION_INFO" | sed 's/^/  /'
+          fi
+          echo ""
+
+          # Configuration paths and context
+          BACKEND_CONFIG="../../config/backend.tfvars"
+          VALIDATION_RESULTS=""
+          VALIDATION_STATUS="success"
+          LAYER_PATH="${{ matrix.layer }}"
+          ACCOUNT=$(echo "$LAYER_PATH" | cut -d'/' -f1)
+
+          # Set verbosity level based on workflow input
+          DEBUG_LEVEL="${{ inputs.debug_level }}"
+          case "$DEBUG_LEVEL" in
+            "verbose")
+              LEVERAGE_VERBOSE="-v"
+              echo "🔍 Debug level: Verbose (-v)"
+              ;;
+            "extra-verbose")
+              LEVERAGE_VERBOSE="-vv"
+              echo "🔍 Debug level: Extra verbose (-vv)"
+              ;;
+            *)
+              LEVERAGE_VERBOSE=""
+              echo "🔍 Debug level: Normal"
+              ;;
+          esac
+
+          # Enhanced context logging
+          echo "🏗️ ===== VALIDATION CONTEXT ====="
+          echo "🎯 Layer: ${{ matrix.layer }}"
+          echo "🏢 Account: $ACCOUNT"
+          echo "🌍 Region: ${{ env.AWS_REGION }}"
+          echo "🔑 AWS Profile: ${{ env.AWS_PROFILE }}"
+          echo "📁 Backend Config: $BACKEND_CONFIG"
+          echo "🐳 Leverage Image: ${{ env.TERRAFORM_IMAGE_TAG }}"
+          echo "==============================="
+
+          # Enhanced error reporting function
+          handle_error() {
+            local command="$1"
+            local output="$2"
+            local exit_code="$3"
+
+            echo "❌ $command failed (exit code: $exit_code)"
+            echo "🔍 Error context:"
+            echo "  - AWS Profile: ${{ env.AWS_PROFILE }}"
+            echo "  - Account: $ACCOUNT"
+            echo "  - Layer: ${{ matrix.layer }}"
+            echo "  - Debug level: $DEBUG_LEVEL"
+            echo "📋 Error output:"
+            echo "$output"
+          }
+
+          # Run format check with enhanced error handling
+          echo "📝 Running format check..."
+          if output=$(leverage $TF_COMMAND format -check $LEVERAGE_VERBOSE 2>&1); then
+            echo "✅ Format check passed"
+            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Format Check\n✅ **PASSED**\n\n"
+          else
+            echo "⚠️ Format check failed"
+            handle_error "Format check" "$output" "$?"
+            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Format Check\n⚠️ **FAILED**\n\`\`\`\n${output}\n\`\`\`\n\n"
+          fi
+
+          # Initialize Terraform with enhanced debugging
+          echo "⚡ Initializing Terraform..."
+          if output=$(leverage $TF_COMMAND init -no-color -backend-config=$BACKEND_CONFIG $LEVERAGE_VERBOSE 2>&1); then
+            echo "✅ Initialization successful"
+            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Initialization\n✅ **PASSED**\n\n"
+          else
+            echo "⚠️ Backend init failed, trying syntax-only validation..."
+            handle_error "Backend initialization" "$output" "$?"
+            VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Initialization\n⚠️ **BACKEND FAILED** - trying syntax-only\n\`\`\`\n${output}\n\`\`\`\n\n"
+
+            if fallback_output=$(leverage $TF_COMMAND init -no-color -backend=false $LEVERAGE_VERBOSE 2>&1); then
+              echo "✅ Syntax-only initialization successful"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n✅ **PASSED**\n\n"
+            else
+              echo "❌ Syntax-only initialization failed"
+              handle_error "Syntax-only initialization" "$fallback_output" "$?"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Syntax Initialization\n❌ **FAILED**\n\`\`\`\n${fallback_output}\n\`\`\`\n\n"
+              VALIDATION_STATUS="failed"
+            fi
+          fi
+
+          # Run validation with enhanced debugging
+          echo "🔍 Running Terraform validation..."
+          if [[ "$VALIDATION_STATUS" != "failed" ]]; then
+            if output=$(leverage $TF_COMMAND validate $LEVERAGE_VERBOSE 2>&1); then
+              echo "✅ Validation successful"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Validation\n✅ **PASSED**\n\n"
+            else
+              echo "❌ Validation failed"
+              handle_error "Terraform validation" "$output" "$?"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}## Terraform Validation\n❌ **FAILED**\n\`\`\`\n${output}\n\`\`\`\n\n"
+              VALIDATION_STATUS="failed"
+            fi
+          fi
+
+          # Create enhanced validation results
+          mkdir -p /tmp/validation-results
+          echo -e "$VALIDATION_RESULTS" > /tmp/validation-results/validation-summary.md
+          echo "$VALIDATION_STATUS" > /tmp/validation-results/validation-status.txt
+
+          # Final status report
+          echo "🎯 ===== VALIDATION SUMMARY ====="
+          echo "Status: $VALIDATION_STATUS"
+          echo "Layer: ${{ matrix.layer }}"
+          echo "Account: $ACCOUNT"
+          echo "Profile: ${{ env.AWS_PROFILE }}"
+          echo "Debug Level: $DEBUG_LEVEL"
+          echo "==============================="
+
+          if [[ "$VALIDATION_STATUS" == "failed" ]]; then
+            echo "❌ Validation failed - check error context above"
+            exit 1
+          else
+            echo "✅ All validation steps passed successfully"
+          fi
+
+      - name: Set artifact name
+        run: |
+          # Replace forward slashes with hyphens for artifact name
+          ARTIFACT_NAME="validation-results-$(echo '${{ matrix.layer }}' | sed 's|/|-|g')"
+          echo "ARTIFACT_NAME=$ARTIFACT_NAME" >> $GITHUB_ENV
+
+      - name: Upload validation results
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: /tmp/validation-results/
+          retention-days: 1
+          if-no-files-found: warn
+        continue-on-error: true
+
+
+  # Job 4: AI Analysis Status Check
+  ai-analysis-status:
+    name: AI Analysis Status
+    runs-on: ubuntu-latest
+    needs: [detect-layers, validate-layer]
+    if: always() && needs.detect-layers.outputs.has-changes == 'true'
+
+    steps:
+      - name: Check AI Analysis Status
+        run: |
+          # Check if AI analysis should be skipped due to PR label
+          WORKFLOW_SETTING="${{ env.ENABLE_AI_ANALYSIS }}"
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # For PRs, we need to check if the label exists (check-ai-control job runs only for PRs)
+            echo "🔍 Checking PR for AI analysis control labels..."
+            echo "Event: Pull Request"
+          fi
+
+          if [[ "$WORKFLOW_SETTING" == "true" ]]; then
+            echo "✅ AI Analysis is enabled - proceeding with analysis"
+            echo "To disable: Add 'skip-ai-analysis' or 'no-ai' label to PR"
+          else
+            echo "⚠️ AI Analysis is disabled - skipping to avoid API limits"
+            echo "To enable AI analysis:"
+            echo "1. Use workflow_dispatch with enable_ai_analysis=true"
+            echo "2. For PRs: Remove skip-ai-analysis or no-ai labels"
+          fi
+
+
+  # Job 5: AI Analysis and PR Comment (can be disabled to avoid GitHub Models API limits)
+  ai-analysis-and-comment:
+    name: AI Analysis and PR Comment
+    runs-on: ubuntu-latest
+    needs: [detect-layers, validate-layer, check-ai-control]
+    if: |
+      always() &&
+      needs.detect-layers.outputs.has-changes == 'true' &&
+      env.ENABLE_AI_ANALYSIS == 'true' &&
+      (github.event_name != 'pull_request' || needs.check-ai-control.outputs.skip-ai-analysis != 'true')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download validation results
+        uses: actions/download-artifact@v4
+        with:
+          path: validation-results
+
+      - name: Load personas configuration
+        id: load-personas
+        run: |
+          echo "Loading AI personas from configuration..."
+          if [[ -f ".github/ai-personas.yml" ]]; then
+            echo "personas-available=true" >> $GITHUB_OUTPUT
+            echo "✅ Personas configuration found"
+          else
+            echo "personas-available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No personas configuration found, using default prompts"
+          fi
+
+      - name: Select appropriate AI persona
+        id: select-persona
+        run: |
+          # Get the first layer from the validation results for persona selection
+          FIRST_LAYER=$(find validation-results -name "validation-summary.md" | head -1 | xargs dirname | xargs basename | sed 's/validation-results-//' | sed 's/-/\//g')
+          echo "Analyzing layer: $FIRST_LAYER"
+
+          # Simple persona selection based on layer patterns
+          if [[ "$FIRST_LAYER" =~ (security|secrets|identities|iam) ]]; then
+            PERSONA="Security Expert 🔐"
+            SYSTEM_PROMPT="You are a specialized AWS Security Expert focusing on IAM, KMS encryption, secrets management, and security compliance. Analyze the following Terraform validation results and provide security-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (network|vpc|vpn) ]]; then
+            PERSONA="Network Specialist 🌐"
+            SYSTEM_PROMPT="You are a specialized AWS Network Expert focusing on VPC design, routing, load balancing, and network security. Analyze the following Terraform validation results and provide network-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (database|rds|aurora|dynamodb) ]]; then
+            PERSONA="Database Administrator 🗄️"
+            SYSTEM_PROMPT="You are a specialized AWS Database Expert focusing on RDS, Aurora, DynamoDB, and database security. Analyze the following Terraform validation results and provide database-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (k8s|eks|ecs|container) ]]; then
+            PERSONA="Container Expert 🐳"
+            SYSTEM_PROMPT="You are a specialized AWS Container Expert focusing on EKS, ECS, container security, and orchestration. Analyze the following Terraform validation results and provide container-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (tools|monitoring|observability) ]]; then
+            PERSONA="DevOps Specialist ⚙️"
+            SYSTEM_PROMPT="You are a specialized DevOps Expert focusing on monitoring, observability, CI/CD, and operational tools. Analyze the following Terraform validation results and provide DevOps-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (s3|backup|storage) ]]; then
+            PERSONA="Storage Expert 💾"
+            SYSTEM_PROMPT="You are a specialized AWS Storage Expert focusing on S3, backup strategies, and data lifecycle management. Analyze the following Terraform validation results and provide storage-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (ec2|lambda|compute) ]]; then
+            PERSONA="Compute Expert ⚡"
+            SYSTEM_PROMPT="You are a specialized AWS Compute Expert focusing on EC2, Lambda, auto-scaling, and compute optimization. Analyze the following Terraform validation results and provide compute-focused recommendations."
+          elif [[ "$FIRST_LAYER" =~ (data|analytics|bedrock|ml) ]]; then
+            PERSONA="Data Analytics Expert 📊"
+            SYSTEM_PROMPT="You are a specialized AWS Data & Analytics Expert focusing on data lakes, ML/AI services, and Bedrock integration. Analyze the following Terraform validation results and provide data-focused recommendations."
+          else
+            PERSONA="Infrastructure Generalist 🏗️"
+            SYSTEM_PROMPT="You are an AWS Infrastructure Expert with broad knowledge across all AWS services. Analyze the following Terraform validation results and provide comprehensive infrastructure recommendations."
+          fi
+
+          echo "Selected persona: $PERSONA"
+          echo "persona=$PERSONA" >> $GITHUB_OUTPUT
+          echo "system_prompt=$SYSTEM_PROMPT" >> $GITHUB_OUTPUT
+
+      - name: Prepare validation summary
+        id: prepare-summary
+        run: |
+          echo "📋 Preparing validation summary for AI analysis..."
+
+          # Combine all validation results
+          SUMMARY=""
+          for file in $(find validation-results -name "validation-summary.md"); do
+            LAYER_NAME=$(echo "$file" | xargs dirname | xargs basename | sed 's/validation-results-//' | sed 's/-/\//g')
+            echo "## Layer: $LAYER_NAME" >> combined-summary.md
+            cat "$file" >> combined-summary.md
+            echo "" >> combined-summary.md
+          done
+
+          # Read the combined summary
+          if [[ -f "combined-summary.md" ]]; then
+            SUMMARY=$(cat combined-summary.md)
+            echo "✅ Validation summary prepared"
+          else
+            SUMMARY="No validation results found"
+            echo "⚠️ No validation results available"
+          fi
+
+          # Save to output (truncate if too long for GitHub)
+          echo "validation_summary<<EOF" >> $GITHUB_OUTPUT
+          echo "$SUMMARY" | head -c 8000 >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Run AI analysis
+        id: ai-analysis
+        uses: actions/ai-inference@v1
+        with:
+          model: 'gpt-4o'
+          system-prompt: ${{ steps.select-persona.outputs.system_prompt }}
+          prompt: |
+            Analyze the following Terraform validation results for infrastructure layer(s):
+
+            ${{ steps.prepare-summary.outputs.validation_summary }}
+
+            Please provide:
+            1. **Overall Assessment**: Summary of validation status
+            2. **Key Findings**: Important issues or successes identified
+            3. **Recommendations**: Specific actions to improve the infrastructure
+            4. **Security Considerations**: Any security implications (if applicable)
+            5. **Best Practices**: Suggestions for following AWS/Terraform best practices
+
+            Format your response in clear markdown with appropriate sections.
+
+      - name: Post AI analysis to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const persona = ${{ toJSON(steps.select-persona.outputs.persona) }};
+            const aiAnalysis = ${{ toJSON(steps.ai-analysis.outputs.response) }};
+
+            const comment = `## 🤖 AI Infrastructure Analysis
+
+            **Analyzed by**: ${persona}
+
+            ${aiAnalysis}
+
+            ---
+            *This analysis was generated by AI using the GitHub Models API. Please review recommendations carefully before implementing.*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

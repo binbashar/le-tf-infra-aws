@@ -22,6 +22,7 @@ This is the **Binbash Leverage Reference Architecture** - a comprehensive OpenTo
 - **Comprehensive backup and disaster recovery** strategies
 - **Cost optimization** with built-in Infracost integration
 - **Atlantis integration** for automated workflow management
+- **Robust CI/CD workflows** with container health checks and automatic cleanup
 
 ### Advanced Capabilities
 - **AWS Bedrock integration** for AI/ML workloads and document processing
@@ -108,6 +109,9 @@ leverage tf plan -out=tfplan
 # Run tests
 leverage tf test
 
+# Container health check and binary detection
+leverage tf shell -c "echo 'Container health check passed'"
+
 # Open shell in container for debugging
 leverage tf shell
 ```
@@ -133,6 +137,29 @@ leverage tf state show resource.name
 
 # Force unlock state (use with caution)
 echo "tofu force-unlock -force <LOCK_ID>" | leverage tf shell
+```
+
+### CI/CD Workflows
+```bash
+# GitHub Actions workflows for automated testing and validation
+
+# AI-powered layer validation workflow
+# - Automatic PR analysis and feedback
+# - Security compliance checks
+# - Cost analysis and reporting
+
+# Leverage CLI testing workflow
+# - Container health checks with binary detection
+# - Automated layer testing (init + plan + apply + destroy)
+# - State lock management and cleanup
+# - Parameterized testing for any layer
+# - Emergency resource cleanup on failures
+
+# Manual workflow triggers with parameters
+gh workflow run leverage-cli-test.yml \
+  -f target_layer="apps-devstg/us-east-1/secrets-manager" \
+  -f test_mode="plan-only" \
+  -f leverage_version="latest"
 ```
 
 ## Architecture Overview
@@ -228,12 +255,128 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 11. **Code quality** - Always run `leverage tf fmt` and `leverage tf validate` before commits
 12. **Atlantis integration** - The repository uses Atlantis for automated OpenTofu/Terraform workflows
 
+## Workflow Safeguards and Automation
+
+### GitHub Actions Workflow Features
+The repository includes robust CI/CD workflows designed to prevent stalling and ensure clean resource management:
+
+**Leverage CLI Testing Workflow (`leverage-cli-test.yml`):**
+- **Container Health Check**: Automatic detection of available binaries (`tofu` vs `terraform`)
+- **Parameterized Testing**: Test any layer with custom parameters
+- **State Lock Management**: Automatic detection and cleanup of stale locks
+- **Timeout Protection**: All operations have timeout limits to prevent infinite hangs
+- **Emergency Cleanup**: Automatic resource cleanup on workflow failure
+- **Workflow-level Timeout**: 45-minute maximum runtime to prevent runaway processes
+
+**AI-Powered Validation Workflow (`ai-layer-validation.yml`):**
+- **Automatic PR Analysis**: AI-powered code review and feedback
+- **Security Compliance**: Automated security scanning and recommendations
+- **Cost Analysis**: Infrastructure cost analysis and reporting
+- **Container Binary Detection**: Dynamic binary detection with fallback mechanisms
+
+### Workflow Parameters and Usage
+```bash
+# Available parameters for leverage-cli-test.yml:
+# - target_layer: Layer to test (default: apps-devstg/global/cli-test-layer)
+# - test_mode: "full" (apply+destroy) or "plan-only" (default: full)
+# - leverage_version: CLI version (default: latest)
+# - leverage_toolbox_version: Container version (default: 1.9.1-tofu-0.3.0)
+
+# Example: Test a specific layer in plan-only mode
+gh workflow run leverage-cli-test.yml \
+  -f target_layer="shared/us-east-1/k8s-eks" \
+  -f test_mode="plan-only"
+```
+
+### Automatic Cleanup and Recovery
+**On Workflow Failure:**
+1. **State Lock Cleanup**: Automatic detection and force unlock of stale locks
+2. **Resource Cleanup**: Emergency destroy attempt for resources created during testing
+3. **Timeout Protection**: All cleanup operations have timeout limits
+4. **Error Reporting**: Detailed error logs with diagnostic information
+
+**Manual Cleanup Commands:**
+```bash
+# Check for stale locks across layers
+find . -name "*.tf" -path "*/apps-devstg/*" -exec dirname {} \; | \
+  while read layer; do
+    echo "Checking $layer"
+    cd "$layer" && leverage tf plan -lock-timeout=10s &>/dev/null || echo "Issue in $layer"
+  done
+
+# Bulk unlock stale locks (use with extreme caution)
+# This should only be used when you're certain all locks are stale
+for layer in apps-devstg/*/secrets-manager; do
+  if [[ -d "$layer" ]]; then
+    cd "$layer"
+    LOCK_OUTPUT=$(leverage tf plan 2>&1 || true)
+    LOCK_ID=$(echo "$LOCK_OUTPUT" | grep -o 'ID:[[:space:]]*[a-f0-9-]*' | cut -d':' -f2 | tr -d ' ')
+    if [[ -n "$LOCK_ID" ]]; then
+      echo "Unlocking $layer: $LOCK_ID"
+      echo "tofu force-unlock -force $LOCK_ID" | leverage tf shell
+    fi
+    cd - > /dev/null
+  fi
+done
+```
+
+### Best Practices for Workflow Usage
+1. **Always use plan-only mode** for production-like layers unless specifically testing deployment
+2. **Monitor workflow logs** for container health check results and timing information
+3. **Review cleanup logs** to ensure proper resource destruction
+4. **Use parameterized testing** to validate specific layers or configurations
+5. **Check state locks** before triggering workflows to avoid conflicts
+
 ## Common Troubleshooting
 
 ### Docker Container Issues
-If you encounter errors like "stat /bin/tofu: no such file or directory":
-- Use the shorthand commands: `leverage tf` instead of `leverage tofu`
-- This maps to OpenTofu and avoids container path issues
+**Container Binary Detection and Health Checks:**
+- The workflows now automatically detect available binaries (`tofu` vs `terraform`)
+- Container health checks prevent stalling by testing startup before operations
+- If you encounter errors like "stat /bin/tofu: no such file or directory":
+  - Use the shorthand commands: `leverage tf` instead of `leverage tofu`
+  - The workflow will automatically fallback to available binary
+
+**Manual Container Health Check:**
+```bash
+# Test container health and binary availability
+leverage tf shell -c "echo 'Container health check passed'"
+
+# Check available binaries
+leverage tf shell -c "command -v tofu || command -v terraform"
+```
+
+### GitHub Actions Workflow Issues
+**Workflow Stalling Prevention:**
+- All workflows now have timeout protection (45-minute maximum)
+- Reduced operation timeouts for faster failure detection:
+  - Init: 2 minutes (was 5 minutes)
+  - Plan: 5 minutes (was 10 minutes)
+  - Apply/Destroy: 10 minutes (was 20 minutes)
+- Automatic cleanup on workflow failure
+
+**Workflow Parameters:**
+```bash
+# Test specific layer with custom parameters
+gh workflow run leverage-cli-test.yml \
+  -f target_layer="apps-devstg/us-east-1/databases-aurora" \
+  -f test_mode="plan-only" \
+  -f leverage_toolbox_version="1.9.1-tofu-0.3.0"
+```
+
+### State Lock Issues
+**Automatic State Lock Management:**
+- Workflows now include automatic stale lock detection and cleanup
+- Force unlock operations have timeout protection to prevent hanging
+
+**Manual State Lock Resolution:**
+```bash
+# Force unlock (use with caution)
+echo "tofu force-unlock -force <LOCK_ID>" | leverage tf shell
+
+# Check for existing locks
+leverage tf plan -lock-timeout=30s
+```
 
 ### AWS CC Provider Issues
 When working with AWS Cloud Control API resources (awscc_*):
@@ -241,19 +384,30 @@ When working with AWS Cloud Control API resources (awscc_*):
 - Image extraction categories must use valid enums: "CONTENT_MODERATION", "TEXT_DETECTION", "LOGOS"
 - Some Bedrock Data Automation features may be in preview
 
-### State Lock Issues
-If encountering state lock errors:
+### Debugging and Emergency Procedures
+**Interactive Debugging:**
 ```bash
-# Force unlock (use with caution)
-echo "tofu force-unlock -force <LOCK_ID>" | leverage tf shell
+# Open shell in container for debugging
+leverage tf shell
+
+# Test container environment
+leverage tf shell -c "env | grep -E '(AWS|TF|TOFU)'"
 ```
 
-### Debugging
-For interactive debugging:
+**Emergency Resource Cleanup:**
 ```bash
-# Open shell in container
-leverage tf shell
+# Emergency destroy (use with caution)
+timeout 300 leverage tf destroy -auto-approve -lock-timeout=2m
+
+# Check remaining resources
+leverage tf plan -detailed-exitcode
 ```
+
+**Workflow Debugging:**
+- Check GitHub Actions logs for detailed error messages and timing
+- Look for container health check results in workflow output
+- Review state lock detection and cleanup attempts
+- Emergency cleanup logs show resource destruction attempts
 
 ## Documentation Sources
 

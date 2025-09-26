@@ -8,6 +8,12 @@ module "secrets" {
       secret_string           = "PLACEHOLDER"
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
     },
+    "/k8s-eks-demoapps/gpt5-test-secret" = {
+      description             = "GPT-5 AI Validation Test Secret"
+      recovery_window_in_days = 0
+      secret_string           = "gpt5-validation-test-data"
+      kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+    },
   }
 
   tags = local.tags

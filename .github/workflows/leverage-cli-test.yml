@@ -18,15 +18,29 @@ on:
         description: "Leverage Toolbox version to test"
         required: false
         type: string
-        default: 1.6.0-0.2.1
+        default: 1.9.1-tofu-0.3.0
+      target_layer:
+        description: "Layer to test (relative to repo root, e.g., 'apps-devstg/global/cli-test-layer')"
+        required: false
+        type: string
+        default: "apps-devstg/global/cli-test-layer"
+      test_mode:
+        description: "Test mode: 'full' (init+plan+apply+destroy) or 'plan-only' (init+plan)"
+        required: false
+        type: choice
+        options:
+          - "full"
+          - "plan-only"
+        default: "full"
 
 jobs:
   test_leverage:
     runs-on: ubuntu-latest
+    timeout-minutes: 45  # Overall workflow timeout to prevent infinite hangs
     env:
       LEVERAGE_VERSION: 2.1.1
       LEVERAGE_REPO: pypi.org
-      LEVERAGE_TOOLBOX_VERSION: 1.6.0-0.2.1
+      LEVERAGE_TOOLBOX_VERSION: 1.9.1-tofu-0.3.0
     steps:
       - name: Checkout base branch
         uses: actions/checkout@v3
@@ -46,17 +60,27 @@ jobs:
           path: /home/runner/.local/share/virtualenvs
           key: ${{ runner.os }}-pipenv-${{ github.run_id }}
 
-      - name: Installing Leverage CLI
+      - name: Setup Python virtual environment and Install Leverage CLI
         run: |
+          printf "[INFO] Setting up Python virtual environment\n"
+          python3 -m venv ~/.leverage-venv
+          source ~/.leverage-venv/bin/activate
+
           printf "[INFO] Installing Leverage CLI\n"
+          pip install --upgrade pip
           if [[  "${{ inputs.leverage_version }}" == "" ]] || [[  "${{ inputs.leverage_repo }}" == "" ]];
           then
-              echo "Installing https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}"
-              python -m pipenv install -i https://${LEVERAGE_REPO}/simple/ leverage==${LEVERAGE_VERSION}
+              echo "Installing latest leverage from ${LEVERAGE_REPO}"
+              pip install leverage
           else
-              echo "Installing https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}"
-              python -m pipenv install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
+              echo "Installing leverage==${{ inputs.leverage_version }} from ${{ inputs.leverage_repo }}"
+              pip install -i https://${{ inputs.leverage_repo }}/simple/ leverage==${{ inputs.leverage_version }}
           fi
+
+          echo "VIRTUAL_ENV=$HOME/.leverage-venv" >> $GITHUB_ENV
+          echo "$HOME/.leverage-venv/bin" >> $GITHUB_PATH
+
+          leverage --version
         working-directory: ./apps-devstg/global/cli-test-layer
 
 #      - name: patch_dependencies
@@ -69,10 +93,23 @@ jobs:
           printf "[INFO] Setting Leverage Toolbox version\n"
           if [[  "${{ inputs.leverage_toolbox_version }}" == "" ]];
           then
-            echo "Using Toolbox ${LEVERAGE_TOOLBOX_VERSION} version"
-            sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${LEVERAGE_TOOLBOX_VERSION}'/' build.env;
+            # Read version from build.env as source of truth
+            if [[ -f "build.env" ]]; then
+              BUILD_ENV_VERSION=$(grep '^TERRAFORM_IMAGE_TAG=' build.env | cut -d'=' -f2)
+              if [[ -n "$BUILD_ENV_VERSION" ]]; then
+                echo "Using Toolbox version from build.env: $BUILD_ENV_VERSION"
+                echo "This ensures workflow stays in sync with project configuration"
+                # build.env already has the correct version, no need to modify
+              else
+                echo "Warning: No TERRAFORM_IMAGE_TAG found in build.env, using fallback: ${LEVERAGE_TOOLBOX_VERSION}"
+                sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${LEVERAGE_TOOLBOX_VERSION}'/' build.env;
+              fi
+            else
+              echo "Warning: build.env not found, using fallback: ${LEVERAGE_TOOLBOX_VERSION}"
+              echo "TERRAFORM_IMAGE_TAG=${LEVERAGE_TOOLBOX_VERSION}" > build.env
+            fi
           else
-            echo "Using Toolbox ${{ inputs.leverage_toolbox_version }} version"
+            echo "Using manually specified Toolbox ${{ inputs.leverage_toolbox_version }} version"
             sed -E -i 's/^TERRAFORM_IMAGE_TAG=.+$/TERRAFORM_IMAGE_TAG='${{ inputs.leverage_toolbox_version }}'/' build.env;
           fi
 
@@ -115,25 +152,357 @@ jobs:
           echo "[INFO] Disable MFA\n"
           sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env
 
-      - name: Test Reference Architecture
+      - name: Setup AWS Environment Variables
+        run: |
+          # Set AWS configuration to use the bb directory (magic recipe)
+          echo "AWS_CONFIG_FILE=$HOME/.aws/bb/config" >> $GITHUB_ENV
+          echo "AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/bb/credentials" >> $GITHUB_ENV
+          echo "AWS_PROFILE=bb-apps-devstg-devops" >> $GITHUB_ENV
+
+          printf "[INFO] AWS Environment configured\n"
+          printf "Config file: $HOME/.aws/bb/config\n"
+          printf "Credentials file: $HOME/.aws/bb/credentials\n"
+          printf "Profile: bb-apps-devstg-devops\n"
+
+      - name: Pre-Health Check Diagnostics
+        run: |
+          printf "[INFO] === System Resources ===\n"
+          df -h
+          free -m
+          ps aux --sort=-%cpu | head -10
+
+          printf "[INFO] === Network Connectivity ===\n"
+          curl -I --connect-timeout 10 https://docker.io || echo "Docker Hub connectivity check failed"
+
+          printf "[INFO] === Docker Status ===\n"
+          docker --version
+          docker system df
+
+          printf "[INFO] Pre-health check diagnostics completed\n"
+
+      - name: Enhanced Container Health Check and Binary Detection
+        run: |
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
+
+          # Change to layer directory (CRITICAL: leverage commands must run from layer directory)
+          cd ${{ env.TARGET_LAYER }}
+          printf "[INFO] Working directory: $(pwd)\n"
+
+          # Create log file for health check details
+          mkdir -p /tmp/leverage-logs
+          HEALTH_LOG="/tmp/leverage-logs/health-check.log"
+
+          printf "[INFO] === Enhanced Container Health Check ===\n"
+          printf "[INFO] Log file: $HEALTH_LOG\n"
+
+          # Stage 0: Pre-check Docker image availability
+          printf "[INFO] Stage 0: Checking Docker image availability\n"
+          DOCKER_IMAGE="binbash/leverage-toolbox:${LEVERAGE_TOOLBOX_VERSION}-1001-1001"
+          printf "[INFO] Target image: $DOCKER_IMAGE\n"
+
+          # Try to pull the image first to avoid build timeouts
+          if ! docker pull "$DOCKER_IMAGE" 2>&1 | tee -a "$HEALTH_LOG"; then
+            printf "[WARN] ⚠️ Docker image pull failed - will attempt local build\n"
+          fi
+
+          # Stage 1: Basic container startup test with verbose logging
+          printf "[INFO] Stage 1: Testing container startup and version check\n"
+          if timeout 60 leverage -v tf version 2>&1 | tee -a "$HEALTH_LOG"; then
+            printf "[INFO] ✅ Container startup successful\n"
+          else
+            printf "[ERROR] ❌ Container startup failed within 30 seconds\n"
+            printf "[ERROR] === Health Check Log Contents ===\n"
+            cat "$HEALTH_LOG"
+            printf "[ERROR] === End of Health Check Log ===\n"
+            printf "[ERROR] This suggests container runtime, image pull, or configuration issues\n"
+            exit 1
+          fi
+
+          # Stage 2: Binary detection and functional validation from version output
+          printf "[INFO] Stage 2: Parsing version output for binary detection and functionality test\n"
+
+          # Parse version output from Stage 1 for binary type detection
+          if grep -q "OpenTofu" "$HEALTH_LOG"; then
+            printf "[INFO] ✅ OpenTofu binary detected from version output\n"
+            echo "TERRAFORM_BINARY=tofu" >> $GITHUB_ENV
+            DETECTED_BINARY="tofu"
+          elif grep -q "Terraform" "$HEALTH_LOG"; then
+            printf "[INFO] ✅ Terraform binary detected from version output\n"
+            echo "TERRAFORM_BINARY=terraform" >> $GITHUB_ENV
+            DETECTED_BINARY="terraform"
+          else
+            printf "[WARN] ⚠️ Unable to detect binary type from version output, using fallback detection\n"
+
+            # Fallback: Use image tag to determine binary type
+            if echo "${LEVERAGE_TOOLBOX_VERSION}" | grep -q "tofu"; then
+              printf "[INFO] ✅ OpenTofu binary detected from image tag (${LEVERAGE_TOOLBOX_VERSION})\n"
+              echo "TERRAFORM_BINARY=tofu" >> $GITHUB_ENV
+              DETECTED_BINARY="tofu"
+            else
+              printf "[INFO] ✅ Terraform binary assumed from image tag (${LEVERAGE_TOOLBOX_VERSION})\n"
+              echo "TERRAFORM_BINARY=terraform" >> $GITHUB_ENV
+              DETECTED_BINARY="terraform"
+            fi
+
+            printf "[WARN] === Version Output Analysis (for debugging) ===\n"
+            cat "$HEALTH_LOG"
+            printf "[WARN] === End of Version Output ===\n"
+          fi
+
+          # Stage 3: Lightweight functional validation (optional - allows failure)
+          printf "[INFO] Stage 3: Testing container functionality with validate command\n"
+          if timeout 30 leverage -v tf validate 2>&1 | tee -a "$HEALTH_LOG"; then
+            printf "[INFO] ✅ Container functionality validation successful\n"
+          else
+            printf "[WARN] ⚠️ Container validate command failed (acceptable - may be due to empty directory)\n"
+            printf "[INFO] Container is still considered healthy based on successful version check\n"
+          fi
+
+          printf "[INFO] ✅ Enhanced container health check completed successfully\n"
+          printf "[INFO] Detected binary: $DETECTED_BINARY\n"
+          printf "[INFO] === Final Health Check Log ===\n"
+          cat "$HEALTH_LOG"
+          printf "[INFO] === End of Final Health Check Log ===\n"
+
+      - name: Emergency Fallback Health Check
+        if: failure()
+        run: |
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
+
+          printf "[WARN] === Primary Health Check Failed - Emergency Diagnostics ===\n"
+          FALLBACK_LOG="/tmp/leverage-logs/emergency-fallback.log"
+
+          # Emergency Method 1: Basic CLI responsiveness
+          printf "[INFO] Emergency 1: Testing basic leverage CLI responsiveness\n"
+          if timeout 30 leverage --version 2>&1 | tee -a "$FALLBACK_LOG"; then
+            printf "[INFO] ✅ Leverage CLI is responsive\n"
+
+            # Emergency Method 2: Test tf subcommand access (no container required)
+            printf "[INFO] Emergency 2: Testing leverage tf help access\n"
+            if timeout 30 leverage tf --help 2>&1 | tee -a "$FALLBACK_LOG"; then
+              printf "[INFO] ✅ Leverage tf command accessible\n"
+              printf "[WARN] Setting emergency fallback binary (assuming OpenTofu based on image name)\n"
+              echo "TERRAFORM_BINARY=tofu" >> $GITHUB_ENV
+              printf "[WARN] Emergency fallback completed - workflow will continue with minimal validation\n"
+            else
+              printf "[ERROR] ❌ Even tf help command failed\n"
+              cat "$FALLBACK_LOG"
+              exit 1
+            fi
+          else
+            printf "[ERROR] ❌ Complete Leverage CLI failure detected\n"
+
+            # Emergency Method 3: System diagnostics
+            printf "[INFO] Emergency 3: System diagnostic information\n"
+            python3 --version 2>&1 | tee -a "$FALLBACK_LOG" || echo "Python check failed"
+            docker --version 2>&1 | tee -a "$FALLBACK_LOG" || echo "Docker check failed"
+            pip list | grep leverage 2>&1 | tee -a "$FALLBACK_LOG" || echo "Leverage package check failed"
+
+            printf "[ERROR] === Complete Emergency Log ===\n"
+            cat "$FALLBACK_LOG" 2>/dev/null || echo "No emergency log available"
+            printf "[ERROR] === End of Emergency Log ===\n"
+
+            printf "[ERROR] All health check methods failed - critical system issue detected\n"
+            exit 1
+          fi
+
+      - name: Health Check Summary
+        if: always()
+        run: |
+          printf "[INFO] === Health Check Summary ===\n"
+
+          if [[ -f "/tmp/leverage-logs/health-check.log" ]]; then
+            printf "[INFO] Primary health check log available\n"
+            printf "[INFO] Health check method: Enhanced multi-stage\n"
+          elif [[ -f "/tmp/leverage-logs/fallback-health.log" ]]; then
+            printf "[WARN] Fallback health check method used\n"
+            printf "[WARN] Primary health check failed - workflow reliability may be reduced\n"
+          else
+            printf "[ERROR] No health check logs found - this may indicate a critical failure\n"
+          fi
+
+          printf "[INFO] Terraform binary: ${TERRAFORM_BINARY:-not-set}\n"
+          printf "[INFO] Health check summary completed\n"
+
+      - name: Validate Target Layer
+        run: |
+          TARGET_LAYER="${{ inputs.target_layer || 'apps-devstg/global/cli-test-layer' }}"
+          echo "TARGET_LAYER=$TARGET_LAYER" >> $GITHUB_ENV
+
+          printf "[INFO] Validating target layer: $TARGET_LAYER\n"
+
+          if [[ ! -d "$TARGET_LAYER" ]]; then
+            printf "[ERROR] Target layer directory does not exist: $TARGET_LAYER\n"
+            printf "[ERROR] Available layers in apps-devstg/global:\n"
+            find apps-devstg/global -type d -maxdepth 1 -name "*-*" | sort
+            exit 1
+          fi
+
+          if [[ ! -f "$TARGET_LAYER/config.tf" ]]; then
+            printf "[ERROR] Target layer does not contain config.tf: $TARGET_LAYER\n"
+            printf "[ERROR] This does not appear to be a valid Terraform layer\n"
+            exit 1
+          fi
+
+          printf "[INFO] Target layer validated: $TARGET_LAYER\n"
+          printf "[INFO] Test mode: ${{ inputs.test_mode || 'full' }}\n"
+
+      - name: Initialize Terraform Backend
+        working-directory: ${{ env.TARGET_LAYER }}
+        run: |
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
+
+          printf "[INFO] Initializing Terraform backend...\n"
+
+          # Configuration paths and context
+          BACKEND_CONFIG="../../config/backend.tfvars"
+
+          # Initialize with timeout protection and verbose logging
+          timeout 120 leverage -v tf init -no-color -backend-config=$BACKEND_CONFIG || {
+            printf "[ERROR] Terraform init failed or timed out after 2 minutes\n"
+            exit 1
+          }
+
+          printf "[INFO] Terraform backend initialized successfully\n"
+
+      - name: Detect and Clear Stale State Locks
+        working-directory: ${{ env.TARGET_LAYER }}
+        run: |
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
+
+          printf "[INFO] Checking for stale state locks (with timeout protection)\n"
+
+          # Quick health check without state access to avoid locks
+          if ! timeout 30 leverage -v tf version > /dev/null 2>&1; then
+            printf "[WARN] State appears to be locked or has issues, investigating...\n"
+
+            # Get lock error details with timeout and verbose logging
+            LOCK_OUTPUT=$(timeout 30 leverage -v tf plan -input=false 2>&1 || echo "Lock detection timed out")
+
+            # Extract lock ID if present
+            LOCK_ID=$(echo "$LOCK_OUTPUT" | grep -o 'ID:[[:space:]]*[a-f0-9-]*' | cut -d':' -f2 | tr -d ' ' || echo "")
+
+            if [[ -n "$LOCK_ID" && "$LOCK_ID" != "Lock" ]]; then
+              printf "[INFO] Found stale lock ID: $LOCK_ID\n"
+              printf "[INFO] Attempting to force unlock\n"
+
+              # Force unlock with timeout protection and verbose logging
+              if timeout 30 leverage -v tf force-unlock -force $LOCK_ID; then
+                printf "[INFO] State unlocked successfully\n"
+              else
+                printf "[ERROR] Failed to unlock state within timeout\n"
+                printf "[ERROR] Lock ID: $LOCK_ID\n"
+                printf "[ERROR] Manual intervention may be required\n"
+                exit 1
+              fi
+            else
+              printf "[WARN] No valid lock ID found, may be configuration issue\n"
+              printf "[INFO] Lock output: $LOCK_OUTPUT\n"
+              printf "[INFO] Continuing with workflow...\n"
+            fi
+          else
+            printf "[INFO] No state locks detected\n"
+          fi
+
+      - name: Test Infrastructure Layer
+        working-directory: ${{ env.TARGET_LAYER }}
         run: |
           # These are later mounted in the container
-          mkdir ~/.ssh && touch ~/.gitconfig
+          mkdir -p ~/.ssh && touch ~/.gitconfig
 
-          printf "[INFO] Initializing layer\n"
-          python -m pipenv run leverage tf init
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
 
-          printf "[INFO] Generating plan\n"
-          python -m pipenv run leverage tf plan
+          TEST_MODE="${{ inputs.test_mode || 'full' }}"
+          printf "[INFO] Starting test for layer: ${{ env.TARGET_LAYER }}\n"
+          printf "[INFO] Test mode: $TEST_MODE\n"
 
-          printf "[INFO] Applying changes\n"
-          python -m pipenv run leverage tf apply -auto-approve
+          # Backend already initialized in previous step, proceeding to plan
+          # Phase 1: Plan (always required)
+          printf "[INFO] Generating plan with lock timeout and verbose logging\n"
+          timeout 300 leverage -v tf plan -input=false -lock-timeout=5m || {
+            printf "[ERROR] Terraform plan timed out or failed after 5 minutes\n"
+            printf "[ERROR] This could indicate:\n"
+            printf "[ERROR] - Network connectivity issues\n"
+            printf "[ERROR] - AWS authentication problems\n"
+            printf "[ERROR] - State lock issues\n"
+            printf "[ERROR] - Container runtime problems\n"
+            exit 1
+          }
 
-          printf "[INFO] Checking if all changes were applied\n"
-          python -m pipenv run leverage tf plan -detailed-exitcode
-          [[ $? -eq 2 ]] && printf "[WARN] There are still remaining changes\n"
-          [[ $? -eq 0 ]] && printf "[INFO] Apply checks out\n"
+          # Phase 3: Apply/Destroy (only in full mode)
+          if [[ "$TEST_MODE" == "full" ]]; then
+            printf "[INFO] Running full test mode (apply + destroy)\n"
 
-          printf "[INFO] Destroying all generated created resources\n"
-          python -m pipenv run leverage tf destroy -auto-approve
-        working-directory: ./apps-devstg/global/cli-test-layer
+            printf "[INFO] Applying changes with timeout protection and verbose logging\n"
+            timeout 600 leverage -v tf apply -input=false -auto-approve -lock-timeout=5m || {
+              printf "[ERROR] Terraform apply timed out after 10 minutes\n"
+              printf "[WARN] State may be locked - manual cleanup required\n"
+              exit 1
+            }
+
+            printf "[INFO] Checking if all changes were applied\n"
+            leverage -v tf plan -input=false -detailed-exitcode -lock-timeout=5m
+            PLAN_EXIT_CODE=$?
+            [[ $PLAN_EXIT_CODE -eq 2 ]] && printf "[WARN] There are still remaining changes\n"
+            [[ $PLAN_EXIT_CODE -eq 0 ]] && printf "[INFO] Apply checks out\n"
+
+            printf "[INFO] Destroying all generated created resources\n"
+            timeout 600 leverage -v tf destroy -input=false -auto-approve -lock-timeout=5m || {
+              printf "[ERROR] Terraform destroy timed out after 10 minutes\n"
+              printf "[WARN] Resources may still exist - manual cleanup required\n"
+              exit 1
+            }
+
+            printf "[INFO] Final verification - state should be clean\n"
+            leverage -v tf plan -input=false -detailed-exitcode -lock-timeout=5m
+            FINAL_EXIT_CODE=$?
+            [[ $FINAL_EXIT_CODE -eq 0 ]] && printf "[INFO] State is clean - no resources remain\n"
+            [[ $FINAL_EXIT_CODE -eq 2 ]] && printf "[WARN] Some resources may still exist\n"
+
+          else
+            printf "[INFO] Plan-only mode completed successfully\n"
+            printf "[INFO] Skipping apply/destroy operations\n"
+            printf "[INFO] Layer configuration validated successfully\n"
+          fi
+
+          printf "[INFO] Test completed for layer: ${{ env.TARGET_LAYER }}\n"
+
+      - name: Cleanup on Failure
+        if: failure()
+        working-directory: ${{ env.TARGET_LAYER }}
+        run: |
+          # Ensure virtual environment is active
+          source ~/.leverage-venv/bin/activate
+
+          printf "[WARN] Workflow failed, attempting cleanup\n"
+
+          # Try to unlock any remaining state locks (already in layer directory via working-directory)
+          printf "[INFO] Currently in directory: $(pwd)\n"
+
+          LOCK_OUTPUT=$(timeout 30 leverage -v tf plan -input=false 2>&1 || echo "No lock info available")
+          LOCK_ID=$(echo "$LOCK_OUTPUT" | grep -o 'ID:[[:space:]]*[a-f0-9-]*' | cut -d':' -f2 | tr -d ' ' || echo "")
+
+          if [[ -n "$LOCK_ID" && "$LOCK_ID" != "Lock" ]]; then
+            printf "[INFO] Attempting to unlock remaining state lock: $LOCK_ID\n"
+            timeout 30 leverage -v tf force-unlock -force $LOCK_ID || true
+          fi
+
+          # Attempt emergency destroy if in full mode
+          if [[ "${{ inputs.test_mode || 'full' }}" == "full" ]]; then
+            printf "[WARN] Attempting emergency resource cleanup\n"
+
+            # Already in layer directory via working-directory
+            printf "[INFO] Emergency cleanup from directory: $(pwd)\n"
+
+            timeout 300 leverage -v tf destroy -input=false -auto-approve -lock-timeout=2m || {
+              printf "[ERROR] Emergency cleanup failed - manual intervention required\n"
+              printf "[ERROR] Please check AWS console for remaining resources\n"
+            }
+          fi
+
+          printf "[INFO] Cleanup attempt completed\n"
