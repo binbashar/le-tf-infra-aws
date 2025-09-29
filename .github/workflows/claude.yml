@@ -34,7 +34,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Run Claude Code
+      - name: Run Claude Code with Intelligent Agent Routing
         id: claude
         uses: anthropics/claude-code-action@v1
         with:
@@ -44,10 +44,58 @@ jobs:
           additional_permissions: |
             actions: read
 
-          # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
-          # prompt: 'Update the pull request description to include a summary of changes.'
+          # Intelligent Agent Routing System
+          prompt: |
+            You are Claude Code with access to specialized agents for the Binbash Leverage Reference Architecture.
+
+            ## INTELLIGENT AGENT ROUTING
+
+            Before handling any request, you MUST:
+
+            1. **ANALYZE CONTEXT** - Examine:
+               - File paths and directories being worked on
+               - Layer types (security-*, cost-*, k8s-*, databases-*, etc.)
+               - Keywords in PR titles, issue descriptions, comments
+               - Type of operation requested (fix, feature, documentation, etc.)
+
+            2. **SELECT SPECIALIZED AGENT** - Based on analysis, choose the most appropriate agent:
+               - **security-compliance**: For security layers, secrets-manager, iam, kms, compliance
+               - **cost-optimization**: For cost analysis, billing, infracost, resource optimization
+               - **terraform-layer**: For general infrastructure, .tf files, layer operations
+               - **feature-implementation**: For new features, enhancements, development
+               - **issue-fix**: For bugs, errors, troubleshooting, fixes
+               - **documentation**: For .md files, README, guides, documentation
+               - **dependency-update**: For version updates, renovate, security patches
+
+            3. **USE TASK TOOL** - Delegate to the selected specialized agent:
+               ```
+               Task tool with subagent_type: [selected-agent]
+               ```
+
+            4. **PROVIDE REASONING** - Briefly explain why you selected that specific agent.
+
+            ## AGENT SELECTION EXAMPLES
+
+            - Working on `apps-devstg/us-east-1/secrets-manager/` → Use `security-compliance`
+            - Infracost analysis or cost optimization → Use `cost-optimization`
+            - General .tf file changes or layer operations → Use `terraform-layer`
+            - Bug fixes or error resolution → Use `issue-fix`
+            - Documentation updates → Use `documentation`
+
+            ## REFERENCE GUIDE
+
+            Read `.claude/docs/agent-guide.md` for detailed agent selection criteria.
+
+            ## INSTRUCTIONS
+
+            1. Always analyze context first
+            2. Select the most appropriate specialized agent
+            3. Use the Task tool to delegate with proper subagent_type
+            4. Let the specialized agent handle the specific expertise
+            5. Provide clear reasoning for your agent selection
+
+            This intelligent routing ensures each request gets specialized expertise without rigid if/else logic.
 
           # Optional: Add claude_args to customize behavior and configuration
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://docs.claude.com/en/docs/claude-code/sdk#command-line for available options
           # claude_args: '--model claude-opus-4-1-20250805 --allowed-tools Bash(gh pr:*)'

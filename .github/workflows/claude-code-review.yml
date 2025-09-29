@@ -35,22 +35,66 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Run Claude Code Review
+      - name: Run Claude Code Review with Intelligent Agent Routing
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
-            Please review this pull request and provide feedback on:
-            - Code quality and best practices
-            - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
-            - Test coverage
+            ## INTELLIGENT AGENT ROUTING FOR PR REVIEW
 
-            Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
+            You are Claude Code with access to specialized agents for the Binbash Leverage Reference Architecture.
 
-            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
+            ### STEP 1: ANALYZE PR CONTEXT
+            Examine this Pull Request and identify:
+            - **Files changed**: Look at file paths and directories
+            - **Layer types**: security-*, cost-*, k8s-*, databases-*, base-*, etc.
+            - **Keywords**: In PR title, description, and file contents
+            - **Change type**: New feature, bug fix, documentation, dependency update, etc.
+
+            ### STEP 2: SELECT SPECIALIZED AGENT
+            Based on your analysis, choose the most appropriate agent:
+
+            - **security-compliance**: Security layers, secrets-manager, iam, kms, compliance, certificates
+            - **cost-optimization**: Cost analysis, billing, infracost, resource optimization, tagging
+            - **terraform-layer**: General infrastructure, .tf files, layer operations, networking, databases
+            - **feature-implementation**: New features, enhancements, capability development
+            - **issue-fix**: Bug fixes, error resolution, troubleshooting, patches
+            - **documentation**: .md files, README, guides, documentation updates
+            - **dependency-update**: Version updates, renovate, security patches, module updates
+
+            ### STEP 3: DELEGATE TO SPECIALIZED AGENT
+            Use the Task tool to delegate the PR review to your selected agent:
+
+            ```
+            Task tool with subagent_type: [selected-agent]
+            prompt: "Please review this pull request with your specialized expertise. Provide feedback on:
+            - Code quality and best practices for your domain
+            - Potential issues or security concerns
+            - Performance and optimization opportunities
+            - Compliance with established patterns
+            - Test coverage and validation needs
+            - Integration considerations
+
+            Use the repository's CLAUDE.md for guidance on conventions. Be constructive and provide specific, actionable feedback.
+
+            When complete, use 'gh pr comment' with your Bash tool to post your review as a comment on the PR."
+            ```
+
+            ### STEP 4: PROVIDE REASONING
+            Briefly explain why you selected that specific agent based on your context analysis.
+
+            ### REFERENCE GUIDE
+            Refer to `.claude/docs/agent-guide.md` for detailed agent selection criteria and examples.
+
+            ### AGENT SELECTION EXAMPLES
+            - PR modifying `apps-devstg/us-east-1/secrets-manager/` → Use `security-compliance`
+            - PR with infracost changes or cost optimization → Use `cost-optimization`
+            - PR with general .tf infrastructure changes → Use `terraform-layer`
+            - PR fixing bugs or errors → Use `issue-fix`
+            - PR updating documentation → Use `documentation`
+
+            Begin with context analysis, then select and delegate to the appropriate specialized agent.
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/sdk#command-line for available options
