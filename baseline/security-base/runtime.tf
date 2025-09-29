@@ -4,54 +4,53 @@ locals {
   # Merge var.accounts with runtime overrides
   # Runtime values will override the variable values, but keep all other parameters
   runtime_accounts = {
-    root = {
-      profile = "bb-root-devops"
+    management = {
+      profile = "bb-management-administrator"
       regions = [
-        "us-east-1",
-        "us-west-2",
-        "us-east-2"
+        var.region_primary,
+        var.region_secondary
       ]
     }
-    security = {
-      profile = "bb-sso-security"
-      regions = [
-        "us-east-1",
-        "us-west-2",
-      ]
-    },
     shared = {
       profile = "bb-shared-devops"
       regions = [
-        "us-east-1",
-        "us-west-2",
+        var.region_primary,
+        var.region_secondary
       ]
-    },
+    }
+    security = {
+      profile = "bb-security-devops"
+      regions = [
+        var.region_primary,
+        var.region_secondary
+      ]
+    }
     network = {
       profile = "bb-network-devops"
       regions = [
-        "us-east-1",
-        "us-west-2",
+        var.region_primary,
+        var.region_secondary
       ]
-    },
+    }
     apps-devstg = {
       profile = "bb-apps-devstg-devops"
       regions = [
-        "us-east-1",
-        "us-west-2",
+        var.region_primary,
+        var.region_secondary
       ]
-    },
+    }
     apps-prd = {
-      profile = "bb-sso-apps-prd"
+      profile = "bb-apps-prd-devops"
       regions = [
-        "us-east-1",
-        "us-west-2",
+        var.region_primary,
+        var.region_secondary
       ]
-    },
+    }
     data-science = {
       profile = "bb-data-science-devops"
       regions = [
-        "us-east-1",
-        "us-west-2",
+        var.region_primary,
+        var.region_secondary
       ]
     }
   }
@@ -60,9 +59,9 @@ locals {
   accounts = merge(
     var.accounts,
     {
-      root = merge(
-        var.accounts.root,
-        local.runtime_accounts.root
+      management = merge(
+        var.accounts.management,
+        local.runtime_accounts.management
       )
       security = merge(
         var.accounts.security,

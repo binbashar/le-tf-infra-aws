@@ -7,8 +7,8 @@ locals {
 
   # Runtime backend settings - only specific parameters to override
   runtime_accounts = {
-    root = {
-      profile = "bb-root-devops"
+    management = {
+      profile = "bb-management-administrator"
       regions = [
         var.region_primary,
         var.region_secondary
@@ -74,9 +74,9 @@ locals {
   accounts = merge(
     var.accounts,
     {
-      root = merge(
-        var.accounts.root,
-        local.runtime_accounts.root
+      management = merge(
+        var.accounts.management,
+        local.runtime_accounts.management
       )
       shared = merge(
         var.accounts.shared,
