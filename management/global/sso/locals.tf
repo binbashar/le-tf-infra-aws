@@ -269,6 +269,14 @@ locals {
         "datascientists"
       ]
     }
+    "hernan.rezilo" = {
+      first_name = "Hernan"
+      last_name  = "Rezilo"
+      email      = "hernan.rezilo@binbash.com.ar"
+      groups = [
+        "devops"
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
