@@ -24,10 +24,11 @@ jobs:
       cancel-in-progress: true
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pull-requests: read
-      issues: read
+      contents: write  # Required for Claude to make code changes
+      pull-requests: write  # Required for Claude to comment and create PRs
+      issues: write  # Required for Claude to comment on issues
       id-token: write
+      actions: read  # Required for Claude to read CI results
 
     steps:
       - name: Checkout repository
@@ -37,7 +38,7 @@ jobs:
 
       - name: Run Claude Code Review with Intelligent Agent Routing
         id: claude-review
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@v1.0.0
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
@@ -96,6 +97,7 @@ jobs:
 
             Begin with context analysis, then select and delegate to the appropriate specialized agent.
 
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://docs.claude.com/en/docs/claude-code/sdk#command-line for available options
-          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
+          # Configure Claude with advanced options for infrastructure review
+          claude_args: |
+            --max-turns 15
+            --allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(git:*),Bash(find:*),Bash(grep:*),Bash(cat:*),Bash(ls:*)"
