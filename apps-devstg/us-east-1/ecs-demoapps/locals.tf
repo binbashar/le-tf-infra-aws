@@ -12,7 +12,7 @@ locals {
 
       containers = {
         web = {
-          image  = "docker.l5d.io/buoyantio/emojivoto-web"
+          image  = "523857393444.dkr.ecr.us-east-1.amazonaws.com/demo-emojivoto/web"
           cpu    = 512
           memory = 2048
 
@@ -29,7 +29,7 @@ locals {
         }
 
         voting-api = {
-          image  = "docker.l5d.io/buoyantio/emojivoto-voting-svc"
+          image  = "523857393444.dkr.ecr.us-east-1.amazonaws.com/demo-emojivoto/voting-svc"
           cpu    = 512
           memory = 2048
 
@@ -45,7 +45,7 @@ locals {
         }
 
         emoji-api = {
-          image  = "docker.l5d.io/buoyantio/emojivoto-emoji-svc"
+          image  = "523857393444.dkr.ecr.us-east-1.amazonaws.com/demo-emojivoto/emoji-svc"
           cpu    = 512
           memory = 2048
 
@@ -61,7 +61,7 @@ locals {
         }
 
         vote-bot = {
-          image  = "docker.l5d.io/buoyantio/emojivoto-web"
+          image  = "523857393444.dkr.ecr.us-east-1.amazonaws.com/demo-emojivoto/web"
           cpu    = 512
           memory = 2048
 

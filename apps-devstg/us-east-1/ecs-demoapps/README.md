@@ -174,6 +174,56 @@ routing = {
 }
 ```
 
+### Deployment Configuration
+
+#### Deployment Types
+
+This ECS cluster supports two deployment strategies:
+
+1. **Rolling Deployment** (default)
+2. **Blue-Green Deployment**
+
+#### Configuring Deployment Type
+
+Set the deployment type using the `ecs_deployment_type` variable:
+
+```hcl
+# Rolling deployment (default)
+ecs_deployment_type = "rolling"
+
+# Blue-green deployment
+ecs_deployment_type = "blue-green"
+```
+
+#### Rolling Deployment
+- **Strategy**: Updates tasks incrementally
+- **Traffic**: Gradual shift to new version
+- **Target Groups**: Single target group per container
+- **Downtime**: Minimal, based on health checks
+- **Configuration**:
+  - Minimum healthy percent: 50%
+  - Maximum percent: 200%
+  - Circuit breaker enabled with automatic rollback
+
+#### Blue-Green Deployment
+- **Strategy**: Maintains two identical environments (blue and green)
+- **Traffic**: Instant switch between environments
+- **Target Groups**: Primary + secondary target groups (with `-bg` suffix)
+- **Downtime**: Zero downtime deployments
+- **Configuration**:
+  - Minimum healthy percent: 100%
+  - Maximum percent: 200%
+  - Circuit breaker enabled with automatic rollback
+
+#### Target Group Configuration
+
+**Rolling Deployment:**
+- Primary target groups only (e.g., `ecs-web`, `ecs-voting-api`)
+
+**Blue-Green Deployment:**
+- Primary target groups: `ecs-web`, `ecs-voting-api`, `ecs-emoji-api`
+- Secondary target groups: `ecs-web-bg`, `ecs-voting-api-bg`, `ecs-emoji-api-bg`
+
 ### GitOps Workflow
 
 #### 1. Application Development
@@ -194,7 +244,9 @@ aws ssm put-parameter \
 #### 3. Infrastructure Response
 - Terraform data source detects parameter change
 - ECS service updates task definition with new image
-- Blue-green deployment (if configured) or rolling update
+- Deployment strategy executed based on `ecs_deployment_type`:
+  - **Rolling**: Gradual task replacement
+  - **Blue-Green**: Zero-downtime environment switch
 
 ### Important Notes
 

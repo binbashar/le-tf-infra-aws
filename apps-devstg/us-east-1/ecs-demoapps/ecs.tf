@@ -41,6 +41,24 @@ module "apps_devstg_ecs_cluster" {
       cpu    = service_values.cpu
       memory = service_values.memory
 
+      # Deployment configuration based on deployment type
+      deployment_configuration = var.ecs_deployment_type == "blue-green" ? {
+        maximum_percent         = 200
+        minimum_healthy_percent = 100
+        deployment_circuit_breaker = {
+          enable   = true
+          rollback = true
+        }
+        } : {
+        # Rolling deployment configuration
+        maximum_percent         = 200
+        minimum_healthy_percent = 50
+        deployment_circuit_breaker = {
+          enable   = true
+          rollback = true
+        }
+      }
+
       # Containers definiton
       container_definitions = { for container_name, container_values in service_values.containers :
         container_name => {
@@ -84,8 +102,27 @@ module "apps_devstg_ecs_cluster" {
       # Service IAM Roles and policies
       task_exec_iam_role_name = "${service_name}-ecr-exec"
 
-      # Target group assignment
-      load_balancer = { for container_name, container_values in local.routing[service_name] :
+      # Target group assignment - conditional based on deployment type
+      load_balancer = var.ecs_deployment_type == "blue-green" ? merge(
+        # Primary target groups (current production traffic)
+        { for container_name, container_values in local.routing[service_name] :
+          container_name => {
+            target_group_arn = module.apps_devstg_alb_ecs_demoapps.target_groups[container_name].arn
+            container_name   = container_name
+            container_port   = container_values.port
+          }
+        },
+        # Secondary target groups for blue-green deployment
+        { for container_name, container_values in local.routing[service_name] :
+          "${container_name}-bg" => {
+            target_group_arn = module.apps_devstg_alb_ecs_demoapps.target_groups["${container_name}-bg"].arn
+            container_name   = container_name
+            container_port   = container_values.port
+          }
+        }
+        ) : {
+        # Rolling deployment - single target group per container
+        for container_name, container_values in local.routing[service_name] :
         container_name => {
           target_group_arn = module.apps_devstg_alb_ecs_demoapps.target_groups[container_name].arn
           container_name   = container_name

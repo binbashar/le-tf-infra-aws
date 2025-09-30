@@ -103,27 +103,51 @@ module "apps_devstg_alb_ecs_demoapps" {
 
   }
 
-  target_groups = { for target_name, target_values in local.target_groups :
-    # Target groups named as the associated container
-    target_name => {
-      name             = "ecs-${target_name}"
-      protocol         = "HTTP"
-      protocol_version = try(target_values.protocol_version, "HTTP1")
-      port             = target_values.port
-      target_type      = "ip"
+  target_groups = merge(
+    # Primary target groups (always created)
+    { for target_name, target_values in local.target_groups :
+      target_name => {
+        name             = "ecs-${target_name}"
+        protocol         = "HTTP"
+        protocol_version = try(target_values.protocol_version, "HTTP1")
+        port             = target_values.port
+        target_type      = "ip"
 
-      health_check = {
-        interval            = 30
-        port                = target_values.port
-        healthy_threshold   = 2
-        unhealthy_threshold = 10
-        protocol            = "HTTP"
-        matcher             = try(target_values.health_check.matcher, null)
+        health_check = {
+          interval            = 30
+          port                = target_values.port
+          healthy_threshold   = 2
+          unhealthy_threshold = 10
+          protocol            = "HTTP"
+          matcher             = try(target_values.health_check.matcher, null)
+        }
+        # ECS handles the attachment
+        create_attachment = false
       }
-      # ECS handles the attachment
-      create_attachment = false
-    }
-  }
+    },
+    # Secondary target groups for blue-green deployment (only created when blue-green is enabled)
+    var.ecs_deployment_type == "blue-green" ? {
+      for target_name, target_values in local.target_groups :
+      "${target_name}-bg" => {
+        name             = "ecs-${target_name}-bg"
+        protocol         = "HTTP"
+        protocol_version = try(target_values.protocol_version, "HTTP1")
+        port             = target_values.port
+        target_type      = "ip"
+
+        health_check = {
+          interval            = 30
+          port                = target_values.port
+          healthy_threshold   = 2
+          unhealthy_threshold = 10
+          protocol            = "HTTP"
+          matcher             = try(target_values.health_check.matcher, null)
+        }
+        # ECS handles the attachment
+        create_attachment = false
+      }
+    } : {}
+  )
 
   depends_on = [data.aws_nat_gateways.natgtw]
 
