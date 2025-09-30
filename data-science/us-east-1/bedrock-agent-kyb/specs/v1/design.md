@@ -28,8 +28,8 @@
 2. EventBridge → BDA Invoker Lambda → BDA Project
 3. BDA → Standard Output → Processing Bucket
 4. EventBridge → Agent Invoker Lambda → Bedrock Agent (with session params)
-5. Agent → GetDocuments Lambda → Processing Bucket
-6. Agent → SaveDocument Lambda → Output Bucket
+5. Agent → Action Group: GetDocuments Lambda → Processing Bucket
+6. Agent → Action Group: SaveDocument Lambda → Output Bucket
 ```
 
 ## OpenTofu Files

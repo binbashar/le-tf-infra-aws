@@ -38,7 +38,7 @@ This is the **Binbash Leverage Reference Architecture** - a comprehensive OpenTo
 - Use variables and locals for all configurable values; avoid hardcoding
 - Structure files logically: main config, locals, variables, outputs, modules
 - Follow the [Leverage AWS directory structure](https://leverage.binbash.co/user-guide/ref-architecture-aws/dir-structure)
-- Always run `leverage tf fmt` for formatting and `leverage tf validate` for validation
+- Always run `leverage tf format` for formatting and `leverage tf validate` for validation
 
 ### Module Guidelines
 - **Always prefer Binbash Leverage modules** - Check the [module library](https://github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile) first
@@ -100,7 +100,7 @@ python build.py layer_dependency
 leverage tf validate
 
 # Format code (recursive)
-leverage tf fmt -recursive
+leverage tf format -recursive
 
 # Check plan output
 leverage tf plan -out=tfplan
@@ -204,12 +204,13 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - Backend config in `{account}/config/backend.tfvars`
 
 ### Version Constraints
-- **OpenTofu**: ~> 1.6.6 (primary IaC tool)
-- **Terraform**: ~> 1.6.6 (legacy support)
+- **OpenTofu**: ~> 1.6 (primary IaC tool)
+- **Terraform**: ~> 1.6 (legacy support)
 - **AWS Provider**: ~> 5.100
 - **AWS CC Provider**: <none found – verify usage or remove>
 - **Kubernetes Provider**: ~> 2.37
 - **Helm Provider**: ~> 2.17
+
 ## Important Development Notes
 
 ### Critical Rules
@@ -225,7 +226,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 8. **Security-first** - Follow AWS Well-Architected Framework and Leverage security guidelines
 9. **Documentation** - Reference official [Leverage Documentation](https://leverage.binbash.co) for guidance
 10. **Testing** - Use `leverage tf test` for module unit tests and integrate with CI/CD
-11. **Code quality** - Always run `leverage tf fmt` and `leverage tf validate` before commits
+11. **Code quality** - Always run `leverage tf format` and `leverage tf validate` before commits
 12. **Atlantis integration** - The repository uses Atlantis for automated OpenTofu/Terraform workflows
 
 ## Common Troubleshooting

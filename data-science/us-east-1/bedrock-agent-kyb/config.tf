@@ -16,7 +16,7 @@ terraform {
     }
   }
   backend "s3" {
-    key = "data-science/us-east-1/bedrock-kyb-agent/terraform.tfstate"
+    key = "data-science/us-east-1/bedrock-agent-kyb/terraform.tfstate"
   }
 }
 

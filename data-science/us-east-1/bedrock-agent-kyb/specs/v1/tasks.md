@@ -10,14 +10,14 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 **Purpose**: Create the basic layer structure and configuration files
 
 ### Subtasks:
-- T-001.1: Create layer directory `data-science/us-east-1/bedrock-kyb-agent`
+- T-001.1: Create layer directory `data-science/us-east-1/bedrock-agent-kyb`
 - T-001.2: Create `config.tf` with providers (aws, awscc, archive)
 - T-001.3: Create `variables.tf` with standard layer variables
 - T-001.4: Create `locals.tf` with naming conventions and tags
 - T-001.5: Create `outputs.tf` with layer outputs structure
 - T-001.6: Create `common-variables.tf` symlink
 
-## [ ] T-002: S3 Buckets Implementation
+## [x] T-002: S3 Buckets Implementation
 **Requirements**: REQ-001, REQ-003, REQ-004
 **Dependencies**: T-001
 **Purpose**: Create the three S3 buckets for the document pipeline

@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Layer Overview
 
-This is the **Bedrock KYB Agent layer** within the Binbash Leverage Reference Architecture, located at `data-science/us-east-1/bedrock-kyb-agent`. It implements a document processing pipeline that combines AWS Bedrock Data Automation (BDA) with a Bedrock Agent for Know Your Business (KYB) document extraction and analysis.
+This is the **Bedrock KYB Agent layer** within the Binbash Leverage Reference Architecture, located at `data-science/us-east-1/bedrock-agent-kyb`. It implements a document processing pipeline that combines AWS Bedrock Data Automation (BDA) with a Bedrock Agent for Know Your Business (KYB) document extraction and analysis.
 
 ## Essential Commands
 
 ### Infrastructure Deployment
 ```bash
 # Navigate to the layer directory (REQUIRED)
-cd data-science/us-east-1/bedrock-kyb-agent
+cd data-science/us-east-1/bedrock-agent-kyb
 
 # Initialize and validate
 leverage tf init
@@ -63,7 +63,7 @@ The layer implements a 6-step document processing pipeline:
 
 ### File Structure
 ```
-bedrock-kyb-agent/
+bedrock-agent-kyb/
 ├── specs/                  # Specification files
 │   ├── requirements.md     # Use cases and functional requirements
 │   ├── design.md          # Component design and data flow
