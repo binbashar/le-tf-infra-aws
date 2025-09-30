@@ -237,6 +237,7 @@ data "aws_iam_policy_document" "data_scientist" {
       "bedrock-agentcore:*",
       "ce:*",
       "cloudformation:*",
+      "cloudshell:*",
       "cloudwatch:*",
       "cognito-identity:*",
       "cognito-idp:*",
