@@ -44,16 +44,29 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-003.5: Add BDA project outputs to `outputs.tf`
 
 ## [ ] T-004: EventBridge Rules Configuration
-**Requirements**: REQ-001, REQ-002
+**Requirements**: REQ-001
 **Dependencies**: T-002, T-005
-**Purpose**: Create EventBridge rules to trigger Lambda functions
+**Purpose**: Create EventBridge rule for input bucket trigger
 
 ### Subtasks:
 - T-004.1: Create `eventbridge.tf` file
 - T-004.2: Implement input bucket → BDA Lambda rule
-- T-004.3: Implement processing bucket → Agent Lambda rule
-- T-004.4: Configure event targets and retry policies
-- T-004.5: Add dead letter queue for failed events
+- T-004.3: Configure event targets and retry policies
+- T-004.4: Add dead letter queue for failed events (optional)
+
+## [ ] T-004-API: API Gateway Setup
+**Requirements**: REQ-002
+**Dependencies**: T-005
+**Purpose**: Create API Gateway with IAM authentication for external agent invocation
+
+### Subtasks:
+- T-004-API.1: Create `api_gateway.tf` file
+- T-004-API.2: Implement REST API resource
+- T-004-API.3: Create POST /invoke-agent endpoint with `authorization = "AWS_IAM"`
+- T-004-API.4: Configure Lambda integration with Agent Invoker
+- T-004-API.5: Add request validation for customer_id parameter
+- T-004-API.6: Configure CORS if needed
+- T-004-API.7: Add API Gateway outputs (endpoint URL, execution ARN, test command)
 
 ## [ ] T-005: Lambda Functions Implementation
 **Requirements**: REQ-001, REQ-002, REQ-003, REQ-004
@@ -76,21 +89,24 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 ### Subtasks:
 - T-006.1: Create `src/lambda/bda_invoker.py`
 - T-006.2: Handle S3 ObjectCreated events from EventBridge
-- T-006.3: Generate correlation ID for tracking
-- T-006.4: Invoke BDA with standard output configuration
-- T-006.5: Store processing metadata
+- T-006.3: Extract customer_id from S3 object key prefix for BDA processing context
+- T-006.4: Generate correlation ID for tracking
+- T-006.5: Invoke BDA with standard output configuration
+- T-006.6: Store processing metadata
 
 ## [ ] T-007: Agent Invoker Lambda Code
 **Requirements**: REQ-002, REQ-003
-**Dependencies**: T-005, T-009
-**Purpose**: Implement Lambda that triggers Bedrock Agent
+**Dependencies**: T-005, T-009, T-004-API
+**Purpose**: Implement Lambda that triggers Bedrock Agent via IAM-authenticated API Gateway
 
 ### Subtasks:
 - T-007.1: Create `src/lambda/agent_invoker.py`
-- T-007.2: Handle S3 ObjectCreated events from processing bucket
-- T-007.3: Extract correlation ID from S3 metadata
-- T-007.4: Invoke Bedrock Agent with session parameters
-- T-007.5: Pass output_type="Standard" parameter
+- T-007.2: Handle API Gateway proxy events (IAM context available)
+- T-007.3: Extract customer_id from request body
+- T-007.4: Validate customer_id parameter (not empty, valid format)
+- T-007.5: Invoke Bedrock Agent with session parameters (customer_id, output_type="Standard")
+- T-007.6: Return JSON response with status, session_id, and agent_id
+- T-007.7: Log IAM principal ARN for audit trail (optional)
 
 ## [ ] T-008: GetDocuments Action Group
 **Requirements**: REQ-003
@@ -101,8 +117,9 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-008.1: Create `schemas/get_documents.yaml` OpenAPI schema
 - T-008.2: Create `src/lambda/get_documents_handler.py`
 - T-008.3: Handle session parameters automatically
-- T-008.4: Retrieve documents from processing bucket using standard output structure
-- T-008.5: Return structured JSON response
+- T-008.4: Retrieve documents from processing bucket using customer_id prefix: `standard/{customer_id}/`
+- T-008.5: List all objects under customer_id prefix in processing bucket
+- T-008.6: Return structured JSON response
 
 ## [ ] T-009: Bedrock Agent Configuration
 **Requirements**: REQ-003, REQ-004
@@ -136,12 +153,15 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 
 ### Subtasks:
 - T-011.1: Create `iam.tf` file
-- T-011.2: Create Lambda execution roles
+- T-011.2: Create Lambda execution roles (Agent Invoker, BDA Invoker, Action Groups)
 - T-011.3: Create BDA service permissions
-- T-011.4: Create Bedrock Agent service role
-- T-011.5: Create S3 bucket access policies
-- T-011.6: Create EventBridge invocation permissions
-- T-011.7: Add IAM role outputs to `outputs.tf`
+- T-011.4: Create Bedrock Agent service role with action group invocation
+- T-011.5: Create S3 bucket access policies for Lambdas
+- T-011.6: Create API Gateway invocation permissions for Agent Invoker Lambda
+- T-011.7: Create EventBridge invocation permissions for BDA Invoker Lambda
+- T-011.8: Add Bedrock InvokeAgent permission to Agent Invoker role
+- T-011.9: Add IAM role outputs to `outputs.tf`
+- T-011.10: Note: API Gateway uses default same-account access (no explicit resource policy needed)
 
 ## [ ] T-012: Deployment and Verification
 **Requirements**: All use cases
@@ -158,7 +178,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 ## Implementation Order
 
 1. **Phase 1**: Infrastructure (T-001, T-002, T-003)
-2. **Phase 2**: Event Processing (T-004, T-005)
+2. **Phase 2**: Event Processing (T-004, T-004-API, T-005)
 3. **Phase 3**: Lambda Implementation (T-006, T-007)
 4. **Phase 4**: Agent Configuration (T-008, T-009, T-010)
 5. **Phase 5**: Security and Deployment (T-011, T-012)
@@ -166,9 +186,13 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 ## Success Criteria
 
 - [ ] PDF upload triggers BDA processing
-- [ ] BDA saves standard output to processing bucket
-- [ ] Processing bucket triggers agent invocation
-- [ ] Agent retrieves documents using GetDocuments
+- [ ] BDA saves standard output to processing bucket with customer_id prefix
+- [ ] API Gateway endpoint requires IAM authentication (SigV4 signing)
+- [ ] API Gateway endpoint accepts customer_id and triggers agent invocation
+- [ ] IAM-authenticated requests successfully invoke the API
+- [ ] Agent Invoker receives customer_id and passes as session parameter
+- [ ] Agent retrieves documents using GetDocuments with customer_id prefix
+- [ ] GetDocuments uses customer_id to locate customer-specific documents in processing bucket
 - [ ] Agent saves bypass results using SaveDocument
-- [ ] Correlation ID maintained throughout pipeline
 - [ ] All resources deployed successfully via Leverage CLI
+- [ ] Test command works with deployer's AWS credentials (awscurl)
