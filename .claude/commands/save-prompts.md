@@ -9,7 +9,7 @@ allowed-tools: ["Write", "Bash"]
 Create a structured Obsidian note template for saving conversation prompts with both original and polished versions.
 
 **Arguments:**
-- `path` - Relative path from Smile/ (default: "AI"). Can be "Folder" or "Folder/Subfolder"
+- `path` - Relative path to default Obsidian MCP vault folder / (default: "AI"). Can be "Folder" or "Folder/Subfolder"
 - `filename` - Base filename without .md extension (default: auto-generated with timestamp)
 - `title` - Note title (default: auto-generated with current date/time)
 
