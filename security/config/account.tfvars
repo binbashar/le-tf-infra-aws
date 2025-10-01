@@ -3,7 +3,7 @@
 #
 
 # Environment Name
-environment = "security"
+environment = "shared"
 
 # SSO
 sso_role = "DevOps"

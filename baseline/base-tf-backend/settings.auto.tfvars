@@ -1,10 +1,10 @@
 region_secondary = "us-west-2"
-region_primary = "us-east-1"
+region_primary   = "us-east-1"
 
 backend_settings = {
   bucket = {
-    key = "baseline/base-tf-backend/terraform.tfstate"
-    name = "terraform-backend"
+    key       = "baseline/base-tf-backend/terraform.tfstate"
+    name      = "terraform-backend"
     delimiter = "-"
     namespace = "bb"
   }
@@ -16,6 +16,7 @@ backend_settings = {
     enable_server_side_encryption = true
     enforce_ssl_requests          = true
     ignore_public_acls            = true
+    force_destroy                 = false
   }
   replication = {
     bucket_replication_enabled    = true

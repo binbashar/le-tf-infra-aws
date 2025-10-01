@@ -19,6 +19,7 @@ variable "backend_settings" {
       enable_server_side_encryption = optional(bool, true)
       enforce_ssl_requests          = optional(bool, true)
       ignore_public_acls            = optional(bool, true)
+      force_destroy                 = optional(bool, false)
     })
     # Replication
     replication = object({

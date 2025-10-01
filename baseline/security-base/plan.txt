@@ -1,78 +1,78 @@
-[17:31:21.747] INFO     Checking for local docker image, tag: 1.9.1-tofu-0.3.0-1000-1000...                                                                 
-[17:31:21.790] INFO     ✔ OK                                                                                                                                
-                                                                                                                                                            
-[17:31:22.729] INFO     Attempting to get temporary credentials for data-science account.                                                                   
-[17:31:22.732] INFO     Using already configured temporary credentials.                                                                                     
-[17:31:22.734] INFO     Attempting to get temporary credentials for security account.                                                                       
-[17:31:22.736] INFO     Using already configured temporary credentials.                                                                                     
-[17:31:22.738] INFO     Attempting to get temporary credentials for network account.                                                                        
-[17:31:22.740] INFO     Using already configured temporary credentials.                                                                                     
-[17:31:22.742] INFO     Attempting to get temporary credentials for shared account.                                                                         
-[17:31:22.744] INFO     Using already configured temporary credentials.                                                                                     
-[17:31:22.746] INFO     Attempting to get temporary credentials for apps-devstg account.                                                                    
-[17:31:22.748] INFO     Using already configured temporary credentials.                                                                                     
-[17:31:22.751] INFO     Attempting to get temporary credentials for shared account.                                                                         
-[17:31:22.753] INFO     Using already configured temporary credentials.                                                                                     
-[17:31:22.754] INFO     Attempting to get temporary credentials for apps-prd account.                                                                       
-[17:31:22.756] INFO     Using already configured temporary credentials.                                                                                     
-[17:31:22.757] INFO     Attempting to get temporary credentials for management account.                                                                     
-[17:31:22.759] INFO     Using already configured temporary credentials.                                                                                     
-aws_s3_account_public_access_block.main["shared-us-east-2"]: Preparing import... [id=763606934258]
-aws_s3_account_public_access_block.main["security-us-east-2"]: Preparing import... [id=900980591242]
-aws_ebs_encryption_by_default.main["apps-devstg-us-east-2"]: Preparing import... [id=523857393444]
-aws_s3_account_public_access_block.main["network-us-east-2"]: Preparing import... [id=822280187662]
-aws_s3_account_public_access_block.main["network-us-east-1"]: Preparing import... [id=822280187662]
-aws_ebs_encryption_by_default.main["shared-us-east-2"]: Preparing import... [id=763606934258]
-aws_s3_account_public_access_block.main["security-us-east-1"]: Preparing import... [id=900980591242]
-aws_ebs_encryption_by_default.main["security-us-east-2"]: Preparing import... [id=900980591242]
+[18:52:23.609] INFO     Checking for local docker image, tag: 1.9.1-tofu-0.3.0-1000-1000...                    
+[18:52:23.643] INFO     ✔ OK                                                                                   
+                                                                                                               
+[18:52:24.524] INFO     Attempting to get temporary credentials for apps-devstg account.                       
+[18:52:24.526] INFO     Using already configured temporary credentials.                                        
+[18:52:24.528] INFO     Attempting to get temporary credentials for network account.                           
+[18:52:24.529] INFO     Using already configured temporary credentials.                                        
+[18:52:24.530] INFO     Attempting to get temporary credentials for apps-prd account.                          
+[18:52:24.532] INFO     Using already configured temporary credentials.                                        
+[18:52:24.533] INFO     Attempting to get temporary credentials for data-science account.                      
+[18:52:24.535] INFO     Using already configured temporary credentials.                                        
+[18:52:24.536] INFO     Attempting to get temporary credentials for shared account.                            
+[18:52:24.538] INFO     Using already configured temporary credentials.                                        
+[18:52:24.539] INFO     Attempting to get temporary credentials for security account.                          
+[18:52:24.540] INFO     Using already configured temporary credentials.                                        
+[18:52:24.541] INFO     Attempting to get temporary credentials for management account.                        
+[18:52:24.543] INFO     Using already configured temporary credentials.                                        
+[18:52:24.544] INFO     Attempting to get temporary credentials for shared account.                            
+[18:52:24.546] INFO     Using already configured temporary credentials.                                        
+aws_s3_account_public_access_block.main["shared-us-east-1"]: Preparing import... [id=763606934258]
+aws_s3_account_public_access_block.main["data-science-us-east-1"]: Preparing import... [id=905418344519]
+aws_s3_account_public_access_block.main["management-us-east-1"]: Preparing import... [id=754065527950]
+aws_s3_account_public_access_block.main["apps-prd-us-east-1"]: Preparing import... [id=802787198489]
+aws_s3_account_public_access_block.main["data-science-us-east-2"]: Preparing import... [id=905418344519]
 aws_s3_account_public_access_block.main["apps-devstg-us-east-1"]: Preparing import... [id=523857393444]
-aws_ebs_encryption_by_default.main["management-us-east-1"]: Preparing import... [id=754065527950]
-aws_s3_account_public_access_block.main["shared-us-east-2"]: Refreshing state... [id=763606934258]
-aws_s3_account_public_access_block.main["network-us-east-1"]: Refreshing state... [id=822280187662]
-aws_ebs_encryption_by_default.main["shared-us-east-2"]: Refreshing state... [id=763606934258]
-aws_s3_account_public_access_block.main["security-us-east-1"]: Refreshing state... [id=900980591242]
+aws_s3_account_public_access_block.main["security-us-east-1"]: Preparing import... [id=900980591242]
+aws_s3_account_public_access_block.main["apps-devstg-us-east-2"]: Preparing import... [id=523857393444]
+aws_s3_account_public_access_block.main["security-us-east-2"]: Preparing import... [id=900980591242]
+aws_s3_account_public_access_block.main["network-us-east-2"]: Preparing import... [id=822280187662]
 aws_s3_account_public_access_block.main["security-us-east-2"]: Refreshing state... [id=900980591242]
-aws_ebs_encryption_by_default.main["apps-devstg-us-east-2"]: Refreshing state... [id=523857393444]
-aws_s3_account_public_access_block.main["network-us-east-2"]: Refreshing state... [id=822280187662]
+aws_s3_account_public_access_block.main["management-us-east-1"]: Refreshing state... [id=754065527950]
+aws_s3_account_public_access_block.main["data-science-us-east-2"]: Refreshing state... [id=905418344519]
 aws_s3_account_public_access_block.main["apps-devstg-us-east-1"]: Refreshing state... [id=523857393444]
-aws_ebs_encryption_by_default.main["management-us-east-1"]: Refreshing state... [id=754065527950]
+aws_s3_account_public_access_block.main["security-us-east-1"]: Refreshing state... [id=900980591242]
+aws_s3_account_public_access_block.main["apps-prd-us-east-1"]: Refreshing state... [id=802787198489]
+aws_s3_account_public_access_block.main["data-science-us-east-1"]: Refreshing state... [id=905418344519]
+aws_s3_account_public_access_block.main["network-us-east-2"]: Refreshing state... [id=822280187662]
+aws_s3_account_public_access_block.main["shared-us-east-1"]: Refreshing state... [id=763606934258]
+aws_s3_account_public_access_block.main["apps-devstg-us-east-2"]: Refreshing state... [id=523857393444]
+aws_s3_account_public_access_block.main["management-us-east-2"]: Preparing import... [id=754065527950]
+aws_s3_account_public_access_block.main["apps-prd-us-east-2"]: Preparing import... [id=802787198489]
+aws_s3_account_public_access_block.main["network-us-east-1"]: Preparing import... [id=822280187662]
+aws_s3_account_public_access_block.main["shared-us-east-2"]: Preparing import... [id=763606934258]
+aws_s3_account_public_access_block.main["apps-prd-us-east-2"]: Refreshing state... [id=802787198489]
+aws_s3_account_public_access_block.main["shared-us-east-2"]: Refreshing state... [id=763606934258]
+aws_s3_account_public_access_block.main["management-us-east-2"]: Refreshing state... [id=754065527950]
+aws_s3_account_public_access_block.main["network-us-east-1"]: Refreshing state... [id=822280187662]
+aws_ebs_encryption_by_default.main["shared-us-east-1"]: Preparing import... [id=763606934258]
+aws_ebs_encryption_by_default.main["security-us-east-2"]: Preparing import... [id=900980591242]
+aws_ebs_encryption_by_default.main["network-us-east-1"]: Preparing import... [id=822280187662]
+aws_ebs_encryption_by_default.main["apps-prd-us-east-1"]: Preparing import... [id=802787198489]
 aws_ebs_encryption_by_default.main["security-us-east-2"]: Refreshing state... [id=900980591242]
+aws_ebs_encryption_by_default.main["apps-prd-us-east-2"]: Preparing import... [id=802787198489]
+aws_ebs_encryption_by_default.main["network-us-east-1"]: Refreshing state... [id=822280187662]
+aws_ebs_encryption_by_default.main["apps-prd-us-east-1"]: Refreshing state... [id=802787198489]
+aws_ebs_encryption_by_default.main["apps-prd-us-east-2"]: Refreshing state... [id=802787198489]
+aws_ebs_encryption_by_default.main["data-science-us-east-2"]: Preparing import... [id=905418344519]
+aws_ebs_encryption_by_default.main["shared-us-east-1"]: Refreshing state... [id=763606934258]
+aws_ebs_encryption_by_default.main["data-science-us-east-2"]: Refreshing state... [id=905418344519]
 aws_ebs_encryption_by_default.main["apps-devstg-us-east-1"]: Preparing import... [id=523857393444]
 aws_ebs_encryption_by_default.main["apps-devstg-us-east-1"]: Refreshing state... [id=523857393444]
-aws_ebs_encryption_by_default.main["apps-prd-us-east-2"]: Preparing import... [id=802787198489]
-aws_ebs_encryption_by_default.main["apps-prd-us-east-2"]: Refreshing state... [id=802787198489]
-aws_ebs_encryption_by_default.main["network-us-east-1"]: Preparing import... [id=822280187662]
-aws_ebs_encryption_by_default.main["network-us-east-1"]: Refreshing state... [id=822280187662]
-aws_ebs_encryption_by_default.main["data-science-us-east-1"]: Preparing import... [id=905418344519]
-aws_ebs_encryption_by_default.main["data-science-us-east-1"]: Refreshing state... [id=905418344519]
-aws_ebs_encryption_by_default.main["shared-us-east-1"]: Preparing import... [id=763606934258]
 aws_ebs_encryption_by_default.main["network-us-east-2"]: Preparing import... [id=822280187662]
-aws_ebs_encryption_by_default.main["shared-us-east-1"]: Refreshing state... [id=763606934258]
 aws_ebs_encryption_by_default.main["network-us-east-2"]: Refreshing state... [id=822280187662]
-aws_ebs_encryption_by_default.main["apps-prd-us-east-1"]: Preparing import... [id=802787198489]
 aws_ebs_encryption_by_default.main["management-us-east-2"]: Preparing import... [id=754065527950]
-aws_ebs_encryption_by_default.main["apps-prd-us-east-1"]: Refreshing state... [id=802787198489]
+aws_ebs_encryption_by_default.main["shared-us-east-2"]: Preparing import... [id=763606934258]
+aws_ebs_encryption_by_default.main["shared-us-east-2"]: Refreshing state... [id=763606934258]
 aws_ebs_encryption_by_default.main["management-us-east-2"]: Refreshing state... [id=754065527950]
+aws_ebs_encryption_by_default.main["management-us-east-1"]: Preparing import... [id=754065527950]
+aws_ebs_encryption_by_default.main["management-us-east-1"]: Refreshing state... [id=754065527950]
+aws_ebs_encryption_by_default.main["apps-devstg-us-east-2"]: Preparing import... [id=523857393444]
+aws_ebs_encryption_by_default.main["apps-devstg-us-east-2"]: Refreshing state... [id=523857393444]
 aws_ebs_encryption_by_default.main["security-us-east-1"]: Preparing import... [id=900980591242]
 aws_ebs_encryption_by_default.main["security-us-east-1"]: Refreshing state... [id=900980591242]
-aws_ebs_encryption_by_default.main["data-science-us-east-2"]: Preparing import... [id=905418344519]
-aws_ebs_encryption_by_default.main["data-science-us-east-2"]: Refreshing state... [id=905418344519]
-aws_s3_account_public_access_block.main["data-science-us-east-2"]: Preparing import... [id=905418344519]
-aws_s3_account_public_access_block.main["data-science-us-east-2"]: Refreshing state... [id=905418344519]
-aws_s3_account_public_access_block.main["apps-prd-us-east-1"]: Preparing import... [id=802787198489]
-aws_s3_account_public_access_block.main["apps-prd-us-east-1"]: Refreshing state... [id=802787198489]
-aws_s3_account_public_access_block.main["apps-prd-us-east-2"]: Preparing import... [id=802787198489]
-aws_s3_account_public_access_block.main["apps-prd-us-east-2"]: Refreshing state... [id=802787198489]
-aws_s3_account_public_access_block.main["shared-us-east-1"]: Preparing import... [id=763606934258]
-aws_s3_account_public_access_block.main["shared-us-east-1"]: Refreshing state... [id=763606934258]
-aws_s3_account_public_access_block.main["apps-devstg-us-east-2"]: Preparing import... [id=523857393444]
-aws_s3_account_public_access_block.main["apps-devstg-us-east-2"]: Refreshing state... [id=523857393444]
-aws_s3_account_public_access_block.main["management-us-east-1"]: Preparing import... [id=754065527950]
-aws_s3_account_public_access_block.main["management-us-east-1"]: Refreshing state... [id=754065527950]
-aws_s3_account_public_access_block.main["management-us-east-2"]: Preparing import... [id=754065527950]
-aws_s3_account_public_access_block.main["management-us-east-2"]: Refreshing state... [id=754065527950]
-aws_s3_account_public_access_block.main["data-science-us-east-1"]: Preparing import... [id=905418344519]
-aws_s3_account_public_access_block.main["data-science-us-east-1"]: Refreshing state... [id=905418344519]
+aws_ebs_encryption_by_default.main["data-science-us-east-1"]: Preparing import... [id=905418344519]
+aws_ebs_encryption_by_default.main["data-science-us-east-1"]: Refreshing state... [id=905418344519]
 
 OpenTofu used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
   ~ update in-place
@@ -314,7 +314,7 @@ Plan: 28 to import, 0 to add, 7 to change, 0 to destroy.
 
 Warning: Value for undeclared variable
 
-The root module does not declare a variable named "dynamodb_table" but a value was found in file "/binbash/baseline/config/backend.tfvars". If you meant to use this value, add a "variable" block to the configuration.
+The root module does not declare a variable named "region" but a value was found in file "/binbash/baseline/config/backend.tfvars". If you meant to use this value, add a "variable" block to the configuration.
 
 To silence these warnings, use TF_VAR_... environment variables to provide certain "global" settings to all configurations in your organization. To reduce the verbosity of these warnings, use the -compact-warnings option.
 

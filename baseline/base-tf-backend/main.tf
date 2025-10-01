@@ -10,7 +10,7 @@ module "base_tf_backend" {
     aws.secondary = aws.accounts["${each.key}-${each.value.region_secondary}"]
   }
 
-  source   = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.28"
+  source = "github.com/binbashar/terraform-aws-tfstate-backend.git?ref=v1.0.28"
 
   delimiter = each.value.inputs.bucket.delimiter
   namespace = each.value.inputs.bucket.namespace
@@ -24,6 +24,7 @@ module "base_tf_backend" {
   enable_server_side_encryption = each.value.inputs.security.enable_server_side_encryption
   enforce_ssl_requests          = each.value.inputs.security.enforce_ssl_requests
   ignore_public_acls            = each.value.inputs.security.ignore_public_acls
+  force_destroy                 = each.value.inputs.security.force_destroy
 
   bucket_replication_enabled    = each.value.inputs.replication.bucket_replication_enabled
   notifications_sns             = each.value.inputs.replication.notifications_sns
@@ -33,7 +34,7 @@ module "base_tf_backend" {
   create_kms_key                = each.value.inputs.replication.create_kms_key
 
   tags = merge(each.value.inputs.tags, {
-    Account     = each.key
-    AccountID   = tostring(each.value.id)
+    Account   = each.key
+    AccountID = tostring(each.value.id)
   })
 }

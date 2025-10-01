@@ -1,11 +1,27 @@
 locals {
+  # ===========================================
+  # STANDARD TAGS FOR ALL RESOURCES IN THIS LAYER
+  # -------------------------------------------
+  # Purpose: Provide a consistent tagging baseline across resources
+  # created by this module. These are merged with per-resource tags
+  # when applicable.
+  # ===========================================
   tags = {
     Terraform   = "true"
     Environment = var.environment
     Layer       = local.layer_name
   }
 
+  # ===========================================
+  # RUNTIME DEPENDENCY INJECTION: AWS ACCOUNT OVERRIDES
+  # -------------------------------------------
+  # Purpose: Define per-account runtime settings (profiles/regions)
+  # to build provider aliases and resource matrices.
+  # Notes:
+  # - Profiles map to SSO/credential profiles in the runner.
+  # - Regions rely on primary/secondary variables for consistency.
   # Runtime backend settings - only specific parameters to override
+  # ===========================================
   runtime_accounts = {
     management = {
       profile = "bb-management-administrator"
@@ -57,6 +73,13 @@ locals {
       ]
     }
   }
+
+  # ================================================================
+  # RUNTIME DEPENDENCY INJECTION: BACKEND SETTINGS OVERRIDES
+  # -----------------------------------------------------------
+  # Purpose: Minimal, targeted overrides for backend settings that
+  # should differ at runtime without redefining the full structure.
+  # ================================================================
   runtime_backend_settings = {
     bucket = {
     }
@@ -65,12 +88,17 @@ locals {
     replication = {
     }
     tags = {
-      Layer = "baseline"
+      Layer = "base-tf-backend"
     }
   }
 
-  # Merge var.accounts with runtime overrides
-  # Runtime values will override the variable values, but keep all other parameters
+  # ================================================================
+  # RUNTIME DEPENDENCY INJECTION: AWS ACCOUNTS MERGE (BASE + OVERRIDES)
+  # -----------------------------------------------------------
+  # Purpose: Combine base account definitions with the runtime
+  # overrides above. Unspecified fields remain from base config.
+  # Result: local.accounts is the canonical structure downstream.
+  # ================================================================
   accounts = merge(
     var.accounts,
     {
@@ -105,7 +133,14 @@ locals {
     }
   )
 
+  # ================================================================
+  # RUNTIME DEPENDENCY INJECTION: AWS ACCOUNTS → PROVIDERS MATRIX
+  # -----------------------------------------------------------
+  # Purpose: Expand accounts into a map keyed by "account-region"
+  # used to instantiate provider aliases per account/region.
+  # Includes id/email/profile to support auditing and provider auth.
   # Transform accounts variable into accounts_providers structure
+  # ================================================================
   accounts_providers = merge([
     for account, config in local.accounts : {
       for region in lookup(config, "regions", []) :
@@ -118,7 +153,14 @@ locals {
     }
   ]...)
 
+  # ================================================================
+  # RUNTIME DEPENDENCY INJECTION: AWS ACCOUNTS → RESOURCES INPUT MAP
+  # -----------------------------------------------------------
+  # Purpose: Create a simplified per-account map consumed by the
+  # tfstate-backend module. It carries account metadata, primary/
+  # secondary regions, and the merged backend settings.
   # Transform accounts variable into accounts_resources structure
+  # ================================================================
   accounts_resources = merge([
     for account, config in local.accounts : {
       "${account}" : {
@@ -131,8 +173,11 @@ locals {
     }
   ]...)
 
-  # Merge var.backend_settings with runtime overrides
-  # Runtime values will override the variable values, but keep all other parameters
+  # ===========================================
+  # RUNTIME DEPENDENCY INJECTION: BACKEND SETTINGS MERGE (BASE + OVERRIDES)
+  # -------------------------------------------
+  # Purpose: Layer runtime overrides over base backend settings,
+  # preserving unspecified values. This feeds downstream modules.
   backend_settings = merge(
     var.backend_settings,
     {

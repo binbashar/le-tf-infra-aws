@@ -3,7 +3,7 @@
 #=============================#
 # Default provider configuration
 provider "aws" {
-  region = var.region_primary
+  region  = var.region_primary
   profile = "bb-shared-devops"
 }
 
@@ -23,7 +23,7 @@ terraform {
   }
 
   backend "s3" {
-    key    = local.backend_settings.bucket.key
+    key = local.backend_settings.bucket.key
   }
 }
 
