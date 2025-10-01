@@ -34,27 +34,36 @@ module "terraform-aws-basic-layout" {
       from_port = 22, # SSH
       to_port   = 22,
       protocol  = "tcp",
-      #cidr_blocks = ["0.0.0.0/0"],
-      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
+      cidr_blocks = [
+        # SSH access is allowed while connected to the VPN
+        data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
+        #
+        # NOTE: During the first installation, it is convenient to add your
+        #       IP here (unless you are planning to use SSM instead).
+        #
+      ],
       description = "Allow SSH"
     },
-    {
-      from_port = 9100, # Prometheus Node Exporter
-      to_port   = 9100,
-      protocol  = "tcp",
-      cidr_blocks = [
-        data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
-        data.terraform_remote_state.vpc-dr.outputs.vpc_cidr_block
-      ],
-      description = "Allow Prometheus NodeExporter"
-    },
+    # {
+    #   from_port = 9100, # Prometheus Node Exporter
+    #   to_port   = 9100,
+    #   protocol  = "tcp",
+    #   cidr_blocks = [
+    #     data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
+    #     data.terraform_remote_state.vpc-dr.outputs.vpc_cidr_block
+    #   ],
+    #   description = "Allow Prometheus NodeExporter"
+    # },
     {
       from_port = 80, # Pritunl VPN Server Letsencrypt http challenge
       to_port   = 80,
       protocol  = "tcp",
       cidr_blocks = [
+        # Access to Pritunl Admin Web from the VPN is allowed, just for TLS redirection
         data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
-        # "0.0.0.0/0",    # Renew LetsEncrypt private url cert (every 90 days)
+        # NOTE: Opening this port is required about every 90 days in order to
+        #       renew the Let's Encrypt certificate used for TLS.
+        # "0.0.0.0/0",
       ],
       description = "Allow Pritunl HTTP UI"
     },
@@ -63,12 +72,18 @@ module "terraform-aws-basic-layout" {
       to_port   = 443,
       protocol  = "tcp",
       cidr_blocks = [
+        # Access to Pritunl Admin Web from the VPN is allowed
         data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
-        #"0.0.0.0/0",    # Public temporally accessible for new users setup (when needed)
+        # NOTE: Opening port 443 is usually required for onboarding new users,
+        #       so they can set up their pin code and OTP. A more secure option
+        #       is to whitelist each user's IP.
+        #"0.0.0.0/0",
       ],
       description = "Allow Pritunl HTTPS UI"
     },
     {
+      # NOTE: this must match the port of the server that you created via
+      #       Pritunl Admin Web
       from_port   = 15255, # Pritunl VPN Server public UDP service ports -> pritunl.server.admin org
       to_port     = 15256, # Pritunl VPN Server public UDP service ports -> pritunl.server.devops org
       protocol    = "udp",
@@ -84,10 +99,12 @@ module "terraform-aws-basic-layout" {
     ttl     = 300
   }]
 
-  #
-  # Github Enhancement Request Issue: Automate the process described below (Will be created after PR)
-  #
-  # UNCOMMENT in order to temporally expose VPN endpoint to:
+  # ---------------------------------------------------------------------------
+  # IMPORTANT!
+  # ---------------------------------------------------------------------------
+  # Exposing the Pritunl Web Admin is required from time to time because of
+  # the following tasks.
+  # ---------------------------------------------------------------------------
   # 1.Renew LetsEncrypt private url cert (every 90 days)
   #    a. must temporally open port 80 to the world (line 52)
   #    b. must temporally open port 443 to the world (line 59)
@@ -98,6 +115,7 @@ module "terraform-aws-basic-layout" {
   #    g. force SSL cert update (manually via UI or via API call)
   #       in the case of using the UI, set the "Lets Encrypt Domain" field with the vpn domain and click on save
   #    h. rollback steps a,b & c + make apply
+  #
   # 2.New users setup (to view profile links -> PIN reset + OTP / uri link for Pritunl Client import).
   #    a. must open port 443 (line 60)
   #    b. must uncomment public DNS record block (lines 105-112)
@@ -105,6 +123,7 @@ module "terraform-aws-basic-layout" {
   #    d. rollback a. step
   #    e. re-comment block from step b.
   #
+
   /*  dns_records_public_hosted_zone = [{
     zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id,
     name    = "vpn.aws.binbash.com.ar",

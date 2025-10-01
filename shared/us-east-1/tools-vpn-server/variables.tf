@@ -21,11 +21,11 @@ variable "name" {
 #
 variable "aws_ami_os_id" {
   description = "AWS AMI Operating System Identificator"
-  default     = "ubuntu/images/hvm-ssd/ubuntu-lunar-23.04-amd64-server-*"
+  default     = "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"
 }
 
 variable "aws_ami_os_owner" {
-  description = "AWS AMI Operating System Owner, eg: 099720109477 for Canonical "
+  description = "AWS AMI Operating System Owner, eg: 099720109477 for Canonical"
   default     = "099720109477"
 }
 
