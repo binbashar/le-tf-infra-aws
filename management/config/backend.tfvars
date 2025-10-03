@@ -6,7 +6,7 @@
 profile = "bb-management-oaar"
 
 # S3 bucket
-bucket = "bb-root-terraform-backend"
+bucket = "bb-management-terraform-backend"
 
 # AWS Region (required by the backend but also used for other resources)
 region = "us-east-1"
@@ -15,4 +15,4 @@ region = "us-east-1"
 encrypt = true
 
 # DynamoDB Table Name
-dynamodb_table = "bb-root-terraform-backend"
+dynamodb_table = "bb-management-terraform-backend"
