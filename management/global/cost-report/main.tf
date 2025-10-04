@@ -6,7 +6,7 @@
 # Known Issues:
 #  1. Leverage toolbox image doesn't have PIP
 #  2. tried to run outside of Leverage, but the packager couldn't find the python executable
-#  3. tried the same as above but via docker using the following, that worked but it is not ideal
+#  3. tried the same as above but via docker (locally, outside Leverage) using the following, that worked but it is not ideal
 
 module "cost_report" {
   source = "github.com/binbashar/terraform-aws-lambda.git?ref=v8.0.1"

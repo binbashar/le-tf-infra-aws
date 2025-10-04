@@ -17,6 +17,6 @@ terraform {
   }
 
   backend "s3" {
-    key = "root/backups/terraform.tfstate"
+    key = "management/backups/terraform.tfstate"
   }
 }

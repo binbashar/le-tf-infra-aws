@@ -20,6 +20,6 @@ terraform {
   }
 
   backend "s3" {
-    key = "root/identities/terraform.tfstate"
+    key = "management/identities/terraform.tfstate"
   }
 }
