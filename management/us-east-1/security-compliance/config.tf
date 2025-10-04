@@ -17,7 +17,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "root/security-compliance/terraform.tfstate"
+    key = "management/security-compliance/terraform.tfstate"
   }
 }
 
