@@ -23,7 +23,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "root/notifications/terraform.tfstate"
+    key = "management/notifications/terraform.tfstate"
   }
 }
 
