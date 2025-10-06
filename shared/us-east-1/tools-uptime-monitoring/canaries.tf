@@ -23,7 +23,7 @@ module "target-canary" {
   existent_topic_arn = data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring
 
   # If the uptime check requires private connectivity, then a list of subnets must be provided
-  subnet_ids = [data.terraform_remote_state.local-vpcs.outputs.private_subnets[0]]
+  subnet_ids = [data.terraform_remote_state.local_vpcs.outputs.private_subnets[0]]
   # A security group for controlling the traffic of the Lambda function that runs the checks
   security_group_ids = [aws_security_group.target-canary-sg.id]
 
@@ -37,7 +37,7 @@ module "target-canary" {
 resource "aws_security_group" "target-canary-sg" {
   name        = "${var.project}-${var.environment}-target-canary-sg"
   description = "Allow TLS outbound traffic"
-  vpc_id      = data.terraform_remote_state.local-vpcs.outputs.vpc_id
+  vpc_id      = data.terraform_remote_state.local_vpcs.outputs.vpc_id
 
   egress {
     from_port   = 0

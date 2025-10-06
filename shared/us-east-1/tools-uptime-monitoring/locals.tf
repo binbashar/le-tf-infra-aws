@@ -4,7 +4,7 @@ locals {
     Environment = var.environment
   }
   # network
-  local-vpc = {
+  local_vpc = {
     local-base = {
       region  = var.region
       profile = "${var.project}-shared-devops"

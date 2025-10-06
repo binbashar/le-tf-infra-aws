@@ -24,15 +24,15 @@ terraform {
 #=============================#
 # Data sources                #
 #=============================#
-data "terraform_remote_state" "local-vpcs" {
+data "terraform_remote_state" "local_vpcs" {
 
   backend = "s3"
 
   config = {
-    region  = lookup(local.local-vpc.local-base, "region")
-    profile = lookup(local.local-vpc.local-base, "profile")
-    bucket  = lookup(local.local-vpc.local-base, "bucket")
-    key     = lookup(local.local-vpc.local-base, "key")
+    region  = lookup(local.local_vpc.local-base, "region")
+    profile = lookup(local.local_vpc.local-base, "profile")
+    bucket  = lookup(local.local_vpc.local-base, "bucket")
+    key     = lookup(local.local_vpc.local-base, "key")
   }
 }
 

@@ -102,7 +102,7 @@ synthetics:*
 If a canary in a private subnet is created, and then it is moved out from that subnet, e.g. you created the private canary, then comment out these lines:
 
 ``` hcl
-  #subnet_ids                = data.terraform_remote_state.local-vpcs.outputs.private_subnets
+  #subnet_ids                = data.terraform_remote_state.local_vpcs.outputs.private_subnets
   #security_group_ids        = [aws_security_group.target-canary-sg.id]
 ```
 
