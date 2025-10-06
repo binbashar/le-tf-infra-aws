@@ -30,11 +30,3 @@ resource "aws_cloudwatch_event_target" "bda_invoker_target" {
     maximum_event_age_in_seconds = 3600
   }
 }
-
-resource "aws_lambda_permission" "allow_eventbridge_bda_invoker" {
-  statement_id  = "AllowExecutionFromEventBridge"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.bda_invoker.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.input_bucket_trigger.arn
-}

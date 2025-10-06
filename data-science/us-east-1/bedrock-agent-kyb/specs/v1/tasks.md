@@ -53,19 +53,19 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - [x] T-004.2: Implement input bucket → BDA Lambda rule
 - [x] T-004.3: Configure event targets and retry policies
 
-## [ ] T-004-API: API Gateway Setup
+## [x] T-004-API: API Gateway Setup
 **Requirements**: REQ-002
 **Dependencies**: T-005
 **Purpose**: Create API Gateway with IAM authentication for external agent invocation
+**Detailed Plan**: See [t-004-api-plan.md](./tasks/t-004-api-plan.md)
+**Status**: ✅ COMPLETE - Infrastructure deployed and tested (2025-10-06)
 
 ### Subtasks:
-- [ ] T-004-API.1: Create `api_gateway.tf` file
-- [ ] T-004-API.2: Implement REST API resource
-- [ ] T-004-API.3: Create POST /invoke-agent endpoint with `authorization = "AWS_IAM"`
-- [ ] T-004-API.4: Configure Lambda integration with Agent Invoker
-- [ ] T-004-API.5: Add request validation for customer_id parameter
-- [ ] T-004-API.6: Configure CORS if needed
-- [ ] T-004-API.7: Add API Gateway outputs (endpoint URL, execution ARN, test command)
+- [x] T-004-API.1: Create `api_gateway.tf` file with module and OpenAPI spec
+- [x] T-004-API.2: Configure Lambda permission for API Gateway invocation
+- [x] T-004-API.3: Add resource policy for same-account access
+- [x] T-004-API.4: Add API Gateway outputs (endpoint URL, execution ARN, test command)
+- [x] T-004-API.8: Create IAM managed policy for API invocation (attach to SSO permission sets)
 
 ## [x] T-005: Lambda Functions Implementation
 **Requirements**: REQ-001, REQ-002, REQ-003, REQ-004

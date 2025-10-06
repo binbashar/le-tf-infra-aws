@@ -19,9 +19,10 @@
 **API Gateway:**
 - REST API endpoint: POST /invoke-agent
 - Authentication: AWS IAM (SigV4 request signing required)
+- Two-policy access control: Resource policy + Identity-based policy
 - Accepts customer_id parameter in request body
-- Integrates with Agent Invoker Lambda
-- Default access: Any IAM principal in same AWS account
+- Integrates with Agent Invoker Lambda via AWS_PROXY
+- Managed IAM policy for SSO permission set attachment
 
 **Bedrock Resources:**
 - BDA Project (with standard output configuration)
@@ -117,7 +118,18 @@ paths:
 
 **Authentication:** AWS IAM (SigV4 signing required)
 
-**Access:** Any IAM principal (user, role) in the same AWS account
+**Access Control Model:**
+AWS IAM authentication uses a **two-policy requirement** for defense-in-depth security:
+
+1. **Resource Policy** (API Gateway): Allows same-account principals to invoke
+2. **Identity-Based Policy** (IAM Principal): Grants `execute-api:Invoke` permission
+
+Both policies must allow for a request to succeed. This provides granular control while maintaining account-level boundaries.
+
+**Operational Access:**
+- IaC creates a managed IAM policy automatically
+- Admin attaches policy to SSO permission sets (one-time per environment)
+- All users with that permission set can invoke the API
 
 **Request Body:**
 ```json

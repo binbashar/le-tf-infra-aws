@@ -90,3 +90,28 @@ output "input_trigger_rule_arn" {
   description = "ARN of the EventBridge rule for input bucket trigger"
   value       = aws_cloudwatch_event_rule.input_bucket_trigger.arn
 }
+
+output "api_gateway_id" {
+  description = "ID of the API Gateway REST API"
+  value       = module.apigw_kyb_agent.aws_api_gateway_rest_api_id
+}
+
+output "api_gateway_endpoint" {
+  description = "Invoke URL for the API Gateway endpoint"
+  value       = "${module.apigw_kyb_agent.aws_api_gateway_stage_invoke_url}/invoke-agent"
+}
+
+output "api_gateway_execution_arn" {
+  description = "Execution ARN of the API Gateway (for Lambda permissions)"
+  value       = module.apigw_kyb_agent.aws_api_gateway_stage_execution_arn
+}
+
+output "api_gateway_stage" {
+  description = "Deployment stage of the API Gateway"
+  value       = module.apigw_kyb_agent.aws_api_gateway_stage_name
+}
+
+output "api_invoke_policy_arn" {
+  description = "IAM policy ARN for API invocation (attach to SSO permission sets)"
+  value       = aws_iam_policy.api_invoke_policy.arn
+}

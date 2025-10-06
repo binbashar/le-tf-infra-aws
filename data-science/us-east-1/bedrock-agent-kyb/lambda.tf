@@ -157,19 +157,3 @@ resource "aws_cloudwatch_log_group" "save_document_logs" {
   retention_in_days = 30
   tags              = local.tags
 }
-
-resource "aws_lambda_permission" "allow_bedrock_get_documents" {
-  statement_id  = "AllowExecutionFromBedrock"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.get_documents.function_name
-  principal     = "bedrock.amazonaws.com"
-  source_arn    = "arn:aws:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:agent/*"
-}
-
-resource "aws_lambda_permission" "allow_bedrock_save_document" {
-  statement_id  = "AllowExecutionFromBedrock"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.save_document.function_name
-  principal     = "bedrock.amazonaws.com"
-  source_arn    = "arn:aws:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:agent/*"
-}

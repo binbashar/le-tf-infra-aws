@@ -1,0 +1,64 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "KYB Agent API"
+basePath: "/v1"
+schemes:
+  - "https"
+
+paths:
+  /invoke-agent:
+    post:
+      operationId: "invokeKybAgent"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "InvokeAgentRequest"
+          required: true
+          schema:
+            $ref: "#/definitions/InvokeAgentRequest"
+      responses:
+        "200":
+          description: "Agent invocation successful"
+        "400":
+          description: "Invalid request"
+        "500":
+          description: "Internal server error"
+      security:
+        - sigv4: []
+      x-amazon-apigateway-request-validator: "Validate body"
+      x-amazon-apigateway-integration:
+        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations"
+        requestTemplates:
+          application/json: "$input.body"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_templates"
+        httpMethod: "POST"
+        type: "aws_proxy"
+
+securityDefinitions:
+  sigv4:
+    type: "apiKey"
+    name: "Authorization"
+    in: "header"
+    x-amazon-apigateway-authtype: "awsSigv4"
+
+definitions:
+  InvokeAgentRequest:
+    type: "object"
+    required:
+      - "customer_id"
+    properties:
+      customer_id:
+        type: "string"
+        minLength: 1
+
+x-amazon-apigateway-request-validators:
+  Validate body:
+    validateRequestParameters: false
+    validateRequestBody: true
