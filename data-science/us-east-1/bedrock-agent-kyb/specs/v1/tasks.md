@@ -99,19 +99,20 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - [ ] T-006.5: Invoke BDA with standard output configuration
 - [ ] T-006.6: Store processing metadata
 
-## [ ] T-007: Agent Invoker Lambda Code
+## [x] T-007: Agent Invoker Lambda Code
 **Requirements**: REQ-002, REQ-003
 **Dependencies**: T-005, T-009, T-004-API
 **Purpose**: Implement Lambda that triggers Bedrock Agent via IAM-authenticated API Gateway
+**Status**: ✅ COMPLETE - Code implemented and deployed (2025-10-06)
 
 ### Subtasks:
-- [ ] T-007.1: Create `src/lambda/agent_invoker.py`
-- [ ] T-007.2: Handle API Gateway proxy events (IAM context available)
-- [ ] T-007.3: Extract customer_id from request body
-- [ ] T-007.4: Validate customer_id parameter (not empty, valid format)
-- [ ] T-007.5: Invoke Bedrock Agent with session parameters (customer_id, output_type="Standard")
-- [ ] T-007.6: Return JSON response with status, session_id, and agent_id
-- [ ] T-007.7: Log IAM principal ARN for audit trail (optional)
+- [x] T-007.1: Create `src/lambda/agent_invoker.py`
+- [x] T-007.2: Handle API Gateway proxy events (IAM context available)
+- [x] T-007.3: Extract customer_id from request body
+- [x] T-007.4: Validate customer_id parameter (not empty, valid format)
+- [x] T-007.5: Invoke Bedrock Agent with session parameters (customer_id, output_type="Standard")
+- [x] T-007.6: Return JSON response with status, session_id, and agent_id
+- [x] T-007.7: Log IAM principal ARN for audit trail (optional - not implemented for MVP)
 
 ## [ ] T-008: GetDocuments Action Group
 **Requirements**: REQ-003
