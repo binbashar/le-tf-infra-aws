@@ -1,25 +1,25 @@
 {
-  "version": "0",
-  "id": "test-event-id",
-  "detail-type": "Object Created",
-  "source": "aws.s3",
-  "time": "2025-10-06T12:00:00Z",
-  "region": "us-east-1",
-  "resources": [
-    "arn:aws:s3:::bb-data-science-kyb-agent-input-05fb92/test-customer-123/sample-document.pdf"
-  ],
   "detail": {
-    "version": "0",
     "bucket": {
       "name": "bb-data-science-kyb-agent-input-05fb92"
     },
     "object": {
+      "etag": "test-etag",
       "key": "test-customer-123/sample-document.pdf",
-      "size": 12345,
-      "etag": "test-etag"
+      "size": 12345
     },
     "request-id": "test-request-id",
     "requester": "123456789012",
-    "source-ip-address": "1.2.3.4"
-  }
+    "source-ip-address": "1.2.3.4",
+    "version": "0"
+  },
+  "detail-type": "Object Created",
+  "id": "test-event-id",
+  "region": "us-east-1",
+  "resources": [
+    "arn:aws:s3:::bb-data-science-kyb-agent-input-05fb92/test-customer-123/sample-document.pdf"
+  ],
+  "source": "aws.s3",
+  "time": "2025-10-06T12:00:00Z",
+  "version": "0"
 }

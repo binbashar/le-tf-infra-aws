@@ -1,1 +1,4 @@
-{"statusCode": 200, "body": "{\"status\": \"not_implemented\"}"}
+{
+  "body": "{\"status\": \"not_implemented\"}",
+  "statusCode": 200
+}

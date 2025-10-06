@@ -1,5 +1,11 @@
 {
   "body": "{\"customer_id\": \"test-customer-123\"}",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "httpMethod": "POST",
+  "isBase64Encoded": false,
+  "path": "/invoke-agent",
   "requestContext": {
     "accountId": "905418344519",
     "apiId": "test-api-id",
@@ -9,17 +15,11 @@
       "accessKey": "ASIATESTKEYEXAMPLE",
       "accountId": "905418344519",
       "caller": "AIDAITESTCALLEREXAMPLE",
-      "userArn": "arn:aws:iam::905418344519:user/test-user",
-      "userAgent": "Mozilla/5.0"
+      "userAgent": "Mozilla/5.0",
+      "userArn": "arn:aws:iam::905418344519:user/test-user"
     },
     "requestId": "test-request-id",
     "resourcePath": "/invoke-agent",
     "stage": "prod"
-  },
-  "headers": {
-    "Content-Type": "application/json"
-  },
-  "httpMethod": "POST",
-  "path": "/invoke-agent",
-  "isBase64Encoded": false
+  }
 }

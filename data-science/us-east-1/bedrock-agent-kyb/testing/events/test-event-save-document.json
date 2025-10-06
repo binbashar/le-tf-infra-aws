@@ -1,16 +1,15 @@
 {
-  "messageVersion": "1.0",
+  "actionGroup": "SaveDocument",
   "agent": {
-    "name": "test-agent",
-    "id": "TESTAGENTID",
     "alias": "TSTALIASID",
+    "id": "TESTAGENTID",
+    "name": "test-agent",
     "version": "DRAFT"
   },
-  "inputText": "Save document for customer test-customer-123",
-  "sessionId": "test-session-123",
-  "actionGroup": "SaveDocument",
   "apiPath": "/save-document",
   "httpMethod": "POST",
+  "inputText": "Save document for customer test-customer-123",
+  "messageVersion": "1.0",
   "parameters": [
     {
       "name": "content",
@@ -18,9 +17,10 @@
       "value": "Test document content"
     }
   ],
+  "promptSessionAttributes": {},
   "sessionAttributes": {
-    "customer_id": "test-customer-123",
-    "correlation_id": "test-correlation-123"
+    "correlation_id": "test-correlation-123",
+    "customer_id": "test-customer-123"
   },
-  "promptSessionAttributes": {}
+  "sessionId": "test-session-123"
 }
