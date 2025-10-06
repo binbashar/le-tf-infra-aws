@@ -23,6 +23,8 @@ module "target-canary" {
   existent_topic_arn = data.terraform_remote_state.notifications.outputs.sns_topic_arn_monitoring
 
   # If the uptime check requires private connectivity, then a list of subnets must be provided
+  # Note: here you only use a single subnet because the example endpoint we are using is not
+  #   deployed in an HA fashion, but make sure you adjust it accordingly.
   subnet_ids = [data.terraform_remote_state.local_vpcs.outputs.private_subnets[0]]
   # A security group for controlling the traffic of the Lambda function that runs the checks
   security_group_ids = [aws_security_group.target-canary-sg.id]
