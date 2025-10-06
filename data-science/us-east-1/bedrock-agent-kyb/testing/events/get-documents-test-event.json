@@ -1,19 +1,23 @@
 {
-  "messageVersion": "1.0",
+  "actionGroup": "GetDocuments",
   "agent": {
-    "name": "KYBAgent",
-    "id": "test-agent",
     "alias": "live",
+    "id": "test-agent",
+    "name": "KYBAgent",
     "version": "1"
   },
-  "sessionId": "test-session-123",
+  "apiPath": "/documents",
+  "httpMethod": "GET",
+  "messageVersion": "1.0",
+  "parameters": [
+    {
+      "name": "output_type",
+      "type": "string",
+      "value": "Standard"
+    }
+  ],
   "sessionAttributes": {
     "customer_id": "test-customer-4"
   },
-  "actionGroup": "GetDocuments",
-  "apiPath": "/documents",
-  "httpMethod": "GET",
-  "parameters": [
-    {"name": "output_type", "type": "string", "value": "Standard"}
-  ]
+  "sessionId": "test-session-123"
 }
