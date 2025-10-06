@@ -1,0 +1,26 @@
+{
+  "messageVersion": "1.0",
+  "agent": {
+    "name": "test-agent",
+    "id": "TESTAGENTID",
+    "alias": "TSTALIASID",
+    "version": "DRAFT"
+  },
+  "inputText": "Save document for customer test-customer-123",
+  "sessionId": "test-session-123",
+  "actionGroup": "SaveDocument",
+  "apiPath": "/save-document",
+  "httpMethod": "POST",
+  "parameters": [
+    {
+      "name": "content",
+      "type": "string",
+      "value": "Test document content"
+    }
+  ],
+  "sessionAttributes": {
+    "customer_id": "test-customer-123",
+    "correlation_id": "test-correlation-123"
+  },
+  "promptSessionAttributes": {}
+}

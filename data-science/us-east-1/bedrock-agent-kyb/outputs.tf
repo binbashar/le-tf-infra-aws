@@ -40,3 +40,43 @@ output "bda_project_arn" {
   description = "ARN of the Bedrock Data Automation project"
   value       = awscc_bedrock_data_automation_project.kyb_agent.project_arn
 }
+
+output "bda_invoker_function_name" {
+  description = "Name of the BDA Invoker Lambda function"
+  value       = aws_lambda_function.bda_invoker.function_name
+}
+
+output "bda_invoker_function_arn" {
+  description = "ARN of the BDA Invoker Lambda function"
+  value       = aws_lambda_function.bda_invoker.arn
+}
+
+output "agent_invoker_function_name" {
+  description = "Name of the Agent Invoker Lambda function"
+  value       = aws_lambda_function.agent_invoker.function_name
+}
+
+output "agent_invoker_function_arn" {
+  description = "ARN of the Agent Invoker Lambda function"
+  value       = aws_lambda_function.agent_invoker.arn
+}
+
+output "get_documents_function_name" {
+  description = "Name of the GetDocuments Lambda function"
+  value       = aws_lambda_function.get_documents.function_name
+}
+
+output "get_documents_function_arn" {
+  description = "ARN of the GetDocuments Lambda function"
+  value       = aws_lambda_function.get_documents.arn
+}
+
+output "save_document_function_name" {
+  description = "Name of the SaveDocument Lambda function"
+  value       = aws_lambda_function.save_document.function_name
+}
+
+output "save_document_function_arn" {
+  description = "ARN of the SaveDocument Lambda function"
+  value       = aws_lambda_function.save_document.arn
+}

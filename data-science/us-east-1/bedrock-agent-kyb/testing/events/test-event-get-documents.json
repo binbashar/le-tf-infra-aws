@@ -1,0 +1,20 @@
+{
+  "messageVersion": "1.0",
+  "agent": {
+    "name": "test-agent",
+    "id": "TESTAGENTID",
+    "alias": "TSTALIASID",
+    "version": "DRAFT"
+  },
+  "inputText": "Get documents for customer test-customer-123",
+  "sessionId": "test-session-123",
+  "actionGroup": "GetDocuments",
+  "apiPath": "/get-documents",
+  "httpMethod": "GET",
+  "parameters": [],
+  "sessionAttributes": {
+    "customer_id": "test-customer-123",
+    "output_type": "Standard"
+  },
+  "promptSessionAttributes": {}
+}

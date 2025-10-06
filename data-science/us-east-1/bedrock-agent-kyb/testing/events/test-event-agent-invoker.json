@@ -1,0 +1,25 @@
+{
+  "body": "{\"customer_id\": \"test-customer-123\"}",
+  "requestContext": {
+    "accountId": "905418344519",
+    "apiId": "test-api-id",
+    "domainName": "test.execute-api.us-east-1.amazonaws.com",
+    "httpMethod": "POST",
+    "identity": {
+      "accessKey": "ASIATESTKEYEXAMPLE",
+      "accountId": "905418344519",
+      "caller": "AIDAITESTCALLEREXAMPLE",
+      "userArn": "arn:aws:iam::905418344519:user/test-user",
+      "userAgent": "Mozilla/5.0"
+    },
+    "requestId": "test-request-id",
+    "resourcePath": "/invoke-agent",
+    "stage": "prod"
+  },
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "httpMethod": "POST",
+  "path": "/invoke-agent",
+  "isBase64Encoded": false
+}
