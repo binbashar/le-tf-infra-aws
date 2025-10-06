@@ -58,7 +58,7 @@ resource "aws_bedrock_inference_profile" "agent_profile" {
   model_source {
     # Single region foundational model
     copy_from = "arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
-    
+
     # OR cross-region inference profile
     # copy_from = "arn:aws:bedrock:eu-central-1:${data.aws_caller_identity.current.account_id}:inference-profile/eu.anthropic.claude-3-5-sonnet-20240620-v1:0"
   }
@@ -89,14 +89,14 @@ resource "awscc_bedrock_agent" "example" {
   agent_name              = "example-agent"
   description             = "Agent using inference profile"
   agent_resource_role_arn = aws_iam_role.agent_role.arn
-  
+
   # Use inference profile instead of foundation model
   foundation_model = aws_bedrock_inference_profile.agent_profile.arn
   # OR reference cross-region profile directly
   # foundation_model = "arn:aws:bedrock:us-east-1:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0"
-  
+
   instruction = "You are an office assistant in an insurance agency. You are friendly and polite."
-  
+
   # Enhanced configuration for inference profiles
   idle_session_ttl_in_seconds = 600
   auto_prepare                = true
@@ -107,7 +107,7 @@ resource "awscc_bedrock_agent" "example" {
       foundation_model = aws_bedrock_inference_profile.agent_profile.arn
       prompt_type     = "ORCHESTRATION"
       prompt_state    = "ENABLED"
-      
+
       inference_configuration {
         maximum_length = 2048
         temperature    = 0.7
@@ -341,10 +341,10 @@ resource "aws_bedrock_inference_profile" "migration_profile" {
 # Replace foundation_model reference
 resource "awscc_bedrock_agent" "main" {
   # ... other configuration ...
-  
+
   # OLD: Direct foundation model
   # foundation_model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
-  
+
   # NEW: Application inference profile
   foundation_model = aws_bedrock_inference_profile.migration_profile.arn
 }
@@ -451,9 +451,9 @@ resource "aws_cloudwatch_log_group" "agent_inference_logs" {
    # locals.tf enhancements
    locals {
      inference_profile_name = "${var.project}-${var.environment}-agent-profile"
-     
+
      # Choose between cross-region and single-region profiles
-     foundation_model_arn = var.use_cross_region_profile ? 
+     foundation_model_arn = var.use_cross_region_profile ?
        "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0" :
        aws_bedrock_inference_profile.single_region.arn
    }
@@ -466,12 +466,12 @@ resource "aws_cloudwatch_log_group" "agent_inference_logs" {
 # Development environment - single region
 resource "aws_bedrock_inference_profile" "dev" {
   count = var.environment == "dev" ? 1 : 0
-  
+
   name = "${var.project}-dev-agent-profile"
   model_source {
     copy_from = "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0"
   }
-  
+
   tags = merge(local.common_tags, {
     Environment = "dev"
     CostOptimized = "true"
@@ -481,12 +481,12 @@ resource "aws_bedrock_inference_profile" "dev" {
 # Production environment - cross-region
 resource "aws_bedrock_inference_profile" "prod" {
   count = var.environment == "prod" ? 1 : 0
-  
+
   name = "${var.project}-prod-agent-profile"
   model_source {
     copy_from = "arn:aws:bedrock:us-east-1:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0"
   }
-  
+
   tags = merge(local.common_tags, {
     Environment = "prod"
     HighAvailability = "true"
@@ -501,9 +501,9 @@ resource "aws_bedrock_inference_profile" "prod" {
 1. **InvokeModel with Inference Profiles**
    ```python
    import boto3
-   
+
    bedrock_runtime = boto3.client('bedrock-runtime')
-   
+
    response = bedrock_runtime.invoke_model(
        modelId='arn:aws:bedrock:us-east-1:123456789012:inference-profile/my-agent-profile',
        body=json.dumps({
@@ -547,7 +547,7 @@ resource "aws_bedrock_inference_profile" "agent_profile" {
 
 resource "awscc_bedrock_agent" "main" {
   foundation_model = aws_bedrock_inference_profile.agent_profile.arn
-  
+
   depends_on = [
     aws_bedrock_inference_profile.agent_profile,
     aws_iam_role.agent_role
@@ -593,7 +593,7 @@ resource "aws_bedrock_inference_profile" "cost_optimized" {
 
   model_source {
     # Use cost-effective model for development
-    copy_from = var.environment == "prod" ? 
+    copy_from = var.environment == "prod" ?
       "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0" :
       "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0"
   }

@@ -78,7 +78,7 @@ action_group_lambda_names_list = list(string)        # List of Lambda names
    - ❌ Complex configuration structure
 
 2. **SourceFuse Arc Bedrock Module**:
-   - ✅ Explicitly designed for multiple action groups 
+   - ✅ Explicitly designed for multiple action groups
    - ✅ Dynamic function schemas for action execution
    - ✅ Better integration patterns
 
@@ -144,11 +144,11 @@ action_group_lambda_names_list = list(string)        # List of Lambda names
 module "bedrock" {
   source  = "aws-ia/bedrock/aws"
   version = "0.0.29"
-  
+
   # Agent configuration
   foundation_model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
   instruction     = "You are an agent with multiple capabilities..."
-  
+
   # Multiple action groups configuration
   action_group_list = [
     {
@@ -173,7 +173,7 @@ module "bedrock" {
 ```hcl
 module "bedrock" {
   source  = "sourcefuse/arc-bedrock/aws"
-  
+
   # Multiple action groups with dynamic schemas
   enable_multiple_action_groups = true
   action_groups = {

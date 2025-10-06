@@ -57,7 +57,7 @@ module "bedrock_agent" {
   version          = "0.0.29"
   foundation_model = "anthropic.claude-v2"
   instruction      = "You are an assistant that helps with document processing"
-  
+
   # Enable action group
   create_ag = true
   action_group_name = "document_processor"
@@ -105,7 +105,7 @@ Action groups define the APIs your agent can invoke. Configuration requires:
        "parameters": [...],
        "requestBody": {...}
    }
-   
+
    # Lambda response structure
    {
        "messageVersion": "1.0",
@@ -293,29 +293,29 @@ The `aws-ia/bedrock/aws` module (v0.0.29) provides the most comprehensive and ma
 module "bedrock_agent" {
   source  = "aws-ia/bedrock/aws"
   version = "0.0.29"
-  
+
   # Core agent configuration
   agent_name       = local.agent_name
   foundation_model = var.foundation_model
   instruction      = var.agent_instruction
-  
+
   # Action group configuration
   create_ag                    = true
   action_group_name           = "${local.agent_name}-actions"
   lambda_action_group_executor = aws_lambda_function.action_handler.arn
   api_schema_s3_bucket_name   = aws_s3_bucket.schemas.bucket
   api_schema_s3_object_key    = "openapi/agent-schema.json"
-  
+
   # Optional: Enable agent alias for production
   create_agent_alias = var.create_alias
   agent_alias_name   = "${local.agent_name}-${var.environment}"
-  
+
   # IAM configuration
   agent_resource_role_arn = aws_iam_role.agent_role.arn
-  
+
   # Encryption
   kms_key_arn = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
-  
+
   tags = local.tags
 }
 ```
@@ -330,12 +330,12 @@ s3_client = boto3.client('s3')
 
 def lambda_handler(event, context):
     """Handle Bedrock Agent action group invocations"""
-    
+
     message_version = event.get('messageVersion', '1.0')
     action_group = event.get('actionGroup')
     api_path = event.get('apiPath')
     parameters = event.get('parameters', [])
-    
+
     # Route to appropriate handler based on API path
     if api_path == '/process-document':
         result = process_document(parameters)
@@ -343,7 +343,7 @@ def lambda_handler(event, context):
         result = extract_data(parameters)
     else:
         result = {"error": "Unknown API path"}
-    
+
     # Return properly formatted response
     return {
         "messageVersion": message_version,
