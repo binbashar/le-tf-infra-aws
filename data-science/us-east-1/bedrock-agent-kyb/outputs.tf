@@ -31,9 +31,12 @@ output "output_bucket_arn" {
   value       = aws_s3_bucket.output.arn
 }
 
-# Planned outputs to be added during remaining implementation:
-# - BDA project name and ARN (T-003: Bedrock Data Automation Setup)
-# - Lambda function names and ARNs (T-005: Lambda Functions Implementation)
-# - EventBridge rule names and ARNs (T-004: EventBridge Rules Configuration)
-# - Bedrock Agent ID and ARN (T-009: Bedrock Agent Configuration)
-# - IAM role ARNs (T-011: IAM Permissions Setup)
+output "bda_project_name" {
+  description = "Name of the Bedrock Data Automation project"
+  value       = awscc_bedrock_data_automation_project.kyb_agent.project_name
+}
+
+output "bda_project_arn" {
+  description = "ARN of the Bedrock Data Automation project"
+  value       = awscc_bedrock_data_automation_project.kyb_agent.project_arn
+}

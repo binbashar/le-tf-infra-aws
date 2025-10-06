@@ -31,7 +31,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - T-002.6: Configure lifecycle management
 - T-002.7: Add S3 bucket outputs to `outputs.tf`
 
-## [ ] T-003: Bedrock Data Automation Setup
+## [x] T-003: Bedrock Data Automation Setup
 **Requirements**: REQ-002
 **Dependencies**: T-002
 **Purpose**: Create BDA project with standard output configuration
