@@ -11,7 +11,7 @@ module "target-canary" {
   alarm_email        = null
   # A list of endpoints to monitor for uptime
   endpoints = {
-    "pritunl-g"       = { url = "https://vpn.aws.binbash.com.ar/login" }
+    "pritunl-g" = { url = "https://vpn.aws.binbash.com.ar/login" }
   }
   # The following are used for tagging
   managedby       = "managedby@binbash.co"
