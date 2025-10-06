@@ -43,16 +43,15 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - [x] T-003.4: Set proper encryption and tagging
 - [x] T-003.5: Add BDA project outputs to `outputs.tf`
 
-## [ ] T-004: EventBridge Rules Configuration
+## [x] T-004: EventBridge Rules Configuration
 **Requirements**: REQ-001
 **Dependencies**: T-002, T-005
 **Purpose**: Create EventBridge rule for input bucket trigger
 
 ### Subtasks:
-- [ ] T-004.1: Create `eventbridge.tf` file
-- [ ] T-004.2: Implement input bucket → BDA Lambda rule
-- [ ] T-004.3: Configure event targets and retry policies
-- [ ] T-004.4: Add dead letter queue for failed events (optional)
+- [x] T-004.1: Create `eventbridge.tf` file
+- [x] T-004.2: Implement input bucket → BDA Lambda rule
+- [x] T-004.3: Configure event targets and retry policies
 
 ## [ ] T-004-API: API Gateway Setup
 **Requirements**: REQ-002
@@ -86,18 +85,18 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - [x] T-005.9: Run validation and formatting
 - [x] T-005.10: Deploy Lambda infrastructure
 
-## [ ] T-006: BDA Invoker Lambda Code
+## [x] T-006: BDA Invoker Lambda Code
 **Requirements**: REQ-001, REQ-002
 **Dependencies**: T-005
 **Purpose**: Implement Lambda that triggers BDA processing
 
 ### Subtasks:
-- [ ] T-006.1: Create `src/lambda/bda_invoker.py`
-- [ ] T-006.2: Handle S3 ObjectCreated events from EventBridge
+- [x] T-006.1: Create `src/lambda/bda_invoker.py`
+- [x] T-006.2: Handle S3 ObjectCreated events from EventBridge
 - [ ] T-006.3: Extract customer_id from S3 object key prefix for BDA processing context
-- [ ] T-006.4: Generate correlation ID for tracking
-- [ ] T-006.5: Invoke BDA with standard output configuration
-- [ ] T-006.6: Store processing metadata
+- [x] T-006.4: Generate correlation ID for tracking
+- [x] T-006.5: Invoke BDA with standard output configuration
+- [x] T-006.6: Store processing metadata
 
 ## [x] T-007: Agent Invoker Lambda Code
 **Requirements**: REQ-002, REQ-003
@@ -114,18 +113,20 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - [x] T-007.6: Return JSON response with status, session_id, and agent_id
 - [x] T-007.7: Log IAM principal ARN for audit trail (optional - not implemented for MVP)
 
-## [ ] T-008: GetDocuments Action Group
+## [x] T-008: GetDocuments Action Group
 **Requirements**: REQ-003
 **Dependencies**: T-005, T-009
 **Purpose**: Implement action group to retrieve BDA output
+**Status**: ✅ COMPLETE - Lambda code implemented and deployed (2025-10-06)
+**Detailed Plan**: See [t-008-plan.md](./tasks/t-008-plan.md)
 
 ### Subtasks:
-- [ ] T-008.1: Create `schemas/get_documents.yaml` OpenAPI schema
-- [ ] T-008.2: Create `src/lambda/get_documents_handler.py`
-- [ ] T-008.3: Handle session parameters automatically
-- [ ] T-008.4: Retrieve documents from processing bucket using customer_id prefix: `standard/{customer_id}/`
-- [ ] T-008.5: List all objects under customer_id prefix in processing bucket
-- [ ] T-008.6: Return structured JSON response
+- [x] T-008.1: Create OpenAPI schema (NOTE: Will be created by T-009)
+- [x] T-008.2: Create `src/get-documents/lambda_function.py` (86 lines)
+- [x] T-008.3: Handle session parameters automatically (customer_id from sessionAttributes)
+- [x] T-008.4: Retrieve documents from processing bucket using customer_id prefix: `standard/{customer_id}/`
+- [x] T-008.5: List all objects under customer_id prefix in processing bucket
+- [x] T-008.6: Return structured JSON response in Bedrock agent format
 
 ## [ ] T-009: Bedrock Agent Configuration
 **Requirements**: REQ-003, REQ-004
