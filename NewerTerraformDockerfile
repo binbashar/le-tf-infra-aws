@@ -1,0 +1,30 @@
+## Run as:
+## TERRAFORM_VERSION=1.6.6 && \
+## USERNAME=leverage && \
+## USERID=$(id -u) && \
+## GROUPID=$(id -g) && \
+## docker build -t repo/image:${TERRAFORM_VERSION}-${USERID}-${GROUPID} \
+##        --build-arg TERRAFORM_VERSION=$TERRAFORM_VERSION \
+##        --build-arg USERNAME=$USERNAME \
+##        --build-arg USERID=$USERID \
+##        --build-arg GROUPID=$GROUPID .
+
+ARG IMAGE_TAG=1.9.1-tofu-0.3.0
+FROM binbash/leverage-toolbox:$IMAGE_TAG
+
+ARG TERRAFORM_VERSION
+ARG PLATFORM=amd64
+
+RUN ["/bin/bash", "-c", "wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${PLATFORM}.zip && \
+    unzip terraform_${TERRAFORM_VERSION}_linux_${PLATFORM}.zip && \
+    mv terraform /usr/local/bin/ && \
+    ln -s /usr/local/bin/terraform /bin/terraform && \
+    terraform --version "]
+
+ENV UNAME=leverage
+ARG USERID
+ARG GROUPID
+RUN groupadd -g $GROUPID -o $UNAME
+RUN useradd -m -u $USERID -g $GROUPID -o -s /bin/bash $UNAME
+RUN chown -R $USERID:$GROUPID /home/leverage
+USER $UNAME
