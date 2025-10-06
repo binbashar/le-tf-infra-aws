@@ -25,4 +25,6 @@ locals {
 
   input_rule_name      = "${var.project}-${var.environment}-kyb-agent-input-trigger"
   processing_rule_name = "${var.project}-${var.environment}-kyb-agent-processing-trigger"
+
+  bda_profile_arn = "arn:aws:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:data-automation-profile/us.data-automation-v1"
 }

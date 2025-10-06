@@ -22,17 +22,43 @@ data "aws_iam_policy_document" "bda_invoker_policy" {
   }
 
   statement {
-    sid       = "S3InputAccess"
+    sid       = "S3ObjectAccess"
     effect    = "Allow"
     actions   = ["s3:GetObject"]
     resources = ["${aws_s3_bucket.input.arn}/*"]
   }
 
   statement {
-    sid       = "BDAAccess"
+    sid     = "S3BucketAccess"
+    effect  = "Allow"
+    actions = ["s3:ListBucket", "s3:GetBucketLocation"]
+    resources = [
+      aws_s3_bucket.input.arn,
+      aws_s3_bucket.processing.arn
+    ]
+  }
+
+  statement {
+    sid    = "BDAAccess"
+    effect = "Allow"
+    actions = [
+      "bedrock:InvokeDataAutomationAsync",
+      "bedrock:GetDataAutomationStatus"
+    ]
+    resources = [
+      "arn:aws:bedrock:us-east-1:*:data-automation-project/*",
+      "arn:aws:bedrock:us-east-1:*:data-automation-profile/*",
+      "arn:aws:bedrock:us-east-2:*:data-automation-profile/*",
+      "arn:aws:bedrock:us-west-1:*:data-automation-profile/*",
+      "arn:aws:bedrock:us-west-2:*:data-automation-profile/*"
+    ]
+  }
+
+  statement {
+    sid       = "S3ProcessingBucketAccess"
     effect    = "Allow"
-    actions   = ["bedrock:InvokeDataAutomationAsync"]
-    resources = [awscc_bedrock_data_automation_project.kyb_agent.project_arn]
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.processing.arn}/*"]
   }
 }
 

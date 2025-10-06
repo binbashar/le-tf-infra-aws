@@ -192,6 +192,22 @@ resource "aws_s3_bucket_policy" "input" {
     Version = "2012-10-17"
     Statement = [
       {
+        Sid    = "AllowBedrockDataAutomationRead"
+        Effect = "Allow"
+        Principal = {
+          Service = "bedrock.amazonaws.com"
+        }
+        Action = [
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.input.arn,
+          "${aws_s3_bucket.input.arn}/*"
+        ]
+      },
+      {
         Sid       = "DenyInsecureConnections"
         Effect    = "Deny"
         Principal = "*"
@@ -203,18 +219,6 @@ resource "aws_s3_bucket_policy" "input" {
         Condition = {
           Bool = {
             "aws:SecureTransport" = "false"
-          }
-        }
-      },
-      {
-        Sid       = "DenyUnencryptedObjectUploads"
-        Effect    = "Deny"
-        Principal = "*"
-        Action    = "s3:PutObject"
-        Resource  = "${aws_s3_bucket.input.arn}/*"
-        Condition = {
-          StringNotEquals = {
-            "s3:x-amz-server-side-encryption" = "AES256"
           }
         }
       }
@@ -229,6 +233,25 @@ resource "aws_s3_bucket_policy" "processing" {
     Version = "2012-10-17"
     Statement = [
       {
+        Sid    = "AllowBedrockDataAutomationWrite"
+        Effect = "Allow"
+        Principal = {
+          Service = "bedrock.amazonaws.com"
+        }
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl",
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.processing.arn,
+          "${aws_s3_bucket.processing.arn}/*"
+        ]
+      },
+      {
         Sid       = "DenyInsecureConnections"
         Effect    = "Deny"
         Principal = "*"
@@ -240,18 +263,6 @@ resource "aws_s3_bucket_policy" "processing" {
         Condition = {
           Bool = {
             "aws:SecureTransport" = "false"
-          }
-        }
-      },
-      {
-        Sid       = "DenyUnencryptedObjectUploads"
-        Effect    = "Deny"
-        Principal = "*"
-        Action    = "s3:PutObject"
-        Resource  = "${aws_s3_bucket.processing.arn}/*"
-        Condition = {
-          StringNotEquals = {
-            "s3:x-amz-server-side-encryption" = "AES256"
           }
         }
       }
@@ -277,18 +288,6 @@ resource "aws_s3_bucket_policy" "output" {
         Condition = {
           Bool = {
             "aws:SecureTransport" = "false"
-          }
-        }
-      },
-      {
-        Sid       = "DenyUnencryptedObjectUploads"
-        Effect    = "Deny"
-        Principal = "*"
-        Action    = "s3:PutObject"
-        Resource  = "${aws_s3_bucket.output.arn}/*"
-        Condition = {
-          StringNotEquals = {
-            "s3:x-amz-server-side-encryption" = "AES256"
           }
         }
       }

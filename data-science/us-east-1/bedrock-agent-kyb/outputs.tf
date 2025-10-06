@@ -80,3 +80,13 @@ output "save_document_function_arn" {
   description = "ARN of the SaveDocument Lambda function"
   value       = aws_lambda_function.save_document.arn
 }
+
+output "input_trigger_rule_name" {
+  description = "Name of the EventBridge rule for input bucket trigger"
+  value       = aws_cloudwatch_event_rule.input_bucket_trigger.name
+}
+
+output "input_trigger_rule_arn" {
+  description = "ARN of the EventBridge rule for input bucket trigger"
+  value       = aws_cloudwatch_event_rule.input_bucket_trigger.arn
+}
