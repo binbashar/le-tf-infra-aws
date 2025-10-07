@@ -17,6 +17,6 @@ terraform {
   }
 
   backend "s3" {
-    key = "root/cost-report/terraform.tfstate"
+    key = "management/cost-report/terraform.tfstate"
   }
 }

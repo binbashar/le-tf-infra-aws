@@ -133,17 +133,17 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         run: |
           echo "=== Fixing Profile Dependencies for LocalStack Testing ==="
-          
+
           # Create backup of original files
           find . -name "*.tf" -exec cp {} {}.backup \;
-          
+
           # Remove profile references from provider blocks in all .tf files
           echo "Removing AWS profile references from provider blocks..."
           find . -name "*.tf" -exec sed -i 's/profile.*=.*/# profile removed for LocalStack testing/' {} \;
-          
+
           # Fix terraform_remote_state data sources - simple approach
           echo "Removing profile references from terraform_remote_state blocks..."
-          
+
           # Just remove profile lines - the simpler the better
           for tf_file in $(find . -name "*.tf"); do
             if grep -q "terraform_remote_state" "$tf_file"; then
@@ -151,38 +151,38 @@ jobs:
               sed -i '/profile.*=.*bb-.*-devops/d' "$tf_file"
             fi
           done
-          
+
           # Set environment variables for terraform to use instead of profiles
           echo "Setting LocalStack environment variables..."
           export AWS_ACCESS_KEY_ID=test
-          export AWS_SECRET_ACCESS_KEY=test  
+          export AWS_SECRET_ACCESS_KEY=test
           export AWS_DEFAULT_REGION=${{ inputs.aws_region }}
           export AWS_ENDPOINT_URL=http://localhost:4566
-          
+
           # Inject LocalStack endpoints into existing provider block instead of creating duplicate
           echo "Injecting LocalStack endpoints into existing AWS provider configuration..."
-          
+
           # Find and modify existing provider "aws" blocks
           for tf_file in $(find . -name "*.tf" -exec grep -l 'provider "aws"' {} \;); do
             echo "Modifying provider in: $tf_file"
-            
+
             # Create a temp file to build the new provider configuration
             temp_file=$(mktemp)
-            
+
             # Parse the file and modify the provider block
             awk '
-            BEGIN { 
+            BEGIN {
               in_provider = 0
               brace_count = 0
             }
-            
+
             # Detect start of provider block
-            /^[[:space:]]*provider "aws" {/ { 
+            /^[[:space:]]*provider "aws" {/ {
               in_provider = 1
               brace_count = 1
               print "provider \"aws\" {"
               print "  region                      = var.region"
-              print "  access_key                  = \"test\""  
+              print "  access_key                  = \"test\""
               print "  secret_key                  = \"test\""
               print "  skip_credentials_validation = true"
               print "  skip_metadata_api_check     = true"
@@ -201,8 +201,8 @@ jobs:
               print "}"
               next
             }
-            
-            # Skip all content inside provider block  
+
+            # Skip all content inside provider block
             in_provider == 1 {
               # Count opening and closing braces to find the end
               for (i = 1; i <= length($0); i++) {
@@ -210,22 +210,22 @@ jobs:
                 if (char == "{") brace_count++
                 if (char == "}") brace_count--
               }
-              
+
               # End of provider block found
               if (brace_count == 0) {
                 in_provider = 0
               }
               next
             }
-            
+
             # Print all other lines unchanged
             { print }
             ' "$tf_file" > "$temp_file"
-            
+
             # Replace original file with modified version
             mv "$temp_file" "$tf_file"
           done
-          
+
           echo "✅ Fixed profile dependencies for LocalStack testing"
           echo "Modified files:"
           find . -name "*.tf" | head -5

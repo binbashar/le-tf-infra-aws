@@ -93,6 +93,7 @@ data "aws_iam_policy_document" "devops" {
       "servicequotas:*",
       "ses:*",
       "shield:*",
+      "synthetics:*",
       "sns:*",
       "sqlworkbench:*",
       "sqs:*",
