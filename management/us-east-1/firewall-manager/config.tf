@@ -17,6 +17,6 @@ terraform {
   }
 
   backend "s3" {
-    key = "root/firewall-manager/terraform.tfstate"
+    key = "management/firewall-manager/terraform.tfstate"
   }
 }

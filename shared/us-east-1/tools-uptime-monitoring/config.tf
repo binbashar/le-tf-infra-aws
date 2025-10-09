@@ -10,24 +10,32 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = "~> 1.6"
+  required_version = "~> 1.9"
 
   required_providers {
-    aws = "~> 3.0"
+    aws = "~> 4.10"
   }
 
   backend "s3" {
-    key = "management/cost-mgmt/terraform.tfstate"
+    key = "shared/uptime-monitoring/terraform.tfstate"
   }
 }
 
 #=============================#
 # Data sources                #
 #=============================#
+data "terraform_remote_state" "local_vpcs" {
 
-#
-# data type from output for notifications
-#
+  backend = "s3"
+
+  config = {
+    region  = lookup(local.local_vpc.local-base, "region")
+    profile = lookup(local.local_vpc.local-base, "profile")
+    bucket  = lookup(local.local_vpc.local-base, "bucket")
+    key     = lookup(local.local_vpc.local-base, "key")
+  }
+}
+
 data "terraform_remote_state" "notifications" {
   backend = "s3"
 

@@ -34,27 +34,29 @@ module "terraform-aws-basic-layout" {
       from_port = 22, # SSH
       to_port   = 22,
       protocol  = "tcp",
-      #cidr_blocks = ["0.0.0.0/0"],
-      cidr_blocks = [data.terraform_remote_state.vpc.outputs.vpc_cidr_block],
-      description = "Allow SSH"
-    },
-    {
-      from_port = 9100, # Prometheus Node Exporter
-      to_port   = 9100,
-      protocol  = "tcp",
       cidr_blocks = [
         data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
-        data.terraform_remote_state.vpc-dr.outputs.vpc_cidr_block
+        # "0.0.0.0/0"   # NOTE: this is useful the first time you deploy the EC2, after that you may want to keep this line disabled
       ],
-      description = "Allow Prometheus NodeExporter"
+      description = "Allow SSH"
     },
+    # {
+    #   from_port = 9100, # Prometheus Node Exporter
+    #   to_port   = 9100,
+    #   protocol  = "tcp",
+    #   cidr_blocks = [
+    #     data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
+    #     data.terraform_remote_state.vpc-dr.outputs.vpc_cidr_block
+    #   ],
+    #   description = "Allow Prometheus NodeExporter"
+    # },
     {
       from_port = 80, # Pritunl VPN Server Letsencrypt http challenge
       to_port   = 80,
       protocol  = "tcp",
       cidr_blocks = [
         data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
-        # "0.0.0.0/0",    # Renew LetsEncrypt private url cert (every 90 days)
+        # "0.0.0.0/0",    # NOTE: Renew LetsEncrypt private url cert (every 90 days)
       ],
       description = "Allow Pritunl HTTP UI"
     },
@@ -64,7 +66,7 @@ module "terraform-aws-basic-layout" {
       protocol  = "tcp",
       cidr_blocks = [
         data.terraform_remote_state.vpc.outputs.vpc_cidr_block,
-        #"0.0.0.0/0",    # Public temporally accessible for new users setup (when needed)
+        #"0.0.0.0/0",    # NOTE: This should be temporally accessible for new users onboarding only, disable afterward
       ],
       description = "Allow Pritunl HTTPS UI"
     },
@@ -105,12 +107,12 @@ module "terraform-aws-basic-layout" {
   #    d. rollback a. step
   #    e. re-comment block from step b.
   #
-  /*  dns_records_public_hosted_zone = [{
-    zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id,
-    name    = "vpn.aws.binbash.com.ar",
-    type    = "A",
-    ttl     = 300
-  }]*/
+  # dns_records_public_hosted_zone = [{
+  #   zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id,
+  #   name    = "vpn.aws.binbash.com.ar",
+  #   type    = "A",
+  #   ttl     = 300
+  # }]
 
   tags = local.tags
 }
