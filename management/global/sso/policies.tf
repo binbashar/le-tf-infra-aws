@@ -240,6 +240,7 @@ data "aws_iam_policy_document" "data_scientist" {
       "cloudformation:*",
       "cloudshell:*",
       "cloudwatch:*",
+      "codebuild:*",
       "cognito-identity:*",
       "cognito-idp:*",
       "config:*",
