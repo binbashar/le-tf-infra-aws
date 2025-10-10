@@ -63,8 +63,8 @@ resource "aws_lambda_function" "agent_invoker" {
 
   environment {
     variables = {
-      AGENT_ID          = "PLACEHOLDER"
-      AGENT_ALIAS_ID    = "PLACEHOLDER"
+      AGENT_ID          = awscc_bedrock_agent.kyb_agent.agent_id
+      AGENT_ALIAS_ID    = awscc_bedrock_agent_alias.kyb_agent_live.agent_alias_id
       PROCESSING_BUCKET = aws_s3_bucket.processing.id
       LOG_LEVEL         = "INFO"
     }

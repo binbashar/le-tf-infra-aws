@@ -9,7 +9,10 @@ AGENT_ALIAS_ID = os.environ['AGENT_ALIAS_ID']
 bedrock_agent_runtime = boto3.client('bedrock-agent-runtime')
 
 def lambda_handler(event, context):
-    body = json.loads(event.get('body', '{}'))
+    if isinstance(event.get("body"), str):
+        body = json.loads(event["body"])
+    else:
+        body = event.get("body", {})
 
     customer_id = body.get('customer_id', '').strip()
 
@@ -31,8 +34,7 @@ def lambda_handler(event, context):
         inputText=f'Please retrieve and process documents for customer: {customer_id}',
         sessionState={
             'sessionAttributes': {
-                'customer_id': customer_id,
-                'output_type': 'Standard'
+                'customer_id': customer_id
             }
         }
     )

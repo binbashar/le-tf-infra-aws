@@ -115,3 +115,28 @@ output "api_invoke_policy_arn" {
   description = "IAM policy ARN for API invocation (attach to SSO permission sets)"
   value       = aws_iam_policy.api_invoke_policy.arn
 }
+
+output "agent_id" {
+  description = "ID of the Bedrock KYB Agent"
+  value       = awscc_bedrock_agent.kyb_agent.agent_id
+}
+
+output "agent_arn" {
+  description = "ARN of the Bedrock KYB Agent"
+  value       = awscc_bedrock_agent.kyb_agent.agent_arn
+}
+
+output "agent_alias_id" {
+  description = "ID of the live agent alias"
+  value       = awscc_bedrock_agent_alias.kyb_agent_live.agent_alias_id
+}
+
+output "agent_alias_arn" {
+  description = "ARN of the live agent alias"
+  value       = awscc_bedrock_agent_alias.kyb_agent_live.agent_alias_arn
+}
+
+output "agent_role_arn" {
+  description = "ARN of the Bedrock Agent IAM role"
+  value       = aws_iam_role.bedrock_agent_role.arn
+}

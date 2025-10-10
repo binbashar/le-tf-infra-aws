@@ -93,7 +93,7 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 ### Subtasks:
 - [x] T-006.1: Create `src/lambda/bda_invoker.py`
 - [x] T-006.2: Handle S3 ObjectCreated events from EventBridge
-- [ ] T-006.3: Extract customer_id from S3 object key prefix for BDA processing context
+- [x] T-006.3: Extract customer_id from S3 object key prefix for BDA processing context
 - [x] T-006.4: Generate correlation ID for tracking
 - [x] T-006.5: Invoke BDA with standard output configuration
 - [x] T-006.6: Store processing metadata
@@ -111,7 +111,6 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - [x] T-007.4: Validate customer_id parameter (not empty, valid format)
 - [x] T-007.5: Invoke Bedrock Agent with session parameters (customer_id, output_type="Standard")
 - [x] T-007.6: Return JSON response with status, session_id, and agent_id
-- [x] T-007.7: Log IAM principal ARN for audit trail (optional - not implemented for MVP)
 
 ## [x] T-008: GetDocuments Action Group
 **Requirements**: REQ-003

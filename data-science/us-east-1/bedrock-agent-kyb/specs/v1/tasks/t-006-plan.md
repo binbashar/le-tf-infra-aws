@@ -221,7 +221,7 @@ def lambda_handler(event, context):
 
     # Invoke BDA
     input_s3_uri = f"s3://{bucket_name}/{object_key}"
-    output_s3_uri = f"s3://{PROCESSING_BUCKET}/standard/{customer_id}/"
+    output_s3_uri = f"s3://{PROCESSING_BUCKET}/customers/{customer_id}/"
 
     response = bda_client.invoke_data_automation_async(
         dataAutomationProfileArn='PLACEHOLDER',  # TODO: Configure profile ARN
@@ -247,7 +247,7 @@ def lambda_handler(event, context):
         'status': 'initiated'
     }
 
-    metadata_key = f"standard/{customer_id}/metadata.json"
+    metadata_key = f"customers/{customer_id}/metadata.json"
     s3_client.put_object(
         Bucket=PROCESSING_BUCKET,
         Key=metadata_key,

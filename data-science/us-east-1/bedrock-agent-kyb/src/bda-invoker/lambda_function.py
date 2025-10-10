@@ -24,7 +24,7 @@ def lambda_handler(event, context):
     correlation_id = str(uuid4())
 
     input_s3_uri = f"s3://{bucket_name}/{object_key}"
-    output_s3_uri = f"s3://{PROCESSING_BUCKET}/standard/{customer_id}/"
+    output_s3_uri = f"s3://{PROCESSING_BUCKET}/customers/{customer_id}/"
 
     response = bda_client.invoke_data_automation_async(
         dataAutomationProfileArn=BDA_PROFILE_ARN,

@@ -85,7 +85,7 @@ paths:
   /documents:
     get:
       parameters:
-        - name: key_pattern
+        - name: output_type
           in: query
           schema:
             type: string

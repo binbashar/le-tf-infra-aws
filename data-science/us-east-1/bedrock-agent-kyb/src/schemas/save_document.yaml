@@ -1,0 +1,38 @@
+openapi: 3.0.0
+info:
+  title: SaveDocument Action
+  version: 1.0.0
+  description: Saves agent-processed results to output bucket
+paths:
+  /documents:
+    post:
+      operationId: saveDocument
+      description: Saves processed document results with metadata
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: Processed document content
+                document_key:
+                  type: string
+                  description: S3 key for the document
+              required:
+                - content
+                - document_key
+      responses:
+        "200":
+          description: Document saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  s3_key:
+                    type: string

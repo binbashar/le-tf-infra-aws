@@ -146,7 +146,7 @@ module "bedrock" {
   version = "0.0.29"
 
   # Agent configuration
-  foundation_model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+  foundation_model = "anthropic.claude-sonnet-4-5-20250929-v1:0"
   instruction     = "You are an agent with multiple capabilities..."
 
   # Multiple action groups configuration

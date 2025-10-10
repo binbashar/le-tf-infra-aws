@@ -24,7 +24,7 @@ Provide comprehensive technical documentation about AWS Bedrock inference profil
 1. **Cross-Region (System-Defined) Inference Profiles**
    - Predefined by Amazon Bedrock
    - Include multiple Regions for automatic load balancing
-   - ARN format: `arn:aws:bedrock:us-east-1:<account-id>:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0`
+   - ARN format: `arn:aws:bedrock:us-east-1:<account-id>:inference-profile/us.us.anthropic.claude-sonnet-4-5-20250929-v1:0`
    - Model IDs prefixed with country/region codes (e.g., `us.`)
    - Automatically route requests across regions (us-east-1, us-east-2, us-west-2) for better availability
 
@@ -57,7 +57,7 @@ resource "aws_bedrock_inference_profile" "agent_profile" {
 
   model_source {
     # Single region foundational model
-    copy_from = "arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+    copy_from = "arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-sonnet-4-5-20250929-v1:0"
 
     # OR cross-region inference profile
     # copy_from = "arn:aws:bedrock:eu-central-1:${data.aws_caller_identity.current.account_id}:inference-profile/eu.anthropic.claude-3-5-sonnet-20240620-v1:0"
@@ -77,7 +77,7 @@ resource "aws_bedrock_inference_profile" "agent_profile" {
 data "aws_bedrock_inference_profiles" "available" {}
 
 data "aws_bedrock_inference_profile" "claude_cross_region" {
-  inference_profile_id = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+  inference_profile_id = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 }
 ```
 
@@ -93,7 +93,7 @@ resource "awscc_bedrock_agent" "example" {
   # Use inference profile instead of foundation model
   foundation_model = aws_bedrock_inference_profile.agent_profile.arn
   # OR reference cross-region profile directly
-  # foundation_model = "arn:aws:bedrock:us-east-1:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+  # foundation_model = "arn:aws:bedrock:us-east-1:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
   instruction = "You are an office assistant in an insurance agency. You are friendly and polite."
 
@@ -326,7 +326,7 @@ resource "aws_bedrock_inference_profile" "migration_profile" {
 
   model_source {
     # Copy current foundation model configuration
-    copy_from = "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+    copy_from = "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-4-5-20250929-v1:0"
   }
 
   tags = merge(local.common_tags, {
@@ -343,7 +343,7 @@ resource "awscc_bedrock_agent" "main" {
   # ... other configuration ...
 
   # OLD: Direct foundation model
-  # foundation_model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+  # foundation_model = "anthropic.claude-sonnet-4-5-20250929-v1:0"
 
   # NEW: Application inference profile
   foundation_model = aws_bedrock_inference_profile.migration_profile.arn
@@ -454,7 +454,7 @@ resource "aws_cloudwatch_log_group" "agent_inference_logs" {
 
      # Choose between cross-region and single-region profiles
      foundation_model_arn = var.use_cross_region_profile ?
-       "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0" :
+       "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-sonnet-4-5-20250929-v1:0" :
        aws_bedrock_inference_profile.single_region.arn
    }
    ```
@@ -484,7 +484,7 @@ resource "aws_bedrock_inference_profile" "prod" {
 
   name = "${var.project}-prod-agent-profile"
   model_source {
-    copy_from = "arn:aws:bedrock:us-east-1:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+    copy_from = "arn:aws:bedrock:us-east-1:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-sonnet-4-5-20250929-v1:0"
   }
 
   tags = merge(local.common_tags, {
@@ -594,7 +594,7 @@ resource "aws_bedrock_inference_profile" "cost_optimized" {
   model_source {
     # Use cost-effective model for development
     copy_from = var.environment == "prod" ?
-      "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0" :
+      "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-sonnet-4-5-20250929-v1:0" :
       "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0"
   }
 

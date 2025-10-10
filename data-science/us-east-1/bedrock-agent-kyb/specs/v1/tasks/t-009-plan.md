@@ -1,7 +1,10 @@
 # T-009: Bedrock Agent Configuration - Detailed Plan
 
+**Last Updated:** 2025-01-09
+**Revision:** 2.0 - Updated for cross-region inference profiles and corrected session parameter architecture
+
 ## Overview
-Implement Bedrock Agent infrastructure with 2 action groups (GetDocuments, SaveDocument) following minimal implementation principles. Uses AWSCC provider for comprehensive feature support and session parameters for automatic context passing.
+Implement Bedrock Agent infrastructure with 2 action groups (GetDocuments, SaveDocument) following minimal implementation principles. Uses AWSCC provider for comprehensive feature support, cross-region inference profiles for high availability, and session parameters for customer context passing.
 
 ## Execution Strategy
 Execute subtasks **sequentially** in the order listed below. Each subtask must complete and validate before moving to the next.
@@ -24,20 +27,25 @@ Execute subtasks **sequentially** in the order listed below. Each subtask must c
      version: 1.0.0
      description: Retrieves processed documents from BDA standard output
    paths:
-     /get-documents:
-       post:
+     /documents:
+       get:
          operationId: getDocuments
          description: Retrieves customer-specific documents from processing bucket
-         requestBody:
-           required: false
-           content:
-             application/json:
-               schema:
-                 type: object
-                 properties:
-                   document_type:
-                     type: string
-                     description: Optional filter for document type
+         parameters:
+           - name: output_type
+             in: query
+             required: true
+             schema:
+               type: string
+               enum: [Standard, Custom]
+               default: Standard
+             description: BDA output type determining folder structure (Standard or Custom)
+           - name: key_pattern
+             in: query
+             required: false
+             schema:
+               type: string
+             description: Optional S3 key pattern filter
          responses:
            "200":
              description: Documents retrieved successfully
@@ -46,16 +54,22 @@ Execute subtasks **sequentially** in the order listed below. Each subtask must c
                  schema:
                    type: object
                    properties:
+                     customer_id:
+                       type: string
+                       description: Customer identifier from session
+                     output_type:
+                       type: string
+                       description: BDA output type used
                      documents:
                        type: array
                        items:
                          type: object
                          properties:
-                           key:
+                           s3_key:
                              type: string
-                           size:
-                             type: integer
                            last_modified:
+                             type: string
+                           document_text:
                              type: string
    ```
 
@@ -67,7 +81,7 @@ Execute subtasks **sequentially** in the order listed below. Each subtask must c
      version: 1.0.0
      description: Saves agent-processed results to output bucket
    paths:
-     /save-document:
+     /documents:
        post:
          operationId: saveDocument
          description: Saves processed document results with metadata
@@ -104,9 +118,11 @@ Execute subtasks **sequentially** in the order listed below. Each subtask must c
 **Pattern Reference**: OpenAPI 3.0.0 format with `operationId` required for newer models
 
 **Key Requirements**:
-- Must include `operationId` field for each path
-- Schema defines interface only - Lambda receives full event with session attributes
-- Session parameters (customer_id, output_type) passed automatically by agent runtime
+- Must include `operationId` field for each path (required for Claude 3.5+, Llama, Nova models)
+- Schema defines action group parameters (e.g., output_type) - these are NOT session parameters
+- Session parameters (ONLY customer_id) come from Agent Invoker Lambda
+- Action group parameters (output_type, key_pattern) come from OpenAPI schema definitions
+- Lambda receives both sources combined in the event structure
 
 **Validation**: Valid OpenAPI 3.0.0 YAML syntax, includes operationId
 
@@ -156,7 +172,8 @@ Execute subtasks **sequentially** in the order listed below. Each subtask must c
          "bedrock:InvokeModelWithResponseStream"
        ]
        resources = [
-         "arn:aws:bedrock:${var.region}::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+         "arn:aws:bedrock:${var.region}::foundation-model/*",
+         "arn:aws:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:inference-profile/*"
        ]
      }
 
@@ -201,9 +218,10 @@ Execute subtasks **sequentially** in the order listed below. Each subtask must c
 **Pattern Reference**: `/data-science/us-east-1/bedrock-agent-kyb/iam.tf` (data source pattern)
 
 **Key Permissions**:
-- **Bedrock Model**: InvokeModel for Claude 3.5 Sonnet
-- **Lambda Functions**: InvokeFunction for both action groups
-- **Trust Policy**: bedrock.amazonaws.com with account/ARN conditions
+- **Bedrock Model Access**: InvokeModel for all foundation models and inference profiles
+- **Inference Profile Support**: Wildcard resources for both foundation-model and inference-profile ARNs
+- **Lambda Functions**: InvokeFunction for both action groups (GetDocuments, SaveDocument)
+- **Trust Policy**: bedrock.amazonaws.com with account/ARN conditions for security
 
 **Validation**: IAM resources defined following data source pattern
 
@@ -220,7 +238,7 @@ Execute subtasks **sequentially** in the order listed below. Each subtask must c
 resource "awscc_bedrock_agent" "kyb_agent" {
   agent_name              = local.agent_name
   description             = "KYB document processing agent with BDA integration"
-  foundation_model        = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+  foundation_model        = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
   agent_resource_role_arn = aws_iam_role.bedrock_agent_role.arn
 
   instruction = <<-EOT
@@ -231,9 +249,6 @@ resource "awscc_bedrock_agent" "kyb_agent" {
     2. Review the retrieved documents
     3. Extract relevant information based on the request
     4. Use the SaveDocument action to save your analysis to the output bucket
-
-    You receive customer_id automatically via session parameters - use this to scope all operations to the correct customer.
-    The output_type session parameter indicates the BDA output format (Standard) used for document storage structure.
   EOT
 
   idle_session_ttl_in_seconds = 600
@@ -286,22 +301,60 @@ resource "awscc_bedrock_agent" "kyb_agent" {
 **Pattern Reference**: AWSCC provider pattern from research document
 
 **Key Configuration**:
-- **Foundation Model**: Claude 3.5 Sonnet (latest available)
+- **Foundation Model**: Cross-region inference profile `us.anthropic.claude-sonnet-4-5-20250929-v1:0`
+- **Inference Profile Benefits**: Automatic failover, load balancing across us-east-1, us-east-2, us-west-2
 - **auto_prepare**: true - automatically prepares agent after creation/modification
 - **idle_session_ttl**: 600 seconds (10 minutes)
 - **Action Groups**: Both defined inline with OpenAPI schemas
-- **Instructions**: Clear guidance on workflow and session parameter usage
+- **Instructions**: Clear guidance on workflow, session parameters, and action group parameters
 - **Dependencies**: Ensures IAM role and Lambda functions exist first
-
-**Session Parameters Behavior**:
-- Not configured in Terraform (runtime-only)
-- Passed by Agent Invoker Lambda during invocation
-- Automatically available to action group Lambda functions
-- Includes: customer_id, output_type, correlation_id
 
 **Validation**: Agent resource defined with both action groups
 
 ---
+
+### Parameter Architecture
+
+**Understanding Session Parameters vs Action Group Parameters:**
+
+This architecture uses TWO distinct parameter sources that are combined by the Bedrock Agent runtime:
+
+| Parameter | Source | Passed Via | Received In Lambda | Purpose |
+|-----------|--------|------------|-------------------|---------|
+| customer_id | Agent Invoker Lambda | sessionAttributes | event['sessionAttributes']['customer_id'] | Customer context across entire session |
+| output_type | Action Group Schema | parameters array | event['parameters'][0]['value'] | BDA output type (Standard/Custom) |
+| key_pattern | Action Group Schema | parameters array | event['parameters'][1]['value'] | Optional S3 key filter |
+
+**Data Flow:**
+
+1. **Agent Invoker Lambda** calls `invoke_agent()` with:
+   ```python
+   sessionState = {
+       'sessionAttributes': {
+           'customer_id': customer_id  # ONLY this is session parameter
+       }
+   }
+   ```
+
+2. **Bedrock Agent Runtime** receives session attributes and stores them for the entire session
+
+3. **Agent decides to invoke GetDocuments** action group
+
+4. **Bedrock Runtime combines:**
+   - Session attributes (customer_id from step 1)
+   - Schema parameters (output_type, key_pattern from OpenAPI schema)
+
+5. **GetDocuments Lambda receives:**
+   ```json
+   {
+     "sessionAttributes": {"customer_id": "test-123"},
+     "parameters": [
+       {"name": "output_type", "type": "string", "value": "Standard"},
+       {"name": "key_pattern", "type": "string", "value": "*.pdf"}
+     ]
+   }
+   ```
+
 
 ### T-009.4: Create Agent Alias resource
 
@@ -483,8 +536,7 @@ output "agent_role_arn" {
 - **Alternative**: AWS provider requires separate resources for agent and action groups
 - **Benefit**: Cleaner configuration with all action groups defined inline
 
-### Session Parameters (CRITICAL)
-Session parameters are **runtime-only** - NOT configured in Terraform:
+### Session Parameters
 ```python
 # In Agent Invoker Lambda (T-007)
 response = bedrock_agent_runtime.invoke_agent(
@@ -494,26 +546,62 @@ response = bedrock_agent_runtime.invoke_agent(
     inputText=input_text,
     sessionState={
         'sessionAttributes': {
-            'customer_id': customer_id,      # From API request
-            'output_type': 'Standard',        # BDA output type
-            'correlation_id': correlation_id  # For tracking
+            'customer_id': customer_id  # ✅ ONLY session parameter (from API request)
         }
     }
 )
+
 ```
 
 ### Action Group Lambda Events
-Action group Lambda functions automatically receive:
-- **event['sessionAttributes']**: Session parameters (customer_id, output_type, correlation_id)
-- **event['apiPath']**: API path from schema (/get-documents, /save-document)
-- **event['parameters']**: Request body parameters from OpenAPI schema
+Action group Lambda functions automatically receive combined data from multiple sources:
+
+**From Session (Agent Invoker Lambda):**
+- **event['sessionAttributes']**: Contains ONLY `customer_id`
+
+**From Action Group Schema (OpenAPI definition):**
+- **event['parameters']**: Array of parameters defined in schema
+  - For GetDocuments: `output_type`
+  - For SaveDocument: request body parameters
+
+**From Bedrock Runtime:**
+- **event['apiPath']**: API path from schema (`/documents`)
+- **event['httpMethod']**: HTTP method from schema (`GET` or `POST`)
 - **event['agent']**: Agent metadata (id, name, alias, version)
+- **event['actionGroup']**: Action group name (`GetDocuments` or `SaveDocument`)
+- **event['messageVersion']**: Protocol version (typically `"1.0"`)
+
+**Example GetDocuments Event Structure:**
+```json
+{
+  "messageVersion": "1.0",
+  "sessionAttributes": {
+    "customer_id": "test-customer-123"
+  },
+  "parameters": [
+    {"name": "output_type", "type": "string", "value": "Standard"},
+    {"name": "key_pattern", "type": "string", "value": "*.pdf"}
+  ],
+  "actionGroup": "GetDocuments",
+  "apiPath": "/documents",
+  "httpMethod": "GET",
+  "agent": {"id": "...", "name": "kyb_agent", "alias": "live", "version": "1"}
+}
+```
 
 ### Foundation Model Selection
-- **Model**: anthropic.claude-3-5-sonnet-20241022-v2:0
-- **Reasoning**: Latest Claude model with best performance
-- **Alternatives**: claude-3-sonnet-20240229-v1:0 (if latest unavailable)
-- **Requirements**: Model must be enabled in AWS Bedrock console
+
+**Using Cross-Region Inference Profiles (Recommended):**
+- **Inference Profile**: `us.anthropic.claude-sonnet-4-5-20250929-v1:0`
+- **Type**: Cross-region system-defined inference profile
+- **Coverage**: Automatic routing across us-east-1, us-east-2, us-west-2
+- **Benefits**:
+  - Enhanced availability through automatic regional failover
+  - Higher aggregate throughput via multi-region load balancing
+  - No additional cost vs direct model invocation
+  - Built-in redundancy for production workloads
+- **Reasoning**: Production-ready architecture with automatic resilience
+
 
 ### Agent Preparation
 - **auto_prepare = true**: Agent automatically prepared after creation/modification

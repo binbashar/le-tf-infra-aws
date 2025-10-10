@@ -75,10 +75,13 @@ data "aws_iam_policy_document" "agent_invoker_policy" {
   }
 
   statement {
-    sid       = "BedrockAgentAccess"
-    effect    = "Allow"
-    actions   = ["bedrock:InvokeAgent"]
-    resources = ["arn:aws:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:agent/*"]
+    sid     = "BedrockAgentAccess"
+    effect  = "Allow"
+    actions = ["bedrock:InvokeAgent"]
+    resources = [
+      "arn:aws:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:agent/${awscc_bedrock_agent.kyb_agent.agent_id}/*",
+      awscc_bedrock_agent_alias.kyb_agent_live.agent_alias_arn
+    ]
   }
 
   statement {
@@ -263,4 +266,75 @@ resource "aws_iam_policy" "api_invoke_policy" {
   })
 
   tags = local.tags
+}
+
+#======================================
+# Bedrock Agent IAM Role
+#======================================
+
+data "aws_iam_policy_document" "bedrock_agent_trust" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["bedrock.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+
+    condition {
+      test     = "ArnLike"
+      variable = "aws:SourceArn"
+      values   = ["arn:aws:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:agent/*"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "bedrock_agent_permissions" {
+  statement {
+    sid    = "BedrockModelAccess"
+    effect = "Allow"
+    actions = [
+      "bedrock:InvokeModel",
+      "bedrock:InvokeModelWithResponseStream",
+      "bedrock:GetInferenceProfile",
+      "bedrock:GetFoundationModel"
+    ]
+    resources = [
+      "arn:aws:bedrock:*::foundation-model/*",
+      "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/*"
+    ]
+  }
+
+  statement {
+    sid     = "ActionGroupLambdaAccess"
+    effect  = "Allow"
+    actions = ["lambda:InvokeFunction"]
+    resources = [
+      aws_lambda_function.get_documents.arn,
+      aws_lambda_function.save_document.arn
+    ]
+  }
+}
+
+resource "aws_iam_role" "bedrock_agent_role" {
+  name               = "${local.agent_name}-role"
+  assume_role_policy = data.aws_iam_policy_document.bedrock_agent_trust.json
+  tags               = local.tags
+}
+
+resource "aws_iam_policy" "bedrock_agent_policy" {
+  name   = "${local.agent_name}-policy"
+  policy = data.aws_iam_policy_document.bedrock_agent_permissions.json
+  tags   = local.tags
+}
+
+resource "aws_iam_role_policy_attachment" "bedrock_agent_policy" {
+  role       = aws_iam_role.bedrock_agent_role.name
+  policy_arn = aws_iam_policy.bedrock_agent_policy.arn
 }

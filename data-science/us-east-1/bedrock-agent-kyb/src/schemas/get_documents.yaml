@@ -1,0 +1,50 @@
+openapi: 3.0.0
+info:
+  title: GetDocuments Action
+  version: 1.0.0
+  description: Retrieves processed documents from BDA output folder
+paths:
+  /documents:
+    get:
+      operationId: getDocuments
+      description: Retrieves customer-specific documents from processing bucket
+      parameters:
+        - name: output_type
+          in: query
+          required: true
+          description: BDA output type determining folder structure (Standard or Custom)
+          schema:
+            type: string
+            enum: [Standard, Custom]
+            default: Standard
+        - name: key_pattern
+          in: query
+          required: false
+          description: Optional S3 key pattern filter
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Documents retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer_id:
+                    type: string
+                    description: Customer identifier from session
+                  output_type:
+                    type: string
+                    description: BDA output type used
+                  documents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        s3_key:
+                          type: string
+                        last_modified:
+                          type: string
+                        document_text:
+                          type: string
