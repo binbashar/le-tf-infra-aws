@@ -49,7 +49,7 @@ def lambda_handler(event, context):
         'status': 'initiated'
     }
 
-    metadata_key = f"standard/{customer_id}/metadata.json"
+    metadata_key = f"customers/{customer_id}/metadata.json"
     s3_client.put_object(
         Bucket=PROCESSING_BUCKET,
         Key=metadata_key,
