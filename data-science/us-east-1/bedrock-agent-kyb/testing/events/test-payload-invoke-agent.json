@@ -1,1 +1,4 @@
-{"body":"{\"customer_id\":\"test-customer-123\"}","httpMethod":"POST"}
+{
+  "body": "{\"customer_id\":\"test-customer-123\"}",
+  "httpMethod": "POST"
+}
