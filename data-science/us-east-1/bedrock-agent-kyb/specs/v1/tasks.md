@@ -127,21 +127,21 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - [x] T-008.5: List all objects under customer_id prefix in processing bucket
 - [x] T-008.6: Return structured JSON response in Bedrock agent format
 
-## [ ] T-009: Bedrock Agent Configuration
+## [x] T-009: Bedrock Agent Configuration
 **Requirements**: REQ-003, REQ-004
 **Dependencies**: T-003, T-005
 **Purpose**: Create Bedrock Agent with 2 action groups and session parameters support using AWSCC provider
 **Detailed Plan**: See [t-009-plan.md](./tasks/t-009-plan.md)
 
 ### Subtasks:
-- [ ] T-009.1: Create OpenAPI schemas for action groups (get_documents.yaml, save_document.yaml)
-- [ ] T-009.2: Create IAM role for Bedrock Agent with model and Lambda permissions
-- [ ] T-009.3: Add Bedrock Agent resource to `bedrock.tf` with 2 action groups inline
-- [ ] T-009.4: Create Agent Alias resource for versioning
-- [ ] T-009.5: Update Agent Invoker Lambda environment variables with real agent IDs
-- [ ] T-009.6: Add Bedrock Agent outputs to `outputs.tf`
-- [ ] T-009.7: Run validation and formatting
-- [ ] T-009.8: Deploy Bedrock Agent infrastructure
+- [x] T-009.1: Create OpenAPI schemas for action groups (get_documents.yaml, save_document.yaml)
+- [x] T-009.2: Create IAM role for Bedrock Agent with model and Lambda permissions
+- [x] T-009.3: Add Bedrock Agent resource to `bedrock.tf` with 2 action groups (uses separate resources)
+- [x] T-009.4: Create Agent Alias resource for versioning
+- [x] T-009.5: Update Agent Invoker Lambda environment variables with real agent IDs
+- [x] T-009.6: Add Bedrock Agent outputs to `outputs.tf`
+- [x] T-009.7: Run validation and formatting
+- [x] T-009.8: Deploy Bedrock Agent infrastructure
 
 ## [ ] T-010: SaveDocument Action Group
 **Requirements**: REQ-004
