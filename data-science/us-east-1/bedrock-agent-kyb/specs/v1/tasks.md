@@ -143,17 +143,18 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - [x] T-009.7: Run validation and formatting
 - [x] T-009.8: Deploy Bedrock Agent infrastructure
 
-## [ ] T-010: SaveDocument Action Group
+## [x] T-010: SaveDocument Action Group
 **Requirements**: REQ-004
 **Dependencies**: T-005, T-009
-**Purpose**: Implement action group to save processed results
+**Purpose**: Implement action group to save KYB verdicts with Athena-queryable partitioning
+**Status**: ✅ COMPLETE - Lambda code implemented and deployed (2025-10-13)
 
 ### Subtasks:
-- [ ] T-010.1: Create `schemas/save_document.yaml` OpenAPI schema
-- [ ] T-010.2: Create `src/lambda/save_document_handler.py`
-- [ ] T-010.3: Handle session parameters automatically
-- [ ] T-010.4: Save results to output bucket
-- [ ] T-010.5: Maintain correlation ID in metadata
+- [x] T-010.1: OpenAPI schema exists at `src/schemas/save_document.yaml`
+- [x] T-010.2: Replace mock implementation in `src/save-document/lambda_function.py` with real S3 save
+- [x] T-010.3: Extract customer_id from session parameters
+- [x] T-010.4: Save verdict to output bucket with Athena partitioning: `{customer_id}/yyyy=YYYY/mm=MM/dd=DD/{uuid}.json`
+- [x] T-010.5: Deploy Lambda function
 
 ## [ ] T-011: IAM Permissions Setup
 **Requirements**: All use cases

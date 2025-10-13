@@ -57,7 +57,6 @@
 **BDA Invoker:**
 - Triggered by input bucket events
 - Invokes BDA with standard output configuration
-- Generates correlation ID for tracking
 
 **Agent Invoker:**
 - Triggered by IAM-authenticated API Gateway POST requests
@@ -73,9 +72,9 @@
 - Returns list of documents and their content
 
 **SaveDocument (Action Group):**
-- Receives session parameters automatically
-- Saves processed results to output bucket
-- Maintains correlation ID in metadata
+- Receives session parameters automatically (customer_id)
+- Receives KYB verdict in request body `content` parameter
+- Saves verdict to output bucket with Athena-queryable partitioning: `{customer_id}/yyyy=YYYY/mm=MM/dd=DD/{uuid}.json`
 
 ## Action Group Interfaces
 
@@ -109,8 +108,7 @@ paths:
 ```
 
 **Session Parameters:**
-- `customer_id`: Passed from API Gateway request
-- `output_type`: "Standard"
+- `customer_id`: Passed from Agent Invoker Lambda
 
 ## API Gateway Endpoint
 

@@ -11,8 +11,8 @@
 **WHEN** the Bedrock Agent is invoked with session parameters
 **THEN** the agent SHALL use a GetDocuments action group (lambda) to retrieve processed documents from the processing bucket using standard output folder structure
 
-**WHEN** the agent retrieves documents
-**THEN** the agent SHALL use a SaveDocument action group (lambda) to save the extraction (bypass) in the output bucket
+**WHEN** the agent completes document analysis
+**THEN** the agent SHALL use a SaveDocument action group (lambda) to save the KYB verdict in the output bucket with Athena-queryable partitioning
 
 **WHEN** the user uploads PDFs with customer-specific prefixes to the input bucket
 **THEN** BDA SHALL maintain the customer_id prefix structure in the processing bucket standard output
@@ -31,6 +31,7 @@
 - By default, any IAM principal in the same AWS account can invoke the API
 - Agent Invoker Lambda SHALL pass customer_id as session parameter to Bedrock Agent
 - GetDocuments action group SHALL use customer_id as S3 prefix to locate documents in processing bucket
+- SaveDocument action group SHALL save verdicts using Athena-queryable partitioning: `{customer_id}/yyyy=YYYY/mm=MM/dd=DD/{uuid}.json`
 
 ## Non-Functional Requirement: Minimal Implementation
 
