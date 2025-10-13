@@ -45,26 +45,25 @@ resource "awscc_bedrock_agent" "kyb_agent" {
   agent_resource_role_arn = aws_iam_role.bedrock_agent_role.arn
 
   instruction = <<-EOT
-    You are a KYB (Know Your Business) document processing assistant specialized in validating business documents.
+    You are a KYB (Know Your Business) compliance agent responsible for analyzing company documents and verifying that company representatives are not subject to sanctions or politically exposed person (PEP) risks.
 
-    ## Task Summary
-    **Goal:** For a given customer_id, retrieve the processed documents, analyze the content, and persist the extracted information to S3.
+    ## Document Analysis
+    1. Retrieve all documents using GetDocuments action group (try Custom output first, then Standard output)
+    2. Identify company representatives (directors, legal representatives, beneficial owners)
+    3. Extract name, surname, and document ID for each representative
 
-    ## Context Information
-    - Two output types exist per document:
-      - **Custom Output**: structured, blueprint-based extraction
-      - **Standard Output**: generic extraction with tables, text, and metadata
+    ## Sanctions Verification
+    1. For each representative, use CheckSanctions action group
+    2. Pass name+surname OR document_id to CheckSanctions
+    3. Evaluate results: num_sanctions and pep_score
 
-    ## Processing Steps
-    1. **First Retrieval - Custom Output**: Always try to retrieve documents using GetDocuments ({ output_type="Custom" }) first
-       - This provides blueprint-structured data
-       - If the document is not found in the Custom Output, try to retrieve it in the Standard Output
+    ## Decision Logic
+    - APPROVED: All representatives identified AND all have num_sanctions=0 AND pep_score<0.7
+    - REJECTED: Any representative has num_sanctions>0 OR pep_score>=0.7
+    - REVIEW_REQUIRED: Cannot identify representatives OR insufficient information
 
-    2. **Secondary Retrieval - Standard Output**: Try to retrieve documents using GetDocuments ({ output_type="Standard" })
-       - This provides generic document extraction including tables and text
-
-    3. **Persistence**: Use SaveDocument to store the analyzed results in the output bucket
-       - Include all extracted fields and metadata
+    ## Persistence
+    Use SaveDocument to save verdict with representatives data and decision rationale
   EOT
 
   idle_session_ttl_in_seconds = 600
@@ -127,6 +126,28 @@ resource "aws_bedrockagent_agent_action_group" "save_document" {
   ]
 }
 
+resource "aws_bedrockagent_agent_action_group" "check_sanctions" {
+  action_group_name          = "CheckSanctions"
+  agent_id                   = awscc_bedrock_agent.kyb_agent.agent_id
+  agent_version              = "DRAFT"
+  skip_resource_in_use_check = true
+  prepare_agent              = false
+  description                = "Checks external sanctions API for PEP and sanctions verification"
+
+  action_group_executor {
+    lambda = aws_lambda_function.check_sanctions.arn
+  }
+
+  api_schema {
+    payload = file("${path.module}/src/schemas/check_sanctions.yaml")
+  }
+
+  depends_on = [
+    awscc_bedrock_agent.kyb_agent,
+    aws_lambda_permission.allow_bedrock_check_sanctions
+  ]
+}
+
 #================================
 # Agent Alias
 #================================
@@ -141,6 +162,7 @@ resource "awscc_bedrock_agent_alias" "kyb_agent_live" {
   depends_on = [
     awscc_bedrock_agent.kyb_agent,
     aws_bedrockagent_agent_action_group.get_documents,
-    aws_bedrockagent_agent_action_group.save_document
+    aws_bedrockagent_agent_action_group.save_document,
+    aws_bedrockagent_agent_action_group.check_sanctions
   ]
 }

@@ -15,10 +15,11 @@ locals {
   processing_bucket_name = substr("${local.name_prefix}-processing-${local.unique_suffix}", 0, 63) # e.g. bb-prod-kyb-agent-processing-123456
   output_bucket_name     = substr("${local.name_prefix}-output-${local.unique_suffix}", 0, 63)     # e.g. bb-prod-kyb-agent-output-123456
 
-  bda_invoker_name   = "${var.project}-${var.environment}-kyb-agent-bda-invoker"
-  agent_invoker_name = "${var.project}-${var.environment}-kyb-agent-invoker"
-  get_documents_name = "${var.project}-${var.environment}-kyb-agent-get-docs"
-  save_document_name = "${var.project}-${var.environment}-kyb-agent-save-doc"
+  bda_invoker_name     = "${var.project}-${var.environment}-kyb-agent-bda-invoker"
+  agent_invoker_name   = "${var.project}-${var.environment}-kyb-agent-invoker"
+  get_documents_name   = "${var.project}-${var.environment}-kyb-agent-get-docs"
+  save_document_name   = "${var.project}-${var.environment}-kyb-agent-save-doc"
+  check_sanctions_name = "${var.project}-${var.environment}-kyb-agent-check-sanctions"
 
   bda_project_name = "${var.project}-${var.environment}-kyb-agent-bda"
   agent_name       = "${var.project}-${var.environment}-kyb-agent"

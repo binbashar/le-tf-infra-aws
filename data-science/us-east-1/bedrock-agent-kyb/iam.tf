@@ -144,6 +144,19 @@ data "aws_iam_policy_document" "save_document_policy" {
   }
 }
 
+data "aws_iam_policy_document" "check_sanctions_policy" {
+  statement {
+    sid    = "CloudWatchLogsAccess"
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = ["arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.check_sanctions_name}:*"]
+  }
+}
+
 resource "aws_iam_role" "bda_invoker_role" {
   name               = "${local.bda_invoker_name}-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
@@ -212,6 +225,23 @@ resource "aws_iam_role_policy_attachment" "save_document_policy" {
   policy_arn = aws_iam_policy.save_document_policy.arn
 }
 
+resource "aws_iam_role" "check_sanctions_role" {
+  name               = "${local.check_sanctions_name}-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+  tags               = local.tags
+}
+
+resource "aws_iam_policy" "check_sanctions_policy" {
+  name   = "${local.check_sanctions_name}-policy"
+  policy = data.aws_iam_policy_document.check_sanctions_policy.json
+  tags   = local.tags
+}
+
+resource "aws_iam_role_policy_attachment" "check_sanctions_policy" {
+  role       = aws_iam_role.check_sanctions_role.name
+  policy_arn = aws_iam_policy.check_sanctions_policy.arn
+}
+
 #======================================
 # Lambda Permissions
 #======================================
@@ -244,6 +274,14 @@ resource "aws_lambda_permission" "allow_bedrock_save_document" {
   statement_id  = "AllowExecutionFromBedrock"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.save_document.function_name
+  principal     = "bedrock.amazonaws.com"
+  source_arn    = "arn:aws:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:agent/*"
+}
+
+resource "aws_lambda_permission" "allow_bedrock_check_sanctions" {
+  statement_id  = "AllowExecutionFromBedrock"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.check_sanctions.function_name
   principal     = "bedrock.amazonaws.com"
   source_arn    = "arn:aws:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:agent/*"
 }
@@ -317,7 +355,8 @@ data "aws_iam_policy_document" "bedrock_agent_permissions" {
     actions = ["lambda:InvokeFunction"]
     resources = [
       aws_lambda_function.get_documents.arn,
-      aws_lambda_function.save_document.arn
+      aws_lambda_function.save_document.arn,
+      aws_lambda_function.check_sanctions.arn
     ]
   }
 }

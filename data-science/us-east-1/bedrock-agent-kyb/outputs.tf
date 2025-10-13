@@ -81,6 +81,16 @@ output "save_document_function_arn" {
   value       = aws_lambda_function.save_document.arn
 }
 
+output "check_sanctions_function_name" {
+  description = "Name of the CheckSanctions Lambda function"
+  value       = aws_lambda_function.check_sanctions.function_name
+}
+
+output "check_sanctions_function_arn" {
+  description = "ARN of the CheckSanctions Lambda function"
+  value       = aws_lambda_function.check_sanctions.arn
+}
+
 output "input_trigger_rule_name" {
   description = "Name of the EventBridge rule for input bucket trigger"
   value       = aws_cloudwatch_event_rule.input_bucket_trigger.name
@@ -139,4 +149,9 @@ output "agent_alias_arn" {
 output "agent_role_arn" {
   description = "ARN of the Bedrock Agent IAM role"
   value       = aws_iam_role.bedrock_agent_role.arn
+}
+
+output "check_sanctions_role_arn" {
+  description = "ARN of the CheckSanctions Lambda IAM role"
+  value       = aws_iam_role.check_sanctions_role.arn
 }

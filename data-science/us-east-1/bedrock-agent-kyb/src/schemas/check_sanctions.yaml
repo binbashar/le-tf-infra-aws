@@ -1,0 +1,49 @@
+openapi: 3.0.0
+info:
+  title: CheckSanctions Action
+  version: 1.0.0
+  description: Returns mocked sanctions and PEP verification data (demo mode)
+paths:
+  /sanctions:
+    get:
+      operationId: checkSanctions
+      description: Check if a person has sanctions or is politically exposed
+      parameters:
+        - name: name
+          in: query
+          required: false
+          description: Person's first name (required if document_id not provided)
+          schema:
+            type: string
+        - name: surname
+          in: query
+          required: false
+          description: Person's last name (required if document_id not provided)
+          schema:
+            type: string
+        - name: document_id
+          in: query
+          required: false
+          description: Person's document ID (passport, national ID, tax ID)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sanctions check completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  num_sanctions:
+                    type: integer
+                    description: Number of active sanctions
+                  pep_score:
+                    type: number
+                    description: Political exposure score (0.0-1.0)
+                  query_type:
+                    type: string
+                    description: Type of query performed (name or document_id)
+                  query_value:
+                    type: string
+                    description: Value used for the query

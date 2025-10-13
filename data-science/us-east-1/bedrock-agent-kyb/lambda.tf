@@ -22,6 +22,12 @@ data "archive_file" "save_document" {
   output_path = "${path.module}/save-document.zip"
 }
 
+data "archive_file" "check_sanctions" {
+  type        = "zip"
+  source_dir  = "${path.module}/src/check-sanctions"
+  output_path = "${path.module}/check-sanctions.zip"
+}
+
 resource "aws_lambda_function" "bda_invoker" {
   filename         = data.archive_file.bda_invoker.output_path
   function_name    = local.bda_invoker_name
@@ -154,6 +160,38 @@ resource "aws_cloudwatch_log_group" "get_documents_logs" {
 
 resource "aws_cloudwatch_log_group" "save_document_logs" {
   name              = "/aws/lambda/${local.save_document_name}"
+  retention_in_days = 30
+  tags              = local.tags
+}
+
+resource "aws_lambda_function" "check_sanctions" {
+  filename         = data.archive_file.check_sanctions.output_path
+  function_name    = local.check_sanctions_name
+  role             = aws_iam_role.check_sanctions_role.arn
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.13"
+  timeout          = var.lambda_timeout
+  memory_size      = var.lambda_memory_size
+  source_code_hash = data.archive_file.check_sanctions.output_base64sha256
+
+  environment {
+    variables = {
+      LOG_LEVEL = "INFO"
+    }
+  }
+
+  tags = merge(local.tags, {
+    Name = local.check_sanctions_name
+  })
+
+  depends_on = [
+    aws_iam_role_policy_attachment.check_sanctions_policy,
+    aws_cloudwatch_log_group.check_sanctions_logs
+  ]
+}
+
+resource "aws_cloudwatch_log_group" "check_sanctions_logs" {
+  name              = "/aws/lambda/${local.check_sanctions_name}"
   retention_in_days = 30
   tags              = local.tags
 }
