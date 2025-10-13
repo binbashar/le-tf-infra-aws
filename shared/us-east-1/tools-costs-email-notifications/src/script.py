@@ -90,7 +90,7 @@ def create_ce_client(account_id):
             aws_session_token=assumed_role['Credentials']['SessionToken']
         )
 
-        return temp_session.client('ce')
+        return temp_session.client('ce', region_name='us-east-1')
     except ClientError as e:
         logger.error(f"Failed to assume role {role_arn}: {str(e)}")
         return None

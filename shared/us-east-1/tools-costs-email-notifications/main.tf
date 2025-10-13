@@ -21,12 +21,12 @@ resource "aws_lambda_function" "monthly_services_usage" {
     variables = {
       # ACCOUNTS is only used as fallback when AUTO_DISCOVER_ACCOUNTS=false or if auto-discovery fails
       ACCOUNTS               = jsonencode(var.accounts)
-      AUTO_DISCOVER_ACCOUNTS = var.auto_discover_accounts
+      AUTO_DISCOVER_ACCOUNTS = tostring(var.auto_discover_accounts)
       EXCLUDED_ACCOUNT_IDS   = join(",", var.excluded_account_ids)
       SENDER                 = var.sender_email
       RECIPIENT              = join(",", var.recipient_emails)
       TAGS_JSON              = jsonencode(var.cost_allocation_tags)
-      EXCLUDE_CREDITS        = var.exclude_aws_credits
+      EXCLUDE_CREDITS        = tostring(var.exclude_aws_credits)
       FORCE_DATE             = var.force_start_date
       REGION                 = var.region
     }

@@ -31,8 +31,11 @@ resource "aws_iam_policy" "monthly_services_usage_lambda_role_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "arn:aws:logs:${var.region}:${var.accounts.shared.id}:log-group:/aws/lambda/${local.lambda_function_name}:*"
-        Effect   = "Allow"
+        Resource = [
+          "arn:aws:logs:${var.region}:${var.accounts.shared.id}:log-group:/aws/lambda/${local.lambda_function_name}",
+          "arn:aws:logs:${var.region}:${var.accounts.shared.id}:log-group:/aws/lambda/${local.lambda_function_name}:*"
+        ]
+        Effect = "Allow"
       },
       {
         Sid = "SESAccess"
