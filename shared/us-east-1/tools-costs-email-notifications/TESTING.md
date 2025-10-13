@@ -137,18 +137,19 @@ After triggering a crash, check:
 
 ### CloudWatch Logs
 
-View logs in real-time:
-```bash
-aws logs tail /aws/lambda/MonthlyServicesUsage --follow --region us-east-1
-```
+**Via AWS Console:**
 
-Filter for errors:
-```bash
-aws logs filter-log-events \
-    --log-group-name /aws/lambda/MonthlyServicesUsage \
-    --filter-pattern "[ERROR]" \
-    --region us-east-1
-```
+1. Navigate to the [CloudWatch console](https://console.aws.amazon.com/cloudwatch/)
+2. In the left navigation pane, click **Logs** → **Log groups**
+3. Search for and select the log group: `/aws/lambda/MonthlyServicesUsage`
+4. Click on the most recent **Log stream** to view the latest execution logs
+5. To search for specific errors:
+   - Click **Search log group** at the top
+   - Enter a filter pattern such as `ERROR` or `Exception`
+   - Set the time range and click **Search**
+6. To view logs in real-time during testing:
+   - Open the log stream before invoking the function
+   - Refresh the page to see new log entries as they appear
 
 ### CloudWatch Alarms
 
@@ -156,12 +157,19 @@ The infrastructure includes CloudWatch alarms that trigger on:
 - Lambda function errors (any error)
 - Complete function failures (returns 500 status)
 
-Monitor alarms:
-```bash
-aws cloudwatch describe-alarms \
-    --alarm-names MonthlyServicesUsageLambdaErrors \
-    --region us-east-1
-```
+**Via AWS Console:**
+
+1. Navigate to the [CloudWatch console](https://console.aws.amazon.com/cloudwatch/)
+2. In the left navigation pane, click **Alarms** → **All alarms**
+3. Search for the alarm: `MonthlyServicesUsageLambdaErrors`
+4. Click on the alarm name to view details including:
+   - Current state (OK, ALARM, or INSUFFICIENT_DATA)
+   - Alarm history and state changes
+   - Configured threshold and evaluation period
+   - Associated SNS topic for notifications
+5. To view alarm history:
+   - Click the **History** tab to see when the alarm changed states
+   - Review timestamps and reasons for state changes
 
 ## Validation Checklist
 
