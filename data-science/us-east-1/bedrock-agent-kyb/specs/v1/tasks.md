@@ -156,34 +156,36 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 - [x] T-010.4: Save verdict to output bucket with Athena partitioning: `{customer_id}/yyyy=YYYY/mm=MM/dd=DD/{uuid}.json`
 - [x] T-010.5: Deploy Lambda function
 
-## [ ] T-011: IAM Permissions Setup
+## [x] T-011: IAM Permissions Setup
 **Requirements**: All use cases
 **Dependencies**: T-002, T-003, T-005, T-009
 **Purpose**: Configure IAM roles and policies
+**Status**: ✅ COMPLETE - All IAM resources implemented and deployed (2025-10-13)
 
 ### Subtasks:
-- [ ] T-011.1: Create `iam.tf` file
-- [ ] T-011.2: Create Lambda execution roles (Agent Invoker, BDA Invoker, Action Groups)
-- [ ] T-011.3: Create BDA service permissions
-- [ ] T-011.4: Create Bedrock Agent service role with action group invocation
-- [ ] T-011.5: Create S3 bucket access policies for Lambdas
-- [ ] T-011.6: Create API Gateway invocation permissions for Agent Invoker Lambda
-- [ ] T-011.7: Create EventBridge invocation permissions for BDA Invoker Lambda
-- [ ] T-011.8: Add Bedrock InvokeAgent permission to Agent Invoker role
-- [ ] T-011.9: Add IAM role outputs to `outputs.tf`
-- [ ] T-011.10: Note: API Gateway uses default same-account access (no explicit resource policy needed)
+- [x] T-011.1: Create `iam.tf` file
+- [x] T-011.2: Create Lambda execution roles (Agent Invoker, BDA Invoker, Action Groups)
+- [x] T-011.3: Create BDA service permissions with multi-region inference profile support
+- [x] T-011.4: Create Bedrock Agent service role with model and Lambda invocation permissions
+- [x] T-011.5: Create S3 bucket access policies scoped to specific buckets for all Lambdas
+- [x] T-011.6: Create API Gateway invocation permissions for Agent Invoker Lambda
+- [x] T-011.7: Create EventBridge invocation permissions for BDA Invoker Lambda
+- [x] T-011.8: Add Bedrock InvokeAgent permission to Agent Invoker role
+- [x] T-011.9: Add IAM role outputs to `outputs.tf` (api_invoke_policy_arn, agent_role_arn)
+- [x] T-011.10: Implement API Gateway resource policy with same-account access condition
 
-## [ ] T-012: Deployment and Verification
+## [x] T-012: Deployment and Verification
 **Requirements**: All use cases
 **Dependencies**: All previous tasks
 **Purpose**: Deploy and verify the complete pipeline
+**Status**: ✅ COMPLETE - Infrastructure deployed and end-to-end pipeline tested (2025-10-13)
 
 ### Subtasks:
-- [ ] T-012.1: Run `leverage tf init` in layer directory
-- [ ] T-012.2: Run `leverage tf plan` and review
-- [ ] T-012.3: Run `leverage tf apply` to deploy
-- [ ] T-012.4: Upload test PDF to input bucket
-- [ ] T-012.5: Verify end-to-end document processing pipeline
+- [x] T-012.1: Run `leverage tf init` in layer directory
+- [x] T-012.2: Run `leverage tf plan` and review
+- [x] T-012.3: Run `leverage tf apply` to deploy all resources
+- [x] T-012.4: Upload test PDF to input bucket (Horarios-casi-invierno-2025.pdf)
+- [x] T-012.5: Verify end-to-end document processing pipeline (BDA → Agent → GetDocuments → SaveDocument)
 
 ## Implementation Order
 
@@ -195,14 +197,14 @@ This document outlines the implementation tasks for the KYB Agent layer followin
 
 ## Success Criteria
 
-- [ ] PDF upload triggers BDA processing
-- [ ] BDA saves standard output to processing bucket with customer_id prefix
-- [ ] API Gateway endpoint requires IAM authentication (SigV4 signing)
-- [ ] API Gateway endpoint accepts customer_id and triggers agent invocation
-- [ ] IAM-authenticated requests successfully invoke the API
-- [ ] Agent Invoker receives customer_id and passes as session parameter
-- [ ] Agent retrieves documents using GetDocuments with customer_id prefix
-- [ ] GetDocuments uses customer_id to locate customer-specific documents in processing bucket
-- [ ] Agent saves bypass results using SaveDocument
-- [ ] All resources deployed successfully via Leverage CLI
-- [ ] Test command works with deployer's AWS credentials (awscurl)
+- [x] PDF upload triggers BDA processing
+- [x] BDA saves standard output to processing bucket with customer_id prefix
+- [x] API Gateway endpoint requires IAM authentication (SigV4 signing)
+- [x] API Gateway endpoint accepts customer_id and triggers agent invocation
+- [x] IAM-authenticated requests successfully invoke the API
+- [x] Agent Invoker receives customer_id and passes as session parameter
+- [x] Agent retrieves documents using GetDocuments with customer_id prefix
+- [x] GetDocuments uses customer_id to locate customer-specific documents in processing bucket
+- [x] Agent saves KYB verdicts using SaveDocument with Athena partitioning
+- [x] All resources deployed successfully via Leverage CLI
+- [x] End-to-end pipeline tested and verified with real document
