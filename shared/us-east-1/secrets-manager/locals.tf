@@ -31,7 +31,7 @@ locals {
         sid    = "CostReportsLambda"
         effect = "Allow"
         principal = {
-          "AWS" : "arn:aws:iam::${var.accounts.management.id}:role/bb-root-cost-report"
+          "AWS" : "arn:aws:iam::${var.accounts.management.id}:role/bb-management-cost-report"
         }
         actions   = ["secretsmanager:GetSecretValue"],
         resources = ["*"]

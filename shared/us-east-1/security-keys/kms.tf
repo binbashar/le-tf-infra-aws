@@ -38,7 +38,7 @@ data "aws_iam_policy_document" "kms" {
       type = "AWS"
       identifiers = [
         # Cost Report lambda function
-        "arn:aws:iam::${var.accounts.management.id}:role/bb-root-cost-report"
+        "arn:aws:iam::${var.accounts.management.id}:role/bb-management-cost-report"
       ]
     }
   }
