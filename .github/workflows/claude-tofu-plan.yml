@@ -1,0 +1,191 @@
+name: Claude OpenTofu Plan Analysis
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "management/**/*.tf"
+      - "security/**/*.tf"
+      - "network/**/*.tf"
+      - "shared/**/*.tf"
+      - "apps-devstg/**/*.tf"
+      - "apps-prd/**/*.tf"
+      - "data-science/**/*.tf"
+
+jobs:
+  tofu-plan-analysis:
+    timeout-minutes: 30
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history to detect changed files
+
+      - name: Detect changed OpenTofu layers
+        id: detect-layers
+        run: |
+          echo "Detecting changed OpenTofu layers..."
+
+          # Get changed .tf files in the PR
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.tf$' || true)
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No .tf files changed"
+            echo "layers=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Extract unique layer directories (account/region/layer)
+          LAYERS=$(echo "$CHANGED_FILES" | grep -E '^[^/]+/[^/]+/[^/]+/' | sed -E 's|^([^/]+/[^/]+/[^/]+)/.*|\1|' | sort -u)
+
+          if [ -z "$LAYERS" ]; then
+            echo "No valid layer directories detected"
+            echo "layers=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Changed layers:"
+          echo "$LAYERS"
+
+          # Convert to JSON array for matrix
+          LAYERS_JSON=$(echo "$LAYERS" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "layers=$LAYERS_JSON" >> $GITHUB_OUTPUT
+
+      - name: Setup Docker for Leverage CLI
+        if: steps.detect-layers.outputs.layers != ''
+        run: |
+          docker --version
+          docker pull binbash/leverage-toolbox:latest
+
+      - name: Configure AWS credentials (if needed)
+        if: steps.detect-layers.outputs.layers != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: us-east-1
+        continue-on-error: true  # Allow workflow to continue even if AWS auth fails
+
+      - name: Run leverage tofu plan for changed layers
+        if: steps.detect-layers.outputs.layers != ''
+        id: tofu-plan
+        run: |
+          echo "Running leverage tofu plan for changed layers..."
+
+          LAYERS='${{ steps.detect-layers.outputs.layers }}'
+
+          # Create output file for plan results
+          PLAN_OUTPUT_FILE="/tmp/tofu-plan-output.txt"
+          > "$PLAN_OUTPUT_FILE"
+
+          echo "$LAYERS" | jq -r '.[]' | while read -r layer; do
+            echo "========================================" | tee -a "$PLAN_OUTPUT_FILE"
+            echo "Layer: $layer" | tee -a "$PLAN_OUTPUT_FILE"
+            echo "========================================" | tee -a "$PLAN_OUTPUT_FILE"
+
+            if [ ! -d "$layer" ]; then
+              echo "ERROR: Layer directory not found: $layer" | tee -a "$PLAN_OUTPUT_FILE"
+              continue
+            fi
+
+            cd "$layer"
+
+            # Initialize if needed
+            echo "Running leverage tf init..." | tee -a "$PLAN_OUTPUT_FILE"
+            if ! leverage tf init -input=false >> "$PLAN_OUTPUT_FILE" 2>&1; then
+              echo "WARNING: Init failed for $layer" | tee -a "$PLAN_OUTPUT_FILE"
+            fi
+
+            # Run plan
+            echo "Running leverage tf plan..." | tee -a "$PLAN_OUTPUT_FILE"
+            if leverage tf plan -input=false -no-color >> "$PLAN_OUTPUT_FILE" 2>&1; then
+              echo "Plan completed successfully for $layer" | tee -a "$PLAN_OUTPUT_FILE"
+            else
+              echo "WARNING: Plan failed for $layer" | tee -a "$PLAN_OUTPUT_FILE"
+            fi
+
+            cd - > /dev/null
+            echo "" | tee -a "$PLAN_OUTPUT_FILE"
+          done
+
+          # Save plan output as artifact and for next step
+          echo "plan-file=$PLAN_OUTPUT_FILE" >> $GITHUB_OUTPUT
+
+          # Display summary
+          echo "Plan execution completed. Output saved to $PLAN_OUTPUT_FILE"
+        continue-on-error: true  # Continue to AI analysis even if some plans fail
+
+      - name: Upload plan output as artifact
+        if: steps.detect-layers.outputs.layers != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: tofu-plan-output
+          path: /tmp/tofu-plan-output.txt
+          retention-days: 30
+
+      - name: AI Analysis of OpenTofu Plan
+        if: steps.detect-layers.outputs.layers != ''
+        uses: anthropics/claude-code-action@v1.0.0
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            ## OPENTOFU PLAN ANALYSIS WITH INTELLIGENT AGENT ROUTING
+
+            You are Claude Code performing AI-driven analysis of OpenTofu plan outputs for the Binbash Leverage Reference Architecture.
+
+            ### YOUR TASK
+
+            1. **Read the plan output**: The file `/tmp/tofu-plan-output.txt` contains the output of `leverage tofu plan` for all changed layers.
+
+            2. **Analyze each layer's plan**:
+               - Resource changes (additions, modifications, deletions)
+               - Potential security implications
+               - Breaking changes or risky operations
+               - Cost implications (if visible)
+               - Compliance with infrastructure best practices
+
+            3. **Select appropriate specialized agent** based on the layers and changes:
+               - **security-compliance**: For security-related changes, IAM, KMS, secrets
+               - **cost-optimization**: For resource sizing, cost-impacting changes
+               - **terraform-layer**: For general infrastructure changes
+               - **feature-implementation**: For new resources or capabilities
+               - **issue-fix**: For fixes to existing infrastructure
+
+            4. **Delegate to specialized agent** using the Task tool:
+               ```
+               Task tool with subagent_type: [selected-agent]
+               prompt: "Analyze the OpenTofu plan output in /tmp/tofu-plan-output.txt. Provide:
+
+               - **Summary**: High-level overview of changes across all layers
+               - **Security Analysis**: Any security concerns or improvements
+               - **Risk Assessment**: Rate changes as low/medium/high risk
+               - **Breaking Changes**: Identify any destructive or breaking changes
+               - **Recommendations**: Suggestions for safer deployment
+               - **Approval Status**: Recommend approve/request changes/needs review
+
+               Format your analysis clearly and post it as a comment on the PR using 'gh pr comment'."
+               ```
+
+            5. **If plan execution failed**: Analyze error messages and provide troubleshooting guidance.
+
+            ### IMPORTANT NOTES
+            - Focus on actionable insights
+            - Highlight any resources that will be destroyed or replaced
+            - Flag changes that require manual intervention
+            - Consider multi-account and cross-layer dependencies
+            - Be constructive and specific in recommendations
+
+            Begin by reading the plan output, then select and delegate to the appropriate specialized agent.
+
+          claude_args: |
+            --max-turns 20
+            --allowed-tools "Bash(gh pr comment:*),Bash(gh pr view:*),Bash(cat:*),Bash(grep:*),Bash(find:*)"

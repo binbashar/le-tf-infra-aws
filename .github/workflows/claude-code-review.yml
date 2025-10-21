@@ -3,12 +3,9 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+    # Only run on SSO layer changes for AI-driven analysis
+    paths:
+      - "management/global/sso/**"
 
 jobs:
   claude-review:
@@ -42,40 +39,45 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
-            ## INTELLIGENT AGENT ROUTING FOR PR REVIEW
+            ## AI-DRIVEN PR ANALYSIS FOR SSO LAYER
 
-            You are Claude Code with access to specialized agents for the Binbash Leverage Reference Architecture.
+            You are Claude Code performing AI-driven analysis of pull requests affecting the SSO layer (management/global/sso/).
+
+            **IMPORTANT**: This workflow performs ONLY static AI analysis. DO NOT execute any infrastructure commands like `leverage tofu plan`.
+            Infrastructure testing is handled by a separate workflow.
 
             ### STEP 1: ANALYZE PR CONTEXT
             Examine this Pull Request and identify:
-            - **Files changed**: Look at file paths and directories
-            - **Layer types**: security-*, cost-*, k8s-*, databases-*, base-*, etc.
+            - **Files changed**: Look at file paths and directories in management/global/sso/
+            - **SSO configuration changes**: Permission sets, assignments, policies
+            - **Security implications**: IAM changes, access control modifications
             - **Keywords**: In PR title, description, and file contents
             - **Change type**: New feature, bug fix, documentation, dependency update, etc.
 
             ### STEP 2: SELECT SPECIALIZED AGENT
-            Based on your analysis, choose the most appropriate agent:
+            Based on your analysis, choose the most appropriate agent for SSO-related changes:
 
-            - **security-compliance**: Security layers, secrets-manager, iam, kms, compliance, certificates
-            - **cost-optimization**: Cost analysis, billing, infracost, resource optimization, tagging
-            - **terraform-layer**: General infrastructure, .tf files, layer operations, networking, databases
-            - **feature-implementation**: New features, enhancements, capability development
-            - **issue-fix**: Bug fixes, error resolution, troubleshooting, patches
-            - **documentation**: .md files, README, guides, documentation updates
-            - **dependency-update**: Version updates, renovate, security patches, module updates
+            - **security-compliance**: SSO permission sets, IAM policies, access control, security configurations (PREFERRED for SSO changes)
+            - **terraform-layer**: General .tf file changes, resource definitions, module configurations
+            - **feature-implementation**: New SSO features, permission sets, group assignments
+            - **issue-fix**: Bug fixes, access issues, configuration errors
+            - **documentation**: .md files, README, deployment guides
+            - **dependency-update**: Module version updates, provider updates
 
             ### STEP 3: DELEGATE TO SPECIALIZED AGENT
             Use the Task tool to delegate the PR review to your selected agent:
 
             ```
             Task tool with subagent_type: [selected-agent]
-            prompt: "Please review this pull request with your specialized expertise. Provide feedback on:
-            - Code quality and best practices for your domain
-            - Potential issues or security concerns
-            - Performance and optimization opportunities
-            - Compliance with established patterns
-            - Test coverage and validation needs
-            - Integration considerations
+            prompt: "Please review this SSO layer pull request with your specialized expertise. Focus on:
+            - **Security implications**: IAM permissions, access control, least privilege principle
+            - **SSO best practices**: Permission set design, group assignments, session duration
+            - **Code quality**: OpenTofu/Terraform best practices, variable usage, module structure
+            - **Compliance**: Adherence to Leverage Reference Architecture patterns
+            - **Documentation**: Clear comments, deployment notes, breaking changes
+            - **Integration considerations**: Cross-account access, dependent services
+
+            **IMPORTANT**: This is STATIC ANALYSIS ONLY. Do NOT execute any infrastructure commands.
 
             Use the repository's CLAUDE.md for guidance on conventions. Be constructive and provide specific, actionable feedback.
 
@@ -85,15 +87,12 @@ jobs:
             ### STEP 4: PROVIDE REASONING
             Briefly explain why you selected that specific agent based on your context analysis.
 
-            ### REFERENCE GUIDE
-            Refer to `.claude/docs/agent-guide.md` for detailed agent selection criteria and examples.
-
             ### AGENT SELECTION EXAMPLES
-            - PR modifying `apps-devstg/us-east-1/secrets-manager/` → Use `security-compliance`
-            - PR with infracost changes or cost optimization → Use `cost-optimization`
-            - PR with general .tf infrastructure changes → Use `terraform-layer`
-            - PR fixing bugs or errors → Use `issue-fix`
-            - PR updating documentation → Use `documentation`
+            - SSO permission set changes → Use `security-compliance`
+            - General SSO .tf file updates → Use `terraform-layer`
+            - New SSO groups or roles → Use `feature-implementation`
+            - SSO configuration fixes → Use `issue-fix`
+            - SSO documentation updates → Use `documentation`
 
             Begin with context analysis, then select and delegate to the appropriate specialized agent.
 
