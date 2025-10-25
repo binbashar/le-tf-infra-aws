@@ -215,7 +215,7 @@ def generate_html_table(account_name, cost_data, ce_client, start_date_str, end_
 
         # Add cost columns for each tag, or an empty cell if the tag doesn't exist for this service
         for tag_key, tag_value in tags.items():
-            tag_cost = get_tag_cost(ce_client, ACCOUNTS[account_name]['id'], start_date_str, end_date_str, tag_key, tag_value)
+            tag_cost = get_cost_data(ce_client, ACCOUNTS[account_name]['id'], start_date_str, end_date_str, tag_key, tag_value)
             tag_cost_amount = sum(Decimal(group['Metrics']['UnblendedCost']['Amount']) for group in tag_cost)
             row.append(f'<td style="text-align:right;">${tag_cost_amount:.2f}</td>')
             total_tag_costs[tag_key] += tag_cost_amount
@@ -347,7 +347,7 @@ def lambda_handler(event, context):
         # Loop through each tag and fetch cost data
         try:
             for tag_key, tag_value in tags.items():
-                tag_cost_data = get_tag_cost(ce_client, account_info['id'], start_date_str, end_date_str, tag_key, tag_value)
+                tag_cost_data = get_cost_data(ce_client, account_info['id'], start_date_str, end_date_str, tag_key, tag_value)
                 tag_cost = sum(Decimal(group['Metrics']['UnblendedCost']['Amount']) for group in tag_cost_data)
                 tag_costs[account_name] = tag_cost
         except Exception as e:
@@ -392,39 +392,33 @@ def lambda_handler(event, context):
     if failed_accounts:
         logger.warning(f"Failed to process {len(failed_accounts)} account(s): {', '.join(failed_accounts)}")
 
-    # Only send email if we have at least one successful table
-    if aggregated_html_tables:
-        # Add failure notice to email if some accounts failed
-        failure_notice = ""
-        if failed_accounts:
-            failure_notice = f"<div style='background-color: #fff3cd; padding: 15px; margin-bottom: 20px; border: 1px solid #ffc107;'>" \
-                           f"<strong>Warning:</strong> Failed to retrieve cost data for the following account(s): {', '.join(failed_accounts)}" \
-                           f"</div>"
+    # Check if we have at least one successful table
+    if not aggregated_html_tables:
+        error_msg = f"Failed to process all {len(failed_accounts)} accounts: {', '.join(failed_accounts)}"
+        logger.error(error_msg)
+        raise Exception(error_msg)
 
-        # Send a single email containing all the tables
-        subject = 'AWS Cost Summary Report'
-        body = f'<html><body>{failure_notice}' + ''.join(aggregated_html_tables) + '</body></html>'
+    # Add failure notice to email if some accounts failed
+    failure_notice = ""
+    if failed_accounts:
+        failure_notice = f"<div style='background-color: #fff3cd; padding: 15px; margin-bottom: 20px; border: 1px solid #ffc107;'>" \
+                       f"<strong>Warning:</strong> Failed to retrieve cost data for the following account(s): {', '.join(failed_accounts)}" \
+                       f"</div>"
 
-        for recipient in RECIPIENTS:
-            send_email(subject, body, recipient)
+    # Send a single email containing all the tables
+    subject = 'AWS Cost Summary Report'
+    body = f'<html><body>{failure_notice}' + ''.join(aggregated_html_tables) + '</body></html>'
 
-        logger.info("Email sent successfully")
-        return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'message': 'Email sent successfully',
-                'processed_accounts': len(aggregated_html_tables),
-                'failed_accounts': len(failed_accounts),
-                'failed_account_names': failed_accounts
-            })
-        }
-    else:
-        logger.error("No accounts were successfully processed. Email not sent.")
-        return {
-            'statusCode': 500,
-            'body': json.dumps({
-                'message': 'Failed to process any accounts',
-                'failed_accounts': len(failed_accounts),
-                'failed_account_names': failed_accounts
-            })
-        }
+    for recipient in RECIPIENTS:
+        send_email(subject, body, recipient)
+
+    logger.info("Email sent successfully")
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+            'message': 'Email sent successfully',
+            'processed_accounts': len(aggregated_html_tables),
+            'failed_accounts': len(failed_accounts),
+            'failed_account_names': failed_accounts
+        })
+    }
