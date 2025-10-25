@@ -93,6 +93,7 @@ data "aws_iam_policy_document" "devops" {
       "servicequotas:*",
       "ses:*",
       "shield:*",
+      "synthetics:*",
       "sns:*",
       "sqlworkbench:*",
       "sqs:*",
@@ -229,6 +230,7 @@ data "aws_iam_policy_document" "data_scientist" {
       "airflow:*",
       "athena:*",
       "apigateway:*",
+      "application-signals:*",
       "aoss:*",
       "autoscaling:*",
       "aws-marketplace:*",
@@ -238,8 +240,11 @@ data "aws_iam_policy_document" "data_scientist" {
       "ce:*",
       "cloudformation:*",
       "cloudshell:*",
+      "cloudtrail:*",
       "cloudwatch:*",
+      "codebuild:*",
       "cognito-identity:*",
+      "codebuild:*",
       "cognito-idp:*",
       "config:*",
       "ds:*",
@@ -287,6 +292,7 @@ data "aws_iam_policy_document" "data_scientist" {
       "support:*",
       "tag:*",
       "transcribe:*",
+      "xray:*"
     ]
     resources = ["*"]
     condition {

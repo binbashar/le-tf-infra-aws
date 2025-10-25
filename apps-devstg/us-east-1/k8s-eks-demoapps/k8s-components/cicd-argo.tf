@@ -123,7 +123,7 @@ resource "helm_release" "argo_rollouts" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-rollouts"
-  version    = "2.40.4"
+  version    = "2.40.5"
   values = [
     templatefile("chart-values/argo-rollouts.yaml", {
       enableDashboard = var.argocd.rollouts.dashboard.enabled,

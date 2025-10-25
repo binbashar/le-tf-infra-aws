@@ -1,5 +1,5 @@
 module "secrets" {
-  source = "github.com/binbashar/terraform-aws-secrets-manager.git?ref=0.11.5"
+  source = "github.com/binbashar/terraform-aws-secrets-manager.git?ref=0.13.0"
 
   secrets = {
     # NOTE: Fields annotated with "#@" must be commented out in the first step, when the database is not yet deployed

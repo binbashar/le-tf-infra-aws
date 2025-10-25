@@ -1,5 +1,5 @@
 module "secrets" {
-  source = "github.com/binbashar/terraform-aws-secrets-manager.git?ref=0.11.5"
+  source = "github.com/binbashar/terraform-aws-secrets-manager.git?ref=0.13.0"
 
   # The secret management is handled via AWS Console
   unmanaged = true
