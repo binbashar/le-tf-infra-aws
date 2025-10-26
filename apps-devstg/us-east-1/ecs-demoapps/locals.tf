@@ -6,9 +6,9 @@ locals {
 
   # ✅ SINGLE SOURCE OF TRUTH - Define service structure once
   service_definitions = {
-    emojivoto = {
-      cpu    = 2048
-      memory = 8192
+    emojivoto-web = {
+      cpu    = 1024
+      memory = 4096
 
       containers = {
         web = {
@@ -17,46 +17,14 @@ locals {
           memory = 2048
 
           environment = {
-            WEB_PORT       = local.routing.emojivoto.web.port
-            EMOJISVC_HOST  = "localhost:${local.routing.emojivoto.emoji-api.port}"
-            VOTINGSVC_HOST = "localhost:${local.routing.emojivoto.voting-api.port}"
+            WEB_PORT       = 8080
+            EMOJISVC_HOST  = "localhost:8082"
+            VOTINGSVC_HOST = "localhost:8081"
             INDEX_BUNDLE   = "dist/index_bundle.js"
           }
 
           ports = {
-            http = local.routing.emojivoto.web.port
-          }
-        }
-
-        voting-api = {
-          image  = "523857393444.dkr.ecr.us-east-1.amazonaws.com/demo-emojivoto/voting-svc"
-          cpu    = 512
-          memory = 2048
-
-          environment = {
-            GRPC_PORT = local.routing.emojivoto.voting-api.port
-            PROM_PORT = 8801
-          }
-
-          ports = {
-            grpc-voting = local.routing.emojivoto.voting-api.port
-            prom-voting = 8801
-          }
-        }
-
-        emoji-api = {
-          image  = "523857393444.dkr.ecr.us-east-1.amazonaws.com/demo-emojivoto/emoji-svc"
-          cpu    = 512
-          memory = 2048
-
-          environment = {
-            GRPC_PORT = local.routing.emojivoto.emoji-api.port
-            PROM_PORT = 8802
-          }
-
-          ports = {
-            grpc-emoji = local.routing.emojivoto.emoji-api.port
-            prom-emoji = 8802
+            http = 8080
           }
         }
 
@@ -66,7 +34,7 @@ locals {
           memory = 2048
 
           environment = {
-            WEB_HOST = "localhost:${local.routing.emojivoto.web.port}"
+            WEB_HOST = "localhost:8080"
           }
 
           entrypoint = ["emojivoto-vote-bot"]
@@ -77,6 +45,52 @@ locals {
           }]
 
           essential = false
+        }
+      }
+    }
+    emojivoto-svc = {
+      cpu    = 512
+      memory = 2048
+
+      containers = {
+
+        voting-api = {
+          image  = "523857393444.dkr.ecr.us-east-1.amazonaws.com/demo-emojivoto/voting-svc"
+          cpu    = 512
+          memory = 2048
+
+          environment = {
+            GRPC_PORT = 8081
+            PROM_PORT = 8801
+          }
+
+          ports = {
+            grpc-voting = 8081
+            prom-voting = 8801
+          }
+        }
+      }
+    }
+    emojivoto-api = {
+      cpu    = 512
+      memory = 2048
+
+      containers = {
+
+        emoji-api = {
+          image  = "523857393444.dkr.ecr.us-east-1.amazonaws.com/demo-emojivoto/emoji-svc"
+          cpu    = 512
+          memory = 2048
+
+          environment = {
+            GRPC_PORT = 8082
+            PROM_PORT = 8802
+          }
+
+          ports = {
+            grpc-emoji = 8082
+            prom-emoji = 8802
+          }
         }
       }
     }
@@ -96,7 +110,7 @@ locals {
   parameter_paths = { for item in local.container_parameters : item.key => item.path }
 
   routing = {
-    emojivoto = {
+    emojivoto-web = {
       web = {
         subdomain = "emojivoto.ecs"
         port      = 8080
@@ -104,11 +118,15 @@ locals {
           matcher = "200-404"
         }
       }
+    }
+    emojivoto-svc = {
       voting-api = {
         subdomain        = "emojivoto-voting.ecs"
         port             = 8081
         protocol_version = "GRPC"
       }
+    }
+    emojivoto-api = {
       emoji-api = {
         subdomain        = "emojivoto-emoji.ecs"
         port             = 8082
@@ -117,6 +135,99 @@ locals {
     }
   }
   target_groups = merge(flatten([for service, tasks in local.routing : [tasks]])...)
+
+  # All possible listeners defined
+  all_listeners = {
+    http-https-redirect = {
+      port     = 80
+      protocol = "HTTP"
+      redirect = {
+        port        = 443
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+    https = {
+      port            = 443
+      protocol        = "HTTPS"
+      ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
+      certificate_arn = data.terraform_remote_state.certs.outputs.certificate_arn
+
+      rules = { for container_name, container_values in local.target_groups :
+        container_name => {
+          actions = [
+            {
+              forward = {
+                target_group_key = container_name
+              }
+            }
+          ]
+
+          conditions = [
+            {
+              host_header = {
+                values = ["${container_values.subdomain}.${local.base_domain}"]
+              }
+            }
+          ]
+        }
+      }
+      fixed_response = {
+        content_type = "text/plain"
+        message_body = "Not Found"
+        status_code  = "404"
+      }
+    }
+    test-http-https-redirect = {
+      enabled  = var.ecs_deployment_type == "BLUE_GREEN"
+      port     = 8080
+      protocol = "HTTP"
+      redirect = {
+        port        = 8443
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+    test-https = {
+      enabled         = var.ecs_deployment_type == "BLUE_GREEN"
+      port            = 8443
+      protocol        = "HTTPS"
+      ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
+      certificate_arn = data.terraform_remote_state.certs.outputs.certificate_arn
+
+      rules = { for container_name, container_values in local.target_groups :
+        "${container_name}-test" => {
+          actions = [
+            {
+              forward = {
+                target_group_key = "${container_name}-bg"
+              }
+            }
+          ]
+
+          conditions = [
+            {
+              host_header = {
+                values = ["${container_values.subdomain}.${local.base_domain}"]
+              }
+            }
+          ]
+        }
+      }
+      fixed_response = {
+        content_type = "text/plain"
+        message_body = "Not Found"
+        status_code  = "404"
+      }
+    }
+  }
+
+  # Filter listeners based on enabled flag
+  alb_listeners = {
+    for name, config in local.all_listeners :
+    name => { for k, v in config : k => v if k != "enabled" }
+    if try(config.enabled, true)
+  }
 
   tags = {
     Terraform   = "true"

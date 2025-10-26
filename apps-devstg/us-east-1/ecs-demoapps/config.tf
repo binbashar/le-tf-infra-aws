@@ -16,10 +16,10 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = "~> 1.3"
+  required_version = "~> 1.9"
 
   required_providers {
-    aws = "~> 5.0"
+    aws = "~> 6.14"
   }
 
   backend "s3" {
