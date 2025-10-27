@@ -1,3 +1,4 @@
+/*
 locals {
   tags = {
     Terraform   = "true"
@@ -182,3 +183,4 @@ locals {
     ]
   ])
 }
+*/
