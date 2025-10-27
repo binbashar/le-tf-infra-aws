@@ -1,4 +1,4 @@
-# VPC Configuration using Terraform Objects
+# VPC Configuration
 
 This module provides a simplified abstraction layer for configuring AWS VPCs using the `terraform-aws-modules/vpc/aws` module. This configuration uses 8 structured object types that group related settings logically.
 
