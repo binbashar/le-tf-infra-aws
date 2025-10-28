@@ -239,7 +239,7 @@ jobs:
         run: |
           TOFU_VERSION="1.8.7"
           wget -q "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
-          unzip -q tofu_${TOFU_VERSION}_linux_amd64.zip
+          unzip -qo tofu_${TOFU_VERSION}_linux_amd64.zip
           sudo mv tofu /usr/local/bin/
           sudo chmod +x /usr/local/bin/tofu
           tofu version
@@ -476,7 +476,7 @@ jobs:
         run: |
           TOFU_VERSION="1.8.7"
           wget -q "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
-          unzip -q tofu_${TOFU_VERSION}_linux_amd64.zip
+          unzip -qo tofu_${TOFU_VERSION}_linux_amd64.zip
           sudo mv tofu /usr/local/bin/
           sudo chmod +x /usr/local/bin/tofu
           tofu version
