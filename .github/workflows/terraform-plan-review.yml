@@ -65,6 +65,8 @@ jobs:
     steps:
       - name: Check trigger and command
         id: check
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           echo "Event: ${{ github.event_name }}"
 
@@ -84,7 +86,7 @@ jobs:
               exit 0
             fi
 
-            COMMENT="${{ github.event.comment.body }}"
+            COMMENT="$COMMENT_BODY"
             PR_NUMBER="${{ github.event.issue.number }}"
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
