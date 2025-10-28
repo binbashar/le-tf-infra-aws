@@ -1,0 +1,584 @@
+name: Terraform Plan Review
+
+# Atlantis/Gitops Replacement:
+# - Automatic: Run terraform plan on PR with *.tf changes
+# - Manual: Run plan/apply via comment commands
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.tf'
+      - '**/*.tfvars'
+      - '**/*.hcl'
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  # Job 1: Determine what action to take based on trigger
+  determine-action:
+    name: Determine Action
+    runs-on: ubuntu-latest
+    outputs:
+      should_plan: ${{ steps.check.outputs.should_plan }}
+      should_apply: ${{ steps.check.outputs.should_apply }}
+      pr_number: ${{ steps.check.outputs.pr_number }}
+    steps:
+      - name: Check trigger and command
+        id: check
+        run: |
+          echo "Event: ${{ github.event_name }}"
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # Automatic plan on PR updates
+            echo "should_plan=true" >> $GITHUB_OUTPUT
+            echo "should_apply=false" >> $GITHUB_OUTPUT
+            echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "✅ Trigger: PR update → Will run automatic plan"
+
+          elif [[ "${{ github.event_name }}" == "issue_comment" ]]; then
+            # Check if comment is on a PR
+            if [[ "${{ github.event.issue.pull_request }}" == "" ]]; then
+              echo "should_plan=false" >> $GITHUB_OUTPUT
+              echo "should_apply=false" >> $GITHUB_OUTPUT
+              echo "⚠️ Comment is not on a PR, skipping"
+              exit 0
+            fi
+
+            COMMENT="${{ github.event.comment.body }}"
+            PR_NUMBER="${{ github.event.issue.number }}"
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+            # Parse command
+            if [[ "$COMMENT" =~ ^/terraform[[:space:]]+plan ]]; then
+              echo "should_plan=true" >> $GITHUB_OUTPUT
+              echo "should_apply=false" >> $GITHUB_OUTPUT
+              echo "✅ Command: /terraform plan → Will run manual plan"
+
+            elif [[ "$COMMENT" =~ ^/terraform[[:space:]]+apply ]]; then
+              echo "should_plan=true" >> $GITHUB_OUTPUT
+              echo "should_apply=true" >> $GITHUB_OUTPUT
+              echo "✅ Command: /terraform apply → Will run plan + apply"
+
+            else
+              echo "should_plan=false" >> $GITHUB_OUTPUT
+              echo "should_apply=false" >> $GITHUB_OUTPUT
+              echo "⚠️ Not a /terraform command, skipping"
+            fi
+          fi
+
+  # Job 2: Setup shared environment
+  setup-environment:
+    name: Setup Environment
+    needs: determine-action
+    if: needs.determine-action.outputs.should_plan == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      python-version: ${{ steps.setup.outputs.python-version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        id: setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.leverage-venv
+          key: ${{ runner.os }}-leverage-${{ hashFiles('build.env') }}
+          restore-keys: |
+            ${{ runner.os }}-leverage-
+
+  # Job 3: Detect changed Terraform layers
+  detect-layers:
+    name: Detect Changed Layers
+    needs: [determine-action, setup-environment]
+    if: needs.determine-action.outputs.should_plan == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      layers: ${{ steps.detect.outputs.layers }}
+      has-layers: ${{ steps.detect.outputs.has-layers }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR information
+        id: pr-info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr_number = ${{ needs.determine-action.outputs.pr_number }};
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number
+            });
+
+            core.setOutput('base_sha', pr.base.sha);
+            core.setOutput('head_sha', pr.head.sha);
+
+      - name: Detect Changed Layers
+        id: detect
+        run: |
+          BASE_REF="${{ steps.pr-info.outputs.base_sha }}"
+          HEAD_REF="${{ steps.pr-info.outputs.head_sha }}"
+
+          echo "Analyzing changes between $BASE_REF and $HEAD_REF"
+
+          # Get list of changed files
+          CHANGED_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF")
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Extract layer directories (pattern: account/region/layer/)
+          CHANGED_LAYERS=$(echo "$CHANGED_FILES" | \
+            grep -E '^[^/]+/[^/]+/[^/]+/' | \
+            sed -E 's|(^[^/]+/[^/]+/[^/]+)/.*|\1|' | \
+            sort -u)
+
+          echo "Potential layers:"
+          echo "$CHANGED_LAYERS"
+
+          # Validate each layer has config.tf
+          VALID_LAYERS=""
+          for layer in $CHANGED_LAYERS; do
+            if [[ -f "$layer/config.tf" ]]; then
+              echo "✓ Valid layer: $layer"
+              VALID_LAYERS="$VALID_LAYERS $layer"
+            else
+              echo "✗ Skipping (no config.tf): $layer"
+            fi
+          done
+
+          # Convert to JSON array for matrix
+          if [[ -n "$VALID_LAYERS" ]]; then
+            LAYERS_JSON=$(echo "$VALID_LAYERS" | tr ' ' '\n' | grep -v '^$' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            echo "layers=$LAYERS_JSON" >> $GITHUB_OUTPUT
+            echo "has-layers=true" >> $GITHUB_OUTPUT
+            echo "Found layers for analysis:"
+            echo "$LAYERS_JSON" | jq .
+          else
+            echo "layers=[]" >> $GITHUB_OUTPUT
+            echo "has-layers=false" >> $GITHUB_OUTPUT
+            echo "No Terraform layers changed in this PR"
+          fi
+
+  # Job 4: Run Terraform plan for each changed layer
+  run-terraform-plan:
+    name: Plan (${{ matrix.layer }})
+    needs: [determine-action, setup-environment, detect-layers]
+    if: needs.detect-layers.outputs.has-layers == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        layer: ${{ fromJSON(needs.detect-layers.outputs.layers) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ needs.setup-environment.outputs.python-version }}
+
+      - name: Install OpenTofu
+        run: |
+          TOFU_VERSION="1.8.7"
+          wget -q "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
+          unzip -q tofu_${TOFU_VERSION}_linux_amd64.zip
+          sudo mv tofu /usr/local/bin/
+          sudo chmod +x /usr/local/bin/tofu
+          tofu version
+
+      - name: Install Leverage CLI
+        run: |
+          python3 -m venv ~/.leverage-venv
+          source ~/.leverage-venv/bin/activate
+          pip install --upgrade pip
+          pip install leverage==2.2.0rc0
+          echo "$HOME/.leverage-venv/bin" >> $GITHUB_PATH
+          leverage --version
+
+      - name: Verify Required Binaries
+        run: |
+          echo "Verifying system binaries for dockerless Leverage CLI..."
+          if ! command -v tofu &> /dev/null; then
+            echo "❌ OpenTofu (tofu) not found"
+            exit 1
+          fi
+          if ! command -v aws &> /dev/null; then
+            echo "❌ AWS CLI not found"
+            exit 1
+          fi
+          echo "✅ OpenTofu: $(tofu version | head -1)"
+          echo "✅ AWS CLI: $(aws --version)"
+          echo "✅ Leverage: $(leverage --version)"
+
+      - name: Configure AWS Credentials
+        run: |
+          mkdir -p ~/.aws/bb
+
+          # Configure AWS profile for cross-account access
+          aws configure set region us-east-1 --profile bb-apps-devstg-devops
+          aws configure set output json --profile bb-apps-devstg-devops
+          aws configure set role_arn arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
+          aws configure set source_profile bb-deploymaster --profile bb-apps-devstg-devops
+
+          # Create credentials file
+          cat << EOF > ~/.aws/credentials
+          [bb-deploymaster]
+          aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          EOF
+
+          cp ~/.aws/credentials ~/.aws/bb/
+          cp ~/.aws/config ~/.aws/bb/
+
+          # Set environment variables
+          echo "AWS_CONFIG_FILE=$HOME/.aws/bb/config" >> $GITHUB_ENV
+          echo "AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/bb/credentials" >> $GITHUB_ENV
+          echo "AWS_PROFILE=bb-apps-devstg-devops" >> $GITHUB_ENV
+
+      - name: Configure Build Environment
+        run: |
+          # Disable MFA for CI/CD
+          sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env || echo "MFA_ENABLED=false" >> build.env
+
+          # Note: TERRAFORM_IMAGE_TAG removed - obsolete for dockerless Leverage CLI v2.2.0+
+
+      - name: Run Terraform Init
+        working-directory: ${{ matrix.layer }}
+        timeout-minutes: 5
+        run: |
+          source ~/.leverage-venv/bin/activate
+          echo "Initializing layer: ${{ matrix.layer }}"
+          leverage tofu init -no-color
+
+      - name: Run Terraform Plan
+        working-directory: ${{ matrix.layer }}
+        timeout-minutes: 10
+        run: |
+          source ~/.leverage-venv/bin/activate
+          echo "Running plan for layer: ${{ matrix.layer }}"
+
+          # Run plan and save to file (for apply) and display output
+          leverage tofu plan -no-color -input=false -out=tfplan.bin 2>&1 | tee plan-output.txt
+
+      - name: Extract Resource Types
+        id: resources
+        working-directory: ${{ matrix.layer }}
+        run: |
+          # Extract resource types from plan output
+          if [[ -f plan-output.txt ]]; then
+            RESOURCE_TYPES=$(grep -E '^\s+#\s+(aws_|azurerm_|google_)' plan-output.txt | \
+              sed -E 's/.*#\s+([a-z_]+)\..*/\1/' | \
+              sort -u | \
+              tr '\n' ',' | \
+              sed 's/,$//')
+
+            echo "resource-types=$RESOURCE_TYPES" >> $GITHUB_OUTPUT
+            echo "Detected resource types: $RESOURCE_TYPES"
+          else
+            echo "resource-types=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload Plan Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: plan-${{ matrix.layer }}
+          path: |
+            ${{ matrix.layer }}/plan-output.txt
+            ${{ matrix.layer }}/tfplan.bin
+          retention-days: 7
+
+  # Job 5: AI-powered plan analysis
+  ai-analyze-plan:
+    name: AI Plan Analysis
+    needs: [determine-action, detect-layers, run-terraform-plan]
+    if: needs.detect-layers.outputs.has-layers == 'true'
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Plan Outputs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: plan-*
+          path: plans/
+
+      - name: Run Claude Code Plan Analysis
+        id: claude-analysis
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            ## TERRAFORM PLAN ANALYSIS WITH AI-POWERED ROUTING
+
+            You are Claude Code analyzing Terraform plan outputs for infrastructure changes.
+
+            ### CONTEXT:
+            - **PR**: #${{ needs.determine-action.outputs.pr_number }}
+            - **Changed Layers**: ${{ needs.detect-layers.outputs.layers }}
+            - **Plan Outputs**: Available in `plans/` directory
+
+            ### YOUR TASK:
+
+            #### STEP 1: ANALYZE PLANS
+            1. Read all plan outputs from `plans/` directory
+            2. For each layer, identify:
+               - Resources being created (+), modified (~), or destroyed (-)
+               - Resource types (aws_secretsmanager_*, aws_iam_*, etc.)
+               - Security configurations (IAM policies, encryption, access)
+               - Cost implications
+
+            #### STEP 2: INTELLIGENT ROUTING
+            Based on layer paths AND resource types, select the appropriate agent:
+
+            - **security-compliance**: Security, secrets, IAM, KMS, compliance
+            - **cost-optimization**: Cost analysis, resource sizing
+            - **terraform-layer**: General infrastructure, networking, databases
+            - **feature-implementation**: New features, significant changes
+            - **dependency-update**: Module/provider version updates
+
+            #### STEP 3: DELEGATE TO AGENT
+            Use Task tool with your selected subagent_type to perform deep analysis.
+
+            Provide the agent with:
+            - Changed layer paths
+            - Plan output summaries
+            - Resource types modified
+            - Security/compliance focus areas
+
+            The agent should post comprehensive analysis as a PR comment using:
+            ```
+            gh pr comment ${{ needs.determine-action.outputs.pr_number }} --body '[analysis]'
+            ```
+
+            #### STEP 4: EXPLAIN ROUTING
+            Document why you selected that agent based on:
+            - Layer path patterns
+            - Resource types
+            - Security implications
+
+            Begin analysis now.
+
+          claude_args: '--allowed-tools "Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Read(plans/**)"'
+
+  # Job 6: Run Terraform apply (manual only)
+  run-terraform-apply:
+    name: Apply (${{ matrix.layer }})
+    needs: [determine-action, detect-layers, run-terraform-plan]
+    if: |
+      needs.determine-action.outputs.should_apply == 'true' &&
+      needs.detect-layers.outputs.has-layers == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        layer: ${{ fromJSON(needs.detect-layers.outputs.layers) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check permissions
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: user } = await github.rest.users.getByUsername({
+              username: context.actor
+            });
+
+            const { data: collaborator } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.actor
+            });
+
+            if (!['admin', 'write'].includes(collaborator.permission)) {
+              core.setFailed(`User ${context.actor} does not have permission to apply changes`);
+            }
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install OpenTofu
+        run: |
+          TOFU_VERSION="1.8.7"
+          wget -q "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
+          unzip -q tofu_${TOFU_VERSION}_linux_amd64.zip
+          sudo mv tofu /usr/local/bin/
+          sudo chmod +x /usr/local/bin/tofu
+          tofu version
+
+      - name: Install Leverage CLI
+        run: |
+          python3 -m venv ~/.leverage-venv
+          source ~/.leverage-venv/bin/activate
+          pip install --upgrade pip
+          pip install leverage==2.2.0rc0
+          echo "$HOME/.leverage-venv/bin" >> $GITHUB_PATH
+          leverage --version
+
+      - name: Verify Required Binaries
+        run: |
+          echo "Verifying system binaries for dockerless Leverage CLI..."
+          if ! command -v tofu &> /dev/null; then
+            echo "❌ OpenTofu (tofu) not found"
+            exit 1
+          fi
+          if ! command -v aws &> /dev/null; then
+            echo "❌ AWS CLI not found"
+            exit 1
+          fi
+          echo "✅ OpenTofu: $(tofu version | head -1)"
+          echo "✅ AWS CLI: $(aws --version)"
+          echo "✅ Leverage: $(leverage --version)"
+
+      - name: Configure AWS Credentials
+        run: |
+          mkdir -p ~/.aws/bb
+
+          aws configure set region us-east-1 --profile bb-apps-devstg-devops
+          aws configure set output json --profile bb-apps-devstg-devops
+          aws configure set role_arn arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
+          aws configure set source_profile bb-deploymaster --profile bb-apps-devstg-devops
+
+          cat << EOF > ~/.aws/credentials
+          [bb-deploymaster]
+          aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          EOF
+
+          cp ~/.aws/credentials ~/.aws/bb/
+          cp ~/.aws/config ~/.aws/bb/
+
+          echo "AWS_CONFIG_FILE=$HOME/.aws/bb/config" >> $GITHUB_ENV
+          echo "AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/bb/credentials" >> $GITHUB_ENV
+          echo "AWS_PROFILE=bb-apps-devstg-devops" >> $GITHUB_ENV
+
+      - name: Configure Build Environment
+        run: |
+          sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env || echo "MFA_ENABLED=false" >> build.env
+
+          # Note: TERRAFORM_IMAGE_TAG removed - obsolete for dockerless Leverage CLI v2.2.0+
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: plan-${{ matrix.layer }}
+          path: ${{ matrix.layer }}/
+
+      - name: Run Terraform Apply
+        working-directory: ${{ matrix.layer }}
+        timeout-minutes: 20
+        run: |
+          source ~/.leverage-venv/bin/activate
+          echo "Applying changes for layer: ${{ matrix.layer }}"
+
+          # Apply using the saved plan
+          leverage tofu apply -no-color -auto-approve tfplan.bin 2>&1 | tee apply-output.txt
+
+      - name: Generate Rollback Plan
+        working-directory: ${{ matrix.layer }}
+        timeout-minutes: 5
+        run: |
+          source ~/.leverage-venv/bin/activate
+          echo "Generating rollback plan for layer: ${{ matrix.layer }}"
+
+          # Generate destroy plan for rollback
+          leverage tofu plan -destroy -no-color -out=rollback.tfplan 2>&1 | tee rollback-plan.txt
+
+      - name: Upload Apply Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: apply-${{ matrix.layer }}
+          path: |
+            ${{ matrix.layer }}/apply-output.txt
+            ${{ matrix.layer }}/rollback.tfplan
+            ${{ matrix.layer }}/rollback-plan.txt
+          retention-days: 30
+
+      - name: Post Apply Results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const layerPath = '${{ matrix.layer }}';
+
+            let applyOutput = '';
+            try {
+              applyOutput = fs.readFileSync(`${layerPath}/apply-output.txt`, 'utf8');
+            } catch (e) {
+              applyOutput = 'Apply output not available';
+            }
+
+            const comment = `## ✅ Terraform Apply Complete
+
+            **Layer**: \`${layerPath}\`
+            **Triggered by**: @${{ github.actor }}
+            **Status**: Success
+
+            <details>
+            <summary>Apply Output</summary>
+
+            \`\`\`
+            ${applyOutput.slice(0, 5000)}
+            ${applyOutput.length > 5000 ? '\n... (truncated)' : ''}
+            \`\`\`
+
+            </details>
+
+            ### Rollback Information
+            A rollback plan has been generated and stored as an artifact.
+
+            **To rollback these changes:**
+            1. Download the \`apply-${layerPath}\` artifact
+            2. Extract \`rollback.tfplan\`
+            3. Run: \`leverage tofu apply rollback.tfplan\`
+
+            **Rollback artifact retention**: 30 days
+
+            ---
+            *Applied by automated Terraform workflow*`;
+
+            github.rest.issues.createComment({
+              issue_number: ${{ needs.determine-action.outputs.pr_number }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
