@@ -306,7 +306,7 @@ jobs:
         run: |
           source ~/.leverage-venv/bin/activate
           echo "Initializing layer: ${{ matrix.layer }}"
-          leverage tofu init -no-color
+          leverage tofu init --skip-validation -no-color
 
       - name: Run Terraform Plan
         working-directory: ${{ matrix.layer }}
@@ -360,6 +360,7 @@ jobs:
       pull-requests: write
       issues: write
       actions: read
+      id-token: write
 
     steps:
       - name: Checkout repository
