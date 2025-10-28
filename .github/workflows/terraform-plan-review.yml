@@ -24,7 +24,37 @@ env:
   AWS_REGION: us-east-1
 
 jobs:
-  # Job 1: Determine what action to take based on trigger
+  # Job 1: Add eyes reaction to indicate processing
+  eyes-reaction:
+    name: Add Eyes Reaction
+    if: github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Add eyes reaction
+        timeout-minutes: 1
+        run: |
+          set -euo pipefail
+
+          COMMENT_ID="${{ github.event.comment.id }}"
+
+          echo "Adding 👀 reaction to comment ID: $COMMENT_ID"
+          gh api repos/${{ github.repository }}/issues/comments/$COMMENT_ID/reactions \
+            --method POST \
+            --field content='eyes' || {
+            echo "Failed to add reaction - this might be expected for some comment types"
+            exit 0
+          }
+
+          echo "✅ Eyes reaction added successfully"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job 2: Determine what action to take based on trigger
   determine-action:
     name: Determine Action
     runs-on: ubuntu-latest
@@ -76,7 +106,7 @@ jobs:
             fi
           fi
 
-  # Job 2: Setup shared environment
+  # Job 3: Setup shared environment
   setup-environment:
     name: Setup Environment
     needs: determine-action
@@ -105,7 +135,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-leverage-
 
-  # Job 3: Detect changed Terraform layers
+  # Job 4: Detect changed Terraform layers
   detect-layers:
     name: Detect Changed Layers
     needs: [determine-action, setup-environment]
@@ -182,7 +212,7 @@ jobs:
             echo "No Terraform layers changed in this PR"
           fi
 
-  # Job 4: Run Terraform plan for each changed layer
+  # Job 5: Run Terraform plan for each changed layer
   run-terraform-plan:
     name: Plan (${{ matrix.layer }})
     needs: [determine-action, setup-environment, detect-layers]
@@ -313,17 +343,21 @@ jobs:
             ${{ matrix.layer }}/tfplan.bin
           retention-days: 7
 
-  # Job 5: AI-powered plan analysis
+  # Job 6: AI-powered plan analysis
   ai-analyze-plan:
     name: AI Plan Analysis
-    needs: [determine-action, detect-layers, run-terraform-plan]
-    if: needs.detect-layers.outputs.has-layers == 'true'
+    needs: [eyes-reaction, determine-action, detect-layers, run-terraform-plan]
+    if: |
+      always() &&
+      (needs.eyes-reaction.result == 'success' || needs.eyes-reaction.result == 'skipped') &&
+      needs.detect-layers.outputs.has-layers == 'true'
     timeout-minutes: 20
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
       issues: write
+      actions: read
 
     steps:
       - name: Checkout repository
@@ -393,9 +427,9 @@ jobs:
 
             Begin analysis now.
 
-          claude_args: '--allowed-tools "Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Read(plans/**)"'
+          claude_args: '--allowed-tools "Task,Read,Grep,Glob,Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh issue view:*),Bash(gh issue list:*),mcp__github_comment__*,mcp__github_ci__*"'
 
-  # Job 6: Run Terraform apply (manual only)
+  # Job 7: Run Terraform apply (manual only)
   run-terraform-apply:
     name: Apply (${{ matrix.layer }})
     needs: [determine-action, detect-layers, run-terraform-plan]
