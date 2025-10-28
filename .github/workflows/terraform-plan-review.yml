@@ -268,15 +268,88 @@ jobs:
           echo "✅ AWS CLI: $(aws --version)"
           echo "✅ Leverage: $(leverage --version)"
 
+      - name: Determine AWS Account
+        id: determine-account
+        run: |
+          # Extract account from layer path (first directory)
+          ACCOUNT=$(echo "${{ matrix.layer }}" | cut -d'/' -f1)
+          echo "Detected account: $ACCOUNT"
+
+          # Map account name to secret variable name and profile
+          case $ACCOUNT in
+            apps-devstg)
+              SECRET_NAME="DEVSTG"
+              ;;
+            apps-prd)
+              SECRET_NAME="PRD"
+              ;;
+            network)
+              SECRET_NAME="NETWORK"
+              ;;
+            security)
+              SECRET_NAME="SECURITY"
+              ;;
+            shared)
+              SECRET_NAME="SHARED"
+              ;;
+            management)
+              SECRET_NAME="MANAGEMENT"
+              ;;
+            data-science)
+              SECRET_NAME="DATA_SCIENCE"
+              ;;
+            *)
+              echo "❌ Unknown account: $ACCOUNT"
+              exit 1
+              ;;
+          esac
+
+          # Output values for next steps
+          echo "account=$ACCOUNT" >> $GITHUB_OUTPUT
+          echo "secret_name=$SECRET_NAME" >> $GITHUB_OUTPUT
+          echo "profile=bb-${ACCOUNT}-devops" >> $GITHUB_OUTPUT
+
+          echo "✅ Account: $ACCOUNT"
+          echo "✅ Secret: AWS_${SECRET_NAME}_ACCOUNT_ID"
+          echo "✅ Profile: bb-${ACCOUNT}-devops"
+
       - name: Configure AWS Credentials
+        env:
+          # Pass all account IDs as environment variables for dynamic selection
+          AWS_DEVSTG_ACCOUNT_ID: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
+          AWS_PRD_ACCOUNT_ID: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
+          AWS_NETWORK_ACCOUNT_ID: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
+          AWS_SECURITY_ACCOUNT_ID: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+          AWS_SHARED_ACCOUNT_ID: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
+          AWS_MANAGEMENT_ACCOUNT_ID: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
+          AWS_DATA_SCIENCE_ACCOUNT_ID: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
         run: |
           mkdir -p ~/.aws/bb
 
+          # Get account details from previous step
+          ACCOUNT="${{ steps.determine-account.outputs.account }}"
+          SECRET_NAME="${{ steps.determine-account.outputs.secret_name }}"
+          PROFILE="${{ steps.determine-account.outputs.profile }}"
+
+          # Use bash variable indirection to get the correct account ID
+          SECRET_VAR="AWS_${SECRET_NAME}_ACCOUNT_ID"
+          ACCOUNT_ID="${!SECRET_VAR}"
+
+          if [[ -z "$ACCOUNT_ID" ]]; then
+            echo "❌ Account ID not found for $SECRET_VAR"
+            echo "Please ensure the secret $SECRET_VAR is configured in GitHub repository secrets"
+            exit 1
+          fi
+
+          echo "Configuring AWS credentials for account: $ACCOUNT"
+          echo "Profile: $PROFILE"
+          echo "Account ID: ${ACCOUNT_ID:0:4}****${ACCOUNT_ID: -4}"
+
           # Configure AWS profile for cross-account access
-          aws configure set region us-east-1 --profile bb-apps-devstg-devops
-          aws configure set output json --profile bb-apps-devstg-devops
-          aws configure set role_arn arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
-          aws configure set source_profile bb-deploymaster --profile bb-apps-devstg-devops
+          aws configure set region us-east-1 --profile "$PROFILE"
+          aws configure set output json --profile "$PROFILE"
+          aws configure set role_arn "arn:aws:iam::${ACCOUNT_ID}:role/DeployMaster" --profile "$PROFILE"
+          aws configure set source_profile bb-deploymaster --profile "$PROFILE"
 
           # Create credentials file
           cat << EOF > ~/.aws/credentials
@@ -288,10 +361,12 @@ jobs:
           cp ~/.aws/credentials ~/.aws/bb/
           cp ~/.aws/config ~/.aws/bb/
 
-          # Set environment variables
+          # Set environment variables with dynamic profile
           echo "AWS_CONFIG_FILE=$HOME/.aws/bb/config" >> $GITHUB_ENV
           echo "AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/bb/credentials" >> $GITHUB_ENV
-          echo "AWS_PROFILE=bb-apps-devstg-devops" >> $GITHUB_ENV
+          echo "AWS_PROFILE=$PROFILE" >> $GITHUB_ENV
+
+          echo "✅ AWS credentials configured for $ACCOUNT account"
 
       - name: Configure Build Environment
         run: |
@@ -506,15 +581,90 @@ jobs:
           echo "✅ AWS CLI: $(aws --version)"
           echo "✅ Leverage: $(leverage --version)"
 
+      - name: Determine AWS Account
+        id: determine-account
+        run: |
+          # Extract account from layer path (first directory)
+          ACCOUNT=$(echo "${{ matrix.layer }}" | cut -d'/' -f1)
+          echo "Detected account: $ACCOUNT"
+
+          # Map account name to secret variable name and profile
+          case $ACCOUNT in
+            apps-devstg)
+              SECRET_NAME="DEVSTG"
+              ;;
+            apps-prd)
+              SECRET_NAME="PRD"
+              ;;
+            network)
+              SECRET_NAME="NETWORK"
+              ;;
+            security)
+              SECRET_NAME="SECURITY"
+              ;;
+            shared)
+              SECRET_NAME="SHARED"
+              ;;
+            management)
+              SECRET_NAME="MANAGEMENT"
+              ;;
+            data-science)
+              SECRET_NAME="DATA_SCIENCE"
+              ;;
+            *)
+              echo "❌ Unknown account: $ACCOUNT"
+              exit 1
+              ;;
+          esac
+
+          # Output values for next steps
+          echo "account=$ACCOUNT" >> $GITHUB_OUTPUT
+          echo "secret_name=$SECRET_NAME" >> $GITHUB_OUTPUT
+          echo "profile=bb-${ACCOUNT}-devops" >> $GITHUB_OUTPUT
+
+          echo "✅ Account: $ACCOUNT"
+          echo "✅ Secret: AWS_${SECRET_NAME}_ACCOUNT_ID"
+          echo "✅ Profile: bb-${ACCOUNT}-devops"
+
       - name: Configure AWS Credentials
+        env:
+          # Pass all account IDs as environment variables for dynamic selection
+          AWS_DEVSTG_ACCOUNT_ID: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
+          AWS_PRD_ACCOUNT_ID: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
+          AWS_NETWORK_ACCOUNT_ID: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
+          AWS_SECURITY_ACCOUNT_ID: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+          AWS_SHARED_ACCOUNT_ID: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
+          AWS_MANAGEMENT_ACCOUNT_ID: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
+          AWS_DATA_SCIENCE_ACCOUNT_ID: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
         run: |
           mkdir -p ~/.aws/bb
 
-          aws configure set region us-east-1 --profile bb-apps-devstg-devops
-          aws configure set output json --profile bb-apps-devstg-devops
-          aws configure set role_arn arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster --profile bb-apps-devstg-devops
-          aws configure set source_profile bb-deploymaster --profile bb-apps-devstg-devops
+          # Get account details from previous step
+          ACCOUNT="${{ steps.determine-account.outputs.account }}"
+          SECRET_NAME="${{ steps.determine-account.outputs.secret_name }}"
+          PROFILE="${{ steps.determine-account.outputs.profile }}"
 
+          # Use bash variable indirection to get the correct account ID
+          SECRET_VAR="AWS_${SECRET_NAME}_ACCOUNT_ID"
+          ACCOUNT_ID="${!SECRET_VAR}"
+
+          if [[ -z "$ACCOUNT_ID" ]]; then
+            echo "❌ Account ID not found for $SECRET_VAR"
+            echo "Please ensure the secret $SECRET_VAR is configured in GitHub repository secrets"
+            exit 1
+          fi
+
+          echo "Configuring AWS credentials for account: $ACCOUNT"
+          echo "Profile: $PROFILE"
+          echo "Account ID: ${ACCOUNT_ID:0:4}****${ACCOUNT_ID: -4}"
+
+          # Configure AWS profile for cross-account access
+          aws configure set region us-east-1 --profile "$PROFILE"
+          aws configure set output json --profile "$PROFILE"
+          aws configure set role_arn "arn:aws:iam::${ACCOUNT_ID}:role/DeployMaster" --profile "$PROFILE"
+          aws configure set source_profile bb-deploymaster --profile "$PROFILE"
+
+          # Create credentials file
           cat << EOF > ~/.aws/credentials
           [bb-deploymaster]
           aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -524,9 +674,12 @@ jobs:
           cp ~/.aws/credentials ~/.aws/bb/
           cp ~/.aws/config ~/.aws/bb/
 
+          # Set environment variables with dynamic profile
           echo "AWS_CONFIG_FILE=$HOME/.aws/bb/config" >> $GITHUB_ENV
           echo "AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/bb/credentials" >> $GITHUB_ENV
-          echo "AWS_PROFILE=bb-apps-devstg-devops" >> $GITHUB_ENV
+          echo "AWS_PROFILE=$PROFILE" >> $GITHUB_ENV
+
+          echo "✅ AWS credentials configured for $ACCOUNT account"
 
       - name: Configure Build Environment
         run: |
