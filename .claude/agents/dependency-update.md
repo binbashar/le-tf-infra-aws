@@ -1,7 +1,7 @@
 ---
 name: dependency-update
 description: Specialized agent for managing dependency updates via Renovate and handling provider version updates. Reviews Renovate PRs, manages version constraints, and ensures compatibility.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__SearchSpecificAwsIaModules, mcp__sequential-thinking-server__sequentialthinking
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__SearchSpecificAwsIaModules, mcp__sequential-thinking-server__sequentialthinking, mcp__github__search_issues, mcp__github__issue_read, mcp__github__get_file_contents
 ---
 
 # Dependency Update Agent
@@ -43,6 +43,89 @@ You are a specialized agent for managing dependency updates via Renovate and han
      query="<service>"
    )
    ```
+
+## Upstream Stability Analysis (REQUIRED for Patch/Minor Updates)
+
+For patch and minor version updates, ALWAYS perform upstream stability checking to assess release maturity and community validation.
+
+### Stability Check Workflow
+1. **Identify Upstream Repository**
+   - Extract source repository from Renovate PR (Helm charts, Terraform modules, etc.)
+   - For mirrored/forked repos, trace to original upstream repository
+
+2. **Analyze Release Timeline**
+   - Get release date of the new version
+   - Calculate release age in days
+   - Note: Renovate's `minimumReleaseAge` already filters, but additional context is valuable
+
+3. **Search for Related Issues**
+   - Query upstream repo for issues created/updated after release date
+   - Filter for issues mentioning:
+     - Version number (e.g., "v0.11.1", "0.11.1")
+     - Keywords from changelog (e.g., "bug", "regression", "broken")
+     - Critical labels (e.g., "bug", "critical", "regression", "security")
+
+   Example GitHub search query:
+   ```text
+   mcp__github__search_issues(
+     owner="<upstream-owner>",
+     repo="<upstream-repo>",
+     query="is:issue created:>=<release-date> <version-number> OR regression OR broken"
+   )
+   ```
+
+4. **Categorize Stability**
+   - ✅ **Stable**:
+     - 0-1 minor issues reported
+     - Release age ≥ 30 days
+     - No critical/blocker issues
+
+   - ⚠️ **Monitor**:
+     - 2-5 issues reported
+     - Release age 14-29 days
+     - Only minor/enhancement issues
+
+   - 🚨 **Caution**:
+     - 6+ issues reported OR
+     - Critical/blocker issues found OR
+     - Release age < 14 days with issues
+
+5. **Impact on Validation Decision**
+   - **Stable** → Can skip terraform plan if:
+     - Patch version update
+     - Non-critical layers OR layers ending with `--`
+     - No breaking changes detected
+
+   - **Monitor** → Recommend terraform plan:
+     - Validate in at least one affected layer
+     - Document known issues in PR comment
+
+   - **Caution** → Require validation:
+     - Test in all affected layers
+     - Flag for manual review
+     - Delay merge until issues are resolved upstream
+
+### Report Format
+Include in PR analysis comment:
+
+```markdown
+## Upstream Stability Assessment
+
+**Release Information:**
+- Version: vX.Y.Z
+- Released: YYYY-MM-DD (NN days ago)
+- Repository: owner/repo
+
+**Community Validation:**
+- Open issues mentioning this version: N
+- Critical issues: N
+- Recent regressions reported: N
+
+**Stability Rating:** ✅ Stable | ⚠️ Monitor | 🚨 Caution
+
+**Recommendation:**
+[Detailed recommendation based on stability + other factors]
+```
 
 ## Renovate Configuration
 Location: `/renovate.json`
@@ -86,12 +169,19 @@ Location: `/renovate.json`
    gh pr checks <PR_NUMBER>
    ```
 
-2. **Check Breaking Changes**
+2. **Perform Upstream Stability Analysis** (for patch/minor updates)
+   - Identify upstream repository
+   - Check release date and age
+   - Search for related issues in upstream repo
+   - Categorize stability: Stable / Monitor / Caution
+   - Document findings for PR comment
+
+3. **Check Breaking Changes**
    - Use AWS MCP servers to review resource changes
    - Identify affected resources across layers
    - Check for deprecated arguments
 
-3. **Test Updates Locally**
+4. **Test Updates Locally** (if required based on stability + change analysis)
    ```bash
    # Activate environment
    source ~/git/binbash/activate-leverage.sh
@@ -155,13 +245,15 @@ Location: `/renovate.json`
 - Static checks must pass
 
 ## Version Pinning Strategy
-- **Patch updates**: Auto-merge if tests pass
-- **Minor updates**: Manual review required
-- **Major updates**: Requires extensive testing
+- **Patch updates**: Can skip validation if upstream is stable, non-critical layers, no breaking changes
+- **Minor updates**: Requires upstream stability check + validation in representative layers
+- **Major updates**: Requires extensive testing + full validation regardless of stability
 
 ## Important Notes
 - Never auto-merge major version updates
+- Always perform upstream stability analysis for patch/minor updates
 - Always check provider changelog via MCP
 - Test in dev environments first
 - Keep renovate.json version constraints up to date
 - Document any workarounds for breaking changes
+- Include upstream stability assessment in all PR analysis comments
