@@ -3,8 +3,46 @@
   "extends": [
     "config:recommended"
   ],
-  "minimumReleaseAge": "3 days",
+  "minimumReleaseAge": "30 days",
   "packageRules": [
+    {
+      "automerge": false,
+      "description": "Group patch updates for Helm charts",
+      "groupName": "helm-patches",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "schedule": [
+        "before 6am on monday"
+      ]
+    },
+    {
+      "automerge": false,
+      "description": "Group minor updates for Helm charts",
+      "groupName": "helm-minors",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "schedule": [
+        "before 6am on monday"
+      ]
+    },
+    {
+      "automerge": false,
+      "description": "Individual review for major updates in Helm charts",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ]
+    },
     {
       "automerge": false,
       "description": "Group patch updates for Terraform providers and modules",
