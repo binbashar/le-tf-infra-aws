@@ -207,15 +207,14 @@ We will use a **Single-Table Design** pattern that consolidates the `/users`, `/
 
 We’ll create a table like this:
 
-1. **Table name:** Enter `PrivateUserDataTable`.  
+1. **Table name:** Set in **Leverage** files
 2. **Partition key:**  
-   * Enter **`userId`**  
-   * Select **String** as the data type.  
+   * **PK**: **`userId`**  
+   * **String** as the data type.  
    * *Rationale: This key will hold the user's Cognito Identity ID (`sub`) and is the pivot point for IAM access restrictions.*  
-3. **Sort key (Optional):**  
-   * Check the box to **"Add a sort key"**.  
-   * Enter **`entityId`**  
-   * Select **String** as the data type.  
+3. **Sort key:**  
+   * **SK**: **`entityId`**  
+   * **String** as the data type.  
    * *Rationale: This key combines the entity type (PROFILE, MOVIE, MUSIC) and the unique ID, allowing all a user's items to be efficiently queried using a single PK.*
 
 ## Cognito
