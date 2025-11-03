@@ -229,17 +229,14 @@ We will use the Python standard library boto3 to interact with both Amazon Cogni
 
 Before running this code, ensure you have:
 
-1. **Basics Deployed:** DynamoDB Table, Cognito User Pool, Identity Pool, and the restricted IAM Role/Policy are deployed (via Leverage demo layer).  
-2. **Python dependecies installed:** pip install requirements.txt  
-3. **Other dependencies**: jq,
+1. **Basics Deployed:** Apply the **Leverage** *layer*:
+    - Assets: DynamoDB Table, Cognito User Pool, Identity Pool, and the restricted IAM Role/Policy.
+2. **Python dependecies installed:** `pip install requirements.txt`
+3. **Other dependencies**: `jq`,
 
 This implementation demonstrates how the complexity of fine-grained access is entirely delegated to **IAM**, allowing the client code to remain clean while being automatically and securely constrained.
 
-Would you like to shift focus to the one remaining Firebase rule that requires backend logic: **allow read, create: if request.auth \!= null;** (Any authenticated user can read any user's profile)?
-
-## Try it\!
-
-### AWS Credentials first\!
+### AWS Credentials first!
 
 Note that to log in we are using the boto3 function “`client.admin_initiate_auth`”.  
 This is only for the sake of this demo and should not be used in a productive environment.  
