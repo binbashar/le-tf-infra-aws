@@ -238,20 +238,37 @@ This implementation demonstrates how the complexity of fine-grained access is en
 
 ### AWS Credentials first!
 
-Note that to log in we are using the boto3 function “`client.admin_initiate_auth`”.  
-This is only for the sake of this demo and should not be used in a productive environment.  
+Note that to log in we are using the boto3 function “`client.admin_initiate_auth`”.
+This is only for the sake of this demo and should not be used in a productive environment. (unless you know what you are doing)
 Using it we are bypassing a few client side tasks we should do to keep the system safe, but are out of the scope of this text and they cause an overhead.  
 So, for using the aforementioned function you MUST have AWS credentials set in your environment. They will be used to reach Cognito, but then the user and password set in the code will be used.  
-Note for this, one of the enabled flows for Cognito, is “ALLOW\_ADMIN\_USER\_PASSWORD\_AUTH”. Do not enable it in Prod unless you really need it.
+Note that for this, one of the enabled flows for Cognito is “ALLOW\_ADMIN\_USER\_PASSWORD\_AUTH”. Do not enable it in Prod unless you really need it.
 
-E.g. you can “aws sso login”, and then “export AWS\_PROFILE=dev-sso-role” (replace your role).
+Set general AWS Credentials:
+- `aws sso login`
+- `export AWS\_PROFILE=dev-sso-role` (replace your role).
 
-### Test it now, this time for real\!
+### How to run the test
 
-Now, follow the steps:
+The steps:
 
-* Apply the testing layer  
-* Get the output values and update the values in Python  
-* Run the Python code  
+* `cd` into the *layer* directory
+  - e.g. `cd <your-project-dir>/apps-devstg/us-east-1/research-dynamodb-access-rules`
+* Apply the layer
+  - `leverage tf apply`
+* `cd` into the demo client directory
+  - `cd demo_client`
+* Run the script (read more on the script below):
+  - `bash run_demo.sh`
 * Drink a beer  
-* Don’t forget to destroy the testing infrastructure
+* Chek your results
+* Play with the demo
+* **Don’t forget to destroy** the testing infrastructure
+
+#### On the script
+
+The *shell script* in the `demo_client` directory inside the *layer* was created to be executed from the given directory.
+
+If you want to run the shell script (and the Python script) from other directory, you must adapt the code.
+
+
