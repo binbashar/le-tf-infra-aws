@@ -70,7 +70,7 @@ The schema is built on a primary hierarchy where the document ID of the root col
   "artist": "Queen",
   "title": "Bohemian Rhapsody",
   "genre": "Rock",
-  "added_on": <timestamp>
+  "added_on": \<timestamp\>
 }
 ```
 
@@ -103,23 +103,24 @@ firestore-root
 This is the security rules definition:
 
 ```json
-rules_version = '2';
+{
+  rules_version = '2';
 
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, create: if request.auth != null;
-      allow update, delete: if request.auth != null && request.auth.uid == userId;
-      match /movies/{movieId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      match /music/{songId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+  service cloud.firestore {
+    match /databases/{database}/documents {
+      match /users/{userId} {
+        allow read, create: if request.auth != null;
+        allow update, delete: if request.auth != null && request.auth.uid == userId;
+        match /movies/{movieId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+        match /music/{songId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
       }
     }
   }
 }
-
 ```
 
 Let’s set a ToDo list for this project.
