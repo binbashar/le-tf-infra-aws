@@ -271,4 +271,9 @@ The *shell script* in the `demo_client` directory inside the *layer* was created
 
 If you want to run the shell script (and the Python script) from other directory, you must adapt the code.
 
+### What does the App do?
 
+- It creates two users in Cognito (using the AWS credentials you've set)
+- It access Dynamo as user 1 and creates a few movies
+- It access Dynamo as user 2 and creates a few movies
+- It tries to access user 1 movies using user 2 credentials
