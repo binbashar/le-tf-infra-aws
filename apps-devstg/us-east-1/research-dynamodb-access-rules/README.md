@@ -70,7 +70,7 @@ The schema is built on a primary hierarchy where the document ID of the root col
   "artist": "Queen",
   "title": "Bohemian Rhapsody",
   "genre": "Rock",
-  "added_on": \<timestamp\>
+  "added_on": <timestamp>
 }
 ```
 
@@ -79,7 +79,6 @@ The schema is built on a primary hierarchy where the document ID of the root col
 The final schema layout is a nested model, which is common and highly effective in Firestore for enforcing user-based security rules.
 
 ```
-
 firestore-root
 └── users (Collection)
     └── {userId} (Document - The User Profile)
@@ -102,8 +101,8 @@ firestore-root
 
 This is the security rules definition:
 
-```json
-{
+```
+
   rules_version = '2';
 
   service cloud.firestore {
@@ -120,7 +119,7 @@ This is the security rules definition:
       }
     }
   }
-}
+
 ```
 
 Let’s set a ToDo list for this project.
