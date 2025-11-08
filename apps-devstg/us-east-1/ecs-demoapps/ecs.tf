@@ -100,7 +100,7 @@ module "apps_devstg_ecs_cluster" {
 
       # Target group assignment - conditional based on deployment type
       load_balancer = {
-        for container_name, container_values in local.routing[service_name] :
+        for container_name, container_values in var.routing[service_name] :
         container_name => merge(
           {
             target_group_arn = module.apps_devstg_alb_ecs_demoapps.target_groups[container_name].arn
@@ -124,7 +124,7 @@ module "apps_devstg_ecs_cluster" {
 
       # Security group ingress rules
       security_group_ingress_rules = {
-        for container_name, container_values in local.routing[service_name] :
+        for container_name, container_values in var.routing[service_name] :
         "ingress_${service_name}_${replace(container_name, "-", "_")}_${container_values.port}" => {
           from_port                    = container_values.port
           to_port                      = container_values.port
