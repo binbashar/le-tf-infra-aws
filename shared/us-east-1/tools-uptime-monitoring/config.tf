@@ -1,0 +1,48 @@
+#=============================#
+# AWS Provider Settings       #
+#=============================#
+provider "aws" {
+  region  = var.region
+  profile = var.profile
+}
+
+#=============================#
+# Backend Config (partial)    #
+#=============================#
+terraform {
+  required_version = "~> 1.9"
+
+  required_providers {
+    aws = "~> 4.10"
+  }
+
+  backend "s3" {
+    key = "shared/uptime-monitoring/terraform.tfstate"
+  }
+}
+
+#=============================#
+# Data sources                #
+#=============================#
+data "terraform_remote_state" "local_vpcs" {
+
+  backend = "s3"
+
+  config = {
+    region  = lookup(local.local_vpc.local-base, "region")
+    profile = lookup(local.local_vpc.local-base, "profile")
+    bucket  = lookup(local.local_vpc.local-base, "bucket")
+    key     = lookup(local.local_vpc.local-base, "key")
+  }
+}
+
+data "terraform_remote_state" "notifications" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/notifications/terraform.tfstate"
+  }
+}

@@ -218,6 +218,7 @@ locals {
       email      = "alex.delossantos@binbash.com.ar"
       groups = [
         "datascientists",
+        "administrators",
       ]
     }
     "favio.tolosa" = {
@@ -267,6 +268,14 @@ locals {
       email      = "marcelo.rodriguez@binbash.com.ar"
       groups = [
         "datascientists"
+      ]
+    }
+    "hernan.rezilo" = {
+      first_name = "Hernan"
+      last_name  = "Rezilo"
+      email      = "hernan.rezilo@binbash.com.ar"
+      groups = [
+        "devops"
       ]
     }
   }

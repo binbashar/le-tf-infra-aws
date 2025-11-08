@@ -7,6 +7,7 @@ data "aws_iam_policy_document" "devops" {
     actions = [
       "access-analyzer:*",
       "acm:*",
+      "airflow:*",
       "amplify:*",
       "aoss:*",
       "apigateway:*",
@@ -92,6 +93,7 @@ data "aws_iam_policy_document" "devops" {
       "servicequotas:*",
       "ses:*",
       "shield:*",
+      "synthetics:*",
       "sns:*",
       "sqlworkbench:*",
       "sqs:*",
@@ -225,19 +227,27 @@ data "aws_iam_policy_document" "data_scientist" {
   statement {
     sid = "Default"
     actions = [
+      "airflow:*",
       "athena:*",
       "apigateway:*",
+      "application-signals:*",
       "aoss:*",
       "autoscaling:*",
       "aws-marketplace:*",
       "aws-portal:*",
       "bedrock:*",
+      "bedrock-agentcore:*",
       "ce:*",
       "cloudformation:*",
+      "cloudshell:*",
+      "cloudtrail:*",
       "cloudwatch:*",
+      "codebuild:*",
       "cognito-identity:*",
+      "codebuild:*",
       "cognito-idp:*",
       "config:*",
+      "ds:*",
       "dynamodb:*",
       "ec2:*",
       "ecr:*",
@@ -262,6 +272,8 @@ data "aws_iam_policy_document" "data_scientist" {
       "ram:*",
       "rds:*",
       "redshift:*",
+      "redshift-data:*",
+      "redshift-serverless:*",
       "resource-explorer:*",
       "resource-explorer-2:*",
       "resource-groups:*",
@@ -272,6 +284,7 @@ data "aws_iam_policy_document" "data_scientist" {
       "sagemaker:*",
       "secretsmanager:*",
       "sns:*",
+      "sqlworkbench:*",
       "sqs:*",
       "ssm:*",
       "states:*",
@@ -279,6 +292,7 @@ data "aws_iam_policy_document" "data_scientist" {
       "support:*",
       "tag:*",
       "transcribe:*",
+      "xray:*"
     ]
     resources = ["*"]
     condition {
