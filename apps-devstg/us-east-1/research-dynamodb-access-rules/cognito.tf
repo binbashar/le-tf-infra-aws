@@ -1,6 +1,28 @@
 resource "aws_cognito_user_pool" "user_pool" {
   name = local.cognitoname
-  # ... other necessary settings like email configuration, required attributes, etc.
+
+  # schema {
+  #   name                = "email"
+  #   attribute_data_type = "String"
+  #   mutable             = true
+  #   required            = true
+  #   string_attribute_constraints {
+  #     min_length = 1
+  #     max_length = 2048
+  #   }
+  # }
+
+  schema {
+    name                = "user_id"
+    attribute_data_type = "String"
+    mutable             = true
+    required            = false
+    string_attribute_constraints {
+      min_length = 0
+      max_length = 500
+    }
+  }
+
   tags = local.tags
 }
 
@@ -24,7 +46,35 @@ resource "aws_cognito_identity_pool" "identity_pool" {
 
   cognito_identity_providers {
     client_id               = aws_cognito_user_pool_client.user_pool_client.id
-    provider_name           = "cognito-idp.us-east-1.amazonaws.com/${aws_cognito_user_pool.user_pool.id}"
+    provider_name           = "cognito-idp.${var.region}.amazonaws.com/${aws_cognito_user_pool.user_pool.id}"
     server_side_token_check = true
+  }
+
+  lifecycle {
+    replace_triggered_by = [
+      aws_cognito_user_pool.user_pool.id # Recreate if the User Pool ID changes
+    ]
+  }
+
+}
+resource "aws_cognito_identity_pool_roles_attachment" "roles_attachment" {
+  identity_pool_id = aws_cognito_identity_pool.identity_pool.id
+
+  roles = {
+    "authenticated" = aws_iam_role.authenticated_role.arn
+  }
+  role_mapping {
+    identity_provider         = "cognito-idp.${var.region}.amazonaws.com/${aws_cognito_user_pool.user_pool.id}:${aws_cognito_user_pool_client.user_pool_client.id}"
+    type                      = "Token"
+    ambiguous_role_resolution = "AuthenticatedRole"
+  }
+}
+resource "aws_cognito_identity_pool_provider_principal_tag" "principal_tag" {
+  identity_pool_id       = aws_cognito_identity_pool.identity_pool.id
+  identity_provider_name = "cognito-idp.${var.region}.amazonaws.com/${aws_cognito_user_pool.user_pool.id}"
+  use_defaults           = false
+  principal_tags = {
+    userId = "custom:user_id"
+    # "userId"               = "$${TokenClaim:custom:user_id}"
   }
 }

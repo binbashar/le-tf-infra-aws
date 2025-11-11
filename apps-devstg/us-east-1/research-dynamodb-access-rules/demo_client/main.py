@@ -197,6 +197,7 @@ def create_user_without_force_change(username: str, email: str, temporary_passwo
             UserAttributes=[
                 {'Name': 'email', 'Value': email},
                 {'Name': 'email_verified', 'Value': 'true'}, # Set email as verified
+                {'Name': 'custom:user_id', 'Value': f'email:{email}'},
             ]
         )
 
@@ -213,6 +214,7 @@ def create_user_without_force_change(username: str, email: str, temporary_passwo
 
     except client.exceptions.UsernameExistsException:
         print(f"❌ User {username} already exists.")
+        response = username
     except Exception as e:
         print(f"❌ Error creating user: {e}")
     return response
@@ -331,22 +333,24 @@ def add_items_to_dynamo(identity_id: str, credentials: dict):
     print("\n--- A. Test Successful Write (Creating own Movie) ---")
 
     # The 'userId' (PK) in the item matches the 'identity_id' from the credentials.
+    print(f"✅ USER_ID: {identity_id}.")
+
     movies_item = [
         {
-        'userId': identity_id,
-        'entityId': 'MOVIE#T800',
+        'PK': f"USER#{identity_id}",
+        'SK': 'MOVIE#T800',
         'title': 'The Terminator',
         'rating': 5
         },
         {
-        'userId': identity_id,
-        'entityId': 'MOVIE#NEO',
+        'PK': f"USER#{identity_id}",
+        'SK': 'MOVIE#NEO',
         'title': 'The Matrix',
         'rating': 9
         },
         {
-        'userId': identity_id,
-        'entityId': 'MOVIE#JC',
+        'PK': f"USER#{identity_id}",
+        'SK': 'MOVIE#JC',
         'title': 'The Man From Earth',
         'rating': 10
         }
@@ -358,6 +362,7 @@ def add_items_to_dynamo(identity_id: str, credentials: dict):
         print("✅ SUCCESS: PutItem successful. Access control approved the write.")
     except ClientError as e:
         print(f"❌ FAILURE: PutItem failed unexpectedly: {e.response['Error']['Code']}")
+        print(f'{e}')
 
 def read_items_from_dynamo(identity_id: str, credentials: dict):
     """
@@ -379,13 +384,24 @@ def read_items_from_dynamo(identity_id: str, credentials: dict):
     try:
         # Successful Query for own data (PK is specified)
         response = table.query(
-            KeyConditionExpression=boto3.dynamodb.conditions.Key('userId').eq(identity_id) &
-                                 boto3.dynamodb.conditions.Key('entityId').begins_with('MOVIE#')
+            KeyConditionExpression=boto3.dynamodb.conditions.Key('PK').eq(f"USER#{identity_id}") &
+                                 boto3.dynamodb.conditions.Key('SK').begins_with('MOVIE#')
         )
         print(f"✅ SUCCESS: Query successful. Found {len(response['Items'])} private movie item(s).")
         print(json.dumps(response['Items'],indent=1,default=decimal_serializer))
     except ClientError as e:
         print(f"❌ FAILURE: QueryItem failed unexpectedly: {e.response['Error']['Code']}")
+
+def decode_jwt_payload(jwt_token):
+    # JWT structure is header.payload.signature
+    # We only need the payload (second part)
+    payload_base64 = jwt_token.split('.')[1]
+
+    # Base64 decode and padding fix for JWT
+    padding = '=' * (4 - len(payload_base64) % 4)
+    payload_decoded = base64.urlsafe_b64decode(payload_base64 + padding)
+
+    return json.loads(payload_decoded)
 
 def test_the_thing(username,userpwd,use_identity=None):
     # --- Login ---
@@ -400,6 +416,15 @@ def test_the_thing(username,userpwd,use_identity=None):
         print("✅ SUCCESS: Logged in!")
         ID_TOKEN = tokens['id_token'] # This is the token passed to the Identity Pool
 
+        # --- Extract user_id for database ---
+        decoded_token = decode_jwt_payload(ID_TOKEN)
+        if decoded_token and 'custom:user_id' in decoded_token:
+            USER_ID = decoded_token['custom:user_id']
+            print(f"✅ SUCCESS: user_id is {USER_ID}")
+        else:
+            print("❌ FAILURE: Can not find user_id")
+            quit()
+
         # --- Get temp creds ---
         print('-- GETTING TEMP CREDS --')
         identity_id, temporary_credentials = get_federated_credentials(ID_TOKEN)
@@ -408,23 +433,25 @@ def test_the_thing(username,userpwd,use_identity=None):
         # --- test it ---
         print('-- ACCESSING DYNAMO --')
         if identity_id and temporary_credentials:
-            add_items_to_dynamo(identity_id, temporary_credentials)
+            add_items_to_dynamo(USER_ID, temporary_credentials)
             print("✅ SUCCESS: tested Dynamo write!")
         else:
             print("❌ FAILURE: Can not write dynamo")
+            quit()
 
         if (identity_id or use_identity is not None) and temporary_credentials:
             if use_identity is not None:
-                identity_id = use_identity
                 print('    *************************************')
                 print('    TESTING WITH WRONG ID, IT SHOULD FAIL')
                 print('    *************************************')
-            read_items_from_dynamo(identity_id, temporary_credentials)
+                print(f'    ** using id={use_identity} for user {USER_ID}')
+                USER_ID = use_identity
+            read_items_from_dynamo(USER_ID, temporary_credentials)
             print("✅ SUCCESS: tested Dynamo read!")
 
     else:
         print("❌ FAILURE: Can not login")
-    return identity_id
+    return USER_ID
 
 # --- Simulation ---
 

@@ -4,8 +4,8 @@ module "dynamodb_table" {
   namespace                    = var.project
   stage                        = var.environment
   name                         = local.dbname
-  hash_key                     = "userId"
-  range_key                    = "entityId"
+  hash_key                     = "PK"
+  range_key                    = "SK"
   autoscale_write_target       = 50
   autoscale_read_target        = 50
   autoscale_min_read_capacity  = 5
@@ -18,12 +18,30 @@ module "dynamodb_table" {
 
   dynamodb_attributes = [
     {
-      name = "userId"
+      name = "PK"
       type = "S"
     },
     {
-      name = "entityId"
+      name = "SK"
       type = "S"
+    },
+    {
+      name = "GSI1PK"
+      type = "S"
+    },
+
+    {
+      name = "GSI1SK"
+      type = "S"
+    }
+  ]
+
+  global_secondary_index_map = [
+    {
+      name            = "GSI1"
+      hash_key        = "GSI1PK"
+      range_key       = "GSI1SK"
+      projection_type = "ALL"
     }
   ]
 

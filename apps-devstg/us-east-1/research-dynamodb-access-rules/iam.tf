@@ -19,7 +19,7 @@ data "aws_iam_policy_document" "dynamodb_user_access" {
     condition {
       test     = "ForAllValues:StringEquals"
       variable = "dynamodb:LeadingKeys"
-      values   = ["$${cognito-identity.amazonaws.com:sub}"] # CRITICAL: Enforces user-specific access
+      values   = ["USER#$${aws:PrincipalTag/userId}"]
     }
   }
 }
@@ -35,7 +35,10 @@ resource "aws_iam_role" "authenticated_role" {
         Principal = {
           Federated = "cognito-identity.amazonaws.com"
         }
-        Action = "sts:AssumeRoleWithWebIdentity"
+        Action = [
+          "sts:AssumeRoleWithWebIdentity",
+          "sts:TagSession"
+        ]
         Condition = {
           StringEquals = {
             "cognito-identity.amazonaws.com:aud" = aws_cognito_identity_pool.identity_pool.id
@@ -59,10 +62,3 @@ resource "aws_iam_role_policy_attachment" "auth_role_attachment" {
   policy_arn = aws_iam_policy.dynamodb_policy.arn
 }
 
-resource "aws_cognito_identity_pool_roles_attachment" "roles_attachment" {
-  identity_pool_id = aws_cognito_identity_pool.identity_pool.id
-
-  roles = {
-    "authenticated" = aws_iam_role.authenticated_role.arn
-  }
-}
