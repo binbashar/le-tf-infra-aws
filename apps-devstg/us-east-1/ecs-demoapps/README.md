@@ -603,8 +603,8 @@ aws deploy continue-deployment \
 
 - **ECS Module**: `github.com/binbashar/terraform-aws-ecs.git?ref=v6.7.0`
 - **ALB Module**: `github.com/binbashar/terraform-aws-alb.git?ref=v10.0.2`
-- **OpenTofu**: `~> 1.6.6`
-- **AWS Provider**: `~> 5.100`
+- **OpenTofu**: `~> 1.6`
+- **AWS Provider**: `~> 6.14`
 
 ---
 
