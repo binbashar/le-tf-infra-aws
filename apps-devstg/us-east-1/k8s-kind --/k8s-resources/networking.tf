@@ -7,7 +7,7 @@ resource "helm_release" "ingress_nginx_private" {
   namespace  = kubernetes_namespace.ingress_nginx.id
   repository = "https://kubernetes.github.io/ingress-nginx"
   chart      = "ingress-nginx"
-  version    = "3.19.0"
+  version    = "3.41.0"
   values     = [file("chart-values/ingress-nginx-private.yaml")]
 }
 
@@ -20,7 +20,7 @@ resource "helm_release" "ingress_nginx_public" {
   namespace  = kubernetes_namespace.ingress_nginx.id
   repository = "https://kubernetes.github.io/ingress-nginx"
   chart      = "ingress-nginx"
-  version    = "3.19.0"
+  version    = "3.41.0"
   values     = [file("chart-values/ingress-nginx-public.yaml")]
 }
 
