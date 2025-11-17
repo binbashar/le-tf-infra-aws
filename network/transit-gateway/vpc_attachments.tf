@@ -21,10 +21,10 @@ module "tgw_vpc_attachments_and_subnet_routes_network_firewall" {
     for k, v in {
       "network-firewall" = data.terraform_remote_state.network-firewall
     } :
-    k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false)
+    k => v if local.enable_tgw && local.enable_network_firewall && local.enable_network
   }
 
-  name = "${var.project}-${each.key}-vpc"
+  name = "${local.tgw_name}-${each.key}-vpc"
 
   # network account can access the Transit Gateway in the network: account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
@@ -61,10 +61,10 @@ module "tgw_vpc_attachments_and_subnet_routes_network" {
 
   for_each = {
     for k, v in data.terraform_remote_state.network-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "network", false)
+    k => v if local.enable_tgw && local.enable_network
   }
 
-  name = "${var.project}-${each.key}-vpc"
+  name = "${local.tgw_name}-${each.key}-vpc"
 
   # network account can access the Transit Gateway in the network: account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
@@ -102,10 +102,10 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-devstg" {
 
   for_each = {
     for k, v in data.terraform_remote_state.apps-devstg-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
+    k => v if local.enable_tgw && local.enable_apps_devstg
   }
 
-  name = "${var.project}-${each.key}-vpc"
+  name = "${local.tgw_name}-${each.key}-vpc"
 
   # apps-devstg account can access the Transit Gateway in the network account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
@@ -145,10 +145,10 @@ module "tgw_vpc_attachments_and_subnet_routes_apps-prd" {
 
   for_each = {
     for k, v in data.terraform_remote_state.apps-prd-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
+    k => v if local.enable_tgw && local.enable_apps_prd
   }
 
-  name = "${var.project}-${each.key}-vpc"
+  name = "${local.tgw_name}-${each.key}-vpc"
 
   # apps-prd account can access the Transit Gateway in the network account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
@@ -188,14 +188,14 @@ module "tgw_vpc_attachments_and_subnet_routes_shared" {
 
   for_each = {
     for k, v in data.terraform_remote_state.shared-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "shared", false)
+    k => v if local.enable_tgw && local.enable_shared
   }
 
-  name = "${var.project}-${each.key}-vpc"
+  name = "${local.tgw_name}-${each.key}-vpc"
 
   # apps-devstg account can access the Transit Gateway in the network account since we shared the Transit Gateway with the Organization using Resource Access Manager
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
-  existing_transit_gateway_route_table_id                        = var.enable_tgw && lookup(var.enable_vpc_attach, "shared", false) ? try(module.tgw_vpc_attachments_and_subnet_routes_network_firewall["network-firewall"].transit_gateway_route_table_id, null) : module.tgw[0].transit_gateway_route_table_id
+  existing_transit_gateway_route_table_id                        = local.enable_tgw && local.enable_shared ? try(module.tgw_vpc_attachments_and_subnet_routes_network_firewall["network-firewall"].transit_gateway_route_table_id, null) : module.tgw[0].transit_gateway_route_table_id
   create_transit_gateway                                         = false
   create_transit_gateway_route_table                             = false
   create_transit_gateway_vpc_attachment                          = true

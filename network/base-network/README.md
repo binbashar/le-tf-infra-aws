@@ -1,19 +1,19 @@
-# VPC Configuration
+# VPC Configuration Module
 
-This module provides a simplified abstraction layer for configuring AWS VPCs using the `terraform-aws-modules/vpc/aws` module. This configuration uses 8 structured object types that group related settings logically.
+This module provides a simplified abstraction layer for configuring AWS VPCs using the `terraform-aws-modules/vpc/aws` module. The configuration uses a single, comprehensive `vpc_config` object that groups all VPC settings logically.
 
 ## Overview
 
-The VPC configuration is organized into 8 main object types:
+The VPC configuration is organized into a single `vpc_config` object with the following structure:
 
-1. **vpc_config** - Core VPC settings (name, CIDR, AZs, DNS)
-2. **subnets_config** - All subnet tiers (public, private, database, etc.)
-3. **network_acls_config** - Network ACLs for security
-4. **gateway_config** - Internet and NAT Gateways
-5. **vpn_config** - VPN Gateway and Customer Gateways
-6. **default_resources_config** - Default VPC resource management
-7. **flow_logs_config** - VPC Flow Logs for monitoring
-8. **advanced_config** - DHCP options and advanced features
+- **version** - Configuration version
+- **region** - AWS region
+- **vpc** - VPC configuration object containing:
+  - **metadata** - VPC metadata (name, environment, tags)
+  - **networking** - Network configuration (CIDR, subnets, gateways, DNS)
+  - **monitoring** - Monitoring configuration (Flow Logs)
+  - **defaultResources** - Default VPC resource management (optional)
+  - **availability** - Availability configuration (multi-AZ)
 
 ## Architecture Diagrams
 
@@ -22,28 +22,35 @@ The VPC configuration is organized into 8 main object types:
 ```mermaid
 graph TB
     subgraph Internet["🌐 Internet"]
-        IGW["Internet Gateway"]
+        IGW["Internet Gateway<br/>bb-apps-devstg-vpc"]
     end
     
-    subgraph VPC["🏢 VPC devstg<br/>172.20.0.0/20"]
-        subgraph AZ-a["📍 Availability Zone A"]
-            PubA["Public Subnet<br/>172.20.8.0/23"]
-            NAT["NAT Gateway"]
-            PrivA["Private Subnet<br/>172.20.0.0/23"]
+    subgraph VPC["🏢 VPC devstg<br/>172.18.32.0/20"]
+        subgraph AZ-a["📍 Availability Zone A<br/>us-east-1a"]
+            PubA["Public Subnet<br/>public-1a<br/>172.18.40.0/23"]
+            NAT["NAT Gateway<br/>nat-1a"]
+            PrivA["Private Subnet<br/>private-1a<br/>172.18.32.0/23"]
             PubA --> NAT
             NAT --> PrivA
         end
         
-        subgraph AZ-b["📍 Availability Zone B"]
-            PubB["Public Subnet<br/>172.20.10.0/23"]
-            PrivB["Private Subnet<br/>172.20.2.0/23"]
+        subgraph AZ-b["📍 Availability Zone B<br/>us-east-1b"]
+            PubB["Public Subnet<br/>public-1b<br/>172.18.42.0/23"]
+            PrivB["Private Subnet<br/>private-1b<br/>172.18.34.0/23"]
+        end
+        
+        subgraph AZ-c["📍 Availability Zone C<br/>us-east-1c"]
+            PubC["Public Subnet<br/>public-1c<br/>172.18.44.0/23"]
+            PrivC["Private Subnet<br/>private-1c<br/>172.18.36.0/23"]
         end
         
         PrivB -.-> NAT
+        PrivC -.-> NAT
     end
     
     IGW <--> PubA
     IGW <--> PubB
+    IGW <--> PubC
     
     classDef internet fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
     classDef vpc fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
@@ -54,9 +61,9 @@ graph TB
     
     class Internet internet
     class VPC vpc
-    class AZ-a,AZ-b az
-    class PubA,PubB public
-    class PrivA,PrivB private
+    class AZ-a,AZ-b,AZ-c az
+    class PubA,PubB,PubC public
+    class PrivA,PrivB,PrivC private
     class NAT nat
 ```
 
@@ -65,37 +72,37 @@ graph TB
 ```mermaid
 graph TB
     subgraph Internet["🌐 Internet"]
-        IGW["Internet Gateway"]
+        IGW["Internet Gateway<br/>prd-igw"]
     end
     
     subgraph VPC["🏢 VPC prd<br/>172.18.0.0/20"]
-        subgraph AZ-a["📍 Availability Zone A"]
-            PubA["Public Subnet"]
-            NATA["NAT Gateway A"]
-            PrivA["Private Subnet"]
-            DBA["Database Subnet<br/>RDS/Aurora"]
+        subgraph AZ-a["📍 Availability Zone A<br/>us-east-1a"]
+            PubA["Public Subnet<br/>public-1a<br/>172.18.8.0/24"]
+            NATA["NAT Gateway A<br/>prd-nat-1a"]
+            PrivA["Private Subnet<br/>private-1a<br/>172.18.0.0/24"]
+            DBA["Database Subnet<br/>database-1a<br/>172.18.3.0/24<br/>RDS/Aurora"]
             
             PubA --> NATA
             NATA --> PrivA
             PrivA --> DBA
         end
         
-        subgraph AZ-b["📍 Availability Zone B"]
-            PubB["Public Subnet"]
-            NATB["NAT Gateway B"]
-            PrivB["Private Subnet"]
-            DBB["Database Subnet<br/>RDS/Aurora"]
+        subgraph AZ-b["📍 Availability Zone B<br/>us-east-1b"]
+            PubB["Public Subnet<br/>public-1b<br/>172.18.9.0/24"]
+            NATB["NAT Gateway B<br/>prd-nat-1b"]
+            PrivB["Private Subnet<br/>private-1b<br/>172.18.1.0/24"]
+            DBB["Database Subnet<br/>database-1b<br/>172.18.4.0/24<br/>RDS/Aurora"]
             
             PubB --> NATB
             NATB --> PrivB
             PrivB --> DBB
         end
         
-        subgraph AZ-c["📍 Availability Zone C"]
-            PubC["Public Subnet"]
-            NATC["NAT Gateway C"]
-            PrivC["Private Subnet"]
-            DBC["Database Subnet<br/>RDS/Aurora"]
+        subgraph AZ-c["📍 Availability Zone C<br/>us-east-1c"]
+            PubC["Public Subnet<br/>public-1c<br/>172.18.10.0/24"]
+            NATC["NAT Gateway C<br/>prd-nat-1c"]
+            PrivC["Private Subnet<br/>private-1c<br/>172.18.2.0/24"]
+            DBC["Database Subnet<br/>database-1c<br/>172.18.5.0/24<br/>RDS/Aurora"]
             
             PubC --> NATC
             NATC --> PrivC
@@ -136,17 +143,17 @@ graph TB
     end
     
     subgraph DevStg["🛠️ DevStg Account"]
-        VPC1["VPC devstg<br/>172.20.0.0/20"]
+        VPC1["VPC devstg<br/>bb-apps-devstg-vpc<br/>172.18.32.0/20"]
         VPC1 <--> TGW
     end
     
     subgraph Prd["🚀 Production Account"]
-        VPC2["VPC prd<br/>172.18.0.0/20"]
+        VPC2["VPC prd<br/>prd-vpc<br/>172.18.0.0/20"]
         VPC2 <--> TGW
     end
     
     subgraph Shared["🤝 Shared Account"]
-        VPC3["VPC shared<br/>172.19.0.0/20"]
+        VPC3["VPC shared<br/>shared-vpc<br/>172.19.0.0/20"]
         VPC3 <--> TGW
     end
     
@@ -165,278 +172,192 @@ graph TB
     class VPC1,VPC2,VPC3 vpc
 ```
 
-### Object Variables Structure
+### VPC Configuration Structure
 
 ```mermaid
-graph LR
-    subgraph Variables["📋 8 Object Variables"]
-        V1["1️⃣ vpc_config<br/>Core VPC settings"]
-        V2["2️⃣ subnets_config<br/>All subnet tiers"]
-        V3["3️⃣ network_acls_config<br/>Security ACLs"]
-        V4["4️⃣ gateway_config<br/>Internet & NAT Gateways"]
-        V5["5️⃣ vpn_config<br/>VPN Gateway & CGWs"]
-        V6["6️⃣ default_resources_config<br/>Default VPC resources"]
-        V7["7️⃣ flow_logs_config<br/>Monitoring & compliance"]
-        V8["8️⃣ advanced_config<br/>DHCP & advanced features"]
+graph TB
+    subgraph Config["📋 vpc_config Object"]
+        V["vpc_config"]
+        
+        subgraph VPC["vpc Object"]
+            META["metadata<br/>name, environment, tags"]
+            NET["networking<br/>CIDR, subnets, gateways, DNS"]
+            MON["monitoring<br/>Flow Logs"]
+            DEF["defaultResources<br/>Default VPC resources<br/>(optional)"]
+            AVAIL["availability<br/>multiAz"]
+        end
+        
+        V --> VPC
+        VPC --> META
+        VPC --> NET
+        VPC --> MON
+        VPC --> DEF
+        VPC --> AVAIL
+        
+        subgraph Subnets["Subnets Object"]
+            PUB["public"]
+            PRIV["private"]
+            DB["database"]
+            RS["redshift"]
+            EC["elasticache"]
+            INTRA["intra"]
+            OUT["outpost"]
+        end
+        
+        NET --> Subnets
+        Subnets --> PUB
+        Subnets --> PRIV
+        Subnets --> DB
+        Subnets --> RS
+        Subnets --> EC
+        Subnets --> INTRA
+        Subnets --> OUT
     end
     
     subgraph Module["🔧 VPC Module"]
-        M["terraform-aws-modules/vpc/aws<br/>v6.5.0<br/>1681 variables"]
+        M["terraform-aws-modules/vpc/aws<br/>v6.5.0"]
     end
     
-    V1 --> M
-    V2 --> M
-    V3 --> M
-    V4 --> M
-    V5 --> M
-    V6 --> M
-    V7 --> M
-    V8 --> M
+    Config --> Module
     
-    classDef variables fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
-    classDef module fill:#fff3e0,stroke:#f57c00,stroke-width:3px,color:#000
-    classDef vpc fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
-    classDef subnets fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#000
-    classDef acls fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
-    classDef gateway fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
-    classDef vpn fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
+    classDef config fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef vpc fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef metadata fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef networking fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef monitoring fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000
     classDef default fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
-    classDef logs fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000
-    classDef advanced fill:#f1f8e9,stroke:#558b2f,stroke-width:2px,color:#000
+    classDef availability fill:#f1f8e9,stroke:#558b2f,stroke-width:2px,color:#000
+    classDef subnets fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#000
+    classDef module fill:#ffebee,stroke:#d32f2f,stroke-width:3px,color:#000
     
-    class Variables variables
+    class Config config
+    class VPC vpc
+    class META metadata
+    class NET networking
+    class MON monitoring
+    class DEF default
+    class AVAIL availability
+    class Subnets subnets
     class Module module
-    class V1 vpc
-    class V2 subnets
-    class V3 acls
-    class V4 gateway
-    class V5 vpn
-    class V6 default
-    class V7 logs
-    class V8 advanced
 ```
 
-## Object Variables Reference
+## Configuration Structure
 
-### 1. vpc_config
+### vpc_config Object
 
-Core VPC configuration settings.
+The main configuration object that contains all VPC settings:
 
 ```hcl
 vpc_config = {
-  name                = "my-vpc"           # Required: VPC name
-  cidr                = "172.20.0.0/20"   # Required: Primary CIDR block
-  secondary_cidrs     = []                 # Optional: Additional CIDR blocks
-  azs                 = ["us-east-1a", "us-east-1b"]  # Required: Availability zones
-  instance_tenancy    = "default"         # Optional: Instance tenancy
-  enable_dns_hostnames = true              # Optional: Enable DNS hostnames
-  enable_dns_support  = true              # Optional: Enable DNS support
-  enable_ipv6         = false             # Optional: Enable IPv6
-  ipv6_cidr           = null              # Optional: IPv6 CIDR block
-  tags                = {}                # Optional: Additional tags
-}
-```
-
-### 2. subnets_config
-
-Configuration for all subnet tiers.
-
-```hcl
-subnets_config = {
-  public = {
-    cidrs                  = ["172.20.8.0/23", "172.20.10.0/23"]
-    ipv6_prefixes         = []
-    map_public_ip         = false
-    names                 = []
-    tags                  = { Tier = "public" }
-    tags_per_az           = {}
-  }
+  version = "6.5.0"  # Configuration version
+  region  = "us-east-1"  # AWS region
   
-  private = {
-    cidrs                     = ["172.20.0.0/23", "172.20.2.0/23"]
-    ipv6_prefixes            = []
-    names                    = []
-    create_nat_gateway_route = true
-    tags                     = { Tier = "private" }
-    tags_per_az              = {}
-  }
-  
-  database = {
-    cidrs                        = ["172.20.4.0/23", "172.20.6.0/23"]
-    create_subnet_group          = true
-    subnet_group_name            = null
-    create_nat_gateway_route     = false
-    create_internet_gateway_route = false
-    tags                         = { Tier = "database" }
-  }
-  
-  elasticache = {
-    cidrs                   = ["172.20.12.0/23", "172.20.14.0/23"]
-    create_subnet_group     = true
-    subnet_group_name       = null
-    tags                    = { Tier = "elasticache" }
-  }
-  
-  redshift = {
-    cidrs                   = []
-    create_subnet_group     = true
-    subnet_group_name       = null
-    enable_public           = false
-    tags                    = {}
-  }
-  
-  intra = {
-    cidrs = []
-    tags  = {}
-  }
-}
-```
-
-### 3. network_acls_config
-
-Network ACL configuration for security.
-
-```hcl
-network_acls_config = {
-  manage_default = true
-  
-  public = {
-    dedicated       = false
-    inbound_rules   = []
-    outbound_rules  = []
-    tags            = {}
-  }
-  
-  private = {
-    dedicated       = false
-    inbound_rules   = []
-    outbound_rules  = []
-    tags            = {}
-  }
-  
-  database = {
-    dedicated       = false
-    inbound_rules   = []
-    outbound_rules  = []
-    tags            = {}
+  vpc = {
+    # VPC metadata
+    metadata = {
+      name        = "bb-apps-devstg-vpc"
+      environment = "devstg"
+      tags        = {
+        Environment = "devstg"
+        Layer       = "base-network"
+      }
+    }
+    
+    # Network configuration
+    networking = {
+      cidrBlock = "172.18.32.0/20"
+      
+      subnets = {
+        public = [
+          {
+            name             = "public-1a"
+            cidr             = "172.18.40.0/23"
+            availabilityZone = "us-east-1a"
+            tags             = {  # Optional: Subnet-specific tags
+              "kubernetes.io/cluster/my-cluster" = "shared"
+              "kubernetes.io/role/elb"            = "1"
+            }
+          }
+        ]
+        private = [
+          {
+            name             = "private-1a"
+            cidr             = "172.18.32.0/23"
+            availabilityZone = "us-east-1a"
+            tags             = {  # Optional: Subnet-specific tags
+              "kubernetes.io/role/internal-elb" = "1"
+            }
+          }
+        ]
+        database    = []  # Optional: Database subnets
+        redshift    = []  # Optional: Redshift subnets
+        elasticache = []  # Optional: ElastiCache subnets
+        intra       = []  # Optional: Intra subnets (no internet)
+        outpost     = []  # Optional: Outpost subnets
+      }
+      
+      internetGateway = {
+        enabled = true
+        name    = "devstg-igw"
+      }
+      
+      natGateways = {
+        enabled = true   # Enable NAT Gateway
+        single  = true   # true = single NAT Gateway, false = NAT Gateway per AZ
+      }
+      
+      dnsSettings = {
+        enableDnsHostnames = true
+        enableDnsSupport   = true
+      }
+      
+      mapPublicIpOnLaunch = false  # Optional: Auto-assign public IP to instances in public subnets (default: false)
+    }
+    
+    # Monitoring configuration
+    monitoring = {
+      flowLogs = {
+        enabled            = false  # Set to true to enable Flow Logs
+        trafficType        = "ALL"  # ALL | ACCEPT | REJECT
+        logDestinationType = "cloud-watch-logs"  # cloud-watch-logs | s3
+        retentionDays      = 7
+      }
+    }
+    
+    # Default resources management (optional)
+    defaultResources = {
+      manageDefaultVpc            = false
+      manageDefaultSecurityGroup  = true
+      manageDefaultNetworkAcl    = true
+      manageDefaultRouteTable    = true
+      # ... additional default resource settings
+    }
+    
+    # Availability configuration
+    availability = {
+      multiAz = true
+    }
   }
 }
 ```
 
-### 4. gateway_config
+## Subnet Types
 
-Internet and NAT Gateway configuration.
+The module supports 7 subnet types:
 
-```hcl
-gateway_config = {
-  create_igw           = true
-  create_egress_only_igw = false
-  
-  enable_nat_gateway   = true
-  single_nat_gateway   = false
-  one_nat_gateway_per_az = true
-  reuse_nat_ips        = false
-  external_nat_ip_ids  = []
-  nat_gateway_tags     = {}
-  nat_eip_tags         = {}
-}
-```
+1. **public** - Public subnets with internet gateway access
+2. **private** - Private subnets with NAT gateway access
+3. **database** - Isolated subnets for RDS/Aurora databases
+4. **redshift** - Subnets for Amazon Redshift clusters
+5. **elasticache** - Subnets for ElastiCache clusters
+6. **intra** - Subnets with no internet access (for internal services)
+7. **outpost** - Subnets for AWS Outposts
 
-### 5. vpn_config
-
-VPN Gateway and Customer Gateway configuration.
-
-```hcl
-vpn_config = {
-  enable_vpn_gateway = true
-  vpn_gateway_id     = ""
-  amazon_side_asn    = "64512"
-  vpn_gateway_az     = null
-  
-  propagate_private_route_tables = true
-  propagate_public_route_tables  = true
-  propagate_intra_route_tables   = false
-  
-  customer_gateways = {}
-  customer_gateway_tags = {}
-}
-```
-
-### 6. default_resources_config
-
-Default VPC resource management.
-
-```hcl
-default_resources_config = {
-  manage_default_vpc           = false
-  default_vpc_name             = null
-  default_vpc_enable_dns_support = true
-  default_vpc_enable_dns_hostnames = true
-  
-  manage_default_security_group = true
-  default_security_group_name   = null
-  default_security_group_ingress = []
-  default_security_group_egress  = []
-  
-  manage_default_network_acl = true
-  manage_default_route_table = true
-  default_route_table_routes = []
-}
-```
-
-### 7. flow_logs_config
-
-VPC Flow Logs configuration.
-
-```hcl
-flow_logs_config = {
-  enable              = true
-  traffic_type        = "ALL"
-  destination_type    = "cloud-watch-logs"
-  destination_arn     = ""
-  log_format          = null
-  max_aggregation_interval = 600
-  
-  cloudwatch = {
-    create_log_group    = true
-    create_iam_role     = true
-    iam_role_arn        = ""
-    log_group_name_prefix = "/aws/vpc-flow-log/"
-    log_group_name_suffix = ""
-    retention_in_days   = 30
-    kms_key_id          = null
-  }
-  
-  s3 = {
-    file_format               = null
-    hive_compatible_partitions = false
-    per_hour_partition        = false
-  }
-  
-  tags = {}
-}
-```
-
-### 8. advanced_config
-
-Advanced VPC features.
-
-```hcl
-advanced_config = {
-  enable_dhcp_options = false
-  dhcp_options = {
-    domain_name          = ""
-    domain_name_servers  = ["AmazonProvidedDNS"]
-    ntp_servers          = []
-    netbios_name_servers = []
-    netbios_node_type    = ""
-  }
-  
-  vpc_block_public_access_options = {}
-  vpc_block_public_access_exclusions = {}
-  enable_network_address_usage_metrics = null
-}
-```
+Each subnet is defined with:
+- `name` - Subnet name
+- `cidr` - CIDR block
+- `availabilityZone` - AWS Availability Zone
+- `tags` - Optional map of tags specific to this subnet (useful for Kubernetes, cost allocation, etc.)
 
 ## Quick Start Guide
 
@@ -459,9 +380,14 @@ cp environments/devstg.tfvars environments/my-environment.tfvars
 ### Step 3: Apply Configuration
 
 ```bash
-terraform init
-terraform plan -var-file="environments/my-environment.tfvars"
-terraform apply -var-file="environments/my-environment.tfvars"
+# Initialize Terraform
+tofu init
+
+# Review the plan
+tofu plan -var-file="environments/my-environment.tfvars"
+
+# Apply the configuration
+tofu apply -var-file="environments/my-environment.tfvars"
 ```
 
 ## Environment-Specific Configurations
@@ -469,53 +395,143 @@ terraform apply -var-file="environments/my-environment.tfvars"
 ### DevStg Account
 
 - **Purpose**: Development and staging workloads
-- **Cost Optimization**: Single NAT Gateway, no Flow Logs
-- **Subnets**: Public + Private only
-- **CIDR**: 172.20.0.0/20
+- **VPC Name**: `bb-apps-devstg-vpc`
+- **CIDR**: `172.18.32.0/20`
+- **Cost Optimization**: Single NAT Gateway, Flow Logs disabled
+- **Subnets**: Public (3 AZs) + Private (3 AZs)
+- **Availability Zones**: us-east-1a, us-east-1b, us-east-1c
+- **Public IP Auto-Assignment**: Enabled (`mapPublicIpOnLaunch = true`)
+- **Subnet Tags**: Kubernetes tags for cluster integration
 
 ### Production Account
 
 - **Purpose**: Production workloads with high availability
-- **High Availability**: NAT Gateway per AZ, Flow Logs enabled
-- **Subnets**: Public + Private + Database + Elasticache
-- **CIDR**: 172.18.0.0/20
-- **Security**: Dedicated Network ACLs with strict rules
+- **VPC Name**: `prd-vpc`
+- **CIDR**: `172.18.0.0/20`
+- **High Availability**: NAT Gateway per AZ, Flow Logs enabled (30 days retention)
+- **Subnets**: Public + Private + Database (all in 3 AZs)
+- **Security**: Default resources managed, Flow Logs enabled
 
 ### Shared Account
 
 - **Purpose**: Shared services and cross-account connectivity
-- **Connectivity**: VPN Gateway, Transit Gateway integration
-- **Subnets**: Public + Private + Database + Intra
-- **CIDR**: 172.19.0.0/20
-- **Monitoring**: Extended Flow Log retention (90 days)
+- **VPC Name**: `shared-vpc`
+- **CIDR**: `172.19.0.0/20`
+- **Connectivity**: Single NAT Gateway, Flow Logs enabled (90 days retention)
+- **Subnets**: Public + Private + Database (all in 2 AZs)
+- **Monitoring**: Extended Flow Log retention for compliance
 
-## Transit Gateway Integration
+## NAT Gateway Configuration
 
-### Prerequisites
+The NAT Gateway configuration is simplified to a boolean object:
 
-Make sure you have enabled RAM in the Organization account by:
+```hcl
+natGateways = {
+  enabled = true   # Enable NAT Gateway (true/false)
+  single  = true   # Single NAT Gateway mode (true = single, false = per AZ)
+}
+```
 
-* Setting RAM to Access enabled in *AWS Organization > Services*
+### Configuration Options:
 
-* **Enable sharing with AWS Organizations** in the AWS console go to *Resource Access Manager > Settings* or via AWS CLI:
+- **Single NAT Gateway** (`enabled = true, single = true`):
+  - Creates one NAT Gateway in the first public subnet
+  - Cost-optimized for non-production environments
+  - All private subnets route through the single NAT Gateway
 
-  `aws ram enable-sharing-with-aws-organization`
+- **NAT Gateway per AZ** (`enabled = true, single = false`):
+  - Creates one NAT Gateway in each Availability Zone
+  - High availability for production environments
+  - Each private subnet routes through its AZ's NAT Gateway
 
-### Deployment
+- **No NAT Gateway** (`enabled = false`):
+  - No NAT Gateways are created
+  - Private subnets have no internet access
+  - Use for isolated workloads or when using VPC endpoints
 
-In order to deploy the Transit Gateway follow these steps:
+## Public IP Auto-Assignment
 
-1. First time deployment: Set to `false` all vpc attachments first in `var.enable_vpc_attach` (consider taking advantage of the `network.auto.tfvars` file for this purpose).
-2. After deploying the Transit Gateway select the vpc attachment to enable in the `var.enable_vpc_attach` by setting to `true`
+The `mapPublicIpOnLaunch` parameter controls whether instances launched in public subnets automatically receive a public IP address:
+
+- **Default**: `false` (instances do not get public IP automatically)
+- **When `true`**: All instances launched in public subnets will automatically receive a public IP
+- **Use case**: Useful for load balancers, NAT instances, or when you want to simplify instance configuration
+
+```hcl
+networking = {
+  mapPublicIpOnLaunch = true  # Enable auto-assignment of public IPs
+  # ... other networking config
+}
+```
+
+**Note**: This setting applies to all public subnets. Individual subnet-level control is not supported by the underlying VPC module.
+
+## Subnet Tags
+
+Each subnet can have its own set of tags, which is useful for:
+
+- **Kubernetes Integration**: Tag subnets for ELB, cluster identification, etc.
+- **Cost Allocation**: Tag subnets by team, project, or cost center
+- **Automation**: Tag subnets for automated resource discovery
+- **Compliance**: Tag subnets for compliance and governance
+
+Example with Kubernetes tags:
+
+```hcl
+public = [
+  {
+    name             = "public-1a"
+    cidr             = "172.18.40.0/23"
+    availabilityZone = "us-east-1a"
+    tags = {
+      "kubernetes.io/cluster/my-cluster" = "shared"
+      "kubernetes.io/role/elb"            = "1"
+    }
+  }
+]
+
+private = [
+  {
+    name             = "private-1a"
+    cidr             = "172.18.32.0/23"
+    availabilityZone = "us-east-1a"
+    tags = {
+      "kubernetes.io/cluster/my-cluster" = "shared"
+      "kubernetes.io/role/internal-elb"  = "1"
+    }
+  }
+]
+```
+
+**Tag Merging Behavior**:
+- **Public/Private subnets**: Tags are merged per Availability Zone (if multiple subnets exist in the same AZ, their tags are merged)
+- **Other subnet types**: Tags are merged across all subnets of the same type
+- If no tags are specified, an empty map `{}` is used
+
+## Default Resources Management
+
+The `defaultResources` section (optional) allows you to manage default VPC resources:
+
+- **Default VPC**: Manage the default VPC in the region
+- **Default Security Group**: Manage default security group rules
+- **Default Network ACL**: Manage default network ACL rules
+- **Default Route Table**: Manage default route table routes
+
+If `defaultResources` is not provided, sensible defaults are used:
+- `manageDefaultVpc = false` (don't manage default VPC)
+- `manageDefaultSecurityGroup = true`
+- `manageDefaultNetworkAcl = true`
+- `manageDefaultRouteTable = true`
 
 ## Best Practices
 
 ### Security
 
-- Use dedicated Network ACLs for production environments
-- Implement least-privilege access rules
-- Enable VPC Flow Logs for security monitoring
 - Use private subnets for databases and sensitive workloads
+- Enable VPC Flow Logs in production for security monitoring
+- Manage default security groups to restrict access
+- Use dedicated Network ACLs for production environments
+- Only enable `mapPublicIpOnLaunch` when necessary (e.g., for load balancers)
 
 ### Cost Optimization
 
@@ -523,11 +539,12 @@ In order to deploy the Transit Gateway follow these steps:
 - Disable Flow Logs in development environments
 - Use appropriate subnet sizing to avoid IP waste
 - Consider NAT Gateway alternatives for high-traffic workloads
+- Use subnet tags for cost allocation and tracking
 
 ### High Availability
 
 - Deploy NAT Gateways across multiple AZs for production
-- Use multi-AZ database subnet groups
+- Use multi-AZ subnet groups for databases
 - Implement cross-AZ replication for databases
 - Monitor NAT Gateway utilization
 
@@ -538,34 +555,61 @@ In order to deploy the Transit Gateway follow these steps:
 - Use network address usage metrics for capacity planning
 - Monitor NAT Gateway costs and utilization
 
+### Tagging Strategy
+
+- Use consistent tagging across all subnets for cost allocation
+- Tag subnets with Kubernetes labels for cluster integration
+- Use tags for automated resource discovery and management
+- Follow AWS tagging best practices (case-sensitive keys)
+
 ## Troubleshooting
 
 ### Common Issues
 
-**Issue**: NAT Gateway not accessible from private subnets
-**Solution**: Ensure `create_private_nat_gateway_route = true` in private subnet configuration
+**Issue**: NAT Gateway not accessible from private subnets  
+**Solution**: Verify NAT Gateway is in a public subnet and route table associations are correct
 
-**Issue**: Database subnets cannot reach internet
-**Solution**: Check that `create_nat_gateway_route = false` for database subnets (this is intentional for security)
+**Issue**: Database subnets cannot reach internet  
+**Solution**: This is intentional for security. Database subnets should not have internet access
 
-**Issue**: VPN Gateway not propagating routes
-**Solution**: Verify `propagate_*_route_tables = true` in vpn_config
+**Issue**: Flow Logs not appearing in CloudWatch  
+**Solution**: Ensure IAM role has proper permissions and log group exists. Check `monitoring.flowLogs.enabled = true`
 
-**Issue**: Flow Logs not appearing in CloudWatch
-**Solution**: Ensure IAM role has proper permissions and log group exists
+**Issue**: Import errors when using imports.tf  
+**Solution**: Replace placeholder IDs with actual AWS resource IDs using AWS CLI commands provided in comments
+
+**Issue**: Subnet tags not appearing on resources  
+**Solution**: Verify tags are correctly formatted as maps. For public/private subnets, tags are merged per AZ. For other types, tags are merged across all subnets of that type.
+
+**Issue**: Instances in public subnets not getting public IP  
+**Solution**: Set `mapPublicIpOnLaunch = true` in the `networking` section. Note that this applies to all public subnets.
 
 ### Validation Commands
 
 ```bash
 # Validate Terraform configuration
-terraform validate
+tofu validate
 
 # Check for unused variables
-terraform plan -var-file="environments/devstg.tfvars"
+tofu plan -var-file="environments/devstg.tfvars"
 
 # Verify VPC configuration
-aws ec2 describe-vpcs --filters "Name=tag:Name,Values=devstg-vpc"
+aws ec2 describe-vpcs --filters "Name=tag:Name,Values=bb-apps-devstg-vpc"
+
+# List all subnets
+aws ec2 describe-subnets --filters "Name=vpc-id,Values=<vpc-id>"
 ```
+
+## Migration from Existing Infrastructure
+
+If you have existing VPC resources, use the `imports.tf` file to import them into Terraform state:
+
+1. Update `imports.tf` with actual AWS resource IDs
+2. Run `tofu plan` to verify imports
+3. Run `tofu apply` to import resources
+4. Remove `imports.tf` after successful import
+
+See `imports.tf` for detailed AWS CLI commands to find resource IDs.
 
 ## References
 

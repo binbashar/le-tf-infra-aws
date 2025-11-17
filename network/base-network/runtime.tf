@@ -1,3 +1,164 @@
+#===========================================#
+# VPC Configuration Locals
+# Computed values derived from vpc_config design spec
+#===========================================#
+locals {
+  #===========================================#
+  # Subnet Configuration Extraction
+  # Extract CIDRs, names, and availability zones from the new subnet structure
+  #===========================================#
+
+  # Public subnets: Extract CIDR blocks, names, and availability zones
+  public_subnets_cidrs = [for s in var.vpc_config.vpc.networking.subnets.public : s.cidr]
+  public_subnet_names  = [for s in var.vpc_config.vpc.networking.subnets.public : s.name]
+  public_subnet_azs    = [for s in var.vpc_config.vpc.networking.subnets.public : s.availabilityZone]
+
+  # Private subnets: Extract CIDR blocks, names, and availability zones
+  private_subnets_cidrs = [for s in var.vpc_config.vpc.networking.subnets.private : s.cidr]
+  private_subnet_names  = [for s in var.vpc_config.vpc.networking.subnets.private : s.name]
+  private_subnet_azs    = [for s in var.vpc_config.vpc.networking.subnets.private : s.availabilityZone]
+
+  # Database subnets: Extract CIDR blocks, names, and availability zones
+  database_subnets_cidrs = [for s in var.vpc_config.vpc.networking.subnets.database : s.cidr]
+  database_subnet_names  = [for s in var.vpc_config.vpc.networking.subnets.database : s.name]
+  database_subnet_azs    = [for s in var.vpc_config.vpc.networking.subnets.database : s.availabilityZone]
+
+  # Redshift subnets: Extract CIDR blocks, names, and availability zones
+  redshift_subnets_cidrs = [for s in var.vpc_config.vpc.networking.subnets.redshift : s.cidr]
+  redshift_subnet_names  = [for s in var.vpc_config.vpc.networking.subnets.redshift : s.name]
+  redshift_subnet_azs    = [for s in var.vpc_config.vpc.networking.subnets.redshift : s.availabilityZone]
+
+  # Elasticache subnets: Extract CIDR blocks, names, and availability zones
+  elasticache_subnets_cidrs = [for s in var.vpc_config.vpc.networking.subnets.elasticache : s.cidr]
+  elasticache_subnet_names  = [for s in var.vpc_config.vpc.networking.subnets.elasticache : s.name]
+  elasticache_subnet_azs    = [for s in var.vpc_config.vpc.networking.subnets.elasticache : s.availabilityZone]
+
+  # Intra subnets: Extract CIDR blocks, names, and availability zones (no internet access)
+  intra_subnets_cidrs = [for s in var.vpc_config.vpc.networking.subnets.intra : s.cidr]
+  intra_subnet_names  = [for s in var.vpc_config.vpc.networking.subnets.intra : s.name]
+  intra_subnet_azs    = [for s in var.vpc_config.vpc.networking.subnets.intra : s.availabilityZone]
+
+  # Outpost subnets: Extract CIDR blocks, names, and availability zones (for AWS Outposts)
+  outpost_subnets_cidrs = [for s in var.vpc_config.vpc.networking.subnets.outpost : s.cidr]
+  outpost_subnet_names  = [for s in var.vpc_config.vpc.networking.subnets.outpost : s.name]
+  outpost_subnet_azs    = [for s in var.vpc_config.vpc.networking.subnets.outpost : s.availabilityZone]
+
+  #===========================================#
+  # Subnet Tags Configuration
+  # Extract tags from subnet objects and create maps for VPC module
+  # The module supports both common tags (*_subnet_tags) and per-AZ tags (*_subnet_tags_per_az)
+  # We use tags_per_az to support individual subnet tags
+  # Note: If multiple subnets exist in the same AZ, tags will be merged
+  #===========================================#
+
+  # Public subnet tags per AZ: Map of AZ -> merged tags for all subnets in that AZ
+  # If multiple subnets exist in the same AZ, their tags are merged
+  public_subnet_tags_per_az = {
+    for az in distinct([for s in var.vpc_config.vpc.networking.subnets.public : s.availabilityZone]) :
+    az => merge([
+      for s in var.vpc_config.vpc.networking.subnets.public :
+      try(s.tags, {}) if s.availabilityZone == az
+    ]...)
+  }
+
+  # Private subnet tags per AZ: Map of AZ -> merged tags for all subnets in that AZ
+  private_subnet_tags_per_az = {
+    for az in distinct([for s in var.vpc_config.vpc.networking.subnets.private : s.availabilityZone]) :
+    az => merge([
+      for s in var.vpc_config.vpc.networking.subnets.private :
+      try(s.tags, {}) if s.availabilityZone == az
+    ]...)
+  }
+
+  #===========================================#
+  # Common Subnet Tags (for subnet types that don't support tags_per_az)
+  # These are merged tags from all subnets of each type
+  # Note: Only public and private subnets support tags_per_az
+  # For other types, we use common tags (merged from all subnets)
+  #===========================================#
+
+  # Database subnet tags: Merge all tags from all database subnets
+  # If no subnets exist, return empty map
+  database_subnet_tags = length(var.vpc_config.vpc.networking.subnets.database) > 0 ? merge([
+    for s in var.vpc_config.vpc.networking.subnets.database :
+    try(s.tags, {})
+  ]...) : {}
+
+  # Redshift subnet tags: Merge all tags from all redshift subnets
+  # If no subnets exist, return empty map
+  redshift_subnet_tags = length(var.vpc_config.vpc.networking.subnets.redshift) > 0 ? merge([
+    for s in var.vpc_config.vpc.networking.subnets.redshift :
+    try(s.tags, {})
+  ]...) : {}
+
+  # Elasticache subnet tags: Merge all tags from all elasticache subnets
+  # If no subnets exist, return empty map
+  elasticache_subnet_tags = length(var.vpc_config.vpc.networking.subnets.elasticache) > 0 ? merge([
+    for s in var.vpc_config.vpc.networking.subnets.elasticache :
+    try(s.tags, {})
+  ]...) : {}
+
+  # Intra subnet tags: Merge all tags from all intra subnets
+  # If no subnets exist, return empty map
+  intra_subnet_tags = length(var.vpc_config.vpc.networking.subnets.intra) > 0 ? merge([
+    for s in var.vpc_config.vpc.networking.subnets.intra :
+    try(s.tags, {})
+  ]...) : {}
+
+  # Outpost subnet tags: Merge all tags from all outpost subnets
+  # If no subnets exist, return empty map
+  outpost_subnet_tags = length(var.vpc_config.vpc.networking.subnets.outpost) > 0 ? merge([
+    for s in var.vpc_config.vpc.networking.subnets.outpost :
+    try(s.tags, {})
+  ]...) : {}
+
+  #===========================================#
+  # Availability Zones Aggregation
+  # Combine all unique availability zones from all subnet types
+  #===========================================#
+  all_azs = distinct(concat(
+    local.public_subnet_azs,
+    local.private_subnet_azs,
+    local.database_subnet_azs,
+    local.redshift_subnet_azs,
+    local.elasticache_subnet_azs,
+    local.intra_subnet_azs,
+    local.outpost_subnet_azs
+  ))
+
+  #===========================================#
+  # NAT Gateway Configuration Derivation
+  # Map natGateways object to module boolean flags
+  #===========================================#
+
+  # Enable NAT gateway from design spec
+  enable_nat_gateway = var.vpc_config.vpc.networking.natGateways.enabled
+
+  # Single NAT gateway mode from design spec
+  single_nat_gateway = var.vpc_config.vpc.networking.natGateways.single
+
+  # One NAT gateway per AZ: true if enabled and not single
+  one_nat_gateway_per_az = var.vpc_config.vpc.networking.natGateways.enabled && !var.vpc_config.vpc.networking.natGateways.single
+
+  # External NAT IP allocation IDs (empty list - not supported in simplified format)
+  # Note: If you need to reuse existing Elastic IPs, you'll need to extend the natGateways object
+  external_nat_ip_ids = []
+
+  #===========================================#
+  # VPC Flow Logs Configuration
+  # Map flow logs settings from design spec to module format
+  #===========================================#
+
+  # Flow logs enabled flag from design spec
+  flow_logs_enabled = var.vpc_config.vpc.monitoring.flowLogs.enabled
+
+  # Map log destination type from design spec to module format
+  # Supports: cloud-watch-logs, s3, kinesis-data-firehose
+  flow_log_destination_type = var.vpc_config.vpc.monitoring.flowLogs.logDestinationType == "cloud-watch-logs" ? "cloud-watch-logs" : (
+    var.vpc_config.vpc.monitoring.flowLogs.logDestinationType == "s3" ? "s3" : "cloud-watch-logs"
+  )
+}
+
 /*
 locals {
   tags = {

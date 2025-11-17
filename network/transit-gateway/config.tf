@@ -2,32 +2,32 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  region  = var.region
+  region  = local.region
   profile = var.profile
 }
 
 provider "aws" {
   alias   = "network"
-  region  = var.region
+  region  = local.region
   profile = var.profile
 }
 
 provider "aws" {
   alias   = "shared"
-  region  = var.region
-  profile = "${var.project}-shared-devops"
+  region  = local.region
+  profile = "${local.project}-shared-devops"
 }
 
 provider "aws" {
   alias   = "apps-devstg"
-  region  = var.region
-  profile = "${var.project}-apps-devstg-devops"
+  region  = local.region
+  profile = "${local.project}-apps-devstg-devops"
 }
 
 provider "aws" {
   alias   = "apps-prd"
-  region  = var.region
-  profile = "${var.project}-apps-prd-devops"
+  region  = local.region
+  profile = "${local.project}-apps-prd-devops"
 }
 
 #=============================#
@@ -56,9 +56,9 @@ data "terraform_remote_state" "tools-vpn-server" {
   backend = "s3"
 
   config = {
-    region  = var.region
-    profile = "${var.project}-shared-devops"
-    bucket  = "${var.project}-shared-terraform-backend"
+    region  = local.region
+    profile = "${local.project}-shared-devops"
+    bucket  = "${local.project}-shared-terraform-backend"
     key     = "shared/vpn-server/terraform.tfstate"
   }
 }
@@ -69,9 +69,9 @@ data "terraform_remote_state" "network-firewall" {
   backend = "s3"
 
   config = {
-    region  = var.region
-    profile = "${var.project}-network-devops"
-    bucket  = "${var.project}-network-terraform-backend"
+    region  = local.region
+    profile = "${local.project}-network-devops"
+    bucket  = "${local.project}-network-terraform-backend"
     key     = "network/network-firewall/terraform.tfstate"
 
   }
@@ -83,9 +83,9 @@ data "terraform_remote_state" "tgw-dr" {
   backend = "s3"
 
   config = {
-    region  = var.region
-    profile = "${var.project}-network-devops"
-    bucket  = "${var.project}-network-terraform-backend"
+    region  = local.region
+    profile = "${local.project}-network-devops"
+    bucket  = "${local.project}-network-terraform-backend"
     key     = "network/transit-gateway-dr/terraform.tfstate"
   }
 }

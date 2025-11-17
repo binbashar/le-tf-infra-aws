@@ -3,102 +3,155 @@
 # Cost-optimized configuration for development/staging
 #===========================================#
 
-# 0. Basic
-region = "us-east-1"
 profile = "binbash-network-devops"
-project = "binbash"
-environment = "devstg"
-layer_name = "base-network"
 
-# 1. VPC Core Configuration
 vpc_config = {
-  name    = "devstg-vpc"
-  cidr    = "172.20.0.0/20"
-  azs     = ["us-east-1a", "us-east-1b"]
-  tags = {
-    Environment = "devstg"
-    Purpose     = "development"
-  }
-}
+  version = "6.5.0"
+  region  = "us-east-1"
 
-# 2. Subnets Configuration
-subnets_config = {
-  # Public subnets
-  public = {
-    cidrs = ["172.20.8.0/23", "172.20.10.0/23"]
-    tags = {
-      Tier = "public"
+  vpc = {
+    metadata = {
+      name        = "bb-apps-devstg-vpc"
+      environment = "devstg"
+      tags = {
+        Environment = "apps-devstg"
+        Layer       = "base-network"
+        Terraform   = "true"
+      }
+    }
+
+    networking = {
+      cidrBlock           = "172.18.32.0/20"
+      mapPublicIpOnLaunch = true
+
+      subnets = {
+        public = [
+          {
+            name             = "bb-apps-devstg-vpc-public-us-east-1a"
+            cidr             = "172.18.40.0/23"
+            availabilityZone = "us-east-1a"
+            # Optional: Add tags specific to this subnet
+            tags = {
+              "kubernetes.io/cluster/cluster-kops-1.k8s.devstg.binbash.aws" = "1"
+              "kubernetes.io/role/elb"                                      = "1"
+            }
+          },
+          {
+            name             = "bb-apps-devstg-vpc-public-us-east-1b"
+            cidr             = "172.18.42.0/23"
+            availabilityZone = "us-east-1b"
+            # Optional: Add tags specific to this subnet
+            tags = {
+              "kubernetes.io/cluster/cluster-kops-1.k8s.devstg.binbash.aws" = "1"
+              "kubernetes.io/role/elb"                                      = "1"
+            }
+          },
+          {
+            name             = "bb-apps-devstg-vpc-public-us-east-1c"
+            cidr             = "172.18.44.0/23"
+            availabilityZone = "us-east-1c"
+            # Optional: Add tags specific to this subnet
+            tags = {
+              "kubernetes.io/cluster/cluster-kops-1.k8s.devstg.binbash.aws" = "1"
+              "kubernetes.io/role/elb"                                      = "1"
+            }
+          }
+        ]
+
+        private = [
+          {
+            name             = "bb-apps-devstg-vpc-private-us-east-1a"
+            cidr             = "172.18.32.0/23"
+            availabilityZone = "us-east-1a"
+            tags = {
+              "kubernetes.io/cluster/cluster-kops-1.k8s.devstg.binbash.aws" = "1"
+              "kubernetes.io/role/internal-elb"                             = "1"
+            }
+          },
+          {
+            name             = "bb-apps-devstg-vpc-private-us-east-1b"
+            cidr             = "172.18.34.0/23"
+            availabilityZone = "us-east-1b"
+            tags = {
+              "kubernetes.io/cluster/cluster-kops-1.k8s.devstg.binbash.aws" = "1"
+              "kubernetes.io/role/internal-elb"                             = "1"
+            }
+          },
+          {
+            name             = "bb-apps-devstg-vpc-private-us-east-1c"
+            cidr             = "172.18.36.0/23"
+            availabilityZone = "us-east-1c"
+            tags = {
+              "kubernetes.io/cluster/cluster-kops-1.k8s.devstg.binbash.aws" = "1"
+              "kubernetes.io/role/internal-elb"                             = "1"
+            }
+          }
+        ]
+
+        database = []
+
+        redshift = []
+
+        elasticache = []
+
+        intra = []
+
+        outpost = []
+      }
+
+      internetGateway = {
+        enabled = true
+        name    = "devstg-igw"
+      }
+
+      natGateways = {
+        enabled = false
+        single  = true
+      }
+
+      dnsSettings = {
+        enableDnsHostnames = true
+        enableDnsSupport   = true
+      }
+    }
+
+    monitoring = {
+      flowLogs = {
+        enabled            = false
+        trafficType        = "ALL"
+        logDestinationType = "cloud-watch-logs"
+        retentionDays      = 7
+      }
+    }
+
+    defaultResources = {
+      # Default VPC management
+      manageDefaultVpc             = false
+      defaultVpcEnableDnsSupport   = true
+      defaultVpcEnableDnsHostnames = true
+      defaultVpcTags               = {}
+
+      # Default Security Group management
+      manageDefaultSecurityGroup  = true
+      defaultSecurityGroupIngress = []
+      defaultSecurityGroupEgress  = []
+      defaultSecurityGroupTags    = {}
+
+      # Default Network ACL management
+      manageDefaultNetworkAcl  = false
+      defaultNetworkAclIngress = []
+      defaultNetworkAclEgress  = []
+      defaultNetworkAclTags    = {}
+
+      # Default Route Table management
+      manageDefaultRouteTable          = false
+      defaultRouteTablePropagatingVgws = []
+      defaultRouteTableRoutes          = []
+      defaultRouteTableTags            = {}
+    }
+
+    availability = {
+      multiAz = true
     }
   }
-  
-  # Private subnets
-  private = {
-    cidrs = ["172.20.0.0/23", "172.20.2.0/23"]
-    create_nat_gateway_route = true
-    tags = {
-      Tier = "private"
-    }
-  }
-  
-  # No database subnets for devstg (cost optimization)
-  database = {
-    cidrs = []
-  }
-  
-  # No elasticache subnets for devstg
-  elasticache = {
-    cidrs = []
-  }
-  
-  # No redshift subnets for devstg
-  redshift = {
-    cidrs = []
-  }
-  
-  # No intra subnets for devstg
-  intra = {
-    cidrs = []
-  }
-}
-
-# 3. Network ACLs Configuration
-network_acls_config = {
-  manage_default = true
-  
-  public = {
-    dedicated = false  # Use default ACL for cost savings
-  }
-  
-  private = {
-    dedicated = false  # Use default ACL for cost savings
-  }
-}
-
-# 4. Gateway Configuration
-gateway_config = {
-  create_igw         = true
-  enable_nat_gateway = true
-  single_nat_gateway = true  # Cost optimization: single NAT for all AZs
-}
-
-# 5. VPN Configuration
-vpn_config = {
-  enable_vpn_gateway = false  # No VPN needed for devstg
-}
-
-# 6. Default Resources Management
-default_resources_config = {
-  manage_default_security_group = true
-  manage_default_network_acl    = true
-  manage_default_route_table   = true
-}
-
-# 7. VPC Flow Logs
-flow_logs_config = {
-  enable = false  # Disabled for cost savings in devstg
-}
-
-# 8. Advanced Features
-advanced_config = {
-  enable_dhcp_options = false
 }

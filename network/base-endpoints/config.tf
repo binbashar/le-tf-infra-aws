@@ -2,7 +2,7 @@
 # AWS Provider Settings       #
 #=============================#
 provider "aws" {
-  region = var.vpc_config.region
+  region = var.endpoints_config.region
   #profile = var.profile
 }
 

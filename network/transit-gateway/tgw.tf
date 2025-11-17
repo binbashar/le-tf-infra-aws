@@ -17,19 +17,19 @@ module "tgw" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.11.3"
 
-  count = var.enable_tgw ? 1 : 0
-  name  = "${var.project}-${var.environment}-tgw"
+  count = local.enable_tgw ? 1 : 0
+  name  = local.tgw_name
 
-  ram_resource_share_enabled = true
+  ram_resource_share_enabled = local.ram_sharing_enabled
 
-  create_transit_gateway                                         = true
-  create_transit_gateway_route_table                             = true
+  create_transit_gateway                                         = local.create_tgw
+  create_transit_gateway_route_table                             = local.create_default_route_table
   create_transit_gateway_vpc_attachment                          = false
-  create_transit_gateway_route_table_association_and_propagation = var.enable_network_firewall ? false : true
+  create_transit_gateway_route_table_association_and_propagation = local.enable_network_firewall ? false : true
 
   config = merge(
     # network private
-    lookup(var.enable_vpc_attach, "network", false) ? {
+    local.enable_network ? {
       for k, v in data.terraform_remote_state.network-vpcs : v.outputs.vpc_id => {
         vpc_id                            = null
         vpc_cidr                          = null
@@ -48,7 +48,7 @@ module "tgw" {
       }
     } : {},
     # shared private
-    lookup(var.enable_vpc_attach, "shared", false) ? {
+    local.enable_shared ? {
       for k, v in data.terraform_remote_state.shared-vpcs : v.outputs.vpc_id => {
         vpc_id                            = null
         vpc_cidr                          = null
@@ -76,9 +76,9 @@ module "tgw_inspection_route_table" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.11.3"
 
-  count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? 1 : 0
+  count = local.enable_tgw && local.enable_network_firewall && local.enable_network ? 1 : 0
 
-  name = "${var.project}-${var.environment}-inspection"
+  name = "${local.tgw_name}-inspection"
 
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
   create_transit_gateway                                         = false
@@ -116,9 +116,9 @@ module "tgw_apps_devstg_route_table" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.11.3"
 
-  count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false) ? 1 : 0
+  count = local.enable_tgw && local.enable_apps_devstg ? 1 : 0
 
-  name = "${var.project}-${var.environment}-apps-devstg"
+  name = "${local.tgw_name}-apps-devstg"
 
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
   create_transit_gateway                                         = false
@@ -151,9 +151,9 @@ module "tgw_apps_prd_route_table" {
 
   source = "github.com/binbashar/terraform-aws-transit-gateway?ref=0.11.3"
 
-  count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false) ? 1 : 0
+  count = local.enable_tgw && local.enable_apps_prd ? 1 : 0
 
-  name = "${var.project}-${var.environment}-apps-prd"
+  name = "${local.tgw_name}-apps-prd"
 
   existing_transit_gateway_id                                    = module.tgw[0].transit_gateway_id
   create_transit_gateway                                         = false
@@ -185,7 +185,7 @@ module "tgw_apps_prd_route_table" {
 # Network Firewall
 #
 resource "aws_ec2_transit_gateway_route" "inspection_default" {
-  count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? 1 : 0
+  count = local.enable_tgw && local.enable_network_firewall && local.enable_network ? 1 : 0
 
   destination_cidr_block         = "0.0.0.0/0"
   transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
@@ -193,7 +193,7 @@ resource "aws_ec2_transit_gateway_route" "inspection_default" {
 }
 
 resource "aws_ec2_transit_gateway_route" "network_firewall_default" {
-  count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? 1 : 0
+  count = local.enable_tgw && local.enable_network_firewall && local.enable_network ? 1 : 0
 
   destination_cidr_block         = "0.0.0.0/0"
   transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
@@ -201,14 +201,14 @@ resource "aws_ec2_transit_gateway_route" "network_firewall_default" {
 }
 
 resource "aws_ec2_transit_gateway_route_table_association" "network-inspection-association" {
-  count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? 1 : 0
+  count = local.enable_tgw && local.enable_network_firewall && local.enable_network ? 1 : 0
 
   transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network_firewall["network-firewall"].transit_gateway_vpc_attachment_ids["network-firewall"]
 }
 
 resource "aws_ec2_transit_gateway_route_table_association" "network-base-association" {
-  count = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? 1 : 0
+  count = local.enable_tgw && local.enable_network_firewall && local.enable_network ? 1 : 0
 
   transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network["network-base"].transit_gateway_vpc_attachment_ids["network-base"]
@@ -221,7 +221,7 @@ resource "aws_ec2_transit_gateway_route_table_association" "shared-rt-associatio
 
   for_each = {
     for k, v in data.terraform_remote_state.shared-vpcs :
-    k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "shared", false)
+    k => v if local.enable_tgw && local.enable_network_firewall && local.enable_shared
   }
 
   transit_gateway_route_table_id = module.tgw_inspection_route_table[0].transit_gateway_route_table_id
@@ -231,7 +231,7 @@ resource "aws_ec2_transit_gateway_route_table_association" "shared-rt-associatio
 resource "aws_ec2_transit_gateway_route_table_propagation" "shared-rt-propagations" {
   for_each = {
     for k, v in data.terraform_remote_state.shared-vpcs :
-    k => v if var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "shared", false)
+    k => v if local.enable_tgw && local.enable_network_firewall && local.enable_shared
   }
 
   transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
@@ -245,7 +245,7 @@ resource "aws_ec2_transit_gateway_route_table_association" "apps-devstg-rt-assoc
 
   for_each = {
     for k, v in data.terraform_remote_state.apps-devstg-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
+    k => v if local.enable_tgw && local.enable_apps_devstg
   }
 
   transit_gateway_route_table_id = module.tgw_apps_devstg_route_table[0].transit_gateway_route_table_id
@@ -255,7 +255,7 @@ resource "aws_ec2_transit_gateway_route_table_association" "apps-devstg-rt-assoc
 resource "aws_ec2_transit_gateway_route_table_propagation" "apps-devstg-rt-propagations" {
   for_each = {
     for k, v in data.terraform_remote_state.apps-devstg-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
+    k => v if local.enable_tgw && local.enable_apps_devstg
   }
 
   transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
@@ -265,7 +265,7 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "apps-devstg-rt-propa
 resource "aws_ec2_transit_gateway_route" "apps-devstg-routes-to-shared" {
   for_each = {
     for k, v in data.terraform_remote_state.shared-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
+    k => v if local.enable_tgw && local.enable_apps_devstg
   }
 
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_shared[each.key].transit_gateway_vpc_attachment_ids[each.key]
@@ -274,7 +274,7 @@ resource "aws_ec2_transit_gateway_route" "apps-devstg-routes-to-shared" {
 }
 
 resource "aws_ec2_transit_gateway_route" "apps-devstg-routes-default" {
-  count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false) ? 1 : 0
+  count = local.enable_tgw && local.enable_apps_devstg ? 1 : 0
 
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network["network-base"].transit_gateway_vpc_attachment_ids["network-base"]
   transit_gateway_route_table_id = module.tgw_apps_devstg_route_table[0].transit_gateway_route_table_id
@@ -284,7 +284,7 @@ resource "aws_ec2_transit_gateway_route" "apps-devstg-routes-default" {
 # apps-devstg ->apps-devstg-dr
 resource "aws_ec2_transit_gateway_route" "apps-devstg-to-apps-devstg-dr" {
 
-  for_each = { for k, v in local.apps-devstg-dr-vpcs : k => v if var.enable_tgw && var.enable_tgw_multi_region && lookup(var.enable_vpc_attach, "apps-devstg", false) && try(data.terraform_remote_state.tgw-dr.outputs.tgw_id != null, false) }
+  for_each = { for k, v in local.apps-devstg-dr-vpcs : k => v if local.enable_tgw && local.enable_tgw_multi_region && local.enable_apps_devstg && try(data.terraform_remote_state.tgw-dr.outputs.tgw_id != null, false) }
 
   destination_cidr_block         = data.terraform_remote_state.apps-devstg-dr-vpcs[each.key].outputs.vpc_cidr_block
   transit_gateway_route_table_id = module.tgw_apps_devstg_route_table[0].transit_gateway_route_table_id
@@ -294,8 +294,8 @@ resource "aws_ec2_transit_gateway_route" "apps-devstg-to-apps-devstg-dr" {
 # Blackholes
 resource "aws_ec2_transit_gateway_route" "apps-devstg-blackholes" {
   for_each = {
-    for k, v in var.tgw_cidrs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-devstg", false)
+    for k, v in local.tgw_cidrs :
+    k => v if local.enable_tgw && local.enable_apps_devstg
   }
   destination_cidr_block         = each.value
   blackhole                      = true
@@ -308,7 +308,7 @@ resource "aws_ec2_transit_gateway_route" "apps-devstg-blackholes" {
 resource "aws_ec2_transit_gateway_route_table_association" "apps-prd-rt-associations" {
   for_each = {
     for k, v in data.terraform_remote_state.apps-prd-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
+    k => v if local.enable_tgw && local.enable_apps_prd
   }
 
   transit_gateway_route_table_id = module.tgw_apps_prd_route_table[0].transit_gateway_route_table_id
@@ -318,7 +318,7 @@ resource "aws_ec2_transit_gateway_route_table_association" "apps-prd-rt-associat
 resource "aws_ec2_transit_gateway_route_table_propagation" "apps-prd-rt-propagations" {
   for_each = {
     for k, v in data.terraform_remote_state.apps-prd-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
+    k => v if local.enable_tgw && local.enable_apps_prd
   }
 
   transit_gateway_route_table_id = module.tgw[0].transit_gateway_route_table_id
@@ -328,7 +328,7 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "apps-prd-rt-propagat
 resource "aws_ec2_transit_gateway_route" "apps-prd-routes-to-shared" {
   for_each = {
     for k, v in data.terraform_remote_state.shared-vpcs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
+    k => v if local.enable_tgw && local.enable_apps_prd
   }
 
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_shared[each.key].transit_gateway_vpc_attachment_ids[each.key]
@@ -337,7 +337,7 @@ resource "aws_ec2_transit_gateway_route" "apps-prd-routes-to-shared" {
 }
 
 resource "aws_ec2_transit_gateway_route" "apps-prd-routes-default" {
-  count = var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false) ? 1 : 0
+  count = local.enable_tgw && local.enable_apps_prd ? 1 : 0
 
   transit_gateway_attachment_id  = module.tgw_vpc_attachments_and_subnet_routes_network["network-base"].transit_gateway_vpc_attachment_ids["network-base"]
   transit_gateway_route_table_id = module.tgw_apps_prd_route_table[0].transit_gateway_route_table_id
@@ -347,7 +347,7 @@ resource "aws_ec2_transit_gateway_route" "apps-prd-routes-default" {
 # apps-prd -> apps-prd-dr
 resource "aws_ec2_transit_gateway_route" "apps-prd-to-apps-prd-dr" {
 
-  for_each = { for k, v in local.apps-prd-dr-vpcs : k => v if var.enable_tgw && var.enable_tgw_multi_region && lookup(var.enable_vpc_attach, "apps-prd", false) && try(data.terraform_remote_state.tgw-dr.outputs.tgw_id != null, false) }
+  for_each = { for k, v in local.apps-prd-dr-vpcs : k => v if local.enable_tgw && local.enable_tgw_multi_region && local.enable_apps_prd && try(data.terraform_remote_state.tgw-dr.outputs.tgw_id != null, false) }
 
   destination_cidr_block         = try(data.terraform_remote_state.apps-prd-dr-vpcs[each.key].outputs.vpc_cidr_block)
   transit_gateway_route_table_id = module.tgw_apps_prd_route_table[0].transit_gateway_route_table_id
@@ -357,8 +357,8 @@ resource "aws_ec2_transit_gateway_route" "apps-prd-to-apps-prd-dr" {
 # Blackholes
 resource "aws_ec2_transit_gateway_route" "apps-prd-blackholes" {
   for_each = {
-    for k, v in var.tgw_cidrs :
-    k => v if var.enable_tgw && lookup(var.enable_vpc_attach, "apps-prd", false)
+    for k, v in local.tgw_cidrs :
+    k => v if local.enable_tgw && local.enable_apps_prd
   }
   destination_cidr_block         = each.value
   blackhole                      = true
@@ -371,7 +371,7 @@ resource "aws_ec2_transit_gateway_route" "apps-prd-blackholes" {
 
 # Update Inspection & AWS Network Firewall route tables
 data "aws_route_table" "inspection_route_table" {
-  for_each = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? {
+  for_each = local.enable_tgw && local.enable_network_firewall && local.enable_network ? {
     for k, v in data.terraform_remote_state.network-firewall.outputs["inspection_subnets"] :
     k => v
   } : {}
@@ -380,7 +380,7 @@ data "aws_route_table" "inspection_route_table" {
 }
 
 resource "aws_route" "inspection_to_endpoint" {
-  for_each = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? {
+  for_each = local.enable_tgw && local.enable_network_firewall && local.enable_network ? {
     for s in data.terraform_remote_state.network-firewall.outputs["sync_states"][0] :
     s["availability_zone"] => s["attachment"]
   } : {}
@@ -391,7 +391,7 @@ resource "aws_route" "inspection_to_endpoint" {
 }
 
 data "aws_route_table" "network_firewall_route_table" {
-  for_each = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? {
+  for_each = local.enable_tgw && local.enable_network_firewall && local.enable_network ? {
     for k, v in data.terraform_remote_state.network-firewall.outputs["network_firewall_subnets"] :
   k => v } : {}
 
@@ -399,7 +399,7 @@ data "aws_route_table" "network_firewall_route_table" {
 }
 
 resource "aws_route" "network_firewall_tgw" {
-  for_each = var.enable_tgw && var.enable_network_firewall && lookup(var.enable_vpc_attach, "network", false) ? {
+  for_each = local.enable_tgw && local.enable_network_firewall && local.enable_network ? {
     for s in data.terraform_remote_state.network-firewall.outputs["sync_states"][0] :
     s["availability_zone"] => s["attachment"]
   } : {}

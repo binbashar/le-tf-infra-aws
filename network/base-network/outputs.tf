@@ -143,12 +143,12 @@ output "elasticache_subnet_arns" {
 
 output "elasticache_subnet_group" {
   description = "ID of the elasticache subnet group"
-  value       = module.vpc.elasticache_subnet_group
+  value       = try(module.vpc.elasticache_subnet_group, null)
 }
 
 output "elasticache_subnet_group_name" {
   description = "Name of the elasticache subnet group"
-  value       = module.vpc.elasticache_subnet_group_name
+  value       = try(module.vpc.elasticache_subnet_group_name, null)
 }
 
 # Subnets - Redshift
@@ -164,7 +164,7 @@ output "redshift_subnet_arns" {
 
 output "redshift_subnet_group" {
   description = "ID of the redshift subnet group"
-  value       = module.vpc.redshift_subnet_group
+  value       = try(module.vpc.redshift_subnet_group, null)
 }
 
 output "redshift_subnet_group_name" {
@@ -222,12 +222,33 @@ output "private_network_acl_id" {
 
 output "database_network_acl_id" {
   description = "ID of the database network ACL"
-  value       = module.vpc.database_network_acl_id
+  value       = try(module.vpc.database_network_acl_id, null)
 }
 
 output "intra_network_acl_id" {
   description = "ID of the intra network ACL"
-  value       = module.vpc.intra_network_acl_id
+  value       = try(module.vpc.intra_network_acl_id, null)
+}
+
+# Subnets - Outpost
+output "outpost_subnets" {
+  description = "List of IDs of outpost subnets"
+  value       = module.vpc.outpost_subnets
+}
+
+output "outpost_subnet_arns" {
+  description = "List of ARNs of outpost subnets"
+  value       = module.vpc.outpost_subnet_arns
+}
+
+output "outpost_subnets_cidr_blocks" {
+  description = "List of cidr_blocks of outpost subnets"
+  value       = module.vpc.outpost_subnets_cidr_blocks
+}
+
+output "outpost_network_acl_id" {
+  description = "ID of the outpost network ACL"
+  value       = try(module.vpc.outpost_network_acl_id, null)
 }
 
 # VPN Gateway
@@ -299,12 +320,23 @@ output "default_vpc_default_route_table_id" {
 output "vpc_config_summary" {
   description = "Summary of VPC configuration"
   value = {
-    name                = var.vpc_config.name
-    cidr                = var.vpc_config.cidr
-    availability_zones  = var.vpc_config.azs
-    enable_nat_gateway  = var.gateway_config.enable_nat_gateway
-    single_nat_gateway  = var.gateway_config.single_nat_gateway
-    enable_vpn_gateway  = var.vpn_config.enable_vpn_gateway
-    enable_flow_logs   = var.flow_logs_config.enable
+    version     = var.vpc_config.version
+    region      = var.vpc_config.region
+    name        = var.vpc_config.vpc.metadata.name
+    environment = var.vpc_config.vpc.metadata.environment
+    cidr        = var.vpc_config.vpc.networking.cidrBlock
+    availability_zones = distinct(concat(
+      [for s in var.vpc_config.vpc.networking.subnets.public : s.availabilityZone],
+      [for s in var.vpc_config.vpc.networking.subnets.private : s.availabilityZone],
+      [for s in var.vpc_config.vpc.networking.subnets.database : s.availabilityZone],
+      [for s in var.vpc_config.vpc.networking.subnets.redshift : s.availabilityZone],
+      [for s in var.vpc_config.vpc.networking.subnets.elasticache : s.availabilityZone],
+      [for s in var.vpc_config.vpc.networking.subnets.intra : s.availabilityZone],
+      [for s in var.vpc_config.vpc.networking.subnets.outpost : s.availabilityZone]
+    ))
+    enable_nat_gateway = var.vpc_config.vpc.networking.natGateways.enabled
+    single_nat_gateway = var.vpc_config.vpc.networking.natGateways.single
+    enable_flow_logs   = var.vpc_config.vpc.monitoring.flowLogs.enabled
+    multi_az           = var.vpc_config.vpc.availability.multiAz
   }
 }
