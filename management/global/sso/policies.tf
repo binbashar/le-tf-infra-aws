@@ -259,6 +259,7 @@ data "aws_iam_policy_document" "data_scientist" {
       "es:*",
       "events:*",
       "execute-api:*",
+      "firehose:*",
       "glue:*",
       "health:*",
       "iam:*",
