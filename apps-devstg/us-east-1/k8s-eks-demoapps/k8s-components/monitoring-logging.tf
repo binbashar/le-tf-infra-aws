@@ -8,7 +8,7 @@ resource "helm_release" "fluentbit" {
   namespace  = kubernetes_namespace.monitoring_logging[0].id
   repository = "https://fluent.github.io/helm-charts"
   chart      = "fluent-bit"
-  version    = "0.53.0"
+  version    = "0.54.0"
   values = [
     templatefile("chart-values/fluentbit.yaml", {
       opensearch_host         = "example-domain.${local.private_base_domain}", # Fetch this from a opensearch layer output

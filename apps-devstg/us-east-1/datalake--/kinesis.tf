@@ -9,7 +9,7 @@ module "kinesis_stream_datalake" {
 
 # Kinesis Firehose Delivery Stream to S3 (Raw Bucket)
 module "kinesis_firehose_datalake" {
-  source = "github.com/fdmsantos/terraform-aws-kinesis-firehose.git?ref=v3.8.2"
+  source = "github.com/fdmsantos/terraform-aws-kinesis-firehose.git?ref=v3.8.3"
   name   = "${var.project}-${var.environment}-ddb-lakehouse-firehose"
 
   # SOURCE
