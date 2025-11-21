@@ -1,0 +1,211 @@
+# Import blocks for existing VPC resources in devstg environment
+# These imports are based on the tfplan.txt output showing resources to be created
+# 
+# IMPORTANT: Replace the placeholder IDs below with actual AWS resource IDs
+# You can find these IDs using AWS CLI or Console:
+#   - VPC ID: aws ec2 describe-vpcs --filters "Name=tag:Name,Values=bb-apps-devstg-vpc" --query "Vpcs[0].VpcId" --output text
+#   - Subnet IDs: aws ec2 describe-subnets --filters "Name=tag:Name,Values=private-1a" --query "Subnets[0].SubnetId" --output text
+#   - IGW ID: aws ec2 describe-internet-gateways --filters "Name=tag:Name,Values=bb-apps-devstg-vpc" --query "InternetGateways[0].InternetGatewayId" --output text
+#   - NAT Gateway ID: aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=bb-apps-devstg-vpc-us-east-1a" --query "NatGateways[0].NatGatewayId" --output text
+#   - EIP Allocation ID: aws ec2 describe-addresses --filters "Name=tag:Name,Values=bb-apps-devstg-vpc-us-east-1a" --query "Addresses[0].AllocationId" --output text
+#   - Route Table IDs: aws ec2 describe-route-tables --filters "Name=tag:Name,Values=bb-apps-devstg-vpc-public" --query "RouteTables[0].RouteTableId" --output text
+
+# ===========================================
+# VPC - DEVSTG ACCOUNT - US-EAST-1 REGION
+# ===========================================
+
+# VPC (CIDR: 172.18.32.0/20, Name: bb-apps-devstg-vpc)
+# Find VPC ID: aws ec2 describe-vpcs --filters "Name=tag:Name,Values=bb-apps-devstg-vpc" --query "Vpcs[0].VpcId" --output text
+import {
+  to = module.vpc.aws_vpc.this[0]
+  id = "vpc-XXXXXXXXXXXXX" # Replace with actual VPC ID
+}
+
+# ===========================================
+# SUBNETS
+# ===========================================
+
+# Private Subnet 1a (CIDR: 172.18.32.0/23, AZ: us-east-1a, Name: private-1a)
+# Find Subnet ID: aws ec2 describe-subnets --filters "Name=tag:Name,Values=private-1a" "Name=vpc-id,Values=<vpc-id>" --query "Subnets[0].SubnetId" --output text
+import {
+  to = module.vpc.aws_subnet.private[0]
+  id = "subnet-XXXXXXXXXXXXX" # Replace with actual subnet ID for private-1a
+}
+
+# Private Subnet 1b (CIDR: 172.18.34.0/23, AZ: us-east-1b, Name: private-1b)
+# Find Subnet ID: aws ec2 describe-subnets --filters "Name=tag:Name,Values=private-1b" "Name=vpc-id,Values=<vpc-id>" --query "Subnets[0].SubnetId" --output text
+import {
+  to = module.vpc.aws_subnet.private[1]
+  id = "subnet-XXXXXXXXXXXXX" # Replace with actual subnet ID for private-1b
+}
+
+# Private Subnet 1c (CIDR: 172.18.36.0/23, AZ: us-east-1c, Name: private-1c)
+# Find Subnet ID: aws ec2 describe-subnets --filters "Name=tag:Name,Values=private-1c" "Name=vpc-id,Values=<vpc-id>" --query "Subnets[0].SubnetId" --output text
+import {
+  to = module.vpc.aws_subnet.private[2]
+  id = "subnet-XXXXXXXXXXXXX" # Replace with actual subnet ID for private-1c
+}
+
+# Public Subnet 1a (CIDR: 172.18.40.0/23, AZ: us-east-1a, Name: public-1a)
+# Find Subnet ID: aws ec2 describe-subnets --filters "Name=tag:Name,Values=public-1a" "Name=vpc-id,Values=<vpc-id>" --query "Subnets[0].SubnetId" --output text
+import {
+  to = module.vpc.aws_subnet.public[0]
+  id = "subnet-XXXXXXXXXXXXX" # Replace with actual subnet ID for public-1a
+}
+
+# Public Subnet 1b (CIDR: 172.18.42.0/23, AZ: us-east-1b, Name: public-1b)
+# Find Subnet ID: aws ec2 describe-subnets --filters "Name=tag:Name,Values=public-1b" "Name=vpc-id,Values=<vpc-id>" --query "Subnets[0].SubnetId" --output text
+import {
+  to = module.vpc.aws_subnet.public[1]
+  id = "subnet-XXXXXXXXXXXXX" # Replace with actual subnet ID for public-1b
+}
+
+# Public Subnet 1c (CIDR: 172.18.44.0/23, AZ: us-east-1c, Name: public-1c)
+# Find Subnet ID: aws ec2 describe-subnets --filters "Name=tag:Name,Values=public-1c" "Name=vpc-id,Values=<vpc-id>" --query "Subnets[0].SubnetId" --output text
+import {
+  to = module.vpc.aws_subnet.public[2]
+  id = "subnet-XXXXXXXXXXXXX" # Replace with actual subnet ID for public-1c
+}
+
+# ===========================================
+# INTERNET GATEWAY
+# ===========================================
+
+# Internet Gateway (Name: bb-apps-devstg-vpc)
+# Find IGW ID: aws ec2 describe-internet-gateways --filters "Name=tag:Name,Values=bb-apps-devstg-vpc" "Name=attachment.vpc-id,Values=<vpc-id>" --query "InternetGateways[0].InternetGatewayId" --output text
+import {
+  to = module.vpc.aws_internet_gateway.this[0]
+  id = "igw-XXXXXXXXXXXXX" # Replace with actual Internet Gateway ID
+}
+
+# ===========================================
+# ELASTIC IP (for NAT Gateway)
+# ===========================================
+
+# Elastic IP for NAT Gateway (Name: bb-apps-devstg-vpc-us-east-1a)
+# Find EIP Allocation ID: aws ec2 describe-addresses --filters "Name=tag:Name,Values=bb-apps-devstg-vpc-us-east-1a" --query "Addresses[0].AllocationId" --output text
+import {
+  to = module.vpc.aws_eip.nat[0]
+  id = "eipalloc-XXXXXXXXXXXXX" # Replace with actual Elastic IP Allocation ID
+}
+
+# ===========================================
+# NAT GATEWAY
+# ===========================================
+
+# NAT Gateway (Name: bb-apps-devstg-vpc-us-east-1a)
+# Find NAT Gateway ID: aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=bb-apps-devstg-vpc-us-east-1a" --query "NatGateways[0].NatGatewayId" --output text
+import {
+  to = module.vpc.aws_nat_gateway.this[0]
+  id = "nat-XXXXXXXXXXXXX" # Replace with actual NAT Gateway ID
+}
+
+# ===========================================
+# ROUTE TABLES
+# ===========================================
+
+# Public Route Table (Name: bb-apps-devstg-vpc-public)
+# Find Route Table ID: aws ec2 describe-route-tables --filters "Name=tag:Name,Values=bb-apps-devstg-vpc-public" "Name=vpc-id,Values=<vpc-id>" --query "RouteTables[0].RouteTableId" --output text
+import {
+  to = module.vpc.aws_route_table.public[0]
+  id = "rtb-XXXXXXXXXXXXX" # Replace with actual public route table ID
+}
+
+# Private Route Table (Name: bb-apps-devstg-vpc-private)
+# Find Route Table ID: aws ec2 describe-route-tables --filters "Name=tag:Name,Values=bb-apps-devstg-vpc-private" "Name=vpc-id,Values=<vpc-id>" --query "RouteTables[0].RouteTableId" --output text
+import {
+  to = module.vpc.aws_route_table.private[0]
+  id = "rtb-XXXXXXXXXXXXX" # Replace with actual private route table ID
+}
+
+# ===========================================
+# ROUTE TABLE ASSOCIATIONS
+# ===========================================
+
+# Route Table Association: Public Subnet 1a -> Public Route Table
+# Find Association ID: aws ec2 describe-route-tables --route-table-ids <public-rt-id> --query "RouteTables[0].Associations[?SubnetId=='<public-subnet-1a-id>'].RouteTableAssociationId" --output text
+import {
+  to = module.vpc.aws_route_table_association.public[0]
+  id = "rtbassoc-XXXXXXXXXXXXX" # Replace with actual route table association ID (public-1a)
+}
+
+# Route Table Association: Public Subnet 1b -> Public Route Table
+# Find Association ID: aws ec2 describe-route-tables --route-table-ids <public-rt-id> --query "RouteTables[0].Associations[?SubnetId=='<public-subnet-1b-id>'].RouteTableAssociationId" --output text
+import {
+  to = module.vpc.aws_route_table_association.public[1]
+  id = "rtbassoc-XXXXXXXXXXXXX" # Replace with actual route table association ID (public-1b)
+}
+
+# Route Table Association: Public Subnet 1c -> Public Route Table
+# Find Association ID: aws ec2 describe-route-tables --route-table-ids <public-rt-id> --query "RouteTables[0].Associations[?SubnetId=='<public-subnet-1c-id>'].RouteTableAssociationId" --output text
+import {
+  to = module.vpc.aws_route_table_association.public[2]
+  id = "rtbassoc-XXXXXXXXXXXXX" # Replace with actual route table association ID (public-1c)
+}
+
+# Route Table Association: Private Subnet 1a -> Private Route Table
+# Find Association ID: aws ec2 describe-route-tables --route-table-ids <private-rt-id> --query "RouteTables[0].Associations[?SubnetId=='<private-subnet-1a-id>'].RouteTableAssociationId" --output text
+import {
+  to = module.vpc.aws_route_table_association.private[0]
+  id = "rtbassoc-XXXXXXXXXXXXX" # Replace with actual route table association ID (private-1a)
+}
+
+# Route Table Association: Private Subnet 1b -> Private Route Table
+# Find Association ID: aws ec2 describe-route-tables --route-table-ids <private-rt-id> --query "RouteTables[0].Associations[?SubnetId=='<private-subnet-1b-id>'].RouteTableAssociationId" --output text
+import {
+  to = module.vpc.aws_route_table_association.private[1]
+  id = "rtbassoc-XXXXXXXXXXXXX" # Replace with actual route table association ID (private-1b)
+}
+
+# Route Table Association: Private Subnet 1c -> Private Route Table
+# Find Association ID: aws ec2 describe-route-tables --route-table-ids <private-rt-id> --query "RouteTables[0].Associations[?SubnetId=='<private-subnet-1c-id>'].RouteTableAssociationId" --output text
+import {
+  to = module.vpc.aws_route_table_association.private[2]
+  id = "rtbassoc-XXXXXXXXXXXXX" # Replace with actual route table association ID (private-1c)
+}
+
+# ===========================================
+# ROUTES
+# ===========================================
+
+# Route: Public Route Table -> Internet Gateway (0.0.0.0/0)
+# Note: Routes use format: <route-table-id>_<destination-cidr-block>
+# Find Route Table ID first, then use format: <rt-id>_0.0.0.0/0
+import {
+  to = module.vpc.aws_route.public_internet_gateway[0]
+  id = "rtb-XXXXXXXXXXXXX_0.0.0.0/0" # Replace: <public-route-table-id>_0.0.0.0/0
+}
+
+# Route: Private Route Table -> NAT Gateway (0.0.0.0/0)
+# Note: Routes use format: <route-table-id>_<destination-cidr-block>
+# Find Route Table ID first, then use format: <rt-id>_0.0.0.0/0
+import {
+  to = module.vpc.aws_route.private_nat_gateway[0]
+  id = "rtb-XXXXXXXXXXXXX_0.0.0.0/0" # Replace: <private-route-table-id>_0.0.0.0/0
+}
+
+# ===========================================
+# DEFAULT RESOURCES
+# ===========================================
+
+# Default Network ACL (Name: bb-apps-devstg-vpc-default)
+# Find Default Network ACL ID: aws ec2 describe-network-acls --filters "Name=default,Values=true" "Name=vpc-id,Values=<vpc-id>" --query "NetworkAcls[0].NetworkAclId" --output text
+import {
+  to = module.vpc.aws_default_network_acl.this[0]
+  id = "acl-XXXXXXXXXXXXX" # Replace with actual default network ACL ID
+}
+
+# Default Route Table (Name: bb-apps-devstg-vpc-default)
+# Find Default Route Table ID: aws ec2 describe-route-tables --filters "Name=association.main,Values=true" "Name=vpc-id,Values=<vpc-id>" --query "RouteTables[0].RouteTableId" --output text
+import {
+  to = module.vpc.aws_default_route_table.default[0]
+  id = "rtb-XXXXXXXXXXXXX" # Replace with actual default route table ID
+}
+
+# Default Security Group (Name: bb-apps-devstg-vpc-default)
+# Find Default Security Group ID: aws ec2 describe-security-groups --filters "Name=group-name,Values=default" "Name=vpc-id,Values=<vpc-id>" --query "SecurityGroups[0].GroupId" --output text
+import {
+  to = module.vpc.aws_default_security_group.this[0]
+  id = "sg-XXXXXXXXXXXXX" # Replace with actual default security group ID
+}
+

@@ -3,10 +3,10 @@
 #
 
 # AWS Profile (required by the backend but also used for other resources)
-profile = "bb-shared-devops"
+profile = "bb-network-devops"
 
 # S3 bucket
-bucket = "bb-shared-terraform-backend"
+bucket = "bb-network-terraform-backend"
 
 # AWS Region (required by the backend but also used for other resources)
 region = "us-east-1"
@@ -15,4 +15,4 @@ region = "us-east-1"
 encrypt = true
 
 # DynamoDB Table Name
-dynamodb_table = "bb-shared-terraform-backend"
+dynamodb_table = "bb-network-terraform-backend"
