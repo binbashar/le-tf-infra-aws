@@ -52,3 +52,16 @@ variable "force_start_date" {
   type        = string
   default     = ""
 }
+
+# Auto-discovery configuration
+variable "auto_discover_accounts" {
+  description = "Enable automatic account discovery from AWS Organizations. When true, ignores the 'accounts' variable."
+  type        = bool
+  default     = true
+}
+
+variable "excluded_account_ids" {
+  description = "List of AWS account IDs to exclude from cost reporting when auto-discovery is enabled"
+  type        = list(string)
+  default     = []
+}
