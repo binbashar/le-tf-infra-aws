@@ -1,5 +1,5 @@
 module "redshift" {
-  source                = "github.com/binbashar/terraform-aws-redshift?ref=v6.1.0"
+  source                = "github.com/binbashar/terraform-aws-redshift?ref=v6.2.0"
   cluster_identifier    = local.name
   allow_version_upgrade = true
   node_type             = "ra3.large"
