@@ -54,6 +54,11 @@ This is the **Binbash Leverage Reference Architecture** - a comprehensive OpenTo
 - Follow [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected)
 - Store sensitive data in AWS Secrets Manager ([example layer](https://github.com/binbashar/le-tf-infra-aws/tree/master/apps-devstg/us-east-1/secrets-manager))
 
+### Git Commit Practices
+- **DO NOT include AI tool attributions** in commit messages (no "Co-Authored-By: Claude" or similar)
+- **DO NOT add Claude Code watermarks** or references to AI assistance in commits
+- Keep commit messages professional and focused on the technical changes
+
 ## Essential Commands
 
 ### Authentication and Setup
