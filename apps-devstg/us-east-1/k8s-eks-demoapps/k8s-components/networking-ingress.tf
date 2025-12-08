@@ -27,7 +27,7 @@ resource "helm_release" "ingress_nginx_private" {
   namespace  = kubernetes_namespace.ingress_nginx[0].id
   repository = "https://kubernetes.github.io/ingress-nginx"
   chart      = "ingress-nginx"
-  version    = "4.13.3"
+  version    = "4.14.0"
   values = [
     templatefile("chart-values/ingress-nginx.yaml", {
       ingressClass = local.private_ingress_class,
