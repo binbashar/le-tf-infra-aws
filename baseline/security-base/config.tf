@@ -6,13 +6,12 @@ provider "aws" {
   region = var.region_primary
   profile = "bb-shared-devops"
 }
+
 provider "aws" {
   alias   = "accounts"
   for_each = local.account_settings
   region  = each.value.region
-
   profile = each.value.profile
-
 }
 
 #=============================#
