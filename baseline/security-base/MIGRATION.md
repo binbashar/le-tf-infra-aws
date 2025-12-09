@@ -16,7 +16,7 @@ This guide explains how to migrate existing, already-provisioned resources into 
 ## High-level steps
 1) Generate an initial plan to discover resources Terraform intends to create.
 2) From that plan, compose `imports.tf` with `import { to, id }` blocks mapping to the real, existing resources.
-3) Run `terraform plan` again; verify that resources are now recognized as "to import" rather than "to create".
+3) Run `leverage tf plan` again; verify that resources are now recognized as "to import" rather than "to create".
 4) Execute the import-aware apply to write resources into state without changes.
 5) Remove or keep `imports.tf` based on your team policy (see "Post-import cleanup").
 
