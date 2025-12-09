@@ -278,6 +278,15 @@ locals {
         "devops"
       ]
     }
+    "juan.rodriguez" = {
+      first_name = "Juan Manuel"
+      last_name  = "Rodriguez"
+      email      = "juan.rodriguez@binbash.com.ar"
+      groups = [
+        "datascientists",
+        "devops"
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
