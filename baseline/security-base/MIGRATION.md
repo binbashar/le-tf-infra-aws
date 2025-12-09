@@ -6,7 +6,7 @@ This guide explains how to migrate existing, already-provisioned resources into 
 
 ## Scope
 - **Target**: `baseline/security-base` stack
-- **Goal**: Import pre-existing account-level security resources (e.g., EBS encryption by default, S3 account public access block) into Terraform using `imports.tf` and then apply the new configuration without drift.
+- **Goal**: Import pre-existing account-level security resources (e.g., EBS encryption by default, S3 account public access block) into OpenTofu/Terraform using `imports.tf` and then apply the new configuration without drift.
 
 ## Prerequisites
 - Terraform >= 1.5 (supports `import {}` blocks in configuration)
