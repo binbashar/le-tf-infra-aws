@@ -12,7 +12,6 @@ provider "aws" {
   for_each = local.accounts_providers
   region   = each.value.region
   profile  = each.value.profile
-
 }
 
 terraform {
