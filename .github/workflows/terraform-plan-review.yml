@@ -373,7 +373,9 @@ jobs:
           # Disable MFA for CI/CD
           sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env || echo "MFA_ENABLED=false" >> build.env
 
-          # Note: TERRAFORM_IMAGE_TAG removed - obsolete for dockerless Leverage CLI v2.2.0+
+          # Configure TF binary for dockerless Leverage CLI v2.2.0+
+          # This tells Leverage CLI to use the locally installed tofu binary
+          echo "TF_BINARY=tofu" >> build.env
 
       - name: Run Terraform Init
         working-directory: ${{ matrix.layer }}
@@ -685,7 +687,9 @@ jobs:
         run: |
           sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env || echo "MFA_ENABLED=false" >> build.env
 
-          # Note: TERRAFORM_IMAGE_TAG removed - obsolete for dockerless Leverage CLI v2.2.0+
+          # Configure TF binary for dockerless Leverage CLI v2.2.0+
+          # This tells Leverage CLI to use the locally installed tofu binary
+          echo "TF_BINARY=tofu" >> build.env
 
       - name: Download Plan Artifact
         uses: actions/download-artifact@v4
