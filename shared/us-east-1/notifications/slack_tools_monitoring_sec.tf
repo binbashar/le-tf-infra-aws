@@ -38,3 +38,26 @@ module "notify_slack_monitoring_sec" {
 
   cloudwatch_log_group_kms_key_id = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
 }
+
+#============================#
+# SNS Topic Policy           #
+#============================#
+# Grant CloudWatch Alarms permission to publish to SNS topic
+resource "aws_sns_topic_policy" "monitoring_sec_cloudwatch" {
+  arn = module.notify_slack_monitoring_sec.this_slack_topic_arn
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowCloudWatchAlarmsPublish"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudwatch.amazonaws.com"
+        }
+        Action   = "SNS:Publish"
+        Resource = module.notify_slack_monitoring_sec.this_slack_topic_arn
+      }
+    ]
+  })
+}
