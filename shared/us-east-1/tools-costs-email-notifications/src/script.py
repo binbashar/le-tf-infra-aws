@@ -90,6 +90,9 @@ def create_ce_client(account_id):
             aws_session_token=assumed_role['Credentials']['SessionToken']
         )
 
+        # Cost Explorer API endpoint (ce.us-east-1.amazonaws.com) is only available in us-east-1
+        # This provides cost data for all AWS regions from a single endpoint
+        # See: https://docs.aws.amazon.com/general/latest/gr/billing.html
         return temp_session.client('ce', region_name='us-east-1')
     except ClientError as e:
         logger.error(f"Failed to assume role {role_arn}: {str(e)}")

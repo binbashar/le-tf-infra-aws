@@ -81,6 +81,10 @@ If you need to add more accounts, you will need to add the corresponding ARN to 
 
 Take into account that you may need to have the assumable role `LambdaCostsExplorerAccess` created on all accounts you want to generate the cost reports for, adding as a trusted entity the account where you are deploying the solution, in this case the `shared` account.
 
+## Testing
+
+For detailed testing instructions, CloudWatch alarm verification, and troubleshooting guidance, see [TESTING.md](TESTING.md).
+
 # Analysis of the Python code
 
 The AWS Cost Summary Report Script is a Python script designed to generate monthly cost reports for multiple AWS accounts. It retrieves cost and usage data from AWS Cost Explorer, calculates cost variations, and generates an HTML report that is emailed to specified recipients using Amazon SES.
