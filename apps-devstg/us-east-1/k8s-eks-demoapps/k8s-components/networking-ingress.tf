@@ -48,14 +48,15 @@ resource "helm_release" "traefik" {
   version    = "37.4.0"
   values = [
     templatefile("chart-values/traefik.yaml", {
-      tags = join(",", local.traefik_tags_list)
+      ingressClass = local.private_ingress_class,
+      tags         = join(",", local.traefik_tags_list)
 
     })
   ]
 }
 
 #------------------------------------------------------------------------------
-# Apps Ingress
+# Apps Ingress ALB2Nginx
 # -----------------------------------------------------------------------------
 # This ingress object defines the attributes of an Application Load Balancer
 # (ALB) which will be created by the ALB Ingress Controller. Such LB will serve
@@ -241,4 +242,3 @@ resource "kubernetes_ingress_v1" "traefik_apps" {
     helm_release.traefik
   ]
 }
-

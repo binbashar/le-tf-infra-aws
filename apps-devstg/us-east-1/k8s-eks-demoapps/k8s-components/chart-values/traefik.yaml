@@ -12,6 +12,12 @@ service:
     # Add resource tags
     service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "${tags}"
 
+# Name of the ingress class to route through this controller
+ingressClass:  # @schema additionalProperties: false
+  enabled: true
+  isDefaultClass: true
+  name: ${ingressClass}
+
 tolerations:
 - effect: NoSchedule
   operator: Exists
@@ -20,3 +26,8 @@ ingressRoute:
   dashboard:
     enabled: false
 
+deployment:
+  # -- Enable deployment
+  enabled: true
+  # -- Deployment or DaemonSet
+  kind: DaemonSet
