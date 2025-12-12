@@ -71,7 +71,7 @@ resource "helm_release" "traefik" {
 #   VPN => ALB => Nginx Ingress (pods) => App (service)
 #
 #------------------------------------------------------------------------------
-resource "kubernetes_ingress_v1" "apps" {
+resource "kubernetes_ingress_v1" "nginx_apps" {
   count                  = var.ingress.apps_ingress.enabled && var.ingress.alb_controller.enabled && var.ingress.nginx_controller.enabled && !var.ingress.traefik.enabled ? 1 : 0
   wait_for_load_balancer = true
 
