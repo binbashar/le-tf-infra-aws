@@ -123,3 +123,12 @@ resource "kubernetes_namespace" "keda" {
     name   = "keda"
   }
 }
+
+resource "kubernetes_namespace" "traefik_ingress" {
+  count = var.ingress.traefik.enabled ? 1 : 0
+
+  metadata {
+    labels = local.labels
+    name   = "traefik"
+  }
+}

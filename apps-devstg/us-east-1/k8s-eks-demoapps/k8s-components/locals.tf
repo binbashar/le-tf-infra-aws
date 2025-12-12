@@ -49,6 +49,15 @@ locals {
     for k, v in local.alb_ingress_to_nginx_ingress_tags_map : "${k}=${v}"
   ]
 
+
+  #------------------------------------------------------------------------------
+  # Traefik Ingress settings
+  #------------------------------------------------------------------------------
+  traefik_tags_map = merge(local.tags_map, { Component = "traefik" })
+  traefik_tags_list = [
+    for k, v in local.alb_ingress_to_nginx_ingress_tags_map : "${k}=${v}"
+  ]
+
   #------------------------------------------------------------------------------
   # ALB Ingress settings
   #------------------------------------------------------------------------------
@@ -57,6 +66,8 @@ locals {
     for k, v in local.alb_ingress_to_nginx_ingress_tags_map : "${k}=${v}"
   ]
   eks_alb_logging_prefix = var.ingress.apps_ingress.logging.prefix != "" ? var.ingress.apps_ingress.logging.prefix : data.terraform_remote_state.cluster.outputs.cluster_name
+
+  load_balancer_attributes = var.ingress.apps_ingress.logging.enabled ? "access_logs.s3.enabled=${var.ingress.apps_ingress.logging.enabled},access_logs.s3.bucket=${var.project}-${var.environment}-alb-logs,access_logs.s3.prefix=${local.eks_alb_logging_prefix}" : "access_logs.s3.enabled=${var.ingress.apps_ingress.logging.enabled}"
 
   #------------------------------------------------------------------------------
   # Argo Settings
