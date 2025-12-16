@@ -444,10 +444,14 @@ jobs:
             echo "resource-types=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Sanitize Layer Name for Artifact
+        id: sanitize
+        run: echo "artifact_name=plan-$(echo '${{ matrix.layer }}' | tr '/' '-')" >> $GITHUB_OUTPUT
+
       - name: Upload Plan Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: plan-${{ matrix.layer }}
+          name: ${{ steps.sanitize.outputs.artifact_name }}
           path: |
             ${{ matrix.layer }}/plan-output.txt
             ${{ matrix.layer }}/tfplan.bin
@@ -722,10 +726,16 @@ jobs:
           # This tells Leverage CLI to use the locally installed tofu binary
           echo "TF_BINARY=tofu" >> build.env
 
+      - name: Sanitize Layer Name for Artifact
+        id: sanitize
+        run: |
+          echo "plan_artifact=plan-$(echo '${{ matrix.layer }}' | tr '/' '-')" >> $GITHUB_OUTPUT
+          echo "apply_artifact=apply-$(echo '${{ matrix.layer }}' | tr '/' '-')" >> $GITHUB_OUTPUT
+
       - name: Download Plan Artifact
         uses: actions/download-artifact@v4
         with:
-          name: plan-${{ matrix.layer }}
+          name: ${{ steps.sanitize.outputs.plan_artifact }}
           path: ${{ matrix.layer }}/
 
       - name: Run Terraform Init
@@ -777,7 +787,7 @@ jobs:
       - name: Upload Apply Results
         uses: actions/upload-artifact@v4
         with:
-          name: apply-${{ matrix.layer }}
+          name: ${{ steps.sanitize.outputs.apply_artifact }}
           path: |
             ${{ matrix.layer }}/apply-output.txt
             ${{ matrix.layer }}/rollback.tfplan
