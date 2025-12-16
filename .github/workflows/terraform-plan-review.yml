@@ -381,19 +381,50 @@ jobs:
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 5
         run: |
-          source ~/.leverage-venv/bin/activate
+          # Use tofu directly to bypass Leverage CLI SSO requirements in CI/CD
+          # The dockerless Leverage CLI expects SSO tokens which aren't available in GitHub Actions
+
+          ACCOUNT="${{ steps.determine-account.outputs.account }}"
+          REPO_ROOT="${{ github.workspace }}"
+
           echo "Initializing layer: ${{ matrix.layer }}"
-          leverage tofu init --skip-validation -no-color
+          echo "Account: $ACCOUNT"
+          echo "Backend config: ${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars"
+
+          # Run tofu init with backend config (same args Leverage would use)
+          tofu init -no-color \
+            -backend-config="${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars"
 
       - name: Run Terraform Plan
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 10
         run: |
-          source ~/.leverage-venv/bin/activate
+          # Use tofu directly to bypass Leverage CLI SSO requirements in CI/CD
+          # Pass the same tfvars files that Leverage CLI would use
+
+          ACCOUNT="${{ steps.determine-account.outputs.account }}"
+          REPO_ROOT="${{ github.workspace }}"
+
           echo "Running plan for layer: ${{ matrix.layer }}"
+          echo "Account: $ACCOUNT"
+
+          # Build tfvars arguments (common + account config, same as Leverage)
+          TFVARS_ARGS=""
+
+          # Add common tfvars if exists
+          if [[ -f "${REPO_ROOT}/config/common.tfvars" ]]; then
+            TFVARS_ARGS="$TFVARS_ARGS -var-file=${REPO_ROOT}/config/common.tfvars"
+          fi
+
+          # Add account tfvars if exists
+          if [[ -f "${REPO_ROOT}/${ACCOUNT}/config/account.tfvars" ]]; then
+            TFVARS_ARGS="$TFVARS_ARGS -var-file=${REPO_ROOT}/${ACCOUNT}/config/account.tfvars"
+          fi
+
+          echo "Using tfvars: $TFVARS_ARGS"
 
           # Run plan and save to file (for apply) and display output
-          leverage tofu plan -no-color -input=false -out=tfplan.bin 2>&1 | tee plan-output.txt
+          tofu plan -no-color -input=false -out=tfplan.bin $TFVARS_ARGS 2>&1 | tee plan-output.txt
 
       - name: Extract Resource Types
         id: resources
@@ -697,25 +728,51 @@ jobs:
           name: plan-${{ matrix.layer }}
           path: ${{ matrix.layer }}/
 
+      - name: Run Terraform Init
+        working-directory: ${{ matrix.layer }}
+        timeout-minutes: 5
+        run: |
+          # Use tofu directly to bypass Leverage CLI SSO requirements in CI/CD
+          ACCOUNT="${{ steps.determine-account.outputs.account }}"
+          REPO_ROOT="${{ github.workspace }}"
+
+          echo "Initializing layer: ${{ matrix.layer }}"
+
+          # Run tofu init with backend config (same args Leverage would use)
+          tofu init -no-color \
+            -backend-config="${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars"
+
       - name: Run Terraform Apply
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 20
         run: |
-          source ~/.leverage-venv/bin/activate
+          # Use tofu directly to bypass Leverage CLI SSO requirements in CI/CD
           echo "Applying changes for layer: ${{ matrix.layer }}"
 
-          # Apply using the saved plan
-          leverage tofu apply -no-color -auto-approve tfplan.bin 2>&1 | tee apply-output.txt
+          # Apply using the saved plan (no tfvars needed - plan file contains everything)
+          tofu apply -no-color -auto-approve tfplan.bin 2>&1 | tee apply-output.txt
 
       - name: Generate Rollback Plan
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 5
         run: |
-          source ~/.leverage-venv/bin/activate
+          # Use tofu directly to bypass Leverage CLI SSO requirements in CI/CD
+          ACCOUNT="${{ steps.determine-account.outputs.account }}"
+          REPO_ROOT="${{ github.workspace }}"
+
           echo "Generating rollback plan for layer: ${{ matrix.layer }}"
 
+          # Build tfvars arguments (same as plan step)
+          TFVARS_ARGS=""
+          if [[ -f "${REPO_ROOT}/config/common.tfvars" ]]; then
+            TFVARS_ARGS="$TFVARS_ARGS -var-file=${REPO_ROOT}/config/common.tfvars"
+          fi
+          if [[ -f "${REPO_ROOT}/${ACCOUNT}/config/account.tfvars" ]]; then
+            TFVARS_ARGS="$TFVARS_ARGS -var-file=${REPO_ROOT}/${ACCOUNT}/config/account.tfvars"
+          fi
+
           # Generate destroy plan for rollback
-          leverage tofu plan -destroy -no-color -out=rollback.tfplan 2>&1 | tee rollback-plan.txt
+          tofu plan -destroy -no-color -out=rollback.tfplan $TFVARS_ARGS 2>&1 | tee rollback-plan.txt
 
       - name: Upload Apply Results
         uses: actions/upload-artifact@v4
