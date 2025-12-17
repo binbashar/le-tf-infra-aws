@@ -2,7 +2,7 @@
 # VPC Peering:  apps-devstg-dr VPC <=> Data-Science VPC
 #
 module "vpc_peering_apps_devstg_to_datascience" {
-  source = "github.com/binbashar/terraform-aws-vpc-peering.git?ref=v5.0.0"
+  source = "github.com/binbashar/terraform-aws-vpc-peering.git?ref=v5.1.0"
 
   for_each = {
     for k, v in local.apps-devstg-vpcs :
