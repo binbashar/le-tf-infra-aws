@@ -1,7 +1,7 @@
 #
 # VPC Peering:  apps-devstg base VPC => eks clusters VPC
 module "vpc_peering_apps_devstg_to_eks_clusters" {
-  source = "github.com/binbashar/terraform-aws-vpc-peering.git?ref=v5.0.0"
+  source = "github.com/binbashar/terraform-aws-vpc-peering.git?ref=v5.1.0"
 
   for_each = {
     for k, v in local.apps-devstg-vpcs :
