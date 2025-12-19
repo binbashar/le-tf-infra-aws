@@ -71,7 +71,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
         with:
           fetch-depth: 0  # Full history for git diff
 
@@ -115,7 +115,7 @@ jobs:
       - name: Run Claude Code PR Analysis
         if: steps.changed-files.outputs.has-changes == 'true'
         id: claude-analysis
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@928c84b37e02abd33f08826a2200058c68633a85  # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |

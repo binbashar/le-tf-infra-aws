@@ -119,18 +119,18 @@ jobs:
       python-version: ${{ steps.setup.outputs.python-version }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
         with:
           fetch-depth: 0
 
       - name: Setup Python
         id: setup
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
         with:
           python-version: '3.13'
 
       - name: Cache Python dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
         with:
           path: ~/.leverage-venv
           key: ${{ runner.os }}-leverage-${{ hashFiles('build.env') }}
@@ -149,13 +149,13 @@ jobs:
       has-layers: ${{ steps.detect.outputs.has-layers }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
         with:
           fetch-depth: 0
 
       - name: Get PR information
         id: pr-info
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
         with:
           script: |
             const pr_number = ${{ needs.determine-action.outputs.pr_number }};
@@ -228,10 +228,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
         with:
           python-version: ${{ needs.setup-environment.outputs.python-version }}
 
@@ -449,7 +449,7 @@ jobs:
         run: echo "artifact_name=plan-$(echo '${{ matrix.layer }}' | tr '/' '-')" >> $GITHUB_OUTPUT
 
       - name: Upload Plan Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: ${{ steps.sanitize.outputs.artifact_name }}
           path: |
@@ -476,19 +476,19 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
         with:
           fetch-depth: 0
 
       - name: Download Plan Outputs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
         with:
           pattern: plan-*
           path: plans/
 
       - name: Run Claude Code Plan Analysis
         id: claude-analysis
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@928c84b37e02abd33f08826a2200058c68633a85  # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
@@ -560,10 +560,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
       - name: Check permissions
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
         with:
           script: |
             const { data: user } = await github.rest.users.getByUsername({
@@ -581,7 +581,7 @@ jobs:
             }
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
         with:
           python-version: '3.13'
 
@@ -733,7 +733,7 @@ jobs:
           echo "apply_artifact=apply-$(echo '${{ matrix.layer }}' | tr '/' '-')" >> $GITHUB_OUTPUT
 
       - name: Download Plan Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
         with:
           name: ${{ steps.sanitize.outputs.plan_artifact }}
           path: ${{ matrix.layer }}/
@@ -785,7 +785,7 @@ jobs:
           tofu plan -destroy -no-color -out=rollback.tfplan $TFVARS_ARGS 2>&1 | tee rollback-plan.txt
 
       - name: Upload Apply Results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: ${{ steps.sanitize.outputs.apply_artifact }}
           path: |
@@ -795,7 +795,7 @@ jobs:
           retention-days: 30
 
       - name: Post Apply Results
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
         with:
           script: |
             const fs = require('fs');
