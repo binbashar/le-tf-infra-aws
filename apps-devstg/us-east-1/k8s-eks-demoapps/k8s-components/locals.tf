@@ -46,16 +46,15 @@ locals {
   #------------------------------------------------------------------------------
   nginx_ingress_tags_map = merge(local.tags_map, { Component = "nginx-ingress" })
   nginx_ingress_tags_list = [
-    for k, v in local.alb_ingress_to_nginx_ingress_tags_map : "${k}=${v}"
+    for k, v in local.nginx_ingress_tags_map : "${k}=${v}"
   ]
-
 
   #------------------------------------------------------------------------------
   # Traefik Ingress settings
   #------------------------------------------------------------------------------
   traefik_tags_map = merge(local.tags_map, { Component = "traefik" })
   traefik_tags_list = [
-    for k, v in local.alb_ingress_to_nginx_ingress_tags_map : "${k}=${v}"
+    for k, v in local.traefik_tags_map : "${k}=${v}"
   ]
 
   #------------------------------------------------------------------------------

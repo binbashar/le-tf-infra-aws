@@ -184,7 +184,7 @@ resource "kubernetes_ingress_v1" "traefik_apps" {
       # Group this LB under a custom group so it's not shared with other groups
       "alb.ingress.kubernetes.io/group.name" = "apps"
       # Nginx provides an endpoint for health checks
-      "alb.ingress.kubernetes.io/healthcheck-path" = "/healthz"
+      "alb.ingress.kubernetes.io/healthcheck-path" = "/ping"
       # Use the AWS ACM certificate we created for this
       "alb.ingress.kubernetes.io/certificate-arn" = data.terraform_remote_state.certs.outputs.certificate_arn
       # Enable ports 80 and 443
