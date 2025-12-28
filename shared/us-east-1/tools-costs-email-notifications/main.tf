@@ -20,7 +20,8 @@ resource "aws_lambda_function" "monthly_services_usage" {
   environment {
     variables = {
       # ACCOUNTS is only used as fallback when AUTO_DISCOVER_ACCOUNTS=false or if auto-discovery fails
-      ACCOUNTS               = jsonencode(var.accounts)
+      # Use local.accounts_with_string_ids to preserve leading zeros in account IDs
+      ACCOUNTS               = jsonencode(local.accounts_with_string_ids)
       AUTO_DISCOVER_ACCOUNTS = tostring(var.auto_discover_accounts)
       EXCLUDED_ACCOUNT_IDS   = join(",", var.excluded_account_ids)
       SENDER                 = var.sender_email

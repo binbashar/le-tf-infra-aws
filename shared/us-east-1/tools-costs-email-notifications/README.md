@@ -122,7 +122,9 @@ Before using this script, you need to set up the following:
        "apps-prd": {"id": "123456789013"}
      }
      ```
+     - **Note**: Account IDs are automatically converted to 12-digit zero-padded strings to preserve leading zeros (e.g., `094271238832`). This is handled by the Terraform configuration in [locals.tf](locals.tf).
    - `AUTO_DISCOVER_ACCOUNTS`: (Optional) Set to `true` to automatically discover accounts from AWS Organizations. Default: `false`
+     - **IMPORTANT**: When `AUTO_DISCOVER_ACCOUNTS=true`, the `ACCOUNTS` variable **must** include the `management` account with its ID. The Lambda will assume the `LambdaCostsExplorerAccess` role in the management account to access the Organizations API.
    - `EXCLUDED_ACCOUNT_IDS`: (Optional) Comma-separated list of account IDs to exclude when using auto-discovery. Example: `111111111111,222222222222`
    - `SENDER`: The sender's email address for SES (must be verified in SES).
    - `RECIPIENT`: A comma-separated list of recipient email addresses for the report.
@@ -131,9 +133,30 @@ Before using this script, you need to set up the following:
    - `FORCE_DATE`: (Optional) Override the report date for testing purposes. Format: `YYYY-MM-DD`
    - `REGION`: (Optional) AWS region for SES. Default: `us-east-1`
 
-3. **AWS Organizations Permissions** (if using auto-discovery): The Lambda execution role needs the `organizations:ListAccounts` permission to discover accounts automatically.
+3. **AWS Organizations Auto-Discovery Setup** (if using `AUTO_DISCOVER_ACCOUNTS=true`):
+   - The `ACCOUNTS` environment variable **must include** the `management` account:
+     ```json
+     {
+       "management": {"id": "123456789012", "email": "aws+root@example.com"}
+     }
+     ```
+   - The `LambdaCostsExplorerAccess` role in the **management account** must have the `organizations:ListAccounts` permission
+   - The Lambda will:
+     1. Look for the account named `"management"` in the `ACCOUNTS` variable
+     2. Assume the `LambdaCostsExplorerAccess` role in that account
+     3. Call `organizations:ListAccounts` to discover all active accounts in the organization
+     4. Process cost data for all discovered accounts (excluding any in `EXCLUDED_ACCOUNT_IDS`)
+   - If auto-discovery fails, the Lambda falls back to using the manually configured `ACCOUNTS` variable
 
-4. **Amazon SES Configuration**: Ensure that your AWS environment has Amazon SES configured with the appropriate permissions to send emails.
+4. **IAM Role Configuration**:
+   - **In each account** (including management): Create the `LambdaCostsExplorerAccess` role with:
+     - Trust relationship allowing the Lambda execution role from the shared account to assume it
+     - Cost Explorer read permissions (`ce:Get*`, `ce:Describe*`, etc.)
+   - **In the management account only**: The `LambdaCostsExplorerAccess` role must also have:
+     - `organizations:ListAccounts` permission (required for auto-discovery)
+     - See [management/global/base-identities/policies.tf](../../../management/global/base-identities/policies.tf) for the policy configuration
+
+5. **Amazon SES Configuration**: Ensure that your AWS environment has Amazon SES configured with the appropriate permissions to send emails.
 
 | :point_up: Note   |
 |:---------------|

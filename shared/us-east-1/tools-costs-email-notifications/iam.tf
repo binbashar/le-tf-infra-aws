@@ -49,15 +49,6 @@ resource "aws_iam_policy" "monthly_services_usage_lambda_role_policy" {
         Effect = "Allow"
       },
       {
-        Sid = "OrganizationsReadAccess"
-        Action = [
-          "organizations:ListAccounts",
-          "organizations:DescribeAccount"
-        ]
-        Resource = "*"
-        Effect   = "Allow"
-      },
-      {
         Sid = "AssumeRoleForCostExplorer"
         Action = [
           "sts:AssumeRole"

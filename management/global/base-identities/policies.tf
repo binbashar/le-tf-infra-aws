@@ -46,6 +46,18 @@ data "aws_iam_policy_document" "lambda_costs_explorer_access" {
       "*"
     ]
   }
+
+  # Allow listing accounts from Organizations for auto-discovery
+  statement {
+    sid = "OrganizationsListAccess"
+    actions = [
+      "organizations:ListAccounts"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
 }
 
 resource "aws_iam_policy" "north_cloud_tool_access" {

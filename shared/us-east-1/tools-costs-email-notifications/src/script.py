@@ -14,7 +14,6 @@ logger.setLevel(logging.INFO)
 
 # Initialize AWS clients
 sts = boto3.client('sts')
-organizations = boto3.client('organizations')
 
 # Environment variables
 ACCOUNTS_JSON = os.environ.get('ACCOUNTS', '{}')
@@ -22,8 +21,19 @@ AUTO_DISCOVER_ACCOUNTS = os.environ.get('AUTO_DISCOVER_ACCOUNTS', 'false').lower
 EXCLUDED_ACCOUNT_IDS = os.environ.get('EXCLUDED_ACCOUNT_IDS', '').split(',') if os.environ.get('EXCLUDED_ACCOUNT_IDS') else []
 
 ACCOUNTS = json.loads(ACCOUNTS_JSON) if ACCOUNTS_JSON != '{}' else {}
+
+# Validate required email configuration
 SENDER = os.environ.get('SENDER')
-RECIPIENTS = os.environ.get('RECIPIENT').split(',')
+RECIPIENT = os.environ.get('RECIPIENT', '')
+
+# Parse recipients, filtering out empty strings and whitespace
+RECIPIENTS = [email.strip() for email in RECIPIENT.split(',') if email.strip()]
+
+if not SENDER:
+    raise ValueError("SENDER environment variable is required but not set")
+if not RECIPIENTS:
+    raise ValueError("RECIPIENT environment variable is required but not set or empty")
+
 if FORCE_DATE := os.environ.get("FORCE_DATE"):
     FORCE_DATE = datetime.strptime(FORCE_DATE, "%Y-%m-%d")  # e.g. 2023-08-30
 EXCLUDE_CREDITS = os.environ.get('EXCLUDE_CREDITS')
@@ -34,9 +44,36 @@ REGION = os.environ.get('REGION', 'us-east-1')
 def discover_accounts():
     """
     Discover all active AWS accounts in the organization.
+    Assumes LambdaCostsExplorerAccess role in management account to access Organizations API.
     Returns a dictionary of account names to account info.
     """
     try:
+        # Get management account ID from ACCOUNTS variable
+        management_account = ACCOUNTS.get('management')
+        if not management_account or not management_account.get('id'):
+            logger.error("Cannot discover accounts: management account not found in ACCOUNTS variable")
+            return {}
+
+        management_account_id = management_account['id']
+
+        # Assume LambdaCostsExplorerAccess role in management account
+        # This role needs organizations:ListAccounts permission in the management account
+        role_arn = f"arn:aws:iam::{management_account_id}:role/LambdaCostsExplorerAccess"
+        logger.info(f"Assuming role {role_arn} to access AWS Organizations")
+
+        assumed_role = sts.assume_role(
+            RoleArn=role_arn,
+            RoleSessionName='LambdaOrganizationsDiscovery'
+        )
+
+        # Create Organizations client with assumed credentials
+        temp_session = boto3.Session(
+            aws_access_key_id=assumed_role['Credentials']['AccessKeyId'],
+            aws_secret_access_key=assumed_role['Credentials']['SecretAccessKey'],
+            aws_session_token=assumed_role['Credentials']['SessionToken']
+        )
+        organizations = temp_session.client('organizations')
+
         accounts = {}
         paginator = organizations.get_paginator('list_accounts')
 
@@ -63,7 +100,7 @@ def discover_accounts():
     except ClientError as e:
         error_code = e.response['Error']['Code']
         if error_code == 'AccessDeniedException':
-            logger.error("Access denied to AWS Organizations API. Ensure Lambda has organizations:ListAccounts permission.")
+            logger.error(f"Access denied to AWS Organizations API. Ensure the management account ({management_account_id}) has LambdaCostsExplorerAccess role with organizations:ListAccounts permission.")
         else:
             logger.error(f"Error discovering accounts from Organizations: {str(e)}")
         return {}
