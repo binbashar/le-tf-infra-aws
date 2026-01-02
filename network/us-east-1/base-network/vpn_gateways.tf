@@ -1,7 +1,7 @@
 # Network Firewall VPC attachment - Inspection subnets (private)
 module "vpn_gateways" {
 
-  source = "github.com/binbashar/terraform-aws-vpn-gateway.git?ref=v2.10.1"
+  source = "github.com/binbashar/terraform-aws-vpn-gateway.git?ref=v2.12.1"
 
   for_each = { for k, v in local.customer_gateways :
     k => v if var.enable_tgw && var.vpc_enable_vpn_gateway
