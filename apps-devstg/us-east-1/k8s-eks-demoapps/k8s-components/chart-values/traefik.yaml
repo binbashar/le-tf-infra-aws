@@ -1,0 +1,33 @@
+---
+service:
+  type: LoadBalancer
+  enabled: true
+  # Keep the traffic on the node it landed on
+  externalTrafficPolicy: Local
+  annotations:
+    # Create an internal load balancer
+    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+    # Make it a Network Load Balancer (either nlb or alb)
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    # Add resource tags
+    service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "${tags}"
+
+# Name of the ingress class to route through this controller
+ingressClass:  # @schema additionalProperties: false
+  enabled: true
+  isDefaultClass: true
+  name: ${ingressClass}
+
+tolerations:
+- effect: NoSchedule
+  operator: Exists
+
+ingressRoute:
+  dashboard:
+    enabled: false
+
+deployment:
+  # -- Enable deployment
+  enabled: true
+  # -- Deployment or DaemonSet
+  kind: DaemonSet
