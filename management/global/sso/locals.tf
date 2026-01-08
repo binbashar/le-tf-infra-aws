@@ -287,6 +287,15 @@ locals {
         "devops"
       ]
     }
+    "nestor.navarro" = {
+      first_name = "Nestor"
+      last_name  = "Navarro"
+      email      = "nestor.navarro@binbash.com.ar"
+      groups = [
+        "datascientists",
+        "devops"
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
