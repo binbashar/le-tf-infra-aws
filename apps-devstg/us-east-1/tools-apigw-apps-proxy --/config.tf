@@ -6,9 +6,9 @@ provider "aws" {
   profile = var.profile
 }
 provider "aws" {
-  alias   = "legacy"
+  alias   = "shared"
   region  = var.region
-  profile = "${var.project}-legacy-devops"
+  profile = "${var.project}-shared-devops"
 }
 
 #======================================
@@ -49,13 +49,13 @@ data "terraform_remote_state" "certs" {
   }
 }
 
-data "terraform_remote_state" "legacy-dns" {
+data "terraform_remote_state" "shared-dns" {
   backend = "s3"
   config = {
     region  = var.region
-    profile = "${var.project}-legacy-devops"
-    bucket  = "${var.project}-legacy-terraform-backend"
-    key     = "legacy/dns/diligentrobots.io/terraform.tfstate"
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
+    key     = "shared/dns/binbash.com.ar/terraform.tfstate"
   }
 }
 

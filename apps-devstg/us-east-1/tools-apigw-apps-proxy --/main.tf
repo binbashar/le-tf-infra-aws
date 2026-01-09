@@ -124,14 +124,14 @@ resource "aws_cloudwatch_log_group" "this" {
 # its corresponding custom domain on the API Gateway
 #
 resource "aws_route53_record" "this" {
-  provider = aws.legacy
+  provider = aws.shared
 
   for_each = toset(local.sites)
 
   # E.g. site1.dev.binbash.com.ar
   name    = "${each.value}.${local.public_domain}"
   type    = "A"
-  zone_id = data.terraform_remote_state.legacy-dns.outputs.public_zone_id
+  zone_id = data.terraform_remote_state.shared-dns.outputs.public_zone_id
 
   alias {
     name                   = module.apigw_proxy[each.value].apigatewayv2_domain_name_target_domain_name
