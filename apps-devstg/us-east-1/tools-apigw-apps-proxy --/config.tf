@@ -45,7 +45,7 @@ data "terraform_remote_state" "certs" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "${var.environment}/security-certs/diligentrobots.io/terraform.tfstate"
+    key     = "${var.environment}/security-certs/binbash.com.ar/terraform.tfstate"
   }
 }
 

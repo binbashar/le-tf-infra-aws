@@ -17,7 +17,7 @@ module "apigw_proxy" {
   description   = "HTTP Proxy for ${each.value}"
   protocol_type = "HTTP"
 
-  # E.g. site1.dev.diligentrobots.io
+  # E.g. site1.dev.binbash.com.ar
   domain_name                 = "${each.value}.${local.public_domain}"
   domain_name_certificate_arn = data.terraform_remote_state.certs.outputs.certificate_arn
 
@@ -36,7 +36,7 @@ module "apigw_proxy" {
         # Pass the original client IP in a special header so it can be used later for IP filtering
         "overwrite:header.X-Client-Ip" = "$context.identity.sourceIp"
         "overwrite:header.X-Real-Ip"   = "$context.identity.sourceIp"
-        # E.g. site1.dev.aws.diligentrobots.io
+        # E.g. site1.dev.aws.binbash.com.ar
         # Important: host header only can be defined statically (can't use variables here)
         "overwrite:header.host" = "${join("", [each.value, "."])}${app}.${local.private_domain}"
       }
