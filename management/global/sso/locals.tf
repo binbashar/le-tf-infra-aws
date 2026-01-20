@@ -296,6 +296,15 @@ locals {
         "devops"
       ]
     }
+    "franco.cerutti" = {
+      first_name = "Franco"
+      last_name  = "Cerutti"
+      email      = "franco.cerutti@binbash.com.ar"
+      groups = [
+        "datascientists",
+        "devops"
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
