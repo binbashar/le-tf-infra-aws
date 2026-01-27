@@ -35,7 +35,7 @@ while [[ $# -gt 0 ]]; do
     --type) SESSION_TYPE="$2"; shift 2 ;;
     --update) FORCE_UPDATE="true"; shift ;;
     --summary) CUSTOM_SUMMARY="$2"; shift 2 ;;
-    *) 
+    *)
       # If no flag, treat as summary
       if [[ -z "$CUSTOM_SUMMARY" ]] && [[ ! "$1" =~ ^-- ]]; then
         CUSTOM_SUMMARY="$1"
@@ -83,7 +83,7 @@ echo "🤖 Analyzing current session and saving progress to Obsidian..."
 # 4. NOTE STRUCTURE (Markdown Template):
 #    ```markdown
 #    # {Date} - {Branch/Issue} - Session Notes
-#    
+#
 #    ## Session Overview
 #    - **Date**: {Current date and time}
 #    - **Branch**: {Current git branch}
@@ -99,7 +99,7 @@ echo "🤖 Analyzing current session and saving progress to Obsidian..."
 #    - **Parent Repository**: {main repo path if worktree detected}
 #    - **Worktree Branch**: {branch associated with this worktree}
 #    - **Full Directory Path**: {complete pwd output for precise restoration}
-#    
+#
 #    ## Context & Objectives
 #    {Auto-extracted from branch name, recent commits, working directory context}
 #
@@ -147,20 +147,20 @@ echo "🤖 Analyzing current session and saving progress to Obsidian..."
 #    - "Resume analysis of {specific_component_or_issue}"
 #    - "The last step was {specific_action}, next I need to {specific_next_action}"
 #    - "Help me {specific_continuation_request} based on the saved context"
-#    
+#
 #    ## Technical Details
 #    ### Files Modified
 #    {List of changed files with brief analysis}
-#    
+#
 #    ### Recent Commits
 #    {Last 3-5 commits with messages}
-#    
+#
 #    ### Key Findings
 #    {Important discoveries, solutions, workarounds}
-#    
+#
 #    ### Current Status
 #    {Git status, any uncommitted changes, current directory context}
-#    
+#
 #    ---
 #    *Session saved automatically on {timestamp} by Claude Code*
 #    ```
@@ -214,7 +214,7 @@ echo "🚀 Claude will now perform autonomous session analysis and Obsidian note
 
 # Session variables for Claude to use
 export CUSTOM_SUMMARY="$CUSTOM_SUMMARY"
-export SESSION_TYPE="$SESSION_TYPE" 
+export SESSION_TYPE="$SESSION_TYPE"
 export FORCE_UPDATE="$FORCE_UPDATE"
 export OBSIDIAN_PATH="second_brain/Binbash/sessions"
 
@@ -225,7 +225,7 @@ CURRENT_TIME=$(date +"%Y-%m-%d %H:%M")
 
 echo "📊 Session Context:"
 echo "   Branch: $CURRENT_BRANCH"
-echo "   Date: $CURRENT_DATE" 
+echo "   Date: $CURRENT_DATE"
 echo "   Custom Summary: ${CUSTOM_SUMMARY:-'Auto-generated'}"
 echo "   Session Type: ${SESSION_TYPE:-'Auto-detected'}"
 echo "   Update Mode: ${FORCE_UPDATE:-'false'}"
