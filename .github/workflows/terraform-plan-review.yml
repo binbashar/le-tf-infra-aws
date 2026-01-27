@@ -249,7 +249,7 @@ jobs:
           python3 -m venv ~/.leverage-venv
           source ~/.leverage-venv/bin/activate
           pip install --upgrade pip
-          pip install leverage==2.2.0rc3
+          pip install leverage==2.2.0rc5
           echo "$HOME/.leverage-venv/bin" >> $GITHUB_PATH
           leverage --version
 
@@ -599,7 +599,7 @@ jobs:
           python3 -m venv ~/.leverage-venv
           source ~/.leverage-venv/bin/activate
           pip install --upgrade pip
-          pip install leverage==2.2.0rc3
+          pip install leverage==2.2.0rc5
           echo "$HOME/.leverage-venv/bin" >> $GITHUB_PATH
           leverage --version
 
