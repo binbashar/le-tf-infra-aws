@@ -40,7 +40,7 @@ locals {
   # ##########################################################
   # Sites and Apps
 
-  # Convert the clients/sites list to a sites list. Note that we are assuming
+  # Convert the sites list to a sites list. Note that we are assuming
   # that all sites need to be enabled, no exclusions are being applied.
   # URL valid names, no dots
   sites = [
