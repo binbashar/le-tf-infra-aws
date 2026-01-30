@@ -296,6 +296,15 @@ locals {
         "devops"
       ]
     }
+    "kevin.santos" = {
+      first_name = "Kevin"
+      last_name  = "Santos"
+      email      = "kevin.santos@binbash.com.ar"
+      groups = [
+        "datascientists",
+        "devops"
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
