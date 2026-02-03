@@ -3,7 +3,7 @@
 #======================================
 
 module "table_order" {
-  source = "github.com/terraform-aws-modules/terraform-aws-dynamodb-table.git?ref=v4.0.1"
+  source = "github.com/terraform-aws-modules/terraform-aws-dynamodb-table.git?ref=v4.4.0"
 
   name           = "OrderTable"
   table_class    = "STANDARD"
@@ -24,7 +24,7 @@ module "table_order" {
 }
 
 module "table_callback" {
-  source = "github.com/terraform-aws-modules/terraform-aws-dynamodb-table.git?ref=v4.0.1"
+  source = "github.com/terraform-aws-modules/terraform-aws-dynamodb-table.git?ref=v4.4.0"
 
   name           = "CallbackTable"
   table_class    = "STANDARD"
