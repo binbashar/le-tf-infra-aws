@@ -11,7 +11,7 @@
 #   - Test replication and backups
 #------------------------------------------------------------------------------
 module "example_efs_file_system" {
-  source = "github.com/terraform-aws-modules/terraform-aws-efs.git?ref=v1.3.1"
+  source = "github.com/terraform-aws-modules/terraform-aws-efs.git?ref=v1.8.1"
 
   # General specs
   name             = "eks-example"
