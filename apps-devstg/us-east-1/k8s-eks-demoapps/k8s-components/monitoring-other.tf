@@ -7,7 +7,7 @@ resource "helm_release" "datadog_agent" {
   namespace  = kubernetes_namespace.monitoring_other[0].id
   repository = "https://helm.datadoghq.com"
   chart      = "datadog"
-  version    = "3.149.2"
+  version    = "3.157.5"
   values = [
     templatefile("chart-values/datadog.yaml", {
       site   = "[REGION].datadoghq.com"
