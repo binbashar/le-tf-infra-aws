@@ -69,7 +69,7 @@ resource "aws_iam_policy" "mwaa_execution_base" {
           "sqs:ReceiveMessage",
           "sqs:SendMessage"
         ]
-        Resource = "arn:aws:sqs:${var.region}:*:airflow-celery-*"
+        Resource = "arn:aws:sqs:${var.region}:${data.aws_caller_identity.current.account_id}:airflow-celery-*"
       },
       {
         Effect = "Allow"

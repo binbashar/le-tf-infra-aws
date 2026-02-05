@@ -17,7 +17,7 @@ schedulers  = 2
 webserver_access_mode = "PRIVATE_ONLY"
 
 # S3 paths
-dag_s3_path = "dags"
+dag_s3_path = "dags/"
 
 # Logging configuration
 enable_logging = true

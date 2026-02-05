@@ -49,7 +49,7 @@ resource "aws_iam_role_policy" "scheduler_mwaa" {
         Action = [
           "iam:PassRole"
         ]
-        Resource = "*"
+        Resource = local.scheduler_passrole_arns
         Condition = {
           StringEquals = {
             "iam:PassedToService" = "airflow.amazonaws.com"
