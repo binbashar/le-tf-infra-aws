@@ -13,7 +13,7 @@ schedules = {
     schedule_expression = "cron(55 16 * * ? *)" # Daily at 16:55 America/Argentina/Buenos_Aires (UTC-3)
     dag_s3_path         = "dags/"
     # execution_role_arn will use the role created in iam.tf by default
-    source_bucket_arn   = "arn:aws:s3:::bb-apache-airflow-dag"
+    source_bucket_arn = "arn:aws:s3:::bb-apache-airflow-dag"
     subnet_ids = [
       "subnet-0ae4e4874034d9346",
       "subnet-0879ec2972f28cc03"
@@ -28,9 +28,9 @@ schedules = {
     schedulers            = 2
     webserver_access_mode = "PRIVATE_ONLY"
     airflow_configuration_options = {
-      "core.load_examples"    = "false"
-      "logging.logging_level" = "INFO"
-      "secrets.backend"       = "airflow.providers.amazon.aws.secrets.secrets_manager.SecretsManagerBackend"
+      "core.load_examples"     = "false"
+      "logging.logging_level"  = "INFO"
+      "secrets.backend"        = "airflow.providers.amazon.aws.secrets.secrets_manager.SecretsManagerBackend"
       "secrets.backend_kwargs" = "{\"connections_prefix\": \"airflow/connections\", \"variables_prefix\": \"airflow/variables\"}"
     }
     enabled  = true

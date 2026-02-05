@@ -32,8 +32,8 @@ resource "aws_iam_policy" "mwaa_execution_base" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
-        Action = "airflow:PublishMetrics"
+        Effect   = "Allow"
+        Action   = "airflow:PublishMetrics"
         Resource = "arn:aws:airflow:${var.region}:${data.aws_caller_identity.current.account_id}:environment/*"
       },
       {
@@ -50,13 +50,13 @@ resource "aws_iam_policy" "mwaa_execution_base" {
         Resource = "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:airflow-*"
       },
       {
-        Effect = "Allow"
-        Action = "logs:DescribeLogGroups"
+        Effect   = "Allow"
+        Action   = "logs:DescribeLogGroups"
         Resource = "*"
       },
       {
-        Effect = "Allow"
-        Action = "cloudwatch:PutMetricData"
+        Effect   = "Allow"
+        Action   = "cloudwatch:PutMetricData"
         Resource = "*"
       },
       {

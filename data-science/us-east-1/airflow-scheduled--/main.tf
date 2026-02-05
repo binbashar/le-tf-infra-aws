@@ -84,19 +84,19 @@ resource "aws_scheduler_schedule" "mwaa_create_environment" {
 
     input = jsonencode(merge(
       {
-        Name               = "${var.project}-${var.environment}-airflow"
-        DagS3Path          = each.value.dag_s3_path
-        ExecutionRoleArn   = coalesce(each.value.execution_role_arn, local.mwaa_execution_role_arn)
-        SourceBucketArn    = each.value.source_bucket_arn
-        EnvironmentClass   = each.value.environment_class
-        AirflowVersion     = each.value.airflow_version
-        MaxWorkers         = each.value.max_workers
-        MinWorkers         = each.value.min_workers
-        Schedulers         = each.value.schedulers
+        Name                = "${var.project}-${var.environment}-airflow"
+        DagS3Path           = each.value.dag_s3_path
+        ExecutionRoleArn    = coalesce(each.value.execution_role_arn, local.mwaa_execution_role_arn)
+        SourceBucketArn     = each.value.source_bucket_arn
+        EnvironmentClass    = each.value.environment_class
+        AirflowVersion      = each.value.airflow_version
+        MaxWorkers          = each.value.max_workers
+        MinWorkers          = each.value.min_workers
+        Schedulers          = each.value.schedulers
         WebserverAccessMode = each.value.webserver_access_mode
         NetworkConfiguration = {
-          SubnetIds         = each.value.subnet_ids
-          SecurityGroupIds  = each.value.security_group_ids
+          SubnetIds        = each.value.subnet_ids
+          SecurityGroupIds = each.value.security_group_ids
         }
       },
       length(each.value.airflow_configuration_options) > 0 ? {
@@ -118,7 +118,7 @@ resource "aws_scheduler_schedule" "mwaa_create_environment" {
 
     retry_policy {
       maximum_event_age_in_seconds = 86400
-      maximum_retry_attempts        = 3
+      maximum_retry_attempts       = 3
     }
   }
 }
