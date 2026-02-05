@@ -40,7 +40,7 @@ variable "webserver_access_mode" {
 variable "dag_s3_path" {
   description = "Relative path to DAG folder in S3"
   type        = string
-  default     = "dags"
+  default     = "dags/"
 }
 
 variable "requirements_s3_path" {
