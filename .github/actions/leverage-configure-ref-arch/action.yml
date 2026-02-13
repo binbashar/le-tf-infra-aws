@@ -84,9 +84,10 @@ runs:
     - name: Configure Reference Architecture
       shell: bash
       run: |
-        set +x
+        set -euo pipefail
 
         echo "📝 Creating config/common.tfvars..."
+        mkdir -p config
         cat > config/common.tfvars << EOF
         project          = "${{ inputs.project }}"
         project_long     = "${{ inputs.project_long }}"

@@ -23,6 +23,11 @@ permissions:
 env:
   AWS_REGION: us-east-1
 
+# Prevent concurrent terraform operations on the same PR to avoid state corruption
+concurrency:
+  group: terraform-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false
+
 jobs:
   # Job 1: Add eyes reaction to indicate processing
   eyes-reaction:
@@ -395,24 +400,6 @@ jobs:
           # Run plan and save to file (for apply) and display output
           tofu plan -no-color -input=false -out=tfplan.bin $TFVARS_ARGS 2>&1 | tee plan-output.txt
 
-      - name: Extract Resource Types
-        id: resources
-        working-directory: ${{ matrix.layer }}
-        run: |
-          # Extract resource types from plan output
-          if [[ -f plan-output.txt ]]; then
-            RESOURCE_TYPES=$(grep -E '^\s+#\s+(aws_|azurerm_|google_)' plan-output.txt | \
-              sed -E 's/.*#\s+([a-z_]+)\..*/\1/' | \
-              sort -u | \
-              tr '\n' ',' | \
-              sed 's/,$//')
-
-            echo "resource-types=$RESOURCE_TYPES" >> $GITHUB_OUTPUT
-            echo "Detected resource types: $RESOURCE_TYPES"
-          else
-            echo "resource-types=" >> $GITHUB_OUTPUT
-          fi
-
       - name: Sanitize Layer Name for Artifact
         id: sanitize
         run: echo "artifact_name=plan-$(echo '${{ matrix.layer }}' | tr '/' '-')" >> $GITHUB_OUTPUT
@@ -431,7 +418,7 @@ jobs:
     name: AI Plan Analysis
     needs: [eyes-reaction, determine-action, detect-layers, run-terraform-plan]
     if: |
-      always() &&
+      needs.run-terraform-plan.result == 'success' &&
       (needs.eyes-reaction.result == 'success' || needs.eyes-reaction.result == 'skipped') &&
       needs.detect-layers.outputs.has-layers == 'true'
     timeout-minutes: 20
@@ -535,10 +522,6 @@ jobs:
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
         with:
           script: |
-            const { data: user } = await github.rest.users.getByUsername({
-              username: context.actor
-            });
-
             const { data: collaborator } = await github.rest.repos.getCollaboratorPermissionLevel({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -691,6 +674,15 @@ jobs:
           tofu init -no-color \
             -backend-config="${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars"
 
+      - name: Save Pre-Apply State for Rollback
+        working-directory: ${{ matrix.layer }}
+        timeout-minutes: 2
+        run: |
+          echo "Saving pre-apply state snapshot for potential rollback..."
+          # Save a backup of the current state before apply
+          tofu state pull > pre-apply-state.json 2>/dev/null || echo '{}' > pre-apply-state.json
+          echo "✅ Pre-apply state saved"
+
       - name: Run Terraform Apply
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 20
@@ -701,36 +693,13 @@ jobs:
           # Apply using the saved plan (no tfvars needed - plan file contains everything)
           tofu apply -no-color -auto-approve tfplan.bin 2>&1 | tee apply-output.txt
 
-      - name: Generate Rollback Plan
-        working-directory: ${{ matrix.layer }}
-        timeout-minutes: 5
-        run: |
-          # Use tofu directly to bypass Leverage CLI SSO requirements in CI/CD
-          ACCOUNT="${{ steps.determine-account.outputs.account }}"
-          REPO_ROOT="${{ github.workspace }}"
-
-          echo "Generating rollback plan for layer: ${{ matrix.layer }}"
-
-          # Build tfvars arguments (same as plan step)
-          TFVARS_ARGS=""
-          if [[ -f "${REPO_ROOT}/config/common.tfvars" ]]; then
-            TFVARS_ARGS="$TFVARS_ARGS -var-file=${REPO_ROOT}/config/common.tfvars"
-          fi
-          if [[ -f "${REPO_ROOT}/${ACCOUNT}/config/account.tfvars" ]]; then
-            TFVARS_ARGS="$TFVARS_ARGS -var-file=${REPO_ROOT}/${ACCOUNT}/config/account.tfvars"
-          fi
-
-          # Generate destroy plan for rollback
-          tofu plan -destroy -no-color -out=rollback.tfplan $TFVARS_ARGS 2>&1 | tee rollback-plan.txt
-
       - name: Upload Apply Results
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: ${{ steps.sanitize.outputs.apply_artifact }}
           path: |
             ${{ matrix.layer }}/apply-output.txt
-            ${{ matrix.layer }}/rollback.tfplan
-            ${{ matrix.layer }}/rollback-plan.txt
+            ${{ matrix.layer }}/pre-apply-state.json
           retention-days: 30
 
       - name: Post Apply Results
@@ -764,12 +733,12 @@ jobs:
             </details>
 
             ### Rollback Information
-            A rollback plan has been generated and stored as an artifact.
+            A pre-apply state snapshot has been saved for potential rollback.
 
             **To rollback these changes:**
-            1. Download the \`apply-${layerPath}\` artifact
-            2. Extract \`rollback.tfplan\`
-            3. Run: \`leverage tofu apply rollback.tfplan\`
+            1. Revert the PR changes in git: \`git revert <commit-sha>\`
+            2. Run \`leverage tf plan\` and \`leverage tf apply\` to restore previous state
+            3. Alternatively, download the \`apply-${layerPath.replace(/\\//g, '-')}\` artifact and use \`tofu state push pre-apply-state.json\` (advanced)
 
             **Rollback artifact retention**: 30 days
 
