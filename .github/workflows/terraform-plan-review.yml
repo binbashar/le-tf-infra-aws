@@ -314,105 +314,37 @@ jobs:
           echo "✅ Profile: bb-${ACCOUNT}-devops"
 
       - name: Configure AWS Credentials
-        env:
-          # Pass all account IDs as environment variables for dynamic selection
-          AWS_DEVSTG_ACCOUNT_ID: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
-          AWS_PRD_ACCOUNT_ID: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
-          AWS_NETWORK_ACCOUNT_ID: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
-          AWS_SECURITY_ACCOUNT_ID: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
-          AWS_SHARED_ACCOUNT_ID: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
-          AWS_MANAGEMENT_ACCOUNT_ID: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
-          AWS_DATA_SCIENCE_ACCOUNT_ID: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
+        uses: ./.github/actions/leverage-aws-credentials
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_management_account_id: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
+          aws_security_account_id: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+          aws_shared_account_id: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
+          aws_network_account_id: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
+          aws_devstg_account_id: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
+          aws_prd_account_id: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
+          aws_data_science_account_id: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
+
+      - name: Set AWS Profile for Layer
         run: |
-          mkdir -p ~/.aws/bb
-
-          # Get account details from previous step
-          ACCOUNT="${{ steps.determine-account.outputs.account }}"
-          SECRET_NAME="${{ steps.determine-account.outputs.secret_name }}"
           PROFILE="${{ steps.determine-account.outputs.profile }}"
-
-          # Use bash variable indirection to get the correct account ID
-          SECRET_VAR="AWS_${SECRET_NAME}_ACCOUNT_ID"
-          ACCOUNT_ID="${!SECRET_VAR}"
-
-          if [[ -z "$ACCOUNT_ID" ]]; then
-            echo "❌ Account ID not found for $SECRET_VAR"
-            echo "Please ensure the secret $SECRET_VAR is configured in GitHub repository secrets"
-            exit 1
-          fi
-
-          echo "Configuring AWS credentials for account: $ACCOUNT"
-          echo "Profile: $PROFILE"
-          echo "Account ID: ${ACCOUNT_ID:0:4}****${ACCOUNT_ID: -4}"
-
-          # Configure AWS profile for cross-account access
-          aws configure set region us-east-1 --profile "$PROFILE"
-          aws configure set output json --profile "$PROFILE"
-          aws configure set role_arn "arn:aws:iam::${ACCOUNT_ID}:role/DeployMaster" --profile "$PROFILE"
-          aws configure set source_profile bb-deploymaster --profile "$PROFILE"
-
-          # Create credentials file
-          cat << EOF > ~/.aws/credentials
-          [bb-deploymaster]
-          aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          EOF
-
-          cp ~/.aws/credentials ~/.aws/bb/
-          cp ~/.aws/config ~/.aws/bb/
-
-          # Set environment variables with dynamic profile
           echo "AWS_CONFIG_FILE=$HOME/.aws/bb/config" >> $GITHUB_ENV
           echo "AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/bb/credentials" >> $GITHUB_ENV
           echo "AWS_PROFILE=$PROFILE" >> $GITHUB_ENV
+          echo "✅ Using AWS profile: $PROFILE"
 
-          echo "✅ AWS credentials configured for $ACCOUNT account"
-
-      - name: Configure Build Environment
-        run: |
-          # Disable MFA for CI/CD
-          sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env || echo "MFA_ENABLED=false" >> build.env
-
-          # Configure TF binary for dockerless Leverage CLI v2.2.0+
-          # This tells Leverage CLI to use the locally installed tofu binary
-          echo "TF_BINARY=tofu" >> build.env
-
-      - name: Generate common.tfvars
-        env:
-          AWS_MANAGEMENT_ACCOUNT_ID: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
-          AWS_SECURITY_ACCOUNT_ID: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
-          AWS_SHARED_ACCOUNT_ID: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
-          AWS_NETWORK_ACCOUNT_ID: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
-          AWS_DEVSTG_ACCOUNT_ID: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
-          AWS_PRD_ACCOUNT_ID: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
-          AWS_DATA_SCIENCE_ACCOUNT_ID: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
-        run: |
-          # Generate config/common.tfvars from GitHub secrets
-          # This file is gitignored but required for terraform plan
-          cat > config/common.tfvars << EOF
-          project = "bb"
-          project_long = "binbash"
-          region_primary = "us-east-1"
-          region_secondary = "us-east-2"
-          regions_allowed = ["us-east-1", "us-east-2", "us-west-2"]
-          sso_enabled   = true
-          sso_start_url = "https://leverage.awsapps.com/start"
-          sso_region    = "us-east-1"
-          enable_tgw = false
-          enable_tgw_multi_region = false
-          tgw_cidrs = ["172.0.0.0/8", "10.0.0.0/8"]
-          external_accounts = {}
-          accounts = {
-            management   = { email = "aws@binbash.com.ar", id = "${AWS_MANAGEMENT_ACCOUNT_ID:-000000000000}" }
-            security     = { email = "aws@binbash.com.ar", id = "${AWS_SECURITY_ACCOUNT_ID:-000000000000}" }
-            shared       = { email = "aws@binbash.com.ar", id = "${AWS_SHARED_ACCOUNT_ID:-000000000000}" }
-            network      = { email = "aws@binbash.com.ar", id = "${AWS_NETWORK_ACCOUNT_ID:-000000000000}" }
-            apps-devstg  = { email = "aws@binbash.com.ar", id = "${AWS_DEVSTG_ACCOUNT_ID:-000000000000}" }
-            apps-prd     = { email = "aws@binbash.com.ar", id = "${AWS_PRD_ACCOUNT_ID:-000000000000}" }
-            data-science = { email = "aws@binbash.com.ar", id = "${AWS_DATA_SCIENCE_ACCOUNT_ID:-000000000000}" }
-          }
-          EOF
-          echo "✅ Generated config/common.tfvars"
+      - name: Configure Reference Architecture
+        uses: ./.github/actions/leverage-configure-ref-arch
+        with:
+          aws_management_account_id: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
+          aws_security_account_id: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+          aws_shared_account_id: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
+          aws_network_account_id: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
+          aws_devstg_account_id: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
+          aws_prd_account_id: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
+          aws_data_science_account_id: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
+          tf_binary: "tofu"
 
       - name: Run Terraform Init
         working-directory: ${{ matrix.layer }}
@@ -701,103 +633,37 @@ jobs:
           echo "✅ Profile: bb-${ACCOUNT}-devops"
 
       - name: Configure AWS Credentials
-        env:
-          # Pass all account IDs as environment variables for dynamic selection
-          AWS_DEVSTG_ACCOUNT_ID: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
-          AWS_PRD_ACCOUNT_ID: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
-          AWS_NETWORK_ACCOUNT_ID: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
-          AWS_SECURITY_ACCOUNT_ID: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
-          AWS_SHARED_ACCOUNT_ID: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
-          AWS_MANAGEMENT_ACCOUNT_ID: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
-          AWS_DATA_SCIENCE_ACCOUNT_ID: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
+        uses: ./.github/actions/leverage-aws-credentials
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_management_account_id: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
+          aws_security_account_id: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+          aws_shared_account_id: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
+          aws_network_account_id: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
+          aws_devstg_account_id: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
+          aws_prd_account_id: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
+          aws_data_science_account_id: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
+
+      - name: Set AWS Profile for Layer
         run: |
-          mkdir -p ~/.aws/bb
-
-          # Get account details from previous step
-          ACCOUNT="${{ steps.determine-account.outputs.account }}"
-          SECRET_NAME="${{ steps.determine-account.outputs.secret_name }}"
           PROFILE="${{ steps.determine-account.outputs.profile }}"
-
-          # Use bash variable indirection to get the correct account ID
-          SECRET_VAR="AWS_${SECRET_NAME}_ACCOUNT_ID"
-          ACCOUNT_ID="${!SECRET_VAR}"
-
-          if [[ -z "$ACCOUNT_ID" ]]; then
-            echo "❌ Account ID not found for $SECRET_VAR"
-            echo "Please ensure the secret $SECRET_VAR is configured in GitHub repository secrets"
-            exit 1
-          fi
-
-          echo "Configuring AWS credentials for account: $ACCOUNT"
-          echo "Profile: $PROFILE"
-          echo "Account ID: ${ACCOUNT_ID:0:4}****${ACCOUNT_ID: -4}"
-
-          # Configure AWS profile for cross-account access
-          aws configure set region us-east-1 --profile "$PROFILE"
-          aws configure set output json --profile "$PROFILE"
-          aws configure set role_arn "arn:aws:iam::${ACCOUNT_ID}:role/DeployMaster" --profile "$PROFILE"
-          aws configure set source_profile bb-deploymaster --profile "$PROFILE"
-
-          # Create credentials file
-          cat << EOF > ~/.aws/credentials
-          [bb-deploymaster]
-          aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          EOF
-
-          cp ~/.aws/credentials ~/.aws/bb/
-          cp ~/.aws/config ~/.aws/bb/
-
-          # Set environment variables with dynamic profile
           echo "AWS_CONFIG_FILE=$HOME/.aws/bb/config" >> $GITHUB_ENV
           echo "AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/bb/credentials" >> $GITHUB_ENV
           echo "AWS_PROFILE=$PROFILE" >> $GITHUB_ENV
+          echo "✅ Using AWS profile: $PROFILE"
 
-          echo "✅ AWS credentials configured for $ACCOUNT account"
-
-      - name: Configure Build Environment
-        run: |
-          sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env || echo "MFA_ENABLED=false" >> build.env
-
-          # Configure TF binary for dockerless Leverage CLI v2.2.0+
-          # This tells Leverage CLI to use the locally installed tofu binary
-          echo "TF_BINARY=tofu" >> build.env
-
-      - name: Generate common.tfvars
-        env:
-          AWS_MANAGEMENT_ACCOUNT_ID: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
-          AWS_SECURITY_ACCOUNT_ID: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
-          AWS_SHARED_ACCOUNT_ID: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
-          AWS_NETWORK_ACCOUNT_ID: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
-          AWS_DEVSTG_ACCOUNT_ID: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
-          AWS_PRD_ACCOUNT_ID: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
-          AWS_DATA_SCIENCE_ACCOUNT_ID: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
-        run: |
-          # Generate config/common.tfvars from GitHub secrets
-          cat > config/common.tfvars << EOF
-          project = "bb"
-          project_long = "binbash"
-          region_primary = "us-east-1"
-          region_secondary = "us-east-2"
-          regions_allowed = ["us-east-1", "us-east-2", "us-west-2"]
-          sso_enabled   = true
-          sso_start_url = "https://leverage.awsapps.com/start"
-          sso_region    = "us-east-1"
-          enable_tgw = false
-          enable_tgw_multi_region = false
-          tgw_cidrs = ["172.0.0.0/8", "10.0.0.0/8"]
-          external_accounts = {}
-          accounts = {
-            management   = { email = "aws@binbash.com.ar", id = "${AWS_MANAGEMENT_ACCOUNT_ID:-000000000000}" }
-            security     = { email = "aws@binbash.com.ar", id = "${AWS_SECURITY_ACCOUNT_ID:-000000000000}" }
-            shared       = { email = "aws@binbash.com.ar", id = "${AWS_SHARED_ACCOUNT_ID:-000000000000}" }
-            network      = { email = "aws@binbash.com.ar", id = "${AWS_NETWORK_ACCOUNT_ID:-000000000000}" }
-            apps-devstg  = { email = "aws@binbash.com.ar", id = "${AWS_DEVSTG_ACCOUNT_ID:-000000000000}" }
-            apps-prd     = { email = "aws@binbash.com.ar", id = "${AWS_PRD_ACCOUNT_ID:-000000000000}" }
-            data-science = { email = "aws@binbash.com.ar", id = "${AWS_DATA_SCIENCE_ACCOUNT_ID:-000000000000}" }
-          }
-          EOF
-          echo "✅ Generated config/common.tfvars"
+      - name: Configure Reference Architecture
+        uses: ./.github/actions/leverage-configure-ref-arch
+        with:
+          aws_management_account_id: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
+          aws_security_account_id: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+          aws_shared_account_id: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
+          aws_network_account_id: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
+          aws_devstg_account_id: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
+          aws_prd_account_id: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
+          aws_data_science_account_id: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
+          tf_binary: "tofu"
 
       - name: Sanitize Layer Name for Artifact
         id: sanitize
