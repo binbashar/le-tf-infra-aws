@@ -6,16 +6,24 @@ ingress = {
     enabled = false
   }
 
+  # ########################
+  # CAN NOT SET BOTH TO TRUE
   nginx_controller = {
     enabled = true
   }
+  traefik = {
+    enabled = false
+  }
+  # ########################
 
+  # create an ingress to send traffic from ALB to Nginx/Traefik
   apps_ingress = {
     enabled = false
     # Load balancer type: internet-facing or internal
     type = "internal"
 
     logging = {
+      # note if this is true the bucket must exists!
       enabled = false
       prefix  = ""
     }

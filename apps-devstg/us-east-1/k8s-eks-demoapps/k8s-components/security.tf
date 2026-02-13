@@ -7,7 +7,7 @@ resource "helm_release" "certmanager" {
   namespace  = kubernetes_namespace.certmanager[0].id
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
-  version    = "v1.18.2"
+  version    = "v1.19.2"
   values = [
     templatefile("chart-values/certmanager.yaml", {
       roleArn = data.terraform_remote_state.cluster-identities.outputs.certmanager_role_arn
@@ -44,7 +44,7 @@ resource "helm_release" "external_secrets" {
   namespace  = kubernetes_namespace.external-secrets[0].id
   repository = "https://charts.external-secrets.io"
   chart      = "external-secrets"
-  version    = "0.19.2"
+  version    = "0.20.4"
   values = [
     templatefile("chart-values/external-secrets.yaml", {
       roleArn = data.terraform_remote_state.cluster-identities.outputs.external_secrets_role_arn

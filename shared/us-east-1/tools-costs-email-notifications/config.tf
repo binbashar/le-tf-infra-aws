@@ -13,7 +13,7 @@ terraform {
   required_version = "~> 1.3"
 
   required_providers {
-    aws   = "~> 4.10"
+    aws   = "~> 5.0"
     vault = "~> 3.6.0"
   }
 
@@ -37,5 +37,19 @@ data "terraform_remote_state" "keys" {
     profile = var.profile
     bucket  = var.bucket
     key     = "${var.environment}/security-keys/terraform.tfstate"
+  }
+}
+
+#
+# data type from output for notifications
+#
+data "terraform_remote_state" "notifications" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/notifications/terraform.tfstate"
   }
 }

@@ -218,6 +218,7 @@ locals {
       email      = "alex.delossantos@binbash.com.ar"
       groups = [
         "datascientists",
+        "administrators",
       ]
     }
     "favio.tolosa" = {
@@ -267,6 +268,41 @@ locals {
       email      = "marcelo.rodriguez@binbash.com.ar"
       groups = [
         "datascientists"
+      ]
+    }
+    "hernan.rezilo" = {
+      first_name = "Hernan"
+      last_name  = "Rezilo"
+      email      = "hernan.rezilo@binbash.com.ar"
+      groups = [
+        "devops"
+      ]
+    }
+    "juan.rodriguez" = {
+      first_name = "Juan Manuel"
+      last_name  = "Rodriguez"
+      email      = "juan.rodriguez@binbash.com.ar"
+      groups = [
+        "datascientists",
+        "devops"
+      ]
+    }
+    "nestor.navarro" = {
+      first_name = "Nestor"
+      last_name  = "Navarro"
+      email      = "nestor.navarro@binbash.com.ar"
+      groups = [
+        "datascientists",
+        "devops"
+      ]
+    }
+    "kevin.santos" = {
+      first_name = "Kevin"
+      last_name  = "Santos"
+      email      = "kevin.santos@binbash.com.ar"
+      groups = [
+        "datascientists",
+        "devops"
       ]
     }
   }

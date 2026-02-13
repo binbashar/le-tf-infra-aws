@@ -75,7 +75,7 @@ module "cluster" {
   # Define Managed Nodes Groups (MNG's) default settings
   eks_managed_node_group_defaults = {
     # Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS
-    ami_type       = "AL2_x86_64"
+    ami_type       = var.ami_type
     disk_size      = 50
     instance_types = ["t3.medium", "t3a.medium"]
     k8s_labels     = local.tags

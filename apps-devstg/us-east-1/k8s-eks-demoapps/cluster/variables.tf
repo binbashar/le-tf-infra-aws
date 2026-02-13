@@ -6,6 +6,16 @@ variable "cluster_version" {
   type        = string
   default     = "1.31"
 }
+# Note that for K8s versions 1.32 and earlier the AMI type could be "AL2_x86_64"
+# For newer versions the newer "AL2023" images must be used, e.g. "AL2023_x86_64_STANDARD"
+# Ref: https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-deprecation-faqs.html
+# Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS
+variable "ami_type" {
+  description = "The AMI type to be used when creating nodes"
+  type        = string
+  default     = "AL2_x86_64"
+}
+
 
 #
 # Security: K8s EKS API via private endpoint

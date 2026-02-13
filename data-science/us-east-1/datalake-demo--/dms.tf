@@ -1,5 +1,5 @@
 module "database_migration_service" {
-  source = "github.com/binbashar/terraform-aws-dms?ref=v2.6.0"
+  source = "github.com/binbashar/terraform-aws-dms?ref=v2.6.1"
 
   # Subnet group
   repl_subnet_group_name        = "${local.name}-subnet-group"

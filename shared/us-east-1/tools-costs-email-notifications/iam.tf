@@ -25,36 +25,36 @@ resource "aws_iam_policy" "monthly_services_usage_lambda_role_policy" {
     Version = "2012-10-17"
     Statement = [
       {
+        Sid = "CloudWatchLogsAccess"
         Action = [
-          "logs:DescribeLogStreams",
+          "logs:CreateLogGroup",
           "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:CreateLogGroup"
+          "logs:PutLogEvents"
         ]
-        Resource = "*"
-        Effect   = "Allow"
+        Resource = [
+          "arn:aws:logs:${var.region}:${var.accounts.shared.id}:log-group:/aws/lambda/${local.lambda_function_name}",
+          "arn:aws:logs:${var.region}:${var.accounts.shared.id}:log-group:/aws/lambda/${local.lambda_function_name}:*"
+        ]
+        Effect = "Allow"
       },
       {
+        Sid = "SESAccess"
         Action = [
-          "ses:*"
+          "ses:SendEmail",
+          "ses:SendRawEmail"
         ]
-        Resource = "*"
-        Effect   = "Allow"
+        Resource = [
+          for email in distinct(concat(var.recipient_emails, [var.sender_email])) : "arn:aws:ses:${var.region}:${var.accounts.shared.id}:identity/${email}"
+        ]
+        Effect = "Allow"
       },
       {
+        Sid = "AssumeRoleForCostExplorer"
         Action = [
           "sts:AssumeRole"
         ]
-        Resource = [
-          "arn:aws:iam::${var.accounts.apps-devstg.id}:role/LambdaCostsExplorerAccess",
-          "arn:aws:iam::${var.accounts.apps-prd.id}:role/LambdaCostsExplorerAccess",
-          "arn:aws:iam::${var.accounts.shared.id}:role/LambdaCostsExplorerAccess",
-          "arn:aws:iam::${var.accounts.network.id}:role/LambdaCostsExplorerAccess",
-          "arn:aws:iam::${var.accounts.security.id}:role/LambdaCostsExplorerAccess",
-          "arn:aws:iam::${var.accounts.management.id}:role/LambdaCostsExplorerAccess",
-          "arn:aws:iam::${var.accounts.data-science.id}:role/LambdaCostsExplorerAccess",
-        ]
-        Effect = "Allow"
+        Resource = "arn:aws:iam::*:role/LambdaCostsExplorerAccess"
+        Effect   = "Allow"
       }
 
     ]

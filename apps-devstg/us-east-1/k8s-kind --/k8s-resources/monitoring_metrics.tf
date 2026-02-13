@@ -20,7 +20,7 @@ resource "helm_release" "node_exporter" {
   namespace  = kubernetes_namespace.monitoring.id
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "node-exporter"
-  version    = "3.1.4"
+  version    = "3.16.1"
   values     = [file("chart-values/node-exporter.yaml")]
 }
 

@@ -7,7 +7,7 @@ resource "helm_release" "datadog_agent" {
   namespace  = kubernetes_namespace.monitoring_other[0].id
   repository = "https://helm.datadoghq.com"
   chart      = "datadog"
-  version    = "3.133.0"
+  version    = "3.157.5"
   values = [
     templatefile("chart-values/datadog.yaml", {
       site   = "[REGION].datadoghq.com"
@@ -42,7 +42,7 @@ resource "helm_release" "uptime_kuma" {
   namespace  = kubernetes_namespace.monitoring_other[0].id
   repository = "https://helm.irsigler.cloud"
   chart      = "uptime-kuma"
-  version    = "2.22.0"
+  version    = "2.24.0"
   values = [
     <<-EOT
       ingress:

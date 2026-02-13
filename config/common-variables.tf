@@ -145,6 +145,6 @@ locals {
   current_region = [for region in local.regions : region if can(regex(region, "${path.cwd}"))][0]
 
   #Split the full path of the layer using the region, in order to get the layer path (after the region)
-  layer_name = trimprefix(split(local.current_region, "${path.cwd}")[1], "/")
+  layer_name = replace(trimprefix(split(local.current_region, "${path.cwd}")[1], "/"), "/", "_")
 }
 
