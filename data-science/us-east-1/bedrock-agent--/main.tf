@@ -4,7 +4,7 @@
 
 module "bedrock_agent" {
   source  = "aws-ia/bedrock/aws"
-  version = "0.0.31"
+  version = "0.0.33"
 
   # Core agent configuration
   agent_name = local.agent_name
