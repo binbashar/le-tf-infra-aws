@@ -1,0 +1,150 @@
+name: "Configure Leverage Reference Architecture"
+description: "Configure Binbash Leverage Reference Architecture (common.tfvars and build.env)"
+
+inputs:
+  project:
+    description: "Project short name"
+    required: false
+    default: "bb"
+  project_long:
+    description: "Project long name"
+    required: false
+    default: "binbash"
+  region_primary:
+    description: "Primary AWS region"
+    required: false
+    default: "us-east-1"
+  region_secondary:
+    description: "Secondary AWS region"
+    required: false
+    default: "us-east-2"
+  aws_management_account_id:
+    description: "AWS Management Account ID"
+    required: true
+  aws_management_account_email:
+    description: "AWS Management Account Email"
+    required: false
+    default: "aws@binbash.com.ar"
+  aws_security_account_id:
+    description: "AWS Security Account ID"
+    required: true
+  aws_security_account_email:
+    description: "AWS Security Account Email"
+    required: false
+    default: "aws+security@binbash.com.ar"
+  aws_shared_account_id:
+    description: "AWS Shared Account ID"
+    required: true
+  aws_shared_account_email:
+    description: "AWS Shared Account Email"
+    required: false
+    default: "aws+shared@binbash.com.ar"
+  aws_network_account_id:
+    description: "AWS Network Account ID"
+    required: true
+  aws_network_account_email:
+    description: "AWS Network Account Email"
+    required: false
+    default: "aws+network@binbash.com.ar"
+  aws_devstg_account_id:
+    description: "AWS DevStg Account ID"
+    required: true
+  aws_devstg_account_email:
+    description: "AWS DevStg Account Email"
+    required: false
+    default: "aws+apps-devstg@binbash.com.ar"
+  aws_prd_account_id:
+    description: "AWS Prd Account ID"
+    required: false
+    default: "000000000000"
+  aws_prd_account_email:
+    description: "AWS Prd Account Email"
+    required: false
+    default: "aws+apps-prd@binbash.com.ar"
+  aws_data_science_account_id:
+    description: "AWS Data Science Account ID"
+    required: false
+    default: "000000000000"
+  aws_data_science_account_email:
+    description: "AWS Data Science Account Email"
+    required: false
+    default: "aws+data-science@binbash.com.ar"
+  sso_enabled:
+    description: "SSO enabled"
+    required: false
+    default: "false"
+  tf_binary:
+    description: "Terraform binary to use (terraform or tofu)"
+    required: false
+    default: "tofu"
+
+runs:
+  using: composite
+  steps:
+    - name: Configure Reference Architecture
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        echo "📝 Creating config/common.tfvars..."
+        mkdir -p config
+        cat > config/common.tfvars << EOF
+        project          = "${{ inputs.project }}"
+        project_long     = "${{ inputs.project_long }}"
+        region_primary   = "${{ inputs.region_primary }}"
+        region_secondary = "${{ inputs.region_secondary }}"
+
+        accounts = {
+          management = {
+            email = "${{ inputs.aws_management_account_email }}"
+            id    = "${{ inputs.aws_management_account_id }}"
+          }
+          security = {
+            email = "${{ inputs.aws_security_account_email }}"
+            id    = "${{ inputs.aws_security_account_id }}"
+          }
+          shared = {
+            email = "${{ inputs.aws_shared_account_email }}"
+            id    = "${{ inputs.aws_shared_account_id }}"
+          }
+          network = {
+            email = "${{ inputs.aws_network_account_email }}"
+            id    = "${{ inputs.aws_network_account_id }}"
+          }
+          apps-devstg = {
+            email = "${{ inputs.aws_devstg_account_email }}"
+            id    = "${{ inputs.aws_devstg_account_id }}"
+          }
+          apps-prd = {
+            email = "${{ inputs.aws_prd_account_email }}"
+            id    = "${{ inputs.aws_prd_account_id }}"
+          }
+          data-science = {
+            email = "${{ inputs.aws_data_science_account_email }}"
+            id    = "${{ inputs.aws_data_science_account_id }}"
+          }
+        }
+
+        sso_enabled = ${{ inputs.sso_enabled }}
+        EOF
+
+        echo "✅ Created config/common.tfvars"
+
+        echo "📝 Configuring build.env..."
+        # Disable MFA for CI/CD
+        if [[ -f build.env ]]; then
+          sed -i 's/MFA_ENABLED=true/MFA_ENABLED=false/' build.env 2>/dev/null || true
+          sed -i 's/MFA_ENABLED=True/MFA_ENABLED=False/' build.env 2>/dev/null || true
+
+          # Set TF_BINARY if not present
+          if ! grep -q "TF_BINARY" build.env; then
+            echo "TF_BINARY=${{ inputs.tf_binary }}" >> build.env
+          fi
+        fi
+
+        echo "✅ Configured build.env"
+
+        # Create git config to avoid git defaults issues
+        touch ~/.gitconfig
+
+        echo "✅ Reference Architecture configured successfully"
