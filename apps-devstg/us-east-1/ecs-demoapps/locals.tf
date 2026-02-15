@@ -4,117 +4,141 @@ locals {
   name        = "${var.project}-${local.environment}-demoapps"
   base_domain = "${local.environment}.${data.terraform_remote_state.shared-dns.outputs.aws_internal_zone_domain_name}"
 
-  services = {
-    emojivoto = {
-      cpu    = 2048
-      memory = 8192
+  # ✅ AUTO-GENERATE parameter paths using CONVENTION
+  # Convention: /ecs/{environment}/{service_name}/{container_name}/image-tag
+  # Now uses var.service_definitions instead of local definition
+  container_parameters = flatten([
+    for service_name, service_config in var.service_definitions : [
+      for container_name, container_config in service_config.containers : {
+        key  = "${service_name}_${container_name}"
+        path = "/ecs/${local.environment}/${service_name}/${container_name}/image-tag"
+      }
+    ]
+  ])
 
-      containers = {
-        web = {
-          image   = "docker.l5d.io/buoyantio/emojivoto-web"
-          version = "v11"
+  parameter_paths = { for item in local.container_parameters : item.key => item.path }
 
-          cpu    = 512
-          memory = 2048
+  # Use routing from variable
+  target_groups = merge(flatten([for service, tasks in var.routing : [tasks]])...)
 
-          environment = {
-            WEB_PORT       = local.routing.emojivoto.web.port
-            EMOJISVC_HOST  = "localhost:${local.routing.emojivoto.emoji-api.port}"
-            VOTINGSVC_HOST = "localhost:${local.routing.emojivoto.voting-api.port}"
-            INDEX_BUNDLE   = "dist/index_bundle.js"
-          }
+  # All possible listeners defined
+  all_listeners = {
+    http-https-redirect = {
+      port     = 80
+      protocol = "HTTP"
+      redirect = {
+        port        = 443
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+    https = {
+      port            = 443
+      protocol        = "HTTPS"
+      ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
+      certificate_arn = data.terraform_remote_state.certs.outputs.certificate_arn
 
-          ports = {
-            http = local.routing.emojivoto.web.port
-          }
+      rules = { for container_name, container_values in local.target_groups :
+        container_name => {
+          actions = [
+            {
+              forward = {
+                target_group_key = container_name
+              }
+            }
+          ]
+
+          conditions = [
+            {
+              host_header = {
+                values = ["${container_values.subdomain}.${local.base_domain}"]
+              }
+            }
+          ]
         }
+      }
+      fixed_response = {
+        content_type = "text/plain"
+        message_body = "Not Found"
+        status_code  = "404"
+      }
+    }
+    test-http-https-redirect = {
+      enabled  = var.ecs_deployment_type == "BLUE_GREEN"
+      port     = 8080
+      protocol = "HTTP"
+      redirect = {
+        port        = 8443
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+    test-https = {
+      enabled         = var.ecs_deployment_type == "BLUE_GREEN"
+      port            = 8443
+      protocol        = "HTTPS"
+      ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
+      certificate_arn = data.terraform_remote_state.certs.outputs.certificate_arn
 
-        voting-api = {
-          image   = "docker.l5d.io/buoyantio/emojivoto-voting-svc"
-          version = "v11"
+      rules = { for container_name, container_values in local.target_groups :
+        "${container_name}-test" => {
+          actions = [
+            {
+              forward = {
+                target_group_key = "${container_name}-bg"
+              }
+            }
+          ]
 
-          cpu    = 512
-          memory = 2048
-
-          environment = {
-            GRPC_PORT = local.routing.emojivoto.voting-api.port
-            PROM_PORT = 8801
-          }
-
-          ports = {
-            grpc-voting = local.routing.emojivoto.voting-api.port
-            prom-voting = 8801
-          }
+          conditions = [
+            {
+              host_header = {
+                values = ["${container_values.subdomain}.${local.base_domain}"]
+              }
+            }
+          ]
         }
-
-        emoji-api = {
-          image   = "docker.l5d.io/buoyantio/emojivoto-emoji-svc"
-          version = "v11"
-
-          cpu    = 512
-          memory = 2048
-
-          environment = {
-            GRPC_PORT = local.routing.emojivoto.emoji-api.port
-            PROM_PORT = 8802
-          }
-
-          ports = {
-            grpc-emoji = local.routing.emojivoto.emoji-api.port
-            prom-emoji = 8802
-          }
-        }
-
-        vote-bot = {
-          image   = "docker.l5d.io/buoyantio/emojivoto-web"
-          version = "v11"
-
-          cpu    = 512
-          memory = 2048
-
-          environment = {
-            WEB_HOST = "localhost:${local.routing.emojivoto.web.port}"
-          }
-
-          entrypoint = ["emojivoto-vote-bot"]
-
-          dependencies = [{
-            containerName = "web"
-            condition     = "START"
-          }]
-
-          essential = false
-        }
+      }
+      fixed_response = {
+        content_type = "text/plain"
+        message_body = "Not Found"
+        status_code  = "404"
       }
     }
   }
 
-  routing = {
-    emojivoto = {
-      web = {
-        subdomain = "emojivoto.ecs"
-        port      = 8080
-        health_check = {
-          matcher = "200-404"
-        }
-      }
-      voting-api = {
-        subdomain        = "emojivoto-voting.ecs"
-        port             = 8081
-        protocol_version = "GRPC"
-      }
-      emoji-api = {
-        subdomain        = "emojivoto-emoji.ecs"
-        port             = 8082
-        protocol_version = "GRPC"
-      }
-    }
+  # Filter listeners based on enabled flag
+  alb_listeners = {
+    for name, config in local.all_listeners :
+    name => { for k, v in config : k => v if k != "enabled" }
+    if try(config.enabled, true)
   }
-  target_groups = merge(flatten([for service, tasks in local.routing : [tasks]])...)
 
   tags = {
     Terraform   = "true"
     Environment = var.environment
     Layer       = local.layer_name
+  }
+}
+
+# ✅ Dynamic parameter lookup
+data "aws_ssm_parameter" "image_tags" {
+  for_each = local.parameter_paths
+  name     = each.value
+}
+
+locals {
+  # ✅ AUTO-REBUILD services with dynamic versions from SSM parameters
+  # Uses var.service_definitions and injects versions from SSM
+  services = {
+    for service_name, service_config in var.service_definitions :
+    service_name => merge(service_config, {
+      containers = {
+        for container_name, container_config in service_config.containers :
+        container_name => merge(container_config, {
+          version = data.aws_ssm_parameter.image_tags["${service_name}_${container_name}"].value
+        })
+      }
+    })
   }
 }
