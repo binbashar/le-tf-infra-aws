@@ -1,0 +1,347 @@
+[18:52:23.609] INFO     Checking for local docker image, tag: 1.9.1-tofu-0.3.0-1000-1000...                    
+[18:52:23.643] INFO     ✔ OK                                                                                   
+                                                                                                               
+[18:52:24.524] INFO     Attempting to get temporary credentials for apps-devstg account.                       
+[18:52:24.526] INFO     Using already configured temporary credentials.                                        
+[18:52:24.528] INFO     Attempting to get temporary credentials for network account.                           
+[18:52:24.529] INFO     Using already configured temporary credentials.                                        
+[18:52:24.530] INFO     Attempting to get temporary credentials for apps-prd account.                          
+[18:52:24.532] INFO     Using already configured temporary credentials.                                        
+[18:52:24.533] INFO     Attempting to get temporary credentials for data-science account.                      
+[18:52:24.535] INFO     Using already configured temporary credentials.                                        
+[18:52:24.536] INFO     Attempting to get temporary credentials for shared account.                            
+[18:52:24.538] INFO     Using already configured temporary credentials.                                        
+[18:52:24.539] INFO     Attempting to get temporary credentials for security account.                          
+[18:52:24.540] INFO     Using already configured temporary credentials.                                        
+[18:52:24.541] INFO     Attempting to get temporary credentials for management account.                        
+[18:52:24.543] INFO     Using already configured temporary credentials.                                        
+[18:52:24.544] INFO     Attempting to get temporary credentials for shared account.                            
+[18:52:24.546] INFO     Using already configured temporary credentials.                                        
+aws_s3_account_public_access_block.main["shared-us-east-1"]: Preparing import... [id=763606934258]
+aws_s3_account_public_access_block.main["data-science-us-east-1"]: Preparing import... [id=905418344519]
+aws_s3_account_public_access_block.main["management-us-east-1"]: Preparing import... [id=754065527950]
+aws_s3_account_public_access_block.main["apps-prd-us-east-1"]: Preparing import... [id=802787198489]
+aws_s3_account_public_access_block.main["data-science-us-east-2"]: Preparing import... [id=905418344519]
+aws_s3_account_public_access_block.main["apps-devstg-us-east-1"]: Preparing import... [id=523857393444]
+aws_s3_account_public_access_block.main["security-us-east-1"]: Preparing import... [id=900980591242]
+aws_s3_account_public_access_block.main["apps-devstg-us-east-2"]: Preparing import... [id=523857393444]
+aws_s3_account_public_access_block.main["security-us-east-2"]: Preparing import... [id=900980591242]
+aws_s3_account_public_access_block.main["network-us-east-2"]: Preparing import... [id=822280187662]
+aws_s3_account_public_access_block.main["security-us-east-2"]: Refreshing state... [id=900980591242]
+aws_s3_account_public_access_block.main["management-us-east-1"]: Refreshing state... [id=754065527950]
+aws_s3_account_public_access_block.main["data-science-us-east-2"]: Refreshing state... [id=905418344519]
+aws_s3_account_public_access_block.main["apps-devstg-us-east-1"]: Refreshing state... [id=523857393444]
+aws_s3_account_public_access_block.main["security-us-east-1"]: Refreshing state... [id=900980591242]
+aws_s3_account_public_access_block.main["apps-prd-us-east-1"]: Refreshing state... [id=802787198489]
+aws_s3_account_public_access_block.main["data-science-us-east-1"]: Refreshing state... [id=905418344519]
+aws_s3_account_public_access_block.main["network-us-east-2"]: Refreshing state... [id=822280187662]
+aws_s3_account_public_access_block.main["shared-us-east-1"]: Refreshing state... [id=763606934258]
+aws_s3_account_public_access_block.main["apps-devstg-us-east-2"]: Refreshing state... [id=523857393444]
+aws_s3_account_public_access_block.main["management-us-east-2"]: Preparing import... [id=754065527950]
+aws_s3_account_public_access_block.main["apps-prd-us-east-2"]: Preparing import... [id=802787198489]
+aws_s3_account_public_access_block.main["network-us-east-1"]: Preparing import... [id=822280187662]
+aws_s3_account_public_access_block.main["shared-us-east-2"]: Preparing import... [id=763606934258]
+aws_s3_account_public_access_block.main["apps-prd-us-east-2"]: Refreshing state... [id=802787198489]
+aws_s3_account_public_access_block.main["shared-us-east-2"]: Refreshing state... [id=763606934258]
+aws_s3_account_public_access_block.main["management-us-east-2"]: Refreshing state... [id=754065527950]
+aws_s3_account_public_access_block.main["network-us-east-1"]: Refreshing state... [id=822280187662]
+aws_ebs_encryption_by_default.main["shared-us-east-1"]: Preparing import... [id=763606934258]
+aws_ebs_encryption_by_default.main["security-us-east-2"]: Preparing import... [id=900980591242]
+aws_ebs_encryption_by_default.main["network-us-east-1"]: Preparing import... [id=822280187662]
+aws_ebs_encryption_by_default.main["apps-prd-us-east-1"]: Preparing import... [id=802787198489]
+aws_ebs_encryption_by_default.main["security-us-east-2"]: Refreshing state... [id=900980591242]
+aws_ebs_encryption_by_default.main["apps-prd-us-east-2"]: Preparing import... [id=802787198489]
+aws_ebs_encryption_by_default.main["network-us-east-1"]: Refreshing state... [id=822280187662]
+aws_ebs_encryption_by_default.main["apps-prd-us-east-1"]: Refreshing state... [id=802787198489]
+aws_ebs_encryption_by_default.main["apps-prd-us-east-2"]: Refreshing state... [id=802787198489]
+aws_ebs_encryption_by_default.main["data-science-us-east-2"]: Preparing import... [id=905418344519]
+aws_ebs_encryption_by_default.main["shared-us-east-1"]: Refreshing state... [id=763606934258]
+aws_ebs_encryption_by_default.main["data-science-us-east-2"]: Refreshing state... [id=905418344519]
+aws_ebs_encryption_by_default.main["apps-devstg-us-east-1"]: Preparing import... [id=523857393444]
+aws_ebs_encryption_by_default.main["apps-devstg-us-east-1"]: Refreshing state... [id=523857393444]
+aws_ebs_encryption_by_default.main["network-us-east-2"]: Preparing import... [id=822280187662]
+aws_ebs_encryption_by_default.main["network-us-east-2"]: Refreshing state... [id=822280187662]
+aws_ebs_encryption_by_default.main["management-us-east-2"]: Preparing import... [id=754065527950]
+aws_ebs_encryption_by_default.main["shared-us-east-2"]: Preparing import... [id=763606934258]
+aws_ebs_encryption_by_default.main["shared-us-east-2"]: Refreshing state... [id=763606934258]
+aws_ebs_encryption_by_default.main["management-us-east-2"]: Refreshing state... [id=754065527950]
+aws_ebs_encryption_by_default.main["management-us-east-1"]: Preparing import... [id=754065527950]
+aws_ebs_encryption_by_default.main["management-us-east-1"]: Refreshing state... [id=754065527950]
+aws_ebs_encryption_by_default.main["apps-devstg-us-east-2"]: Preparing import... [id=523857393444]
+aws_ebs_encryption_by_default.main["apps-devstg-us-east-2"]: Refreshing state... [id=523857393444]
+aws_ebs_encryption_by_default.main["security-us-east-1"]: Preparing import... [id=900980591242]
+aws_ebs_encryption_by_default.main["security-us-east-1"]: Refreshing state... [id=900980591242]
+aws_ebs_encryption_by_default.main["data-science-us-east-1"]: Preparing import... [id=905418344519]
+aws_ebs_encryption_by_default.main["data-science-us-east-1"]: Refreshing state... [id=905418344519]
+
+OpenTofu used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+OpenTofu will perform the following actions:
+
+  # aws_ebs_encryption_by_default.main["apps-devstg-us-east-1"] will be updated in-place
+  # (imported from "523857393444")
+  ~ resource "aws_ebs_encryption_by_default" "main" {
+      ~ enabled = true -> false
+        id      = "523857393444"
+    }
+
+  # aws_ebs_encryption_by_default.main["apps-devstg-us-east-2"] will be imported
+    resource "aws_ebs_encryption_by_default" "main" {
+        enabled = false
+        id      = "523857393444"
+    }
+
+  # aws_ebs_encryption_by_default.main["apps-prd-us-east-1"] will be imported
+    resource "aws_ebs_encryption_by_default" "main" {
+        enabled = true
+        id      = "802787198489"
+    }
+
+  # aws_ebs_encryption_by_default.main["apps-prd-us-east-2"] will be updated in-place
+  # (imported from "802787198489")
+  ~ resource "aws_ebs_encryption_by_default" "main" {
+      ~ enabled = false -> true
+        id      = "802787198489"
+    }
+
+  # aws_ebs_encryption_by_default.main["data-science-us-east-1"] will be imported
+    resource "aws_ebs_encryption_by_default" "main" {
+        enabled = true
+        id      = "905418344519"
+    }
+
+  # aws_ebs_encryption_by_default.main["data-science-us-east-2"] will be updated in-place
+  # (imported from "905418344519")
+  ~ resource "aws_ebs_encryption_by_default" "main" {
+      ~ enabled = false -> true
+        id      = "905418344519"
+    }
+
+  # aws_ebs_encryption_by_default.main["management-us-east-1"] will be imported
+    resource "aws_ebs_encryption_by_default" "main" {
+        enabled = true
+        id      = "754065527950"
+    }
+
+  # aws_ebs_encryption_by_default.main["management-us-east-2"] will be updated in-place
+  # (imported from "754065527950")
+  ~ resource "aws_ebs_encryption_by_default" "main" {
+      ~ enabled = false -> true
+        id      = "754065527950"
+    }
+
+  # aws_ebs_encryption_by_default.main["network-us-east-1"] will be imported
+    resource "aws_ebs_encryption_by_default" "main" {
+        enabled = true
+        id      = "822280187662"
+    }
+
+  # aws_ebs_encryption_by_default.main["network-us-east-2"] will be updated in-place
+  # (imported from "822280187662")
+  ~ resource "aws_ebs_encryption_by_default" "main" {
+      ~ enabled = false -> true
+        id      = "822280187662"
+    }
+
+  # aws_ebs_encryption_by_default.main["security-us-east-1"] will be imported
+    resource "aws_ebs_encryption_by_default" "main" {
+        enabled = true
+        id      = "900980591242"
+    }
+
+  # aws_ebs_encryption_by_default.main["security-us-east-2"] will be updated in-place
+  # (imported from "900980591242")
+  ~ resource "aws_ebs_encryption_by_default" "main" {
+      ~ enabled = false -> true
+        id      = "900980591242"
+    }
+
+  # aws_ebs_encryption_by_default.main["shared-us-east-1"] will be imported
+    resource "aws_ebs_encryption_by_default" "main" {
+        enabled = true
+        id      = "763606934258"
+    }
+
+  # aws_ebs_encryption_by_default.main["shared-us-east-2"] will be updated in-place
+  # (imported from "763606934258")
+  ~ resource "aws_ebs_encryption_by_default" "main" {
+      ~ enabled = false -> true
+        id      = "763606934258"
+    }
+
+  # aws_s3_account_public_access_block.main["apps-devstg-us-east-1"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "523857393444"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "523857393444"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+  # aws_s3_account_public_access_block.main["apps-devstg-us-east-2"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "523857393444"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "523857393444"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+  # aws_s3_account_public_access_block.main["apps-prd-us-east-1"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "802787198489"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "802787198489"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+  # aws_s3_account_public_access_block.main["apps-prd-us-east-2"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "802787198489"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "802787198489"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+  # aws_s3_account_public_access_block.main["data-science-us-east-1"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "905418344519"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "905418344519"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+  # aws_s3_account_public_access_block.main["data-science-us-east-2"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "905418344519"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "905418344519"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+  # aws_s3_account_public_access_block.main["management-us-east-1"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "754065527950"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "754065527950"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+  # aws_s3_account_public_access_block.main["management-us-east-2"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "754065527950"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "754065527950"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+  # aws_s3_account_public_access_block.main["network-us-east-1"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "822280187662"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "822280187662"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+  # aws_s3_account_public_access_block.main["network-us-east-2"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "822280187662"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "822280187662"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+  # aws_s3_account_public_access_block.main["security-us-east-1"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "900980591242"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "900980591242"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+  # aws_s3_account_public_access_block.main["security-us-east-2"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "900980591242"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "900980591242"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+  # aws_s3_account_public_access_block.main["shared-us-east-1"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "763606934258"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "763606934258"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+  # aws_s3_account_public_access_block.main["shared-us-east-2"] will be imported
+    resource "aws_s3_account_public_access_block" "main" {
+        account_id              = "763606934258"
+        block_public_acls       = true
+        block_public_policy     = true
+        id                      = "763606934258"
+        ignore_public_acls      = false
+        restrict_public_buckets = false
+    }
+
+Plan: 28 to import, 0 to add, 7 to change, 0 to destroy.
+
+Warning: Value for undeclared variable
+
+The root module does not declare a variable named "region" but a value was found in file "/binbash/baseline/config/backend.tfvars". If you meant to use this value, add a "variable" block to the configuration.
+
+To silence these warnings, use TF_VAR_... environment variables to provide certain "global" settings to all configurations in your organization. To reduce the verbosity of these warnings, use the -compact-warnings option.
+
+Warning: Value for undeclared variable
+
+The root module does not declare a variable named "profile" but a value was found in file "/binbash/baseline/config/backend.tfvars". If you meant to use this value, add a "variable" block to the configuration.
+
+To silence these warnings, use TF_VAR_... environment variables to provide certain "global" settings to all configurations in your organization. To reduce the verbosity of these warnings, use the -compact-warnings option.
+
+Warning: Values for undeclared variables
+
+In addition to the other similar warnings shown, 3 other variable(s) defined without being declared.
+
+Warning: Provider configuration for_each matches resource
+
+  on account.tf line 5, in resource "aws_ebs_encryption_by_default" "main":
+   5:   for_each = local.account_settings
+
+This provider configuration uses the same for_each expression as a resource, which means that subsequent removal of elements from this collection would cause a planning error.
+
+OpenTofu relies on a provider instance to destroy resource instances that are associated with it, and so the provider instance must outlive all of its resource instances by at least one plan/apply round. For removal of instances to succeed in future you must structure the configuration so that the provider block's for_each expression can produce a superset of the instances of the resources associated with the provider configuration. Refer to the OpenTofu documentation for specific suggestions.
+
+To destroy this object before removing the provider configuration, consider first performing a targeted destroy:
+    tofu apply -destroy -target=aws_ebs_encryption_by_default.main
+
+(and one more similar warning elsewhere)
+
+
+
+Note: You didn't use the -out option to save this plan, so OpenTofu can't guarantee to take exactly these actions if you run "tofu apply" now.
