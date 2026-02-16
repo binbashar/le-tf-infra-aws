@@ -3,7 +3,7 @@
 #======================================
 
 module "topic_shippingservice" {
-  source = "github.com/terraform-aws-modules/terraform-aws-sns.git?ref=v6.1.3"
+  source = "github.com/terraform-aws-modules/terraform-aws-sns.git?ref=v6.2.1"
 
   name = "ShippingServiceTopic"
 
