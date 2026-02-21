@@ -33,10 +33,7 @@ resource "awscc_bedrockagentcore_runtime" "this" {
   environment_variables = var.environment_variables
   tags                  = local.tags
 
-  depends_on = [
-    aws_iam_role_policy.runtime_permissions,
-    aws_iam_role_policy.runtime_slr,
-  ]
+  depends_on = [time_sleep.wait_for_iam]
 }
 
 #=============================#
