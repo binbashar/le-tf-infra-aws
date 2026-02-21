@@ -134,3 +134,14 @@ resource "aws_iam_role_policy" "runtime_slr" {
     ]
   })
 }
+
+#=============================#
+# IAM Propagation Wait        #
+#=============================#
+resource "time_sleep" "wait_for_iam" {
+  depends_on = [
+    aws_iam_role_policy.runtime_permissions,
+    aws_iam_role_policy.runtime_slr,
+  ]
+  create_duration = "15s"
+}

@@ -13,6 +13,10 @@ terraform {
       source  = "hashicorp/awscc"
       version = ">= 1.0.0"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.12"
+    }
   }
   backend "s3" {
     key = "data-science/us-east-1/bedrock-agentcore/terraform.tfstate"
