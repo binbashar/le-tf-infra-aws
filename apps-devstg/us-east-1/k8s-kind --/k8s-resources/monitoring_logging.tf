@@ -42,7 +42,7 @@ resource "helm_release" "fluentbit" {
   namespace  = kubernetes_namespace.monitoring.id
   repository = "https://fluent.github.io/helm-charts"
   chart      = "fluent-bit"
-  version    = "0.54.0"
+  version    = "0.55.0"
   values = [
     templatefile("chart-values/fluentbit.yaml", {
       es-host   = var.elastic_host,
