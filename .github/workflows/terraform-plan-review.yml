@@ -67,6 +67,7 @@ jobs:
       should_plan: ${{ steps.check.outputs.should_plan }}
       should_apply: ${{ steps.check.outputs.should_apply }}
       pr_number: ${{ steps.check.outputs.pr_number }}
+      plan_full: ${{ steps.check.outputs.plan_full }}
     steps:
       - name: Check trigger and command
         id: check
@@ -76,17 +77,19 @@ jobs:
           echo "Event: ${{ github.event_name }}"
 
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # Automatic plan on PR updates
+            # Automatic plan on PR updates — always delta format
             echo "should_plan=true" >> $GITHUB_OUTPUT
             echo "should_apply=false" >> $GITHUB_OUTPUT
+            echo "plan_full=false" >> $GITHUB_OUTPUT
             echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-            echo "✅ Trigger: PR update → Will run automatic plan"
+            echo "✅ Trigger: PR update → Will run automatic plan (delta format)"
 
           elif [[ "${{ github.event_name }}" == "issue_comment" ]]; then
             # Check if comment is on a PR
             if [[ "${{ github.event.issue.pull_request }}" == "" ]]; then
               echo "should_plan=false" >> $GITHUB_OUTPUT
               echo "should_apply=false" >> $GITHUB_OUTPUT
+              echo "plan_full=false" >> $GITHUB_OUTPUT
               echo "⚠️ Comment is not on a PR, skipping"
               exit 0
             fi
@@ -95,20 +98,29 @@ jobs:
             PR_NUMBER="${{ github.event.issue.number }}"
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
-            # Parse command
-            if [[ "$COMMENT" =~ ^/terraform[[:space:]]+plan ]]; then
+            # Parse command — check full before plain plan to avoid substring match
+            if [[ "$COMMENT" =~ ^/terraform[[:space:]]+plan[[:space:]]+full ]]; then
               echo "should_plan=true" >> $GITHUB_OUTPUT
               echo "should_apply=false" >> $GITHUB_OUTPUT
-              echo "✅ Command: /terraform plan → Will run manual plan"
+              echo "plan_full=true" >> $GITHUB_OUTPUT
+              echo "✅ Command: /terraform plan full → Will run manual plan (full output)"
+
+            elif [[ "$COMMENT" =~ ^/terraform[[:space:]]+plan ]]; then
+              echo "should_plan=true" >> $GITHUB_OUTPUT
+              echo "should_apply=false" >> $GITHUB_OUTPUT
+              echo "plan_full=false" >> $GITHUB_OUTPUT
+              echo "✅ Command: /terraform plan → Will run manual plan (delta format)"
 
             elif [[ "$COMMENT" =~ ^/terraform[[:space:]]+apply ]]; then
               echo "should_plan=true" >> $GITHUB_OUTPUT
               echo "should_apply=true" >> $GITHUB_OUTPUT
+              echo "plan_full=false" >> $GITHUB_OUTPUT
               echo "✅ Command: /terraform apply → Will run plan + apply"
 
             else
               echo "should_plan=false" >> $GITHUB_OUTPUT
               echo "should_apply=false" >> $GITHUB_OUTPUT
+              echo "plan_full=false" >> $GITHUB_OUTPUT
               echo "⚠️ Not a /terraform command, skipping"
             fi
           fi
@@ -442,6 +454,25 @@ jobs:
           pattern: plan-*
           path: plans/
 
+      - name: Capture Code Diff
+        run: |
+          PR_NUMBER=${{ needs.determine-action.outputs.pr_number }}
+
+          # Get PR base and head SHAs via GitHub API
+          BASE_SHA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER --jq '.base.sha')
+          HEAD_SHA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER --jq '.head.sha')
+
+          echo "Capturing .tf/.hcl diff between $BASE_SHA and $HEAD_SHA"
+          git diff "$BASE_SHA"..."$HEAD_SHA" -- '*.tf' '*.hcl' > plans/code-diff.txt 2>&1 || {
+            echo "Warning: Could not capture code diff"
+            echo "No code diff available" > plans/code-diff.txt
+          }
+
+          LINES=$(wc -l < plans/code-diff.txt)
+          echo "✅ Code diff captured: $LINES lines"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run Claude Code Plan Analysis
         id: claude-analysis
         uses: anthropics/claude-code-action@928c84b37e02abd33f08826a2200058c68633a85  # v1
@@ -456,16 +487,20 @@ jobs:
             - **PR**: #${{ needs.determine-action.outputs.pr_number }}
             - **Changed Layers**: ${{ needs.detect-layers.outputs.layers }}
             - **Plan Outputs**: Available in `plans/` directory
+            - **Code Diff**: Available in `plans/code-diff.txt`
+            - **Output Format**: ${{ needs.determine-action.outputs.plan_full == 'true' && 'FULL (all resources)' || 'DELTA (changed resources only)' }}
 
             ### YOUR TASK:
 
-            #### STEP 1: ANALYZE PLANS
-            1. Read all plan outputs from `plans/` directory
-            2. For each layer, identify:
+            #### STEP 1: ANALYZE PLANS AND CODE DIFF
+            1. Read `plans/code-diff.txt` first — this shows the `.tf`/`.hcl` code changes that CAUSED the plan. Use it to understand the developer intent and WHY resources are changing.
+            2. Read all plan outputs from `plans/` directory (plan-output.txt files under each layer subdirectory)
+            3. For each layer, identify:
                - Resources being created (+), modified (~), or destroyed (-)
                - Resource types (aws_secretsmanager_*, aws_iam_*, etc.)
                - Security configurations (IAM policies, encryption, access)
                - Cost implications
+               - Connection between code changes (from code-diff.txt) and infrastructure changes
 
             #### STEP 2: INTELLIGENT ROUTING
             Based on layer paths AND resource types, select the appropriate agent:
@@ -482,18 +517,34 @@ jobs:
             Provide the agent with:
             - Changed layer paths
             - Plan output summaries
+            - Code diff context (what code changes triggered this plan)
             - Resource types modified
             - Security/compliance focus areas
+            - Whether to post DELTA or FULL format (from context above)
 
-            The agent should post comprehensive analysis as a PR comment using:
+            The agent MUST post the analysis as a PR comment using:
             ```
             gh pr comment ${{ needs.determine-action.outputs.pr_number }} --body '[analysis]'
             ```
+
+            **Comment format requirements**:
+
+            If format is DELTA (default):
+            - Start with a one-sentence **Summary** describing what these changes accomplish (derived from code-diff.txt intent)
+            - Show ONLY changed resource blocks using Terraform's `+`/`~`/`-` notation
+            - Omit unchanged/no-op resources entirely
+            - End with the standard plan line: `Plan: X to add, X to change, X to destroy`
+            - Add security/cost/risk assessment section
+
+            If format is FULL:
+            - Include the complete unfiltered plan output in a collapsible `<details>` block
+            - Still prepend the Summary line and assessment section
 
             #### STEP 4: EXPLAIN ROUTING
             Document why you selected that agent based on:
             - Layer path patterns
             - Resource types
+            - Code changes from diff
             - Security implications
 
             Begin analysis now.

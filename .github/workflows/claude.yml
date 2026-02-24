@@ -85,9 +85,49 @@ jobs:
           prompt: |
             You are Claude Code with access to specialized agents for the Binbash Leverage Reference Architecture.
 
+            ## PRE-ROUTING: SPECIAL TERRAFORM COMMANDS
+
+            **Before any other analysis**, check if the comment/request is one of these special commands:
+
+            ### `@claude tf-plan` — Delta Terraform Plan
+            If the comment contains `@claude tf-plan` (but NOT `@claude tf-plan full`):
+            1. Use `gh pr view` to identify the PR number and changed files
+            2. Identify the changed Terraform layer(s) from the PR diff (pattern: `{account}/{region}/{layer}/`)
+            3. Post a comment on the PR triggering the plan workflow:
+               ```
+               gh pr comment <PR_NUMBER> --body "/terraform plan"
+               ```
+            4. Reply confirming: "Triggered delta Terraform plan for the changed layers. The plan results will be posted as a PR comment with changed resources only."
+
+            ### `@claude tf-plan full` — Full Terraform Plan
+            If the comment contains `@claude tf-plan full`:
+            1. Use `gh pr view` to identify the PR number and changed files
+            2. Post a comment triggering the full plan:
+               ```
+               gh pr comment <PR_NUMBER> --body "/terraform plan full"
+               ```
+            3. Reply confirming: "Triggered full Terraform plan. Complete unfiltered output will be posted as a PR comment."
+
+            ### `@claude tf-apply` — Apply with Permission Check
+            If the comment contains `@claude tf-apply`:
+            1. Check if the commenter has admin or write permission using:
+               ```
+               gh api repos/{owner}/{repo}/collaborators/{username}/permission --jq '.permission'
+               ```
+            2. If permission is NOT `admin` or `write`: reply with "Permission denied. Only contributors with write or admin access can trigger apply."
+            3. If permission IS sufficient:
+               a. Use `gh pr view` to identify changed layers
+               b. Post a comment triggering the apply workflow:
+                  ```
+                  gh pr comment <PR_NUMBER> --body "/terraform apply"
+                  ```
+               c. Reply confirming: "Triggered Terraform apply for the changed layers. Apply output and rollback information will be posted as a PR comment."
+
+            ---
+
             ## INTELLIGENT AGENT ROUTING
 
-            Before handling any request, you MUST:
+            If the request is NOT one of the special commands above, proceed with intelligent routing:
 
             1. **ANALYZE CONTEXT** - Examine:
                - File paths and directories being worked on
@@ -125,9 +165,9 @@ jobs:
 
             ## INSTRUCTIONS
 
-            1. Always analyze context first
-            2. Select the most appropriate specialized agent
-            3. Use the Task tool to delegate with proper subagent_type
+            1. Check for special terraform commands FIRST (`@claude tf-plan`, `@claude tf-plan full`, `@claude tf-apply`)
+            2. If no special command, analyze context and select the most appropriate specialized agent
+            3. Use the Task tool to delegate with proper subagent_type for general requests
             4. Let the specialized agent handle the specific expertise
             5. Provide clear reasoning for your agent selection
 
@@ -136,4 +176,4 @@ jobs:
           # Configure Claude with advanced options
           claude_args: |
             --max-turns 15
-            --allowed-tools "Task,Read,Grep,Glob,Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(git:*),Bash(find:*),Bash(grep:*),Bash(cat:*),Bash(ls:*),mcp__github_comment__*,mcp__github_ci__*"
+            --allowed-tools "Task,Read,Grep,Glob,Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh api:*),Bash(git:*),Bash(find:*),Bash(grep:*),Bash(cat:*),Bash(ls:*),mcp__github_comment__*,mcp__github_ci__*"
