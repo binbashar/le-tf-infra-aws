@@ -3,6 +3,7 @@ name: Terraform Plan Review
 # Atlantis/Gitops Replacement:
 # - Automatic: Run terraform plan on PR with *.tf changes
 # - Manual: Run plan/apply via comment commands
+# - Aliases: /tf-plan = /terraform plan, /tf-apply = /terraform apply
 
 on:
   pull_request:
@@ -99,29 +100,30 @@ jobs:
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
             # Parse command — check full before plain plan to avoid substring match
-            if [[ "$COMMENT" =~ ^/terraform[[:space:]]+plan[[:space:]]+full ]]; then
+            # Aliases: /tf-plan = /terraform plan, /tf-apply = /terraform apply
+            if [[ "$COMMENT" =~ ^(/terraform[[:space:]]+plan[[:space:]]+full|/tf-plan[[:space:]]+full) ]]; then
               echo "should_plan=true" >> $GITHUB_OUTPUT
               echo "should_apply=false" >> $GITHUB_OUTPUT
               echo "plan_full=true" >> $GITHUB_OUTPUT
-              echo "✅ Command: /terraform plan full → Will run manual plan (full output)"
+              echo "✅ Command: ${BASH_REMATCH[0]} → Will run manual plan (full output)"
 
-            elif [[ "$COMMENT" =~ ^/terraform[[:space:]]+plan ]]; then
+            elif [[ "$COMMENT" =~ ^(/terraform[[:space:]]+plan|/tf-plan) ]]; then
               echo "should_plan=true" >> $GITHUB_OUTPUT
               echo "should_apply=false" >> $GITHUB_OUTPUT
               echo "plan_full=false" >> $GITHUB_OUTPUT
-              echo "✅ Command: /terraform plan → Will run manual plan (delta format)"
+              echo "✅ Command: ${BASH_REMATCH[0]} → Will run manual plan (delta format)"
 
-            elif [[ "$COMMENT" =~ ^/terraform[[:space:]]+apply ]]; then
+            elif [[ "$COMMENT" =~ ^(/terraform[[:space:]]+apply|/tf-apply) ]]; then
               echo "should_plan=true" >> $GITHUB_OUTPUT
               echo "should_apply=true" >> $GITHUB_OUTPUT
               echo "plan_full=false" >> $GITHUB_OUTPUT
-              echo "✅ Command: /terraform apply → Will run plan + apply"
+              echo "✅ Command: ${BASH_REMATCH[0]} → Will run plan + apply"
 
             else
               echo "should_plan=false" >> $GITHUB_OUTPUT
               echo "should_apply=false" >> $GITHUB_OUTPUT
               echo "plan_full=false" >> $GITHUB_OUTPUT
-              echo "⚠️ Not a /terraform command, skipping"
+              echo "⚠️ Not a /terraform or /tf- command, skipping"
             fi
           fi
 

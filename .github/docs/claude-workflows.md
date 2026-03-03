@@ -31,7 +31,7 @@ sequenceDiagram
     participant AI as Claude (ai-analyze-plan)
     participant PR as PR Comment
 
-    Dev->>GH: Push *.tf / *.hcl changes (or comment /terraform plan)
+    Dev->>GH: Push *.tf / *.hcl changes (or comment /terraform plan or /tf-plan)
     GH->>WF: Trigger workflow
 
     WF->>WF: determine-action<br/>(plan? apply? plan_full?)
@@ -62,7 +62,7 @@ sequenceDiagram
     participant Tofu as OpenTofu
     participant PR as PR Comment
 
-    Dev->>GH: Comment /terraform apply
+    Dev->>GH: Comment /terraform apply (or /tf-apply)
     GH->>WF: Trigger workflow (issue_comment event)
 
     WF->>WF: determine-action → should_apply=true
@@ -82,6 +82,7 @@ sequenceDiagram
 ### Key Features
 - **Delta format by default**: PR comments show only changed resources (`+`, `~`, `-`) plus a meaningful one-sentence summary.
 - **Full format on demand**: Use `/terraform plan full` to get the complete unfiltered output.
+- **Short aliases**: `/tf-plan` = `/terraform plan`, `/tf-plan full` = `/terraform plan full`, `/tf-apply` = `/terraform apply`.
 - **Code diff context**: Claude reads `.tf`/`.hcl` code changes alongside the plan to understand developer intent.
 - **Rollback safety**: Pre-apply state snapshot is retained for 30 days.
 - **Concurrency guard**: Only one plan/apply runs per PR at a time (`cancel-in-progress: false`).
@@ -218,26 +219,26 @@ cd apps-devstg/us-east-1/secrets-manager
 
 ### PR Comment Bot Commands
 
-| Command | Surface | Behavior |
-|---------|---------|----------|
-| `@claude tf-plan` | PR comment | Delta plan via Claude bot (triggers `/terraform plan`) |
-| `@claude tf-plan full` | PR comment | Full plan via Claude bot (triggers `/terraform plan full`) |
-| `@claude tf-apply` | PR comment | Apply via Claude bot — checks permission first |
-| `/terraform plan` | PR comment | Delta plan via terraform-plan-review workflow |
-| `/terraform plan full` | PR comment | Full plan via terraform-plan-review workflow |
-| `/terraform apply` | PR comment | Apply with permission check (full pipeline + rollback) |
-| `@claude <question>` | Issue or PR comment | General intelligent routing to specialized agent |
+| Command | Alias | Surface | Behavior |
+|---------|-------|---------|----------|
+| `@claude tf-plan` | — | PR comment | Delta plan via Claude bot (triggers `/terraform plan`) |
+| `@claude tf-plan full` | — | PR comment | Full plan via Claude bot (triggers `/terraform plan full`) |
+| `@claude tf-apply` | — | PR comment | Apply via Claude bot — checks permission first |
+| `/terraform plan` | `/tf-plan` | PR comment | Delta plan via terraform-plan-review workflow |
+| `/terraform plan full` | `/tf-plan full` | PR comment | Full plan via terraform-plan-review workflow |
+| `/terraform apply` | `/tf-apply` | PR comment | Apply with permission check (full pipeline + rollback) |
+| `@claude <question>` | — | Issue or PR comment | General intelligent routing to specialized agent |
 
 ### Permission Requirements
 
-| Command | Required GitHub Role |
-|---------|---------------------|
-| `/terraform plan` | Any collaborator |
-| `@claude tf-plan` | Any collaborator |
-| `/terraform plan full` | Any collaborator |
-| `@claude tf-plan full` | Any collaborator |
-| `/terraform apply` | Write or Admin |
-| `@claude tf-apply` | Write or Admin |
+| Command | Alias | Required GitHub Role |
+|---------|-------|---------------------|
+| `/terraform plan` | `/tf-plan` | Any collaborator |
+| `/terraform plan full` | `/tf-plan full` | Any collaborator |
+| `@claude tf-plan` | — | Any collaborator |
+| `@claude tf-plan full` | — | Any collaborator |
+| `/terraform apply` | `/tf-apply` | Write or Admin |
+| `@claude tf-apply` | — | Write or Admin |
 
 ---
 
@@ -245,7 +246,7 @@ cd apps-devstg/us-east-1/secrets-manager
 
 ### Delta Format (default)
 
-Used when: PR push/update, `/terraform plan`, `@claude tf-plan`
+Used when: PR push/update, `/terraform plan` (or `/tf-plan`), `@claude tf-plan`
 
 ```
 Summary: Creates a KMS-encrypted Secrets Manager secret for the API key and grants the devops role read access.
@@ -267,6 +268,6 @@ Plan: 2 to add, 0 to change, 0 to destroy.
 
 ### Full Format
 
-Used when: `/terraform plan full`, `@claude tf-plan full`
+Used when: `/terraform plan full` (or `/tf-plan full`), `@claude tf-plan full`
 
 Shows complete unfiltered output (all resources, refresh output, etc.) in a collapsible `<details>` block, prefixed with the same Summary line and assessment section.
