@@ -9,6 +9,7 @@ Minimal [Strands](https://github.com/strands-agents/strands-agents-python) agent
 | `agent.py` | Agent entrypoint using `BedrockAgentCoreApp` |
 | `pyproject.toml` | Python dependencies |
 | `build.sh` | Builds the deployment zip for AgentCore |
+| `test.sh` | Smoke test — validates runtime, endpoint, and invocation |
 
 ## Build
 
@@ -33,6 +34,14 @@ leverage tf init
 leverage tf plan
 leverage tf apply
 ```
+
+## Test
+
+```bash
+AWS_PROFILE=<your-sso-profile> ./test.sh
+```
+
+Checks runtime `READY`, endpoint `READY`, invocation HTTP 200, and response payload. Pass `RUNTIME_ID` and `ENDPOINT_NAME` env vars to skip auto-detection from terraform state.
 
 ## Customize
 

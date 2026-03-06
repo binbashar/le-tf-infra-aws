@@ -246,6 +246,11 @@ When working with AWS Cloud Control API resources (awscc_*):
 - Image extraction categories must use valid enums: "CONTENT_MODERATION", "TEXT_DETECTION", "LOGOS"
 - Some Bedrock Data Automation features may be in preview
 
+### Bedrock AgentCore (data-science/us-east-1/bedrock-agentcore)
+- Uses direct AWSCC resources (not aws-ia module) — see layer CLAUDE.md for details
+- Two AWS CLI services: `bedrock-agentcore` (invoke) and `bedrock-agentcore-control` (CRUD)
+- `bb-data-science-devops` profile only works inside leverage Docker; use SSO profile for direct CLI calls
+
 ### State Lock Issues
 If encountering state lock errors:
 ```bash
