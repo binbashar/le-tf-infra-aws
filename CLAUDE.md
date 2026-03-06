@@ -233,6 +233,14 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 11. **Code quality** - Always run `leverage tf fmt` and `leverage tf validate` before commits
 12. **Atlantis integration** - The repository uses Atlantis for automated OpenTofu/Terraform workflows
 
+### CI / Pre-commit
+- CI job "Test and Lint" runs `make pre-commit` → `pre-commit run --all-files`
+- Includes `terraform_fmt` hook — always run `leverage tf fmt -recursive` before pushing
+- PR template at `.github/PULL_REQUEST_TEMPLATE.md` uses What? / Why? / References format
+
+### Common GitHub Usernames
+- exe → `exequielrafaela`, OJ (Diego Ojeda) → `diego-ojeda-binbash`, Alex → `Alx-binbash`
+
 ## Common Troubleshooting
 
 ### Docker Container Issues
