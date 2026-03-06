@@ -233,6 +233,14 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 11. **Code quality** - Always run `leverage tf fmt` and `leverage tf validate` before commits
 12. **Atlantis integration** - The repository uses Atlantis for automated OpenTofu/Terraform workflows
 
+### CI / Pre-commit
+- CI job "Test and Lint" runs `make pre-commit` → `pre-commit run --all-files`
+- Includes `terraform_fmt` hook — always run `leverage tf fmt -recursive` before pushing
+- PR template at `.github/PULL_REQUEST_TEMPLATE.md` uses What? / Why? / References format
+
+### Common GitHub Usernames
+- exe → `exequielrafaela`, OJ (Diego Ojeda) → `diego-ojeda-binbash`, Alex → `Alx-binbash`
+
 ## Common Troubleshooting
 
 ### Docker Container Issues
@@ -245,6 +253,11 @@ When working with AWS Cloud Control API resources (awscc_*):
 - Blueprint version must be numeric string without decimals (e.g., "1" not "1.0")
 - Image extraction categories must use valid enums: "CONTENT_MODERATION", "TEXT_DETECTION", "LOGOS"
 - Some Bedrock Data Automation features may be in preview
+
+### Bedrock AgentCore (data-science/us-east-1/bedrock-agentcore)
+- Uses direct AWSCC resources (not aws-ia module) — see layer CLAUDE.md for details
+- Two AWS CLI services: `bedrock-agentcore` (invoke) and `bedrock-agentcore-control` (CRUD)
+- `bb-data-science-devops` profile only works inside leverage Docker; use SSO profile for direct CLI calls
 
 ### State Lock Issues
 If encountering state lock errors:
