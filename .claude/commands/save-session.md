@@ -83,7 +83,7 @@ echo "🤖 Analyzing current session and saving progress to Obsidian..."
 # 4. NOTE STRUCTURE (Markdown Template):
 #    ```markdown
 #    # {Date} - {Branch/Issue} - Session Notes
-#  
+#
 #    ## Session Overview
 #    - **Date**: {Current date and time}
 #    - **Branch**: {Current git branch}
@@ -99,7 +99,7 @@ echo "🤖 Analyzing current session and saving progress to Obsidian..."
 #    - **Parent Repository**: {main repo path if worktree detected}
 #    - **Worktree Branch**: {branch associated with this worktree}
 #    - **Full Directory Path**: {complete pwd output for precise restoration}
-#  
+#
 #    ## Context & Objectives
 #    {Auto-extracted from branch name, recent commits, working directory context}
 #
@@ -147,20 +147,20 @@ echo "🤖 Analyzing current session and saving progress to Obsidian..."
 #    - "Resume analysis of {specific_component_or_issue}"
 #    - "The last step was {specific_action}, next I need to {specific_next_action}"
 #    - "Help me {specific_continuation_request} based on the saved context"
-#  
+#
 #    ## Technical Details
 #    ### Files Modified
 #    {List of changed files with brief analysis}
-#  
+#
 #    ### Recent Commits
 #    {Last 3-5 commits with messages}
-#  
+#
 #    ### Key Findings
 #    {Important discoveries, solutions, workarounds}
-#  
+#
 #    ### Current Status
 #    {Git status, any uncommitted changes, current directory context}
-#  
+#
 #    ---
 #    *Session saved automatically on {timestamp} by Claude Code*
 #    ```

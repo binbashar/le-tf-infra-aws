@@ -1,0 +1,220 @@
+name: Claude Code Review
+
+# Lightweight PR review based on file context only
+# NO Terraform execution - just analyzes changed files
+# Limited to management/global/sso/ path
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'management/global/sso/**'
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+jobs:
+  eyes-reaction:
+    name: Add Eyes Reaction
+    if: |
+      (github.event_name == 'issue_comment' && (contains(github.event.comment.body, 'review') || contains(github.event.comment.body, '@claude'))) ||
+      (github.event_name == 'pull_request_review_comment' && (contains(github.event.comment.body, 'review') || contains(github.event.comment.body, '@claude')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Add eyes reaction
+        timeout-minutes: 1
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "issue_comment" ]; then
+            COMMENT_ID="${{ github.event.comment.id }}"
+          elif [ "${{ github.event_name }}" = "pull_request_review_comment" ]; then
+            COMMENT_ID="${{ github.event.comment.id }}"
+          else
+            echo "No comment to react to"
+            exit 0
+          fi
+
+          echo "Adding 👀 reaction to comment ID: $COMMENT_ID"
+          gh api repos/${{ github.repository }}/issues/comments/$COMMENT_ID/reactions \
+            --method POST \
+            --field content='eyes' || exit 0
+
+          echo "✅ Eyes reaction added successfully"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  analyze-pr-context:
+    name: PR Context Analysis
+    needs: eyes-reaction
+    if: |
+      always() &&
+      (needs.eyes-reaction.result == 'success' || needs.eyes-reaction.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          fetch-depth: 0  # Full history for git diff
+
+      - name: Get Changed Files
+        id: changed-files
+        run: |
+          BASE_REF="${{ github.event.pull_request.base.sha }}"
+          HEAD_REF="${{ github.event.pull_request.head.sha }}"
+
+          echo "Analyzing changes between $BASE_REF and $HEAD_REF"
+          echo "Path filter: management/global/sso/**"
+
+          # Get changed files in management/global/sso/
+          CHANGED_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF" | grep '^management/global/sso/')
+
+          if [[ -z "$CHANGED_FILES" ]]; then
+            echo "No files changed in management/global/sso/"
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changed files:"
+            echo "$CHANGED_FILES"
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+
+            # Save to file for Claude to read
+            echo "$CHANGED_FILES" > changed-files.txt
+          fi
+
+      - name: Get File Diffs
+        if: steps.changed-files.outputs.has-changes == 'true'
+        run: |
+          BASE_REF="${{ github.event.pull_request.base.sha }}"
+          HEAD_REF="${{ github.event.pull_request.head.sha }}"
+
+          echo "Generating diffs for changed files..."
+
+          # Generate unified diff for changed files
+          git diff "$BASE_REF" "$HEAD_REF" -- management/global/sso/ > file-diffs.txt
+
+          echo "Diff generated ($(wc -l < file-diffs.txt) lines)"
+
+      - name: Run Claude Code PR Analysis
+        if: steps.changed-files.outputs.has-changes == 'true'
+        id: claude-analysis
+        uses: anthropics/claude-code-action@928c84b37e02abd33f08826a2200058c68633a85  # v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            ## PR CONTEXT ANALYSIS - management/global/sso/
+
+            You are Claude Code analyzing a Pull Request for the Binbash Leverage AWS infrastructure.
+
+            **IMPORTANT**: This is a CONTEXT-ONLY analysis. NO Terraform execution. Just analyze the changed files.
+
+            ### PR INFORMATION:
+            - **PR Number**: #${{ github.event.pull_request.number }}
+            - **Title**: ${{ github.event.pull_request.title }}
+            - **Author**: @${{ github.event.pull_request.user.login }}
+            - **Path Scope**: management/global/sso/ (AWS SSO configuration)
+
+            ### CHANGED FILES:
+            Read `changed-files.txt` for the list of modified files.
+            Read `file-diffs.txt` for the actual code changes.
+
+            ### YOUR TASK:
+
+            #### STEP 1: ANALYZE CHANGES
+            Review the file changes and identify:
+            1. **Type of changes**: New resources, configuration updates, deletions
+            2. **AWS Services affected**: SSO, IAM, permission sets, assignments
+            3. **Security implications**: Access changes, permission modifications
+            4. **Compliance considerations**: Least privilege, audit requirements
+            5. **Keywords**: secret, password, key, token, credential, policy, role
+
+            #### STEP 2: INTELLIGENT ROUTING
+            Based on the changes, select the most appropriate specialized agent:
+
+            - **security-compliance**: SSO configurations, IAM policies, permission sets
+              - Triggers: IAM-related changes, security policies, access controls
+              - Focus: Security best practices, least privilege, audit compliance
+
+            - **documentation**: README updates, configuration docs
+              - Triggers: .md files, documentation changes
+              - Focus: Clarity, completeness, accuracy
+
+            - **terraform-layer**: General infrastructure configuration
+              - Triggers: Module updates, resource configuration
+              - Focus: Terraform best practices, resource organization
+
+            - **dependency-update**: Module version updates
+              - Triggers: Version bumps in module sources
+              - Focus: Compatibility, breaking changes
+
+            #### STEP 3: DELEGATE TO AGENT
+            Use the Task tool with your selected subagent_type:
+
+            ```
+            Task tool with subagent_type: [selected-agent]
+            prompt: "Analyze this PR for AWS SSO infrastructure changes.
+
+            **PR Context:**
+            - Title: ${{ github.event.pull_request.title }}
+            - Path: management/global/sso/
+            - Changed files: [list from changed-files.txt]
+
+            **Code Changes:**
+            [Include relevant snippets from file-diffs.txt]
+
+            **Analysis Focus:**
+            1. Security assessment - IAM policies, permission scopes, access patterns
+            2. Compliance check - AWS SSO best practices, least privilege
+            3. Risk evaluation - Potential security issues, overly permissive access
+            4. Recommendations - Specific improvements with examples
+
+            Provide your analysis as a structured PR comment:
+            - Summary (2-3 sentences)
+            - Critical Issues (if any)
+            - Warnings (if any)
+            - Suggestions for improvement
+            - Approval recommendation: APPROVE / REQUEST_CHANGES / COMMENT
+
+            Post your review using:
+            gh pr comment ${{ github.event.pull_request.number }} --body '[your analysis]'
+            "
+            ```
+
+            #### STEP 4: EXPLAIN ROUTING
+            After the agent posts its review, explain your routing decision:
+            - Why this agent was selected
+            - Key factors from the changes
+            - What specialized expertise was needed
+
+            ### IMPORTANT NOTES:
+            - This is context-based analysis only (no Terraform plan execution)
+            - Focus on code review, security, and compliance
+            - Be specific and actionable in recommendations
+            - For SSO changes, emphasize security and least privilege
+
+            Begin analysis now by reading the changed files and routing to the appropriate agent.
+
+          claude_args: '--allowed-tools "Task,Read,Grep,Glob,Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh issue view:*),Bash(gh issue list:*),mcp__github_comment__*,mcp__github_ci__*"'
+
+      - name: No Changes Detected
+        if: steps.changed-files.outputs.has-changes != 'true'
+        run: |
+          echo "✅ No files changed in management/global/sso/ path"
+          echo "This PR does not affect the monitored path, skipping analysis"
