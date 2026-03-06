@@ -58,9 +58,9 @@ resource "aws_iam_role_policy" "runtime_permissions" {
         Resource = "arn:aws:logs:${local.region}:${local.account_id}:log-group:/aws/bedrock-agentcore/runtimes/*"
       },
       {
-        Sid    = "CloudWatchLogsDescribe"
-        Effect = "Allow"
-        Action = "logs:DescribeLogGroups"
+        Sid      = "CloudWatchLogsDescribe"
+        Effect   = "Allow"
+        Action   = "logs:DescribeLogGroups"
         Resource = "arn:aws:logs:${local.region}:${local.account_id}:log-group:*"
       },
       {
@@ -121,9 +121,9 @@ resource "aws_iam_role_policy" "runtime_slr" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "CreateBedrockAgentCoreIdentitySLR"
-        Effect = "Allow"
-        Action = "iam:CreateServiceLinkedRole"
+        Sid      = "CreateBedrockAgentCoreIdentitySLR"
+        Effect   = "Allow"
+        Action   = "iam:CreateServiceLinkedRole"
         Resource = "arn:aws:iam::*:role/aws-service-role/runtime-identity.bedrock-agentcore.amazonaws.com/AWSServiceRoleForBedrockAgentCoreRuntimeIdentity"
         Condition = {
           StringEquals = {
