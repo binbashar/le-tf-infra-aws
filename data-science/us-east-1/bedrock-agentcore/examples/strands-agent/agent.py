@@ -11,6 +11,7 @@ agent = Agent(model=model, system_prompt="You are a helpful assistant.")
 
 @app.entrypoint
 def invoke(payload: dict) -> dict:
+    """Handle an agent invocation request and return the response."""
     prompt = payload.get("prompt", "")
     if not prompt:
         return {"error": "No prompt provided", "status": "error"}
