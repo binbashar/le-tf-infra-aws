@@ -138,14 +138,6 @@ locals {
         "marketplaceseller",
       ]
     }
-    "matias.sorozabal" = {
-      first_name = "Matias"
-      last_name  = "Sorozabal"
-      email      = "matias.sorozabal@binbash.com.ar"
-      groups = [
-        "datascientists",
-      ]
-    }
     "ignacio.gomez" = {
       first_name = "Ignacio"
       last_name  = "Gomez"
@@ -244,22 +236,6 @@ locals {
       email      = "lucas.langwagen@binbash.com.ar"
       groups = [
         "datascientists",
-      ]
-    }
-    "diego.maye" = {
-      first_name = "Diego"
-      last_name  = "Maye"
-      email      = "diego.maye@binbash.com.ar"
-      groups = [
-        "datascientists",
-      ]
-    }
-    "roberto.trujillo" = {
-      first_name = "Roberto"
-      last_name  = "Trujillo"
-      email      = "roberto.trujillo@binbash.com.ar"
-      groups = [
-        "datascientists"
       ]
     }
     "marcelo.rodriguez" = {
