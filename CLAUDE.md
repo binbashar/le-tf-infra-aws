@@ -201,6 +201,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - Project prefix: `${var.project}-${var.environment}-{resource}`
 - AWS profiles follow cross-account access patterns
 - Directories ending with `--` suffix indicate disabled/optional layers
+- Never commit `tfplan` binary files or test PDF/binary documents
 - Tags: Consistent tagging with `Terraform`, `Environment`, `Layer`
 
 ### Variable Management
@@ -236,6 +237,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 ### CI / Pre-commit
 - CI job "Test and Lint" runs `make pre-commit` → `pre-commit run --all-files`
 - Includes `terraform_fmt` hook — always run `leverage tf fmt -recursive` before pushing
+- `pretty-format-json` hook sorts keys alphabetically and autofixes — ensure JSON files have sorted keys before pushing
 - PR template at `.github/PULL_REQUEST_TEMPLATE.md` uses What? / Why? / References format
 
 ### Common GitHub Usernames
