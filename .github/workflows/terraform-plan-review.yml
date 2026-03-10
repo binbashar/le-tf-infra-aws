@@ -30,10 +30,37 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Job 0: Authorization gate for comment-triggered events
+  authorize:
+    name: Authorize
+    if: github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      authorized: ${{ steps.auth.outputs.authorized }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          sparse-checkout: .github/actions/authorize-collaborator
+          fetch-depth: 1
+
+      - name: Check collaborator permission
+        id: auth
+        uses: ./.github/actions/authorize-collaborator
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
   # Job 1: Add eyes reaction to indicate processing
   eyes-reaction:
     name: Add Eyes Reaction
-    if: github.event_name == 'issue_comment'
+    needs: [authorize]
+    if: |
+      always() &&
+      (github.event_name == 'pull_request' ||
+       (github.event_name == 'issue_comment' && needs.authorize.outputs.authorized == 'true'))
     runs-on: ubuntu-latest
     timeout-minutes: 2
     permissions:
@@ -41,28 +68,28 @@ jobs:
       pull-requests: write
       issues: write
     steps:
+      - name: Checkout repository
+        if: github.event_name == 'issue_comment'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          sparse-checkout: .github/actions/add-eyes-reaction
+          fetch-depth: 1
+
       - name: Add eyes reaction
-        timeout-minutes: 1
-        run: |
-          set -euo pipefail
-
-          COMMENT_ID="${{ github.event.comment.id }}"
-
-          echo "Adding 👀 reaction to comment ID: $COMMENT_ID"
-          gh api repos/${{ github.repository }}/issues/comments/$COMMENT_ID/reactions \
-            --method POST \
-            --field content='eyes' || {
-            echo "Failed to add reaction - this might be expected for some comment types"
-            exit 0
-          }
-
-          echo "✅ Eyes reaction added successfully"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: github.event_name == 'issue_comment'
+        uses: ./.github/actions/add-eyes-reaction
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          comment_id: ${{ github.event.comment.id }}
 
   # Job 2: Determine what action to take based on trigger
   determine-action:
     name: Determine Action
+    needs: [authorize]
+    if: |
+      always() &&
+      (github.event_name == 'pull_request' ||
+       (github.event_name == 'issue_comment' && needs.authorize.outputs.authorized == 'true'))
     runs-on: ubuntu-latest
     outputs:
       should_plan: ${{ steps.check.outputs.should_plan }}
@@ -83,7 +110,7 @@ jobs:
             echo "should_apply=false" >> $GITHUB_OUTPUT
             echo "plan_full=false" >> $GITHUB_OUTPUT
             echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-            echo "✅ Trigger: PR update → Will run automatic plan (delta format)"
+            echo "Trigger: PR update -> Will run automatic plan (delta format)"
 
           elif [[ "${{ github.event_name }}" == "issue_comment" ]]; then
             # Check if comment is on a PR
@@ -91,7 +118,7 @@ jobs:
               echo "should_plan=false" >> $GITHUB_OUTPUT
               echo "should_apply=false" >> $GITHUB_OUTPUT
               echo "plan_full=false" >> $GITHUB_OUTPUT
-              echo "⚠️ Comment is not on a PR, skipping"
+              echo "Comment is not on a PR, skipping"
               exit 0
             fi
 
@@ -105,25 +132,25 @@ jobs:
               echo "should_plan=true" >> $GITHUB_OUTPUT
               echo "should_apply=false" >> $GITHUB_OUTPUT
               echo "plan_full=true" >> $GITHUB_OUTPUT
-              echo "✅ Command: ${BASH_REMATCH[0]} → Will run manual plan (full output)"
+              echo "Command: ${BASH_REMATCH[0]} -> Will run manual plan (full output)"
 
             elif [[ "$COMMENT" =~ ^(/terraform[[:space:]]+plan|/tf-plan) ]]; then
               echo "should_plan=true" >> $GITHUB_OUTPUT
               echo "should_apply=false" >> $GITHUB_OUTPUT
               echo "plan_full=false" >> $GITHUB_OUTPUT
-              echo "✅ Command: ${BASH_REMATCH[0]} → Will run manual plan (delta format)"
+              echo "Command: ${BASH_REMATCH[0]} -> Will run manual plan (delta format)"
 
             elif [[ "$COMMENT" =~ ^(/terraform[[:space:]]+apply|/tf-apply) ]]; then
               echo "should_plan=true" >> $GITHUB_OUTPUT
               echo "should_apply=true" >> $GITHUB_OUTPUT
               echo "plan_full=false" >> $GITHUB_OUTPUT
-              echo "✅ Command: ${BASH_REMATCH[0]} → Will run plan + apply"
+              echo "Command: ${BASH_REMATCH[0]} -> Will run plan + apply"
 
             else
               echo "should_plan=false" >> $GITHUB_OUTPUT
               echo "should_apply=false" >> $GITHUB_OUTPUT
               echo "plan_full=false" >> $GITHUB_OUTPUT
-              echo "⚠️ Not a /terraform or /tf- command, skipping"
+              echo "Not a /terraform or /tf- command, skipping"
             fi
           fi
 
@@ -213,10 +240,10 @@ jobs:
           VALID_LAYERS=""
           for layer in $CHANGED_LAYERS; do
             if [[ -f "$layer/config.tf" ]]; then
-              echo "✓ Valid layer: $layer"
+              echo "Valid layer: $layer"
               VALID_LAYERS="$VALID_LAYERS $layer"
             else
-              echo "✗ Skipping (no config.tf): $layer"
+              echo "Skipping (no config.tf): $layer"
             fi
           done
 
@@ -249,88 +276,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
-      - name: Setup Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
-        with:
-          python-version: ${{ needs.setup-environment.outputs.python-version }}
-
-      - name: Install OpenTofu
-        run: |
-          TOFU_VERSION="1.8.7"
-          wget -q "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
-          unzip -qo tofu_${TOFU_VERSION}_linux_amd64.zip
-          sudo mv tofu /usr/local/bin/
-          sudo chmod +x /usr/local/bin/tofu
-          tofu version
-
-      - name: Install Leverage CLI
-        run: |
-          python3 -m venv ~/.leverage-venv
-          source ~/.leverage-venv/bin/activate
-          pip install --upgrade pip
-          pip install leverage==2.2.0rc5
-          echo "$HOME/.leverage-venv/bin" >> $GITHUB_PATH
-          leverage --version
-
-      - name: Verify Required Binaries
-        run: |
-          echo "Verifying system binaries for dockerless Leverage CLI..."
-          if ! command -v tofu &> /dev/null; then
-            echo "❌ OpenTofu (tofu) not found"
-            exit 1
-          fi
-          if ! command -v aws &> /dev/null; then
-            echo "❌ AWS CLI not found"
-            exit 1
-          fi
-          echo "✅ OpenTofu: $(tofu version | head -1)"
-          echo "✅ AWS CLI: $(aws --version)"
-          echo "✅ Leverage: $(leverage --version)"
+      - name: Setup OpenTofu and Leverage CLI
+        uses: ./.github/actions/setup-tofu-leverage
 
       - name: Determine AWS Account
         id: determine-account
-        run: |
-          # Extract account from layer path (first directory)
-          ACCOUNT=$(echo "${{ matrix.layer }}" | cut -d'/' -f1)
-          echo "Detected account: $ACCOUNT"
-
-          # Map account name to secret variable name and profile
-          case $ACCOUNT in
-            apps-devstg)
-              SECRET_NAME="DEVSTG"
-              ;;
-            apps-prd)
-              SECRET_NAME="PRD"
-              ;;
-            network)
-              SECRET_NAME="NETWORK"
-              ;;
-            security)
-              SECRET_NAME="SECURITY"
-              ;;
-            shared)
-              SECRET_NAME="SHARED"
-              ;;
-            management)
-              SECRET_NAME="MANAGEMENT"
-              ;;
-            data-science)
-              SECRET_NAME="DATA_SCIENCE"
-              ;;
-            *)
-              echo "❌ Unknown account: $ACCOUNT"
-              exit 1
-              ;;
-          esac
-
-          # Output values for next steps
-          echo "account=$ACCOUNT" >> $GITHUB_OUTPUT
-          echo "secret_name=$SECRET_NAME" >> $GITHUB_OUTPUT
-          echo "profile=bb-${ACCOUNT}-devops" >> $GITHUB_OUTPUT
-
-          echo "✅ Account: $ACCOUNT"
-          echo "✅ Secret: AWS_${SECRET_NAME}_ACCOUNT_ID"
-          echo "✅ Profile: bb-${ACCOUNT}-devops"
+        uses: ./.github/actions/determine-account
+        with:
+          layer_path: ${{ matrix.layer }}
 
       - name: Configure AWS Credentials
         uses: ./.github/actions/leverage-aws-credentials
@@ -351,7 +304,7 @@ jobs:
           echo "AWS_CONFIG_FILE=$HOME/.aws/bb/config" >> $GITHUB_ENV
           echo "AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/bb/credentials" >> $GITHUB_ENV
           echo "AWS_PROFILE=$PROFILE" >> $GITHUB_ENV
-          echo "✅ Using AWS profile: $PROFILE"
+          echo "Using AWS profile: $PROFILE"
 
       - name: Configure Reference Architecture
         uses: ./.github/actions/leverage-configure-ref-arch
@@ -369,17 +322,11 @@ jobs:
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 5
         run: |
-          # Use tofu directly to bypass Leverage CLI SSO requirements in CI/CD
-          # The dockerless Leverage CLI expects SSO tokens which aren't available in GitHub Actions
-
           ACCOUNT="${{ steps.determine-account.outputs.account }}"
           REPO_ROOT="${{ github.workspace }}"
 
           echo "Initializing layer: ${{ matrix.layer }}"
-          echo "Account: $ACCOUNT"
-          echo "Backend config: ${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars"
 
-          # Run tofu init with backend config (same args Leverage would use)
           tofu init -no-color \
             -backend-config="${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars"
 
@@ -387,31 +334,22 @@ jobs:
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 10
         run: |
-          # Use tofu directly to bypass Leverage CLI SSO requirements in CI/CD
-          # Pass the same tfvars files that Leverage CLI would use
-
           ACCOUNT="${{ steps.determine-account.outputs.account }}"
           REPO_ROOT="${{ github.workspace }}"
 
           echo "Running plan for layer: ${{ matrix.layer }}"
-          echo "Account: $ACCOUNT"
 
           # Build tfvars arguments (common + account config, same as Leverage)
           TFVARS_ARGS=""
 
-          # Add common tfvars if exists
           if [[ -f "${REPO_ROOT}/config/common.tfvars" ]]; then
             TFVARS_ARGS="$TFVARS_ARGS -var-file=${REPO_ROOT}/config/common.tfvars"
           fi
 
-          # Add account tfvars if exists
           if [[ -f "${REPO_ROOT}/${ACCOUNT}/config/account.tfvars" ]]; then
             TFVARS_ARGS="$TFVARS_ARGS -var-file=${REPO_ROOT}/${ACCOUNT}/config/account.tfvars"
           fi
 
-          echo "Using tfvars: $TFVARS_ARGS"
-
-          # Run plan and save to file (for apply) and display output
           tofu plan -no-color -input=false -out=tfplan.bin $TFVARS_ARGS 2>&1 | tee plan-output.txt
 
       - name: Sanitize Layer Name for Artifact
@@ -427,10 +365,101 @@ jobs:
             ${{ matrix.layer }}/tfplan.bin
           retention-days: 7
 
-  # Job 6: AI-powered plan analysis
+  # Job 6: Scan plan for destructive operations
+  scan-destructive-operations:
+    name: Destructive Operation Check
+    needs: [determine-action, detect-layers, run-terraform-plan]
+    if: needs.run-terraform-plan.result == 'success' && needs.detect-layers.outputs.has-layers == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      has_destructions: ${{ steps.scan.outputs.has_destructions }}
+      destruction_count: ${{ steps.scan.outputs.destruction_count }}
+      blocked: ${{ steps.scan.outputs.blocked }}
+    steps:
+      - name: Download Plan Outputs
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          pattern: plan-*
+          path: plans/
+
+      - name: Scan for destructive changes
+        id: scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DESTROY_COUNT=0
+          REPLACE_COUNT=0
+          DETAILS=""
+
+          for plan_file in plans/*/plan-output.txt; do
+            if [[ ! -f "$plan_file" ]]; then
+              continue
+            fi
+
+            LAYER=$(basename "$(dirname "$plan_file")" | sed 's/^plan-//' | tr '-' '/')
+            D=$(grep -c 'will be destroyed' "$plan_file" 2>/dev/null || echo 0)
+            R=$(grep -c 'must be replaced' "$plan_file" 2>/dev/null || echo 0)
+
+            if [[ $D -gt 0 || $R -gt 0 ]]; then
+              DETAILS="${DETAILS}\n- **${LAYER}**: ${D} destroy, ${R} replace"
+            fi
+
+            DESTROY_COUNT=$((DESTROY_COUNT + D))
+            REPLACE_COUNT=$((REPLACE_COUNT + R))
+          done
+
+          TOTAL=$((DESTROY_COUNT + REPLACE_COUNT))
+          echo "destruction_count=$TOTAL" >> $GITHUB_OUTPUT
+
+          # Threshold: block auto-apply if >5 destructive operations
+          THRESHOLD=5
+          if [[ $TOTAL -gt $THRESHOLD ]]; then
+            echo "has_destructions=true" >> $GITHUB_OUTPUT
+            echo "blocked=true" >> $GITHUB_OUTPUT
+            echo "BLOCKED: $TOTAL destructive operations exceed threshold ($THRESHOLD)"
+          elif [[ $TOTAL -gt 0 ]]; then
+            echo "has_destructions=true" >> $GITHUB_OUTPUT
+            echo "blocked=false" >> $GITHUB_OUTPUT
+            echo "WARNING: $TOTAL destructive operations detected (below threshold)"
+          else
+            echo "has_destructions=false" >> $GITHUB_OUTPUT
+            echo "blocked=false" >> $GITHUB_OUTPUT
+            echo "No destructive operations detected"
+          fi
+
+      - name: Post destruction warning
+        if: steps.scan.outputs.has_destructions == 'true'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
+        with:
+          script: |
+            const count = '${{ steps.scan.outputs.destruction_count }}';
+            const blocked = '${{ steps.scan.outputs.blocked }}' === 'true';
+            const prNumber = ${{ needs.determine-action.outputs.pr_number }};
+
+            let body = `## :warning: Destructive Operations Detected\n\n`;
+            body += `**${count} resource(s)** will be destroyed or replaced.\n\n`;
+
+            if (blocked) {
+              body += `> :no_entry: **Auto-apply is BLOCKED** — destructive operations exceed the safety threshold (>5 resources).\n`;
+              body += `> A manual review and explicit approval is required before applying.\n`;
+            } else {
+              body += `> :eyes: Review the plan carefully before applying.\n`;
+            }
+
+            body += `\n---\n*Automated destructive operation scan*`;
+
+            await github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  # Job 7: AI-powered plan analysis
   ai-analyze-plan:
     name: AI Plan Analysis
-    needs: [eyes-reaction, determine-action, detect-layers, run-terraform-plan]
+    needs: [eyes-reaction, determine-action, detect-layers, run-terraform-plan, scan-destructive-operations]
     if: |
       needs.run-terraform-plan.result == 'success' &&
       (needs.eyes-reaction.result == 'success' || needs.eyes-reaction.result == 'skipped') &&
@@ -460,7 +489,6 @@ jobs:
         run: |
           PR_NUMBER=${{ needs.determine-action.outputs.pr_number }}
 
-          # Get PR base and head SHAs via GitHub API
           BASE_SHA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER --jq '.base.sha')
           HEAD_SHA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER --jq '.head.sha')
 
@@ -471,7 +499,7 @@ jobs:
           }
 
           LINES=$(wc -l < plans/code-diff.txt)
-          echo "✅ Code diff captured: $LINES lines"
+          echo "Code diff captured: $LINES lines"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -481,85 +509,24 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
-            ## TERRAFORM PLAN ANALYSIS WITH AI-POWERED ROUTING
-
-            You are Claude Code analyzing Terraform plan outputs for infrastructure changes.
-
-            ### CONTEXT:
-            - **PR**: #${{ needs.determine-action.outputs.pr_number }}
-            - **Changed Layers**: ${{ needs.detect-layers.outputs.layers }}
-            - **Plan Outputs**: Available in `plans/` directory
-            - **Code Diff**: Available in `plans/code-diff.txt`
-            - **Output Format**: ${{ needs.determine-action.outputs.plan_full == 'true' && 'FULL (all resources)' || 'DELTA (changed resources only)' }}
-
-            ### YOUR TASK:
-
-            #### STEP 1: ANALYZE PLANS AND CODE DIFF
-            1. Read `plans/code-diff.txt` first — this shows the `.tf`/`.hcl` code changes that CAUSED the plan. Use it to understand the developer intent and WHY resources are changing.
-            2. Read all plan outputs from `plans/` directory (plan-output.txt files under each layer subdirectory)
-            3. For each layer, identify:
-               - Resources being created (+), modified (~), or destroyed (-)
-               - Resource types (aws_secretsmanager_*, aws_iam_*, etc.)
-               - Security configurations (IAM policies, encryption, access)
-               - Cost implications
-               - Connection between code changes (from code-diff.txt) and infrastructure changes
-
-            #### STEP 2: INTELLIGENT ROUTING
-            Based on layer paths AND resource types, select the appropriate agent:
-
-            - **security-compliance**: Security, secrets, IAM, KMS, compliance
-            - **cost-optimization**: Cost analysis, resource sizing
-            - **terraform-layer**: General infrastructure, networking, databases
-            - **feature-implementation**: New features, significant changes
-            - **dependency-update**: Module/provider version updates
-
-            #### STEP 3: DELEGATE TO AGENT
-            Use Task tool with your selected subagent_type to perform deep analysis.
-
-            Provide the agent with:
-            - Changed layer paths
-            - Plan output summaries
-            - Code diff context (what code changes triggered this plan)
-            - Resource types modified
-            - Security/compliance focus areas
-            - Whether to post DELTA or FULL format (from context above)
-
-            The agent MUST post the analysis as a PR comment using:
-            ```
-            gh pr comment ${{ needs.determine-action.outputs.pr_number }} --body '[analysis]'
-            ```
-
-            **Comment format requirements**:
-
-            If format is DELTA (default):
-            - Start with a one-sentence **Summary** describing what these changes accomplish (derived from code-diff.txt intent)
-            - Show ONLY changed resource blocks using Terraform's `+`/`~`/`-` notation
-            - Omit unchanged/no-op resources entirely
-            - End with the standard plan line: `Plan: X to add, X to change, X to destroy`
-            - Add security/cost/risk assessment section
-
-            If format is FULL:
-            - Include the complete unfiltered plan output in a collapsible `<details>` block
-            - Still prepend the Summary line and assessment section
-
-            #### STEP 4: EXPLAIN ROUTING
-            Document why you selected that agent based on:
-            - Layer path patterns
-            - Resource types
-            - Code changes from diff
-            - Security implications
-
-            Begin analysis now.
+            Read and follow `.claude/skills/ci-analyze-plan.md`.
+            Context:
+              PR=#${{ needs.determine-action.outputs.pr_number }}
+              Layers=${{ needs.detect-layers.outputs.layers }}
+              Format=${{ needs.determine-action.outputs.plan_full == 'true' && 'FULL' || 'DELTA' }}
+              DestructionCount=${{ needs.scan-destructive-operations.outputs.destruction_count }}
+              Blocked=${{ needs.scan-destructive-operations.outputs.blocked }}
 
           claude_args: '--allowed-tools "Task,Read,Grep,Glob,Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh issue view:*),Bash(gh issue list:*),mcp__github_comment__*,mcp__github_ci__*"'
 
-  # Job 7: Run Terraform apply (manual only)
+  # Job 8: Run Terraform apply (manual only)
   run-terraform-apply:
     name: Apply (${{ matrix.layer }})
-    needs: [determine-action, detect-layers, run-terraform-plan]
+    needs: [determine-action, detect-layers, run-terraform-plan, scan-destructive-operations]
     if: |
       needs.determine-action.outputs.should_apply == 'true' &&
-      needs.detect-layers.outputs.has-layers == 'true'
+      needs.detect-layers.outputs.has-layers == 'true' &&
+      needs.scan-destructive-operations.outputs.blocked != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -571,10 +538,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
-      - name: Check permissions
+      - name: Check permissions and PR approval
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
         with:
           script: |
+            // Check collaborator permission
             const { data: collaborator } = await github.rest.repos.getCollaboratorPermissionLevel({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -583,90 +551,33 @@ jobs:
 
             if (!['admin', 'write'].includes(collaborator.permission)) {
               core.setFailed(`User ${context.actor} does not have permission to apply changes`);
+              return;
             }
 
-      - name: Setup Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
-        with:
-          python-version: '3.13'
+            // Check PR has at least one approved review
+            const prNumber = ${{ needs.determine-action.outputs.pr_number }};
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
 
-      - name: Install OpenTofu
-        run: |
-          TOFU_VERSION="1.8.7"
-          wget -q "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
-          unzip -qo tofu_${TOFU_VERSION}_linux_amd64.zip
-          sudo mv tofu /usr/local/bin/
-          sudo chmod +x /usr/local/bin/tofu
-          tofu version
+            const hasApproval = reviews.some(r => r.state === 'APPROVED');
+            if (!hasApproval) {
+              core.setFailed(`PR #${prNumber} requires at least one approved review before applying`);
+              return;
+            }
 
-      - name: Install Leverage CLI
-        run: |
-          python3 -m venv ~/.leverage-venv
-          source ~/.leverage-venv/bin/activate
-          pip install --upgrade pip
-          pip install leverage==2.2.0rc5
-          echo "$HOME/.leverage-venv/bin" >> $GITHUB_PATH
-          leverage --version
+            core.info(`User ${context.actor} authorized (${collaborator.permission}) and PR has approval`);
 
-      - name: Verify Required Binaries
-        run: |
-          echo "Verifying system binaries for dockerless Leverage CLI..."
-          if ! command -v tofu &> /dev/null; then
-            echo "❌ OpenTofu (tofu) not found"
-            exit 1
-          fi
-          if ! command -v aws &> /dev/null; then
-            echo "❌ AWS CLI not found"
-            exit 1
-          fi
-          echo "✅ OpenTofu: $(tofu version | head -1)"
-          echo "✅ AWS CLI: $(aws --version)"
-          echo "✅ Leverage: $(leverage --version)"
+      - name: Setup OpenTofu and Leverage CLI
+        uses: ./.github/actions/setup-tofu-leverage
 
       - name: Determine AWS Account
         id: determine-account
-        run: |
-          # Extract account from layer path (first directory)
-          ACCOUNT=$(echo "${{ matrix.layer }}" | cut -d'/' -f1)
-          echo "Detected account: $ACCOUNT"
-
-          # Map account name to secret variable name and profile
-          case $ACCOUNT in
-            apps-devstg)
-              SECRET_NAME="DEVSTG"
-              ;;
-            apps-prd)
-              SECRET_NAME="PRD"
-              ;;
-            network)
-              SECRET_NAME="NETWORK"
-              ;;
-            security)
-              SECRET_NAME="SECURITY"
-              ;;
-            shared)
-              SECRET_NAME="SHARED"
-              ;;
-            management)
-              SECRET_NAME="MANAGEMENT"
-              ;;
-            data-science)
-              SECRET_NAME="DATA_SCIENCE"
-              ;;
-            *)
-              echo "❌ Unknown account: $ACCOUNT"
-              exit 1
-              ;;
-          esac
-
-          # Output values for next steps
-          echo "account=$ACCOUNT" >> $GITHUB_OUTPUT
-          echo "secret_name=$SECRET_NAME" >> $GITHUB_OUTPUT
-          echo "profile=bb-${ACCOUNT}-devops" >> $GITHUB_OUTPUT
-
-          echo "✅ Account: $ACCOUNT"
-          echo "✅ Secret: AWS_${SECRET_NAME}_ACCOUNT_ID"
-          echo "✅ Profile: bb-${ACCOUNT}-devops"
+        uses: ./.github/actions/determine-account
+        with:
+          layer_path: ${{ matrix.layer }}
 
       - name: Configure AWS Credentials
         uses: ./.github/actions/leverage-aws-credentials
@@ -687,7 +598,7 @@ jobs:
           echo "AWS_CONFIG_FILE=$HOME/.aws/bb/config" >> $GITHUB_ENV
           echo "AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/bb/credentials" >> $GITHUB_ENV
           echo "AWS_PROFILE=$PROFILE" >> $GITHUB_ENV
-          echo "✅ Using AWS profile: $PROFILE"
+          echo "Using AWS profile: $PROFILE"
 
       - name: Configure Reference Architecture
         uses: ./.github/actions/leverage-configure-ref-arch
@@ -717,13 +628,11 @@ jobs:
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 5
         run: |
-          # Use tofu directly to bypass Leverage CLI SSO requirements in CI/CD
           ACCOUNT="${{ steps.determine-account.outputs.account }}"
           REPO_ROOT="${{ github.workspace }}"
 
           echo "Initializing layer: ${{ matrix.layer }}"
 
-          # Run tofu init with backend config (same args Leverage would use)
           tofu init -no-color \
             -backend-config="${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars"
 
@@ -732,18 +641,14 @@ jobs:
         timeout-minutes: 2
         run: |
           echo "Saving pre-apply state snapshot for potential rollback..."
-          # Save a backup of the current state before apply
           tofu state pull > pre-apply-state.json 2>/dev/null || echo '{}' > pre-apply-state.json
-          echo "✅ Pre-apply state saved"
+          echo "Pre-apply state saved"
 
       - name: Run Terraform Apply
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 20
         run: |
-          # Use tofu directly to bypass Leverage CLI SSO requirements in CI/CD
           echo "Applying changes for layer: ${{ matrix.layer }}"
-
-          # Apply using the saved plan (no tfvars needed - plan file contains everything)
           tofu apply -no-color -auto-approve tfplan.bin 2>&1 | tee apply-output.txt
 
       - name: Upload Apply Results
@@ -769,7 +674,7 @@ jobs:
               applyOutput = 'Apply output not available';
             }
 
-            const comment = `## ✅ Terraform Apply Complete
+            const comment = `## Terraform Apply Complete
 
             **Layer**: \`${layerPath}\`
             **Triggered by**: @${{ github.actor }}
@@ -791,7 +696,7 @@ jobs:
             **To rollback these changes:**
             1. Revert the PR changes in git: \`git revert <commit-sha>\`
             2. Run \`leverage tf plan\` and \`leverage tf apply\` to restore previous state
-            3. Alternatively, download the \`apply-${layerPath.replace(/\\//g, '-')}\` artifact and use \`tofu state push pre-apply-state.json\` (advanced)
+            3. Alternatively, download the \`apply-${layerPath.replace(/\//g, '-')}\` artifact and use \`tofu state push pre-apply-state.json\` (advanced)
 
             **Rollback artifact retention**: 30 days
 
