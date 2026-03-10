@@ -1,0 +1,23 @@
+{
+  "actionGroup": "GetDocuments",
+  "agent": {
+    "alias": "live",
+    "id": "test-agent",
+    "name": "KYBAgent",
+    "version": "1"
+  },
+  "apiPath": "/documents",
+  "httpMethod": "GET",
+  "messageVersion": "1.0",
+  "parameters": [
+    {
+      "name": "output_type",
+      "type": "string",
+      "value": "Standard"
+    }
+  ],
+  "sessionAttributes": {
+    "customer_id": "test-customer-4"
+  },
+  "sessionId": "test-session-123"
+}
