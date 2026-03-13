@@ -281,6 +281,15 @@ locals {
         "devops"
       ]
     }
+    "dorian.machado" = {
+      first_name = "Dorian"
+      last_name  = "Machado"
+      email      = "dorian.machado@binbash.com.ar"
+      groups = [
+        "datascientists",
+        "devops"
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
