@@ -8,9 +8,9 @@ This document describes the three GitHub Actions workflows that integrate Claude
 
 | Workflow | File | Trigger | Purpose |
 |----------|------|---------|---------|
-| **Terraform Plan Review** | `terraform-plan-review.yml` | PR open/update, `/terraform` comment | Auto-plan changed layers, AI analysis, apply on demand |
+| **Terraform Plan Review** | `terraform-plan-review.yml` | PR open/update, `/tofu` comment | Auto-plan changed layers, AI analysis, apply on demand |
 | **Claude Code Review** | `claude-code-review.yml` | PR to `management/global/sso/**` | Focused code review of SSO/IAM changes |
-| **General @claude Handler** | `claude.yml` | `@claude` mention in issues/PRs | Bot commands + intelligent agent routing |
+| **General @claude Handler** | `claude-code-assistant.yml` | `@claude` mention in issues/PRs | Bot commands + intelligent agent routing |
 
 ---
 
@@ -31,7 +31,7 @@ sequenceDiagram
     participant AI as Claude (ai-analyze-plan)
     participant PR as PR Comment
 
-    Dev->>GH: Push *.tf / *.hcl changes (or comment /terraform plan or /tf-plan)
+    Dev->>GH: Push *.tf / *.hcl changes (or comment /tofu plan or /tf-plan)
     GH->>WF: Trigger workflow
 
     WF->>WF: determine-action<br/>(plan? apply? plan_full?)
@@ -62,7 +62,7 @@ sequenceDiagram
     participant Tofu as OpenTofu
     participant PR as PR Comment
 
-    Dev->>GH: Comment /terraform apply (or /tf-apply)
+    Dev->>GH: Comment /tofu apply (or /tf-apply)
     GH->>WF: Trigger workflow (issue_comment event)
 
     WF->>WF: determine-action → should_apply=true
@@ -81,8 +81,8 @@ sequenceDiagram
 
 ### Key Features
 - **Delta format by default**: PR comments show only changed resources (`+`, `~`, `-`) plus a meaningful one-sentence summary.
-- **Full format on demand**: Use `/terraform plan full` to get the complete unfiltered output.
-- **Short aliases**: `/tf-plan` = `/terraform plan`, `/tf-plan full` = `/terraform plan full`, `/tf-apply` = `/terraform apply`.
+- **Full format on demand**: Use `/tofu plan full` to get the complete unfiltered output.
+- **Short aliases**: `/tf-plan` = `/tofu plan`, `/tf-plan full` = `/tofu plan full`, `/tf-apply` = `/tofu apply`.
 - **Code diff context**: Claude reads `.tf`/`.hcl` code changes alongside the plan to understand developer intent.
 - **Rollback safety**: Pre-apply state snapshot is retained for 30 days.
 - **Concurrency guard**: Only one plan/apply runs per PR at a time (`cancel-in-progress: false`).
@@ -119,7 +119,7 @@ sequenceDiagram
 
 ## 4. Workflow: General @claude Handler
 
-**File**: `.github/workflows/claude.yml`
+**File**: `.github/workflows/claude-code-assistant.yml`
 
 Handles all `@claude` mentions in issues, PR comments, and PR review comments.
 
@@ -127,7 +127,7 @@ Handles all `@claude` mentions in issues, PR comments, and PR review comments.
 sequenceDiagram
     participant User as User
     participant GH as GitHub
-    participant WF as claude.yml
+    participant WF as claude-code-assistant.yml
     participant AI as Claude (routing)
     participant Agent as Specialized Agent
     participant PR as Issue/PR Comment
@@ -143,17 +143,17 @@ sequenceDiagram
         AI->>AI: Detect @claude tf-plan / tf-plan full / tf-apply
 
         alt @claude tf-plan
-            AI->>GH: gh pr comment PR_NUMBER --body "/terraform plan"
+            AI->>GH: gh pr comment PR_NUMBER --body "/tofu plan"
             GH->>WF: Triggers terraform-plan-review.yml (delta format)
         else @claude tf-plan full
-            AI->>GH: gh pr comment PR_NUMBER --body "/terraform plan full"
+            AI->>GH: gh pr comment PR_NUMBER --body "/tofu plan full"
             GH->>WF: Triggers terraform-plan-review.yml (full format)
         else @claude tf-apply
             AI->>GH: Check commenter permission via gh api
             alt Permission denied
                 AI->>PR: Reply "Permission denied"
             else Permission granted
-                AI->>GH: gh pr comment PR_NUMBER --body "/terraform apply"
+                AI->>GH: gh pr comment PR_NUMBER --body "/tofu apply"
                 GH->>WF: Triggers terraform-plan-review.yml (apply)
             end
         end
@@ -221,23 +221,23 @@ cd apps-devstg/us-east-1/secrets-manager
 
 | Command | Alias | Surface | Behavior |
 |---------|-------|---------|----------|
-| `@claude tf-plan` | — | PR comment | Delta plan via Claude bot (triggers `/terraform plan`) |
-| `@claude tf-plan full` | — | PR comment | Full plan via Claude bot (triggers `/terraform plan full`) |
+| `@claude tf-plan` | — | PR comment | Delta plan via Claude bot (triggers `/tofu plan`) |
+| `@claude tf-plan full` | — | PR comment | Full plan via Claude bot (triggers `/tofu plan full`) |
 | `@claude tf-apply` | — | PR comment | Apply via Claude bot — checks permission first |
-| `/terraform plan` | `/tf-plan` | PR comment | Delta plan via terraform-plan-review workflow |
-| `/terraform plan full` | `/tf-plan full` | PR comment | Full plan via terraform-plan-review workflow |
-| `/terraform apply` | `/tf-apply` | PR comment | Apply with permission check (full pipeline + rollback) |
+| `/tofu plan` | `/tf-plan` | PR comment | Delta plan via terraform-plan-review workflow |
+| `/tofu plan full` | `/tf-plan full` | PR comment | Full plan via terraform-plan-review workflow |
+| `/tofu apply` | `/tf-apply` | PR comment | Apply with permission check (full pipeline + rollback) |
 | `@claude <question>` | — | Issue or PR comment | General intelligent routing to specialized agent |
 
 ### Permission Requirements
 
 | Command | Alias | Required GitHub Role |
 |---------|-------|---------------------|
-| `/terraform plan` | `/tf-plan` | Any collaborator |
-| `/terraform plan full` | `/tf-plan full` | Any collaborator |
+| `/tofu plan` | `/tf-plan` | Any collaborator |
+| `/tofu plan full` | `/tf-plan full` | Any collaborator |
 | `@claude tf-plan` | — | Any collaborator |
 | `@claude tf-plan full` | — | Any collaborator |
-| `/terraform apply` | `/tf-apply` | Write or Admin |
+| `/tofu apply` | `/tf-apply` | Write or Admin |
 | `@claude tf-apply` | — | Write or Admin |
 
 ---
@@ -246,7 +246,7 @@ cd apps-devstg/us-east-1/secrets-manager
 
 ### Delta Format (default)
 
-Used when: PR push/update, `/terraform plan` (or `/tf-plan`), `@claude tf-plan`
+Used when: PR push/update, `/tofu plan` (or `/tf-plan`), `@claude tf-plan`
 
 ```
 Summary: Creates a KMS-encrypted Secrets Manager secret for the API key and grants the devops role read access.
@@ -268,6 +268,6 @@ Plan: 2 to add, 0 to change, 0 to destroy.
 
 ### Full Format
 
-Used when: `/terraform plan full` (or `/tf-plan full`), `@claude tf-plan full`
+Used when: `/tofu plan full` (or `/tf-plan full`), `@claude tf-plan full`
 
 Shows complete unfiltered output (all resources, refresh output, etc.) in a collapsible `<details>` block, prefixed with the same Summary line and assessment section.

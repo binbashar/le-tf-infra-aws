@@ -10,15 +10,15 @@ Route incoming requests to specialized agents. Check for special terraform comma
 ## Special Commands (check first)
 
 ### `@claude tf-plan` (not `tf-plan full`)
-Post `/terraform plan` as a PR comment via `gh pr comment <PR> --body "/terraform plan"` and confirm.
+Post `/tofu plan` as a PR comment via `gh pr comment <PR> --body "/tofu plan"` and confirm.
 
 ### `@claude tf-plan full`
-Post `/terraform plan full` as a PR comment and confirm.
+Post `/tofu plan full` as a PR comment and confirm.
 
 ### `@claude tf-apply`
 1. Check commenter permission: `gh api repos/{owner}/{repo}/collaborators/{username}/permission --jq '.permission'`
 2. Deny if not admin/write
-3. If authorized, post `/terraform apply` as a PR comment and confirm
+3. If authorized, post `/tofu apply` as a PR comment and confirm
 
 ## Intelligent Routing (if not a special command)
 

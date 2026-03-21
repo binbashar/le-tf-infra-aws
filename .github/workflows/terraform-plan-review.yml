@@ -3,7 +3,8 @@ name: Terraform Plan Review
 # Atlantis/Gitops Replacement:
 # - Automatic: Run terraform plan on PR with *.tf changes
 # - Manual: Run plan/apply via comment commands
-# - Aliases: /tf-plan = /terraform plan, /tf-apply = /terraform apply
+# - Primary: /tofu plan, /tofu apply
+# - Aliases: /tf-plan = /tofu plan, /tf-apply = /tofu apply
 
 on:
   pull_request:
@@ -127,20 +128,20 @@ jobs:
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
             # Parse command — check full before plain plan to avoid substring match
-            # Aliases: /tf-plan = /terraform plan, /tf-apply = /terraform apply
-            if [[ "$COMMENT" =~ ^(/terraform[[:space:]]+plan[[:space:]]+full|/tf-plan[[:space:]]+full) ]]; then
+            # Primary: /tofu plan, /tofu apply | Aliases: /tf-plan, /tf-apply
+            if [[ "$COMMENT" =~ ^(/tofu[[:space:]]+plan[[:space:]]+full|/tf-plan[[:space:]]+full) ]]; then
               echo "should_plan=true" >> $GITHUB_OUTPUT
               echo "should_apply=false" >> $GITHUB_OUTPUT
               echo "plan_full=true" >> $GITHUB_OUTPUT
               echo "Command: ${BASH_REMATCH[0]} -> Will run manual plan (full output)"
 
-            elif [[ "$COMMENT" =~ ^(/terraform[[:space:]]+plan|/tf-plan) ]]; then
+            elif [[ "$COMMENT" =~ ^(/tofu[[:space:]]+plan|/tf-plan) ]]; then
               echo "should_plan=true" >> $GITHUB_OUTPUT
               echo "should_apply=false" >> $GITHUB_OUTPUT
               echo "plan_full=false" >> $GITHUB_OUTPUT
               echo "Command: ${BASH_REMATCH[0]} -> Will run manual plan (delta format)"
 
-            elif [[ "$COMMENT" =~ ^(/terraform[[:space:]]+apply|/tf-apply) ]]; then
+            elif [[ "$COMMENT" =~ ^(/tofu[[:space:]]+apply|/tf-apply) ]]; then
               echo "should_plan=true" >> $GITHUB_OUTPUT
               echo "should_apply=true" >> $GITHUB_OUTPUT
               echo "plan_full=false" >> $GITHUB_OUTPUT
@@ -150,7 +151,7 @@ jobs:
               echo "should_plan=false" >> $GITHUB_OUTPUT
               echo "should_apply=false" >> $GITHUB_OUTPUT
               echo "plan_full=false" >> $GITHUB_OUTPUT
-              echo "Not a /terraform or /tf- command, skipping"
+              echo "Not a /tofu or /tf- command, skipping"
             fi
           fi
 
@@ -412,16 +413,11 @@ jobs:
           TOTAL=$((DESTROY_COUNT + REPLACE_COUNT))
           echo "destruction_count=$TOTAL" >> $GITHUB_OUTPUT
 
-          # Threshold: block auto-apply if >5 destructive operations
-          THRESHOLD=5
-          if [[ $TOTAL -gt $THRESHOLD ]]; then
+          # Block auto-apply if any destructive operations are detected
+          if [[ $TOTAL -gt 0 ]]; then
             echo "has_destructions=true" >> $GITHUB_OUTPUT
             echo "blocked=true" >> $GITHUB_OUTPUT
-            echo "BLOCKED: $TOTAL destructive operations exceed threshold ($THRESHOLD)"
-          elif [[ $TOTAL -gt 0 ]]; then
-            echo "has_destructions=true" >> $GITHUB_OUTPUT
-            echo "blocked=false" >> $GITHUB_OUTPUT
-            echo "WARNING: $TOTAL destructive operations detected (below threshold)"
+            echo "BLOCKED: $TOTAL destructive operations detected — auto-apply disabled"
           else
             echo "has_destructions=false" >> $GITHUB_OUTPUT
             echo "blocked=false" >> $GITHUB_OUTPUT
@@ -440,12 +436,8 @@ jobs:
             let body = `## :warning: Destructive Operations Detected\n\n`;
             body += `**${count} resource(s)** will be destroyed or replaced.\n\n`;
 
-            if (blocked) {
-              body += `> :no_entry: **Auto-apply is BLOCKED** — destructive operations exceed the safety threshold (>5 resources).\n`;
-              body += `> A manual review and explicit approval is required before applying.\n`;
-            } else {
-              body += `> :eyes: Review the plan carefully before applying.\n`;
-            }
+            body += `> :no_entry: **Auto-apply is BLOCKED** — destructive operations are not allowed via automated apply.\n`;
+            body += `> A manual review and explicit approval is required before applying.\n`;
 
             body += `\n---\n*Automated destructive operation scan*`;
 

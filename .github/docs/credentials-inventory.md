@@ -6,7 +6,7 @@ All secrets referenced by Claude Code GitHub workflows in this repository.
 
 | Secret | Used By | Risk | Purpose |
 |--------|---------|------|---------|
-| `CLAUDE_CODE_OAUTH_TOKEN` | claude.yml, claude-code-review.yml, terraform-plan-review.yml | Medium | OAuth token for Claude Code Action — authenticates AI analysis |
+| `CLAUDE_CODE_OAUTH_TOKEN` | claude-code-assistant.yml, claude-code-review.yml, terraform-plan-review.yml | Medium | OAuth token for Claude Code Action — authenticates AI analysis |
 | `AWS_ACCESS_KEY_ID` | terraform-plan-review.yml | **High** | Static IAM access key for DeployMaster role — used in plan/apply |
 | `AWS_SECRET_ACCESS_KEY` | terraform-plan-review.yml | **High** | Static IAM secret key paired with access key |
 | `AWS_MANAGEMENT_ACCOUNT_ID` | terraform-plan-review.yml | Low | Management account ID for assume-role ARN construction |
