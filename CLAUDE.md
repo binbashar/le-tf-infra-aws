@@ -164,11 +164,11 @@ Within each region, resources are organized into functional layers:
 - **k8s-*** - Kubernetes infrastructure
 - **tools-*** - Operational tools
 
-Directories ending with ` --` suffix (space-dash-dash) are **disabled/optional layers** excluded from active deployment and Atlantis autodiscover.
+Directories ending with a space followed by `--` suffix (e.g., `databases-mysql --`) are **disabled/optional layers** excluded from active deployment and Atlantis autodiscover.
 
 ### File Structure per Layer
 Each layer follows this standardized pattern:
-```
+```text
 layer-name/
 ├── config.tf                    # Provider, backend configuration, and remote state data sources
 ├── common-variables.tf          # Symlinked shared variables (-> ../../../config/common-variables.tf)
@@ -212,7 +212,7 @@ data "terraform_remote_state" "base-network" {
     region  = var.region
     profile = var.profile
     bucket  = var.bucket
-    key     = "{account}/{layer}/terraform.tfstate"
+    key     = "{account}/{layer-path}/terraform.tfstate"
   }
 }
 ```
@@ -249,7 +249,7 @@ Profile naming: `{project}-{account}-devops` (e.g., `bb-shared-devops`, `bb-netw
 
 ### OpenTofu/Terraform State Management
 - Each account has its own S3 backend with DynamoDB locking
-- State files stored per layer: `{account}/{layer}/terraform.tfstate`
+- State files stored per layer: `{account}/{layer-path}/terraform.tfstate`
 - Remote state references enable cross-layer data sharing
 - Force unlock only when necessary: `echo "tofu force-unlock -force <LOCK_ID>" | leverage tf shell`
 
@@ -267,10 +267,10 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 
 ### Version Constraints
 - **OpenTofu**: >= 1.0.9 to ~> 1.6 (varies by layer; primary IaC tool)
-- **AWS Provider**: ~> 5.0 to ~> 5.100 (most modern layers use ~> 5.100)
+- **AWS Provider**: ~> 3.0 to ~> 6.0 (most layers use ~> 5.0 or ~> 4.10)
 - **AWSCC Provider**: ~> 1.0 (used in Bedrock/AI layers under data-science/)
-- **Kubernetes Provider**: ~> 2.37
-- **Helm Provider**: ~> 2.17
+- **Kubernetes Provider**: ~> 2.11 to ~> 2.23
+- **Helm Provider**: ~> 2.11 to ~> 2.13
 
 ### Project Configuration Files
 - **`build.env`** (repo root): `PROJECT=bb`, `TERRAFORM_IMAGE_TAG=1.9.1-tofu-0.3.0` -- configures the Leverage CLI Docker image
