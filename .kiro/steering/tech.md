@@ -30,10 +30,8 @@ leverage aws sso login
 # Initialize makefiles (first time setup)
 make init-makefiles
 
-# Initialize OpenTofu backend (preferred)
+# Initialize OpenTofu backend
 leverage tofu init
-# Or using shorthand
-leverage tf init
 ```
 
 ### Layer Management
@@ -41,22 +39,14 @@ leverage tf init
 # Navigate to specific layer (e.g., security/global/base-identities)
 cd security/global/base-identities
 
-# Initialize layer (use OpenTofu commands)
+# Standard workflow
 leverage tofu init
-leverage tf init  # shorthand version
-
-# Plan changes
 leverage tofu plan
-leverage tf plan  # shorthand version
-
-# Apply changes
 leverage tofu apply
-leverage tf apply  # shorthand version
-
-# Destroy infrastructure
 leverage tofu destroy
-leverage tf destroy  # shorthand version
 ```
+
+> **Note**: `leverage tf` is a shorthand alias for `leverage tofu`. Both run OpenTofu.
 
 ### Secret Management
 ```bash
@@ -79,19 +69,12 @@ make infracost-breakdown
 ```bash
 # Format OpenTofu/Terraform code
 leverage tofu fmt -recursive
-leverage tf fmt -recursive  # shorthand
 
 # Validate configuration
 leverage tofu validate
-leverage tf validate  # shorthand
 
 # Check plan output
 leverage tofu plan -out=tfplan
-leverage tf plan -out=tfplan  # shorthand
-
-# Open shell in container
-leverage tofu shell
-leverage tf shell  # shorthand
 ```
 
 ### Analysis and Dependencies
@@ -107,7 +90,7 @@ python build.py layer_dependency
 
 ### OpenTofu Migration
 - **Primary Tool**: OpenTofu (`leverage tofu`) is now the primary IaC tool
-- **Shorthand Commands**: Use `leverage tf` for shorter commands (maps to OpenTofu)
+- **Shorthand**: `leverage tf` is a shorthand alias for `leverage tofu`
 - **Legacy Support**: Terraform commands still work but OpenTofu is preferred
 - **Container Issues**: If encountering "/bin/tofu: no such file or directory", use shorthand commands
 
@@ -142,12 +125,12 @@ python build.py layer_dependency
 ### Testing & Quality Assurance
 ```bash
 # Linting and validation tools
-leverage tf validate
+leverage tofu validate
 tflint  # Additional linting (when available)
 terrascan  # Security scanning (when available)
 
 # Testing workflows
-leverage tf test  # Module unit tests
+leverage tofu test  # Module unit tests
 ```
 
 ### CI/CD Integration
@@ -159,14 +142,14 @@ leverage tf test  # Module unit tests
 ### Performance & Optimization
 ```bash
 # Targeted operations for efficiency
-leverage tf plan -target=resource.name
-leverage tf apply -target=resource.name
+leverage tofu plan -target=resource.name
+leverage tofu apply -target=resource.name
 
 **Note**: Use -target sparingly; it's intended for exceptional cases and can lead to partial applies and unintended drift if misused.
 
 # State management
-leverage tf state list
-leverage tf state show resource.name
+leverage tofu state list
+leverage tofu state show resource.name
 ```
 
 ### Advanced AWS Services
@@ -189,10 +172,10 @@ leverage tf state show resource.name
 ### Troubleshooting & Debugging
 ```bash
 # State lock issues
-echo "tofu force-unlock -force <LOCK_ID>" | leverage tf shell
+echo "tofu force-unlock -force <LOCK_ID>" | leverage tofu shell
 
 # Container debugging
-leverage tf shell  # Interactive container access
+leverage tofu shell  # Interactive container access
 
 # Dependency analysis
 python build.py layer_dependency

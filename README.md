@@ -70,9 +70,9 @@ leverage --version
 
 3. Follow the standard workflow:
    ```bash
-   leverage tf init
-   leverage tf plan
-   leverage tf apply
+   leverage tofu init
+   leverage tofu plan
+   leverage tofu apply
    ```
 
 4. Repeat for any desired Reference Architecture layer.
@@ -133,17 +133,17 @@ leverage run <task>           # Run a build.py task (e.g., layer_dependency, dec
 
 ### Layer commands (run from a layer directory)
 ```bash
-leverage tf init              # Initialize the layer
-leverage tf plan              # Preview changes
-leverage tf apply             # Apply changes
-leverage tf destroy           # Destroy infrastructure
-leverage tf fmt               # Format code
-leverage tf validate          # Validate configuration
-leverage tf state list        # List resources in state
-leverage tf state show <res>  # Show a specific resource in state
+leverage tofu init              # Initialize the layer
+leverage tofu plan              # Preview changes
+leverage tofu apply             # Apply changes
+leverage tofu destroy           # Destroy infrastructure
+leverage tofu fmt               # Format code
+leverage tofu validate          # Validate configuration
+leverage tofu state list        # List resources in state
+leverage tofu state show <res>  # Show a specific resource in state
 ```
 
-> `leverage tf` is the preferred shorthand for `leverage tofu`. Both run OpenTofu.
+> `leverage tf` is a shorthand alias for `leverage tofu`. Both run OpenTofu.
 
 ## Release Management
 ### [Reference Architecture | Releases](https://github.com/binbashar/le-tf-infra-aws/releases)

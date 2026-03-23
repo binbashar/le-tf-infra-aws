@@ -19,8 +19,9 @@ variable "region_primary" {
 }
 
 variable "regions_allowed" {
-  type        = list(any)
+  type        = list(string)
   description = "List of allowed AWS regions"
+  default     = ["us-east-1", "us-east-2", "us-west-2"]
 }
 
 variable "profile" {
