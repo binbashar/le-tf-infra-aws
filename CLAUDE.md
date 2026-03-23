@@ -38,7 +38,7 @@ This is the **Binbash Leverage Reference Architecture** - a comprehensive OpenTo
 - Use variables and locals for all configurable values; avoid hardcoding
 - Structure files logically: main config, locals, variables, outputs, modules
 - Follow the [Leverage AWS directory structure](https://leverage.binbash.co/user-guide/ref-architecture-aws/dir-structure)
-- Always run `leverage tf fmt` for formatting and `leverage tf validate` for validation
+- Always run `leverage tofu fmt` for formatting and `leverage tofu validate` for validation
 
 ### Module Guidelines
 - **Always prefer Binbash Leverage modules** - Check the [module library](https://github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile) first
@@ -71,7 +71,7 @@ leverage aws sso login
 make init-makefiles
 
 # Initialize OpenTofu for a specific layer (run from layer directory)
-leverage tf init
+leverage tofu init
 ```
 
 ### Development Workflow
@@ -80,13 +80,13 @@ leverage tf init
 cd {account}/{region}/{layer}  # e.g., shared/us-east-1/k8s-eks
 
 # Plan changes (use shorthand 'tf' for OpenTofu)
-leverage tf plan
+leverage tofu plan
 
 # Apply changes
-leverage tf apply
+leverage tofu apply
 
 # Destroy infrastructure
-leverage tf destroy
+leverage tofu destroy
 
 # Cost analysis (from repository root)
 make infracost-breakdown
@@ -101,16 +101,16 @@ leverage run layer_dependency
 ### Testing and Validation
 ```bash
 # Validate configuration
-leverage tf validate
+leverage tofu validate
 
 # Format code (recursive)
-leverage tf fmt -recursive
+leverage tofu fmt -recursive
 
 # Run tests
-leverage tf test
+leverage tofu test
 
 # Open shell in container for debugging
-leverage tf shell
+leverage tofu shell
 ```
 
 ### Secret Management
@@ -125,15 +125,15 @@ leverage run encrypt          # encrypts secrets.dec.tf -> secrets.enc, deletes 
 ### Advanced Operations
 ```bash
 # Targeted operations for efficiency
-leverage tf plan -target=resource.name
-leverage tf apply -target=resource.name
+leverage tofu plan -target=resource.name
+leverage tofu apply -target=resource.name
 
 # State management
-leverage tf state list
-leverage tf state show resource.name
+leverage tofu state list
+leverage tofu state show resource.name
 
 # Force unlock state (use with caution)
-echo "tofu force-unlock -force <LOCK_ID>" | leverage tf shell
+echo "tofu force-unlock -force <LOCK_ID>" | leverage tofu shell
 ```
 
 ## Architecture Overview
@@ -251,7 +251,7 @@ Profile naming: `{project}-{account}-devops` (e.g., `bb-shared-devops`, `bb-netw
 - Each account has its own S3 backend with DynamoDB locking
 - State files stored per layer: `{account}/{layer-path}/terraform.tfstate`
 - Remote state references enable cross-layer data sharing
-- Force unlock only when necessary: `echo "tofu force-unlock -force <LOCK_ID>" | leverage tf shell`
+- Force unlock only when necessary: `echo "tofu force-unlock -force <LOCK_ID>" | leverage tofu shell`
 
 ### Module Sources
 Modules are sourced from GitHub repositories:
@@ -282,7 +282,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 ## Important Development Notes
 
 ### Critical Rules
-1. **Always use Leverage CLI** - Never use direct `tofu` or `terraform` commands, always use `leverage tf` (shorthand for OpenTofu)
+1. **Always use Leverage CLI** - Never use direct `tofu` or `terraform` commands, always use `leverage tofu` (or `leverage tf` shorthand)
 2. **Always work from specific layer directories** - Commands must be run from layer paths, not repository root
 3. **Check layer dependencies** before making changes using `leverage run layer_dependency`
 4. **Respect multi-account boundaries** - Changes in one account may affect others through remote state
@@ -293,13 +293,13 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 7. **Cost awareness** - Run `make infracost-breakdown` before applying significant changes
 8. **Security-first** - Follow AWS Well-Architected Framework and Leverage security guidelines
 9. **Documentation** - Reference official [Leverage Documentation](https://leverage.binbash.co) for guidance
-10. **Testing** - Use `leverage tf test` for module unit tests and integrate with CI/CD
-11. **Code quality** - Always run `leverage tf fmt` and `leverage tf validate` before commits
+10. **Testing** - Use `leverage tofu test` for module unit tests and integrate with CI/CD
+11. **Code quality** - Always run `leverage tofu fmt` and `leverage tofu validate` before commits
 12. **Atlantis integration** - The repository uses Atlantis for automated OpenTofu/Terraform workflows
 
 ### CI / Pre-commit
 - CI job "Test and Lint" runs `make pre-commit` → `pre-commit run --all-files`
-- Includes `terraform_fmt` hook — always run `leverage tf fmt -recursive` before pushing
+- Includes `terraform_fmt` hook — always run `leverage tofu fmt -recursive` before pushing
 - `pretty-format-json` hook sorts keys alphabetically and autofixes — ensure JSON files have sorted keys before pushing
 - **Infracost** workflow for cost impact analysis on PRs
 - Slack notifications on pipeline success/failure
@@ -312,7 +312,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 
 ### Docker Container Issues
 If you encounter errors like "stat /bin/tofu: no such file or directory":
-- Use the shorthand commands: `leverage tf` instead of `leverage tofu`
+- Use `leverage tofu` (or `leverage tf` shorthand) instead of direct `tofu` commands
 - This maps to OpenTofu and avoids container path issues
 
 ### AWS CC Provider Issues
@@ -330,14 +330,14 @@ When working with AWS Cloud Control API resources (awscc_*):
 If encountering state lock errors:
 ```bash
 # Force unlock (use with caution)
-echo "tofu force-unlock -force <LOCK_ID>" | leverage tf shell
+echo "tofu force-unlock -force <LOCK_ID>" | leverage tofu shell
 ```
 
 ### Debugging
 For interactive debugging:
 ```bash
 # Open shell in container
-leverage tf shell
+leverage tofu shell
 ```
 
 ## Documentation Sources

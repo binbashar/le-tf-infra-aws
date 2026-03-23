@@ -19,8 +19,16 @@ variable "region_primary" {
 }
 
 variable "regions_allowed" {
-  type        = list(any)
+  type        = list(string)
   description = "List of allowed AWS regions"
+  default     = ["us-east-1", "us-east-2", "us-west-2"]
+
+  validation {
+    condition = length(var.regions_allowed) > 0 && alltrue([
+      for region in var.regions_allowed : can(regex("^[a-z]{2}-[a-z]+-[0-9]+$", region))
+    ])
+    error_message = "regions_allowed must be a non-empty list of valid AWS region IDs (e.g., us-east-1)."
+  }
 }
 
 variable "profile" {

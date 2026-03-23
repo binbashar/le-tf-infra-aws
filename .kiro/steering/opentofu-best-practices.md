@@ -9,7 +9,7 @@
 - Structure files logically: main config, locals, variables, outputs, modules
 
 ### Leverage CLI Usage
-- **Always use the Leverage CLI** (`leverage tofu <command>` or `leverage tf <command>`) for all OpenTofu operations
+- **Always use the Leverage CLI** (`leverage tofu <command>`) for all OpenTofu operations. `leverage tf` is a shorthand alias.
 - This ensures consistency, automation, and alignment with Leverage best practices
 - Never use direct `tofu` or `terraform` commands - always go through Leverage CLI
 
@@ -42,8 +42,8 @@
   ```
 
 ### Code Quality
-- Always run `leverage tf fmt` for formatting
-- Use `leverage tf validate` for validation
+- Always run `leverage tofu fmt` for formatting
+- Use `leverage tofu validate` for validation
 - Use tools like `tflint` or `terrascan` for linting
 - Lock provider versions for consistency
 - Configure pre-commit hooks to run fmt/validate/lint locally (e.g., `tofu fmt`, `tofu validate`, `tflint`, `terrascan`)
@@ -95,8 +95,8 @@
 
 ### Testing Strategy
 - Integrate with CI/CD (GitHub Actions, [Digger](https://digger.dev))
-- Run `leverage tf plan` in CI to catch issues before apply
-- Use `leverage tf test` for module unit tests
+- Run `leverage tofu plan` in CI to catch issues before apply
+- Use `leverage tofu test` for module unit tests
 - Automate tests for critical infrastructure (network, IAM)
 
 ### Workflow Integration
@@ -130,8 +130,8 @@
 - Document any deviations from Leverage standards in code comments and PRs
 
 ### Quality Gates
-- All code must pass `leverage tf validate`
-- All code must be formatted with `leverage tf fmt`
+- All code must pass `leverage tofu validate`
+- All code must be formatted with `leverage tofu fmt`
 - Security scanning must pass
 - Cost impact must be reviewed with Infracost
 
