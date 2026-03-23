@@ -31,6 +31,7 @@ locals {
     # above and so they start using one key for all machine users.
     # Note: once all existing machine users have been migrated to this new
     # approach, the code will need to be simplified and cleaned up.
-    "machine.atlantis" = "machine.infra"
+    "machine.atlantis"              = "machine.infra"
+    "machine.github.actions.le-cli" = "machine.infra"
   }
 }

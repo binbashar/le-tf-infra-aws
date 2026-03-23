@@ -63,6 +63,7 @@ module "iam_group_deploymaster" {
   group_users = [
     module.machine_user["machine.circle.ci"].iam_user_name,
     module.machine_user["machine.github.actions"].iam_user_name,
+    module.machine_user["machine.github.actions.le-cli"].iam_user_name,
   ]
 
   custom_group_policy_arns = [
