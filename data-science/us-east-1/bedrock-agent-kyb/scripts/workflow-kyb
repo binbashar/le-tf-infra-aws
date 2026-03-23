@@ -1,0 +1,213 @@
+#!/bin/bash
+
+set -euo pipefail
+
+CUSTOMER_ID=""
+PROFILE="binbash"
+REGION="us-east-1"
+API_ENDPOINT="https://qzek5vbxzl.execute-api.us-east-1.amazonaws.com/v1/invoke-agent"
+OUTPUT_BUCKET="bb-data-science-kyb-agent-output-05fb92"
+TIMEOUT_SECONDS=120
+POLL_INTERVAL=5
+
+# Timing Configuration (seconds)
+STEP_DELAY=3                   # Delay between major steps
+SUBSTEP_RETRIEVE_DOCS=2         # Duration for "Retrieving documents" animation
+SUBSTEP_ANALYZE_COMPANY=5       # Duration for "Analyzing company" animation
+SUBSTEP_CHECK_SANCTIONS=5       # Duration for "Checking sanctions" animation
+SUBSTEP_GENERATE_VERDICT=3      # Duration for "Generating verdict" animation
+
+# Colors
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+MAGENTA='\033[0;35m'
+BOLD='\033[1m'
+DIM='\033[2m'
+RESET='\033[0m'
+
+# Progress bar characters
+PROGRESS_EMPTY="░"
+PROGRESS_FILLED="█"
+
+# Spinner frames
+SPINNER_FRAMES=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
+
+show_progress_bar() {
+  local current=$1
+  local total=$2
+  local width=30
+  local percentage=$((current * 100 / total))
+  local filled=$((current * width / total))
+  local empty=$((width - filled))
+
+  printf "\r  ["
+  printf "%${filled}s" | tr ' ' "$PROGRESS_FILLED"
+  printf "%${empty}s" | tr ' ' "$PROGRESS_EMPTY"
+  printf "] ${percentage}%% - Waiting for results..."
+}
+
+animate_step() {
+  local message=$1
+  local duration=${2:-2}
+  local i=0
+
+  for ((n=0; n<duration*10; n++)); do
+    printf "\r  ${CYAN}${SPINNER_FRAMES[$i]}${RESET} ${message}"
+    i=$(( (i + 1) % ${#SPINNER_FRAMES[@]} ))
+    sleep 0.1
+  done
+
+  printf "\r  ${GREEN}✓${RESET} ${message}\n"
+}
+
+show_help() {
+  cat << EOF
+Usage: $0 --customer-id <customer_id>
+
+Invoke the KYB (Know Your Business) agent workflow to analyze customer documents
+and perform compliance checks including sanctions screening.
+
+Options:
+  --customer-id ID    Customer identifier (required)
+  --customer_id ID    Alternative format (underscore)
+  -h, --help         Show this help message
+
+Examples:
+  $0 --customer-id binbash
+  $0 --customer-id acme-corp
+  $0 --customer_id test-customer-123
+
+The workflow will:
+  1. Invoke the Bedrock Agent via API Gateway
+  2. Monitor the processing status
+  3. Display the analysis results when complete
+
+Output includes:
+  - Company information
+  - Tax identification
+  - Sanctions check results
+  - Representatives analysis
+  - Final verdict (APPROVED/REJECTED)
+EOF
+  exit 0
+}
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --customer-id|--customer_id)
+      CUSTOMER_ID="$2"
+      shift 2
+      ;;
+    -h|--help)
+      show_help
+      ;;
+    *)
+      echo "Error: Unknown option $1"
+      echo "Use --help for usage information"
+      exit 1
+      ;;
+  esac
+done
+
+if [ -z "$CUSTOMER_ID" ]; then
+  echo "Error: --customer-id is required"
+  echo ""
+  show_help
+fi
+
+echo ""
+echo -e "${BOLD}╔════════════════════════════════════════╗${RESET}"
+echo -e "${BOLD}║     KYB AGENT ANALYSIS WORKFLOW        ║${RESET}"
+echo -e "${BOLD}╚════════════════════════════════════════╝${RESET}"
+echo ""
+echo -e "  ${DIM}Customer:${RESET}   ${BOLD}${CUSTOMER_ID}${RESET}"
+echo -e "  ${DIM}Region:${RESET}     ${REGION}"
+echo -e "  ${DIM}Endpoint:${RESET}   API Gateway"
+echo ""
+
+echo -e "${MAGENTA}┌─ Step 1/3: Initiating agent invocation${RESET}"
+RESPONSE=$(uv run awscurl --service execute-api \
+  -X POST \
+  -d "{\"customer_id\":\"$CUSTOMER_ID\"}" \
+  -H "Content-Type: application/json" \
+  --profile "$PROFILE" \
+  --region "$REGION" \
+  "$API_ENDPOINT" 2>/dev/null)
+
+STATUS=$(echo "$RESPONSE" | jq -r '.status')
+SESSION_ID=$(echo "$RESPONSE" | jq -r '.session_id')
+AGENT_ID=$(echo "$RESPONSE" | jq -r '.agent_id')
+
+if [ "$STATUS" = "processing" ]; then
+  echo -e "${MAGENTA}│${RESET} Status:      ${GREEN}✓ ACCEPTED${RESET}"
+  echo -e "${MAGENTA}│${RESET} Session ID:  ${DIM}${SESSION_ID}${RESET}"
+  echo -e "${MAGENTA}│${RESET} Agent ID:    ${DIM}${AGENT_ID}${RESET}"
+  echo -e "${MAGENTA}└─${RESET}"
+  echo ""
+else
+  echo "Error: Unexpected response from API"
+  echo "$RESPONSE" | jq '.'
+  exit 1
+fi
+
+sleep $STEP_DELAY
+
+echo -e "${MAGENTA}┌─ Step 2/3: Agent processing workflow${RESET}"
+echo -e "${MAGENTA}│${RESET}"
+animate_step "Retrieving documents from processing bucket" $SUBSTEP_RETRIEVE_DOCS
+animate_step "Analyzing company information" $SUBSTEP_ANALYZE_COMPANY
+animate_step "Checking sanctions and compliance" $SUBSTEP_CHECK_SANCTIONS
+animate_step "Generating final verdict" $SUBSTEP_GENERATE_VERDICT
+echo -e "${MAGENTA}└─${RESET}"
+echo ""
+
+echo -e "${MAGENTA}┌─ Step 3/3: Monitoring for results${RESET}"
+echo -e "${MAGENTA}│${RESET}"
+
+ELAPSED=0
+OUTPUT_PATH="s3://${OUTPUT_BUCKET}/${CUSTOMER_ID}/"
+
+while [ $ELAPSED -lt $TIMEOUT_SECONDS ]; do
+  RECENT_FILES=$(aws s3 ls "$OUTPUT_PATH" --recursive --profile "$PROFILE" --region "$REGION" 2>/dev/null | \
+    awk '{if (NF >= 4) print $4}' | \
+    grep -E '\.json$' || true)
+
+  if [ -n "$RECENT_FILES" ]; then
+    show_progress_bar $TIMEOUT_SECONDS $TIMEOUT_SECONDS
+    sleep 0.5
+    printf "\r"
+    echo -e "${MAGENTA}│${RESET} ${GREEN}✓ Results ready!${RESET}"
+    echo -e "${MAGENTA}└─${RESET}"
+    echo ""
+
+    LATEST_FILE=$(echo "$RECENT_FILES" | tail -n 1)
+
+    aws s3 cp "s3://${OUTPUT_BUCKET}/${LATEST_FILE}" output.json --profile "$PROFILE" --region "$REGION" &>/dev/null
+
+    echo -e "${GREEN}╔════════════════════════════════════════╗${RESET}"
+    echo -e "${GREEN}║        WORKFLOW COMPLETED              ║${RESET}"
+    echo -e "${GREEN}╚════════════════════════════════════════╝${RESET}"
+    echo ""
+    echo -e "  Execute ${BOLD}open output.json${RESET} to visualize verdict"
+    echo ""
+    exit 0
+  fi
+
+  show_progress_bar $ELAPSED $TIMEOUT_SECONDS
+  sleep $POLL_INTERVAL
+  ELAPSED=$((ELAPSED + POLL_INTERVAL))
+done
+
+printf "\r"
+echo -e "${MAGENTA}│${RESET} ${YELLOW}⚠ Timeout (${TIMEOUT_SECONDS}s)${RESET}"
+echo -e "${MAGENTA}└─${RESET}"
+echo ""
+echo -e "${YELLOW}The agent may still be processing. Check manually:${RESET}"
+echo -e "  ${DIM}aws s3 ls $OUTPUT_PATH --recursive --profile $PROFILE${RESET}"
+echo ""
+echo -e "${YELLOW}Or check CloudWatch logs:${RESET}"
+echo -e "  ${DIM}leverage aws logs tail /aws/lambda/bb-data-science-kyb-agent-invoker --since 5m${RESET}"
+echo ""
+exit 1

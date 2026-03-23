@@ -1,0 +1,31 @@
+locals {
+  tags = {
+    Terraform   = "true"
+    Environment = var.environment
+    Purpose     = "bedrock-kyb-agent"
+    Layer       = "bedrock-kyb-agent"
+    Service     = "bedrock-data-automation-agent"
+  }
+
+  name_prefix = lower(replace("${var.project}-${var.environment}-kyb-agent", "_", "-")) # e.g. bb-prod-kyb-agent
+
+  unique_suffix = substr(md5("${local.name_prefix}-${data.aws_caller_identity.current.account_id}"), 0, 6) # e.g. 123456
+
+  input_bucket_name      = substr("${local.name_prefix}-input-${local.unique_suffix}", 0, 63)      # e.g. bb-prod-kyb-agent-input-123456
+  processing_bucket_name = substr("${local.name_prefix}-processing-${local.unique_suffix}", 0, 63) # e.g. bb-prod-kyb-agent-processing-123456
+  output_bucket_name     = substr("${local.name_prefix}-output-${local.unique_suffix}", 0, 63)     # e.g. bb-prod-kyb-agent-output-123456
+
+  bda_invoker_name     = "${var.project}-${var.environment}-kyb-agent-bda-invoker"
+  agent_invoker_name   = "${var.project}-${var.environment}-kyb-agent-invoker"
+  get_documents_name   = "${var.project}-${var.environment}-kyb-agent-get-docs"
+  save_document_name   = "${var.project}-${var.environment}-kyb-agent-save-doc"
+  check_sanctions_name = "${var.project}-${var.environment}-kyb-agent-check-sanctions"
+
+  bda_project_name = "${var.project}-${var.environment}-kyb-agent-bda"
+  agent_name       = "${var.project}-${var.environment}-kyb-agent"
+
+  input_rule_name      = "${var.project}-${var.environment}-kyb-agent-input-trigger"
+  processing_rule_name = "${var.project}-${var.environment}-kyb-agent-processing-trigger"
+
+  bda_profile_arn = "arn:aws:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:data-automation-profile/us.data-automation-v1"
+}

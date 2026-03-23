@@ -1,0 +1,15 @@
+{
+  "actionGroup": "CheckSanctions",
+  "apiPath": "/sanctions",
+  "httpMethod": "GET",
+  "messageVersion": "1.0",
+  "parameters": [
+    {
+      "name": "document_id",
+      "value": "12345678A"
+    }
+  ],
+  "sessionAttributes": {
+    "customer_id": "test-customer-123"
+  }
+}
