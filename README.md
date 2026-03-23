@@ -11,44 +11,82 @@
 # Leverage Reference Architecture: OpenTofu/Terraform AWS Infrastructure
 
 ## Overview
-This repository contains all OpenTofu/Terraform configuration files used to create Binbash Leverage Reference AWS Cloud
-Solutions Architecture.
+This repository contains all OpenTofu/Terraform configuration files used to create the Binbash Leverage Reference AWS Cloud Solutions Architecture.
 
 ## Documentation
-Check out the [Binbash Leverage Reference Architecture Official Documentation](https://leverage.binbash.com.ar).
+- [Binbash Leverage Reference Architecture Official Documentation](https://leverage.binbash.co)
+- [Leverage CLI](https://github.com/binbashar/leverage) ([PyPI](https://pypi.org/project/leverage/))
+- [Binbash Module Library](https://github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile)
 
 ---
 
 ## Getting Started
 
-In order to get the full automated potential of the
-[Binbash Leverage DevOps Automation Code Library](https://leverage.binbash.co/user-guide/infra-as-code-library/overview)  
-you should follow the steps below:
+### Prerequisites
+- [Leverage CLI](https://leverage.binbash.co/user-guide/leverage-cli/installation/) (v2.2.0+)
+- [OpenTofu](https://opentofu.org/docs/intro/install/) (>= 1.6)
+- AWS SSO access configured for the target accounts
+- [uv](https://docs.astral.sh/uv/) (recommended for Python/Leverage CLI management)
 
-1. [Install](https://leverage.binbash.co/user-guide/leverage-cli/installation/) and use the `leverage cli`
-2. Update your [configuration files](https://leverage.binbash.co/user-guide/ref-architecture-aws/configuration/#configuration-files)
-3. Review and assure you meet all the OpenTofu/Terraform AWS pre-requisites
-   1. AWS Credentials (Including your MFA setup)
-      1. Run `leverage aws sso login` to setup the credentials.
-    2. [Initialize your accounts OpenTofu/Terraform State Backend](https://leverage.binbash.co/user-guide/ref-architecture-aws/tf-state/)
+### Installation
 
-4. Follow the [standard `leverage cli` workflow](https://leverage.binbash.co/user-guide/ref-architecture-aws/workflow/)
-    1. Get into the folder that you need to work with (e.g. [`/security/global/base-identities`](https://github.com/binbashar/le-tf-infra-aws/tree/master/security/global/base-identities) )
-    2. Run `leverage tf init`
-    3. Make whatever changes you need to make
-    4. Run `leverage tf plan` (if you only mean to preview those changes)
-    5. Run `leverage tf apply` (if you want to review and likely apply those changes)
-    6. Repeat for any desired Reference Architecture layer
+#### Option A: Install via pip (stable)
+```bash
+pip install leverage
+```
 
-### Consideration
+#### Option B: Install via uv (recommended for local development)
+[uv](https://docs.astral.sh/uv/) provides fast, reproducible Python environments without conflicting with system packages.
 
-The `backend.tfvars` will inject the profile name with the necessary permissions that OpenTofu/Terraform will
-use to make changes on AWS.
-* Such profile is usually one that relies on another profile to assume a role to get access to
-  each corresponding account [( AWS IAM: users, groups, roles & policies )](https://leverage.binbash.co/user-guide/ref-architecture-aws/features/identities/identities/)
-* Read the following [AWS page doc](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html)
-  to understand how to set up a profile to assume a role
+```bash
+# Create a Python 3.12 virtual environment
+uv venv --python 3.12 .venv
 
+# Install the latest Leverage CLI release (or a specific version/pre-release)
+uv pip install leverage
+# For pre-release/release candidates:
+# uv pip install --pre leverage==2.2.0rc5
+
+# Activate the environment
+source .venv/bin/activate
+
+# Verify
+leverage --version
+```
+
+> **Note**: Leverage CLI v2.2.0+ runs OpenTofu natively (no Docker required). You need the `tofu` binary installed locally (e.g., `brew install opentofu` on macOS).
+
+### Setup and Workflow
+
+1. Authenticate with AWS SSO:
+   ```bash
+   leverage aws sso login
+   ```
+
+2. Navigate to the layer you want to work with:
+   ```bash
+   cd {account}/{region}/{layer}  # e.g., security/global/base-identities
+   ```
+
+3. Follow the standard workflow:
+   ```bash
+   leverage tf init
+   leverage tf plan
+   leverage tf apply
+   ```
+
+4. Repeat for any desired Reference Architecture layer.
+
+### How it works
+
+The `backend.tfvars` injects the AWS profile name with the necessary permissions that OpenTofu uses to make changes on AWS. This profile relies on AWS SSO to assume a cross-account role for each corresponding account ([AWS IAM: users, groups, roles & policies](https://leverage.binbash.co/user-guide/ref-architecture-aws/features/identities/identities/)).
+
+Configuration files are automatically loaded by the Leverage CLI:
+- `config/common.tfvars` - Project-wide variables (project name, account IDs, SSO config)
+- `{account}/config/account.tfvars` - Account-specific variables (environment, SSO role)
+- `{account}/config/backend.tfvars` - Backend configuration (S3 bucket, profile, DynamoDB table)
+
+For more details, see the [configuration files documentation](https://leverage.binbash.co/user-guide/ref-architecture-aws/configuration/#configuration-files) and the [standard workflow](https://leverage.binbash.co/user-guide/ref-architecture-aws/workflow/).
 
 ## AI Development Configs
 
@@ -66,7 +104,8 @@ This repository includes pre-configured settings for AI-powered development tool
 
 - **[Claude Code](CLAUDE.md)** - Anthropic's AI coding assistant
   - [`CLAUDE.md`](CLAUDE.md) - Project instructions and context for Claude
-  - [`.mcp.json`](.mcp.json) - Root-level MCP server configurations
+  - [`.claude/agents/`](.claude/agents/) - Specialized agent definitions (architect, security, terraform-layer, etc.)
+  - [`.mcp.json`](.mcp.json) - Root-level MCP server configurations (AWS Core, AWS Documentation, Terraform)
 
 ### Usage
 
@@ -82,62 +121,29 @@ These configurations are automatically loaded when you open the project in the r
 - [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
 - [MCP Protocol Specification](https://modelcontextprotocol.io/)
 
-## Project-wide Leverage CLI commands
-```shell
-╭─    ~/ref-architecture/le-tf-infra-aws  on   master · ✔  at 12:13:36 
-╰─ leverage
+## Leverage CLI Reference
 
-Usage: leverage [OPTIONS] COMMAND [ARGS]...
-
-  Leverage Reference Architecture projects command-line tool.
-
-Options:
-  -f, --filename TEXT  Name of the build file containing the tasks
-                       definitions.  [default: build.py]
-  -l, --list-tasks     List available tasks to run.
-  -v, --verbose        Increase output verbosity.
-  --version            Show the version and exit.
-  -h, --help           Show this message and exit.
-
-Commands:
-  credentials  Manage AWS CLI credentials.
-  project      Manage a Leverage project.
-  run          Perform specified task(s) and all of its dependencies.
-  terraform    Run Terraform commands through the Leverage CLI
-  tofu         Run OpenTofu commands through the Leverage CLI
-  tf           Short form of the "tofu" command
+### Project-wide commands
+```bash
+leverage --help               # Show all commands
+leverage --version            # Show version
+leverage aws sso login        # Authenticate with AWS SSO
+leverage run <task>           # Run a build.py task (e.g., layer_dependency, decrypt, encrypt)
 ```
 
-## Layer-wide Leverage CLI OpenTofu commands
-```shell
-╭─    ~/ref-architecture/le-tf-infra-aws  on   master · ✔  at 12:13:36 
-╰─ leverage tofu
-Usage: leverage tofu [OPTIONS] COMMAND [ARGS]...
-
-  Run OpenTofu commands through the Leverage CLI in order to obtain
-  additional functionality such as automatic AWS credentials injection or
-  config files autoloading.
-  All OpenTofu subcommands and their flags/arguments will be passed on to
-  the OpenTofu binary. For example the following:
-    - leverage tf init -reconfigure
-    - leverage tofu apply -auto-approve
-
-Options:
-  -h, --help  Show this message and exit.
-
-Commands:
-  apply     Build or change the infrastructure in this layer.
-  aws       Run a command in AWS cli.
-  destroy   Destroy infrastructure in this layer.
-  format    Check if all files meet the canonical format and rewrite them...
-  import    Import a resource.
-  init      Initialize this layer.
-  output    Show all output variables of this layer.
-  plan      Generate an execution plan for this layer.
-  shell     Open a shell into the Leverage toolbox container in this layer (deprecated).
-  validate  Validate code of the current directory.
-  version   Print version.
+### Layer commands (run from a layer directory)
+```bash
+leverage tf init              # Initialize the layer
+leverage tf plan              # Preview changes
+leverage tf apply             # Apply changes
+leverage tf destroy           # Destroy infrastructure
+leverage tf fmt               # Format code
+leverage tf validate          # Validate configuration
+leverage tf state list        # List resources in state
+leverage tf state show <res>  # Show a specific resource in state
 ```
 
-# Release Management
-## [**Reference Architecture | Releases**](https://github.com/binbashar/le-tf-infra-aws/releases)
+> `leverage tf` is the preferred shorthand for `leverage tofu`. Both run OpenTofu.
+
+## Release Management
+### [Reference Architecture | Releases](https://github.com/binbashar/le-tf-infra-aws/releases)
