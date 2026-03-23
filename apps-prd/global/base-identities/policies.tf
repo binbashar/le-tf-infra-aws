@@ -139,29 +139,29 @@ resource "aws_iam_policy" "deploy_master_access" {
         {
             "Effect": "Allow",
             "Action": [
+                "bedrock:Converse",
+                "bedrock:InvokeModel",
                 "budgets:*",
                 "cloudfront:*",
                 "cloudtrail:*",
                 "cloudwatch:*",
                 "config:*",
-                "ecr:*",
-                "elasticloadbalancing:*",
-                "iam:*",
                 "dynamodb:*",
                 "ec2:*",
                 "ecr:*",
+                "elasticloadbalancing:*",
                 "iam:*",
                 "logs:*",
                 "route53:*",
                 "route53domains:*",
                 "s3:*",
                 "sns:*",
-                "ssm:*",
                 "sqs:*",
+                "ssm:*",
                 "vpc:*",
                 "waf:*",
-                "wafv2:*",
-                "waf-regional:*"
+                "waf-regional:*",
+                "wafv2:*"
             ],
             "Resource": [
                 "*"
