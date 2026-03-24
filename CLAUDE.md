@@ -60,6 +60,12 @@ This is the **Binbash Leverage Reference Architecture** - a comprehensive OpenTo
 - Keep commit messages professional and focused on the technical changes
 - Never commit `tfplan` binary files or test PDF/binary documents
 
+### Sensitive Information in PRs and Comments
+- **Never expose AWS account IDs** in PR descriptions, comments, or plan outputs — replace with `<ACCOUNT_NAME_ACCOUNT_ID>` (e.g., `<SECURITY_ACCOUNT_ID>`)
+- **Never expose AWS access key IDs or secrets** — replace entirely with `***`
+- **Obfuscate PGP keys, ARNs with account IDs, and any IAM credential identifiers** before posting plan outputs
+- When posting `leverage tofu plan` output to PRs, always review and redact sensitive values before sharing
+
 ## Essential Commands
 
 ### Authentication and Setup
