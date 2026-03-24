@@ -140,7 +140,11 @@ resource "aws_iam_policy" "deploy_master_access" {
             "Effect": "Allow",
             "Action": [
                 "bedrock:Converse",
+                "bedrock:GetFoundationModel",
                 "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream",
+                "bedrock:ListFoundationModels",
+                "bedrock:ListInferenceProfiles",
                 "budgets:*",
                 "cloudfront:*",
                 "cloudtrail:*",
