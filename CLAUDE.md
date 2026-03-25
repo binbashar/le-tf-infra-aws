@@ -68,9 +68,15 @@ This is the **Binbash Leverage Reference Architecture** - a comprehensive OpenTo
 
 ## Essential Commands
 
+### Leverage CLI via uv
+The `leverage` CLI is installed in a local venv managed by [uv](https://docs.astral.sh/uv/). The binary lives at `.venv/bin/leverage` in the repo root. Since the venv may not be activated in Claude Code's shell, always invoke leverage using its full path:
+```bash
+.venv/bin/leverage <command>
+```
+
 ### Authentication and Setup
 ```bash
-# Authenticate with AWS SSO
+# Authenticate with AWS SSO (interactive — requires browser, user must run manually)
 leverage aws sso login
 
 # Initialize makefiles (first time setup)

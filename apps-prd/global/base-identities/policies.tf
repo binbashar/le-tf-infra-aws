@@ -179,6 +179,16 @@ resource "aws_iam_policy" "deploy_master_access" {
                     ]
                 }
             }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "aws-marketplace:Subscribe",
+                "aws-marketplace:ViewSubscriptions"
+            ],
+            "Resource": [
+                "*"
+            ]
         }
     ]
 }
