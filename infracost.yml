@@ -492,6 +492,11 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
+  - path: "apps-prd/us-east-1/app-ai-lab"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
   - path: "apps-prd/us-east-1/notifications"
     terraform_var_files:
       - "../../../config/common.tfvars"
