@@ -159,6 +159,8 @@ resource "aws_iam_policy" "deploy_master_access" {
                 "route53:*",
                 "route53domains:*",
                 "s3:*",
+                "ses:SendEmail",
+                "ses:SendRawEmail",
                 "sns:*",
                 "sqs:*",
                 "ssm:*",
