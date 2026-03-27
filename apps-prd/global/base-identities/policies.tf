@@ -159,8 +159,6 @@ resource "aws_iam_policy" "deploy_master_access" {
                 "route53:*",
                 "route53domains:*",
                 "s3:*",
-                "ses:SendEmail",
-                "ses:SendRawEmail",
                 "sns:*",
                 "sqs:*",
                 "ssm:*",
@@ -179,6 +177,20 @@ resource "aws_iam_policy" "deploy_master_access" {
                         "us-east-2",
                         "us-west-2"
                     ]
+                }
+            }
+        },
+        {
+            "Sid": "AllowSESForAILab",
+            "Effect": "Allow",
+            "Action": [
+                "ses:SendEmail",
+                "ses:SendRawEmail"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "ses:FromAddress": "noreply@binbash.co"
                 }
             }
         },
