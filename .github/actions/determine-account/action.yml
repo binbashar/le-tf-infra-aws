@@ -1,0 +1,50 @@
+name: "Determine AWS Account"
+description: "Map layer path to AWS account name, secret variable name, and profile"
+
+inputs:
+  layer_path:
+    description: "Terraform layer path (e.g. apps-devstg/us-east-1/base-network)"
+    required: true
+
+outputs:
+  account:
+    description: "AWS account name"
+    value: ${{ steps.map.outputs.account }}
+  secret_name:
+    description: "Secret variable name suffix"
+    value: ${{ steps.map.outputs.secret_name }}
+  profile:
+    description: "AWS CLI profile name"
+    value: ${{ steps.map.outputs.profile }}
+
+runs:
+  using: composite
+  steps:
+    - name: Map layer to account
+      id: map
+      shell: bash
+      run: |
+        # Extract account from layer path (first directory)
+        ACCOUNT=$(echo "${{ inputs.layer_path }}" | cut -d'/' -f1)
+        echo "Detected account: $ACCOUNT"
+
+        # Map account name to secret variable name
+        case $ACCOUNT in
+          apps-devstg)  SECRET_NAME="DEVSTG" ;;
+          apps-prd)     SECRET_NAME="PRD" ;;
+          network)      SECRET_NAME="NETWORK" ;;
+          security)     SECRET_NAME="SECURITY" ;;
+          shared)       SECRET_NAME="SHARED" ;;
+          management)   SECRET_NAME="MANAGEMENT" ;;
+          data-science) SECRET_NAME="DATA_SCIENCE" ;;
+          *)
+            echo "Unknown account: $ACCOUNT"
+            exit 1
+            ;;
+        esac
+
+        echo "account=$ACCOUNT" >> $GITHUB_OUTPUT
+        echo "secret_name=$SECRET_NAME" >> $GITHUB_OUTPUT
+        echo "profile=bb-${ACCOUNT}-devops" >> $GITHUB_OUTPUT
+
+        echo "Account: $ACCOUNT | Secret: AWS_${SECRET_NAME}_ACCOUNT_ID | Profile: bb-${ACCOUNT}-devops"
