@@ -40,6 +40,34 @@ module "apps_devstg_ecs_cluster" {
       cpu    = service_values.cpu
       memory = service_values.memory
 
+      # Ephemeral storage configuration (Fargate task-level storage)
+      # Default is 20 GiB if not specified, can be increased up to 200 GiB
+      # Module expects an object with size_in_gib field
+      ephemeral_storage = try(service_values.ephemeral_storage_size_in_gib, null) != null ? {
+        size_in_gib = service_values.ephemeral_storage_size_in_gib
+      } : null
+
+      # Volumes configuration
+      # tmpfs: Only name required (Fargate auto-provisions in-memory storage)
+      # EFS: Requires efs_volume_configuration with file_system_id
+      volume = try(service_values.volumes, null) != null ? {
+        for volume_name, volume_config in service_values.volumes :
+        volume_name => {
+          name                                         = volume_name
+          configure_at_launch                          = null
+          docker_volume_configuration                  = null
+          host_path                                    = null
+          fsx_windows_file_server_volume_configuration = null
+          efs_volume_configuration = volume_config.type == "efs" ? {
+            file_system_id          = volume_config.file_system_id
+            root_directory          = null
+            transit_encryption      = null
+            transit_encryption_port = null
+            authorization_config    = null
+          } : null
+        }
+      } : null
+
       # Deployment configuration
       deployment_configuration = {
         strategy             = var.ecs_deployment_type
@@ -65,11 +93,24 @@ module "apps_devstg_ecs_cluster" {
           # Container image
           image = "${container_values.image}:${container_values.version}"
 
+          # Filesystem access control
+          # Set to false to allow container to write to filesystem (default)
+          # Set to true for read-only filesystem (security best practice for stateless containers)
+          readonlyRootFilesystem = try(container_values.readonlyRootFilesystem, false)
+
           # Environment variables
           environment = [for env_var, env_value in try(container_values.environment, {}) :
             {
               name  = env_var,
               value = env_value
+            }
+          ]
+
+          # Secrets from AWS Secrets Manager or SSM Parameter Store
+          secrets = [for secret_name, secret_arn in try(container_values.secrets, {}) :
+            {
+              name      = secret_name,
+              valueFrom = secret_arn
             }
           ]
 
@@ -81,6 +122,15 @@ module "apps_devstg_ecs_cluster" {
               protocol      = "tcp"
             }
           ]
+
+          # Mount points for volumes
+          mountPoints = try(container_values.mount_points, null) != null ? [
+            for mount_name, mount_config in container_values.mount_points : {
+              sourceVolume  = mount_config.source_volume
+              containerPath = mount_config.container_path
+              readOnly      = mount_config.read_only
+            }
+          ] : []
 
           # Entrypoint
           entrypoint = try(container_values.entrypoint, [])
@@ -97,6 +147,11 @@ module "apps_devstg_ecs_cluster" {
       tasks_iam_role_name = "${service_name}-ecr-task"
       # Service IAM Roles and policies
       task_exec_iam_role_name = "${service_name}-ecr-exec"
+
+      # Task execution role policies for Secrets Manager access
+      task_exec_iam_role_policies = {
+        secrets_manager = aws_iam_policy.ecs_secrets_access.arn
+      }
 
       # Target group assignment - conditional based on deployment type
       load_balancer = {

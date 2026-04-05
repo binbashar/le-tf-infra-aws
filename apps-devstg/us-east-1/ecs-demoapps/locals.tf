@@ -19,7 +19,7 @@ locals {
   parameter_paths = { for item in local.container_parameters : item.key => item.path }
 
   # Use routing from variable
-  target_groups = merge(flatten([for service, tasks in var.routing : [tasks]])...)
+  target_groups = merge(values(var.routing)...)
 
   # All possible listeners defined
   all_listeners = {

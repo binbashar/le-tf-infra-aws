@@ -18,15 +18,27 @@ variable "ecs_deployment_type" {
 variable "service_definitions" {
   description = "ECS service and container definitions. Image versions are dynamically sourced from SSM parameters."
   type = map(object({
-    cpu    = number
-    memory = number
+    cpu                           = number
+    memory                        = number
+    ephemeral_storage_size_in_gib = optional(number) # Optional: only set if > 20 GiB needed (range: 21-200 GiB)
+    volumes = optional(map(object({
+      type           = string
+      file_system_id = optional(string) # Required for EFS volumes
+    })), {})
     containers = map(object({
-      image       = string
-      cpu         = number
-      memory      = number
-      environment = optional(map(string), {})
-      ports       = optional(map(number), {})
-      entrypoint  = optional(list(string), [])
+      image                  = string
+      cpu                    = number
+      memory                 = number
+      readonlyRootFilesystem = optional(bool, false) # Allow writable filesystem by default
+      environment            = optional(map(string), {})
+      secrets                = optional(map(string), {}) # Map of secret name to Secrets Manager ARN or SSM Parameter ARN
+      ports                  = optional(map(number), {})
+      entrypoint             = optional(list(string), [])
+      mount_points = optional(map(object({
+        source_volume  = string
+        container_path = string
+        read_only      = bool
+      })), {})
       dependencies = optional(list(object({
         containerName = string
         condition     = string
@@ -138,6 +150,7 @@ variable "routing" {
     protocol_version = optional(string, "HTTP1")
     health_check = optional(object({
       matcher = optional(string)
+      path    = optional(string)
     }), {})
   })))
 

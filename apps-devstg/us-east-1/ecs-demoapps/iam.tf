@@ -30,3 +30,69 @@ resource "aws_iam_role_policy_attachment" "ecs_blue_green" {
   role       = aws_iam_role.ecs_blue_green[0].name
   policy_arn = "arn:aws:iam::aws:policy/AmazonECSInfrastructureRolePolicyForLoadBalancers"
 }
+
+#
+# IAM Policy for ECS Task Execution Role to Access Secrets Manager
+# This policy is attached to the task execution role created by the ECS module
+#
+data "aws_iam_policy_document" "ecs_secrets_access" {
+  statement {
+    sid    = "AllowSecretsManagerAccess"
+    effect = "Allow"
+
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret"
+    ]
+
+    resources = [
+      "arn:aws:secretsmanager:${var.region}:${data.aws_caller_identity.current.account_id}:secret:/ecs/${local.environment}/*"
+    ]
+  }
+
+  statement {
+    sid    = "AllowSSMParameterAccess"
+    effect = "Allow"
+
+    actions = [
+      "ssm:GetParameters",
+      "ssm:GetParameter"
+    ]
+
+    resources = [
+      "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/ecs/${local.environment}/*"
+    ]
+  }
+
+  statement {
+    sid    = "AllowKMSDecrypt"
+    effect = "Allow"
+
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey"
+    ]
+
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values = [
+        "secretsmanager.${var.region}.amazonaws.com",
+        "ssm.${var.region}.amazonaws.com"
+      ]
+    }
+  }
+}
+
+resource "aws_iam_policy" "ecs_secrets_access" {
+  name        = "${local.name}-ecs-secrets-access"
+  description = "Allow ECS task execution role to access Secrets Manager and SSM parameters"
+  policy      = data.aws_iam_policy_document.ecs_secrets_access.json
+
+  tags = local.tags
+}
+
+# Data source to get current AWS account ID
+data "aws_caller_identity" "current" {}

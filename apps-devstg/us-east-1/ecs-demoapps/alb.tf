@@ -19,33 +19,61 @@ module "apps_devstg_alb_ecs_demoapps" {
   security_group_description = "Apps-devstg ECS Demoapps cluster load balancer"
 
   security_group_ingress_rules = {
-    http = {
+    http_shared = {
       from_port   = 80
       to_port     = 80
       ip_protocol = "tcp"
       cidr_ipv4   = data.terraform_remote_state.shared-vpc.outputs.vpc_cidr_block
       description = "Allow HTTP from Shared VPC"
     }
-    https = {
+    http_apps = {
+      from_port   = 80
+      to_port     = 80
+      ip_protocol = "tcp"
+      cidr_ipv4   = data.terraform_remote_state.vpc.outputs.vpc_cidr_block
+      description = "Allow HTTP from Apps VPC"
+    }
+    https_shared = {
       from_port   = 443
       to_port     = 443
       ip_protocol = "tcp"
       cidr_ipv4   = data.terraform_remote_state.shared-vpc.outputs.vpc_cidr_block
       description = "Allow HTTPS from Shared VPC"
     }
-    alt_http = {
+    https_apps = {
+      from_port   = 443
+      to_port     = 443
+      ip_protocol = "tcp"
+      cidr_ipv4   = data.terraform_remote_state.vpc.outputs.vpc_cidr_block
+      description = "Allow HTTPS from Apps VPC"
+    }
+    alt_http_shared = {
       from_port   = 8080
       to_port     = 8080
       ip_protocol = "tcp"
       cidr_ipv4   = data.terraform_remote_state.shared-vpc.outputs.vpc_cidr_block
       description = "Allow test HTTP from Shared VPC (blue-green)"
     }
-    alt_https = {
+    alt_http_apps = {
+      from_port   = 8080
+      to_port     = 8080
+      ip_protocol = "tcp"
+      cidr_ipv4   = data.terraform_remote_state.vpc.outputs.vpc_cidr_block
+      description = "Allow test HTTP from Apps VPC (blue-green)"
+    }
+    alt_https_shared = {
       from_port   = 8443
       to_port     = 8443
       ip_protocol = "tcp"
       cidr_ipv4   = data.terraform_remote_state.shared-vpc.outputs.vpc_cidr_block
       description = "Allow test HTTPS from Shared VPC (blue-green)"
+    }
+    alt_https_apps = {
+      from_port   = 8443
+      to_port     = 8443
+      ip_protocol = "tcp"
+      cidr_ipv4   = data.terraform_remote_state.vpc.outputs.vpc_cidr_block
+      description = "Allow test HTTPS from Apps VPC (blue-green)"
     }
   }
 
@@ -76,6 +104,7 @@ module "apps_devstg_alb_ecs_demoapps" {
           unhealthy_threshold = 10
           protocol            = "HTTP"
           matcher             = try(target_values.health_check.matcher, null)
+          path                = try(target_values.health_check.path, "/")
         }
         # ECS handles the attachment
         create_attachment = false
@@ -98,6 +127,7 @@ module "apps_devstg_alb_ecs_demoapps" {
           unhealthy_threshold = 10
           protocol            = "HTTP"
           matcher             = try(target_values.health_check.matcher, null)
+          path                = try(target_values.health_check.path, "/")
         }
         # ECS handles the attachment
         create_attachment = false

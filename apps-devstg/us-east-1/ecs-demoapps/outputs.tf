@@ -26,6 +26,23 @@ output "alb_listeners" {
   value       = module.apps_devstg_alb_ecs_demoapps.listeners
 }
 
+output "alb_https_listener_arn" {
+  description = "ARN of the HTTPS listener"
+  value       = module.apps_devstg_alb_ecs_demoapps.listeners["https"].arn
+}
+
+output "target_groups" {
+  description = "Target group configuration for API Gateway routing"
+  value = {
+    for target_name, target_config in local.target_groups :
+    target_name => {
+      arn      = module.apps_devstg_alb_ecs_demoapps.target_groups[target_name].arn
+      dns_name = "${target_config.subdomain}.${local.base_domain}"
+      port     = target_config.port
+    }
+  }
+}
+
 #
 # ECS Cluster Outputs
 #
