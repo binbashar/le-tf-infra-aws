@@ -81,6 +81,10 @@ If you need to add more accounts, you will need to add the corresponding ARN to 
 
 Take into account that you may need to have the assumable role `LambdaCostsExplorerAccess` created on all accounts you want to generate the cost reports for, adding as a trusted entity the account where you are deploying the solution, in this case the `shared` account.
 
+## Testing
+
+For detailed testing instructions, CloudWatch alarm verification, and troubleshooting guidance, see [TESTING.md](TESTING.md).
+
 # Analysis of the Python code
 
 The AWS Cost Summary Report Script is a Python script designed to generate monthly cost reports for multiple AWS accounts. It retrieves cost and usage data from AWS Cost Explorer, calculates cost variations, and generates an HTML report that is emailed to specified recipients using Amazon SES.
@@ -89,11 +93,17 @@ The AWS Cost Summary Report Script is a Python script designed to generate month
 
 - **Multi-Account Support**: The script supports processing cost data for multiple AWS accounts, allowing you to consolidate cost information from various accounts into a single report.
 
+- **Auto-Discovery of AWS Accounts**: Optionally discover and process all active accounts in your AWS Organization automatically, eliminating the need to manually configure account lists.
+
+- **Flexible Account Configuration**: Choose between manual account configuration or automatic discovery with optional account exclusions.
+
 - **Cost Calculation**: It retrieves cost data from AWS Cost Explorer, including unblended costs, and groups the costs by service to provide a detailed breakdown.
 
 - **Cost Variation**: The script calculates variations in costs for each service compared to the previous month. It highlights cost variations in the report.
 
-- **Custom Tag Support**: The script can filter costs based on custom tags. For example, it can calculate costs associated with the 'perception-ml' tag and display them separately.
+- **Custom Tag Support**: The script can filter costs based on custom tags (up to 3 tags) and display tag-specific costs in separate columns.
+
+- **Robust Error Handling**: Improved error handling with detailed logging. Failed accounts are reported in the email with a warning notice while successfully processed accounts are still included in the report.
 
 - **Email Notifications**: The generated report is sent via email using Amazon SES to specified recipients.
 
@@ -105,11 +115,48 @@ Before using this script, you need to set up the following:
 
 2. **Environment Variables**: Set the necessary environment variables:
 
-   - `ACCOUNTS`: A JSON string containing information about the AWS accounts to process.
-   - `SENDER`: The sender's email address for SES.
+   - `ACCOUNTS`: A JSON string containing information about the AWS accounts to process. Example:
+     ```json
+     {
+       "apps-devstg": {"id": "123456789012"},
+       "apps-prd": {"id": "123456789013"}
+     }
+     ```
+     - **Note**: Account IDs are automatically converted to 12-digit zero-padded strings to preserve leading zeros (e.g., `094271238832`). This is handled by the Terraform configuration in [locals.tf](locals.tf).
+   - `AUTO_DISCOVER_ACCOUNTS`: (Optional) Set to `true` to automatically discover accounts from AWS Organizations. Default: `false`
+     - **IMPORTANT**: When `AUTO_DISCOVER_ACCOUNTS=true`, the `ACCOUNTS` variable **must** include the `management` account with its ID. The Lambda will assume the `LambdaCostsExplorerAccess` role in the management account to access the Organizations API.
+   - `EXCLUDED_ACCOUNT_IDS`: (Optional) Comma-separated list of account IDs to exclude when using auto-discovery. Example: `111111111111,222222222222`
+   - `SENDER`: The sender's email address for SES (must be verified in SES).
    - `RECIPIENT`: A comma-separated list of recipient email addresses for the report.
+   - `TAGS_JSON`: (Optional) JSON string with up to 3 custom tags for cost filtering. Example: `{"Environment": "production", "Team": "platform"}`
+   - `EXCLUDE_CREDITS`: (Optional) Set to `true` to exclude AWS credits and refunds from the cost calculations.
+   - `FORCE_DATE`: (Optional) Override the report date for testing purposes. Format: `YYYY-MM-DD`
+   - `REGION`: (Optional) AWS region for SES. Default: `us-east-1`
 
-3. **Amazon SES Configuration**: Ensure that your AWS environment has Amazon SES configured with the appropriate permissions to send emails.
+3. **AWS Organizations Auto-Discovery Setup** (if using `AUTO_DISCOVER_ACCOUNTS=true`):
+   - The `ACCOUNTS` environment variable **must include** the `management` account:
+     ```json
+     {
+       "management": {"id": "123456789012", "email": "aws+root@example.com"}
+     }
+     ```
+   - The `LambdaCostsExplorerAccess` role in the **management account** must have the `organizations:ListAccounts` permission
+   - The Lambda will:
+     1. Look for the account named `"management"` in the `ACCOUNTS` variable
+     2. Assume the `LambdaCostsExplorerAccess` role in that account
+     3. Call `organizations:ListAccounts` to discover all active accounts in the organization
+     4. Process cost data for all discovered accounts (excluding any in `EXCLUDED_ACCOUNT_IDS`)
+   - If auto-discovery fails, the Lambda falls back to using the manually configured `ACCOUNTS` variable
+
+4. **IAM Role Configuration**:
+   - **In each account** (including management): Create the `LambdaCostsExplorerAccess` role with:
+     - Trust relationship allowing the Lambda execution role from the shared account to assume it
+     - Cost Explorer read permissions (`ce:Get*`, `ce:Describe*`, etc.)
+   - **In the management account only**: The `LambdaCostsExplorerAccess` role must also have:
+     - `organizations:ListAccounts` permission (required for auto-discovery)
+     - See [management/global/base-identities/policies.tf](../../../management/global/base-identities/policies.tf) for the policy configuration
+
+5. **Amazon SES Configuration**: Ensure that your AWS environment has Amazon SES configured with the appropriate permissions to send emails.
 
 | :point_up: Note   |
 |:---------------|
@@ -117,10 +164,147 @@ Before using this script, you need to set up the following:
 
 ## How it Works
 
-1. The script calculates the start and end dates for the past month and the month before that.
+### Flow Diagram
 
-2. It fetches cost data for each AWS account and groups it by service.
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Lambda Function Invoked                      │
+│                  (Scheduled via EventBridge)                    │
+└────────────────────────────┬────────────────────────────────────┘
+                             │
+                             ▼
+                  ┌──────────────────────┐
+                  │ AUTO_DISCOVER_ACCOUNTS│
+                  │     enabled?          │
+                  └──────────┬────────────┘
+                             │
+                ┌────────────┴────────────┐
+                │                         │
+               Yes                       No
+                │                         │
+                ▼                         ▼
+    ┌────────────────────────┐   ┌─────────────────┐
+    │ Query AWS Organizations│   │  Use ACCOUNTS   │
+    │  - List all accounts   │   │  env variable   │
+    │  - Filter ACTIVE only  │   │                 │
+    │  - Exclude by IDs      │   │                 │
+    └────────────┬───────────┘   └────────┬────────┘
+                 │                        │
+                 └────────────┬───────────┘
+                              │
+                              ▼
+                ┌──────────────────────────┐
+                │   For Each Account:      │
+                │                          │
+                │ 1. Assume Role           │
+                │    LambdaCostsExplorer   │
+                │    Access                │
+                │                          │
+                │ 2. Create CE Client      │
+                │                          │
+                │ 3. Get Cost Data         │
+                │    - Current Month       │
+                │    - Previous Month      │
+                │    - Filter by Tags      │
+                │    - Exclude Credits     │
+                └──────────┬───────────────┘
+                           │
+                           ▼
+                ┌──────────────────────┐
+                │  Success?            │
+                └──────┬───────────────┘
+                       │
+           ┌───────────┴───────────┐
+           │                       │
+          Yes                     No
+           │                       │
+           ▼                       ▼
+  ┌─────────────────┐    ┌──────────────────┐
+  │ Generate HTML   │    │ Add to Failed    │
+  │ Table for       │    │ Accounts List    │
+  │ Account         │    │                  │
+  └────────┬────────┘    │ Log Error        │
+           │             └────────┬─────────┘
+           │                      │
+           └──────────┬───────────┘
+                      │
+                      ▼
+           ┌────────────────────────┐
+           │ All Accounts Processed │
+           └──────────┬─────────────┘
+                      │
+                      ▼
+           ┌────────────────────────┐
+           │ Aggregate Results:     │
+           │                        │
+           │ - Combine HTML tables  │
+           │ - Add warning notice   │
+           │   for failed accounts  │
+           └──────────┬─────────────┘
+                      │
+                      ▼
+           ┌────────────────────────┐
+           │ Send Email via SES     │
+           │                        │
+           │ To: Recipients         │
+           │ From: Sender           │
+           │ Body: HTML Report      │
+           └──────────┬─────────────┘
+                      │
+                      ▼
+           ┌────────────────────────┐
+           │ Lambda Execution       │
+           │ Completes              │
+           └──────────┬─────────────┘
+                      │
+         ┌────────────┴────────────┐
+         │                         │
+      Success                   Error/Failure
+         │                         │
+         ▼                         ▼
+  ┌──────────┐          ┌──────────────────────┐
+  │  Done    │          │ CloudWatch Alarm     │
+  └──────────┘          │ Detects Error        │
+                        └──────────┬───────────┘
+                                   │
+                                   ▼
+                        ┌──────────────────────┐
+                        │ SNS Topic Publishes  │
+                        └──────────┬───────────┘
+                                   │
+                                   ▼
+                        ┌──────────────────────┐
+                        │ Lambda (Slack Notify)│
+                        └──────────┬───────────┘
+                                   │
+                                   ▼
+                        ┌──────────────────────┐
+                        │ Slack Notification   │
+                        │ (Monitoring Channel) │
+                        └──────────────────────┘
+```
 
-3. It calculates the cost variation for each service compared to the previous month and highlights variations.
+### Detailed Steps
 
-4. The script generates an HTML report with detailed cost breakdown and sends it via email to the specified recipients.
+1. **Account Discovery** (optional):
+   - If `AUTO_DISCOVER_ACCOUNTS` is enabled, the script queries AWS Organizations to get all active accounts
+   - Excludes any accounts specified in `EXCLUDED_ACCOUNT_IDS`
+   - Falls back to manually configured `ACCOUNTS` if auto-discovery fails
+
+2. **Date Calculation**: The script calculates the start and end dates for the past month and the month before that.
+
+3. **Cost Data Retrieval**:
+   - Assumes the `LambdaCostsExplorerAccess` role in each target account
+   - Fetches cost data for each AWS account and groups it by service
+   - Optionally filters by custom tags if `TAGS_JSON` is provided
+   - Excludes credits/refunds if `EXCLUDE_CREDITS` is enabled
+
+4. **Error Handling**:
+   - Logs detailed information about the execution
+   - If an account fails (e.g., role assumption failure), it's added to a failed accounts list
+   - Processing continues for remaining accounts
+   - Failed accounts are reported in the email with a warning notice
+
+5. **Report Generation**: The script calculates the cost variation for each service compared to the previous month and highlights variations in the HTML report.
+
+6. **Email Delivery**: The script generates an HTML report with detailed cost breakdown (including any warnings for failed accounts) and sends it via email to the specified recipients.

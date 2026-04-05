@@ -95,3 +95,14 @@ resource "aws_route53_record" "aws_public_hosted_zone_TXT_record_google_spf" {
   records = ["v=spf1 include:_spf.google.com ~all", "google-site-verification=LaYgwNHSBPq2LZnpW91PQVbpCcUtVKicSPgRablVl1w"]
   ttl     = 300
 }
+
+#
+# A records
+#
+resource "aws_route53_record" "fcc_binbash_com_ar" {
+  zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
+  name    = "fcc.binbash.com.ar"
+  type    = "A"
+  ttl     = 300
+  records = ["65.21.4.71"]
+}

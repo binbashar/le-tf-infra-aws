@@ -1,0 +1,181 @@
+#!/bin/bash
+
+set -euo pipefail
+
+CUSTOMER_ID=""
+PROFILE="binbash"
+REGION="us-east-1"
+INPUT_BUCKET="bb-data-science-kyb-agent-input-05fb92"
+PROCESSING_BUCKET="bb-data-science-kyb-agent-processing-05fb92"
+OUTPUT_BUCKET="bb-data-science-kyb-agent-output-05fb92"
+DRY_RUN=false
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
+BOLD='\033[1m'
+DIM='\033[2m'
+RESET='\033[0m'
+
+# Spinner frames
+SPINNER_FRAMES=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
+
+spinner() {
+  local pid=$1
+  local message=$2
+  local i=0
+
+  while kill -0 "$pid" 2>/dev/null; do
+    printf "\r  ${CYAN}${SPINNER_FRAMES[$i]}${RESET} ${message}"
+    i=$(( (i + 1) % ${#SPINNER_FRAMES[@]} ))
+    sleep 0.1
+  done
+
+  printf "\r  ${GREEN}✓${RESET} ${message}\n"
+}
+
+show_help() {
+  cat << EOF
+Usage: $0 --customer-id <customer_id> [--dry-run]
+
+Remove all files for a specific customer from input, processing, and output buckets.
+
+Options:
+  --customer-id ID    Customer identifier (required)
+  --dry-run          List files that would be deleted without actually deleting them
+  -h, --help         Show this help message
+
+Examples:
+  $0 --customer-id binbash --dry-run
+  $0 --customer-id acme-corp
+
+Buckets:
+  Input:      s3://${INPUT_BUCKET}/{customer-id}/
+  Processing: s3://${PROCESSING_BUCKET}/{customer-id}/
+  Output:     s3://${OUTPUT_BUCKET}/{customer-id}/
+
+${YELLOW}Warning: This operation cannot be undone. Use --dry-run first to preview.${RESET}
+EOF
+  exit 0
+}
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --customer-id|--customer_id)
+      CUSTOMER_ID="$2"
+      shift 2
+      ;;
+    --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    -h|--help)
+      show_help
+      ;;
+    *)
+      echo "Error: Unknown option $1"
+      echo "Use --help for usage information"
+      exit 1
+      ;;
+  esac
+done
+
+if [ -z "$CUSTOMER_ID" ]; then
+  echo "Error: --customer-id is required"
+  echo ""
+  show_help
+fi
+
+echo ""
+echo -e "${BOLD}╔════════════════════════════════════════╗${RESET}"
+echo -e "${BOLD}║     KYB CUSTOMER DATA CLEANUP         ║${RESET}"
+echo -e "${BOLD}╚════════════════════════════════════════╝${RESET}"
+echo ""
+echo -e "  ${DIM}Customer:${RESET}  ${BOLD}${CUSTOMER_ID}${RESET}"
+echo -e "  ${DIM}Mode:${RESET}      $([ "$DRY_RUN" = true ] && echo "${CYAN}DRY RUN${RESET}" || echo "${RED}DELETE${RESET}")"
+echo ""
+
+delete_bucket_prefix() {
+  local bucket=$1
+  local prefix=$2
+  local bucket_name=$(echo "$bucket" | awk -F'-' '{print $(NF-1)}' | tr '[:lower:]' '[:upper:]')
+
+  echo -e "${MAGENTA}┌─${RESET} ${BOLD}${bucket_name} bucket${RESET}"
+
+  local count=$(aws s3 ls "s3://${bucket}/${prefix}" \
+    --recursive \
+    --profile "$PROFILE" \
+    --region "$REGION" \
+    2>/dev/null | wc -l | tr -d ' ')
+
+  if [ "$count" -eq 0 ]; then
+    echo -e "${MAGENTA}│${RESET} ${DIM}No files found${RESET}"
+    echo -e "${MAGENTA}└─${RESET}"
+    echo ""
+    return
+  fi
+
+  echo -e "${MAGENTA}│${RESET} Found: ${YELLOW}${count}${RESET} file(s)"
+
+  if [ "$DRY_RUN" = true ]; then
+    echo -e "${MAGENTA}│${RESET}"
+    aws s3 ls "s3://${bucket}/${prefix}" \
+      --recursive \
+      --profile "$PROFILE" \
+      --region "$REGION" \
+      2>/dev/null | awk '{print "'${MAGENTA}'│'${RESET}' '${DIM}'" $4 "'${RESET}'"}'
+    echo -e "${MAGENTA}└─${RESET}"
+    echo ""
+  else
+    echo -e "${MAGENTA}│${RESET}"
+    aws s3 rm "s3://${bucket}/${prefix}" \
+      --recursive \
+      --profile "$PROFILE" \
+      --region "$REGION" \
+      2>&1 | grep -v "delete:" > /dev/null &
+
+    DELETE_PID=$!
+    spinner $DELETE_PID "Deleting ${count} file(s)..."
+    wait $DELETE_PID || true
+    echo -e "${MAGENTA}└─${RESET}"
+    echo ""
+  fi
+}
+
+if [ "$DRY_RUN" = false ]; then
+  echo -e "${YELLOW}╔════════════════════════════════════════╗${RESET}"
+  echo -e "${YELLOW}║              WARNING!                 ║${RESET}"
+  echo -e "${YELLOW}╚════════════════════════════════════════╝${RESET}"
+  echo ""
+  echo -e "  This will ${RED}permanently delete${RESET} all files for:"
+  echo -e "  ${BOLD}${CUSTOMER_ID}${RESET}"
+  echo ""
+  echo -e "  ${DIM}Press Ctrl+C to cancel, Enter to continue...${RESET}"
+  read -r
+  echo ""
+fi
+
+delete_bucket_prefix "$INPUT_BUCKET" "${CUSTOMER_ID}/"
+delete_bucket_prefix "$PROCESSING_BUCKET" "customers/${CUSTOMER_ID}/"
+delete_bucket_prefix "$OUTPUT_BUCKET" "${CUSTOMER_ID}/"
+
+if [ "$DRY_RUN" = true ]; then
+  echo -e "${GREEN}╔════════════════════════════════════════╗${RESET}"
+  echo -e "${GREEN}║        DRY RUN COMPLETE               ║${RESET}"
+  echo -e "${GREEN}╚════════════════════════════════════════╝${RESET}"
+  echo ""
+  echo -e "${CYAN}▸${RESET} To actually delete these files:"
+  echo -e "  ${BOLD}$0 --customer-id $CUSTOMER_ID${RESET}"
+  echo ""
+else
+  echo -e "${GREEN}╔════════════════════════════════════════╗${RESET}"
+  echo -e "${GREEN}║        CLEANUP COMPLETE               ║${RESET}"
+  echo -e "${GREEN}╚════════════════════════════════════════╝${RESET}"
+  echo ""
+  echo -e "  ${DIM}Customer:${RESET} ${BOLD}${CUSTOMER_ID}${RESET}"
+  echo ""
+fi

@@ -36,6 +36,22 @@ resource "aws_route53_record" "CNAME_leverage_binbash_co" {
   ttl     = 300
 }
 
+resource "aws_route53_record" "CNAME_ai_lab_binbash_co" {
+  zone_id = aws_route53_zone.public.id
+  name    = "ai-lab.binbash.co"
+  records = ["98dad776b81543bb.vercel-dns-016.com."]
+  type    = "CNAME"
+  ttl     = 300
+}
+
+resource "aws_route53_record" "CNAME_event_studio_binbash_co" {
+  zone_id = aws_route53_zone.public.id
+  name    = "event-studio.binbash.co"
+  records = ["c86285d79d05996d.vercel-dns-016.com."]
+  type    = "CNAME"
+  ttl     = 300
+}
+
 #
 # MX records
 #

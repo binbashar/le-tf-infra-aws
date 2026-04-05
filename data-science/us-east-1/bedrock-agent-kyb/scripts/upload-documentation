@@ -1,0 +1,146 @@
+#!/bin/bash
+
+set -euo pipefail
+
+CUSTOMER_ID=""
+DOCUMENT=""
+PROFILE="binbash"
+REGION="us-east-1"
+INPUT_BUCKET="bb-data-science-kyb-agent-input-05fb92"
+
+# Colors
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+BOLD='\033[1m'
+DIM='\033[2m'
+RESET='\033[0m'
+
+# Spinner frames
+SPINNER_FRAMES=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
+
+spinner() {
+  local pid=$1
+  local message=$2
+  local i=0
+
+  while kill -0 "$pid" 2>/dev/null; do
+    printf "\r${CYAN}${SPINNER_FRAMES[$i]}${RESET} ${message}"
+    i=$(( (i + 1) % ${#SPINNER_FRAMES[@]} ))
+    sleep 0.1
+  done
+
+  printf "\r${GREEN}✓${RESET} ${message}\n"
+}
+
+format_bytes() {
+  local bytes=$1
+  if [ "$bytes" -lt 1024 ]; then
+    echo "${bytes}B"
+  elif [ "$bytes" -lt 1048576 ]; then
+    echo "$((bytes / 1024))KB"
+  else
+    echo "$((bytes / 1048576))MB"
+  fi
+}
+
+show_help() {
+  cat << EOF
+Usage: $0 --customer-id <customer_id> --document <pdf_file>
+
+Upload KYB documentation to trigger the agent workflow.
+
+Options:
+  --customer-id ID    Customer identifier (required)
+  --document FILE     PDF document path (required)
+  -h, --help         Show this help message
+
+Examples:
+  $0 --customer-id binbash --document invoice.pdf
+  $0 --customer-id acme-corp --document certificate.pdf
+
+The document will be uploaded to:
+  s3://${INPUT_BUCKET}/{customer-id}/{document}
+
+This triggers the automated KYB processing workflow.
+EOF
+  exit 0
+}
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --customer-id|--customer_id)
+      CUSTOMER_ID="$2"
+      shift 2
+      ;;
+    --document)
+      DOCUMENT="$2"
+      shift 2
+      ;;
+    -h|--help)
+      show_help
+      ;;
+    *)
+      echo "Error: Unknown option $1"
+      echo "Use --help for usage information"
+      exit 1
+      ;;
+  esac
+done
+
+if [ -z "$CUSTOMER_ID" ]; then
+  echo "Error: --customer-id is required"
+  echo ""
+  show_help
+fi
+
+if [ -z "$DOCUMENT" ]; then
+  echo "Error: --document is required"
+  echo ""
+  show_help
+fi
+
+if [ ! -f "$DOCUMENT" ]; then
+  echo "Error: Document file not found: $DOCUMENT"
+  exit 1
+fi
+
+FILENAME=$(basename "$DOCUMENT")
+FILE_SIZE=$(stat -f%z "$DOCUMENT" 2>/dev/null || stat -c%s "$DOCUMENT" 2>/dev/null)
+FILE_SIZE_FORMATTED=$(format_bytes "$FILE_SIZE")
+S3_PATH="s3://${INPUT_BUCKET}/${CUSTOMER_ID}/${FILENAME}"
+
+echo ""
+echo -e "${BOLD}╔════════════════════════════════════════╗${RESET}"
+echo -e "${BOLD}║     KYB DOCUMENT UPLOAD WORKFLOW       ║${RESET}"
+echo -e "${BOLD}╚════════════════════════════════════════╝${RESET}"
+echo ""
+echo -e "  ${DIM}Customer ID:${RESET}   ${BOLD}${CUSTOMER_ID}${RESET}"
+echo -e "  ${DIM}Document:${RESET}      ${FILENAME}"
+echo -e "  ${DIM}Size:${RESET}          ${FILE_SIZE_FORMATTED}"
+echo -e "  ${DIM}Destination:${RESET}   ${BLUE}${S3_PATH}${RESET}"
+echo ""
+
+aws s3 cp "$DOCUMENT" "$S3_PATH" \
+  --profile "$PROFILE" \
+  --region "$REGION" \
+  --sse AES256 \
+  2>&1 | grep -v "Completed" | grep -v "upload:" > /dev/null &
+
+UPLOAD_PID=$!
+spinner $UPLOAD_PID "Uploading document to S3..."
+
+wait $UPLOAD_PID
+
+echo ""
+echo -e "${GREEN}╔════════════════════════════════════════╗${RESET}"
+echo -e "${GREEN}║          UPLOAD SUCCESSFUL            ║${RESET}"
+echo -e "${GREEN}╚════════════════════════════════════════╝${RESET}"
+echo ""
+echo -e "  ${CYAN}▸${RESET} EventBridge will trigger BDA processing"
+echo -e "  ${CYAN}▸${RESET} Agent workflow starts after extraction"
+echo ""
+echo -e "${YELLOW}Next step:${RESET}"
+echo -e "  ${BOLD}./workflow-kyb --customer-id ${CUSTOMER_ID}${RESET}"
+echo ""

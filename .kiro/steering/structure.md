@@ -92,7 +92,7 @@ Layers reference each other via Terraform remote state:
 ## Development Workflow
 
 1. **Navigate to specific layer directory** - Always work from layer directories, not root
-2. **Use Leverage CLI** - Use `leverage tofu` or `leverage tf` (shorthand) for all operations
+2. **Use Leverage CLI** - Use `leverage tofu` for all operations (`leverage tf` is a shorthand alias)
 3. **Check dependencies** - Run `leverage run layer_dependency` (from layer directory) before major changes
 4. **Follow standard workflow** - init → plan → apply → validate
 5. **Maintain consistent structure** - Follow established file patterns and naming conventions
@@ -102,7 +102,7 @@ Layers reference each other via Terraform remote state:
 ## Key Development Rules
 
 ### Always Use Leverage CLI
-- **Never use direct tofu/terraform commands** - Always use `leverage tofu` or `leverage tf`
+- **Never use direct tofu/terraform commands** - Always use `leverage tofu` (or `leverage tf` shorthand)
 - **Work from layer directories** - Commands must be run from specific layer paths
 - **Respect container environment** - All operations run in controlled Docker containers
 
@@ -110,4 +110,4 @@ Layers reference each other via Terraform remote state:
 - Each account has isolated S3 backend with DynamoDB locking
 - State files stored per layer: `{account}/{region}/{layer}/terraform.tfstate`
 - Remote state references enable cross-layer data sharing
-- Force unlock only when necessary: `leverage tf shell` then `tofu force-unlock -force <LOCK_ID>`
+- Force unlock only when necessary: `leverage tofu shell` then `tofu force-unlock -force <LOCK_ID>`

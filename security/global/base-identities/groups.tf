@@ -60,9 +60,15 @@ module "iam_group_deploymaster" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-group-with-policies?ref=v5.60.0"
   name   = "deploymaster"
 
+  # Machine users authenticate with access keys (no MFA), so the default
+  # IAM self-management policy must be disabled — it includes a
+  # DenyAllExceptListedIfNoMFA statement that blocks sts:AssumeRole.
+  attach_iam_self_management_policy = false
+
   group_users = [
     module.machine_user["machine.circle.ci"].iam_user_name,
     module.machine_user["machine.github.actions"].iam_user_name,
+    module.machine_user["machine.github.actions.le-cli"].iam_user_name,
   ]
 
   custom_group_policy_arns = [
