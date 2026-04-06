@@ -61,8 +61,8 @@ module "apps_devstg_ecs_cluster" {
           efs_volume_configuration = volume_config.type == "efs" ? {
             file_system_id          = volume_config.file_system_id
             root_directory          = null
-            transit_encryption      = null
-            transit_encryption_port = null
+            transit_encryption      = "ENABLED"
+            transit_encryption_port = null # defaults to 2049 (EFS TLS standard port)
             authorization_config    = null
           } : null
         }
@@ -71,12 +71,12 @@ module "apps_devstg_ecs_cluster" {
       # Deployment configuration
       deployment_configuration = {
         strategy             = var.ecs_deployment_type
-        bake_time_in_minutes = var.ecs_deployment_type == "BLUE_GREEN" ? 5 : null
+        bake_time_in_minutes = var.ecs_deployment_type == "BLUE_GREEN" ? var.ecs_deployment_bake_time_minutes : null
       }
 
       # Deployment percentage settings (at service level)
-      deployment_maximum_percent         = 200
-      deployment_minimum_healthy_percent = var.ecs_deployment_type == "BLUE_GREEN" ? 100 : 50
+      deployment_maximum_percent         = var.ecs_deployment_maximum_percent
+      deployment_minimum_healthy_percent = var.ecs_deployment_type == "BLUE_GREEN" ? var.ecs_deployment_minimum_healthy_percent_blue_green : var.ecs_deployment_minimum_healthy_percent_rolling
 
       # Deployment circuit breaker (at service level)
       deployment_circuit_breaker = {
@@ -150,12 +150,12 @@ module "apps_devstg_ecs_cluster" {
 
       # Task execution role policies for Secrets Manager access
       task_exec_iam_role_policies = {
-        secrets_manager = aws_iam_policy.ecs_secrets_access.arn
+        secrets_manager = aws_iam_policy.ecs_secrets_access[service_name].arn
       }
 
       # Target group assignment - conditional based on deployment type
       load_balancer = {
-        for container_name, container_values in var.routing[service_name] :
+        for container_name, container_values in try(var.routing[service_name], {}) :
         container_name => merge(
           {
             target_group_arn = module.apps_devstg_alb_ecs_demoapps.target_groups[container_name].arn
@@ -179,7 +179,7 @@ module "apps_devstg_ecs_cluster" {
 
       # Security group ingress rules
       security_group_ingress_rules = {
-        for container_name, container_values in var.routing[service_name] :
+        for container_name, container_values in try(var.routing[service_name], {}) :
         "ingress_${service_name}_${replace(container_name, "-", "_")}_${container_values.port}" => {
           from_port                    = container_values.port
           to_port                      = container_values.port

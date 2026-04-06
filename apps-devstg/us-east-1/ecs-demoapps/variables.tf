@@ -4,11 +4,58 @@
 variable "ecs_deployment_type" {
   description = "ECS deployment type: 'rolling' for rolling updates or 'blue-green' for blue-green deployments"
   type        = string
-  default     = "ROLLING"
+  default     = "BLUE_GREEN"
 
   validation {
     condition     = contains(["ROLLING", "BLUE_GREEN"], var.ecs_deployment_type)
     error_message = "ECS deployment type must be either 'ROLLING' or 'BLUE_GREEN'."
+  }
+}
+
+#===========================================#
+# ECS Deployment Tuning
+#===========================================#
+variable "ecs_deployment_bake_time_minutes" {
+  description = "Minutes ECS waits after a blue-green deployment before marking it stable"
+  type        = number
+  default     = 5
+
+  validation {
+    condition     = var.ecs_deployment_bake_time_minutes > 0
+    error_message = "Bake time must be greater than 0 minutes."
+  }
+}
+
+variable "ecs_deployment_maximum_percent" {
+  description = "Maximum percentage of tasks that can run during a deployment (surge capacity)"
+  type        = number
+  default     = 200
+
+  validation {
+    condition     = var.ecs_deployment_maximum_percent >= 100
+    error_message = "Maximum deployment percent must be at least 100."
+  }
+}
+
+variable "ecs_deployment_minimum_healthy_percent_rolling" {
+  description = "Minimum percentage of healthy tasks required during a rolling deployment"
+  type        = number
+  default     = 50
+
+  validation {
+    condition     = var.ecs_deployment_minimum_healthy_percent_rolling >= 0 && var.ecs_deployment_minimum_healthy_percent_rolling < 100
+    error_message = "Minimum healthy percent for rolling must be between 0 and 99."
+  }
+}
+
+variable "ecs_deployment_minimum_healthy_percent_blue_green" {
+  description = "Minimum percentage of healthy tasks required during a blue-green deployment"
+  type        = number
+  default     = 100
+
+  validation {
+    condition     = var.ecs_deployment_minimum_healthy_percent_blue_green >= 0 && var.ecs_deployment_minimum_healthy_percent_blue_green <= 100
+    error_message = "Minimum healthy percent for blue-green must be between 0 and 100."
   }
 }
 
@@ -153,6 +200,14 @@ variable "routing" {
       path    = optional(string)
     }), {})
   })))
+
+  validation {
+    condition = (
+      length(flatten([for service, containers in var.routing : keys(containers)])) ==
+      length(toset(flatten([for service, containers in var.routing : keys(containers)])))
+    )
+    error_message = "Container names within 'routing' must be globally unique across all services. Duplicate keys cause silent ALB target group overwrites."
+  }
 
   default = {
     emojivoto-web = {
