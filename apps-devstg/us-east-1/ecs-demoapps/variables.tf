@@ -2,9 +2,9 @@
 # ECS Deployment Configuration
 #===========================================#
 variable "ecs_deployment_type" {
-  description = "ECS deployment type: 'rolling' for rolling updates or 'blue-green' for blue-green deployments"
+  description = "ECS deployment type: 'ROLLING' for rolling updates or 'BLUE_GREEN' for blue-green deployments"
   type        = string
-  default     = "BLUE_GREEN"
+  default     = "ROLLING"
 
   validation {
     condition     = contains(["ROLLING", "BLUE_GREEN"], var.ecs_deployment_type)
