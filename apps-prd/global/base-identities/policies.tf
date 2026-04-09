@@ -181,6 +181,20 @@ resource "aws_iam_policy" "deploy_master_access" {
             }
         },
         {
+            "Sid": "AllowSESForAILab",
+            "Effect": "Allow",
+            "Action": [
+                "ses:SendEmail",
+                "ses:SendRawEmail"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "ses:FromAddress": "noreply@binbash.co"
+                }
+            }
+        },
+        {
             "Effect": "Allow",
             "Action": [
                 "aws-marketplace:Subscribe",
