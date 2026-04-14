@@ -117,7 +117,8 @@ data "aws_iam_policy_document" "devops" {
       "wafv2:*",
       "wellarchitected:*",
       "workspaces-web:*",
-      "workspaces:*"
+      "workspaces:*",
+      "pricing:*"
     ]
     resources = ["*"]
     condition {
