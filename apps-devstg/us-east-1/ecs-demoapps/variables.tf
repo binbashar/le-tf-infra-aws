@@ -4,7 +4,7 @@
 variable "ecs_deployment_type" {
   description = "ECS deployment type: 'ROLLING' for rolling updates or 'BLUE_GREEN' for blue-green deployments"
   type        = string
-  default     = "ROLLING"
+  default     = "BLUE_GREEN"
 
   validation {
     condition     = contains(["ROLLING", "BLUE_GREEN"], var.ecs_deployment_type)
@@ -95,9 +95,9 @@ variable "service_definitions" {
   }))
 
   default = {
-    emojivoto-web = {
-      cpu    = 1024
-      memory = 4096
+    emojivoto = {
+      cpu    = 2048
+      memory = 8192
 
       containers = {
         web = {
@@ -119,8 +119,8 @@ variable "service_definitions" {
 
         vote-bot = {
           image  = "523857393444.dkr.ecr.us-east-1.amazonaws.com/demo-emojivoto/web"
-          cpu    = 512
-          memory = 2048
+          cpu    = 256
+          memory = 512
 
           environment = {
             WEB_HOST = "localhost:8080"
@@ -135,14 +135,7 @@ variable "service_definitions" {
 
           essential = false
         }
-      }
-    }
 
-    emojivoto-svc = {
-      cpu    = 512
-      memory = 2048
-
-      containers = {
         voting-api = {
           image  = "523857393444.dkr.ecr.us-east-1.amazonaws.com/demo-emojivoto/voting-svc"
           cpu    = 512
@@ -158,14 +151,7 @@ variable "service_definitions" {
             prom-voting = 8801
           }
         }
-      }
-    }
 
-    emojivoto-api = {
-      cpu    = 512
-      memory = 2048
-
-      containers = {
         emoji-api = {
           image  = "523857393444.dkr.ecr.us-east-1.amazonaws.com/demo-emojivoto/emoji-svc"
           cpu    = 512
@@ -210,29 +196,13 @@ variable "routing" {
   }
 
   default = {
-    emojivoto-web = {
+    emojivoto = {
       web = {
         subdomain = "emojivoto.ecs"
         port      = 8080
         health_check = {
           matcher = "200-404"
         }
-      }
-    }
-
-    emojivoto-svc = {
-      voting-api = {
-        subdomain        = "emojivoto-voting.ecs"
-        port             = 8081
-        protocol_version = "GRPC"
-      }
-    }
-
-    emojivoto-api = {
-      emoji-api = {
-        subdomain        = "emojivoto-emoji.ecs"
-        port             = 8082
-        protocol_version = "GRPC"
       }
     }
   }
