@@ -132,3 +132,12 @@ resource "kubernetes_namespace" "traefik_ingress" {
     name   = "traefik"
   }
 }
+
+resource "kubernetes_namespace" "kgateway" {
+  count = var.kgateway.enabled ? 1 : 0
+
+  metadata {
+    labels = local.labels
+    name   = "kgateway-system"
+  }
+}

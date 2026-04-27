@@ -1,0 +1,27 @@
+# kgateway controller values
+# Docs: https://kgateway.dev/docs/envoy/latest/
+#
+# NOTE: kgateway itself is only the control plane. It watches Gateway API
+# resources and provisions Envoy-based data-plane proxies on demand. During
+# this test drive we do not pre-provision a Gateway; create one manually or
+# via a separate manifest when ready to test traffic routing.
+
+controller:
+  image:
+    pullPolicy: IfNotPresent
+
+  # Schedule the controller on the tools node group (consistent with other
+  # cluster-wide controllers in this layer).
+  nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}
+
+  # Toggle Gateway API experimental features (TLSRoute, TCPRoute, etc.).
+  # Requires the experimental channel of Gateway API CRDs to be installed.
+  extraEnv:
+    KGW_ENABLE_GATEWAY_API_EXPERIMENTAL_FEATURES: "${experimentalFeatures}"
+
+# Data-plane proxy defaults (applied to Envoy pods provisioned by kgateway
+# for each Gateway resource). Keep lightweight for the test drive.
+gateway:
+  # Whether to enable the default GatewayClass (kgateway) on install.
+  enabled: true

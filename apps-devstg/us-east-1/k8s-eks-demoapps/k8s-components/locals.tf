@@ -58,6 +58,16 @@ locals {
   ]
 
   #------------------------------------------------------------------------------
+  # kgateway settings
+  #------------------------------------------------------------------------------
+  kgateway_tags_map = merge(local.tags_map, { Component = "kgateway" })
+  kgateway_tags_list = [
+    for k, v in local.kgateway_tags_map : "${k}=${v}"
+  ]
+  # Gateway API CRDs standard channel manifest (upstream GitHub release)
+  gateway_api_crds_url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/${var.kgateway.gateway_api_version}/standard-install.yaml"
+
+  #------------------------------------------------------------------------------
   # ALB Ingress settings
   #------------------------------------------------------------------------------
   alb_ingress_to_nginx_ingress_tags_map = merge(local.tags_map, { Component = "alb-ingress" })

@@ -217,3 +217,24 @@ variable "keda" {
     }
   }
 }
+
+variable "kgateway" {
+  type = object({
+    enabled               = bool
+    version               = string
+    gateway_api_version   = string
+    experimental_features = bool
+    private_gateway = object({
+      enabled = bool
+    })
+  })
+  default = {
+    enabled               = false
+    version               = "v2.2.3"
+    gateway_api_version   = "v1.4.0"
+    experimental_features = false
+    private_gateway = {
+      enabled = false
+    }
+  }
+}

@@ -26,3 +26,10 @@ serviceAccount:
   name: certmanager
   annotations:
     eks.amazonaws.com/role-arn: ${roleArn}
+
+# Skip the post-install API sanity-check job. It runs as a k8s Job with no
+# tolerations/nodeSelector and was getting stuck in Pending: the apps node hits
+# pod-density limits and the tools node has a `stack: tools` taint it doesn't
+# tolerate. cert-manager itself works without it; this is just a one-shot probe.
+startupapicheck:
+  enabled: false

@@ -1,8 +1,21 @@
+# Image override: Bitnami's free public images were retracted from Docker Hub
+# in 2025. Pinning to the upstream image at registry.k8s.io (same binary, just
+# a different registry). The chart's wrapper logic only needs the binary's
+# CLI surface, which is identical between Bitnami's and upstream's builds.
+image:
+  registry: registry.k8s.io
+  repository: external-dns/external-dns
+  tag: v0.14.0
+
 # When enabled, prints DNS record changes rather than actually performing them
 dryRun: false
 # K8s resources type to be observed for new DNS entries by ExternalDNS
+# (e.g. ingress, service, gateway-httproute — Gateway API support requires
+#  external-dns >= 0.13 / chart >= 6.20)
 sources:
-  - ingress
+%{ for src in sources ~}
+  - ${src}
+%{ endfor ~}
 # DNS provider where the DNS records will be created
 provider: aws
 # Limit possible target zones by domain suffixes (optional)
@@ -18,8 +31,13 @@ policy: sync
 registry: txt
 # TXT Registry Identifier
 txtOwnerId: ${txtOwnerId}
-# Filter sources managed by external-dns via annotation using label selector semantics (optional)
+%{ if annotationFilter != "" ~}
+# Filter sources managed by external-dns via annotation using label selector semantics (optional).
+# Note: applies across all sources — when a release watches both `ingress` and
+# `gateway-httproute`, an Ingress-class-based filter would silently exclude
+# all HTTPRoutes. Leave empty in that case and rely on `domainFilters`.
 annotationFilter: ${annotationFilter}
+%{ endif ~}
 
 # Adjust the interval for DNS updates
 interval: 3m

@@ -3,13 +3,13 @@
 #------------------------------------------------------------------------------
 ingress = {
   alb_controller = {
-    enabled = false
+    enabled = true
   }
 
   # ########################
   # CAN NOT SET BOTH TO TRUE
   nginx_controller = {
-    enabled = true
+    enabled = false
   }
   traefik = {
     enabled = false
@@ -54,7 +54,7 @@ dns_sync = {
 # Secrets Management
 #------------------------------------------------------------------------------
 external_secrets = {
-  enabled = true
+  enabled = false
 }
 
 #------------------------------------------------------------------------------
@@ -96,6 +96,24 @@ keda = {
     enabled = false
   }
 }
+
+#------------------------------------------------------------------------------
+# Ingress: kgateway (test drive — Gateway API based controller, eventual
+# replacement for nginx-ingress). Safe to run alongside nginx since kgateway
+# uses Gateway API resources, not Ingress resources.
+#------------------------------------------------------------------------------
+kgateway = {
+  enabled               = true
+  version               = "v2.2.3"
+  gateway_api_version   = "v1.4.0"
+  experimental_features = false
+
+  # Shared private path: kgateway-provisioned Envoy fronted by an LBC-managed
+  # internal NLB. Workload HTTPRoutes attach via cross-namespace parentRef.
+  private_gateway = {
+    enabled = true
+  }
+}
 #------------------------------------------------------------------------------
 # Monitoring: Logging
 #------------------------------------------------------------------------------
@@ -116,7 +134,7 @@ logging = {
 # KubePrometheusStack
 prometheus = {
   kube_stack = {
-    enabled = true
+    enabled = false
 
     alertmanager = {
       enabled = false
@@ -166,17 +184,17 @@ gatus = {
 # CICD | Argo
 #------------------------------------------------------------------------------
 argocd = {
-  enabled = true
+  enabled = false
 
   enableWebTerminal   = true
   enableNotifications = false
 
   image_updater = {
-    enabled = true
+    enabled = false
   }
 
   rollouts = {
-    enabled = true
+    enabled = false
 
     dashboard = {
       enabled = false

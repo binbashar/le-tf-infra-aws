@@ -13,10 +13,15 @@ resource "helm_release" "externaldns_private" {
   version    = "6.38.0"
   values = [
     templatefile("chart-values/externaldns.yaml", {
-      filteredDomain     = local.private_base_domain
-      filteredZoneId     = data.terraform_remote_state.shared-dns.outputs.aws_internal_zone_id
-      txtOwnerId         = "${local.environment}-eks-demo-prv"
-      annotationFilter   = "kubernetes.io/ingress.class=${local.private_ingress_class}"
+      filteredDomain = local.private_base_domain
+      filteredZoneId = data.terraform_remote_state.shared-dns.outputs.aws_internal_zone_id
+      txtOwnerId     = "${local.environment}-eks-demo-prv"
+      # Watch both Ingresses (nginx path) and Gateway API HTTPRoutes (kgateway path).
+      # Drop the Ingress-class annotation filter — it would silently exclude all
+      # HTTPRoutes (which don't carry the kubernetes.io/ingress.class annotation).
+      # Domain filtering above already scopes records to aws.binbash.com.ar.
+      sources            = ["ingress", "gateway-httproute"]
+      annotationFilter   = ""
       zoneType           = "private"
       serviceAccountName = "externaldns-private"
       roleArn            = data.terraform_remote_state.cluster-identities.outputs.private_externaldns_role_arn
@@ -40,6 +45,7 @@ resource "helm_release" "externaldns_public" {
       filteredDomain     = local.public_base_domain
       filteredZoneId     = data.terraform_remote_state.shared-dns.outputs.aws_public_zone_id
       txtOwnerId         = "${local.environment}-eks-demo-pub"
+      sources            = ["ingress"]
       annotationFilter   = "kubernetes.io/ingress.class=${local.public_ingress_class}"
       zoneType           = "public"
       serviceAccountName = "externaldns-public"
