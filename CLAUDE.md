@@ -74,6 +74,8 @@ The `leverage` CLI is installed in a local venv managed by [uv](https://docs.ast
 .venv/bin/leverage <command>
 ```
 
+**Important — `leverage tofu` is a wrapper, not native tofu.** Reference: [leverage tofu docs](https://leverage.binbash.co/user-guide/leverage-cli/reference/tofu/tofu/). It only exposes a curated subset of subcommands: `apply`, `destroy`, `force-unlock`, `format`, `import`, `init`, `output`, `plan`, `refresh-credentials`, `validate`, `validate-layout`, `version`. Native tofu subcommands like `state`, `shell`, `console`, `providers`, `workspace`, `graph`, `show`, `get` are **not** available via the wrapper. For state inspection or other unsupported operations, use the native `tofu` binary directly with the layer's backend config (loading the same AWS profile from `*/config/backend.tfvars`).
+
 ### Authentication and Setup
 ```bash
 # Authenticate with AWS SSO (interactive — requires browser, user must run manually)

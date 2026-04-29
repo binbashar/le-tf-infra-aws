@@ -21,7 +21,7 @@ locals {
         "administrators",
         "devops",
         "datascientists",
-        "marketplaceseller",
+        "marketplaceandpartnercentral",
       ]
     }
     "marcos.pagnucco" = {
@@ -64,7 +64,7 @@ locals {
       last_name  = "Brest"
       email      = "emiliano.brest@binbash.com.ar"
       groups = [
-        "marketplaceseller",
+        "marketplaceandpartnercentral",
       ]
     }
     "juan.delacamara" = {
@@ -135,7 +135,7 @@ locals {
       last_name  = "Prates"
       email      = "caetano.prates@binbash.com.ar"
       groups = [
-        "marketplaceseller",
+        "marketplaceandpartnercentral",
       ]
     }
     "ignacio.gomez" = {
@@ -159,7 +159,7 @@ locals {
       last_name  = "Beresvil"
       email      = "marcelo.beresvil@binbash.com.ar"
       groups = [
-        "marketplaceseller",
+        "marketplaceandpartnercentral",
       ]
     }
     "rene.montilva" = {
@@ -177,7 +177,7 @@ locals {
       email      = "manuel.quinteros@binbash.com.ar"
       groups = [
         "devops",
-        "marketplaceseller",
+        "marketplaceandpartnercentral",
       ]
     }
     "julian.curetti" = {
@@ -316,9 +316,9 @@ locals {
       name        = "ReadOnly"
       description = "Provides view-only access to most resources."
     }
-    marketplaceseller = {
-      name        = "MarketplaceSeller"
-      description = "Provides access to the AWS MarketPlace Seller."
+    marketplaceandpartnercentral = {
+      name        = "MarketplaceAndPartnerCentral"
+      description = "Provides access to the AWS Marketplace Seller and AWS Partner Central (APN)."
     }
     datascientists = {
       name        = "DataScientists"
