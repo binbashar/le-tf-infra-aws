@@ -17,7 +17,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/research-dynamodb-access-rules/terraform.tfstate"
+    key = "apps-devstg/dynamodb-access-rules-demoapps/terraform.tfstate"
   }
 }
 

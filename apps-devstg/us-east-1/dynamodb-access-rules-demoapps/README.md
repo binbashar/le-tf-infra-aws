@@ -253,7 +253,7 @@ Set general AWS Credentials:
 The steps:
 
 * `cd` into the *layer* directory
-  - e.g. `cd <your-project-dir>/apps-devstg/us-east-1/research-dynamodb-access-rules`
+  - e.g. `cd <your-project-dir>/apps-devstg/us-east-1/dynamodb-access-rules-demoapps`
 * Apply the layer
   - `leverage tf apply`
 * `cd` into the demo client directory
