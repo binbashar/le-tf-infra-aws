@@ -120,11 +120,8 @@ leverage tofu validate
 # Format code (recursive)
 leverage tofu fmt -recursive
 
-# Run tests
-leverage tofu test
-
-# Open shell in container for debugging
-leverage tofu shell
+# Run tests (not exposed by leverage wrapper — use native tofu)
+tofu test
 ```
 
 ### Secret Management
@@ -142,12 +139,13 @@ leverage run encrypt          # encrypts secrets.dec.tf -> secrets.enc, deletes 
 leverage tofu plan -target=resource.name
 leverage tofu apply -target=resource.name
 
-# State management
-leverage tofu state list
-leverage tofu state show resource.name
+# State management (not exposed by leverage wrapper — use native tofu directly,
+# loading the AWS profile from the layer's backend.tfvars)
+tofu state list
+tofu state show resource.name
 
-# Force unlock state (use with caution)
-echo "tofu force-unlock -force <LOCK_ID>" | leverage tofu shell
+# Force unlock state (use with caution; supported by the leverage wrapper)
+leverage tofu force-unlock -force <LOCK_ID>
 ```
 
 ## Architecture Overview
@@ -265,7 +263,7 @@ Profile naming: `{project}-{account}-devops` (e.g., `bb-shared-devops`, `bb-netw
 - Each account has its own S3 backend with DynamoDB locking
 - State files stored per layer: `{account}/{layer-path}/terraform.tfstate`
 - Remote state references enable cross-layer data sharing
-- Force unlock only when necessary: `echo "tofu force-unlock -force <LOCK_ID>" | leverage tofu shell`
+- Force unlock only when necessary: `leverage tofu force-unlock -force <LOCK_ID>`
 
 ### Module Sources
 Modules are sourced from GitHub repositories:
@@ -296,7 +294,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 ## Important Development Notes
 
 ### Critical Rules
-1. **Always use Leverage CLI** - Never use direct `tofu` or `terraform` commands, always use `leverage tofu` (or `leverage tf` shorthand)
+1. **Prefer the Leverage CLI** - Use `leverage tofu` (or `leverage tf` shorthand) for all supported subcommands (`apply`, `destroy`, `force-unlock`, `format`, `import`, `init`, `output`, `plan`, `refresh-credentials`, `validate`, `validate-layout`, `version`). For unsupported subcommands (`state`, `shell`, `console`, `providers`, `workspace`, `graph`, `show`, `get`, `test`), fall back to the native `tofu` binary, loading the same AWS profile from the layer's `*/config/backend.tfvars`
 2. **Always work from specific layer directories** - Commands must be run from layer paths, not repository root
 3. **Check layer dependencies** before making changes using `leverage run layer_dependency`
 4. **Respect multi-account boundaries** - Changes in one account may affect others through remote state
@@ -307,7 +305,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 7. **Cost awareness** - Run `make infracost-breakdown` before applying significant changes
 8. **Security-first** - Follow AWS Well-Architected Framework and Leverage security guidelines
 9. **Documentation** - Reference official [Leverage Documentation](https://leverage.binbash.co) for guidance
-10. **Testing** - Use `leverage tofu test` for module unit tests and integrate with CI/CD
+10. **Testing** - Use native `tofu test` for module unit tests (the leverage wrapper does not expose `test`) and integrate with CI/CD
 11. **Code quality** - Always run `leverage tofu fmt` and `leverage tofu validate` before commits
 12. **Atlantis integration** - The repository uses Atlantis for automated OpenTofu/Terraform workflows
 
@@ -343,15 +341,15 @@ When working with AWS Cloud Control API resources (awscc_*):
 ### State Lock Issues
 If encountering state lock errors:
 ```bash
-# Force unlock (use with caution)
-echo "tofu force-unlock -force <LOCK_ID>" | leverage tofu shell
+# Force unlock (use with caution; supported by the leverage wrapper)
+leverage tofu force-unlock -force <LOCK_ID>
 ```
 
 ### Debugging
-For interactive debugging:
+The `leverage tofu` wrapper does not expose `shell` (or other native tofu subcommands like `console`, `state`, `providers`, `workspace`, `graph`, `show`, `get`). For interactive debugging or to use any unsupported subcommand, run the native `tofu` binary directly from the layer directory, loading the AWS profile from `*/config/backend.tfvars`:
 ```bash
-# Open shell in container
-leverage tofu shell
+tofu console
+tofu state list
 ```
 
 ## Documentation Sources
