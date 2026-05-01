@@ -66,15 +66,16 @@ module "permission_sets" {
       customer_managed_policy_attachments = []
     },
     {
-      name             = "MarketplaceSeller"
-      description      = "Grants marketplace access to manage service/product offers."
+      name             = "MarketplaceAndPartnerCentral"
+      description      = "Grants AWS Marketplace seller and AWS Partner Central (APN) access to manage service/product offers and partner programs."
       relay_state      = local.default_relay_state
       session_duration = local.default_session_duration
       tags             = local.tags
-      inline_policy    = data.aws_iam_policy_document.marketplaceseller.json
+      inline_policy    = data.aws_iam_policy_document.marketplaceandpartnercentral.json
       policy_attachments = [
         "arn:aws:iam::aws:policy/AWSMarketplaceSellerFullAccess",
         "arn:aws:iam::aws:policy/AWSMarketplaceFullAccess",
+        "arn:aws:iam::aws:policy/AWSPartnerCentralFullAccess",
         "arn:aws:iam::aws:policy/WellArchitectedConsoleFullAccess",
         "arn:aws:iam::aws:policy/job-function/Billing",
       ]

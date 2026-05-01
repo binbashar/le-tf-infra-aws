@@ -15,6 +15,7 @@ data "aws_iam_policy_document" "devops" {
       "appconfig:*",
       "application-autoscaling:*",
       "apprunner:*",
+      "appsync:*",
       "athena:*",
       "autoscaling:*",
       "aws-marketplace:*",
@@ -316,7 +317,7 @@ data "aws_iam_policy_document" "data_scientist" {
   }
 }
 
-data "aws_iam_policy_document" "marketplaceseller" {
+data "aws_iam_policy_document" "marketplaceandpartnercentral" {
   statement {
     sid = "FullSupportAccess"
     actions = [
