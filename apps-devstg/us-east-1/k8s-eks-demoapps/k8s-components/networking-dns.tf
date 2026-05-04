@@ -16,11 +16,13 @@ resource "helm_release" "externaldns_private" {
       filteredDomain = local.private_base_domain
       filteredZoneId = data.terraform_remote_state.shared-dns.outputs.aws_internal_zone_id
       txtOwnerId     = "${local.environment}-eks-demo-prv"
-      # Watch both Ingresses (nginx path) and Gateway API HTTPRoutes (kgateway path).
+      # Watch Ingresses (nginx path) and, when kgateway is enabled, Gateway API
+      # HTTPRoutes too. Watching `gateway-httproute` without its CRD installed
+      # makes the controller fatally crash, so gate it on kgateway.enabled.
       # Drop the Ingress-class annotation filter — it would silently exclude all
       # HTTPRoutes (which don't carry the kubernetes.io/ingress.class annotation).
       # Domain filtering above already scopes records to aws.binbash.com.ar.
-      sources            = ["ingress", "gateway-httproute"]
+      sources            = var.kgateway.enabled ? ["ingress", "gateway-httproute"] : ["ingress"]
       annotationFilter   = ""
       zoneType           = "private"
       serviceAccountName = "externaldns-private"

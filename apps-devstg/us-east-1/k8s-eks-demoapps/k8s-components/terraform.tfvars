@@ -9,7 +9,7 @@ ingress = {
   # ########################
   # CAN NOT SET BOTH TO TRUE
   nginx_controller = {
-    enabled = false
+    enabled = true
   }
   traefik = {
     enabled = false
@@ -46,7 +46,7 @@ dns_sync = {
   }
 
   public = {
-    enabled = false
+    enabled = true
   }
 }
 
