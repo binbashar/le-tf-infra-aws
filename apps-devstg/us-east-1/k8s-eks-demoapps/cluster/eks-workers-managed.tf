@@ -77,7 +77,7 @@ module "cluster" {
     # Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS
     ami_type       = var.ami_type
     disk_size      = 50
-    instance_types = ["t3.medium", "t3a.medium"]
+    instance_types = ["t3.medium", "t3a.medium", "t2.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
     k8s_labels     = local.tags
     # IMPORTANT: setting this to true is only necessary during the initial bootstrap
     # of the cluster, otherwise the built-in VPC CNI won't start. Then, after you get
@@ -122,11 +122,11 @@ module "cluster" {
     # Standard, Spot, single node group across all AZs
     # ---------------------------------------------------------------
     standard_spot = {
-      desired_size   = 1
+      desired_size   = 2
       max_size       = 6
-      min_size       = 1
+      min_size       = 2
       capacity_type  = "SPOT"
-      instance_types = ["t3.medium", "t3a.medium"]
+      instance_types = ["t3.medium", "t3a.medium", "t2.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
       labels         = merge(local.tags, { "stack" = "standard" })
     }
 
@@ -138,7 +138,7 @@ module "cluster" {
       max_size       = 6
       min_size       = 1
       capacity_type  = "SPOT"
-      instance_types = ["t3.medium", "t3a.medium"]
+      instance_types = ["t3.medium", "t3a.medium", "t2.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
       labels         = merge(local.tags, { "stack" = "tools" })
       taints = {
         tools = {
