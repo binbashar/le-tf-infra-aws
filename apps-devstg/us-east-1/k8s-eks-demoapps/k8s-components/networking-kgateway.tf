@@ -121,8 +121,12 @@ resource "kubernetes_manifest" "private_gateway" {
           name     = "http"
           protocol = "HTTP"
           port     = 80
+          # Only platform-namespaced HTTPRoutes (i.e. `kgateway-system`) can
+          # attach here, which restricts port 80 to the redirect-to-HTTPS
+          # HTTPRoute below. App HTTPRoutes auto-attach to the `https` listener
+          # only, getting nginx-equivalent HTTP→HTTPS redirect for free.
           allowedRoutes = {
-            namespaces = { from = "All" }
+            namespaces = { from = "Same" }
           }
         },
         {
@@ -201,6 +205,53 @@ resource "kubernetes_manifest" "private_gateway_params" {
 
   depends_on = [
     helm_release.kgateway,
+  ]
+}
+
+#------------------------------------------------------------------------------
+# Platform-shared HTTP→HTTPS redirector for `private-gw`. Sits in the gateway
+# namespace and attaches to the http listener (the only listener that allows
+# `Same`-namespace routes). Matches all hostnames, returns 301 to the https
+# scheme (Gateway API only permits 301/302; nginx's default 308 is rejected).
+# App HTTPRoutes don't have to opt in — the http listener simply refuses
+# their attachment by namespace policy, and they reach the data plane only
+# via 443.
+#------------------------------------------------------------------------------
+resource "kubernetes_manifest" "private_gateway_https_redirect" {
+  count = var.kgateway.enabled && var.kgateway.private_gateway.enabled ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "private-gw-https-redirect"
+      namespace = kubernetes_namespace.kgateway[0].id
+    }
+    spec = {
+      parentRefs = [{
+        name        = kubernetes_manifest.private_gateway[0].manifest.metadata.name
+        sectionName = "http"
+      }]
+      rules = [{
+        matches = [{
+          path = {
+            type  = "PathPrefix"
+            value = "/"
+          }
+        }]
+        filters = [{
+          type = "RequestRedirect"
+          requestRedirect = {
+            scheme     = "https"
+            statusCode = 301
+          }
+        }]
+      }]
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.private_gateway,
   ]
 }
 
