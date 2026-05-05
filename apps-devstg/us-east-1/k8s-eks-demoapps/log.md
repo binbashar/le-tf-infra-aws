@@ -256,6 +256,154 @@ Stable resting point: dual ingress data planes running in parallel, same
 backend, no traffic shifted. Phase 3 (incremental migration) is opt-in
 per-app whenever needed; nothing automatic.
 
+## Day-2: midnight teardown lambda + recovery (2026-05-05)
+
+Cluster has a scheduled lambda that nuke daytime resources every midnight
+local time. By design — the cluster is intended to be ephemeral.
+
+### Damage report (after the run)
+
+| Component | State |
+|---|---|
+| EKS control plane | ✅ ACTIVE (etcd preserved: helm releases, HTTPRoutes, Ingresses, the LE wildcard cert Secret) |
+| Managed node groups | ⚠ status=DEGRADED; `AutoScalingGroupNotFound` + `Ec2LaunchTemplateNotFound` |
+| ASGs (both spot groups) | ❌ deleted |
+| EC2 launch templates | ❌ deleted |
+| EC2 instances | ❌ none |
+| Internal NLBs (nginx + kgateway) | ❌ deleted |
+| AWS LBC TargetGroupBindings (CRs in cluster) | ✅ persisted in etcd, but pointing at deleted TGs |
+| NAT gateway | ✅ alive |
+| IAM roles | ✅ alive |
+| VPC, subnets | ✅ alive |
+| EKS addons | ✅ alive (pods reschedule on new nodes) |
+
+Key quirk: the EKS managed node group **objects** still existed in EKS even
+though their backing ASG/LT were gone. So a plain `tofu plan` on the
+`cluster` sublayer showed no drift. Forced replacement via `-replace=` was
+required to make terraform actually rebuild them.
+
+### Recovery sequence
+
+1. **Force-replace the two node groups** (cluster sublayer):
+
+   ```bash
+   leverage tofu apply -auto-approve \
+     -target='module.cluster.module.eks_managed_node_group["standard_spot"]' \
+     -target='module.cluster.module.eks_managed_node_group["tools_spot"]' \
+     -replace='module.cluster.module.eks_managed_node_group["standard_spot"].aws_eks_node_group.this[0]' \
+     -replace='module.cluster.module.eks_managed_node_group["tools_spot"].aws_eks_node_group.this[0]'
+   ```
+
+   Scoping with `-target=` was necessary because the first attempt (without
+   `-target`) errored on the `module.cluster-aws-auth` submodule — its
+   kubernetes provider couldn't initialize during the refresh phase
+   (`http://localhost/api/v1/.../aws-auth → connection refused`). Root cause:
+   the data sources `aws_eks_cluster` / `aws_eks_cluster_auth` are declared
+   with `depends_on = [module.cluster]`, so during a replace within
+   `module.cluster` the provider config doesn't have its endpoint yet and
+   defaults to localhost. Targeting the node-group submodules sidesteps the
+   aws-auth code path entirely.
+
+2. **Manually scaled `eks-standard_spot...` ASG `desired=2`** (same
+   workaround as Day-1) to make room for the helm-hook + Pending pods.
+   Tools_spot stays at 1.
+
+3. **Stale TargetGroupBinding cleanup** — the most subtle issue. AWS LBC
+   logs were full of:
+   ```
+   TargetGroupNotFound: Target groups 'arn:.../k8s-ingressn-ingressn-9860af82d3/...' not found
+   ...
+   creating targetGroupBinding ... resourceID":"ingress-nginx/.../80
+   "targetgroupbindings.elbv2.k8s.aws "k8s-ingressn-ingressn-9860af82d3" already exists"
+   ```
+
+   AWS LBC builds TGB names deterministically from `(service, port)`. The
+   pre-teardown TGBs persisted in etcd, still pointing at deleted target
+   groups. New reconciliation tried to create TGBs with the same names →
+   conflict. Result: the Service `.status.loadBalancer.ingress.hostname`
+   stayed pinned to the dead NLB hostnames, externaldns happily said "all
+   records up to date" against stale data, and DNS returned NXDOMAIN
+   (because the dead hostnames have no A records anymore).
+
+   Fix: delete all 4 stale TGBs (2 per Service: ports 80 + 443).
+   ```bash
+   kubectl delete targetgroupbinding -n ingress-nginx --all
+   kubectl delete targetgroupbinding -n kgateway-system --all
+   ```
+   AWS LBC immediately recreated them against the live (post-teardown) NLBs
+   and target groups; Service status flipped to the new hostnames.
+
+4. **Restarted both `externaldns-private` and `externaldns-public`
+   deployments** to skip the 3-min reconcile interval — instant Route53
+   rewrite to the new NLB IPs.
+
+### Validation after recovery
+
+| Path | Result |
+|---|---|
+| `http://echo-server.aws.binbash.com.ar/` (nginx) | ✅ HTTP 200 |
+| `http://echo-server-kg.aws.binbash.com.ar/` (kgateway HTTP) | ✅ HTTP 200 |
+| `https://echo-server-kg.aws.binbash.com.ar/` (kgateway HTTPS, no `-k`) | ✅ HTTP 200 |
+
+LE wildcard cert survived in etcd — no LE re-issuance needed. Both helm
+releases and the kgateway Gateway/HTTPRoute are unchanged. From the user's
+perspective the system is fully back to the post-Phase-2 state.
+
+### Lessons for next morning's recovery
+
+- Recovery does NOT require a terraform reapply of `k8s-components` or
+  `k8s-workloads`. Only `cluster` sublayer needs the targeted node-group
+  replace; everything else is k8s-side reconciliation + the manual
+  TGB-cleanup nudge.
+- Keep the `-target` scoped reapply pattern handy — without it,
+  `cluster-aws-auth` will block recovery again.
+- The TGB cleanup is the non-obvious step. If the cluster gets nuked
+  again, look for `TargetGroupNotFound` + `already exists` pairs in the
+  AWS LBC log and bulk-delete the conflicting TGBs.
+- ASG bump to 2 on `standard_spot` is needed pre-helm-hook scheduling
+  (same as Day-1).
+
+## Day-2 follow-up: nginx echo-server TLS fix
+
+After the recovery, a closer check showed the nginx HTTPS path was serving
+its **default self-signed `Kubernetes Ingress Controller Fake Certificate`**
+— the Ingress had `enabled = true` but no `tls` block / cert-manager
+annotation, so port 443 fell back to the controller's built-in cert. Only
+HTTP through nginx and HTTP/HTTPS through kgateway were properly working.
+
+Fix in `k8s-workloads/echo_server.tf`: added cert-manager annotation +
+TLS section to the helm-chart Ingress block, mirroring the argocd
+convention that already exists in this repo:
+
+```hcl
+annotations = {
+  "kubernetes.io/ingress.class"   = "private-apps"
+  "cert-manager.io/cluster-issuer" = "clusterissuer-binbash-cert-manager-clusterissuer"
+}
+tls = [{
+  hosts      = ["echo-server.aws.binbash.com.ar"]
+  secretName = "echo-server-tls"
+}]
+```
+
+cert-manager auto-created a `Certificate/echo-server-tls` from the
+Ingress, drove it through DNS01 (public-zone fall-through, same trick the
+kgateway wildcard uses), and populated the secret in ~94s. nginx-ingress
+picked it up on next reconcile.
+
+End-state: two parallel TLS strategies in play, both publicly trusted:
+
+| Path | Cert |
+|---|---|
+| `https://echo-server.aws.binbash.com.ar/` (nginx) | LE per-host: `CN=echo-server.aws.binbash.com.ar` |
+| `https://echo-server-kg.aws.binbash.com.ar/` (kgateway) | LE wildcard: `*.aws.binbash.com.ar` |
+
+Per-host vs wildcard is intentionally different per data plane:
+- **nginx**: cert-manager issues a fresh ACME order per Ingress (matches
+  the argocd pattern). Scales linearly with apps.
+- **kgateway**: single wildcard bound to the gateway listener at
+  provision time; all apps behind the gateway share it.
+
 ## Outstanding (uncommitted) changes
 
 - `network/terraform.tfvars` — flipped to `vpc_enable_nat_gateway = true`.

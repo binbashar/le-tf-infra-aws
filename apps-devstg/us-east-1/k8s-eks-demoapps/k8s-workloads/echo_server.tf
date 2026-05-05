@@ -26,12 +26,19 @@ resource "helm_release" "echo_server" {
         # ingress-nginx-private was launched with --ingress-class=private-apps,
         # so the controller filters by this annotation rather than the modern
         # spec.ingressClassName / IngressClass resource.
+        # cert-manager auto-issues the per-host LE cert via DNS01 (public zone
+        # fall-through, same trick the kgateway wildcard uses).
         annotations = {
-          "kubernetes.io/ingress.class" = "private-apps"
+          "kubernetes.io/ingress.class"   = "private-apps"
+          "cert-manager.io/cluster-issuer" = "clusterissuer-binbash-cert-manager-clusterissuer"
         }
         hosts = [{
           host  = "echo-server.aws.binbash.com.ar"
           paths = ["/"]
+        }]
+        tls = [{
+          hosts      = ["echo-server.aws.binbash.com.ar"]
+          secretName = "echo-server-tls"
         }]
       }
     })
