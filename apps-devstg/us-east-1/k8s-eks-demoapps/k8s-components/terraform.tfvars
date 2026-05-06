@@ -114,6 +114,21 @@ kgateway = {
     enabled = true
   }
 }
+
+#------------------------------------------------------------------------------
+# Ingress: Envoy Gateway (CNCF, third parallel data plane). Same NLB pattern,
+# distinct GatewayClass `envoy-gateway` and namespace `envoy-gateway-system`
+# so it coexists cleanly with kgateway. Workload HTTPRoutes attach via
+# parentRef pointing at `private-gw-eg`.
+#------------------------------------------------------------------------------
+envoy_gateway = {
+  enabled = true
+  version = "v1.7.2"
+
+  private_gateway = {
+    enabled = true
+  }
+}
 #------------------------------------------------------------------------------
 # Monitoring: Logging
 #------------------------------------------------------------------------------

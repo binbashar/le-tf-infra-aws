@@ -141,3 +141,12 @@ resource "kubernetes_namespace" "kgateway" {
     name   = "kgateway-system"
   }
 }
+
+resource "kubernetes_namespace" "envoy_gateway" {
+  count = var.envoy_gateway.enabled ? 1 : 0
+
+  metadata {
+    labels = local.labels
+    name   = "envoy-gateway-system"
+  }
+}

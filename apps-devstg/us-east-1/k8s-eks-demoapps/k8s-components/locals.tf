@@ -68,6 +68,15 @@ locals {
   gateway_api_crds_url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/${var.kgateway.gateway_api_version}/standard-install.yaml"
 
   #------------------------------------------------------------------------------
+  # Envoy Gateway settings
+  #------------------------------------------------------------------------------
+  envoy_gateway_tags_map = merge(local.tags_map, { Component = "envoy-gateway" })
+  envoy_gateway_tags_list = [
+    for k, v in local.envoy_gateway_tags_map : "${k}=${v}"
+  ]
+  private_gw_eg_wildcard_cert_secret = "private-gw-eg-wildcard-tls"
+
+  #------------------------------------------------------------------------------
   # ALB Ingress settings
   #------------------------------------------------------------------------------
   alb_ingress_to_nginx_ingress_tags_map = merge(local.tags_map, { Component = "alb-ingress" })

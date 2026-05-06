@@ -275,7 +275,6 @@ resource "kubernetes_manifest" "private_gateway_https_redirect" {
 #------------------------------------------------------------------------------
 locals {
   private_gw_wildcard_cert_secret = "private-gw-wildcard-tls"
-  private_gw_clusterissuer_name   = "clusterissuer-binbash-aws"
 }
 
 resource "helm_release" "private_gw_tls" {
@@ -291,24 +290,6 @@ resource "helm_release" "private_gw_tls" {
     <<-EOF
     resources:
       - apiVersion: cert-manager.io/v1
-        kind: ClusterIssuer
-        metadata:
-          name: ${local.private_gw_clusterissuer_name}
-        spec:
-          acme:
-            server: https://acme-v02.api.letsencrypt.org/directory
-            email: info@binbash.com.ar
-            privateKeySecretRef:
-              name: ${local.private_gw_clusterissuer_name}-account-key
-            solvers:
-              - selector:
-                  dnsZones:
-                    - ${local.private_base_domain}
-                dns01:
-                  route53:
-                    region: ${var.region}
-                    hostedZoneID: ${data.terraform_remote_state.shared-dns.outputs.aws_public_zone_id}
-      - apiVersion: cert-manager.io/v1
         kind: Certificate
         metadata:
           name: private-gw-wildcard
@@ -317,7 +298,7 @@ resource "helm_release" "private_gw_tls" {
           secretName: ${local.private_gw_wildcard_cert_secret}
           issuerRef:
             kind: ClusterIssuer
-            name: ${local.private_gw_clusterissuer_name}
+            name: ${local.shared_clusterissuer_name}
           commonName: ${local.private_base_domain}
           dnsNames:
             - ${local.private_base_domain}
@@ -327,5 +308,6 @@ resource "helm_release" "private_gw_tls" {
 
   depends_on = [
     helm_release.certmanager,
+    helm_release.cluster_issuer_binbash_aws,
   ]
 }

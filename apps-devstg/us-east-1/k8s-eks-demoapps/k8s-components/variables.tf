@@ -238,3 +238,24 @@ variable "kgateway" {
     }
   }
 }
+
+# Envoy Gateway shares the upstream Gateway API CRDs installed by the
+# kgateway path (see networking-kgateway.tf) — keep `var.kgateway.enabled`
+# = true while EG is in use, or factor those CRDs out into a standalone
+# resource gated on any Gateway API consumer.
+variable "envoy_gateway" {
+  type = object({
+    enabled = bool
+    version = string
+    private_gateway = object({
+      enabled = bool
+    })
+  })
+  default = {
+    enabled = false
+    version = "v1.7.2"
+    private_gateway = {
+      enabled = false
+    }
+  }
+}

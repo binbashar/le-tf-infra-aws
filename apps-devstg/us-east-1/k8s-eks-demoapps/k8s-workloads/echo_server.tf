@@ -1,8 +1,7 @@
 #------------------------------------------------------------------------------
 # DemoApp: echo-server (https://github.com/Ealenn/Echo-Server)
 #
-# Installed directly via Helm rather than as an ArgoCD Application — ArgoCD is
-# not currently enabled in the k8s-components sublayer.
+# Installed directly via Helm rather than as an ArgoCD Application.
 #
 # Routing: exposed via the private nginx-ingress controller (internal NLB,
 # reachable only over VPN). externaldns-private creates the Route53 record in
@@ -66,6 +65,36 @@ resource "kubernetes_manifest" "echo_server_route" {
         namespace = "kgateway-system"
       }]
       hostnames = ["echo-server-kg.aws.binbash.com.ar"]
+      rules = [{
+        backendRefs = [{
+          name = "echo-server"
+          port = 80
+        }]
+      }]
+    }
+  }
+}
+
+#------------------------------------------------------------------------------
+# Envoy Gateway smoke test: third parallel HTTPRoute attaching to the
+# EG-managed `private-gw-eg` in `envoy-gateway-system`. Distinct hostname so
+# externaldns-private creates a separate Route53 record. Same backend
+# Service as the nginx + kgateway paths.
+#------------------------------------------------------------------------------
+resource "kubernetes_manifest" "echo_server_route_eg" {
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "echo-server-eg"
+      namespace = "echo-server"
+    }
+    spec = {
+      parentRefs = [{
+        name      = "private-gw-eg"
+        namespace = "envoy-gateway-system"
+      }]
+      hostnames = ["echo-server-eg.aws.binbash.com.ar"]
       rules = [{
         backendRefs = [{
           name = "echo-server"
