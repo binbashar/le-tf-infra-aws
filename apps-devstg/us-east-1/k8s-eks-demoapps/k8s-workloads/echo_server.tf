@@ -69,11 +69,18 @@ resource "kubernetes_service" "echo_server" {
   }
   spec {
     selector = local.echo_server_labels
+    # Gateway API v1.2+ standard signal that this backend accepts WebSocket
+    # upgrades (KEP-3726). kgateway honours it by enabling envoy upgrade_configs
+    # on routes pointing here; without it, kgateway's envoy returns 403 on
+    # `/.ws` upgrade requests. Envoy Gateway allows WS by default and nginx
+    # ignores the field, so this is effectively kgateway-specific but harmless
+    # everywhere else.
     port {
-      name        = "http"
-      port        = 80
-      target_port = 8080
-      protocol    = "TCP"
+      name         = "http"
+      port         = 80
+      target_port  = 8080
+      protocol     = "TCP"
+      app_protocol = "kubernetes.io/ws"
     }
   }
 }
