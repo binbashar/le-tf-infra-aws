@@ -6,6 +6,8 @@ locals {
   ]
 }
 resource "kubernetes_manifest" "demo-emojivoto" {
+  count = var.demo_apps.emojivoto.enabled ? 1 : 0
+
   manifest = {
     "apiVersion" = "argoproj.io/v1alpha1"
     "kind"       = "Application"
@@ -54,4 +56,9 @@ resource "kubernetes_manifest" "demo-emojivoto" {
       }
     }
   }
+}
+
+moved {
+  from = kubernetes_manifest.demo-emojivoto
+  to   = kubernetes_manifest.demo-emojivoto[0]
 }

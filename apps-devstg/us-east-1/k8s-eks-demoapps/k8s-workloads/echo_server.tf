@@ -56,6 +56,8 @@ locals {
 }
 
 resource "kubernetes_deployment" "echo_server" {
+  count = var.demo_apps.echo_server.enabled ? 1 : 0
+
   metadata {
     name      = "echo-server"
     namespace = local.echo_server_namespace
@@ -96,6 +98,8 @@ resource "kubernetes_deployment" "echo_server" {
 }
 
 resource "kubernetes_service" "echo_server" {
+  count = var.demo_apps.echo_server.enabled ? 1 : 0
+
   metadata {
     name      = "echo-server"
     namespace = local.echo_server_namespace
@@ -120,6 +124,8 @@ resource "kubernetes_service" "echo_server" {
 }
 
 resource "kubernetes_ingress_v1" "echo_server" {
+  count = var.demo_apps.echo_server.enabled ? 1 : 0
+
   metadata {
     name      = "echo-server"
     namespace = local.echo_server_namespace
@@ -167,6 +173,8 @@ resource "kubernetes_ingress_v1" "echo_server" {
 # cert bound to the gateway's HTTPS listener.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "echo_server_route" {
+  count = var.demo_apps.echo_server.enabled ? 1 : 0
+
   manifest = {
     apiVersion = "gateway.networking.k8s.io/v1"
     kind       = "HTTPRoute"
@@ -197,6 +205,8 @@ resource "kubernetes_manifest" "echo_server_route" {
 # Service as the nginx + kgateway paths.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "echo_server_route_eg" {
+  count = var.demo_apps.echo_server.enabled ? 1 : 0
+
   manifest = {
     apiVersion = "gateway.networking.k8s.io/v1"
     kind       = "HTTPRoute"
@@ -218,4 +228,31 @@ resource "kubernetes_manifest" "echo_server_route_eg" {
       }]
     }
   }
+}
+
+#------------------------------------------------------------------------------
+# State address shifts when `count` was introduced on the resources above.
+# These let `tofu apply` reconcile the existing live objects from
+# `kubernetes_*.echo_server` to `kubernetes_*.echo_server[0]` without a
+# destroy/create cycle. Safe to keep — they're no-ops once state has caught up.
+#------------------------------------------------------------------------------
+moved {
+  from = kubernetes_deployment.echo_server
+  to   = kubernetes_deployment.echo_server[0]
+}
+moved {
+  from = kubernetes_service.echo_server
+  to   = kubernetes_service.echo_server[0]
+}
+moved {
+  from = kubernetes_ingress_v1.echo_server
+  to   = kubernetes_ingress_v1.echo_server[0]
+}
+moved {
+  from = kubernetes_manifest.echo_server_route
+  to   = kubernetes_manifest.echo_server_route[0]
+}
+moved {
+  from = kubernetes_manifest.echo_server_route_eg
+  to   = kubernetes_manifest.echo_server_route_eg[0]
 }
