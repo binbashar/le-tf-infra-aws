@@ -14,6 +14,40 @@
 # Routing: exposed via the private nginx-ingress controller (internal NLB,
 # reachable only over VPN). externaldns-private creates the Route53 record in
 # the private zone (aws.binbash.com.ar). No public exposure.
+#
+# Three parallel hostnames hit the same backend Service, one per data plane:
+#   - echo-server.aws.binbash.com.ar      → nginx-ingress (Ingress, below)
+#   - echo-server-kg.aws.binbash.com.ar   → kgateway      (HTTPRoute → private-gw)
+#   - echo-server-eg.aws.binbash.com.ar   → Envoy Gateway (HTTPRoute → private-gw-eg)
+#
+# Smoke-testing (VPN required for all three):
+#
+#   # HTTP (returns the request as plain text, jmalloc-style):
+#   curl https://echo-server-eg.aws.binbash.com.ar/
+#
+#   # WebSocket — `wscat` is the simplest interactive client. It defaults to
+#   # HTTP/1.1, which matters for the nginx host: nginx-ingress negotiates
+#   # HTTP/2 via ALPN and `websocat 1.x` cannot do WS-over-HTTP/2 (RFC 8441),
+#   # so it errors with "I/O failure" against echo-server.aws…; wscat works
+#   # against all three hosts.
+#   #   brew install wscat   (or: npm i -g wscat)
+#   wscat -c wss://echo-server.aws.binbash.com.ar/.ws       # nginx
+#   wscat -c wss://echo-server-kg.aws.binbash.com.ar/.ws    # kgateway
+#   wscat -c wss://echo-server-eg.aws.binbash.com.ar/.ws    # envoy-gateway
+#   # Type any line at the `>` prompt; jmalloc echoes it back prefixed with
+#   # a `Request served by …` line on first frame.
+#
+#   # Raw upgrade handshake check via curl (forces HTTP/1.1 so it works
+#   # everywhere, prints the `101 Switching Protocols` response):
+#   curl -k --http1.1 -i \
+#     -H "Connection: Upgrade" -H "Upgrade: websocket" \
+#     -H "Sec-WebSocket-Key: $(openssl rand -base64 16)" \
+#     -H "Sec-WebSocket-Version: 13" \
+#     https://echo-server.aws.binbash.com.ar/.ws
+#
+# kgateway requires `appProtocol = "kubernetes.io/ws"` on the Service port to
+# allow WS upgrades (see kubernetes_service.echo_server below); without it
+# kgateway's envoy returns 403 Forbidden on `/.ws` while still serving `/`.
 #------------------------------------------------------------------------------
 
 locals {
