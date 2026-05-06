@@ -406,15 +406,169 @@ Per-host vs wildcard is intentionally different per data plane:
 
 ## Outstanding (uncommitted) changes
 
-- `network/terraform.tfvars` — flipped to `vpc_enable_nat_gateway = true`.
-- `k8s-components/terraform.tfvars` — `kgateway.enabled = true` (Phase 1).
-- `k8s-components/chart-values/ingress-nginx.yaml` — annotation fix (bug #1).
-- `k8s-components/networking-dns.tf` — kgateway-conditional sources (bug #2).
-- `k8s-workloads/echo_server.tf` — nginx-ingress Ingress (Phase 5 of
-  orchestration) + parallel kgateway HTTPRoute (Phase 2 of kgateway
-  rollout).
-- `eks-standard_spot...` ASG — manually scaled to `desired=2` (cluster-
-  autoscaler manages going forward; revert if you want fewer nodes).
+All in-flight work from Day 1 is now committed:
+- `f0bed101` — ingress-nginx config bug fixes + echo-server wired through both
+  paths.
+- `fb55c555` — nginx echo-server TLS (per-host LE cert).
 
-Bugs #1 and #2 are real defects in the checked-in config; worth committing
-independently of the kgateway / echo-server work.
+---
+
+# Day 2 — 2026-05-05
+
+## Outcome
+
+Full nightly teardown (orderly per-layer destroy) + morning re-orchestration.
+Code-level fixes landed for the two recurring bootstrap speed bumps. End
+state: same cluster footprint as Day 1 with sturdier node-group config.
+
+## Nightly teardown (~01:15 local)
+
+Reverse-order destroy of every layer (Option A from the proposed paths). The
+goal was a clean slate for morning, not just a daytime resource sweep — so
+state had to come down with the resources.
+
+| Layer | Result |
+|---|---|
+| `k8s-workloads` | targeted destroy of `helm_release.echo_server` + `kubernetes_manifest.echo_server_route` (the two argoproj.io stub manifests in this layer fail plan-time validation since ArgoCD is not installed; they aren't in state, so targeted destroy sidesteps them) |
+| `k8s-components` | **skipped** — `context deadline exceeded` on `helm_release.ingress_nginx_private` (5 min) and `kubernetes_namespace.kgateway` (4+ min). Underlying cause: the leftover `LoadBalancer` services and `TargetGroupBinding` CRs were waiting on AWS LBC, which had already been destroyed earlier in the same plan. Manual cleanup: deleted the two LB Services, patched the kgateway-system Service to drop the `service.k8s.aws/resources` finalizer, namespace finalized in seconds. NLBs were already gone in AWS (clean LBC uninstall removed them); two stale TGs in ELB v2 were deleted via CLI. |
+| `addons` | 4 destroyed |
+| `identities` | 37 destroyed |
+| `cluster` | 50 destroyed |
+| `network` | flipped `vpc_enable_nat_gateway = false` and applied — VPC kept, NAT down to stop the hourly bleed |
+
+`k8s-components` state ended up with one stale entry: `kubernetes_namespace.ingress_nginx[0]`. Cheap to clean up next bootstrap.
+
+## Morning re-orchestration
+
+Same Steps 1–5 as Day 1, with the local tfvars overrides preserved (kgateway
+on, nginx on, public dns_sync on). Step 6 skipped per request.
+
+| Step | Layer | Notes |
+|---|---|---|
+| 1 | `network` | flipped NAT back on; 3 added |
+| 2 | `cluster` | 50 added; ~17 min, no surprises |
+| 3 | `identities` | 37 added |
+| 4 | `addons` | 4 added |
+| – | state cleanup | `tofu state rm 'kubernetes_namespace.ingress_nginx[0]'` (run via plain `tofu` — leverage CLI doesn't expose `state` subcommands) |
+| 5 | `k8s-components` | two-stage targeted apply (same pattern as Day 1) |
+
+### k8s-components quirks (re-encountered)
+
+1. **kgateway CRD chicken-and-egg** — `kubernetes_manifest.private_gateway` and `private_gateway_params` validate at plan time against the live API, but the kgateway helm chart that installs `gateway.kgateway.dev` CRDs hadn't run yet. Resolved with the same two-stage flow:
+   - Stage 1: `tofu apply -exclude='kubernetes_manifest.private_gateway' -exclude='kubernetes_manifest.private_gateway_params'` — installs everything else, including kgateway helm release (which lays down the CRDs).
+   - Stage 2: `tofu apply` (no exclusions) — adds the 2 manifests against now-existing CRDs.
+2. **AWS LBC webhook race** — same `failed calling webhook "mservice.elbv2.k8s.aws"` as Day 1 on first apply pass; cleared on retry.
+3. **Spot capacity (us-east-1b, t3a.medium)** — `InsufficientInstanceCapacity` on the standard_spot ASG mid-Stage-1, all attempts failing. ASG eventually recovered across AZs after several minutes.
+4. **cert-manager scheduling on a 1-node standard pool** — `FailedScheduling 0/2 nodes are available: 1 Too many pods, 1 node(s) had untolerated taint {stack: tools}`. Same as Day 1: t3.medium `max-pods=17` is exhausted by kube-system + a single deployment chain. Manually scaled the `eks-standard_spot...` ASG to `desired=2`. New node ready in ~90s, scheduling unblocked.
+
+End state (verified): nodes Ready, no pending pods, both NLBs provisioned, `kgateway-system/private-gw` Gateway PROGRAMMED=True.
+
+## Code-level fixes for the recurring speed bumps (commit `d8e9937e`)
+
+`cluster/eks-workers-managed.tf`:
+
+| | Before | After |
+|---|---|---|
+| `standard_spot` `min_size` / `desired_size` | 1 / 1 | 2 / 2 |
+| Default + per-node-group `instance_types` | `[t3.medium, t3a.medium]` | `[t3.medium, t3a.medium, t2.medium, m5.large, m5a.large, m6a.large, m6i.large]` |
+
+Why:
+- **Floor of 2**: cert-manager's three deployments + AWS LBC + externaldns + autoscaler + nginx + kgateway exceed `t3.medium`'s pod limit. The cluster autoscaler can't help itself schedule (chicken-and-egg), so the *bootstrap* floor matters even with autoscaler running. Cost: roughly +$10/mo for one extra spot instance.
+- **Broader pool**: shifts spot fulfillment from "one of 2 types in 3 AZs" (6 combos) to "one of 7 types in 3 AZs" (21 combos). `m*.large` is 4 GiB → 8 GiB and roughly 2× the price of t3.medium on spot, but the EKS module's `capacity_optimized` allocation strategy keeps cheap pools preferred — m-family is fallback, not default. Zero ongoing cost.
+
+Apply was a node-group force-replace (instance_types is a replacement attribute). Used `-target='module.cluster.module.eks_managed_node_group["standard_spot"]'` and `tools_spot` to avoid the same `module.cluster-aws-auth` provider connection-refused chicken-and-egg from Day 1.
+
+Final `tofu plan` clean, no drift.
+
+## Day-2 follow-ups
+
+### kgateway HTTP→HTTPS redirect (commit `d9db6a87`)
+
+Spot check after re-orchestration revealed kgateway was serving the same
+content on port 80 as port 443 — no redirect, unlike nginx. Root cause: the
+`http` listener had `allowedRoutes.namespaces.from = "All"`, so app
+HTTPRoutes (e.g. echo-server) auto-attached to *both* listeners. Combined
+with Gateway API's "more specific hostname wins" routing, port 80 served
+the app directly. Gateway API has no Gateway-level "redirect HTTP→HTTPS"
+knob.
+
+Fix: tightened the `http` listener to `from = "Same"` (only platform-
+namespaced HTTPRoutes can attach), then added a single
+`HTTPRoute/private-gw-https-redirect` in `kgateway-system` with
+`sectionName: "http"` and a `RequestRedirect` filter (scheme=https,
+statusCode=301). Apps don't need to opt in — the namespace policy on the
+http listener silently rejects their attachment, so they're HTTPS-only by
+construction.
+
+Note: Gateway API restricts statusCode to 301/302 (rejects nginx's default
+308). Used 301.
+
+### Envoy Gateway as third data plane (commit `416a6f32`)
+
+Added Envoy Gateway (CNCF, Envoy maintainers' official Gateway API
+implementation) alongside nginx and kgateway. echo-server now reachable
+via three parallel paths:
+
+| Path | Endpoint | TLS |
+|---|---|---|
+| nginx | `https://echo-server.aws.binbash.com.ar/` | LE per-host |
+| kgateway | `https://echo-server-kg.aws.binbash.com.ar/` | LE wildcard |
+| Envoy Gateway | `https://echo-server-eg.aws.binbash.com.ar/` | LE wildcard |
+
+Architecture mirrors kgateway: distinct GatewayClass (`envoy-gateway`),
+namespace (`envoy-gateway-system`), and Gateway (`private-gw-eg`). Same
+NLB pattern (AWS LBC, internal scheme, target-type=ip), same wildcard
+cert pattern, same HTTP→HTTPS 301 redirect HTTPRoute. EG's `EnvoyProxy`
+CR pins the data-plane Envoy pod to `stack=tools` and carries the three
+NLB annotations on `envoyService.annotations`.
+
+Notable structural difference: EG references `EnvoyProxy` at the
+GatewayClass level (`spec.parametersRef`), unlike kgateway's
+`GatewayParameters` which is referenced from each Gateway. All Gateways
+using class `envoy-gateway` share the same EnvoyProxy params.
+
+#### Refactor: shared ClusterIssuer
+
+Extracted `clusterissuer-binbash-aws` from kgateway's TLS bundle into its
+own `helm_release.cluster_issuer_binbash_aws` (in `certmanager`
+namespace), gated on `var.certmanager.enabled && (var.kgateway.enabled ||
+var.envoy_gateway.enabled)`. Each data plane now owns only its own
+Certificate; neither is load-bearing for the other.
+
+Transient pain during rollout: the new release adopted the existing
+ClusterIssuer cleanly (after re-pointing its helm ownership annotations
+via `kubectl annotate`), but the kgateway TLS upgrade ran *after* the
+adoption and helm proceeded to delete the ClusterIssuer it tracked in
+its v1 manifest. Recovered by `tofu apply -replace` on the new release.
+
+Lesson: when refactoring resources between two helm releases under
+terraform, stage the apply so the *donating* release upgrades before the
+*adopting* release creates — otherwise helm's diff-against-v1-manifest
+removes the resource right after adoption.
+
+#### EG CRDs: bypass the helm subchart
+
+`gateway-crds-helm` ships Gateway API standard + experimental + EG CRDs
+in templates. Even with `crds.gatewayAPI.enabled=false`, the chart
+*archive* exceeds etcd's 1 MB-per-Secret limit (the EnvoyProxy CRD alone
+is 1.2 MB). Helm install fails with `Secret 'sh.helm.release.v1.envoy-
+gateway-crds.v1' is invalid: data: Too long`.
+
+Fix: pull the rendered EG CRDs YAML from the GitHub release page
+(`https://github.com/envoyproxy/gateway/releases/download/v1.7.2/envoy-
+gateway-crds.yaml`) and apply via `data.http` + `kubernetes_manifest`
+for_each. Same pattern as the upstream Gateway API CRDs already in the
+kgateway path.
+
+The main `gateway-helm` chart needs `skip_crds = true` for the same
+reason — its own bundled CRDs would clobber the ones we now manage
+directly.
+
+#### Misc
+
+- external-dns sources gating is now `(kgateway || envoy_gateway) ?
+  ["ingress", "gateway-httproute"] : ["ingress"]` — add new Gateway API
+  consumers to the OR if/when needed.
+- Clean `tofu plan`, no drift.
+- All three Gateways carry distinct NLBs; total internal NLB count for
+  this layer: 3 (nginx, kgateway, EG).
