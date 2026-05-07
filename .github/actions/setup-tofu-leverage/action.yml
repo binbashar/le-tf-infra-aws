@@ -1,0 +1,60 @@
+name: "Setup OpenTofu and Leverage CLI"
+description: "Install OpenTofu and Leverage CLI with verification"
+
+inputs:
+  tofu_version:
+    description: "OpenTofu version to install"
+    required: false
+    default: "1.8.7"
+  leverage_version:
+    description: "Leverage CLI version to install"
+    required: false
+    default: "2.2.0rc5"
+  python_version:
+    description: "Python version for Leverage CLI"
+    required: false
+    default: "3.13"
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+      with:
+        python-version: ${{ inputs.python_version }}
+
+    - name: Install OpenTofu
+      shell: bash
+      run: |
+        TOFU_VERSION="${{ inputs.tofu_version }}"
+        wget -q "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
+        unzip -qo tofu_${TOFU_VERSION}_linux_amd64.zip
+        sudo mv tofu /usr/local/bin/
+        sudo chmod +x /usr/local/bin/tofu
+        tofu version
+
+    - name: Install Leverage CLI
+      shell: bash
+      run: |
+        python3 -m venv ~/.leverage-venv
+        source ~/.leverage-venv/bin/activate
+        pip install --upgrade pip
+        pip install leverage==${{ inputs.leverage_version }}
+        echo "$HOME/.leverage-venv/bin" >> $GITHUB_PATH
+        leverage --version
+
+    - name: Verify Required Binaries
+      shell: bash
+      run: |
+        echo "Verifying system binaries for dockerless Leverage CLI..."
+        if ! command -v tofu &> /dev/null; then
+          echo "OpenTofu (tofu) not found"
+          exit 1
+        fi
+        if ! command -v aws &> /dev/null; then
+          echo "AWS CLI not found"
+          exit 1
+        fi
+        echo "OpenTofu: $(tofu version | head -1)"
+        echo "AWS CLI: $(aws --version)"
+        echo "Leverage: $(leverage --version)"

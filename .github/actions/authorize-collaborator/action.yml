@@ -1,0 +1,38 @@
+name: "Authorize Collaborator"
+description: "Check if the commenter has admin or write permission on the repository"
+
+inputs:
+  github_token:
+    description: "GitHub token for API calls"
+    required: true
+
+outputs:
+  authorized:
+    description: "Whether the user is authorized (true/false)"
+    value: ${{ steps.check.outputs.authorized }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check collaborator permission
+      id: check
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: |
+        ACTOR="${{ github.actor }}"
+        REPO="${{ github.repository }}"
+
+        echo "Checking permission for user: $ACTOR"
+
+        PERMISSION=$(gh api "repos/$REPO/collaborators/$ACTOR/permission" --jq '.permission' 2>/dev/null || echo "none")
+
+        echo "Permission level: $PERMISSION"
+
+        if [[ "$PERMISSION" == "admin" || "$PERMISSION" == "write" ]]; then
+          echo "authorized=true" >> $GITHUB_OUTPUT
+          echo "User $ACTOR is authorized ($PERMISSION)"
+        else
+          echo "authorized=false" >> $GITHUB_OUTPUT
+          echo "User $ACTOR is NOT authorized ($PERMISSION) — blocking workflow"
+        fi

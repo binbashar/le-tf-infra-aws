@@ -1,0 +1,703 @@
+name: Terraform Plan Review
+
+# Atlantis/Gitops Replacement:
+# - Automatic: Run terraform plan on PR with *.tf changes
+# - Manual: Run plan/apply via comment commands
+# - Primary: /tofu plan, /tofu apply
+# - Aliases: /tf-plan = /tofu plan, /tf-apply = /tofu apply
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.tf'
+      - '**/*.tfvars'
+      - '**/*.hcl'
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write
+
+env:
+  AWS_REGION: us-east-1
+
+# Prevent concurrent terraform operations on the same PR to avoid state corruption
+concurrency:
+  group: terraform-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  # Job 0: Authorization gate for comment-triggered events
+  authorize:
+    name: Authorize
+    if: github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      authorized: ${{ steps.auth.outputs.authorized }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          sparse-checkout: .github/actions/authorize-collaborator
+          fetch-depth: 1
+
+      - name: Check collaborator permission
+        id: auth
+        uses: ./.github/actions/authorize-collaborator
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job 1: Add eyes reaction to indicate processing
+  eyes-reaction:
+    name: Add Eyes Reaction
+    needs: [authorize]
+    if: |
+      always() &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+       (github.event_name == 'issue_comment' && needs.authorize.outputs.authorized == 'true'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        if: github.event_name == 'issue_comment'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          sparse-checkout: .github/actions/add-eyes-reaction
+          fetch-depth: 1
+
+      - name: Add eyes reaction
+        if: github.event_name == 'issue_comment'
+        uses: ./.github/actions/add-eyes-reaction
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          comment_id: ${{ github.event.comment.id }}
+
+  # Job 2: Determine what action to take based on trigger
+  determine-action:
+    name: Determine Action
+    needs: [authorize]
+    if: |
+      always() &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+       (github.event_name == 'issue_comment' && needs.authorize.outputs.authorized == 'true'))
+    runs-on: ubuntu-latest
+    outputs:
+      should_plan: ${{ steps.check.outputs.should_plan }}
+      should_apply: ${{ steps.check.outputs.should_apply }}
+      pr_number: ${{ steps.check.outputs.pr_number }}
+      plan_full: ${{ steps.check.outputs.plan_full }}
+    steps:
+      - name: Check trigger and command
+        id: check
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          echo "Event: ${{ github.event_name }}"
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # Automatic plan on PR updates — always delta format
+            echo "should_plan=true" >> $GITHUB_OUTPUT
+            echo "should_apply=false" >> $GITHUB_OUTPUT
+            echo "plan_full=false" >> $GITHUB_OUTPUT
+            echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "Trigger: PR update -> Will run automatic plan (delta format)"
+
+          elif [[ "${{ github.event_name }}" == "issue_comment" ]]; then
+            # Check if comment is on a PR
+            if [[ "${{ github.event.issue.pull_request }}" == "" ]]; then
+              echo "should_plan=false" >> $GITHUB_OUTPUT
+              echo "should_apply=false" >> $GITHUB_OUTPUT
+              echo "plan_full=false" >> $GITHUB_OUTPUT
+              echo "Comment is not on a PR, skipping"
+              exit 0
+            fi
+
+            COMMENT="$COMMENT_BODY"
+            PR_NUMBER="${{ github.event.issue.number }}"
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+            # Parse command — check full before plain plan to avoid substring match
+            # Primary: /tofu plan, /tofu apply | Aliases: /tf-plan, /tf-apply
+            if [[ "$COMMENT" =~ ^(/tofu[[:space:]]+plan[[:space:]]+full|/tf-plan[[:space:]]+full) ]]; then
+              echo "should_plan=true" >> $GITHUB_OUTPUT
+              echo "should_apply=false" >> $GITHUB_OUTPUT
+              echo "plan_full=true" >> $GITHUB_OUTPUT
+              echo "Command: ${BASH_REMATCH[0]} -> Will run manual plan (full output)"
+
+            elif [[ "$COMMENT" =~ ^(/tofu[[:space:]]+plan|/tf-plan) ]]; then
+              echo "should_plan=true" >> $GITHUB_OUTPUT
+              echo "should_apply=false" >> $GITHUB_OUTPUT
+              echo "plan_full=false" >> $GITHUB_OUTPUT
+              echo "Command: ${BASH_REMATCH[0]} -> Will run manual plan (delta format)"
+
+            elif [[ "$COMMENT" =~ ^(/tofu[[:space:]]+apply|/tf-apply) ]]; then
+              echo "should_plan=true" >> $GITHUB_OUTPUT
+              echo "should_apply=true" >> $GITHUB_OUTPUT
+              echo "plan_full=false" >> $GITHUB_OUTPUT
+              echo "Command: ${BASH_REMATCH[0]} -> Will run plan + apply"
+
+            else
+              echo "should_plan=false" >> $GITHUB_OUTPUT
+              echo "should_apply=false" >> $GITHUB_OUTPUT
+              echo "plan_full=false" >> $GITHUB_OUTPUT
+              echo "Not a /tofu or /tf- command, skipping"
+            fi
+          fi
+
+  # Job 3: Setup shared environment
+  setup-environment:
+    name: Setup Environment
+    needs: determine-action
+    if: needs.determine-action.outputs.should_plan == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      python-version: ${{ steps.setup.outputs.python-version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        id: setup
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+        with:
+          python-version: '3.13'
+
+      - name: Cache Python dependencies
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+        with:
+          path: ~/.leverage-venv
+          key: ${{ runner.os }}-leverage-${{ hashFiles('build.env') }}
+          restore-keys: |
+            ${{ runner.os }}-leverage-
+
+  # Job 4: Detect changed Terraform layers
+  detect-layers:
+    name: Detect Changed Layers
+    needs: [determine-action, setup-environment]
+    if: needs.determine-action.outputs.should_plan == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      layers: ${{ steps.detect.outputs.layers }}
+      has-layers: ${{ steps.detect.outputs.has-layers }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR information
+        id: pr-info
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
+        with:
+          script: |
+            const pr_number = ${{ needs.determine-action.outputs.pr_number }};
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number
+            });
+
+            core.setOutput('base_sha', pr.base.sha);
+            core.setOutput('head_sha', pr.head.sha);
+
+      - name: Detect Changed Layers
+        id: detect
+        run: |
+          BASE_REF="${{ steps.pr-info.outputs.base_sha }}"
+          HEAD_REF="${{ steps.pr-info.outputs.head_sha }}"
+
+          echo "Analyzing changes between $BASE_REF and $HEAD_REF"
+
+          # Get list of changed files
+          CHANGED_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF")
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Extract layer directories (pattern: account/region/layer/)
+          CHANGED_LAYERS=$(echo "$CHANGED_FILES" | \
+            grep -E '^[^/]+/[^/]+/[^/]+/' | \
+            sed -E 's|(^[^/]+/[^/]+/[^/]+)/.*|\1|' | \
+            sort -u)
+
+          echo "Potential layers:"
+          echo "$CHANGED_LAYERS"
+
+          # Validate each layer has config.tf
+          VALID_LAYERS=""
+          for layer in $CHANGED_LAYERS; do
+            if [[ -f "$layer/config.tf" ]]; then
+              echo "Valid layer: $layer"
+              VALID_LAYERS="$VALID_LAYERS $layer"
+            else
+              echo "Skipping (no config.tf): $layer"
+            fi
+          done
+
+          # Convert to JSON array for matrix
+          if [[ -n "$VALID_LAYERS" ]]; then
+            LAYERS_JSON=$(echo "$VALID_LAYERS" | tr ' ' '\n' | grep -v '^$' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            echo "layers=$LAYERS_JSON" >> $GITHUB_OUTPUT
+            echo "has-layers=true" >> $GITHUB_OUTPUT
+            echo "Found layers for analysis:"
+            echo "$LAYERS_JSON" | jq .
+          else
+            echo "layers=[]" >> $GITHUB_OUTPUT
+            echo "has-layers=false" >> $GITHUB_OUTPUT
+            echo "No Terraform layers changed in this PR"
+          fi
+
+  # Job 5: Run Terraform plan for each changed layer
+  run-terraform-plan:
+    name: Plan (${{ matrix.layer }})
+    needs: [determine-action, setup-environment, detect-layers]
+    if: needs.detect-layers.outputs.has-layers == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        layer: ${{ fromJSON(needs.detect-layers.outputs.layers) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+
+      - name: Setup OpenTofu and Leverage CLI
+        uses: ./.github/actions/setup-tofu-leverage
+
+      - name: Determine AWS Account
+        id: determine-account
+        uses: ./.github/actions/determine-account
+        with:
+          layer_path: ${{ matrix.layer }}
+
+      - name: Configure AWS Credentials
+        uses: ./.github/actions/leverage-aws-credentials
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_management_account_id: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
+          aws_security_account_id: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+          aws_shared_account_id: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
+          aws_network_account_id: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
+          aws_devstg_account_id: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
+          aws_prd_account_id: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
+          aws_data_science_account_id: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
+
+      - name: Set AWS Profile for Layer
+        run: |
+          PROFILE="${{ steps.determine-account.outputs.profile }}"
+          echo "AWS_CONFIG_FILE=$HOME/.aws/bb/config" >> $GITHUB_ENV
+          echo "AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/bb/credentials" >> $GITHUB_ENV
+          echo "AWS_PROFILE=$PROFILE" >> $GITHUB_ENV
+          echo "Using AWS profile: $PROFILE"
+
+      - name: Configure Reference Architecture
+        uses: ./.github/actions/leverage-configure-ref-arch
+        with:
+          aws_management_account_id: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
+          aws_security_account_id: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+          aws_shared_account_id: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
+          aws_network_account_id: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
+          aws_devstg_account_id: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
+          aws_prd_account_id: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
+          aws_data_science_account_id: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
+          tf_binary: "tofu"
+
+      - name: Run Terraform Init
+        working-directory: ${{ matrix.layer }}
+        timeout-minutes: 5
+        run: |
+          ACCOUNT="${{ steps.determine-account.outputs.account }}"
+          REPO_ROOT="${{ github.workspace }}"
+
+          echo "Initializing layer: ${{ matrix.layer }}"
+
+          tofu init -no-color \
+            -backend-config="${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars"
+
+      - name: Run Terraform Plan
+        working-directory: ${{ matrix.layer }}
+        timeout-minutes: 10
+        run: |
+          ACCOUNT="${{ steps.determine-account.outputs.account }}"
+          REPO_ROOT="${{ github.workspace }}"
+
+          echo "Running plan for layer: ${{ matrix.layer }}"
+
+          # Build tfvars arguments (common + account config, same as Leverage)
+          TFVARS_ARGS=""
+
+          if [[ -f "${REPO_ROOT}/config/common.tfvars" ]]; then
+            TFVARS_ARGS="$TFVARS_ARGS -var-file=${REPO_ROOT}/config/common.tfvars"
+          fi
+
+          if [[ -f "${REPO_ROOT}/${ACCOUNT}/config/account.tfvars" ]]; then
+            TFVARS_ARGS="$TFVARS_ARGS -var-file=${REPO_ROOT}/${ACCOUNT}/config/account.tfvars"
+          fi
+
+          tofu plan -no-color -input=false -out=tfplan.bin $TFVARS_ARGS 2>&1 | tee plan-output.txt
+
+      - name: Sanitize Layer Name for Artifact
+        id: sanitize
+        run: echo "artifact_name=plan-$(echo '${{ matrix.layer }}' | tr '/' '-')" >> $GITHUB_OUTPUT
+
+      - name: Upload Plan Artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: ${{ steps.sanitize.outputs.artifact_name }}
+          path: |
+            ${{ matrix.layer }}/plan-output.txt
+            ${{ matrix.layer }}/tfplan.bin
+          retention-days: 7
+
+  # Job 6: Scan plan for destructive operations
+  scan-destructive-operations:
+    name: Destructive Operation Check
+    needs: [determine-action, detect-layers, run-terraform-plan]
+    if: needs.run-terraform-plan.result == 'success' && needs.detect-layers.outputs.has-layers == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      has_destructions: ${{ steps.scan.outputs.has_destructions }}
+      destruction_count: ${{ steps.scan.outputs.destruction_count }}
+      blocked: ${{ steps.scan.outputs.blocked }}
+    steps:
+      - name: Download Plan Outputs
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          pattern: plan-*
+          path: plans/
+
+      - name: Scan for destructive changes
+        id: scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DESTROY_COUNT=0
+          REPLACE_COUNT=0
+          DETAILS=""
+
+          for plan_file in plans/*/plan-output.txt; do
+            if [[ ! -f "$plan_file" ]]; then
+              continue
+            fi
+
+            LAYER=$(basename "$(dirname "$plan_file")" | sed 's/^plan-//' | tr '-' '/')
+            D=$(grep -c 'will be destroyed' "$plan_file" 2>/dev/null || echo 0)
+            R=$(grep -c 'must be replaced' "$plan_file" 2>/dev/null || echo 0)
+
+            if [[ $D -gt 0 || $R -gt 0 ]]; then
+              DETAILS="${DETAILS}\n- **${LAYER}**: ${D} destroy, ${R} replace"
+            fi
+
+            DESTROY_COUNT=$((DESTROY_COUNT + D))
+            REPLACE_COUNT=$((REPLACE_COUNT + R))
+          done
+
+          TOTAL=$((DESTROY_COUNT + REPLACE_COUNT))
+          echo "destruction_count=$TOTAL" >> $GITHUB_OUTPUT
+
+          # Block auto-apply if any destructive operations are detected
+          if [[ $TOTAL -gt 0 ]]; then
+            echo "has_destructions=true" >> $GITHUB_OUTPUT
+            echo "blocked=true" >> $GITHUB_OUTPUT
+            echo "BLOCKED: $TOTAL destructive operations detected — auto-apply disabled"
+          else
+            echo "has_destructions=false" >> $GITHUB_OUTPUT
+            echo "blocked=false" >> $GITHUB_OUTPUT
+            echo "No destructive operations detected"
+          fi
+
+      - name: Post destruction warning
+        if: steps.scan.outputs.has_destructions == 'true'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
+        with:
+          script: |
+            const count = '${{ steps.scan.outputs.destruction_count }}';
+            const blocked = '${{ steps.scan.outputs.blocked }}' === 'true';
+            const prNumber = ${{ needs.determine-action.outputs.pr_number }};
+
+            let body = `## :warning: Destructive Operations Detected\n\n`;
+            body += `**${count} resource(s)** will be destroyed or replaced.\n\n`;
+
+            body += `> :no_entry: **Auto-apply is BLOCKED** — destructive operations are not allowed via automated apply.\n`;
+            body += `> A manual review and explicit approval is required before applying.\n`;
+
+            body += `\n---\n*Automated destructive operation scan*`;
+
+            await github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  # Job 7: AI-powered plan analysis
+  ai-analyze-plan:
+    name: AI Plan Analysis
+    needs: [eyes-reaction, determine-action, detect-layers, run-terraform-plan, scan-destructive-operations]
+    if: |
+      needs.run-terraform-plan.result == 'success' &&
+      (needs.eyes-reaction.result == 'success' || needs.eyes-reaction.result == 'skipped') &&
+      needs.detect-layers.outputs.has-layers == 'true'
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      actions: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Plan Outputs
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          pattern: plan-*
+          path: plans/
+
+      - name: Capture Code Diff
+        run: |
+          PR_NUMBER=${{ needs.determine-action.outputs.pr_number }}
+
+          BASE_SHA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER --jq '.base.sha')
+          HEAD_SHA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER --jq '.head.sha')
+
+          echo "Capturing .tf/.hcl diff between $BASE_SHA and $HEAD_SHA"
+          git diff "$BASE_SHA"..."$HEAD_SHA" -- '*.tf' '*.hcl' > plans/code-diff.txt 2>&1 || {
+            echo "Warning: Could not capture code diff"
+            echo "No code diff available" > plans/code-diff.txt
+          }
+
+          LINES=$(wc -l < plans/code-diff.txt)
+          echo "Code diff captured: $LINES lines"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Claude Code Plan Analysis
+        id: claude-analysis
+        uses: anthropics/claude-code-action@928c84b37e02abd33f08826a2200058c68633a85  # v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Read and follow `.claude/skills/ci-analyze-plan.md`.
+            Context:
+              PR=#${{ needs.determine-action.outputs.pr_number }}
+              Layers=${{ needs.detect-layers.outputs.layers }}
+              Format=${{ needs.determine-action.outputs.plan_full == 'true' && 'FULL' || 'DELTA' }}
+              DestructionCount=${{ needs.scan-destructive-operations.outputs.destruction_count }}
+              Blocked=${{ needs.scan-destructive-operations.outputs.blocked }}
+
+          claude_args: '--allowed-tools "Task,Read,Grep,Glob,Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh issue view:*),Bash(gh issue list:*),mcp__github_comment__*,mcp__github_ci__*"'
+
+  # Job 8: Run Terraform apply (manual only)
+  run-terraform-apply:
+    name: Apply (${{ matrix.layer }})
+    needs: [determine-action, detect-layers, run-terraform-plan, scan-destructive-operations]
+    if: |
+      needs.determine-action.outputs.should_apply == 'true' &&
+      needs.detect-layers.outputs.has-layers == 'true' &&
+      needs.scan-destructive-operations.outputs.blocked != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        layer: ${{ fromJSON(needs.detect-layers.outputs.layers) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+
+      - name: Check permissions and PR approval
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
+        with:
+          script: |
+            // Check collaborator permission
+            const { data: collaborator } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.actor
+            });
+
+            if (!['admin', 'write'].includes(collaborator.permission)) {
+              core.setFailed(`User ${context.actor} does not have permission to apply changes`);
+              return;
+            }
+
+            // Check PR has at least one approved review
+            const prNumber = ${{ needs.determine-action.outputs.pr_number }};
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            const hasApproval = reviews.some(r => r.state === 'APPROVED');
+            if (!hasApproval) {
+              core.setFailed(`PR #${prNumber} requires at least one approved review before applying`);
+              return;
+            }
+
+            core.info(`User ${context.actor} authorized (${collaborator.permission}) and PR has approval`);
+
+      - name: Setup OpenTofu and Leverage CLI
+        uses: ./.github/actions/setup-tofu-leverage
+
+      - name: Determine AWS Account
+        id: determine-account
+        uses: ./.github/actions/determine-account
+        with:
+          layer_path: ${{ matrix.layer }}
+
+      - name: Configure AWS Credentials
+        uses: ./.github/actions/leverage-aws-credentials
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_management_account_id: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
+          aws_security_account_id: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+          aws_shared_account_id: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
+          aws_network_account_id: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
+          aws_devstg_account_id: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
+          aws_prd_account_id: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
+          aws_data_science_account_id: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
+
+      - name: Set AWS Profile for Layer
+        run: |
+          PROFILE="${{ steps.determine-account.outputs.profile }}"
+          echo "AWS_CONFIG_FILE=$HOME/.aws/bb/config" >> $GITHUB_ENV
+          echo "AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/bb/credentials" >> $GITHUB_ENV
+          echo "AWS_PROFILE=$PROFILE" >> $GITHUB_ENV
+          echo "Using AWS profile: $PROFILE"
+
+      - name: Configure Reference Architecture
+        uses: ./.github/actions/leverage-configure-ref-arch
+        with:
+          aws_management_account_id: ${{ secrets.AWS_MANAGEMENT_ACCOUNT_ID }}
+          aws_security_account_id: ${{ secrets.AWS_SECURITY_ACCOUNT_ID }}
+          aws_shared_account_id: ${{ secrets.AWS_SHARED_ACCOUNT_ID }}
+          aws_network_account_id: ${{ secrets.AWS_NETWORK_ACCOUNT_ID }}
+          aws_devstg_account_id: ${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}
+          aws_prd_account_id: ${{ secrets.AWS_PRD_ACCOUNT_ID }}
+          aws_data_science_account_id: ${{ secrets.AWS_DATA_SCIENCE_ACCOUNT_ID }}
+          tf_binary: "tofu"
+
+      - name: Sanitize Layer Name for Artifact
+        id: sanitize
+        run: |
+          echo "plan_artifact=plan-$(echo '${{ matrix.layer }}' | tr '/' '-')" >> $GITHUB_OUTPUT
+          echo "apply_artifact=apply-$(echo '${{ matrix.layer }}' | tr '/' '-')" >> $GITHUB_OUTPUT
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          name: ${{ steps.sanitize.outputs.plan_artifact }}
+          path: ${{ matrix.layer }}/
+
+      - name: Run Terraform Init
+        working-directory: ${{ matrix.layer }}
+        timeout-minutes: 5
+        run: |
+          ACCOUNT="${{ steps.determine-account.outputs.account }}"
+          REPO_ROOT="${{ github.workspace }}"
+
+          echo "Initializing layer: ${{ matrix.layer }}"
+
+          tofu init -no-color \
+            -backend-config="${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars"
+
+      - name: Save Pre-Apply State for Rollback
+        working-directory: ${{ matrix.layer }}
+        timeout-minutes: 2
+        run: |
+          echo "Saving pre-apply state snapshot for potential rollback..."
+          tofu state pull > pre-apply-state.json 2>/dev/null || echo '{}' > pre-apply-state.json
+          echo "Pre-apply state saved"
+
+      - name: Run Terraform Apply
+        working-directory: ${{ matrix.layer }}
+        timeout-minutes: 20
+        run: |
+          echo "Applying changes for layer: ${{ matrix.layer }}"
+          tofu apply -no-color -auto-approve tfplan.bin 2>&1 | tee apply-output.txt
+
+      - name: Upload Apply Results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: ${{ steps.sanitize.outputs.apply_artifact }}
+          path: |
+            ${{ matrix.layer }}/apply-output.txt
+            ${{ matrix.layer }}/pre-apply-state.json
+          retention-days: 30
+
+      - name: Post Apply Results
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
+        with:
+          script: |
+            const fs = require('fs');
+            const layerPath = '${{ matrix.layer }}';
+
+            let applyOutput = '';
+            try {
+              applyOutput = fs.readFileSync(`${layerPath}/apply-output.txt`, 'utf8');
+            } catch (e) {
+              applyOutput = 'Apply output not available';
+            }
+
+            const comment = `## Terraform Apply Complete
+
+            **Layer**: \`${layerPath}\`
+            **Triggered by**: @${{ github.actor }}
+            **Status**: Success
+
+            <details>
+            <summary>Apply Output</summary>
+
+            \`\`\`
+            ${applyOutput.slice(0, 5000)}
+            ${applyOutput.length > 5000 ? '\n... (truncated)' : ''}
+            \`\`\`
+
+            </details>
+
+            ### Rollback Information
+            A pre-apply state snapshot has been saved for potential rollback.
+
+            **To rollback these changes:**
+            1. Revert the PR changes in git: \`git revert <commit-sha>\`
+            2. Run \`leverage tf plan\` and \`leverage tf apply\` to restore previous state
+            3. Alternatively, download the \`apply-${layerPath.replace(/\//g, '-')}\` artifact and use \`tofu state push pre-apply-state.json\` (advanced)
+
+            **Rollback artifact retention**: 30 days
+
+            ---
+            *Applied by automated Terraform workflow*`;
+
+            github.rest.issues.createComment({
+              issue_number: ${{ needs.determine-action.outputs.pr_number }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
