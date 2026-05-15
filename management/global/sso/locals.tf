@@ -221,15 +221,6 @@ locals {
         "devops",
       ]
     }
-    "santiago.respane" = {
-      first_name = "Santiago"
-      last_name  = "Respane"
-      email      = "santiago.respane@binbash.com.ar"
-      groups = [
-        "datascientists",
-        "devops"
-      ]
-    }
     "lucas.langwagen" = {
       first_name = "Lucas"
       last_name  = "Langwagen"
