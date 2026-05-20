@@ -51,4 +51,5 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "🎉 Python script executed successfully."
 else
     echo "❌ Python script failed with exit code $EXIT_CODE."
+    exit $EXIT_CODE
 fi
