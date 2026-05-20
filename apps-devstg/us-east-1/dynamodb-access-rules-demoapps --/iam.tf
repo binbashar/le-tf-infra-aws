@@ -25,7 +25,7 @@ data "aws_iam_policy_document" "dynamodb_user_access" {
 }
 
 resource "aws_iam_role" "authenticated_role" {
-  name = "CognitoAuthRole"
+  name = "bb-demo-CognitoAuthRole"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -53,7 +53,7 @@ resource "aws_iam_role" "authenticated_role" {
 }
 
 resource "aws_iam_policy" "dynamodb_policy" {
-  name   = "PrivateDynamoDBPolicy"
+  name   = "bb-demo-PrivateDynamoDBPolicy"
   policy = data.aws_iam_policy_document.dynamodb_user_access.json
 }
 
