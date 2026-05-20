@@ -27,38 +27,6 @@ def get_required_env_var(key):
     # Trim whitespace just in case the environment variable has leading/trailing spaces
     return value.strip()
 
-load_dotenv()
-
-PASSWORD_FILE = "binbash_test_passwords.json"
-
-# --- Environment Variable Keys (Matching the Shell Script's Exported Names) ---
-# The shell script converts Terraform output names to uppercase.
-# e.g., dynamodb_table_name -> DYNAMODB_TABLE_NAME
-ENV_DYNAMODB_TABLE_NAME = "DYNAMODB_TABLE_NAME"
-ENV_IDENTITY_POOL_ID = "AWS_COGNITO_IDENTITY_POOL_ID"
-ENV_COGNITO_CLIENT_ID = "AWS_COGNITO_USER_POOL_CLIENT_ID"
-ENV_USER_POOL_ID = "AWS_COGNITO_USER_POOL_ID"
-ENV_CLIENT_SECRET = "AWS_COGNITO_USER_POOL_CLIENT_CLIENT_SECRET"
-ENV_REGION_ENDPOINT = "AWS_COGNITO_USER_POOL_ENDPOINT"
-
-# Dynamically retrieve and enforce all variables
-DYNAMODB_TABLE_NAME = get_required_env_var(ENV_DYNAMODB_TABLE_NAME)
-IDENTITY_POOL_ID = get_required_env_var(ENV_IDENTITY_POOL_ID)
-COGNITO_CLIENT_ID = get_required_env_var(ENV_COGNITO_CLIENT_ID)
-USER_POOL_ID = get_required_env_var(ENV_USER_POOL_ID)
-CLIENT_SECRET = get_required_env_var(ENV_CLIENT_SECRET)
-REGION_ENDPOINT = get_required_env_var(ENV_REGION_ENDPOINT)
-
-# Determine the region. This is often necessary for SDK calls.
-# The user pool ID usually contains the region (e.g., "us-east-1_XXXXX").
-# We can extract it or use a separate variable if available.
-# Assuming the region is the prefix of the USER_POOL_ID (e.g., "us-east-1")
-REGION = USER_POOL_ID.split('_')[0] if '_' in USER_POOL_ID else "us-east-1"
-print(f"✅ REGION inferred from USER_POOL_ID: {REGION}")
-
-USER_POOL_PROVIDER_NAME = "cognito-idp.{}.amazonaws.com/{}".format(REGION, USER_POOL_ID) # e.g., cognito-idp.us-east-1.amazonaws.com/us-east-1_XXXXX
-
-
 
 # --- Password Generation Function (same as before) ---
 def generate_strong_password(length=20):
@@ -148,21 +116,6 @@ def get_or_generate_passwords(user_emails, password_file):
             sys.exit(1)
 
     return passwords
-
-# --- User Credentials (Conditional Password Assignment) ---
-
-USER_EMAIL_1="SaulGoodman@hhm.com"
-USER_EMAIL_2="Chuck@hhm.com"
-
-# Define the list of users we need passwords for
-user_emails = [USER_EMAIL_1, USER_EMAIL_2]
-
-# Get or generate the passwords
-user_passwords = get_or_generate_passwords(user_emails, PASSWORD_FILE)
-
-# Assign the passwords to the final variables
-USER_PWD_1 = user_passwords[USER_EMAIL_1]
-USER_PWD_2 = user_passwords[USER_EMAIL_2]
 
 
 def decimal_serializer(obj):
@@ -453,12 +406,62 @@ def test_the_thing(username,userpwd,use_identity=None):
         print("❌ FAILURE: Can not login")
     return USER_ID
 
-# --- Simulation ---
+if __name__ == "__main__":
 
-print('-- CREATING USERS --')
-if create_user_without_force_change(USER_EMAIL_1, USER_EMAIL_1, USER_PWD_1) is not None and create_user_without_force_change(USER_EMAIL_2, USER_EMAIL_2, USER_PWD_2) is not None:
-  identity1_id = test_the_thing(USER_EMAIL_1,USER_PWD_1)
-  identity2_id = test_the_thing(USER_EMAIL_2,USER_PWD_2)
-  identity2_id = test_the_thing(USER_EMAIL_2,USER_PWD_2,use_identity=identity1_id)
-else:
-  print("❌ FAILURE: Can not create users")
+    load_dotenv()
+
+    PASSWORD_FILE = "binbash_test_passwords.json"
+
+    # --- Environment Variable Keys (Matching the Shell Script's Exported Names) ---
+    # The shell script converts Terraform output names to uppercase.
+    # e.g., dynamodb_table_name -> DYNAMODB_TABLE_NAME
+    ENV_DYNAMODB_TABLE_NAME = "DYNAMODB_TABLE_NAME"
+    ENV_IDENTITY_POOL_ID = "AWS_COGNITO_IDENTITY_POOL_ID"
+    ENV_COGNITO_CLIENT_ID = "AWS_COGNITO_USER_POOL_CLIENT_ID"
+    ENV_USER_POOL_ID = "AWS_COGNITO_USER_POOL_ID"
+    ENV_CLIENT_SECRET = "AWS_COGNITO_USER_POOL_CLIENT_CLIENT_SECRET"
+    ENV_REGION_ENDPOINT = "AWS_COGNITO_USER_POOL_ENDPOINT"
+
+    # Dynamically retrieve and enforce all variables
+    DYNAMODB_TABLE_NAME = get_required_env_var(ENV_DYNAMODB_TABLE_NAME)
+    IDENTITY_POOL_ID = get_required_env_var(ENV_IDENTITY_POOL_ID)
+    COGNITO_CLIENT_ID = get_required_env_var(ENV_COGNITO_CLIENT_ID)
+    USER_POOL_ID = get_required_env_var(ENV_USER_POOL_ID)
+    CLIENT_SECRET = get_required_env_var(ENV_CLIENT_SECRET)
+    REGION_ENDPOINT = get_required_env_var(ENV_REGION_ENDPOINT)
+
+    # Determine the region. This is often necessary for SDK calls.
+    # The user pool ID usually contains the region (e.g., "us-east-1_XXXXX").
+    # We can extract it or use a separate variable if available.
+    # Assuming the region is the prefix of the USER_POOL_ID (e.g., "us-east-1")
+    REGION = USER_POOL_ID.split('_')[0] if '_' in USER_POOL_ID else "us-east-1"
+    print(f"✅ REGION inferred from USER_POOL_ID: {REGION}")
+
+    USER_POOL_PROVIDER_NAME = "cognito-idp.{}.amazonaws.com/{}".format(REGION, USER_POOL_ID) # e.g., cognito-idp.us-east-1.amazonaws.com/us-east-1_XXXXX
+
+
+    # --- User Credentials (Conditional Password Assignment) ---
+
+    USER_EMAIL_1="SaulGoodman@hhm.com"
+    USER_EMAIL_2="Chuck@hhm.com"
+
+    # Define the list of users we need passwords for
+    user_emails = [USER_EMAIL_1, USER_EMAIL_2]
+
+    # Get or generate the passwords
+    user_passwords = get_or_generate_passwords(user_emails, PASSWORD_FILE)
+
+    # Assign the passwords to the final variables
+    USER_PWD_1 = user_passwords[USER_EMAIL_1]
+    USER_PWD_2 = user_passwords[USER_EMAIL_2]
+
+
+    # --- Simulation ---
+
+    print('-- CREATING USERS --')
+    if create_user_without_force_change(USER_EMAIL_1, USER_EMAIL_1, USER_PWD_1) is not None and create_user_without_force_change(USER_EMAIL_2, USER_EMAIL_2, USER_PWD_2) is not None:
+    identity1_id = test_the_thing(USER_EMAIL_1,USER_PWD_1)
+    identity2_id = test_the_thing(USER_EMAIL_2,USER_PWD_2)
+    identity2_id = test_the_thing(USER_EMAIL_2,USER_PWD_2,use_identity=identity1_id)
+    else:
+    print("❌ FAILURE: Can not create users")
