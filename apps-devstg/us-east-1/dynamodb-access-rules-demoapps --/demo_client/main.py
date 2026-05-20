@@ -365,6 +365,7 @@ def decode_jwt_payload(jwt_token):
 def test_the_thing(username,userpwd,use_identity=None):
     # --- Login ---
     identity_id = None
+    USER_ID = None
     print('------------------------------------')
     print(f'-- FULL TEST FOR USER {username} --')
     print('------------------------------------')
@@ -382,7 +383,7 @@ def test_the_thing(username,userpwd,use_identity=None):
             print(f"✅ SUCCESS: user_id is {USER_ID}")
         else:
             print("❌ FAILURE: Can not find user_id")
-            quit()
+            return None
 
         # --- Get temp creds ---
         print('-- GETTING TEMP CREDS --')
@@ -396,7 +397,7 @@ def test_the_thing(username,userpwd,use_identity=None):
             print("✅ SUCCESS: tested Dynamo write!")
         else:
             print("❌ FAILURE: Can not write dynamo")
-            quit()
+            return None
 
         if (identity_id or use_identity is not None) and temporary_credentials:
             if use_identity is not None:
