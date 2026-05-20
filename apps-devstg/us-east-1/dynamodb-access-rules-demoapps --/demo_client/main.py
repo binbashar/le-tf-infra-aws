@@ -4,7 +4,7 @@ import base64
 import json
 import os
 import sys
-import random
+import secrets
 import string
 from dotenv import load_dotenv
 from decimal import Decimal
@@ -49,25 +49,25 @@ def generate_strong_password(length=20):
     all_chars = letters + digits + punctuation
 
     # 1. Start the password with a random letter (upper or lower)
-    password = [random.choice(letters)]
+    password = [secrets.choice(letters)]
 
     # 2. Ensure all required character types are present in the remaining characters
     # We already have one letter, so we only need to guarantee the remaining three types:
     required_chars = [
-        random.choice(lower),
-        random.choice(upper),
-        random.choice(digits),
-        random.choice(punctuation)
+        secrets.choice(lower),
+        secrets.choice(upper),
+        secrets.choice(digits),
+        secrets.choice(punctuation)
     ]
 
     # 3. Fill the remaining length with random choices from all sets
     remaining_length = length - len(password) - len(required_chars)
 
     # Combine required characters and filler
-    filler_chars = required_chars + [random.choice(all_chars) for _ in range(remaining_length)]
+    filler_chars = required_chars + [secrets.choice(all_chars) for _ in range(remaining_length)]
 
     # 4. Shuffle the filler characters to randomize their positions
-    random.shuffle(filler_chars)
+    secrets.SystemRandom().shuffle(filler_chars)
 
     # 5. Build the final password: [Starting Letter] + [Shuffled Filler]
     password.extend(filler_chars)
@@ -434,7 +434,11 @@ if __name__ == "__main__":
     # The user pool ID usually contains the region (e.g., "us-east-1_XXXXX").
     # We can extract it or use a separate variable if available.
     # Assuming the region is the prefix of the USER_POOL_ID (e.g., "us-east-1")
-    REGION = USER_POOL_ID.split('_')[0] if '_' in USER_POOL_ID else "us-east-1"
+    user_pool_parts = USER_POOL_ID.split("_", 1)
+    if len(user_pool_parts) != 2 or not user_pool_parts[0]:
+        print(f"❌ ERROR: Invalid AWS_COGNITO_USER_POOL_ID: {USER_POOL_ID!r}")
+        sys.exit(1)
+    REGION = user_pool_parts[0]
     print(f"✅ REGION inferred from USER_POOL_ID: {REGION}")
 
     USER_POOL_PROVIDER_NAME = "cognito-idp.{}.amazonaws.com/{}".format(REGION, USER_POOL_ID) # e.g., cognito-idp.us-east-1.amazonaws.com/us-east-1_XXXXX
