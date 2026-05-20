@@ -166,8 +166,14 @@ def create_user_without_force_change(username: str, email: str, temporary_passwo
         print(f"✅ User {username} created and status set to permanent password.")
 
     except client.exceptions.UsernameExistsException:
-        print(f"❌ User {username} already exists.")
-        response = username
+        client.admin_set_user_password(
+            UserPoolId=USER_POOL_ID,
+            Username=username,
+            Password=temporary_password,
+            Permanent=True,
+        )
+        print(f"✅ User {username} already existed; password reset for demo reuse.")
+        response = {"Username": username}
     except Exception as e:
         print(f"❌ Error creating user: {e}")
     return response
