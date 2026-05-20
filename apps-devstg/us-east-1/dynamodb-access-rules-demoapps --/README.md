@@ -132,7 +132,7 @@ The DynamoDB design must ensure the user ID is the primary partitioning element 
 | :---- | :---- | :---- | :---- |
 | **1.1** | **Create DynamoDB Table** | Create a single table, e.g., PrivateUserDataTable. | Stores all user profiles and their subcollection items (movies, music). |
 | **1.2** | **Define Primary Keys** | Set the **Partition Key (PK)** to userId (String). Set the **Sort Key (SK)** to entityId (String). | The userId (which will be the Cognito Identity ID) ensures item-level access control via IAM. |
-| **1.3** | **Populate SK Values** | Define a convention for the Sort Key to differentiate between the user profile and the subcollection data. | * **User Profile Item:** SK = PROFILE * **Movie Item:** SK = MOVIE#<movieId> * **Music Item:** SK = MUSIC#<songId> |
+| **1.3** | **Populate SK Values** | Define a convention for the Sort Key to differentiate between the user profile and the subcollection data. | **User Profile Item:** SK = PROFILE **Movie Item:** SK = MOVIE#<movieId> **Music Item:** SK = MUSIC#<songId> |
 
 ## Phase 1: Authentication and IAM Policy Creation (Enforcing request.auth.uid \== userId)
 
