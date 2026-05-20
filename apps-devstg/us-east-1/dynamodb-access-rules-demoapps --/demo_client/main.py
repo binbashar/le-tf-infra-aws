@@ -471,8 +471,8 @@ if __name__ == "__main__":
 
     print('-- CREATING USERS --')
     if create_user_without_force_change(USER_EMAIL_1, USER_EMAIL_1, USER_PWD_1) is not None and create_user_without_force_change(USER_EMAIL_2, USER_EMAIL_2, USER_PWD_2) is not None:
-    identity1_id = test_the_thing(USER_EMAIL_1,USER_PWD_1)
-    identity2_id = test_the_thing(USER_EMAIL_2,USER_PWD_2)
-    identity2_id = test_the_thing(USER_EMAIL_2,USER_PWD_2,use_identity=identity1_id)
+        identity1_id = test_the_thing(USER_EMAIL_1,USER_PWD_1)
+        identity2_id = test_the_thing(USER_EMAIL_2,USER_PWD_2)
+        identity2_id = test_the_thing(USER_EMAIL_2,USER_PWD_2,use_identity=identity1_id)
     else:
-    print("❌ FAILURE: Can not create users")
+        print("❌ FAILURE: Can not create users")
