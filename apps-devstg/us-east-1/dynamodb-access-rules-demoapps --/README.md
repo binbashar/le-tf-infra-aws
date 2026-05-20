@@ -261,7 +261,7 @@ The steps:
 * Run the script (read more on the script below):
   - `bash run_demo.sh`
 * Drink a beer  
-* Chek your results
+* Check your results
 * Play with the demo
 * **Don’t forget to destroy** the testing infrastructure
 
