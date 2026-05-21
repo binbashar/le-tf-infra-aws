@@ -72,15 +72,6 @@ locals {
         "marketplaceandpartnercentral",
       ]
     }
-    "ezequiel.godoy" = {
-      first_name = "Ezequiel"
-      last_name  = "Godoy"
-      email      = "ezequiel.godoy@binbash.com.ar"
-      groups = [
-        "administrators",
-        "devops",
-      ]
-    }
     "exequiel.barrirero" = {
       first_name = "Exequiel"
       last_name  = "Barrirero"
@@ -92,18 +83,19 @@ locals {
         "marketplaceandpartnercentral",
       ]
     }
+    "ezequiel.godoy" = {
+      first_name = "Ezequiel"
+      last_name  = "Godoy"
+      email      = "ezequiel.godoy@binbash.com.ar"
+      groups = [
+        "administrators",
+        "devops",
+      ]
+    }
     "favio.tolosa" = {
       first_name = "Favio"
       last_name  = "Tolosa"
       email      = "favio.tolosa@binbash.com.ar"
-      groups = [
-        "devops",
-      ]
-    }
-    "franco.gauchat" = {
-      first_name = "Franco"
-      last_name  = "Gauchat"
-      email      = "franco.gauchat@binbash.com.ar"
       groups = [
         "devops",
       ]
@@ -114,6 +106,14 @@ locals {
       email      = "francisco.rivera@binbash.com.ar"
       groups = [
         "administrators",
+        "devops",
+      ]
+    }
+    "franco.gauchat" = {
+      first_name = "Franco"
+      last_name  = "Gauchat"
+      email      = "franco.gauchat@binbash.com.ar"
+      groups = [
         "devops",
       ]
     }
