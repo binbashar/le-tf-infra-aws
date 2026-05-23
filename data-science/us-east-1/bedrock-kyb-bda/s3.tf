@@ -140,6 +140,27 @@ resource "aws_s3_bucket_policy" "kyb_input" {
             "aws:SecureTransport" = "false"
           }
         }
+      },
+      {
+        Sid    = "AllowBedrockDataAutomationRead"
+        Effect = "Allow"
+        Principal = {
+          Service = "bedrock.amazonaws.com"
+        }
+        Action = [
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+          "s3:ListBucket",
+        ]
+        Resource = [
+          aws_s3_bucket.kyb_input.arn,
+          "${aws_s3_bucket.kyb_input.arn}/*"
+        ]
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+          }
+        }
       }
       ], var.enable_encryption ? [
       {
@@ -201,6 +222,30 @@ resource "aws_s3_bucket_policy" "kyb_output" {
         Condition = {
           Bool = {
             "aws:SecureTransport" = "false"
+          }
+        }
+      },
+      {
+        Sid    = "AllowBedrockDataAutomationWrite"
+        Effect = "Allow"
+        Principal = {
+          Service = "bedrock.amazonaws.com"
+        }
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl",
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+          "s3:DeleteObject",
+          "s3:ListBucket",
+        ]
+        Resource = [
+          aws_s3_bucket.kyb_output.arn,
+          "${aws_s3_bucket.kyb_output.arn}/*"
+        ]
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = data.aws_caller_identity.current.account_id
           }
         }
       }

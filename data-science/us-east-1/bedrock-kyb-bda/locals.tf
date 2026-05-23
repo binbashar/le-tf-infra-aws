@@ -1,10 +1,11 @@
 locals {
   tags = {
-    Terraform   = "true"
-    Environment = var.environment
-    Purpose     = "bedrock-kyb-bda"
-    Layer       = "bedrock-kyb-bda"
-    Service     = "bedrock-data-automation"
+    Terraform    = "true"
+    Environment  = var.environment
+    Purpose      = "bedrock-kyb-bda"
+    Layer        = "bedrock-kyb-bda"
+    Service      = "bedrock-data-automation"
+    "aws-apn-id" = "pc:b6t445987ttlzwgcll8zdt8nv"
   }
 
   # Sanitized name prefix
