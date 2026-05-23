@@ -88,6 +88,9 @@ resource "aws_route53_record" "TXT_google_domain_verification" {
   zone_id = aws_route53_zone.public.id
   name    = "binbash.co"
   type    = "TXT"
-  records = ["google-site-verification=7-ckJxbKpPRrcQ-foy3UIkImTGlp60MUtDgzfudJZmM"]
-  ttl     = 300
+  records = [
+    "google-site-verification=7-ckJxbKpPRrcQ-foy3UIkImTGlp60MUtDgzfudJZmM",
+    "linkedin-site-verification=bbe1c109-7cab-456f-9669-2f66982d41bf",
+  ]
+  ttl = 300
 }
