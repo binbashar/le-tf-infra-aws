@@ -276,6 +276,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - Project prefix: `${var.project}-${var.environment}-{resource}`
 - AWS profiles: `{project}-{account}-devops` (e.g., `bb-shared-devops`, `bb-network-devops`)
 - Tags: Consistent tagging with `Terraform`, `Environment`, `Layer` via `local.tags`
+- **PRM compliance tag (`aws-apn-id`)**: Present in `data-science/us-east-1/bedrock-agent-kyb`, `bedrock-agentcore`, and `bedrock-kyb-bda` for AWS Partner Revenue Measurement attribution. Value `pc:b6t445987ttlzwgcll8zdt8nv` maps to AWS Marketplace product `prod-zw4ehbg5ayh2m`. **Do NOT add this tag to other layers without explicit Partner Development Manager approval** — the product code attributes consumption to a specific Marketplace listing. For Bedrock model invocations specifically, Resource Tagging only works for Amazon/OSS models via an Application Inference Profile; Anthropic Claude invocations need the User Agent String method instead. See [AWS PRM Bedrock docs](https://docs.aws.amazon.com/PRM/latest/aws-prm-onboarding-guide/bedrock-best-practices.html).
 
 ### Version Constraints
 - **OpenTofu**: >= 1.0.9 to ~> 1.6 (varies by layer; primary IaC tool)
