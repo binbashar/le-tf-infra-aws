@@ -64,6 +64,14 @@ module "iam_assumable_role_deploy_master" {
     "arn:aws:iam::${var.accounts.network.id}:root"
   ]
 
+  # sts:TagSession is required by aws-actions/configure-aws-credentials@v4 (session tagging)
+  # sts:SetSourceIdentity preserves caller identity for CloudTrail auditing
+  trusted_role_actions = [
+    "sts:AssumeRole",
+    "sts:TagSession",
+    "sts:SetSourceIdentity",
+  ]
+
   create_role = true
   role_name   = "DeployMaster"
   role_path   = "/"

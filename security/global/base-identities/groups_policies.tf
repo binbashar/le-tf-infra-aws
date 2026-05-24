@@ -63,6 +63,11 @@ EOF
 #
 # Policy: Assume DeployMaster Role (Cross-Org Accounts)
 #
+# sts:TagSession is required by aws-actions/configure-aws-credentials@v4 (session tagging).
+# sts:SetSourceIdentity preserves caller identity for CloudTrail auditing.
+# Both actions must be allowed on the principal's identity policy in addition to the
+# target role's trust policy for cross-account session-tagged AssumeRole to succeed.
+#
 resource "aws_iam_policy" "assume_deploymaster_role" {
   name        = "assume_deploymaster_role"
   description = "Allow assume DeployMaster role in member accounts"
@@ -74,7 +79,9 @@ resource "aws_iam_policy" "assume_deploymaster_role" {
         {
             "Effect": "Allow",
             "Action": [
-                "sts:AssumeRole"
+                "sts:AssumeRole",
+                "sts:TagSession",
+                "sts:SetSourceIdentity"
             ],
             "Resource": [
                 "arn:aws:iam::${var.accounts.shared.id}:role/DeployMaster",
