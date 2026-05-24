@@ -317,6 +317,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - **Infracost** workflow for cost impact analysis on PRs
 - Slack notifications on pipeline success/failure
 - PR template at `.github/PULL_REQUEST_TEMPLATE.md` uses What? / Why? / References format
+- **`@claude` PR assistant** (`.github/workflows/claude.yml`) — mention `@claude` in a PR/issue/review comment to trigger a Claude response billed to Amazon Bedrock via repo-level secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ASSUME_ROLE_ARN`). The action's built-in permission gate restricts invocation to users with write access, so external commenters on this public repo cannot drain the Bedrock budget.
 
 ### Common GitHub Usernames
 - exe → `exequielrafaela`, OJ (Diego Ojeda) → `diego-ojeda-binbash`, Alex → `Alx-binbash`
