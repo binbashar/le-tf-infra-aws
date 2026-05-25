@@ -199,8 +199,8 @@ module "iam_assumable_role_deploy_master" {
   # sts:SetSourceIdentity preserves caller identity for CloudTrail auditing
   trusted_role_actions = [
     "sts:AssumeRole",
-    "sts:TagSession",
     "sts:SetSourceIdentity",
+    "sts:TagSession",
   ]
 
   create_role = true

@@ -80,8 +80,8 @@ resource "aws_iam_policy" "assume_deploymaster_role" {
             "Effect": "Allow",
             "Action": [
                 "sts:AssumeRole",
-                "sts:TagSession",
-                "sts:SetSourceIdentity"
+                "sts:SetSourceIdentity",
+                "sts:TagSession"
             ],
             "Resource": [
                 "arn:aws:iam::${var.accounts.shared.id}:role/DeployMaster",
