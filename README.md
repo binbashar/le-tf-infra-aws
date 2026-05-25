@@ -121,6 +121,17 @@ These configurations are automatically loaded when you open the project in the r
 - [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
 - [MCP Protocol Specification](https://modelcontextprotocol.io/)
 
+## AI-Driven SDLC
+
+Every PR is reviewed by **CodeRabbit AI** and **Gemini Code Assist** (both
+auto-trigger on open / sync), gated by CI checks (`Test and Lint`, `Infracost`,
+`GitGuardian`), and can be inspected on demand by **`@claude`** — which routes
+through **Amazon Bedrock** (Anthropic Claude Sonnet 4.6) rather than the public
+Anthropic API, so prompts and code stay inside our `apps-prd` AWS account.
+
+See [`doc/ai-sdlc/`](doc/ai-sdlc/) for the full workflow, configuration knobs,
+and architecture diagrams.
+
 ## Leverage CLI Reference
 
 ### Project-wide commands

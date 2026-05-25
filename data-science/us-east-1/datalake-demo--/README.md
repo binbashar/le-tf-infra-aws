@@ -50,7 +50,7 @@ in our [binbash Leverage™ site](https://leverage.binbash.co).
 
 ## Architectural Components
 
-![binbash-logo](../../../@doc/figures/binbash-data-lake.png "binbash")
+![binbash-logo](../../../doc/diagrams/binbash-data-lake.png "binbash")
 
 ### AWS Account - Apps DevStg
 
@@ -141,7 +141,7 @@ Once we run `leverage terraform apply`, the following components are **automatic
   - Kinesis Data Analytics
   - StarRocks
 
-![binbash-logo](../../../@doc/figures/binbash-data-lake-realtime.png "binbash")
+![binbash-logo](../../../doc/diagrams/binbash-data-lake-realtime.png "binbash")
 
 ## Contributing
 
