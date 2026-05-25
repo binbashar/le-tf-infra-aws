@@ -317,7 +317,15 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - **Infracost** workflow for cost impact analysis on PRs
 - Slack notifications on pipeline success/failure
 - PR template at `.github/PULL_REQUEST_TEMPLATE.md` uses What? / Why? / References format
-- **`@claude` PR assistant** (`.github/workflows/claude.yml`) — mention `@claude` in a PR/issue/review comment to trigger a Claude response billed to Amazon Bedrock via repo-level secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ASSUME_ROLE_ARN`). The action's built-in permission gate restricts invocation to users with write access, so external commenters on this public repo cannot drain the Bedrock budget.
+
+### @claude on PRs
+
+This repo has the [`anthropics/claude-code-action`](https://github.com/anthropics/claude-code-action) workflow installed (`.github/workflows/claude.yml`). Mention `@claude` in a PR/issue/review comment to trigger an automated review or change.
+
+- **Authentication**: routes through **Amazon Bedrock** using repo-level secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ASSUME_ROLE_ARN`) configured at `Settings → Secrets and variables → Actions`.
+- **Configuration**: optional repository variables `BEDROCK_MODEL_ID` (defaults to `us.anthropic.claude-sonnet-4-6`) and `AWS_REGION` (defaults to `us-east-1`). Names match the AI Use Case Lab app env vars so the same mental model applies on both sides.
+- **Permissions**: only users with write access to this repo can invoke `@claude`. On this public repo, that gate is what keeps external commenters from draining the Bedrock budget.
+- **Troubleshooting**: if a `@claude` invocation never replies, check the workflow run under the **Actions** tab. `issue_comment`-triggered workflows always run from the **default branch** version of `claude.yml`, so changes to the workflow file in a PR won't take effect until the PR is merged to `master`.
 
 ### Common GitHub Usernames
 - exe → `exequielrafaela`, OJ (Diego Ojeda) → `diego-ojeda-binbash`, Alex → `Alx-binbash`
