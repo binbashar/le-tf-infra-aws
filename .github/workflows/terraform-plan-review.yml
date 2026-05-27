@@ -103,6 +103,7 @@ jobs:
         env:
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
+          set -euo pipefail
           echo "Event: ${{ github.event_name }}"
 
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -194,6 +195,7 @@ jobs:
     outputs:
       layers: ${{ steps.detect.outputs.layers }}
       has-layers: ${{ steps.detect.outputs.has-layers }}
+      head-sha: ${{ steps.pr-info.outputs.head_sha }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
@@ -218,6 +220,7 @@ jobs:
       - name: Detect Changed Layers
         id: detect
         run: |
+          set -euo pipefail
           BASE_REF="${{ steps.pr-info.outputs.base_sha }}"
           HEAD_REF="${{ steps.pr-info.outputs.head_sha }}"
 
@@ -232,7 +235,7 @@ jobs:
           CHANGED_LAYERS=$(echo "$CHANGED_FILES" | \
             grep -E '^[^/]+/[^/]+/[^/]+/' | \
             sed -E 's|(^[^/]+/[^/]+/[^/]+)/.*|\1|' | \
-            sort -u)
+            sort -u) || true
 
           echo "Potential layers:"
           echo "$CHANGED_LAYERS"
@@ -276,6 +279,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          ref: ${{ needs.detect-layers.outputs.head-sha }}
 
       - name: Setup OpenTofu and Leverage CLI
         uses: ./.github/actions/setup-tofu-leverage
@@ -323,6 +328,7 @@ jobs:
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 5
         run: |
+          set -euo pipefail
           ACCOUNT="${{ steps.determine-account.outputs.account }}"
           REPO_ROOT="${{ github.workspace }}"
 
@@ -335,6 +341,7 @@ jobs:
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 10
         run: |
+          set -euo pipefail
           ACCOUNT="${{ steps.determine-account.outputs.account }}"
           REPO_ROOT="${{ github.workspace }}"
 
@@ -353,6 +360,13 @@ jobs:
 
           tofu plan -no-color -input=false -out=tfplan.bin $TFVARS_ARGS 2>&1 | tee plan-output.txt
 
+      - name: Record Plan SHA
+        working-directory: ${{ matrix.layer }}
+        run: |
+          set -euo pipefail
+          echo "${{ needs.detect-layers.outputs.head-sha }}" > plan-sha.txt
+          echo "Plan generated against commit: $(cat plan-sha.txt)"
+
       - name: Sanitize Layer Name for Artifact
         id: sanitize
         run: echo "artifact_name=plan-$(echo '${{ matrix.layer }}' | tr '/' '-')" >> $GITHUB_OUTPUT
@@ -364,6 +378,7 @@ jobs:
           path: |
             ${{ matrix.layer }}/plan-output.txt
             ${{ matrix.layer }}/tfplan.bin
+            ${{ matrix.layer }}/plan-sha.txt
           retention-days: 7
 
   # Job 6: Scan plan for destructive operations
@@ -529,6 +544,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          ref: ${{ needs.detect-layers.outputs.head-sha }}
 
       - name: Check permissions and PR approval
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
@@ -616,10 +633,29 @@ jobs:
           name: ${{ steps.sanitize.outputs.plan_artifact }}
           path: ${{ matrix.layer }}/
 
+      - name: Validate Plan Matches Current Commit
+        working-directory: ${{ matrix.layer }}
+        run: |
+          set -euo pipefail
+          if [[ ! -f plan-sha.txt ]]; then
+            echo "::error::plan-sha.txt missing from plan artifact — cannot verify plan freshness. Re-run \`/tofu plan\`."
+            exit 1
+          fi
+          PLAN_SHA="$(cat plan-sha.txt)"
+          CURRENT_SHA="${{ needs.detect-layers.outputs.head-sha }}"
+          echo "Plan generated against: $PLAN_SHA"
+          echo "Current PR head:        $CURRENT_SHA"
+          if [[ "$PLAN_SHA" != "$CURRENT_SHA" ]]; then
+            echo "::error::Plan artifact was generated against $PLAN_SHA but PR head is now $CURRENT_SHA. Re-run \`/tofu plan\` before applying."
+            exit 1
+          fi
+          echo "✅ Plan artifact matches current PR head — safe to apply."
+
       - name: Run Terraform Init
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 5
         run: |
+          set -euo pipefail
           ACCOUNT="${{ steps.determine-account.outputs.account }}"
           REPO_ROOT="${{ github.workspace }}"
 
@@ -632,6 +668,7 @@ jobs:
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 2
         run: |
+          set -euo pipefail
           echo "Saving pre-apply state snapshot for potential rollback..."
           tofu state pull > pre-apply-state.json 2>/dev/null || echo '{}' > pre-apply-state.json
           echo "Pre-apply state saved"
@@ -640,6 +677,7 @@ jobs:
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 20
         run: |
+          set -euo pipefail
           echo "Applying changes for layer: ${{ matrix.layer }}"
           tofu apply -no-color -auto-approve tfplan.bin 2>&1 | tee apply-output.txt
 

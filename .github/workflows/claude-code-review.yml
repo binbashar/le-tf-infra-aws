@@ -17,7 +17,11 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  issues: read
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
 
 jobs:
   # Job 0: Authorization gate for comment-triggered events
@@ -99,13 +103,14 @@ jobs:
       - name: Get Changed Files
         id: changed-files
         run: |
+          set -euo pipefail
           BASE_REF="${{ github.event.pull_request.base.sha }}"
           HEAD_REF="${{ github.event.pull_request.head.sha }}"
 
           echo "Analyzing changes between $BASE_REF and $HEAD_REF"
           echo "Path filter: management/global/sso/**"
 
-          CHANGED_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF" | grep '^management/global/sso/')
+          CHANGED_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF" | grep '^management/global/sso/' || true)
 
           if [[ -z "$CHANGED_FILES" ]]; then
             echo "No files changed in management/global/sso/"
@@ -120,6 +125,7 @@ jobs:
       - name: Get File Diffs
         if: steps.changed-files.outputs.has-changes == 'true'
         run: |
+          set -euo pipefail
           BASE_REF="${{ github.event.pull_request.base.sha }}"
           HEAD_REF="${{ github.event.pull_request.head.sha }}"
 
@@ -145,5 +151,6 @@ jobs:
       - name: No Changes Detected
         if: steps.changed-files.outputs.has-changes != 'true'
         run: |
+          set -euo pipefail
           echo "No files changed in management/global/sso/ path"
           echo "This PR does not affect the monitored path, skipping analysis"

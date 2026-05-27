@@ -20,6 +20,7 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
       run: |
+        set -euo pipefail
         ACTOR="${{ github.actor }}"
         REPO="${{ github.repository }}"
 

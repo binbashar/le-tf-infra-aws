@@ -24,6 +24,7 @@ runs:
       id: map
       shell: bash
       run: |
+        set -euo pipefail
         # Extract account from layer path (first directory)
         ACCOUNT=$(echo "${{ inputs.layer_path }}" | cut -d'/' -f1)
         echo "Detected account: $ACCOUNT"

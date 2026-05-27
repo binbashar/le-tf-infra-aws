@@ -26,6 +26,7 @@ runs:
     - name: Install OpenTofu
       shell: bash
       run: |
+        set -euo pipefail
         TOFU_VERSION="${{ inputs.tofu_version }}"
         wget -q "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
         unzip -qo tofu_${TOFU_VERSION}_linux_amd64.zip
@@ -36,6 +37,7 @@ runs:
     - name: Install Leverage CLI
       shell: bash
       run: |
+        set -euo pipefail
         python3 -m venv ~/.leverage-venv
         source ~/.leverage-venv/bin/activate
         pip install --upgrade pip
@@ -46,6 +48,7 @@ runs:
     - name: Verify Required Binaries
       shell: bash
       run: |
+        set -euo pipefail
         echo "Verifying system binaries for dockerless Leverage CLI..."
         if ! command -v tofu &> /dev/null; then
           echo "OpenTofu (tofu) not found"
