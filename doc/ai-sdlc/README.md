@@ -101,10 +101,13 @@ and look for the most recent `Claude Code` workflow run. Because
 Maintainers read the AI + CI findings on the PR, then:
 
 1. **Approve the PR** (1 approval required by branch protection).
-2. **Run `leverage tofu plan` and `leverage tofu apply`** locally from the
-   affected layer directory — Atlantis is **deprecated** in this repo; the
-   apply step is a manual operation performed by the maintainer per layer
-   (`{account}/{region}/{layer}/`).
+2. **Plan & apply infrastructure changes — infra PRs only.** Run
+   `leverage tofu plan` from the affected layer directory and share the output
+   on the PR for reviewer visibility *before* approval, then run
+   `leverage tofu apply` *after* approval. Atlantis is **deprecated** in this
+   repo, so apply is a manual operation performed by the maintainer per layer
+   (`{account}/{region}/{layer}/`). Docs-only PRs (like this one) have nothing
+   to plan or apply — skip straight to merge.
 3. **Merge to `master`**. Release notes are auto-drafted by
    [`release-drafter.yml`](../../.github/release-drafter.yml).
 

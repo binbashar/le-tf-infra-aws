@@ -8,12 +8,14 @@ Claude Sonnet 4.6) is identical to .github/workflows/claude.yml in this repo.
 
 Requires: pip install diagrams && brew install graphviz
 
-Run from repo root:
+Run from anywhere (output path is resolved relative to this file):
 
     python3 doc/diagrams/ci-claude-review.py
 
 Outputs doc/diagrams/ci-claude-review.png.
 """
+
+import os
 
 from diagrams import Diagram, Cluster, Edge
 from diagrams.aws.ml import Bedrock
@@ -48,9 +50,12 @@ edge_attr = {
     "fontname": "Helvetica",
 }
 
+# Absolute path so the PNG is written next to this script no matter where it is run from.
+OUTPUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ci-claude-review")
+
 with Diagram(
     "@claude PR Review — CI/CD Flow",
-    filename="doc/diagrams/ci-claude-review",
+    filename=OUTPUT,
     show=False,
     direction="LR",
     graph_attr=graph_attr,
