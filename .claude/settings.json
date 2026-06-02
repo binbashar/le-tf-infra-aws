@@ -1,11 +1,24 @@
 {
+  "extraKnownMarketplaces": {
+    "bb-ai-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "binbashar/bb-ai-marketplace",
+        "ref": "v1.0.0"
+      }
+    }
+  },
   "enabledPlugins": {
+    "aws-cost-estimation@bb-ai-marketplace": true,
     "claude-md-management@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
     "context7@claude-plugins-official": true,
+    "drawio-diagramming@bb-ai-marketplace": true,
     "github@claude-plugins-official": true,
+    "migration-diagrams@bb-ai-marketplace": true,
     "security-guidance@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true,
+    "well-architected-iac-review@bb-ai-marketplace": true
   }
 }
