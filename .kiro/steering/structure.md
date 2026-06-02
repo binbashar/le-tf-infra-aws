@@ -13,7 +13,8 @@ The repository follows a **multi-account, layered architecture** pattern with cl
 │   └── {region}/                 # Region-specific resources
 │       └── {layer}/              # Individual infrastructure layers
 ├── config/                       # Shared configuration
-└── @doc/                        # Documentation and diagrams
+└── doc/
+    └── diagrams/                # Architecture diagrams (PNG + diagrams.py source)
 ```
 
 ## Account Structure
@@ -75,7 +76,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 
 ### Root Level
 - `@bin/`: Build scripts and makefiles
-- `@doc/`: Architecture diagrams and documentation
+- `doc/diagrams/`: Architecture diagrams (PNG + Python `diagrams` library sources)
 - `config/`: Shared configuration templates
 
 ### Special Markers
