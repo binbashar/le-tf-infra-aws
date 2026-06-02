@@ -15,7 +15,7 @@
   "extraKnownMarketplaces": {
     "bb-ai-marketplace": {
       "source": {
-        "ref": "v1.0.0",
+        "ref": "v1.2.0",
         "repo": "binbashar/bb-ai-marketplace",
         "source": "github"
       }
