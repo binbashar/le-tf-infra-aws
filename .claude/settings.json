@@ -4,6 +4,7 @@
     "claude-md-management@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
     "context7@claude-plugins-official": true,
+    "diagrams-as-code@bb-ai-marketplace": true,
     "drawio-diagramming@bb-ai-marketplace": true,
     "github@claude-plugins-official": true,
     "migration-diagrams@bb-ai-marketplace": true,
