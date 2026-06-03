@@ -5,9 +5,9 @@
     "code-review@claude-plugins-official": true,
     "context7@claude-plugins-official": true,
     "diagrams-as-code@bb-ai-marketplace": true,
-    "drawio-diagramming@bb-ai-marketplace": true,
+    "diagrams-drawio-mcp@bb-ai-marketplace": true,
     "github@claude-plugins-official": true,
-    "migration-diagrams@bb-ai-marketplace": true,
+    "diagrams-migration-mermaid@bb-ai-marketplace": true,
     "security-guidance@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
@@ -16,7 +16,7 @@
   "extraKnownMarketplaces": {
     "bb-ai-marketplace": {
       "source": {
-        "ref": "v1.2.0",
+        "ref": "v1.4.0",
         "repo": "binbashar/bb-ai-marketplace",
         "source": "github"
       }
