@@ -66,6 +66,40 @@ This is the **Binbash Leverage Reference Architecture** - a comprehensive OpenTo
 - **Obfuscate PGP keys, ARNs with account IDs, and any IAM credential identifiers** before posting plan outputs
 - When posting `leverage tofu plan` output to PRs, always review and redact sensitive values before sharing
 
+### Standard workflow: posting a `tofu plan` to a PR for review
+
+Every infra change is reviewed via its plan **before** it is applied — **never `apply` from
+automation or from the PR; applying is a human step after approval.** Attach the plan to the
+PR with this exact, repeatable procedure so no sensitive data leaks:
+
+1. **Generate** the plan from the layer directory, with color codes off:
+   ```bash
+   cd {account}/{region}/{layer}
+   .venv/bin/leverage tofu plan -no-color > /tmp/plan.txt 2>&1
+   ```
+2. **Keep only the execution-plan action section** — everything from
+   `OpenTofu will perform the following actions:` through
+   `Plan: N to add, N to change, N to destroy.` **Drop the `Refreshing state... [id=...]`
+   log**: those lines embed account IDs (inside ARNs), IAM usernames, account aliases and
+   resource IDs, and add no review value — whereas the action section shows changed
+   attributes as `(known after apply)` and is inherently free of those identifiers.
+   ```bash
+   awk '/will perform the following actions/{f=1} f' /tmp/plan.txt > /tmp/plan-clean.txt
+   ```
+3. **Redact + scan** the excerpt as belt-and-suspenders. Write to a new file rather than
+   editing in place — `sed -i` is non-portable (BSD/macOS requires `-i ''`, GNU/Linux requires
+   bare `-i`), and this procedure must run on both macOS and Linux (CI). The scan must print nothing:
+   ```bash
+   sed -E 's/[0-9]{12}/<ACCOUNT_NAME_ACCOUNT_ID>/g; s/(AKIA|ASIA)[A-Z0-9]{16}/***/g' /tmp/plan-clean.txt > /tmp/plan-redacted.txt
+   grep -nE '[0-9]{12}|arn:aws:iam::[0-9]|AKIA|ASIA|-----BEGIN' /tmp/plan-redacted.txt   # expect no output
+   ```
+   Use the named placeholder form, e.g. `<MANAGEMENT_ACCOUNT_ID>` (see the bullets above).
+4. **Embed** the redacted excerpt (`/tmp/plan-redacted.txt`) in the PR body inside a collapsible `<details>` block with a
+   ```` ```text ```` fence (keep the What / Why / References sections intact). Never paste the
+   raw refresh log.
+5. **Review only — do not apply or merge from automation.** A human runs `leverage tofu apply`
+   after approval. Never commit the `tfplan` binary (see the Git rule above).
+
 ## Essential Commands
 
 ### Leverage CLI via uv
