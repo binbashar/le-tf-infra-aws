@@ -40,3 +40,54 @@ resource "aws_iam_policy" "deploy_master_access" {
 }
 EOF
 }
+
+#
+# Customer Managed Policy: aws-finops plugin read-only access
+#
+# Read-only AWS Billing & Cost Management permissions consumed by the `aws-finops`
+# Claude Code plugin (skills: aws-finops-investigate, aws-finops-optimize,
+# leverage-aws-creds-check) through the awslabs.billing-cost-management-mcp-server
+# MCP server. Attached to the DeployMaster role so any management profile that
+# assumes DeployMaster can run the plugin without static keys.
+#
+# NOTE: intentionally NO `aws:RequestedRegion` condition — Cost Explorer, Budgets,
+# Cost Optimization Hub, Savings Plans, Pricing and Free Tier are global / us-east-1
+# endpoints and a region condition can silently break them. Read verbs only.
+#
+resource "aws_iam_policy" "aws_finops_readonly_access" {
+  name        = "aws_finops_readonly_access"
+  description = "Read-only Billing & Cost Management access for the aws-finops Claude Code plugin"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AwsFinOpsReadOnly",
+            "Effect": "Allow",
+            "Action": [
+                "ce:Get*",
+                "ce:List*",
+                "ce:Describe*",
+                "budgets:ViewBudget",
+                "budgets:Describe*",
+                "compute-optimizer:Get*",
+                "compute-optimizer:Describe*",
+                "compute-optimizer:List*",
+                "cost-optimization-hub:Get*",
+                "cost-optimization-hub:List*",
+                "savingsplans:Describe*",
+                "savingsplans:List*",
+                "pricing:GetProducts",
+                "pricing:DescribeServices",
+                "pricing:GetAttributeValues",
+                "freetier:GetFreeTierUsage",
+                "organizations:Describe*",
+                "organizations:List*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}

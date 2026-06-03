@@ -106,7 +106,9 @@ module "iam_assumable_role_deploy_master" {
   mfa_age              = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
   max_session_duration = 10800 # Max age of the session (in seconds) when assuming roles
   custom_role_policy_arns = [
-    aws_iam_policy.deploy_master_access.arn
+    aws_iam_policy.deploy_master_access.arn,
+    # Read-only Billing & Cost Management access for the aws-finops Claude Code plugin
+    aws_iam_policy.aws_finops_readonly_access.arn,
   ]
 }
 
