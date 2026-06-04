@@ -1,11 +1,25 @@
 {
   "enabledPlugins": {
+    "aws-cost-estimation@bb-ai-marketplace": true,
     "claude-md-management@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
     "context7@claude-plugins-official": true,
+    "diagrams-as-code@bb-ai-marketplace": true,
+    "diagrams-drawio-mcp@bb-ai-marketplace": true,
+    "diagrams-migration-mermaid@bb-ai-marketplace": true,
     "github@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true,
+    "well-architected-iac-review@bb-ai-marketplace": true
+  },
+  "extraKnownMarketplaces": {
+    "bb-ai-marketplace": {
+      "source": {
+        "ref": "v1.4.0",
+        "repo": "binbashar/bb-ai-marketplace",
+        "source": "github"
+      }
+    }
   }
 }
