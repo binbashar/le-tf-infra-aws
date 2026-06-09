@@ -82,6 +82,16 @@ module "permission_sets" {
       customer_managed_policy_attachments = []
     },
     {
+      name                                = "MarketplaceBuyer"
+      description                         = "Provides access to manage AWS MarketPlace product subscriptions."
+      relay_state                         = local.default_relay_state
+      session_duration                    = local.default_session_duration
+      tags                                = local.tags
+      inline_policy                       = ""
+      policy_attachments                  = ["arn:aws:iam::aws:policy/AWSMarketplaceManageSubscriptions"]
+      customer_managed_policy_attachments = []
+    },
+    {
       name                                = "DataScientist"
       description                         = "Provides access to AWS services that have to do with Data Science and MLOps."
       relay_state                         = local.default_relay_state

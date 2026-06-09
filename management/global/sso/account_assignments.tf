@@ -234,6 +234,20 @@ module "account_assignments" {
       principal_name      = local.groups["marketplaceandpartnercentral"].name
       account             = var.accounts.management.id
     },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["MarketplaceAndPartnerCentral"].arn
+      permission_set_name = "MarketplaceAndPartnerCentral"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["marketplacevalidationsellers"].name
+      account             = var.accounts.data-science.id
+    },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["MarketplaceBuyer"].arn
+      permission_set_name = "MarketplaceBuyer"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["marketplacevalidationbuyers"].name
+      account             = var.accounts.apps-devstg.id
+    },
 
     # -------------------------------------------------------------------------
     # DataScientist Permissions
@@ -244,6 +258,13 @@ module "account_assignments" {
       principal_type      = local.principal_type_group
       principal_name      = local.groups["datascientists"].name
       account             = var.accounts.data-science.id
+    },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["DataScientist"].arn
+      permission_set_name = "DataScientist"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["marketplacevalidationbuyers"].name
+      account             = var.accounts.apps-devstg.id
     },
     {
       permission_set_arn  = module.permission_sets.permission_sets["DataScientist"].arn
