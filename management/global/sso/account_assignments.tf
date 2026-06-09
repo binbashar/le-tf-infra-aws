@@ -252,6 +252,7 @@ module "account_assignments" {
       principal_name      = local.groups["datascientists"].name
       account             = var.accounts.data-science.id
     },
+
     {
       permission_set_arn  = module.permission_sets.permission_sets["DataScientist"].arn
       permission_set_name = "DataScientist"
@@ -274,4 +275,32 @@ module "account_assignments" {
       account             = var.accounts["workshop-genai-3"].id
     }, */
   ]
+}
+
+locals {
+  marketplace_validation_account_assignments = {
+    seller = {
+      account            = var.accounts.data-science.id
+      group              = "marketplace-validation-sellers"
+      permission_set_arn = module.permission_sets.permission_sets["MarketplaceSeller"].arn
+    }
+    buyer = {
+      account            = var.accounts.apps-devstg.id
+      group              = "marketplace-validation-buyers"
+      permission_set_arn = module.permission_sets.permission_sets["DataScientist"].arn
+    }
+  }
+}
+
+# Use direct account assignments for newly-created validation groups so Terraform
+# can depend on the managed group resources instead of looking up pre-existing names.
+resource "aws_ssoadmin_account_assignment" "marketplace_validation" {
+  for_each = local.marketplace_validation_account_assignments
+
+  instance_arn       = tolist(data.aws_ssoadmin_instances.main.arns)[0]
+  permission_set_arn = each.value.permission_set_arn
+  principal_id       = aws_identitystore_group.default[each.value.group].group_id
+  principal_type     = local.principal_type_group
+  target_id          = each.value.account
+  target_type        = "AWS_ACCOUNT"
 }

@@ -99,6 +99,8 @@ locals {
       groups = [
         "devops",
         "administrators",
+        "marketplace-validation-sellers",
+        "marketplace-validation-buyers",
       ]
     }
     "ezequiel.godoy" = {
@@ -334,6 +336,14 @@ locals {
     marketplaceseller = {
       name        = "MarketplaceSeller"
       description = "Provides access to the AWS MarketPlace Seller."
+    }
+    marketplace-validation-sellers = {
+      name        = "MarketplaceValidationSellers"
+      description = "Provides AWS Marketplace seller validation access."
+    }
+    marketplace-validation-buyers = {
+      name        = "MarketplaceValidationBuyers"
+      description = "Provides AWS Marketplace buyer validation access."
     }
     datascientists = {
       name        = "DataScientists"
