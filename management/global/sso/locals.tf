@@ -206,6 +206,8 @@ locals {
       groups = [
         "devops",
         "administrators",
+        "marketplacevalidationsellers",
+        "marketplacevalidationbuyers",
       ]
     }
     "manuel.quinteros" = {
@@ -319,6 +321,14 @@ locals {
     marketplaceandpartnercentral = {
       name        = "MarketplaceAndPartnerCentral"
       description = "Provides access to the AWS Marketplace Seller and AWS Partner Central (APN)."
+    }
+    marketplacevalidationsellers = {
+      name        = "MarketplaceValidationSellers"
+      description = "Provides access to AWS MarketPlace seller validation."
+    }
+    marketplacevalidationbuyers = {
+      name        = "MarketplaceValidationBuyers"
+      description = "Provides access to AWS MarketPlace buyer validation."
     }
     datascientists = {
       name        = "DataScientists"
