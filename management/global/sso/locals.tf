@@ -271,7 +271,9 @@ locals {
       email      = "nestor.navarro@binbash.com.ar"
       groups = [
         "datascientists",
-        "devops"
+        "devops",
+        "marketplacevalidationbuyers",
+        "marketplacevalidationsellers",
       ]
     }
     "nicolas.suarez" = {
