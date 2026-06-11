@@ -85,8 +85,8 @@ data "aws_iam_policy_document" "github_actions_deploy" {
     sid    = "AllowSiteBucketList"
     effect = "Allow"
     actions = [
-      "s3:ListBucket",
       "s3:GetBucketLocation",
+      "s3:ListBucket",
     ]
     resources = [module.aws_startups_accelerate.s3_bucket_arn]
   }
@@ -95,9 +95,9 @@ data "aws_iam_policy_document" "github_actions_deploy" {
     sid    = "AllowSiteBucketSync"
     effect = "Allow"
     actions = [
-      "s3:PutObject",
-      "s3:GetObject",
       "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:PutObject",
     ]
     resources = ["${module.aws_startups_accelerate.s3_bucket_arn}/*"]
   }
