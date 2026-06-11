@@ -18,10 +18,11 @@ provider "aws" {
 # Backend Config (partial)    #
 #=============================#
 terraform {
-  required_version = "~> 1.6"
+  required_version = "~> 1.9"
 
   required_providers {
-    aws = "~> 5.0"
+    # terraform-aws-cloudfront-s3-cdn v2.x requires aws >= 6.13
+    aws = "~> 6.0"
   }
 
   backend "s3" {

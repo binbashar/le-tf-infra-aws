@@ -3,7 +3,7 @@
 # (Next.js static export published by the app repo CI via `aws s3 sync`)
 #
 module "aws_startups_accelerate" {
-  source = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=v1.1.1"
+  source = "github.com/binbashar/terraform-aws-cloudfront-s3-cdn.git?ref=v2.1.1"
 
   # Common: bucket naming convention is "[PROJECT]-[ENV]-[APP_SUBDOMAIN]"
   namespace = "${var.project}-${var.environment}"
