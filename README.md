@@ -132,6 +132,14 @@ Anthropic API, so prompts and code stay inside our `apps-prd` AWS account.
 See [`doc/ai-sdlc/`](doc/ai-sdlc/) for the full workflow, configuration knobs,
 and architecture diagrams.
 
+### Claude Code on AWS Bedrock (local sessions)
+
+Local Claude Code sessions can also route through **Amazon Bedrock** in the
+`data-science` account on demand — via a `claude-bedrock` launcher that flips a
+single session to Bedrock while plain `claude` keeps using the native Anthropic
+API. Setup, model entitlements/quotas, and troubleshooting:
+[`doc/ai-sdlc/claude-code-bedrock.md`](doc/ai-sdlc/claude-code-bedrock.md).
+
 ## Leverage CLI Reference
 
 ### Project-wide commands
