@@ -4,6 +4,11 @@ Static hosting for `https://aws-startups-accelerate.binbash.co` (Next.js static
 export from the `bb-ai-sales-tools` monorepo) on S3 + CloudFront, deployed by the
 app repo CI via a GitHub OIDC role.
 
+![Architecture](../../../doc/diagrams/app-aws-startups-accelerate.png)
+
+Diagram source: [`doc/diagrams/app-aws-startups-accelerate.py`](../../../doc/diagrams/app-aws-startups-accelerate.py)
+(diagrams-as-code — `pip install diagrams && brew install graphviz`, then re-run the script).
+
 ```text
 GitHub: bb-ai-sales-tools (CI)                         shared (global)
   next build (output: export) → out/                Route53 public zone: binbash.co
