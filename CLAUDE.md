@@ -371,6 +371,24 @@ If you encounter errors like "stat /bin/tofu: no such file or directory":
 - Use `leverage tofu` (or `leverage tf` shorthand) instead of direct `tofu` commands
 - This maps to OpenTofu and avoids container path issues
 
+### Apple Silicon: AWS provider 6.x hangs with an x86_64 tofu (Rosetta)
+**Symptom**: `tofu validate`/`plan` never completes on layers pinning `aws ~> 6.0` —
+`terraform-provider-aws` processes spin at ~100% CPU indefinitely, or init/validate fails
+with "timeout while waiting for plugin to start". AWS provider 4.x works, 5.x is flaky,
+6.x (observed with 6.50.0) effectively hangs.
+
+**Cause**: an x86_64 `tofu` binary in PATH (check with `file $(which tofu)`) runs under
+Rosetta 2 on Apple Silicon and selects `darwin_amd64` providers; the AWS provider 6.x
+schema load does not complete under emulation. `leverage tofu` invokes the same PATH
+binary (no Docker on recent Leverage CLI), so it hangs identically.
+
+**Fix**: use a native `darwin_arm64` OpenTofu (install one, or download a release zip to
+`/tmp` for a one-off). When (re)generating `.terraform.lock.hcl`, include hashes for all
+platforms so Atlantis/CI (linux) and both macOS architectures verify:
+```bash
+tofu providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_amd64 -platform=darwin_arm64
+```
+
 ### AWS CC Provider Issues
 When working with AWS Cloud Control API resources (awscc_*):
 - Blueprint version must be numeric string without decimals (e.g., "1" not "1.0")
