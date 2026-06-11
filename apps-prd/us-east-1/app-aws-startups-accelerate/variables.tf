@@ -8,7 +8,7 @@
 variable "github_repository" {
   description = "GitHub repository (org/repo) allowed to assume the deploy role via OIDC"
   type        = string
-  default     = "binbashar/bb-sales-tools"
+  default     = "binbashar/bb-ai-sales-tools"
 
   validation {
     condition     = can(regex("^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", var.github_repository))

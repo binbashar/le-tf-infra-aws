@@ -1,11 +1,11 @@
 # Deployment: app-aws-startups-accelerate
 
 Static hosting for `https://aws-startups-accelerate.binbash.co` (Next.js static
-export from the `bb-sales-tools` monorepo) on S3 + CloudFront, deployed by the
+export from the `bb-ai-sales-tools` monorepo) on S3 + CloudFront, deployed by the
 app repo CI via a GitHub OIDC role.
 
 ```text
-GitHub: bb-sales-tools (CI)                         shared (global)
+GitHub: bb-ai-sales-tools (CI)                         shared (global)
   next build (output: export) → out/                Route53 public zone: binbash.co
         │  assume role via GitHub OIDC                 aws-startups-accelerate.binbash.co ─┐
         ▼  (least-priv: s3 sync + cf invalidation)                                         │ A/AAAA alias
@@ -42,7 +42,7 @@ Both layers need valid `bb-apps-prd-devops` and `bb-shared-devops` credentials
 
 ## Handoff to the app repo CI
 
-Consume these outputs (`leverage tofu output`) in `bb-sales-tools`:
+Consume these outputs (`leverage tofu output`) in `bb-ai-sales-tools`:
 
 | Output               | Used for                                            |
 | -------------------- | --------------------------------------------------- |
@@ -51,10 +51,10 @@ Consume these outputs (`leverage tofu output`) in `bb-sales-tools`:
 | `cf_distribution_id` | `aws cloudfront create-invalidation --distribution-id <id> --paths '/*'` |
 
 The role trust is scoped to `var.github_repository` @ `var.github_branch`
-(defaults: `binbashar/bb-sales-tools` @ `main`) — override via tfvars if the
+(defaults: `binbashar/bb-ai-sales-tools` @ `main`) — override via tfvars if the
 repo/branch differs.
 
-App build requirements (companion work in `bb-sales-tools`):
+App build requirements (companion work in `bb-ai-sales-tools`):
 
 - `next.config.ts`: `output: 'export'`, `images: { unoptimized: true }`, and
   **`trailingSlash: true`** — the CloudFront viewer-request function rewrites
