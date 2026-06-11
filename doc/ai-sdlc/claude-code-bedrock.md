@@ -87,6 +87,12 @@ export ANTHROPIC_DEFAULT_OPUS_MODEL="us.anthropic.claude-opus-4-8"
 export ANTHROPIC_DEFAULT_SONNET_MODEL="us.anthropic.claude-sonnet-4-6"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="us.anthropic.claude-haiku-4-5-20251001-v1:0"
 
+# A SECOND, explicit Opus row (4.6) next to the 4.8 alias in the /model picker —
+# see "Pinning a second Opus version in the /model picker" below.
+export ANTHROPIC_CUSTOM_MODEL_OPTION="us.anthropic.claude-opus-4-6-v1"
+export ANTHROPIC_CUSTOM_MODEL_OPTION_NAME="us.anthropic.claude-opus-4-6-v1"
+export ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION="Cross-region inference profile (Amazon Bedrock)"
+
 # Preflight: Leverage temp credentials go stale independently of the SSO token.
 if ! aws sts get-caller-identity --output text --query Account >/dev/null 2>&1; then
   echo "ERROR: AWS credentials for profile '$AWS_PROFILE' are stale or missing." >&2
@@ -114,8 +120,63 @@ claude-bedrock -p "one-shot prompt"                         # headless print mod
 ```
 
 Bedrock model IDs use the **cross-region inference-profile** form (`us.`
-prefix, no version suffix for Opus/Sonnet): `us.anthropic.claude-opus-4-8`,
-`us.anthropic.claude-sonnet-4-6`, `us.anthropic.claude-haiku-4-5-20251001-v1:0`.
+prefix), but the **suffix is inconsistent across versions — don't extrapolate
+one ID from another.** Opus 4.8 is bare (`us.anthropic.claude-opus-4-8`), Opus
+4.6 carries a `-v1` (`us.anthropic.claude-opus-4-6-v1`), Opus 4.5 a dated
+`-vN:0` (`us.anthropic.claude-opus-4-5-20251101-v1:0`), and Haiku 4.5 likewise
+(`us.anthropic.claude-haiku-4-5-20251001-v1:0`). Always confirm the exact ID
+from the account rather than guessing:
+
+```bash
+aws bedrock list-inference-profiles --region us-east-1 --profile bb-data-science-devops \
+  --query "inferenceProfileSummaries[?contains(inferenceProfileId,'anthropic')].inferenceProfileId" --output text
+```
+
+### Pinning a second Opus version in the `/model` picker
+
+In a Bedrock session the `/model` list is built from the launcher's env vars,
+not a fixed catalog — each variable injects one row (verified on Claude Code
+`v2.1.172`):
+
+| Picker row | Driven by |
+| --- | --- |
+| `us.anthropic.claude-sonnet-4-6` — *Custom Sonnet model* | `ANTHROPIC_DEFAULT_SONNET_MODEL` |
+| `us.anthropic.claude-opus-4-8` — *Custom Opus model* | `ANTHROPIC_DEFAULT_OPUS_MODEL` |
+| `us.anthropic.claude-haiku-…` — *Custom Haiku model* | `ANTHROPIC_DEFAULT_HAIKU_MODEL` |
+| **Opus 4.8 ✔** (active) | `ANTHROPIC_MODEL` |
+
+There is only one Opus slot, so to switch between Opus **4.8** and **4.6** in the
+same session the launcher adds one more row via the
+`ANTHROPIC_CUSTOM_MODEL_OPTION` trio (its `_NAME` / `_DESCRIPTION` companions set
+the label):
+
+```bash
+export ANTHROPIC_CUSTOM_MODEL_OPTION="us.anthropic.claude-opus-4-6-v1"
+export ANTHROPIC_CUSTOM_MODEL_OPTION_NAME="us.anthropic.claude-opus-4-6-v1"
+export ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION="Cross-region inference profile (Amazon Bedrock)"
+```
+
+Open `/model` and a **`us.anthropic.claude-opus-4-6-v1`** row appears next to Opus
+4.8; `s` switches the current session to it. (Env vars are read at launch, so relaunch `claude-bedrock`
+for the row to show.) Because the launcher re-pins `ANTHROPIC_MODEL` on every run,
+the picker's `Enter` ("set as default") won't survive a relaunch — to *start* on
+4.6 use the existing override:
+`CLAUDE_BEDROCK_MODEL=us.anthropic.claude-opus-4-6-v1 claude-bedrock`. This is the
+Opus that actually **invokes** today: per §5 the 4.8 TPM quota (`L-DB99DCDB`) is
+still 0, so selecting Opus 4.8 fails with `AccessDenied` (not available for this
+account) while 4.6 works — and the pin keeps working unchanged once that quota
+lands.
+
+**Keep this in the wrapper, never in a settings `env` block.** Per §1 a settings
+`env` block also applies to plain `claude` (native Anthropic API), where a
+Bedrock inference-profile ID like `us.anthropic.claude-opus-4-6-v1` is rejected as
+`dispatching to firstParty` (the §6 404). Exporting it from the launcher keeps
+it scoped to Bedrock sessions.
+
+`ANTHROPIC_CUSTOM_MODEL_OPTION` adds exactly **one** extra row. To pin several
+models the mechanism is the `availableModels` + `modelOverrides` settings keys
+instead — but those live in a settings file (subject to the §1 leak caveat), so
+the single env-var row is the right fit for this dual-mode wrapper.
 
 ## 4. Who can enable model access (permission sets)
 
