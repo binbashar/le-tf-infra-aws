@@ -4,6 +4,10 @@ How a change reaches `master` in this repo: who reviews it, which AI/automation
 runs at each step, and how the on-demand `@claude` assistant routes through
 **AWS Bedrock** instead of the public Anthropic API.
 
+> **Local sessions too:** developers can route their own Claude Code sessions
+> through Bedrock (data-science account) on demand — see
+> [`claude-code-bedrock.md`](claude-code-bedrock.md).
+
 ![AI-Driven SDLC overview](../diagrams/ai-sdlc.png)
 
 > Source: [`doc/diagrams/ai-sdlc.py`](../diagrams/ai-sdlc.py) — re-render with
