@@ -4,10 +4,11 @@ Static hosting for `https://aws-startups-accelerate.binbash.co` (Next.js static
 export from the `bb-ai-sales-tools` monorepo) on S3 + CloudFront, deployed by the
 app repo CI via a GitHub OIDC role.
 
-![Architecture](../../../doc/diagrams/app-aws-startups-accelerate.png)
+![Architecture](../../../doc/diagrams/app-aws-startups-accelerate.drawio.png)
 
-Diagram source: [`doc/diagrams/app-aws-startups-accelerate.py`](../../../doc/diagrams/app-aws-startups-accelerate.py)
-(diagrams-as-code — `pip install diagrams && brew install graphviz`, then re-run the script).
+Diagram source: [`doc/diagrams/app-aws-startups-accelerate.drawio`](../../../doc/diagrams/app-aws-startups-accelerate.drawio)
+(edit at [app.diagrams.net](https://app.diagrams.net) or draw.io desktop; re-export the PNG with:
+`docker run --rm -v $PWD/doc/diagrams:/data rlespinasse/drawio-export --format png --scale 2 --output . app-aws-startups-accelerate.drawio`).
 
 ```text
 GitHub: bb-ai-sales-tools (CI)                         shared (global)
