@@ -23,10 +23,12 @@ runs:
     - name: Map layer to account
       id: map
       shell: bash
+      env:
+        LAYER_PATH: ${{ inputs.layer_path }}
       run: |
         set -euo pipefail
         # Extract account from layer path (first directory)
-        ACCOUNT=$(echo "${{ inputs.layer_path }}" | cut -d'/' -f1)
+        ACCOUNT=$(echo "$LAYER_PATH" | cut -d'/' -f1)
         echo "Detected account: $ACCOUNT"
 
         # Map account name to secret variable name

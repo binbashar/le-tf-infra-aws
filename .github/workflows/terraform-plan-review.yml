@@ -271,6 +271,10 @@ jobs:
     if: needs.detect-layers.outputs.has-layers == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Expose the matrix layer via env so run:/script: steps reference "$LAYER"
+    # instead of interpolating ${{ matrix.layer }} directly into shell/JS.
+    env:
+      LAYER: ${{ matrix.layer }}
     strategy:
       fail-fast: false
       matrix:
@@ -332,7 +336,7 @@ jobs:
           ACCOUNT="${{ steps.determine-account.outputs.account }}"
           REPO_ROOT="${{ github.workspace }}"
 
-          echo "Initializing layer: ${{ matrix.layer }}"
+          echo "Initializing layer: $LAYER"
 
           tofu init -no-color \
             -backend-config="${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars"
@@ -345,7 +349,7 @@ jobs:
           ACCOUNT="${{ steps.determine-account.outputs.account }}"
           REPO_ROOT="${{ github.workspace }}"
 
-          echo "Running plan for layer: ${{ matrix.layer }}"
+          echo "Running plan for layer: $LAYER"
 
           # Build tfvars arguments (common + account config, same as Leverage)
           TFVARS_ARGS=""
@@ -369,7 +373,7 @@ jobs:
 
       - name: Sanitize Layer Name for Artifact
         id: sanitize
-        run: echo "artifact_name=plan-$(echo '${{ matrix.layer }}' | tr '/' '-')" >> $GITHUB_OUTPUT
+        run: echo "artifact_name=plan-$(echo "$LAYER" | tr '/' '-')" >> "$GITHUB_OUTPUT"
 
       - name: Upload Plan Artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
@@ -542,6 +546,10 @@ jobs:
     # collaborator + PR-approval check below remains as defense-in-depth.
     environment: tofu-apply
     timeout-minutes: 30
+    # Expose the matrix layer via env so run:/script: steps reference "$LAYER"
+    # instead of interpolating ${{ matrix.layer }} directly into shell/JS.
+    env:
+      LAYER: ${{ matrix.layer }}
     strategy:
       fail-fast: false
       matrix:
@@ -630,8 +638,8 @@ jobs:
       - name: Sanitize Layer Name for Artifact
         id: sanitize
         run: |
-          echo "plan_artifact=plan-$(echo '${{ matrix.layer }}' | tr '/' '-')" >> $GITHUB_OUTPUT
-          echo "apply_artifact=apply-$(echo '${{ matrix.layer }}' | tr '/' '-')" >> $GITHUB_OUTPUT
+          echo "plan_artifact=plan-$(echo "$LAYER" | tr '/' '-')" >> "$GITHUB_OUTPUT"
+          echo "apply_artifact=apply-$(echo "$LAYER" | tr '/' '-')" >> "$GITHUB_OUTPUT"
 
       - name: Download Plan Artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
@@ -665,7 +673,7 @@ jobs:
           ACCOUNT="${{ steps.determine-account.outputs.account }}"
           REPO_ROOT="${{ github.workspace }}"
 
-          echo "Initializing layer: ${{ matrix.layer }}"
+          echo "Initializing layer: $LAYER"
 
           tofu init -no-color \
             -backend-config="${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars"
@@ -684,7 +692,7 @@ jobs:
         timeout-minutes: 20
         run: |
           set -euo pipefail
-          echo "Applying changes for layer: ${{ matrix.layer }}"
+          echo "Applying changes for layer: $LAYER"
           tofu apply -no-color -auto-approve tfplan.bin 2>&1 | tee apply-output.txt
 
       - name: Upload Apply Results
@@ -701,7 +709,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const layerPath = '${{ matrix.layer }}';
+            const layerPath = process.env.LAYER;
 
             let applyOutput = '';
             try {
