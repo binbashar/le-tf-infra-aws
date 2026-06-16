@@ -535,6 +535,12 @@ jobs:
       needs.detect-layers.outputs.has-layers == 'true' &&
       needs.scan-destructive-operations.outputs.blocked != 'true'
     runs-on: ubuntu-latest
+    # Out-of-band approval gate: this Environment must be configured in
+    # Settings > Environments > "tofu-apply" with Required reviewers (and an
+    # optional wait timer). It moves the apply approval outside the credentialed
+    # job, so the gate can't be bypassed by editing in-job JS. The in-job
+    # collaborator + PR-approval check below remains as defense-in-depth.
+    environment: tofu-apply
     timeout-minutes: 30
     strategy:
       fail-fast: false
