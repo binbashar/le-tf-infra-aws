@@ -1,6 +1,6 @@
 ---
 description: "Route CI requests to specialized agents via intelligent analysis"
-allowed-tools: ["Task", "Read", "Grep", "Glob", "Bash(gh issue view:*)", "Bash(gh search:*)", "Bash(gh issue list:*)", "Bash(gh pr comment:*)", "Bash(gh pr diff:*)", "Bash(gh pr view:*)", "Bash(gh pr list:*)", "Bash(gh api:*)", "Bash(git:*)", "Bash(find:*)", "Bash(grep:*)", "Bash(cat:*)", "Bash(ls:*)"]
+allowed-tools: ["Task", "Read", "Grep", "Glob", "Bash(gh issue view:*)", "Bash(gh search:*)", "Bash(gh issue list:*)", "Bash(gh pr comment:*)", "Bash(gh pr diff:*)", "Bash(gh pr view:*)", "Bash(gh pr list:*)", "Bash(gh api repos/*/*/collaborators/*/permission:*)", "Bash(find:*)", "Bash(grep:*)", "Bash(cat:*)", "Bash(ls:*)"]
 ---
 
 # CI Request Router

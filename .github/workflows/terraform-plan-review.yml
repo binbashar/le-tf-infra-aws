@@ -418,8 +418,11 @@ jobs:
             fi
 
             LAYER=$(basename "$(dirname "$plan_file")" | sed 's/^plan-//' | tr '-' '/')
-            D=$(grep -c 'will be destroyed' "$plan_file" 2>/dev/null || echo 0)
-            R=$(grep -c 'must be replaced' "$plan_file" 2>/dev/null || echo 0)
+            # grep -c already prints "0" and exits 1 on no match; `|| echo 0`
+            # would append a second line (D="0\n0") and break the arithmetic
+            # below. `|| true` swallows the exit code while keeping the count.
+            D=$(grep -c 'will be destroyed' "$plan_file" 2>/dev/null || true)
+            R=$(grep -c 'must be replaced' "$plan_file" 2>/dev/null || true)
 
             if [[ $D -gt 0 || $R -gt 0 ]]; then
               DETAILS="${DETAILS}\n- **${LAYER}**: ${D} destroy, ${R} replace"
@@ -688,6 +691,7 @@ jobs:
           echo "Pre-apply state saved"
 
       - name: Run Terraform Apply
+        id: apply
         working-directory: ${{ matrix.layer }}
         timeout-minutes: 20
         run: |
@@ -696,6 +700,9 @@ jobs:
           tofu apply -no-color -auto-approve tfplan.bin 2>&1 | tee apply-output.txt
 
       - name: Upload Apply Results
+        # Always upload — a failed apply is exactly when the logs/state snapshot
+        # are most valuable for diagnostics and rollback.
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: ${{ steps.sanitize.outputs.apply_artifact }}
@@ -705,11 +712,18 @@ jobs:
           retention-days: 30
 
       - name: Post Apply Results
+        # Always post — including (especially) when the apply failed, so the PR
+        # gets a confirmation/diagnostic comment either way.
+        if: always()
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
+        env:
+          APPLY_OUTCOME: ${{ steps.apply.outcome }}
         with:
           script: |
             const fs = require('fs');
             const layerPath = process.env.LAYER;
+            const outcome = process.env.APPLY_OUTCOME || 'unknown';
+            const succeeded = outcome === 'success';
 
             let applyOutput = '';
             try {
@@ -718,11 +732,11 @@ jobs:
               applyOutput = 'Apply output not available';
             }
 
-            const comment = `## Terraform Apply Complete
+            const comment = `## Terraform Apply ${succeeded ? 'Complete' : 'Failed'}
 
             **Layer**: \`${layerPath}\`
             **Triggered by**: @${{ github.actor }}
-            **Status**: Success
+            **Status**: ${succeeded ? '✅ Success' : `❌ ${outcome}`}
 
             <details>
             <summary>Apply Output</summary>
@@ -747,7 +761,7 @@ jobs:
             ---
             *Applied by automated Terraform workflow*`;
 
-            github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: ${{ needs.determine-action.outputs.pr_number }},
               owner: context.repo.owner,
               repo: context.repo.repo,

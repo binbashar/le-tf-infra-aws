@@ -91,7 +91,7 @@ runs:
         source_profile = bb-deploymaster
         EOF
 
-        cat > ~/.aws/bb/credentials << EOF
+        cat > ~/.aws/bb/credentials << 'EOF'
         [bb-deploymaster]
         aws_access_key_id = ${{ inputs.aws_access_key_id }}
         aws_secret_access_key = ${{ inputs.aws_secret_access_key }}
