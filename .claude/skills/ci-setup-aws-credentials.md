@@ -9,15 +9,15 @@ Deterministic setup — no AI reasoning needed. Use this as a reference for AWS 
 
 ## Account Structure
 
-| Account | Secret Suffix | Profile |
-|---------|--------------|---------|
-| apps-devstg | `DEVSTG` | `bb-apps-devstg-devops` |
-| apps-prd | `PRD` | `bb-apps-prd-devops` |
-| network | `NETWORK` | `bb-network-devops` |
-| security | `SECURITY` | `bb-security-devops` |
-| shared | `SHARED` | `bb-shared-devops` |
-| management | `MANAGEMENT` | `bb-management-devops` |
-| data-science | `DATA_SCIENCE` | `bb-data-science-devops` |
+The authoritative layer → account / secret-suffix / profile mapping lives in
+`.github/actions/determine-account/action.yml` (the `case "$ACCOUNT"` block).
+Refer to it directly — it is the single source of truth, so this doc no longer
+duplicates the full table (which would drift).
+
+Conventions it encodes: account directories are `apps-devstg`, `apps-prd`,
+`network`, `security`, `shared`, `management`, `data-science`; profiles are
+`bb-<account>-devops`; and the secret suffix is the upper-cased account name
+(e.g. `apps-devstg` → `DEVSTG`, consumed as `AWS_<SUFFIX>_ACCOUNT_ID`).
 
 ## Required Secrets
 

@@ -20,6 +20,14 @@ Post `/tofu plan full` as a PR comment and confirm.
 2. Deny if not admin/write
 3. If authorized, post `/tofu apply` as a PR comment and confirm
 
+> **Note — advisory only.** This in-prompt permission check is a fast UX
+> rejection for non-collaborators; it is **not** the security boundary. The
+> authoritative gate is the `run-terraform-apply` job in
+> `terraform-plan-review.yml`, which independently re-verifies collaborator
+> permission **and** an approved PR review (plus the `tofu-apply` environment)
+> before any apply runs. Never rely on this model-side check to protect a
+> privileged action.
+
 ## Intelligent Routing (if not a special command)
 
 Analyze file paths, layer types, and keywords, then delegate via the Task tool.
