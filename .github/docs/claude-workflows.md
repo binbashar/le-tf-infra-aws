@@ -37,7 +37,7 @@ sequenceDiagram
     Dev->>GH: Push *.tf / *.hcl changes (or comment /tofu plan or /tf-plan)
     GH->>WF: Trigger workflow
 
-    WF->>WF: determine-action<br/>(plan? plan_full?)
+    WF->>WF: determine-action<br/>(plan?)
     WF->>WF: detect-layers<br/>(git diff → walk up to nearest config.tf)
 
     loop For each changed layer (matrix)
@@ -73,10 +73,9 @@ consolidates the repeated OpenTofu/Leverage install, account resolution, AWS
 credentials, and reference-architecture config into a single step.
 
 ### Key Features
-- **Delta format by default**: PR comments show only changed resources (`+`, `~`, `-`, `-/+`) plus a meaningful one-sentence summary, with a collapsed dropdown carrying the full plan.
-- **Full format on demand**: `/tofu plan full` promotes the complete output to the top of the comment.
+- **Single comment format**: PR comments show only changed resources (`+`, `~`, `-`, `-/+`) plus a meaningful one-sentence summary, with a collapsed dropdown carrying the full plan. There is no separate "full" command or mode — see the design-decision note in [`output-formats.md`](../../.claude/docs/output-formats.md).
 - **Complete plan retained**: every run uploads the full `plan-output.txt` + `tfplan.bin` as the `plan-<layer>` artifact (7-day retention) — the authoritative, never-truncated copy.
-- **Short aliases**: `/tf-plan` = `/tofu plan`, `/tf-plan full` = `/tofu plan full`.
+- **Short alias**: `/tf-plan` = `/tofu plan`.
 - **Code diff context**: Claude reads `.tf`/`.hcl` changes alongside the plan to understand developer intent.
 - **Destructive-op scan**: destroy/replace counts are surfaced for reviewer attention (informational — the plan stage does not apply).
 - **Concurrency guard**: one plan runs per PR at a time (`cancel-in-progress: false`).
@@ -110,20 +109,18 @@ based on file paths, layer names, resource types, and request keywords (see
 | Command | Description | Output |
 |---------|-------------|--------|
 | `/tf-plan` | Delta plan for current layer | Changed resources only + meaningful summary |
-| `/tf-plan-full` | Full plan for current layer | Complete unfiltered plan output |
 
 Run from a Terraform layer directory (one containing `config.tf`):
 ```bash
 cd apps-devstg/us-east-1/secrets-manager
-/tf-plan        # See what will change
-/tf-plan-full   # See the complete output
+/tf-plan            # See what will change (delta + summary)
+leverage tf plan    # See the complete, unfiltered output
 ```
 
 ### PR Comment Commands
 
 | Command | Alias | Required GitHub Role | Behavior |
 |---------|-------|----------------------|----------|
-| `/tofu plan` | `/tf-plan` | Any collaborator | Delta plan via the Terraform Plan workflow |
-| `/tofu plan full` | `/tf-plan full` | Any collaborator | Full plan via the Terraform Plan workflow |
+| `/tofu plan` | `/tf-plan` | Any collaborator | Plan via the Terraform Plan workflow (delta comment + collapsed full-plan dropdown + artifact) |
 
 Automatic plans run on every PR that changes `*.tf` / `*.tfvars` / `*.hcl` (non-fork).

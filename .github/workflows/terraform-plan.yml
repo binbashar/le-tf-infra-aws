@@ -2,9 +2,9 @@ name: Terraform Plan
 
 # Atlantis/GitOps replacement — plan stage (no apply).
 # - Automatic: run `tofu plan` on PRs that change *.tf / *.tfvars / *.hcl
-# - Manual:    re-run a plan via comment commands
-#   - Primary: /tofu plan, /tofu plan full
-#   - Aliases: /tf-plan = /tofu plan, /tf-plan full = /tofu plan full
+# - Manual:    re-run a plan via comment command: /tofu plan (alias: /tf-plan)
+# There is no separate "full" command — every plan comment already carries the
+# complete plan in a collapsed dropdown + artifact (see output-formats.md).
 # The apply path is delivered in a later staged workflow.
 
 on:
@@ -95,7 +95,6 @@ jobs:
     outputs:
       should_plan: ${{ steps.check.outputs.should_plan }}
       pr_number: ${{ steps.check.outputs.pr_number }}
-      plan_full: ${{ steps.check.outputs.plan_full }}
     steps:
       - name: Check trigger and command
         id: check
@@ -105,18 +104,23 @@ jobs:
           set -euo pipefail
           echo "Event: ${{ github.event_name }}"
 
+          # Design decision: there is no separate "full plan" command or mode.
+          # Every plan comment already embeds the complete plan in a collapsed
+          # dropdown and uploads it as the plan-<layer> artifact, and locally
+          # `leverage tf plan` already prints the full output — so a dedicated
+          # `full` toggle would be redundant. A trailing "full" (e.g.
+          # `/tofu plan full`) is accepted but treated as a normal plan.
+          # See .claude/docs/output-formats.md.
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # Automatic plan on PR updates — always delta format
+            # Automatic plan on PR updates
             echo "should_plan=true" >> $GITHUB_OUTPUT
-            echo "plan_full=false" >> $GITHUB_OUTPUT
             echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-            echo "Trigger: PR update -> Will run automatic plan (delta format)"
+            echo "Trigger: PR update -> Will run automatic plan"
 
           elif [[ "${{ github.event_name }}" == "issue_comment" ]]; then
             # Check if comment is on a PR
             if [[ "${{ github.event.issue.pull_request }}" == "" ]]; then
               echo "should_plan=false" >> $GITHUB_OUTPUT
-              echo "plan_full=false" >> $GITHUB_OUTPUT
               echo "Comment is not on a PR, skipping"
               exit 0
             fi
@@ -125,21 +129,12 @@ jobs:
             PR_NUMBER="${{ github.event.issue.number }}"
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
-            # Parse command — check full before plain plan to avoid substring match.
-            # Primary: /tofu plan [full] | Aliases: /tf-plan [full]
-            if [[ "$COMMENT" =~ ^(/tofu[[:space:]]+plan[[:space:]]+full|/tf-plan[[:space:]]+full) ]]; then
+            # Primary: /tofu plan | Alias: /tf-plan
+            if [[ "$COMMENT" =~ ^(/tofu[[:space:]]+plan|/tf-plan) ]]; then
               echo "should_plan=true" >> $GITHUB_OUTPUT
-              echo "plan_full=true" >> $GITHUB_OUTPUT
-              echo "Command: ${BASH_REMATCH[0]} -> Will run manual plan (full output)"
-
-            elif [[ "$COMMENT" =~ ^(/tofu[[:space:]]+plan|/tf-plan) ]]; then
-              echo "should_plan=true" >> $GITHUB_OUTPUT
-              echo "plan_full=false" >> $GITHUB_OUTPUT
-              echo "Command: ${BASH_REMATCH[0]} -> Will run manual plan (delta format)"
-
+              echo "Command: ${BASH_REMATCH[0]} -> Will run plan"
             else
               echo "should_plan=false" >> $GITHUB_OUTPUT
-              echo "plan_full=false" >> $GITHUB_OUTPUT
               echo "Not a /tofu plan or /tf-plan command, skipping"
             fi
           fi
@@ -480,7 +475,6 @@ jobs:
             Context:
               PR=#${{ needs.determine-action.outputs.pr_number }}
               Layers=${{ needs.detect-layers.outputs.layers }}
-              Format=${{ needs.determine-action.outputs.plan_full == 'true' && 'FULL' || 'DELTA' }}
               DestructionCount=${{ needs.scan-destructive-operations.outputs.destruction_count }}
 
           claude_args: '--allowed-tools "Task,Read,Grep,Glob,Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh issue view:*),Bash(gh issue list:*),mcp__github_comment__*,mcp__github_ci__*"'

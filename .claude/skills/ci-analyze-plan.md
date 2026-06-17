@@ -17,18 +17,17 @@ Analyze plan outputs in `plans/` and post a structured PR comment.
 ## Output format
 
 Follow `.claude/docs/output-formats.md` exactly — it is the single source of
-truth for the DELTA / FULL formats and the standard PR-comment structure. Do not
-re-invent the format here.
+truth for the plan-comment format and structure. Do not re-invent the format here.
 
-Key points for CI:
-- **DELTA** (default): summary + changed resources + `Plan: X to add, …` +
-  assessment, then a **collapsed `<details>` "Full plan output"** dropdown.
-- **FULL** (`Format=FULL`): promote the full output to the top, uncollapsed.
-- The full output you embed comes from each layer's `plans/<artifact>/plan-output.txt`.
-  **Cap the embedded full output at ~60,000 characters** (GitHub's comment limit
-  is 65,536); when you truncate, say so and point to the artifact.
-- Always end with the artifact pointer: the complete plan is in the
-  **`plan-<layer>`** artifact (7-day retention).
+Every comment uses the same layout (there is no separate "full" mode — see the
+design-decision note in `output-formats.md`):
+- Summary + changed resources only + `Plan: X to add, …` + assessment.
+- A **collapsed `<details>` "Full plan output"** dropdown. The embedded text comes
+  from each layer's `plans/<artifact>/plan-output.txt`. **Cap it at ~60,000
+  characters** (GitHub's comment limit is 65,536); when you truncate, say so and
+  point to the artifact.
+- End with the artifact pointer: the complete plan is in the **`plan-<layer>`**
+  artifact (7-day retention).
 - If `DestructionCount > 0`, explicitly call out the destroy/replace resources in
   the assessment.
 

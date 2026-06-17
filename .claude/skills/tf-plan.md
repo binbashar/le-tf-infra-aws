@@ -57,4 +57,4 @@ From `/tmp/tf-plan-output.txt`, render the **DELTA format** exactly as specified
 
 If there are **no changes** (`No changes. Infrastructure is up-to-date`), output the no-changes block from `output-formats.md`.
 
-To see the complete, unfiltered output instead, use `/tf-plan-full`.
+To see the complete, unfiltered output instead, run `leverage tf plan` directly (there is no `/tf-plan-full` skill — see the design-decision note in `.claude/docs/output-formats.md`).
