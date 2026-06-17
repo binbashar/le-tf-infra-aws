@@ -1,0 +1,60 @@
+name: "Determine AWS Account"
+description: "Map layer path to AWS account name, secret variable name, and profile"
+
+inputs:
+  layer_path:
+    description: "Terraform layer path (e.g. apps-devstg/us-east-1/base-network)"
+    required: true
+
+outputs:
+  account:
+    description: "AWS account name"
+    value: ${{ steps.map.outputs.account }}
+  secret_name:
+    description: "Secret variable name suffix"
+    value: ${{ steps.map.outputs.secret_name }}
+  profile:
+    description: "AWS CLI profile name"
+    value: ${{ steps.map.outputs.profile }}
+
+runs:
+  using: composite
+  steps:
+    - name: Map layer to account
+      id: map
+      shell: bash
+      env:
+        LAYER_PATH: ${{ inputs.layer_path }}
+      run: |
+        set -euo pipefail
+        # Account = first path segment (Leverage directory convention).
+        ACCOUNT="${LAYER_PATH%%/*}"
+        echo "Detected account: $ACCOUNT"
+
+        # Data-driven map for the *non-mechanical* account -> secret-suffix
+        # relationship (e.g. apps-devstg -> DEVSTG, apps-prd -> PRD). Keep this
+        # as the single source of truth; add a row here to onboard a new account.
+        declare -A SECRET_SUFFIX=(
+          [management]="MANAGEMENT"
+          [security]="SECURITY"
+          [shared]="SHARED"
+          [network]="NETWORK"
+          [apps-devstg]="DEVSTG"
+          [apps-prd]="PRD"
+          [data-science]="DATA_SCIENCE"
+        )
+
+        SECRET_NAME="${SECRET_SUFFIX[$ACCOUNT]:-}"
+        if [[ -z "$SECRET_NAME" ]]; then
+          echo "::error::Unknown account '$ACCOUNT' — add it to the SECRET_SUFFIX map in determine-account/action.yml"
+          exit 1
+        fi
+
+        # Profile is mechanical and derived generically.
+        PROFILE="bb-${ACCOUNT}-devops"
+
+        echo "account=$ACCOUNT" >> "$GITHUB_OUTPUT"
+        echo "secret_name=$SECRET_NAME" >> "$GITHUB_OUTPUT"
+        echo "profile=$PROFILE" >> "$GITHUB_OUTPUT"
+
+        echo "Account: $ACCOUNT | Secret: AWS_${SECRET_NAME}_ACCOUNT_ID | Profile: $PROFILE"
