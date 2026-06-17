@@ -23,11 +23,25 @@ runs:
       with:
         python-version: ${{ inputs.python_version }}
 
+    - name: Cache OpenTofu binary and Leverage venv
+      id: cache-cli
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+      with:
+        # This action runs per-layer in a matrix; cache the heavy downloads so
+        # each matrix job doesn't re-fetch tofu and re-install leverage. Cache the
+        # tofu binary and the venv *specifically* — not all of ~/.local/bin, which
+        # on self-hosted runners may hold unrelated user binaries.
+        path: |
+          ~/.local/bin/tofu
+          ~/.leverage-venv
+        key: ${{ runner.os }}-tofu-${{ inputs.tofu_version }}-leverage-${{ inputs.leverage_version }}
+
     - name: Install OpenTofu
+      if: steps.cache-cli.outputs.cache-hit != 'true'
       shell: bash
       run: |
         set -euo pipefail
-        # Install to a user-local dir on PATH instead of `sudo`-moving into
+        # Install to a user-local dir instead of `sudo`-moving into
         # /usr/local/bin, so the action also works on self-hosted runners that
         # restrict root/passwordless sudo.
         TOFU_VERSION="${{ inputs.tofu_version }}"
@@ -36,26 +50,30 @@ runs:
         unzip -qo tofu_${TOFU_VERSION}_linux_amd64.zip tofu -d ~/.local/bin
         rm tofu_${TOFU_VERSION}_linux_amd64.zip
         chmod +x ~/.local/bin/tofu
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-        ~/.local/bin/tofu version
 
     - name: Install Leverage CLI
+      if: steps.cache-cli.outputs.cache-hit != 'true'
       shell: bash
       run: |
         set -euo pipefail
-        # Install into an isolated venv, then symlink only the `leverage`
-        # entrypoint into a user-local dir on PATH (no sudo). Adding the venv's
-        # bin/ to $GITHUB_PATH would also shadow the runner's python/pip with the
-        # venv's, which can make later steps unexpectedly run inside the venv. The
-        # leverage shebang points at the venv's python, so the symlink alone is
-        # sufficient.
+        # Install into an isolated venv. The `leverage` entrypoint is exposed via
+        # a symlink in the "Expose CLIs on PATH" step below — adding the venv's
+        # bin/ to $GITHUB_PATH would shadow the runner's python/pip with the
+        # venv's, which can make later steps unexpectedly run inside the venv.
         python3 -m venv ~/.leverage-venv
         ~/.leverage-venv/bin/pip install --upgrade pip
         ~/.leverage-venv/bin/pip install leverage==${{ inputs.leverage_version }}
+
+    - name: Expose CLIs on PATH
+      shell: bash
+      run: |
+        set -euo pipefail
+        # Always run (cache hit or miss): ensure the leverage symlink exists and
+        # ~/.local/bin is on PATH. The leverage shebang points at the venv's
+        # python, so the symlink alone is sufficient to expose it.
         mkdir -p ~/.local/bin
         ln -sf ~/.leverage-venv/bin/leverage ~/.local/bin/leverage
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-        ~/.local/bin/leverage --version
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
     - name: Verify Required Binaries
       shell: bash
