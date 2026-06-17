@@ -38,11 +38,15 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
+        # Install into an isolated venv, then symlink only the `leverage`
+        # entrypoint onto PATH. Adding the venv's bin/ to $GITHUB_PATH would also
+        # shadow the runner's python/pip with the venv's, which can make later
+        # steps unexpectedly run inside the venv. The leverage shebang points at
+        # the venv's python, so the symlink alone is sufficient.
         python3 -m venv ~/.leverage-venv
-        source ~/.leverage-venv/bin/activate
-        pip install --upgrade pip
-        pip install leverage==${{ inputs.leverage_version }}
-        echo "$HOME/.leverage-venv/bin" >> $GITHUB_PATH
+        ~/.leverage-venv/bin/pip install --upgrade pip
+        ~/.leverage-venv/bin/pip install leverage==${{ inputs.leverage_version }}
+        sudo ln -sf ~/.leverage-venv/bin/leverage /usr/local/bin/leverage
         leverage --version
 
     - name: Verify Required Binaries

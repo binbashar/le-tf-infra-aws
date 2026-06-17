@@ -131,10 +131,11 @@ runs:
         echo "✅ Created config/common.tfvars"
 
         echo "📝 Configuring build.env..."
-        # Disable MFA for CI/CD
+        # Disable MFA for CI/CD. Avoid `sed -i`: the in-place flag is not
+        # portable between GNU (Linux) and BSD (macOS) sed. Redirect to a temp
+        # file and move it back instead.
         if [[ -f build.env ]]; then
-          sed -i 's/MFA_ENABLED=true/MFA_ENABLED=false/' build.env 2>/dev/null || true
-          sed -i 's/MFA_ENABLED=True/MFA_ENABLED=False/' build.env 2>/dev/null || true
+          sed 's/MFA_ENABLED=[tT]rue/MFA_ENABLED=false/g' build.env > build.env.tmp && mv build.env.tmp build.env
 
           # Set TF_BINARY if not present
           if ! grep -q "TF_BINARY" build.env; then
