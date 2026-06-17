@@ -27,27 +27,35 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
+        # Install to a user-local dir on PATH instead of `sudo`-moving into
+        # /usr/local/bin, so the action also works on self-hosted runners that
+        # restrict root/passwordless sudo.
         TOFU_VERSION="${{ inputs.tofu_version }}"
         wget -q "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
-        unzip -qo tofu_${TOFU_VERSION}_linux_amd64.zip
-        sudo mv tofu /usr/local/bin/
-        sudo chmod +x /usr/local/bin/tofu
-        tofu version
+        mkdir -p ~/.local/bin
+        unzip -qo tofu_${TOFU_VERSION}_linux_amd64.zip tofu -d ~/.local/bin
+        rm tofu_${TOFU_VERSION}_linux_amd64.zip
+        chmod +x ~/.local/bin/tofu
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        ~/.local/bin/tofu version
 
     - name: Install Leverage CLI
       shell: bash
       run: |
         set -euo pipefail
         # Install into an isolated venv, then symlink only the `leverage`
-        # entrypoint onto PATH. Adding the venv's bin/ to $GITHUB_PATH would also
-        # shadow the runner's python/pip with the venv's, which can make later
-        # steps unexpectedly run inside the venv. The leverage shebang points at
-        # the venv's python, so the symlink alone is sufficient.
+        # entrypoint into a user-local dir on PATH (no sudo). Adding the venv's
+        # bin/ to $GITHUB_PATH would also shadow the runner's python/pip with the
+        # venv's, which can make later steps unexpectedly run inside the venv. The
+        # leverage shebang points at the venv's python, so the symlink alone is
+        # sufficient.
         python3 -m venv ~/.leverage-venv
         ~/.leverage-venv/bin/pip install --upgrade pip
         ~/.leverage-venv/bin/pip install leverage==${{ inputs.leverage_version }}
-        sudo ln -sf ~/.leverage-venv/bin/leverage /usr/local/bin/leverage
-        leverage --version
+        mkdir -p ~/.local/bin
+        ln -sf ~/.leverage-venv/bin/leverage ~/.local/bin/leverage
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        ~/.local/bin/leverage --version
 
     - name: Verify Required Binaries
       shell: bash
