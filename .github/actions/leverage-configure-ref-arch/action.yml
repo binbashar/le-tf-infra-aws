@@ -86,9 +86,14 @@ runs:
       run: |
         set -euo pipefail
 
+        # Anchor writes to the repository root so this works regardless of the
+        # caller's working directory (e.g. when invoked from a layer subdir),
+        # where a relative build.env / config/ would otherwise be missed.
+        REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo ".")"
+
         echo "📝 Creating config/common.tfvars..."
-        mkdir -p config
-        cat > config/common.tfvars << EOF
+        mkdir -p "$REPO_ROOT/config"
+        cat > "$REPO_ROOT/config/common.tfvars" << EOF
         project          = "${{ inputs.project }}"
         project_long     = "${{ inputs.project_long }}"
         region_primary   = "${{ inputs.region_primary }}"
@@ -134,12 +139,13 @@ runs:
         # Disable MFA for CI/CD. Avoid `sed -i`: the in-place flag is not
         # portable between GNU (Linux) and BSD (macOS) sed. Redirect to a temp
         # file and move it back instead.
-        if [[ -f build.env ]]; then
-          sed 's/MFA_ENABLED=[tT]rue/MFA_ENABLED=false/g' build.env > build.env.tmp && mv build.env.tmp build.env
+        BUILD_ENV="$REPO_ROOT/build.env"
+        if [[ -f "$BUILD_ENV" ]]; then
+          sed 's/MFA_ENABLED=[tT]rue/MFA_ENABLED=false/g' "$BUILD_ENV" > "$BUILD_ENV.tmp" && mv "$BUILD_ENV.tmp" "$BUILD_ENV"
 
           # Set TF_BINARY if not present
-          if ! grep -q "TF_BINARY" build.env; then
-            echo "TF_BINARY=${{ inputs.tf_binary }}" >> build.env
+          if ! grep -q "TF_BINARY" "$BUILD_ENV"; then
+            echo "TF_BINARY=${{ inputs.tf_binary }}" >> "$BUILD_ENV"
           fi
         fi
 

@@ -34,7 +34,7 @@ runs:
         path: |
           ~/.local/bin/tofu
           ~/.leverage-venv
-        key: ${{ runner.os }}-tofu-${{ inputs.tofu_version }}-leverage-${{ inputs.leverage_version }}
+        key: ${{ runner.os }}-tofu-${{ inputs.tofu_version }}-leverage-${{ inputs.leverage_version }}-python-${{ inputs.python_version }}
 
     - name: Install OpenTofu
       if: steps.cache-cli.outputs.cache-hit != 'true'
