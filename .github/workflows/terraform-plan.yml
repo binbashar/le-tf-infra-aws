@@ -313,7 +313,13 @@ jobs:
 
           echo "Running plan for layer: $LAYER"
 
-          # Build tfvars arguments (common + account config, same as Leverage)
+          # Build tfvars arguments (common + account + backend config, same as
+          # Leverage). backend.tfvars is also fed to `tofu init -backend-config`,
+          # but its values (region, profile, bucket, dynamodb_table, encrypt) are
+          # likewise required *input variables* — the provider and remote-state
+          # data sources read var.region / var.profile / var.bucket — so it must
+          # be passed as a -var-file here too, or the plan fails with
+          # "No value for required variable".
           TFVARS_ARGS=""
 
           if [[ -f "${REPO_ROOT}/config/common.tfvars" ]]; then
@@ -322,6 +328,10 @@ jobs:
 
           if [[ -f "${REPO_ROOT}/${ACCOUNT}/config/account.tfvars" ]]; then
             TFVARS_ARGS="$TFVARS_ARGS -var-file=${REPO_ROOT}/${ACCOUNT}/config/account.tfvars"
+          fi
+
+          if [[ -f "${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars" ]]; then
+            TFVARS_ARGS="$TFVARS_ARGS -var-file=${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars"
           fi
 
           tofu plan -no-color -input=false -out=tfplan.bin $TFVARS_ARGS 2>&1 | tee plan-output.txt

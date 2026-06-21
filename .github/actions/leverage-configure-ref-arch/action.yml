@@ -73,6 +73,14 @@ inputs:
     description: "SSO enabled"
     required: false
     default: "false"
+  sso_start_url:
+    description: "SSO start URL"
+    required: false
+    default: "https://leverage.awsapps.com/start"
+  sso_region:
+    description: "SSO region"
+    required: false
+    default: "us-east-1"
   tf_binary:
     description: "Terraform binary to use (terraform or tofu)"
     required: false
@@ -130,7 +138,9 @@ runs:
           }
         }
 
-        sso_enabled = ${{ inputs.sso_enabled }}
+        sso_enabled   = ${{ inputs.sso_enabled }}
+        sso_start_url = "${{ inputs.sso_start_url }}"
+        sso_region    = "${{ inputs.sso_region }}"
         EOF
 
         echo "✅ Created config/common.tfvars"
