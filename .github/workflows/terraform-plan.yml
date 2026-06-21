@@ -100,6 +100,7 @@ jobs:
         id: check
         env:
           COMMENT_BODY: ${{ github.event.comment.body }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           echo "Event: ${{ github.event_name }}"
@@ -131,8 +132,20 @@ jobs:
 
             # Primary: /tofu plan | Alias: /tf-plan
             if [[ "$COMMENT" =~ ^(/tofu[[:space:]]+plan|/tf-plan) ]]; then
-              echo "should_plan=true" >> $GITHUB_OUTPUT
-              echo "Command: ${BASH_REMATCH[0]} -> Will run plan"
+              # Security gate: a comment-triggered plan runs the PR HEAD code with
+              # org-wide AWS credentials. The authorize job only proves the
+              # *commenter* is trusted — not that the PR's code is. Never plan a
+              # fork PR's head from a comment (a maintainer can review it locally
+              # with `leverage tf plan`). Auto-plan already excludes forks.
+              # Fail closed: treat any API error as a fork and refuse.
+              IS_FORK=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" --jq '.head.repo.fork' 2>/dev/null || echo "true")
+              if [[ "$IS_FORK" == "true" ]]; then
+                echo "should_plan=false" >> $GITHUB_OUTPUT
+                echo "::notice::Refusing to plan a fork PR via comment — untrusted head code would run with org-wide credentials. Review the branch locally instead."
+              else
+                echo "should_plan=true" >> $GITHUB_OUTPUT
+                echo "Command: ${BASH_REMATCH[0]} -> Will run plan"
+              fi
             else
               echo "should_plan=false" >> $GITHUB_OUTPUT
               echo "Not a /tofu plan or /tf-plan command, skipping"
@@ -257,6 +270,11 @@ jobs:
     if: needs.detect-layers.outputs.has-layers == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Least privilege: this job checks out and plans PR HEAD code. It never posts
+    # PR/issue comments (the scan + AI jobs do that), so it only needs read access
+    # — so a compromised plan can't use GITHUB_TOKEN to write to the repo or PR.
+    permissions:
+      contents: read
     # Expose the matrix layer via env so run: steps reference "$LAYER" instead of
     # interpolating ${{ matrix.layer }} directly into the shell.
     env:
