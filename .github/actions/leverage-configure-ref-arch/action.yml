@@ -136,12 +136,12 @@ runs:
         echo "✅ Created config/common.tfvars"
 
         echo "📝 Configuring build.env..."
-        # Disable MFA for CI/CD. Avoid `sed -i`: the in-place flag is not
-        # portable between GNU (Linux) and BSD (macOS) sed. Redirect to a temp
-        # file and move it back instead.
+        # Disable MFA for CI/CD. This composite action only runs on GitHub Actions
+        # (Linux) runners (GNU sed) — consistent with the repo's other workflows
+        # that use in-place edits — so `sed -i` is fine here.
         BUILD_ENV="$REPO_ROOT/build.env"
         if [[ -f "$BUILD_ENV" ]]; then
-          sed 's/MFA_ENABLED=[tT]rue/MFA_ENABLED=false/g' "$BUILD_ENV" > "$BUILD_ENV.tmp" && mv "$BUILD_ENV.tmp" "$BUILD_ENV"
+          sed -i 's/MFA_ENABLED=[tT]rue/MFA_ENABLED=false/g' "$BUILD_ENV"
 
           # Set TF_BINARY if not present
           if ! grep -q "TF_BINARY" "$BUILD_ENV"; then

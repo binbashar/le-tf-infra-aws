@@ -34,6 +34,8 @@ runs:
         # Data-driven map for the *non-mechanical* account -> secret-suffix
         # relationship (e.g. apps-devstg -> DEVSTG, apps-prd -> PRD). Keep this
         # as the single source of truth; add a row here to onboard a new account.
+        # This composite action only runs on GitHub Actions (Linux) runners, so a
+        # bash 4+ associative array is safe — the local /tf-plan skill never runs it.
         declare -A SECRET_SUFFIX=(
           [management]="MANAGEMENT"
           [security]="SECURITY"
