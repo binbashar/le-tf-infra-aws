@@ -62,6 +62,25 @@ variable "alarm_total_error_rate_threshold" {
   }
 }
 
+variable "alarm_min_requests_per_period" {
+  description = <<-EOT
+    Minimum CloudFront Requests in a 5-minute period before the error-rate
+    alarms evaluate. CloudFront's *ErrorRate metrics are percentages, so on a
+    near-idle site a handful of background scanner 404s (e.g. probes for
+    /.env, /wp-config.php) reads as ~100% and pages a false alarm. Below this
+    floor the alarm expression reports 0 (stays OK); at or above it, the real
+    error rate is evaluated. Raise as legitimate traffic grows; lower to
+    increase sensitivity at low traffic.
+  EOT
+  type        = number
+  default     = 50
+
+  validation {
+    condition     = var.alarm_min_requests_per_period >= 1
+    error_message = "alarm_min_requests_per_period must be at least 1."
+  }
+}
+
 #
 # CloudFront access logs
 #
