@@ -285,6 +285,14 @@ locals {
         "devops",
       ]
     }
+    "patricia.charlier" = {
+      first_name = "Patricia"
+      last_name  = "Charlier"
+      email      = "patricia.charlier@binbash.com.ar"
+      groups = [
+        "marketplaceandpartnercentral",
+      ]
+    }
     "rene.montilva" = {
       first_name = "Rene"
       last_name  = "Montilva"
