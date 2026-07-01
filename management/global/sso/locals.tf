@@ -265,6 +265,15 @@ locals {
         "readonly",
       ]
     }
+    "maximiliano.dumon" = {
+      first_name = "Maximiliano"
+      last_name  = "Dumon"
+      email      = "maximiliano.dumon@binbash.com.ar"
+      groups = [
+        "devops",
+        "datascientists",
+      ]
+    }
     "nestor.navarro" = {
       first_name = "Nestor"
       last_name  = "Navarro"
@@ -283,6 +292,14 @@ locals {
       groups = [
         "datascientists",
         "devops",
+      ]
+    }
+    "patricia.charlier" = {
+      first_name = "Patricia"
+      last_name  = "Charlier"
+      email      = "patricia.charlier@binbash.com.ar"
+      groups = [
+        "marketplaceandpartnercentral",
       ]
     }
     "rene.montilva" = {
