@@ -265,6 +265,15 @@ locals {
         "readonly",
       ]
     }
+    "maximiliano.dumon" = {
+      first_name = "Maximiliano"
+      last_name  = "Dumon"
+      email      = "maximiliano.dumon@binbash.com.ar"
+      groups = [
+        "devops",
+        "datascientists",
+      ]
+    }
     "nestor.navarro" = {
       first_name = "Nestor"
       last_name  = "Navarro"
