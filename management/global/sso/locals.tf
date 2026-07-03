@@ -141,6 +141,14 @@ locals {
         "datascientists",
       ]
     }
+    "ivan.mejia" = {
+      first_name = "Ivan"
+      last_name  = "Mejia"
+      email      = "ivan.mejia@binbash.com.ar"
+      groups = [
+        "marketplaceandpartnercentral",
+      ]
+    }
     "jose.peinado" = {
       first_name = "Jose"
       last_name  = "Peinado"
