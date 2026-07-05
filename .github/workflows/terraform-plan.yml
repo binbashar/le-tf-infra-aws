@@ -17,10 +17,11 @@ on:
   issue_comment:
     types: [created]
 
+# Least privilege at the workflow level: read-only. Jobs that post comments or
+# reactions (eyes-reaction, scan-destructive-operations, ai-analyze-plan)
+# declare their own write scopes.
 permissions:
   contents: read
-  pull-requests: write
-  issues: write
 
 env:
   AWS_REGION: us-east-1
@@ -92,6 +93,9 @@ jobs:
       ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
        (github.event_name == 'issue_comment' && needs.authorize.outputs.authorized == 'true'))
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       should_plan: ${{ steps.check.outputs.should_plan }}
       pr_number: ${{ steps.check.outputs.pr_number }}
@@ -100,6 +104,9 @@ jobs:
         id: check
         env:
           COMMENT_BODY: ${{ github.event.comment.body }}
+          # Object-valued github.event.issue.pull_request must not be
+          # interpolated into the shell — use its .url string instead.
+          PR_URL: ${{ github.event.issue.pull_request.url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
@@ -120,7 +127,7 @@ jobs:
 
           elif [[ "${{ github.event_name }}" == "issue_comment" ]]; then
             # Check if comment is on a PR
-            if [[ "${{ github.event.issue.pull_request }}" == "" ]]; then
+            if [[ -z "$PR_URL" ]]; then
               echo "should_plan=false" >> $GITHUB_OUTPUT
               echo "Comment is not on a PR, skipping"
               exit 0
@@ -188,10 +195,14 @@ jobs:
     if: needs.determine-action.outputs.should_plan == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       layers: ${{ steps.detect.outputs.layers }}
       has-layers: ${{ steps.detect.outputs.has-layers }}
       head-sha: ${{ steps.pr-info.outputs.head_sha }}
+      base-sha: ${{ steps.pr-info.outputs.base_sha }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
@@ -269,7 +280,9 @@ jobs:
     needs: [determine-action, setup-environment, detect-layers]
     if: needs.detect-layers.outputs.has-layers == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Step timeouts alone sum to 15m (init 5 + plan 10) — keep headroom for
+    # checkout, setup-layer-context (slow on cache miss) and artifact upload.
+    timeout-minutes: 20
     # Least privilege: this job checks out and plans PR HEAD code. It never posts
     # PR/issue comments (the scan + AI jobs do that), so it only needs read access
     # — so a compromised plan can't use GITHUB_TOKEN to write to the repo or PR.
@@ -352,7 +365,30 @@ jobs:
             TFVARS_ARGS="$TFVARS_ARGS -var-file=${REPO_ROOT}/${ACCOUNT}/config/backend.tfvars"
           fi
 
-          tofu plan -no-color -input=false -out=tfplan.bin $TFVARS_ARGS 2>&1 | tee plan-output.txt
+          # No -out=tfplan.bin in the plan stage: a saved plan embeds raw state
+          # values (incl. sensitive ones), and on this public repo workflow
+          # artifacts are downloadable by anyone. The apply stage reintroduces
+          # it behind its own protections.
+          tofu plan -no-color -input=false $TFVARS_ARGS 2>&1 | tee plan-output.txt
+
+      - name: Redact Sensitive Identifiers
+        working-directory: ${{ matrix.layer }}
+        run: |
+          set -euo pipefail
+          # Repo policy (CLAUDE.md): never expose AWS account IDs or credential
+          # identifiers in PR comments or plan outputs. Everything downstream —
+          # the plan-<layer> artifact (public on this repo), the destructive-op
+          # scan and the AI-generated PR comment — consumes this file, so redact
+          # at the source.
+          sed -E 's/[0-9]{12}/<ACCOUNT_ID_REDACTED>/g; s/(AKIA|ASIA)[A-Z0-9]{16}/***/g' plan-output.txt > plan-output.redacted.txt
+          mv plan-output.redacted.txt plan-output.txt
+
+          # Belt-and-suspenders scan (same as the manual procedure): must be empty.
+          if grep -nE '[0-9]{12}|-----BEGIN' plan-output.txt; then
+            echo "::error::Sensitive-looking content remains in plan output after redaction"
+            exit 1
+          fi
+          echo "Plan output redacted"
 
       - name: Record Plan SHA
         working-directory: ${{ matrix.layer }}
@@ -371,7 +407,6 @@ jobs:
           name: ${{ steps.sanitize.outputs.artifact_name }}
           path: |
             ${{ matrix.layer }}/plan-output.txt
-            ${{ matrix.layer }}/tfplan.bin
             ${{ matrix.layer }}/plan-sha.txt
           retention-days: 7
 
@@ -382,6 +417,10 @@ jobs:
     if: needs.run-terraform-plan.result == 'success' && needs.detect-layers.outputs.has-layers == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     outputs:
       has_destructions: ${{ steps.scan.outputs.has_destructions }}
       destruction_count: ${{ steps.scan.outputs.destruction_count }}
@@ -394,8 +433,6 @@ jobs:
 
       - name: Scan for destructive changes
         id: scan
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           DESTROY_COUNT=0
           REPLACE_COUNT=0
@@ -477,13 +514,13 @@ jobs:
 
       - name: Capture Code Diff
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Same PR snapshot as the plan: reuse detect-layers' SHAs instead of
+          # re-querying the PR, so the analyzed diff can't drift from the plan
+          # if the branch moves mid-run.
+          BASE_SHA: ${{ needs.detect-layers.outputs.base-sha }}
+          HEAD_SHA: ${{ needs.detect-layers.outputs.head-sha }}
         run: |
-          PR_NUMBER=${{ needs.determine-action.outputs.pr_number }}
-
-          BASE_SHA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER --jq '.base.sha')
-          HEAD_SHA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER --jq '.head.sha')
-
+          set -euo pipefail
           echo "Capturing .tf/.hcl diff between $BASE_SHA and $HEAD_SHA"
           git diff "$BASE_SHA"..."$HEAD_SHA" -- '*.tf' '*.hcl' > plans/code-diff.txt 2>&1 || {
             echo "Warning: Could not capture code diff"

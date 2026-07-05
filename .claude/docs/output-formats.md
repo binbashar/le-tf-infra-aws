@@ -31,9 +31,18 @@ in CI every comment is delta + collapsed full dropdown + artifact.
 
 ## Where the complete plan lives (CI)
 
-The `run-terraform-plan` job **always uploads the complete, unfiltered plan as an
-artifact** (`plan-<layer>`: `plan-output.txt` + `tfplan.bin` + `plan-sha.txt`,
-7-day retention). The artifact is the authoritative, never-truncated copy.
+The `run-terraform-plan` job **always uploads the complete plan text as an
+artifact** (`plan-<layer>`: `plan-output.txt` + `plan-sha.txt`, 7-day retention).
+The artifact is the authoritative, never-truncated copy. There is no
+`tfplan.bin` in the plan stage — a saved binary plan embeds raw state values,
+and artifacts on this public repo are downloadable by anyone; the apply stage
+reintroduces it behind its own protections.
+
+**Redaction happens at the source**: the workflow redacts sensitive identifiers
+(12-digit AWS account IDs → `<ACCOUNT_ID_REDACTED>`, `AKIA`/`ASIA` access-key
+IDs → `***`) in `plan-output.txt` before anything consumes it. Comments and the
+artifact therefore never contain raw account IDs — keep the placeholders as-is
+and never attempt to reconstruct the original values.
 
 A GitHub issue/PR comment is capped at **65,536 characters**, so the inline full
 output in the dropdown must be size-bounded — embed at most **~60,000 characters**
@@ -50,7 +59,7 @@ Show **only the resources that will change** plus a meaningful summary, then a
 collapsed dropdown carrying the full output. Omit all `# (no changes)` / no-op
 resources from the delta section.
 
-```
+````text
 ## Terraform Plan — <layer path>
 
 Summary: <one sentence describing WHAT the change accomplishes — e.g.
@@ -77,7 +86,7 @@ Plan: X to add, X to change, X to destroy.
 <details>
 <summary>Full plan output</summary>
 
-```
+```text
 <complete tofu plan output, capped at ~60,000 chars>
 ... (truncated — download the `plan-<layer>` artifact for the complete output)
 ```
@@ -85,14 +94,14 @@ Plan: X to add, X to change, X to destroy.
 </details>
 
 📦 Complete plan: **`plan-<layer>`** artifact (7-day retention).
-```
+````
 
 Resource change prefixes: `+` create, `~` update in-place, `-` destroy,
 `-/+` replace.
 
 When there are no changes, skip the dropdown:
 
-```
+```text
 ## Terraform Plan — <layer path>
 
 Summary: No infrastructure changes detected — the layer is already up to date.

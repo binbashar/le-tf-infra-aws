@@ -6,19 +6,19 @@ This guide helps Claude intelligently route requests to the most appropriate spe
 
 ### 1. security-compliance
 **Use for**: Security layers, compliance, IAM, KMS, secrets management
-- **Layer patterns**: `*/secrets-manager/*`, `*/security-*/*`, `*/base-identities/*`, `*/iam/*`, `*/kms/*`
+- **Layer patterns**: `**/secrets-manager/**`, `**/security-*/**`, `**/base-identities/**`, `**/iam/**`, `**/kms/**`
 - **Keywords**: security, compliance, secrets, iam, kms, guardduty, securityhub, encryption, certificates
 - **Expertise**: AWS security services, IAM policies, KMS encryption, CIS compliance, security monitoring
 
 ### 2. cost-optimization
 **Use for**: Cost analysis, billing, financial governance, resource optimization
-- **Layer patterns**: `*/cost-*/*`, `management/*/billing/*`, `*/notifications/*`
+- **Layer patterns**: `**/cost-*/**`, `management/**/billing/**`, `**/notifications/**`
 - **Keywords**: cost, billing, infracost, pricing, budget, tagging, optimization, financial
 - **Expertise**: Infracost analysis, tagging strategies, resource sizing, cost monitoring, billing alerts
 
 ### 3. terraform-layer
 **Use for**: General OpenTofu/Terraform operations, infrastructure layers
-- **Layer patterns**: `**/*.tf`, `*/base-*/*`, `*/network/*`, `*/databases-*/*`, `*/k8s-*/*`
+- **Layer patterns**: `**/*.tf`, `**/base-*/**`, `network/**`, `**/databases-*/**`, `**/k8s-*/**`
 - **Keywords**: terraform, tofu, infrastructure, layer, module, provider, resource, leverage
 - **Expertise**: Layer creation, OpenTofu operations, Leverage CLI, backend configuration, testing
 

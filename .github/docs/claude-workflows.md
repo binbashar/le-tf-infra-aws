@@ -42,7 +42,7 @@ sequenceDiagram
 
     loop For each changed layer (matrix)
         WF->>Tofu: tofu init + tofu plan
-        Tofu-->>WF: plan-output.txt + tfplan.bin
+        Tofu-->>WF: plan-output.txt (account IDs redacted)
         WF->>GH: Upload artifacts (plan-{layer}/, 7-day retention)
     end
 
@@ -61,7 +61,7 @@ sequenceDiagram
 |-----|------|
 | `authorize` | Collaborator gate for comment-triggered runs (admin/write only) |
 | `eyes-reaction` | 👀 reaction to acknowledge a triggering comment |
-| `determine-action` | Decide whether to plan and which format (delta vs full) |
+| `determine-action` | Decide whether to run a plan (auto PR update, or authorized `/tofu plan` comment) |
 | `setup-environment` | Python + dependency cache warm-up |
 | `detect-layers` | Marker-based detection — find layer roots (`config.tf`) for changed files |
 | `run-terraform-plan` | Per-layer matrix: `setup-layer-context` → `tofu init` → `tofu plan` → upload artifact |
@@ -74,7 +74,8 @@ credentials, and reference-architecture config into a single step.
 
 ### Key Features
 - **Single comment format**: PR comments show only changed resources (`+`, `~`, `-`, `-/+`) plus a meaningful one-sentence summary, with a collapsed dropdown carrying the full plan. There is no separate "full" command or mode — see the design-decision note in [`output-formats.md`](../../.claude/docs/output-formats.md).
-- **Complete plan retained**: every run uploads the full `plan-output.txt` + `tfplan.bin` as the `plan-<layer>` artifact (7-day retention) — the authoritative, never-truncated copy.
+- **Complete plan retained**: every run uploads the full `plan-output.txt` as the `plan-<layer>` artifact (7-day retention) — the authoritative, never-truncated copy. No `tfplan.bin` in the plan stage: a saved binary plan embeds raw state values, and artifacts on this public repo are downloadable by anyone (the apply stage reintroduces it behind its own protections).
+- **Sensitive-identifier redaction**: plan output is redacted at the source (AWS account IDs → `<ACCOUNT_ID_REDACTED>`, access-key IDs → `***`) before the artifact upload, the destructive-op scan, and the AI comment ever see it — per the repo policy of never exposing account IDs in PRs.
 - **Short alias**: `/tf-plan` = `/tofu plan`.
 - **Code diff context**: Claude reads `.tf`/`.hcl` changes alongside the plan to understand developer intent.
 - **Destructive-op scan**: destroy/replace counts are surfaced for reviewer attention (informational — the plan stage does not apply).
@@ -121,6 +122,6 @@ leverage tf plan    # See the complete, unfiltered output
 
 | Command | Alias | Required GitHub Role | Behavior |
 |---------|-------|----------------------|----------|
-| `/tofu plan` | `/tf-plan` | Any collaborator | Plan via the Terraform Plan workflow (delta comment + collapsed full-plan dropdown + artifact) |
+| `/tofu plan` | `/tf-plan` | Collaborator with admin/write access | Plan via the Terraform Plan workflow (delta comment + collapsed full-plan dropdown + artifact) |
 
 Automatic plans run on every PR that changes `*.tf` / `*.tfvars` / `*.hcl` (non-fork).

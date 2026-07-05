@@ -10,7 +10,9 @@ Analyze plan outputs in `plans/` and post a structured PR comment.
 ## Workflow
 
 1. Read `plans/code-diff.txt` to understand developer intent (the WHY)
-2. Read plan outputs from `plans/` (`plan-output.txt` files in per-layer subdirectories — the WHAT)
+2. Read plan outputs from `plans/` (`plan-output.txt` files in per-layer subdirectories — the WHAT).
+   These arrive **pre-redacted** (account IDs → `<ACCOUNT_ID_REDACTED>`, key IDs → `***`);
+   keep the placeholders verbatim and never try to reconstruct the original values
 3. Identify resources created (+), modified (~), destroyed (-), replaced (-/+) per layer
 4. Route to a specialized agent via the Task tool based on resource types (see `.claude/docs/agent-guide.md`)
 
@@ -33,4 +35,7 @@ design-decision note in `output-formats.md`):
 
 ## Agent Responsibilities
 
-The delegated agent MUST post the PR comment via `gh pr comment <PR_NUMBER> --body '...'`.
+The delegated agent MUST post the PR comment by writing the rendered markdown to
+a temp file and running `gh pr comment <PR_NUMBER> --body-file <file>` — never
+inline `--body '...'`, which breaks on the quotes, backticks and size of a full
+plan comment.
