@@ -141,6 +141,14 @@ locals {
         "datascientists",
       ]
     }
+    "ivan.mejia" = {
+      first_name = "Ivan"
+      last_name  = "Mejia"
+      email      = "ivan.mejia@binbash.com.ar"
+      groups = [
+        "marketplaceandpartnercentral",
+      ]
+    }
     "jose.peinado" = {
       first_name = "Jose"
       last_name  = "Peinado"
@@ -265,6 +273,15 @@ locals {
         "readonly",
       ]
     }
+    "maximiliano.dumon" = {
+      first_name = "Maximiliano"
+      last_name  = "Dumon"
+      email      = "maximiliano.dumon@binbash.com.ar"
+      groups = [
+        "devops",
+        "datascientists",
+      ]
+    }
     "nestor.navarro" = {
       first_name = "Nestor"
       last_name  = "Navarro"
@@ -283,6 +300,14 @@ locals {
       groups = [
         "datascientists",
         "devops",
+      ]
+    }
+    "patricia.charlier" = {
+      first_name = "Patricia"
+      last_name  = "Charlier"
+      email      = "patricia.charlier@binbash.com.ar"
+      groups = [
+        "marketplaceandpartnercentral",
       ]
     }
     "rene.montilva" = {
