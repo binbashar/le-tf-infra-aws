@@ -262,6 +262,13 @@ module "account_assignments" {
     {
       permission_set_arn  = module.permission_sets.permission_sets["DataScientist"].arn
       permission_set_name = "DataScientist"
+      principal_type      = local.principal_type_user
+      principal_name      = local.users["nestor.navarro"].email
+      account             = var.accounts.management.id
+    },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["DataScientist"].arn
+      permission_set_name = "DataScientist"
       principal_type      = local.principal_type_group
       principal_name      = local.groups["marketplacevalidationbuyers"].name
       account             = var.accounts.apps-devstg.id
