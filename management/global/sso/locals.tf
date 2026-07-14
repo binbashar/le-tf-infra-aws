@@ -289,6 +289,7 @@ locals {
       groups = [
         "datascientists",
         "devops",
+        "managementdatascientists",
         "marketplacevalidationbuyers",
         "marketplacevalidationsellers",
       ]
@@ -360,6 +361,10 @@ locals {
     datascientists = {
       name        = "DataScientists"
       description = "Provides access to the Data Science related services."
+    }
+    managementdatascientists = {
+      name        = "ManagementDataScientists"
+      description = "Provides access to Data Science related services in the Management account."
     }
   }
 
