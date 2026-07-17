@@ -90,8 +90,8 @@ means the layer exists and is written, but its directory carries the ` --` suffi
 | **IAM Access Analyzer** | Recommended | `security/us-east-1/security-base` | ✅ **Active** | none |
 | **AWS Config** (FSBP checks, 1-yr retention) | **Core / required** | `management/us-east-1/security-compliance` (active) · `security/us-east-1/security-compliance --` (**disabled**) (`terraform-aws-config` `v8.1.0`) | ⚠️ **Partial** | Enable + delegate to the `security` account |
 | **Security Hub** (FSBP + CIS) | **Core / central pane** | `security/us-east-1/security-hub --` & `management/us-east-1/security-hub --` (**disabled**; `auto_enable_standards = "NONE"`) | ❌ **Disabled** | Delegate admin, enable standards org-wide |
-| **GuardDuty** (all regions) | Recommended | `security/us-east-1/security-monitoring --` (**disabled**; `terraform-aws-guardduty-multiaccount` `v0.2.1` + custom `terraform-aws-guardduty-monitor` `v1.2.1`) | ❌ **Disabled** | Re-enable delegated-admin setup |
-| **Amazon Inspector** (EC2/ECR) | Recommended | `security/us-east-1/security-compliance --` (**disabled**; `inspector2` via `null_resource`) | ❌ **Disabled** | Enable via delegation |
+| **GuardDuty** (all regions) | Recommended | `management/us-east-1/security-monitoring --` (**disabled**; `delegated-admin`) · `security/us-east-1/security-monitoring --` (**disabled**; `terraform-aws-guardduty-multiaccount` `v0.2.1` + custom `terraform-aws-guardduty-monitor` `v1.2.1`) | ❌ **Disabled** | Delegate admin from management, then re-enable in security |
+| **Amazon Inspector** (EC2/ECR) | Recommended | `management/us-east-1/security-compliance` (delegation, gated on `enable_inspector`) · `security/us-east-1/security-compliance --` (**disabled**; `inspector2` via `null_resource`) | ❌ **Disabled** | Set `enable_inspector = true` in management, then enable in security |
 | **Amazon Macie** | Mentioned | — | ❌ **Absent** | Net-new (optional; sensitive-data discovery) |
 | **Amazon Detective** | Mentioned | — | ❌ **Absent** | Net-new (optional; investigation graphs) |
 
@@ -244,13 +244,18 @@ new code. Order matters: delegate from `management`, then enable in `security`.
       admin), then enable `security/us-east-1/security-hub --`; flip
       `auto_enable_standards` from `NONE` and confirm **FSBP + CIS** are active
       org-wide.
-- [ ] **GuardDuty** — enable `security/us-east-1/security-monitoring --`
-      (delegated-admin + multi-account); promote it over the empty active
-      `security-monitoring/` stub. **Defer/skip** the custom
-      `terraform-aws-guardduty-monitor` Lambda — prefer native exposure findings +
-      EventBridge (Phase 2).
-- [ ] **Inspector** — enable via `security/us-east-1/security-compliance --`
-      (`enable_inspector = true`); confirm EC2 + ECR coverage across members.
+- [ ] **GuardDuty** — apply `management/us-east-1/security-monitoring --` first
+      (the `delegated-admin` module designates the `security` account as GuardDuty
+      delegated administrator), then enable `security/us-east-1/security-monitoring --`
+      (multi-account setup); promote it over the empty active `security-monitoring/`
+      stub. **Defer/skip** the custom `terraform-aws-guardduty-monitor` Lambda —
+      prefer native exposure findings + EventBridge (Phase 2).
+- [ ] **Inspector** — set `enable_inspector = true` and apply
+      `management/us-east-1/security-compliance` first (its
+      `awsinspector_delegation.tf` runs `inspector2 enable-delegated-admin-account`
+      for the `security` account, gated on that variable), then enable
+      `security/us-east-1/security-compliance --`; confirm EC2 + ECR coverage across
+      members.
 - [ ] **Macie / Detective** *(optional)* — evaluate net-new for sensitive-data
       discovery and investigation graphs.
 - [ ] **Aggregation cleanup** — once exposure findings are on, migrate alert
@@ -288,6 +293,5 @@ new code. Order matters: delegate from `management`, then enable in `security`.
 - Security Hub CSPM — <https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html>
 - Security Hub exposure findings — <https://docs.aws.amazon.com/securityhub/latest/userguide/exposure-findings.html>
 - Related detective layers in this repo:
-  - `security/us-east-1/security-audit` (CloudTrail) · `security/us-east-1/security-base` (Access Analyzer)
-  - `security/us-east-1/security-compliance --` (Config + Inspector) · `security/us-east-1/security-hub --`
-  - `security/us-east-1/security-monitoring --` (GuardDuty) · `management/us-east-1/security-compliance` (Config delegation)
+  - **security account:** `security/us-east-1/security-audit` (CloudTrail) · `security/us-east-1/security-base` (Access Analyzer) · `security/us-east-1/security-compliance --` (Config + Inspector) · `security/us-east-1/security-hub --` · `security/us-east-1/security-monitoring --` (GuardDuty)
+  - **management account (delegation):** `management/us-east-1/security-compliance` (Config + Inspector delegation) · `management/us-east-1/security-hub --` · `management/us-east-1/security-monitoring --` (GuardDuty delegated-admin)
