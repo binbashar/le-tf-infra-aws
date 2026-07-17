@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+#
+# claude-bedrock — launch Claude Code against Amazon Bedrock (binbash SSO)
+#
+# Two SEPARATE Bedrock integrations live in this repo, in different accounts:
+#   • CI @claude PR reviewer  → apps-prd  (see doc/ai-sdlc/README.md §4)
+#   • local human sessions    → this launcher (ACCOUNT + ROLE chosen at launch)
+#
+# You pick the ACCOUNT and SSO ROLE interactively (or via env); the launcher sets
+# the matching profile, the models that account actually has, and the credential
+# auto-refresh layer. Model availability differs per account:
+#   apps-prd      → Opus 4.8 / Sonnet 5 live today
+#   data-science  → Opus 4.6 / Sonnet 4.6 (Opus 4.8 & Sonnet 5 quota pending)
+# Role: devops | datascientist (not everyone has DevOps; pick what you have).
+#
+# Non-interactive / overrides (env wins over the prompts; required under `-p`):
+#   CLAUDE_BEDROCK_ACCOUNT=apps-prd CLAUDE_BEDROCK_ROLE=devops claude-bedrock -p "..."
+#   CLAUDE_BEDROCK_MODEL=us.anthropic.claude-sonnet-5 claude-bedrock
+#
+# Install (symlink this committed script onto your PATH):
+#   ln -s "$(git rev-parse --show-toplevel)/doc/ai-sdlc/bin/claude-bedrock" ~/.local/bin/claude-bedrock
+#
+# Shell-exported env vars take precedence over Claude Code settings files, so this
+# wrapper flips a single session to Bedrock without touching settings.local.json —
+# plain `claude` keeps using the native Anthropic endpoints. Credentials refresh
+# automatically when the temp keys go stale (see the preflight block); only an
+# expired SSO *session* needs a manual `leverage aws sso login` (browser).
+set -euo pipefail
+
+export AWS_CONFIG_FILE="${AWS_CONFIG_FILE:-$HOME/.aws/bb/config}"
+export AWS_SHARED_CREDENTIALS_FILE="${AWS_SHARED_CREDENTIALS_FILE:-$HOME/.aws/bb/credentials}"
+export AWS_REGION="${CLAUDE_BEDROCK_REGION:-us-east-1}"
+
+# Headless (`-p`/`--print`) must never block on a prompt — treat it as non-interactive.
+headless=0
+for _arg in "$@"; do case "$_arg" in -p | --print) headless=1; break ;; esac; done
+interactive() { [[ "$headless" == 0 && -t 0 && -t 1 ]]; }
+
+# --- Account selection (env > prompt > default) ----------------------------
+if [[ -z "${CLAUDE_BEDROCK_ACCOUNT:-}" ]]; then
+  if interactive; then
+    echo "AWS account for this Amazon Bedrock session:" >&2
+    echo "  1) data-science  [default]  — Opus 4.6 / Sonnet 4.6 (Opus 4.8 & Sonnet 5 quota pending)" >&2
+    echo "  2) apps-prd      (prod)     — Opus 4.8 / Sonnet 5 live" >&2
+    printf "Account [1]: " >&2; read -r _a || _a=""
+    case "$_a" in 2 | apps-prd | prd | prod) CLAUDE_BEDROCK_ACCOUNT="apps-prd" ;; *) CLAUDE_BEDROCK_ACCOUNT="data-science" ;; esac
+  else
+    CLAUDE_BEDROCK_ACCOUNT="data-science"
+  fi
+fi
+account="$CLAUDE_BEDROCK_ACCOUNT"
+
+# --- Role selection (env > prompt > default) -------------------------------
+if [[ -z "${CLAUDE_BEDROCK_ROLE:-}" ]]; then
+  if interactive; then
+    echo "SSO role in ${account}:" >&2
+    echo "  1) devops        [default]" >&2
+    echo "  2) datascientist" >&2
+    printf "Role [1]: " >&2; read -r _r || _r=""
+    case "$_r" in 2 | datascientist | ds | data-scientist) CLAUDE_BEDROCK_ROLE="datascientist" ;; *) CLAUDE_BEDROCK_ROLE="devops" ;; esac
+  else
+    CLAUDE_BEDROCK_ROLE="devops"
+  fi
+fi
+role="$CLAUDE_BEDROCK_ROLE"
+
+export AWS_PROFILE="${CLAUDE_BEDROCK_PROFILE:-bb-${account}-${role}}"
+
+# Roles/accounts differ per user — fail early with the profiles you actually have.
+if ! grep -qE "^\[profile ${AWS_PROFILE}\]" "$AWS_CONFIG_FILE" 2>/dev/null; then
+  echo "ERROR: AWS profile '$AWS_PROFILE' not found in $AWS_CONFIG_FILE." >&2
+  echo "Profiles you have for these accounts:" >&2
+  grep -oE '^\[profile bb-(data-science|apps-prd)-[a-z]+\]' "$AWS_CONFIG_FILE" 2>/dev/null \
+    | sed -E 's/^\[profile (.*)\]/  \1/' | sort -u >&2
+  exit 1
+fi
+
+# --- Account-aware model set + /model picker descriptions ------------------
+# The NAME shown in /model stays the raw us.anthropic.* inference-profile ID
+# (unambiguous evidence you're on Bedrock). _DESCRIPTION labels each row's origin.
+# Availability differs per account — see the header. When data-science's Opus 4.8 /
+# Sonnet 5 quota lands, promote them to the defaults here (and drop the "pending").
+case "$account" in
+  apps-prd)
+    refresh_layer_default="apps-prd/us-east-1/notifications"
+    default_model="us.anthropic.claude-opus-4-8"
+    opus="us.anthropic.claude-opus-4-8";                 opus_desc="Amazon Bedrock · apps-prd account (most capable)"
+    sonnet="us.anthropic.claude-sonnet-5";               sonnet_desc="Amazon Bedrock · apps-prd account (balanced)"
+    haiku="us.anthropic.claude-haiku-4-5-20251001-v1:0"; haiku_desc="Amazon Bedrock · apps-prd account (fast, low-cost)"
+    custom="us.anthropic.claude-opus-4-6-v1";            custom_desc="Amazon Bedrock · apps-prd account (Opus 4.6 fallback)"
+    ;;
+  data-science)
+    refresh_layer_default="data-science/us-east-1/bedrock-agentcore"
+    default_model="us.anthropic.claude-opus-4-6-v1"      # Opus 4.8 quota still pending in this account
+    opus="us.anthropic.claude-opus-4-6-v1";              opus_desc="Amazon Bedrock · data-science account (Opus 4.6; 4.8 quota pending)"
+    sonnet="us.anthropic.claude-sonnet-4-6";             sonnet_desc="Amazon Bedrock · data-science account (Sonnet 4.6; 5 quota pending)"
+    haiku="us.anthropic.claude-haiku-4-5-20251001-v1:0"; haiku_desc="Amazon Bedrock · data-science account (fast, low-cost)"
+    custom="us.anthropic.claude-opus-4-8";               custom_desc="Amazon Bedrock · data-science account (Opus 4.8 — quota pending)"
+    ;;
+  *)
+    echo "ERROR: unknown CLAUDE_BEDROCK_ACCOUNT '$account' (expected: data-science | apps-prd)." >&2
+    exit 1
+    ;;
+esac
+
+export CLAUDE_CODE_USE_BEDROCK=1
+export ANTHROPIC_MODEL="${CLAUDE_BEDROCK_MODEL:-$default_model}"
+export ANTHROPIC_DEFAULT_OPUS_MODEL="$opus"
+export ANTHROPIC_DEFAULT_OPUS_MODEL_DESCRIPTION="$opus_desc"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="$sonnet"
+export ANTHROPIC_DEFAULT_SONNET_MODEL_DESCRIPTION="$sonnet_desc"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="$haiku"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION="$haiku_desc"
+export ANTHROPIC_CUSTOM_MODEL_OPTION="$custom"
+export ANTHROPIC_CUSTOM_MODEL_OPTION_NAME="$custom"
+export ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION="$custom_desc"
+
+# --- Locate the le-tf-infra-aws checkout (for the credential auto-refresh) --
+# Override with CLAUDE_BEDROCK_REPO; otherwise derive it from this script's own
+# location (works when the script lives in — or is symlinked into — the repo).
+if [[ -z "${CLAUDE_BEDROCK_REPO:-}" ]]; then
+  src="${BASH_SOURCE[0]}"
+  while [[ -h "$src" ]]; do
+    dir="$(cd -P "$(dirname "$src")" && pwd)"
+    src="$(readlink "$src")"
+    if [[ "$src" != /* ]]; then src="$dir/$src"; fi
+  done
+  script_dir="$(cd -P "$(dirname "$src")" && pwd)"
+  CLAUDE_BEDROCK_REPO="$(git -C "$script_dir" rev-parse --show-toplevel 2>/dev/null || true)"
+fi
+CLAUDE_BEDROCK_REFRESH_LAYER="${CLAUDE_BEDROCK_REFRESH_LAYER:-$refresh_layer_default}"
+
+creds_ok() { aws sts get-caller-identity --output text --query Account >/dev/null 2>&1; }
+
+# --- Preflight + auto-refresh ----------------------------------------------
+# Leverage temp credentials go stale independently of the SSO token. When the check
+# fails, auto-run `leverage tofu refresh-credentials` from this account's layer
+# (mints fresh keys into ~/.aws/bb/credentials — it never touches state or infra).
+# Note: refresh mints the layer's DevOps profile, so a non-DevOps role whose creds
+# aren't already minted falls through to the manual hint. Disable with
+# CLAUDE_BEDROCK_AUTO_REFRESH=0.
+if ! creds_ok; then
+  leverage_bin="$CLAUDE_BEDROCK_REPO/.venv/bin/leverage"
+  [[ -x "$leverage_bin" ]] || leverage_bin="$(command -v leverage || true)"
+  refresh_dir="$CLAUDE_BEDROCK_REPO/$CLAUDE_BEDROCK_REFRESH_LAYER"
+  if [[ "${CLAUDE_BEDROCK_AUTO_REFRESH:-1}" == "1" && "$role" == "devops" && -n "$CLAUDE_BEDROCK_REPO" && -x "$leverage_bin" && -d "$refresh_dir" ]]; then
+    echo "claude-bedrock: temp credentials stale, refreshing via 'leverage tofu refresh-credentials'..." >&2
+    ( cd "$refresh_dir" && "$leverage_bin" tofu refresh-credentials </dev/null ) || true
+  fi
+  if ! creds_ok; then
+    echo "ERROR: no valid AWS credentials for profile '$AWS_PROFILE' after auto-refresh." >&2
+    echo "Fix (from your le-tf-infra-aws checkout):" >&2
+    echo "  .venv/bin/leverage aws sso login          # if the SSO session expired (browser)" >&2
+    echo "  cd $CLAUDE_BEDROCK_REFRESH_LAYER && .venv/bin/leverage tofu refresh-credentials" >&2
+    exit 1
+  fi
+fi
+
+# Export static credentials into the environment. Env-key credentials outrank
+# profile resolution in the AWS SDK chain, so a project settings.local.json that
+# pins AWS_PROFILE to another account cannot redirect the Bedrock session.
+eval "$(aws configure export-credentials --profile "$AWS_PROFILE" --format env)"
+
+echo "claude-bedrock: account=$account role=$role profile=$AWS_PROFILE region=$AWS_REGION model=$ANTHROPIC_MODEL" >&2
+exec claude "$@"

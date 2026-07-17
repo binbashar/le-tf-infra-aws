@@ -1,14 +1,23 @@
-# Claude Code on AWS Bedrock — local sessions (data-science account)
+# Claude Code on AWS Bedrock — local sessions
 
-How to run **local Claude Code sessions against Amazon Bedrock** in the
-`data-science` account, while keeping the **native Anthropic API as the
-default** for everyday sessions. This complements the CI-side `@claude` PR
-reviewer (see [`README.md`](README.md) §4), which already routes through
-Bedrock in `apps-prd`.
+How to run **local Claude Code sessions against Amazon Bedrock** in the binbash
+accounts, while keeping the **native Anthropic API as the default** for everyday
+sessions.
+
+> **Two separate Bedrock integrations live in this repo — different accounts,
+> different purposes. Don't conflate them:**
+>
+> | Integration | Account | Who / what runs it |
+> | --- | --- | --- |
+> | CI `@claude` PR reviewer | **`apps-prd`** (prod) | GitHub Actions — see [`README.md`](README.md) §4 |
+> | `claude-bedrock` local sessions | **`apps-prd`** or **`data-science`** (you pick) | humans, on their own machines (this doc) |
+>
+> The launcher targets whichever account + role you choose at launch; it never
+> touches the native Anthropic API.
 
 ```text
-claude            → native Anthropic API (subscription login)   [default]
-claude-bedrock    → Amazon Bedrock, data-science account        [opt-in]
+claude            → native Anthropic API (subscription login)            [default]
+claude-bedrock    → Amazon Bedrock — account + role chosen at launch      [opt-in]
 ```
 
 ---
@@ -44,170 +53,162 @@ project `.claude/settings.local.json` may keep the always-true values only:
 ```
 
 Keep `CLAUDE_CODE_USE_BEDROCK`, `AWS_PROFILE`, and `ANTHROPIC_MODEL` **out**
-of every settings `env` block. The shell (wrapper) provides them per
-invocation.
+of every settings `env` block. The launcher provides them per invocation.
 
 ## 2. Prerequisites
 
-- Leverage CLI SSO session and fresh per-profile credentials:
+- A Leverage CLI **SSO session**:
 
   ```bash
   leverage aws sso login                 # browser; refreshes the SSO token
-  cd data-science/us-east-1/bedrock-agentcore
-  leverage tofu refresh-credentials      # writes bb-data-science-devops temp keys
   ```
 
-- The target models must be **entitled** in the account *and* have non-zero
-  **service quotas** (see §5 — these are two separate gates).
+  The per-profile temp credentials are refreshed **automatically** by the launcher
+  when they go stale (see §3.2) — you only run `leverage aws sso login` yourself
+  when the SSO *session* itself has expired.
+
+- Access to the account you want (see §4) with a role that has `bedrock:*`
+  (DevOps or DataScientist), and the target model **enabled + quota'd** in that
+  account (see §5 — three separate gates).
 
 ## 3. Install the `claude-bedrock` launcher
 
-Save as `~/.local/bin/claude-bedrock` and `chmod +x` it:
+The launcher is committed at [`doc/ai-sdlc/bin/claude-bedrock`](bin/claude-bedrock).
+Symlink it onto your `PATH` — nothing to copy or keep in sync, and it auto-locates
+this repo from its own path for the credential auto-refresh (§3.2):
 
 ```bash
-#!/usr/bin/env bash
-#
-# claude-bedrock — launch Claude Code against Amazon Bedrock (data-science account)
-#
-# Shell-exported env vars only take effect because the project settings.local.json
-# does NOT pin CLAUDE_CODE_USE_BEDROCK / AWS_PROFILE — plain `claude` keeps using
-# the native Anthropic endpoints.
-#
-# Model override:  CLAUDE_BEDROCK_MODEL=us.anthropic.claude-sonnet-4-6 claude-bedrock
-set -euo pipefail
-
-export AWS_CONFIG_FILE="$HOME/.aws/bb/config"
-export AWS_SHARED_CREDENTIALS_FILE="$HOME/.aws/bb/credentials"
-export AWS_PROFILE="${CLAUDE_BEDROCK_PROFILE:-bb-data-science-devops}"
-export AWS_REGION="${CLAUDE_BEDROCK_REGION:-us-east-1}"
-
-export CLAUDE_CODE_USE_BEDROCK=1
-export ANTHROPIC_MODEL="${CLAUDE_BEDROCK_MODEL:-us.anthropic.claude-opus-4-8}"
-export ANTHROPIC_DEFAULT_OPUS_MODEL="us.anthropic.claude-opus-4-8"
-export ANTHROPIC_DEFAULT_SONNET_MODEL="us.anthropic.claude-sonnet-4-6"
-export ANTHROPIC_DEFAULT_HAIKU_MODEL="us.anthropic.claude-haiku-4-5-20251001-v1:0"
-
-# A SECOND, explicit Opus row (4.6) next to the 4.8 alias in the /model picker —
-# see "Pinning a second Opus version in the /model picker" below.
-export ANTHROPIC_CUSTOM_MODEL_OPTION="us.anthropic.claude-opus-4-6-v1"
-export ANTHROPIC_CUSTOM_MODEL_OPTION_NAME="us.anthropic.claude-opus-4-6-v1"
-export ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION="Cross-region inference profile (Amazon Bedrock)"
-
-# Preflight: Leverage temp credentials go stale independently of the SSO token.
-if ! aws sts get-caller-identity --output text --query Account >/dev/null 2>&1; then
-  echo "ERROR: AWS credentials for profile '$AWS_PROFILE' are stale or missing." >&2
-  echo "Fix (from the le-tf-infra-aws repo):" >&2
-  echo "  leverage aws sso login   # only if the SSO token itself expired" >&2
-  echo "  cd data-science/us-east-1/bedrock-agentcore && leverage tofu refresh-credentials" >&2
-  exit 1
-fi
-
-# Export static credentials into the environment. Env-key credentials outrank
-# profile resolution in the AWS SDK chain, so a settings file that pins
-# AWS_PROFILE to another account cannot redirect the Bedrock session.
-eval "$(aws configure export-credentials --profile "$AWS_PROFILE" --format env)"
-
-echo "claude-bedrock: profile=$AWS_PROFILE region=$AWS_REGION model=$ANTHROPIC_MODEL"
-exec claude "$@"
+ln -s "$(git rev-parse --show-toplevel)/doc/ai-sdlc/bin/claude-bedrock" ~/.local/bin/claude-bedrock
 ```
 
 Usage:
 
 ```bash
-claude-bedrock                                              # Opus 4.8 on Bedrock
-CLAUDE_BEDROCK_MODEL=us.anthropic.claude-sonnet-4-6 claude-bedrock   # Sonnet 4.6
-claude-bedrock -p "one-shot prompt"                         # headless print mode
+claude-bedrock                                   # prompts for account + role, then launches
+claude-bedrock -p "one-shot prompt"              # headless print mode (no prompts; env/defaults)
+CLAUDE_BEDROCK_MODEL=us.anthropic.claude-sonnet-5 claude-bedrock   # force a model for this run
 ```
 
-Bedrock model IDs use the **cross-region inference-profile** form (`us.`
-prefix), but the **suffix is inconsistent across versions — don't extrapolate
-one ID from another.** Opus 4.8 is bare (`us.anthropic.claude-opus-4-8`), Opus
-4.6 carries a `-v1` (`us.anthropic.claude-opus-4-6-v1`), Opus 4.5 a dated
-`-vN:0` (`us.anthropic.claude-opus-4-5-20251101-v1:0`), and Haiku 4.5 likewise
-(`us.anthropic.claude-haiku-4-5-20251001-v1:0`). Always confirm the exact ID
-from the account rather than guessing:
+### 3.1 Account + role selection
+
+On launch the wrapper asks which **account** and **SSO role** to use, then sets the
+matching profile (`bb-<account>-<role>`), the models that account actually has, and
+the credential-refresh layer. Non-interactively (or under `-p`) it uses the env vars
+/ defaults instead of prompting.
+
+| Account | Models available today | Default role |
+| --- | --- | --- |
+| **`data-science`** (default) | Opus 4.6 / Sonnet 4.6 / Haiku 4.5 — **Opus 4.8 & Sonnet 5 quota pending** (§5) | `devops` |
+| **`apps-prd`** (prod) | **Opus 4.8 / Sonnet 5** / Haiku 4.5 — live today | `devops` |
+
+Not everyone has DevOps (some users only have DataScientist, etc.), so the role is a
+choice too. The launcher validates `bb-<account>-<role>` against your
+`~/.aws/bb/config` and, if it's missing, prints the profiles you *do* have.
+
+Overrides (env wins over the prompts):
+
+| Env var | Default | Purpose |
+| --- | --- | --- |
+| `CLAUDE_BEDROCK_ACCOUNT` | `data-science` | `data-science` \| `apps-prd` |
+| `CLAUDE_BEDROCK_ROLE` | `devops` | `devops` \| `datascientist` |
+| `CLAUDE_BEDROCK_MODEL` | account default | active model for this session |
+| `CLAUDE_BEDROCK_PROFILE` | `bb-<account>-<role>` | override the whole profile |
+| `CLAUDE_BEDROCK_REPO` | auto-derived from the script path | your `le-tf-infra-aws` checkout |
+| `CLAUDE_BEDROCK_AUTO_REFRESH` | `1` | `0` to skip the auto-refresh (§3.2) |
+
+### 3.2 Automatic credential refresh
+
+Leverage temp credentials go stale independently of the SSO token. On each run the
+launcher checks `aws sts get-caller-identity`; if it fails, it auto-runs
+`leverage tofu refresh-credentials` from the chosen account's layer
+(`data-science/us-east-1/bedrock-agentcore` or `apps-prd/us-east-1/notifications`)
+to mint fresh keys into `~/.aws/bb/credentials`. That call only writes local
+credentials — it never runs `plan`/`apply` or touches state or infra, which is why
+it's safe to automate and safe to ship in this public repo. The wrapper also confers
+no access on its own: with no valid SSO session the refresh fails closed and it exits.
+
+**Caveat — roles:** `refresh-credentials` mints the layer's **DevOps** profile, so
+the auto-refresh only covers `role=devops`. A non-DevOps role whose static creds
+aren't already minted falls through to the manual hint (run `leverage aws sso login`
+and mint that role's creds). Only an **expired SSO session** ever needs the manual,
+non-automatable browser login.
+
+### 3.3 The `/model` picker
+
+In a Bedrock session the `/model` list is built from the launcher's env vars, not a
+fixed catalog — each `ANTHROPIC_DEFAULT_*_MODEL` (and `ANTHROPIC_CUSTOM_MODEL_OPTION`)
+injects one row (verified on Claude Code `v2.1.172`). Each accepts `_NAME` and
+`_DESCRIPTION` suffix variables ([model-config docs](https://code.claude.com/docs/en/model-config));
+the launcher sets only `_DESCRIPTION` — labelling every row **Amazon Bedrock ·
+`<account>` account** so the routing is obvious — and leaves the **name** as the raw
+`us.anthropic.*` inference-profile ID (unambiguous evidence you're on Bedrock, not the
+native API). Example rows for an **apps-prd** session:
+
+| Picker row (name — description) | Driven by |
+| --- | --- |
+| `us.anthropic.claude-sonnet-5` — *Amazon Bedrock · apps-prd account (balanced)* | `ANTHROPIC_DEFAULT_SONNET_MODEL` + `_DESCRIPTION` |
+| `us.anthropic.claude-opus-4-8` — *Amazon Bedrock · apps-prd account (most capable)* | `ANTHROPIC_DEFAULT_OPUS_MODEL` + `_DESCRIPTION` |
+| `us.anthropic.claude-haiku-…` — *Amazon Bedrock · apps-prd account (fast, low-cost)* | `ANTHROPIC_DEFAULT_HAIKU_MODEL` + `_DESCRIPTION` |
+| `us.anthropic.claude-opus-4-6-v1` — *Amazon Bedrock · apps-prd account (Opus 4.6 fallback)* | `ANTHROPIC_CUSTOM_MODEL_OPTION` trio |
+
+A `data-science` session shows the same shape with that account's models (Opus 4.6 /
+Sonnet 4.6, plus Opus 4.8 as a "quota pending" custom row). `ANTHROPIC_CUSTOM_MODEL_OPTION`
+adds exactly **one** extra row; for several extra models the mechanism is the
+`availableModels` / `modelOverrides` settings keys, but those live in a settings file
+(subject to the §1 leak caveat), so the single env-var row fits this dual-mode wrapper.
+
+**Bedrock model-ID caveat:** IDs use the cross-region inference-profile form (`us.`
+prefix), but the **suffix is inconsistent across versions — don't extrapolate one ID
+from another.** Current-generation models are bare — Opus 4.8
+(`us.anthropic.claude-opus-4-8`), Sonnet 5 (`us.anthropic.claude-sonnet-5`) — while
+older ones carry suffixes: Opus 4.6 a `-v1`, Opus 4.5 a dated `-vN:0`, Haiku 4.5
+likewise (`us.anthropic.claude-haiku-4-5-20251001-v1:0`). Always confirm from the
+account:
 
 ```bash
-aws bedrock list-inference-profiles --region us-east-1 --profile bb-data-science-devops \
+aws bedrock list-inference-profiles --region us-east-1 --profile bb-<account>-devops \
   --query "inferenceProfileSummaries[?contains(inferenceProfileId,'anthropic')].inferenceProfileId" --output text
 ```
 
-### Pinning a second Opus version in the `/model` picker
-
-In a Bedrock session the `/model` list is built from the launcher's env vars,
-not a fixed catalog — each variable injects one row (verified on Claude Code
-`v2.1.172`):
-
-| Picker row | Driven by |
-| --- | --- |
-| `us.anthropic.claude-sonnet-4-6` — *Custom Sonnet model* | `ANTHROPIC_DEFAULT_SONNET_MODEL` |
-| `us.anthropic.claude-opus-4-8` — *Custom Opus model* | `ANTHROPIC_DEFAULT_OPUS_MODEL` |
-| `us.anthropic.claude-haiku-…` — *Custom Haiku model* | `ANTHROPIC_DEFAULT_HAIKU_MODEL` |
-| **Opus 4.8 ✔** (active) | `ANTHROPIC_MODEL` |
-
-There is only one Opus slot, so to switch between Opus **4.8** and **4.6** in the
-same session the launcher adds one more row via the
-`ANTHROPIC_CUSTOM_MODEL_OPTION` trio (its `_NAME` / `_DESCRIPTION` companions set
-the label):
-
-```bash
-export ANTHROPIC_CUSTOM_MODEL_OPTION="us.anthropic.claude-opus-4-6-v1"
-export ANTHROPIC_CUSTOM_MODEL_OPTION_NAME="us.anthropic.claude-opus-4-6-v1"
-export ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION="Cross-region inference profile (Amazon Bedrock)"
-```
-
-Open `/model` and a **`us.anthropic.claude-opus-4-6-v1`** row appears next to Opus
-4.8; `s` switches the current session to it. (Env vars are read at launch, so relaunch `claude-bedrock`
-for the row to show.) Because the launcher re-pins `ANTHROPIC_MODEL` on every run,
-the picker's `Enter` ("set as default") won't survive a relaunch — to *start* on
-4.6 use the existing override:
-`CLAUDE_BEDROCK_MODEL=us.anthropic.claude-opus-4-6-v1 claude-bedrock`. This is the
-Opus that actually **invokes** today: per §5 the 4.8 TPM quota (`L-DB99DCDB`) is
-still 0, so selecting Opus 4.8 fails with `AccessDenied` (not available for this
-account) while 4.6 works — and the pin keeps working unchanged once that quota
-lands.
-
-**Keep this in the wrapper, never in a settings `env` block.** Per §1 a settings
-`env` block also applies to plain `claude` (native Anthropic API), where a
-Bedrock inference-profile ID like `us.anthropic.claude-opus-4-6-v1` is rejected as
-`dispatching to firstParty` (the §6 404). Exporting it from the launcher keeps
-it scoped to Bedrock sessions.
-
-`ANTHROPIC_CUSTOM_MODEL_OPTION` adds exactly **one** extra row. To pin several
-models the mechanism is the `availableModels` + `modelOverrides` settings keys
-instead — but those live in a settings file (subject to the §1 leak caveat), so
-the single env-var row is the right fit for this dual-mode wrapper.
-
 ## 4. Who can enable model access (permission sets)
 
-Bedrock model access is an **account-level grant**: once enabled by anyone,
-every principal in the account with `bedrock:InvokeModel*` can consume the
-model. Per [`management/global/sso/policies.tf`](../../management/global/sso/policies.tf):
+Bedrock model access is an **account-level grant**: once enabled by anyone, every
+principal in the account with `bedrock:InvokeModel*` can consume the model. Per
+[`management/global/sso/policies.tf`](../../management/global/sso/policies.tf):
 
-| Permission set | `aws-marketplace:*` + `bedrock:*` (manage model access) | `servicequotas:*` (file quota increases) |
+| Permission set | `aws-marketplace:*` + `bedrock:*` (manage + invoke) | `servicequotas:*` (file quota increases) |
 | --- | --- | --- |
-| **DevOps** | ✅ (verified live) | ✅ (verified live) |
-| **DataScientist** | ✅ (inline policy) | ❌ — quota requests must go through DevOps/Administrator |
+| **DevOps** | ✅ (region-conditioned to us-east-1/us-east-2/us-west-2) | ✅ |
+| **DataScientist** | ✅ (same region condition) | ❌ — quota requests go through DevOps/Administrator |
 
-So either DevOps or DataScientist can accept a model agreement; only
-DevOps/Administrator can file the service-quota increases that newer models
-also need.
+Both `bedrock:*` grants are conditioned on `aws:RequestedRegion ∈
+{us-east-1, us-east-2, us-west-2}`, which covers the regions the `us.` cross-region
+inference profiles route to — so IAM is **not** what blocks a new model (verified: the
+DevOps role invokes Sonnet 4.6 / Opus 4.6 / Haiku 4.5 today). What's missing for a new
+model is gate 1/2 below, not IAM.
 
-## 5. Model entitlement state (data-science, us-east-1)
+## 5. Model availability — the three gates (checked 2026-07-17, us-east-1)
 
-Checked 2026-06-10. **Entitlement and quota are separate gates** — a model can
-be fully subscribed yet still refuse invokes because AWS ships some new models
-with **all token quotas at 0**.
+Three **independent** gates must all pass to invoke a model. A model can clear one or
+two and still refuse:
 
-| Model | Agreement | Token quotas | Invokable |
-| --- | --- | --- | --- |
-| Sonnet 4.6, Opus 4.5/4.6, Haiku 4.5 | ✅ | 6M TPM-class | ✅ |
-| **Opus 4.8** | ✅ (accepted 2026-06-10) | **0 — increase pending** | ❌ until quota granted |
-| Opus 4.7 | ✅ | 0 | ❌ |
+1. **Model access** — the agreement is accepted for that model, per account (Bedrock
+   console → *Model access*).
+2. **Service quota (TPM)** — non-zero, per model, per account, and per profile family
+   (`us.` cross-region vs `global.` global-cross-region have *separate* quotas).
+3. **IAM** — your SSO role allows `bedrock:InvokeModel*` (see §4 — DevOps/DataScientist do).
 
-A quota increase for *Cross-region model inference tokens per minute for
-Anthropic Claude Opus 4.8* (`L-DB99DCDB`) to the AWS default (30M) was filed on
-2026-06-10 → status `CASE_OPENED`. Check progress with:
+| Model | `apps-prd` | `data-science` |
+| --- | --- | --- |
+| Opus 4.6, Sonnet 4.6, Haiku 4.5 | ✅ | ✅ |
+| **Opus 4.8** | ✅ | ⏳ **quota pending** |
+| **Sonnet 5** | ✅ | ⏳ **quota pending** |
+| Fable 5 | ❌ no access | ❌ no access |
+
+So **use `apps-prd` for Opus 4.8 / Sonnet 5 today**; in `data-science` they return
+*"not available for this account"* — a gate-1/2 (access/quota) block, **not** IAM.
+Quota-increase cases for data-science's *Global cross-region* Opus 4.8 (30M TPM) and
+Sonnet 5 (6M TPM) are filed and `Case Opened`. Check any quota with:
 
 ```bash
 aws service-quotas get-service-quota --service-code bedrock \
@@ -215,17 +216,20 @@ aws service-quotas get-service-quota --service-code bedrock \
   --profile bb-data-science-devops --query 'Quota.Value'
 ```
 
-Once it returns non-zero, `claude-bedrock` works with Opus 4.8 as-is. Until
-then use `CLAUDE_BEDROCK_MODEL=us.anthropic.claude-sonnet-4-6`.
+> **The console's IAM-worded error is misleading.** The Bedrock console playground may
+> surface a missing model as *"not authorized to perform bedrock:InvokeModelWithResponseStream"*,
+> but the reproducible gate is access/quota (`converse` returns *"not available for this
+> account"*). The role's `bedrock:*` is fine — don't go editing permission sets for this.
 
 ## 6. Troubleshooting
 
 | Symptom | Root cause | Fix |
 | --- | --- | --- |
-| `There's an issue with the selected model (us.anthropic....)` and debug log shows `dispatching to firstParty` | `CLAUDE_CODE_USE_BEDROCK` pinned/overridden by a settings `env` block — the Bedrock model ID was sent to the native Anthropic API (404) | Remove the key from every settings `env` block (§1) |
-| `Failed to authenticate. API Error: 403 The security token included in the request is invalid` | `AWS_PROFILE` pinned in a settings `env` block to a profile with stale credentials — it outranks the wrapper's profile *and* env-key credentials | Remove the `AWS_PROFILE` pin (§1); refresh credentials |
-| `AccessDeniedException: <model> is not available for this account` on invoke, while `list-inference-profiles` shows it `ACTIVE` | Model agreement not accepted, **or** (if `get-foundation-model-availability` is all green) token quotas are 0 | Accept the agreement (Bedrock console → Model access, or `create-foundation-model-agreement`); then request the TPM quota (§5) |
-| Wrapper preflight fails on `sts get-caller-identity` | Leverage temp credentials expired (SSO token may still be valid) | `leverage tofu refresh-credentials` from any data-science layer; `leverage aws sso login` only if the SSO token itself expired |
+| `AccessDeniedException: <model> is not available for this account` (or a console `InvokeModelWithResponseStream` error) | Model **access or quota** not granted for that model **in that account** (gate 1/2, §5) — **not** IAM | Use `apps-prd` (has Opus 4.8 / Sonnet 5), or enable access + wait for the data-science quota case |
+| `There's an issue with the selected model (us.anthropic....)`; debug log shows `dispatching to firstParty` | `CLAUDE_CODE_USE_BEDROCK` pinned/overridden by a settings `env` block — the Bedrock model ID went to the native Anthropic API (404) | Remove the key from every settings `env` block (§1) |
+| `403 The security token included in the request is invalid` | `AWS_PROFILE` pinned in a settings `env` block to a stale profile — it outranks the wrapper | Remove the `AWS_PROFILE` pin (§1); refresh credentials |
+| `ERROR: AWS profile 'bb-…' not found` | You don't have that account/role combo | Pick a profile the launcher lists (from your `~/.aws/bb/config`) |
+| `ERROR: no valid AWS credentials … after auto-refresh` | SSO session expired, or a non-DevOps role whose creds aren't minted (§3.2) | `leverage aws sso login` (browser), then re-run; for non-DevOps, mint that role's creds |
 
 To see the real API error behind Claude Code's masked message:
 
@@ -234,5 +238,5 @@ claude-bedrock -p "test" --debug --debug-file /tmp/claude-debug.log
 grep -E "dispatching to|API error" /tmp/claude-debug.log
 ```
 
-`dispatching to firstParty` = native Anthropic API; Bedrock-mode sessions must
-not show `firstParty` with a `us.anthropic.*` model.
+`dispatching to firstParty` = native Anthropic API; Bedrock-mode sessions must not
+show `firstParty` with a `us.anthropic.*` model.
