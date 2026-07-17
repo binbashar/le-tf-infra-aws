@@ -1,7 +1,7 @@
 # Security Monitoring & the AWS Security Agent — Reference Layer
 
 > **Status: Documentation-only reference layer.** This directory intentionally
-> contains **no `.tf` files**. The trailing ` --` suffix marks it as a disabled
+> contains **no `.tf` files**. The trailing space-plus-`--` suffix marks it as a disabled
 > layer, so Atlantis autodiscover and `leverage tofu` never try to plan or apply
 > it. It exists to document a posture decision and to answer
 > [issue #541 — *Review our implementation of the AWS security monitoring
@@ -19,7 +19,7 @@ This layer reviews our AWS **security monitoring** posture against the model in
 
 1. **The classic detective stack is the foundation and it is only half-on.**
    CloudTrail and IAM Access Analyzer are live; **AWS Config, Security Hub,
-   GuardDuty, and Inspector are written but sitting in disabled ` --` layers.**
+   GuardDuty, and Inspector are written but sitting in disabled `--`-suffixed layers.**
    The article's core recommendation (Config + Security Hub as the central pane,
    GuardDuty/Inspector feeding it) is therefore **not** currently realized in the
    `security` account. Re-enabling those layers is step one — see
@@ -34,7 +34,7 @@ This layer reviews our AWS **security monitoring** posture against the model in
    | AWS AI offering | Axis | Verdict |
    |---|---|---|
    | **AWS Security Agent** (threat modeling, code review, on-demand pentest) | Build-time / shift-left | **Complementary** — new phase, no overlap |
-   | **AI Investigative Agent** (in Security Incident Response) | Response-time / triage | **Complementary**, and **replaces** custom alert-triage glue |
+   | **AI Investigative Agent** (in Security Incident Response) | Response-time / investigation | **Complementary** — replaces the manual **investigation** runbook (AWS-supported cases); not alert routing |
    | **Unified Security Hub** (exposure findings, attack-path correlation) | Aggregation evolution | **Replaces** our custom GuardDuty→Lambda→EventBridge routing |
 
    > **Bottom line:** keep the detectors, drop the bespoke glue. Re-enable the
@@ -49,7 +49,7 @@ This layer reviews our AWS **security monitoring** posture against the model in
 The article organizes AWS security telemetry into three layers. This is the lens
 we use for the gap analysis below.
 
-```
+```text
    ┌──────────────────────────────────────────────────────────────────┐
    │  3. AGGREGATION      Security Hub  ── single pane, ASFF, scoring   │
    │        ▲                                                           │
@@ -81,14 +81,14 @@ Article guidance we hold ourselves to:
 ## Current posture in this repository
 
 What the article recommends vs. **what is actually deployed today**. "Disabled"
-means the layer exists and is written, but its directory carries the ` --` suffix
+means the layer exists and is written, but its directory carries the space-plus-`--` suffix
 (or is an empty stub), so it is not applied.
 
 | Service | cloudonaut stance | Where it lives in this repo | State | Gap |
 |---|---|---|---|---|
 | **CloudTrail** (org, multi-region, log validation, KMS) | Required source | `security/us-east-1/security-audit` (`terraform-aws-cloudtrail` `0.24.0`) | ✅ **Active** | none |
 | **IAM Access Analyzer** | Recommended | `security/us-east-1/security-base` | ✅ **Active** | none |
-| **AWS Config** (FSBP checks, 1-yr retention) | **Core / required** | `management/us-east-1/security-compliance` (active) · `security/us-east-1/security-compliance --` (**disabled**) (`terraform-aws-config` `v8.1.0`) | ⚠️ **Partial** | Enable + delegate to the `security` account |
+| **AWS Config** (selected managed rules, 1-yr retention) | **Core / required** | `management/us-east-1/security-compliance` (active) · `security/us-east-1/security-compliance --` (**disabled**) (`terraform-aws-config` `v8.1.0`) | ⚠️ **Partial** | Enable + delegate to `security`; note this configures a **curated rule subset** (root-MFA, CloudTrail, GuardDuty, RDS/EC2 checks), **not** the full FSBP standard — that gap is closed by Security Hub |
 | **Security Hub** (FSBP + CIS) | **Core / central pane** | `security/us-east-1/security-hub --` & `management/us-east-1/security-hub --` (**disabled**; `auto_enable_standards = "NONE"`) | ❌ **Disabled** | Delegate admin, enable standards org-wide |
 | **GuardDuty** (all regions) | Recommended | `management/us-east-1/security-monitoring --` (**disabled**; `delegated-admin`) · `security/us-east-1/security-monitoring --` (**disabled**; `terraform-aws-guardduty-multiaccount` `v0.2.1` + custom `terraform-aws-guardduty-monitor` `v1.2.1`) | ❌ **Disabled** | Delegate admin from management, then re-enable in security |
 | **Amazon Inspector** (EC2/ECR) | Recommended | `management/us-east-1/security-compliance` (delegation, gated on `enable_inspector`) · `security/us-east-1/security-compliance --` (**disabled**; `inspector2` via `null_resource`) | ❌ **Disabled** | Set `enable_inspector = true` in management, then enable in security |
@@ -101,10 +101,15 @@ means the layer exists and is written, but its directory carries the ` --` suffi
 > `security-monitoring --` sibling. Re-activation means promoting that code, not
 > writing it from scratch.
 
-**Reading of the gap:** the *sources* layer is healthy (CloudTrail + Config-in-management),
-but the **analysis** and **aggregation** layers the article calls "core" are
-switched off in the `security` account. The good news: the code already exists —
-this is a **re-enablement and delegation** exercise, not new development.
+**Reading of the gap:** the *sources* layer is **partially** covered — CloudTrail
+(org-wide) and Config-in-management are confirmed active, but the other sources the
+diagram lists are **not verified enabled for the `security` account**: VPC Flow
+Logs exist only in the `base-network` layers of other accounts (`shared`,
+`apps-prd`, `apps-devstg`), and **Route 53 DNS query logging is absent repo-wide**.
+The **analysis** and **aggregation** layers the article calls "core" are switched
+off in the `security` account. The good news: most of the code already exists — so
+the bulk of this is a **re-enablement and delegation** exercise, with VPC
+Flow/DNS-logging coverage to confirm (or add) separately.
 
 ---
 
@@ -161,12 +166,16 @@ AWS responders:
 Enablement is org-level (AWS Organizations management account); AI investigation
 applies to **AWS-supported** cases (not self-managed).
 
-**Verdict: Complementary, and a partial replacement of glue.** It **consumes the
-same CloudTrail** our `security-audit` layer already produces — reinforcing that
-the source layer must stay on. It does **not** replace the detectors, but it
-**does replace the manual triage runbook** and much of the bespoke
-severity-filtering/notification logic the article hand-rolls. It answers *"what
-happened and what do I do?"* — the step after a finding fires.
+**Verdict: Complementary — replaces manual *investigation*, not alert routing.**
+It **consumes the same CloudTrail** our `security-audit` layer already produces —
+reinforcing that the source layer must stay on. It does **not** replace the
+detectors, and it does **not** handle severity-filtering/notification routing
+(that's finding C, unified Security Hub) — it answers *"what happened here?"* by
+**replacing the manual investigation runbook** for a case, the step after a
+finding is escalated. Scope limits to keep in mind: it applies to **AWS-supported
+cases only** (not self-managed), is oriented to **threat-detection**
+investigations rather than posture/compliance findings, and is invoked per-case
+rather than as a standing notification path.
 Docs: <https://docs.aws.amazon.com/security-ir/latest/userguide/ai-investigative-agent.html>
 
 ### C. Unified Security Hub — *aggregation-layer evolution*
@@ -196,7 +205,7 @@ Docs: <https://docs.aws.amazon.com/securityhub/latest/userguide/exposure-finding
 Detective foundation (re-enabled) feeding a native aggregation/correlation layer,
 wrapped by the two agents at the ends of the lifecycle.
 
-```
+```text
    BUILD-TIME                     RUN-TIME (detect → aggregate)                 RESPONSE-TIME
    ─────────                      ─────────────────────────────                ─────────────
 
@@ -217,7 +226,7 @@ wrapped by the two agents at the ends of the lifecycle.
    └──────────────────┘        │  · attack-path graphs                │      automation rules
                                 │  delegated-admin: security account   │      / notifications
                                 └──────────────────────────────────────┘
-   ✅ active today   ⚠️ partial (management only)   ❌ written but disabled (` --`)
+   ✅ active today   ⚠️ partial (management only)   ❌ written but disabled (-- suffix)
 ```
 
 ### Phased adoption path
@@ -226,7 +235,7 @@ wrapped by the two agents at the ends of the lifecycle.
 |---|---|---|
 | **1 — Restore the foundation** | Turn the article's "core" back on | Re-enable Config + Security Hub + GuardDuty + Inspector layers (see checklist); delegate admin to the `security` account |
 | **2 — Modernize aggregation** | Replace custom glue with native | Enable **unified Security Hub** exposure findings; migrate the `guardduty_monitor` Lambda logic to **EventBridge automation rules**; retire the custom module |
-| **3 — Add response-time AI** | Cut triage from days to hours | Enable **AWS Security Incident Response** at the org level so the **Investigative Agent** activates on cases |
+| **3 — Add response-time AI** | Cut investigation from days to hours | Enable **AWS Security Incident Response** from the Organizations **management account**; onboard the **membership** (select OUs/accounts for coverage), confirm the service is available in the **regions** in use, configure **incident-response contacts** and permissions, then verify the **Investigative Agent** activates on AWS-supported cases |
 | **4 — Add build-time AI** | Shift security left | Onboard **AWS Security Agent**; wire code review to repos and add threat modeling to the design workflow |
 
 ---
@@ -237,9 +246,9 @@ The detective layers already exist — this is **re-enablement + delegation**, n
 new code. Order matters: delegate from `management`, then enable in `security`.
 
 - [ ] **AWS Config** — apply `management/us-east-1/security-compliance` (delegation),
-      then rename `security/us-east-1/security-compliance --` → drop the ` --`
-      suffix and apply in the `security` account. Confirm ~1-year retention per
-      region in use.
+      then rename `security/us-east-1/security-compliance --` → drop the
+      space-plus-`--` suffix and apply in the `security` account. Confirm ~1-year
+      retention per region in use.
 - [ ] **Security Hub** — apply `management/us-east-1/security-hub --` (delegate
       admin), then enable `security/us-east-1/security-hub --`; flip
       `auto_enable_standards` from `NONE` and confirm **FSBP + CIS** are active
@@ -260,7 +269,10 @@ new code. Order matters: delegate from `management`, then enable in `security`.
       discovery and investigation graphs.
 - [ ] **Aggregation cleanup** — once exposure findings are on, migrate alert
       routing to EventBridge automation rules and **retire** the custom Lambda.
-- [ ] **Response-time** — enable **AWS Security Incident Response** (org level).
+- [ ] **Response-time** — enable **AWS Security Incident Response** from the
+      management account; onboard membership (OU/account coverage), confirm
+      supported regions, and set incident-response contacts so the Investigative
+      Agent activates on AWS-supported cases.
 - [ ] **Build-time** — onboard **AWS Security Agent**; connect repos + design flow.
 
 > Follow the repo standard workflow for every layer you re-enable: generate a
