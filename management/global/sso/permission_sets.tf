@@ -92,6 +92,19 @@ module "permission_sets" {
       customer_managed_policy_attachments = []
     },
     {
+      name             = "MarketplaceAIPublisher"
+      description      = "Provides scoped access to publish AI products in AWS Marketplace and Partner Central."
+      relay_state      = local.default_relay_state
+      session_duration = local.default_session_duration
+      tags             = local.tags
+      inline_policy    = ""
+      policy_attachments = [
+        "arn:aws:iam::aws:policy/AWSMarketplaceSellerProductsFullAccess",
+        "arn:aws:iam::aws:policy/AWSPartnerCentralFullAccess",
+      ]
+      customer_managed_policy_attachments = []
+    },
+    {
       name                                = "DataScientist"
       description                         = "Provides access to AWS services that have to do with Data Science and MLOps."
       relay_state                         = local.default_relay_state
