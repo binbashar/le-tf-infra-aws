@@ -289,6 +289,7 @@ locals {
       groups = [
         "datascientists",
         "devops",
+        "managementmarketplaceaipublishers",
         "managementdatascientists",
         "marketplacevalidationbuyers",
         "marketplacevalidationsellers",
@@ -365,6 +366,10 @@ locals {
     managementdatascientists = {
       name        = "ManagementDataScientists"
       description = "Provides access to Data Science related services in the Management account."
+    }
+    managementmarketplaceaipublishers = {
+      name        = "ManagementMarketplaceAIPublishers"
+      description = "Provides access to publish AI products in AWS Marketplace and Partner Central from the Management account."
     }
   }
 

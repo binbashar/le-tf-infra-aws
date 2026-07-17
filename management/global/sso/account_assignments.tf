@@ -248,6 +248,13 @@ module "account_assignments" {
       principal_name      = local.groups["marketplacevalidationbuyers"].name
       account             = var.accounts.apps-devstg.id
     },
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["MarketplaceAIPublisher"].arn
+      permission_set_name = "MarketplaceAIPublisher"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["managementmarketplaceaipublishers"].name
+      account             = var.accounts.management.id
+    },
 
     # -------------------------------------------------------------------------
     # DataScientist Permissions
