@@ -205,10 +205,13 @@ two and still refuse:
 | **Sonnet 5** | ✅ | ⏳ **quota pending** |
 | Fable 5 | ❌ no access | ❌ no access |
 
-So **use `apps-prd` for Opus 4.8 / Sonnet 5 today**; in `data-science` they return
-*"not available for this account"* — a gate-1/2 (access/quota) block, **not** IAM.
-Quota-increase cases for data-science's *Global cross-region* Opus 4.8 (30M TPM) and
-Sonnet 5 (6M TPM) are filed and `Case Opened`. Check any quota with:
+So **use `apps-prd` for Opus 4.8 / Sonnet 5 today**; in `data-science` the launcher's
+`us.` profiles return *"not available for this account"* — a gate-1/2 (access/quota)
+block, **not** IAM. Heads-up: the pending Service Quotas cases you may see are for the
+separate **`global.*`** family (*Global cross-region* Opus 4.8 / Sonnet 5), which the
+launcher does **not** use (and which the region condition blocks by design, §4) — so
+they won't unblock the launcher on their own. Turning on data-science's **`us.`**
+models is its own model-access + `us.`-quota step. Check a quota with:
 
 ```bash
 aws service-quotas get-service-quota --service-code bedrock \

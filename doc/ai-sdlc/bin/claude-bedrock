@@ -20,11 +20,12 @@
 # Install (symlink this committed script onto your PATH):
 #   ln -s "$(git rev-parse --show-toplevel)/doc/ai-sdlc/bin/claude-bedrock" ~/.local/bin/claude-bedrock
 #
-# Shell-exported env vars take precedence over Claude Code settings files, so this
-# wrapper flips a single session to Bedrock without touching settings.local.json —
-# plain `claude` keeps using the native Anthropic endpoints. Credentials refresh
-# automatically when the temp keys go stale (see the preflight block); only an
-# expired SSO *session* needs a manual `leverage aws sso login` (browser).
+# Mode-dependent env vars are deliberately kept OUT of settings.local.json, so the
+# values this wrapper exports are what take effect (a settings `env` block would
+# otherwise override the shell — see the doc §1). Plain `claude` keeps using the
+# native Anthropic endpoints. Credentials refresh automatically when the temp keys go
+# stale (see the preflight block); only an expired SSO *session* needs a manual
+# `leverage aws sso login` (browser).
 set -euo pipefail
 
 export AWS_CONFIG_FILE="${AWS_CONFIG_FILE:-$HOME/.aws/bb/config}"
@@ -112,7 +113,6 @@ export ANTHROPIC_DEFAULT_SONNET_MODEL_DESCRIPTION="$sonnet_desc"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="$haiku"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION="$haiku_desc"
 export ANTHROPIC_CUSTOM_MODEL_OPTION="$custom"
-export ANTHROPIC_CUSTOM_MODEL_OPTION_NAME="$custom"
 export ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION="$custom_desc"
 
 # --- Locate the le-tf-infra-aws checkout (for the credential auto-refresh) --
@@ -156,9 +156,10 @@ if ! creds_ok; then
   fi
 fi
 
-# Export static credentials into the environment. Env-key credentials outrank
-# profile resolution in the AWS SDK chain, so a project settings.local.json that
-# pins AWS_PROFILE to another account cannot redirect the Bedrock session.
+# Materialize the chosen profile's temporary credentials as env keys for the session
+# (the bb profiles live in a non-default AWS config file). This relies on AWS_PROFILE
+# being absent from settings.local.json: a pinned AWS_PROFILE there still wins
+# (§1 — AWS_PROFILE beats env-key creds), so keep it out of settings.
 eval "$(aws configure export-credentials --profile "$AWS_PROFILE" --format env)"
 
 echo "claude-bedrock: account=$account role=$role profile=$AWS_PROFILE region=$AWS_REGION model=$ANTHROPIC_MODEL" >&2
