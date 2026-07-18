@@ -110,6 +110,12 @@ resource "aws_sns_topic" "summary_jobs" {
 resource "aws_sqs_queue" "summary_worker" {
   name                       = "${local.name}-summary-worker"
   visibility_timeout_seconds = 300 # ≥ summary worker max runtime
+
+  # Route messages that fail processing maxReceiveCount times to the DLQ.
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.summary_worker_dlq.arn
+    maxReceiveCount     = 5
+  })
 }
 
 resource "aws_sqs_queue" "summary_worker_dlq" {
@@ -120,6 +126,27 @@ resource "aws_sns_topic_subscription" "summary_to_sqs" {
   topic_arn = aws_sns_topic.summary_jobs.arn
   protocol  = "sqs"
   endpoint  = aws_sqs_queue.summary_worker.arn
+}
+
+# Allow the SNS topic to deliver to the SQS queue. Without this policy SNS
+# cannot call sqs:SendMessage and deliveries fail silently.
+resource "aws_sqs_queue_policy" "summary_worker" {
+  queue_url = aws_sqs_queue.summary_worker.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = { Service = "sns.amazonaws.com" }
+        Action    = "sqs:SendMessage"
+        Resource  = aws_sqs_queue.summary_worker.arn
+        Condition = {
+          ArnEquals = { "aws:SourceArn" = aws_sns_topic.summary_jobs.arn }
+        }
+      }
+    ]
+  })
 }
 
 # ── Secrets Manager (Secret Manager secrets) ────────────────────────────────

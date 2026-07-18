@@ -56,6 +56,11 @@ resource "aws_ecs_service" "api" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "api" {
+  name              = "/ecs/${local.name}-api"
+  retention_in_days = 30
+}
+
 resource "aws_ecs_task_definition" "api" {
   family                   = "${local.name}-api"
   requires_compatibilities = ["FARGATE"]
@@ -69,6 +74,16 @@ resource "aws_ecs_task_definition" "api" {
       image        = "${aws_ecr_repository.api.repository_url}:latest"
       essential    = true
       portMappings = [{ containerPort = 8080 }]
+      # Ship stdout/stderr to CloudWatch Logs (the awslogs driver needs the
+      # log group to exist — created above).
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.api.name
+          "awslogs-region"        = local.region
+          "awslogs-stream-prefix" = "api"
+        }
+      }
     }
   ])
 
@@ -82,6 +97,48 @@ resource "aws_lb_target_group" "api" {
   protocol    = "HTTP"
   vpc_id      = module.vpc.vpc_id
   target_type = "ip"
+}
+
+# TLS cert for the ALB, DNS-validated against the Route 53 zone (see data.tf).
+resource "aws_acm_certificate" "api" {
+  domain_name       = "meridian.app"
+  validation_method = "DNS"
+}
+
+resource "aws_route53_record" "api_cert_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.api.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      type   = dvo.resource_record_type
+      record = dvo.resource_record_value
+    }
+  }
+
+  zone_id = aws_route53_zone.primary.zone_id
+  name    = each.value.name
+  type    = each.value.type
+  records = [each.value.record]
+  ttl     = 60
+}
+
+resource "aws_acm_certificate_validation" "api" {
+  certificate_arn         = aws_acm_certificate.api.arn
+  validation_record_fqdns = [for r in aws_route53_record.api_cert_validation : r.fqdn]
+}
+
+# HTTPS listener binds the ALB to the target group — without it the ALB never
+# forwards traffic to the Fargate service.
+resource "aws_lb_listener" "https" {
+  load_balancer_arn = aws_lb.api.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = aws_acm_certificate_validation.api.certificate_arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.api.arn
+  }
 }
 
 resource "aws_security_group" "api" {
