@@ -1,0 +1,134 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Meridian — EXISTING GCP infrastructure (the "before")
+#
+# This is the fictional startup's current Terraform. It is the INPUT to the
+# aws-startup-advisor `migration-to-aws` skill's Discover phase, which reads
+# `google_*` resource types to build a discovery profile.
+#
+# ⚠️  This is a `.tf.example` file on purpose. It is GCP Terraform, is never
+#     applied, and must not be renamed to `.tf` (Atlantis would try to plan it).
+# ─────────────────────────────────────────────────────────────────────────────
+
+terraform {
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "google" {
+  project = "meridian-prod"
+  region  = "us-central1"
+}
+
+# ── Networking ───────────────────────────────────────────────────────────────
+resource "google_compute_network" "vpc" {
+  name                    = "meridian-vpc"
+  auto_create_subnetworks = false
+}
+
+resource "google_dns_managed_zone" "primary" {
+  name     = "meridian-app"
+  dns_name = "meridian.app."
+}
+
+resource "google_compute_global_forwarding_rule" "https" {
+  name       = "meridian-https-lb"
+  target     = "projects/meridian-prod/global/targetHttpsProxies/meridian-proxy"
+  port_range = "443"
+}
+
+# ── Compute: API service (always-on HTTP, container) ─────────────────────────
+resource "google_cloud_run_v2_service" "api" {
+  name     = "meridian-api"
+  location = "us-central1"
+
+  template {
+    containers {
+      image = "gcr.io/meridian-prod/api:latest"
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "512Mi"
+        }
+      }
+    }
+    scaling {
+      min_instance_count = 1 # always-on → cold-start sensitive
+      max_instance_count = 10
+    }
+  }
+}
+
+# ── Compute: webhook handler (event-driven, short) ───────────────────────────
+resource "google_cloudfunctions2_function" "webhooks" {
+  name     = "meridian-webhooks"
+  location = "us-central1"
+
+  build_config {
+    runtime     = "python312"
+    entry_point = "handle_webhook"
+  }
+
+  service_config {
+    max_instance_count = 20
+    available_memory   = "256M"
+    timeout_seconds    = 120
+  }
+}
+
+# ── Database: primary OLTP store ─────────────────────────────────────────────
+resource "google_sql_database_instance" "postgres" {
+  name             = "meridian-pg"
+  database_version = "POSTGRES_15"
+  region           = "us-central1"
+
+  settings {
+    tier              = "db-custom-2-7680" # 2 vCPU / 7.5 GB — prod primary
+    availability_type = "REGIONAL"         # HA (multi-zone)
+    disk_size         = 50
+  }
+}
+
+# ── Cache ────────────────────────────────────────────────────────────────────
+resource "google_redis_instance" "cache" {
+  name           = "meridian-cache"
+  tier           = "STANDARD_HA"
+  memory_size_gb = 1
+  region         = "us-central1"
+}
+
+# ── Object storage: user uploads + static assets ─────────────────────────────
+resource "google_storage_bucket" "uploads" {
+  name          = "meridian-uploads"
+  location      = "US"
+  force_destroy = false
+}
+
+# ── Messaging: async summary jobs ────────────────────────────────────────────
+resource "google_pubsub_topic" "summary_jobs" {
+  name = "meridian-summary-jobs"
+}
+
+# ── Secrets ──────────────────────────────────────────────────────────────────
+resource "google_secret_manager_secret" "openai_api_key" {
+  secret_id = "openai-api-key"
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret" "db_password" {
+  secret_id = "db-password"
+  replication {
+    auto {}
+  }
+}
+
+# NOTE — AI feature (not a Terraform resource, detected from app code during
+# Discover): the summary worker calls the OpenAI Chat Completions API
+# (`gpt-4o`) to generate meeting summaries. The migration maps this to
+# Amazon Bedrock (Claude). See ../terraform/ai-bedrock.tf.example and the
+# example README's AI-migration section.

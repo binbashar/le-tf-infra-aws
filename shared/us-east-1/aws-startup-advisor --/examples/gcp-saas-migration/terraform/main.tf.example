@@ -1,0 +1,54 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Meridian — GENERATED AWS target infrastructure (the "after")
+#
+# This is illustrative of what the aws-startup-advisor `migration-to-aws`
+# Generate phase emits: raw `hashicorp/aws` resources, dev-sized by default,
+# with prod sizing noted in comments. It is the STARTING POINT for a Leverage
+# layer — NOT drop-in Leverage code. See ../README.md ("Refactor to Leverage").
+#
+# ⚠️  `.tf.example` on purpose: never applied, no backend, must not become `.tf`.
+# ─────────────────────────────────────────────────────────────────────────────
+
+terraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "us-east-1"
+
+  default_tags {
+    tags = {
+      Project     = "meridian"
+      Environment = "prod"
+      ManagedBy   = "terraform"
+      Migration   = "gcp-to-aws"
+    }
+  }
+}
+
+locals {
+  name   = "meridian"
+  region = "us-east-1"
+}
+
+# ── Networking (google_compute_network → VPC) ────────────────────────────────
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
+
+  name = "${local.name}-vpc"
+  cidr = "10.20.0.0/16"
+
+  azs             = ["us-east-1a", "us-east-1b"]
+  private_subnets = ["10.20.1.0/24", "10.20.2.0/24"]
+  public_subnets  = ["10.20.101.0/24", "10.20.102.0/24"]
+
+  enable_nat_gateway = true
+  single_nat_gateway = true # dev/cost default; prod → one NAT per AZ
+}
