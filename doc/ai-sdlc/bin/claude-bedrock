@@ -18,11 +18,15 @@
 # account's effective data-retention mode is provider_data_share, selecting Fable 5
 # in /model fails with `400 data retention mode 'default' is not available for this
 # model` — the request reached Bedrock; the model is policy-gated, not missing.
-# Opting in is an ACCOUNT-WIDE governance decision (it retains prompts+outputs AND
-# shares them with the provider; on apps-prd this also covers the CI @claude reviewer).
-# There is no console UI — opt in via the data-retention API, ideally project-scoped:
+# provider_data_share is Anthropic/AWS's required trust-&-safety posture for these
+# frontier models (prompts+outputs retained up to 30 days for abuse monitoring under
+# the AWS/Anthropic terms) — it is a governance ACKNOWLEDGEMENT, not a data leak. The
+# account mode gates PER MODEL via allowed_modes: only Fable/Mythos (share-only) share
+# with Anthropic; every other model here is ["default","provider_data_share"], so it
+# stays AWS-only and the CI @claude reviewer's data is NOT shared. Still get sign-off:
+# it's an account-wide setting. No console UI — opt in via the data-retention API:
 #   PUT  https://bedrock.{region}.amazonaws.com/data-retention  {"mode":"provider_data_share"}
-# See https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html
+# See doc §5.1 and https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html
 #
 # Non-interactive / overrides (env wins over the prompts; required under `-p`):
 #   CLAUDE_BEDROCK_ACCOUNT=apps-prd CLAUDE_BEDROCK_ROLE=devops claude-bedrock -p "..."
