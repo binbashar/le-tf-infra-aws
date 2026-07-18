@@ -386,6 +386,11 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
+  - path: "management/global/finops-agent"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
   - path: "management/global/organizations"
     terraform_var_files:
       - "../../../config/common.tfvars"
