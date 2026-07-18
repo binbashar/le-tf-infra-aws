@@ -9,9 +9,20 @@
 # You pick the ACCOUNT and SSO ROLE interactively (or via env); the launcher sets
 # the matching profile, the models that account actually has, and the credential
 # auto-refresh layer. Model availability differs per account:
-#   apps-prd      → Opus 4.8 / Sonnet 5 live today
-#   data-science  → Opus 4.6 / Sonnet 4.6 (Opus 4.8 & Sonnet 5 quota pending)
+#   apps-prd      → Opus 4.8 / Sonnet 5 live today; Fable 5 needs the opt-in below
+#   data-science  → Opus 4.6 / Sonnet 4.6 (Opus 4.8, Sonnet 5 & Fable 5 quota pending)
 # Role: devops | datascientist (not everyone has DevOps; pick what you have).
+#
+# Fable 5 data-retention gate: unlike every other model here, Bedrock's Fable 5
+# (and Mythos 5) declare allowed_modes=["provider_data_share"] ONLY. Until the
+# account's effective data-retention mode is provider_data_share, selecting Fable 5
+# in /model fails with `400 data retention mode 'default' is not available for this
+# model` — the request reached Bedrock; the model is policy-gated, not missing.
+# Opting in is an ACCOUNT-WIDE governance decision (it retains prompts+outputs AND
+# shares them with the provider; on apps-prd this also covers the CI @claude reviewer).
+# There is no console UI — opt in via the data-retention API, ideally project-scoped:
+#   PUT  https://bedrock.{region}.amazonaws.com/data-retention  {"mode":"provider_data_share"}
+# See https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html
 #
 # Non-interactive / overrides (env wins over the prompts; required under `-p`):
 #   CLAUDE_BEDROCK_ACCOUNT=apps-prd CLAUDE_BEDROCK_ROLE=devops claude-bedrock -p "..."
@@ -85,9 +96,10 @@ case "$account" in
   apps-prd)
     refresh_layer_default="apps-prd/us-east-1/notifications"
     default_model="us.anthropic.claude-opus-4-8"
-    opus="us.anthropic.claude-opus-4-8";                 opus_desc="Amazon Bedrock · apps-prd account (most capable)"
+    opus="us.anthropic.claude-opus-4-8";                 opus_desc="Amazon Bedrock · apps-prd account (most capable Opus)"
     sonnet="us.anthropic.claude-sonnet-5";               sonnet_desc="Amazon Bedrock · apps-prd account (balanced)"
     haiku="us.anthropic.claude-haiku-4-5-20251001-v1:0"; haiku_desc="Amazon Bedrock · apps-prd account (fast, low-cost)"
+    fable="us.anthropic.claude-fable-5";                 fable_desc="Amazon Bedrock · apps-prd account (Fable 5 — most capable, premium; needs provider_data_share opt-in)"
     custom="us.anthropic.claude-opus-4-6-v1";            custom_desc="Amazon Bedrock · apps-prd account (Opus 4.6 fallback)"
     ;;
   data-science)
@@ -96,6 +108,7 @@ case "$account" in
     opus="us.anthropic.claude-opus-4-6-v1";              opus_desc="Amazon Bedrock · data-science account (Opus 4.6; 4.8 quota pending)"
     sonnet="us.anthropic.claude-sonnet-4-6";             sonnet_desc="Amazon Bedrock · data-science account (Sonnet 4.6; 5 quota pending)"
     haiku="us.anthropic.claude-haiku-4-5-20251001-v1:0"; haiku_desc="Amazon Bedrock · data-science account (fast, low-cost)"
+    fable="us.anthropic.claude-fable-5";                 fable_desc="Amazon Bedrock · data-science account (Fable 5 — quota pending; also needs provider_data_share opt-in)"
     custom="us.anthropic.claude-opus-4-8";               custom_desc="Amazon Bedrock · data-science account (Opus 4.8 — quota pending)"
     ;;
   *)
@@ -112,6 +125,8 @@ export ANTHROPIC_DEFAULT_SONNET_MODEL="$sonnet"
 export ANTHROPIC_DEFAULT_SONNET_MODEL_DESCRIPTION="$sonnet_desc"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="$haiku"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION="$haiku_desc"
+export ANTHROPIC_DEFAULT_FABLE_MODEL="$fable"
+export ANTHROPIC_DEFAULT_FABLE_MODEL_DESCRIPTION="$fable_desc"
 export ANTHROPIC_CUSTOM_MODEL_OPTION="$custom"
 export ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION="$custom_desc"
 
