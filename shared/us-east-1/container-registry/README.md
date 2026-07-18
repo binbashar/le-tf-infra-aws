@@ -9,8 +9,12 @@ across the organization. Images are built and pushed here once, and other accoun
 (e.g. `apps-devstg`) are granted cross-account **pull (read)** access through repository
 policies.
 
-The same layer is deployed in the primary region (`us-east-1`) and, for DR, in the
-secondary region (`us-east-2`).
+A corresponding container-registry layer is deployed in the secondary region
+(`us-east-2`) for DR. Note it is **not an exact mirror**: this primary-region layer uses
+the [`terraform-aws-ecr`](https://github.com/binbashar/terraform-aws-ecr) module
+(`local.repositories`), whereas `us-east-2` uses the
+[`terraform-aws-ecr-cross-account`](https://github.com/binbashar/terraform-aws-ecr-cross-account)
+module (`local.repository_list`) with a different variable structure.
 
 ### What this layer configures
 
@@ -39,10 +43,11 @@ approaches lives in the Leverage documentation, under the AWS Reference Architec
 
 - [Leverage Reference Architecture — Features](https://leverage.binbash.co/user-guide/ref-architecture-aws/features/)
 
-## Module
+## Modules
 
-- [`terraform-aws-ecr`](https://github.com/binbashar/terraform-aws-ecr) — `v2.4.0`
+- This layer (`us-east-1`): [`terraform-aws-ecr`](https://github.com/binbashar/terraform-aws-ecr) — `v2.4.0`
+- DR layer (`us-east-2`): [`terraform-aws-ecr-cross-account`](https://github.com/binbashar/terraform-aws-ecr-cross-account) — `v1.1.0`
 
 ---
 
-**Layer**: `shared/us-east-1/container-registry` (mirrored in `shared/us-east-2`)
+**Layer**: `shared/us-east-1/container-registry` (with a corresponding DR layer in `shared/us-east-2`)
