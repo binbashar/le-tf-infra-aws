@@ -266,19 +266,28 @@ API Error: 400 data retention mode 'default' is not available for this model
 
 The request reached Bedrock and the model is `ACTIVE` — it's policy-gated, not missing.
 
-**Check the current account mode** (read-only). `awscli` 2.27.8 has no `data-retention`
-subcommand, so sign the control-plane REST call (`bedrock` service, SigV4):
+**Check the current account mode** (read-only). `awscli` (2.27.x) has no `data-retention`
+subcommand, so sign the control-plane REST call directly (`bedrock` service, SigV4). Modern
+`curl` (7.75.0+) signs it natively via `--aws-sigv4`, reading the same `AWS_ACCESS_KEY_ID` /
+`AWS_SECRET_ACCESS_KEY` / `AWS_SESSION_TOKEN` the launcher already exports for the session:
 
 ```bash
 # via the bb SSO profile; returns e.g. {"mode":"inherit","updatedAt":null}
-curl -s "https://bedrock.us-east-1.amazonaws.com/data-retention"   # + SigV4 (bedrock, us-east-1)
+curl -s --aws-sigv4 "aws:amz:us-east-1:bedrock" \
+  --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
+  -H "X-Amz-Security-Token: $AWS_SESSION_TOKEN" \
+  "https://bedrock.us-east-1.amazonaws.com/data-retention"
 ```
 
 **Opt in** (the write — account-wide; needs governance sign-off):
 
 ```bash
 curl -s -X PUT "https://bedrock.us-east-1.amazonaws.com/data-retention" \
-  -H "Content-Type: application/json" -d '{"mode":"provider_data_share"}'   # + SigV4
+  --aws-sigv4 "aws:amz:us-east-1:bedrock" \
+  --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
+  -H "X-Amz-Security-Token: $AWS_SESSION_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"mode":"provider_data_share"}'
 ```
 
 Scope it to a **project** instead of the whole account with
