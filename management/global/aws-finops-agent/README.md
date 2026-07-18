@@ -26,7 +26,7 @@ This layer therefore manages everything that *is* IaC-able, and the agentspace i
 ## Deploy
 
 ```bash
-cd management/global/finops-agent
+cd management/global/aws-finops-agent
 leverage tofu init
 leverage tofu plan
 leverage tofu apply   # human step, after PR approval

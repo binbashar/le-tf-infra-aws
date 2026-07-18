@@ -20,7 +20,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "management/finops-agent/terraform.tfstate"
+    key = "management/aws-finops-agent/terraform.tfstate"
   }
 }
 
