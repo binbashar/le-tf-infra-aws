@@ -4,6 +4,15 @@ locals {
   #----------------------------------------------------------------------------
   users = {
     # Binbash
+    "agustin.godnic" = {
+      first_name = "Agustin"
+      last_name  = "Godnic"
+      email      = "agustin.godnic@binbash.com.ar"
+      groups = [
+        "datascientists",
+        "devops",
+      ]
+    }
     "alex.delossantos" = {
       first_name = "Alex"
       last_name  = "DelosSantos"
