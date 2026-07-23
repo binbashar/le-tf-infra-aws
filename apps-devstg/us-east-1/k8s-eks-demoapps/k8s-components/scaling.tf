@@ -21,7 +21,7 @@ resource "helm_release" "cluster_autoscaling" {
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://kubernetes.github.io/autoscaler"
   chart      = "cluster-autoscaler"
-  version    = "9.55.1"
+  version    = "9.58.0"
   values = [
     templatefile("chart-values/cluster-autoscaler.yaml",
       {
@@ -126,7 +126,7 @@ resource "helm_release" "keda" {
   namespace  = kubernetes_namespace.keda[0].id
   repository = "https://kedacore.github.io/charts"
   chart      = "keda"
-  version    = "2.18.3"
+  version    = "2.20.1"
   values     = []
 }
 
@@ -136,7 +136,7 @@ resource "helm_release" "keda_http_add_on" {
   namespace  = kubernetes_namespace.keda[0].id
   repository = "https://kedacore.github.io/charts"
   chart      = "keda-add-ons-http"
-  version    = "0.11.1"
+  version    = "0.15.0"
   values     = []
 }
 
