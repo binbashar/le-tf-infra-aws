@@ -10,9 +10,9 @@ Requires: pip install diagrams && brew install graphviz
 
 Run from anywhere (output path is resolved relative to this file):
 
-    python3 doc/diagrams/ci-claude-review.py
+    python3 docs/diagrams/ci-claude-review.py
 
-Outputs doc/diagrams/ci-claude-review.png.
+Outputs docs/diagrams/ci-claude-review.png.
 """
 
 import os

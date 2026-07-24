@@ -10,8 +10,8 @@ runs at each step, and how the on-demand `@claude` assistant routes through
 
 ![AI-Driven SDLC overview](../diagrams/ai-sdlc.png)
 
-> Source: [`doc/diagrams/ai-sdlc.py`](../diagrams/ai-sdlc.py) — re-render with
-> `python3 doc/diagrams/ai-sdlc.py` (requires `pip install diagrams` and
+> Source: [`docs/diagrams/ai-sdlc.py`](../diagrams/ai-sdlc.py) — re-render with
+> `python3 docs/diagrams/ai-sdlc.py` (requires `pip install diagrams` and
 > `brew install graphviz librsvg`).
 
 ---
@@ -56,7 +56,7 @@ review comment. Workflow: [`.github/workflows/claude.yml`](../../.github/workflo
 
 ![@claude PR review CI/CD flow](../diagrams/ci-claude-review.png)
 
-> Source: [`doc/diagrams/ci-claude-review.py`](../diagrams/ci-claude-review.py)
+> Source: [`docs/diagrams/ci-claude-review.py`](../diagrams/ci-claude-review.py)
 > — ported verbatim from `binbashar/bb-sales-tools` because the wiring is
 > identical.
 
@@ -119,6 +119,6 @@ Maintainers read the AI + CI findings on the PR, then:
 
 - Project conventions and commands: [`CLAUDE.md`](../../CLAUDE.md)
 - Workflows: [`.github/workflows/`](../../.github/workflows/)
-- Diagram sources & rendered PNGs: [`doc/diagrams/`](../diagrams/)
+- Diagram sources & rendered PNGs: [`docs/diagrams/`](../diagrams/)
 - `@claude` action: [anthropics/claude-code-action](https://github.com/anthropics/claude-code-action)
 - Leverage docs: <https://leverage.binbash.co>
