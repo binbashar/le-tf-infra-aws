@@ -9,13 +9,13 @@ Requires: pip install diagrams && brew install graphviz librsvg
 
 Run from anywhere (icon paths are resolved relative to this file):
 
-    python3 doc/diagrams/ai-sdlc.py
+    python3 docs/diagrams/ai-sdlc.py
 
-Outputs doc/diagrams/ai-sdlc.png.
+Outputs docs/diagrams/ai-sdlc.png.
 
 Brand icons (CodeRabbit, Gemini, Anthropic/Claude, Renovate, OpenTofu) are
 MIT-licensed SVGs from simple-icons.org, rasterized to 512px PNGs under
-doc/diagrams/icons/.
+docs/diagrams/icons/.
 """
 
 import os

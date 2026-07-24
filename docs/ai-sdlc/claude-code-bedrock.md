@@ -74,12 +74,12 @@ of every settings `env` block. The launcher provides them per invocation.
 
 ## 3. Install the `claude-bedrock` launcher
 
-The launcher is committed at [`doc/ai-sdlc/bin/claude-bedrock`](bin/claude-bedrock).
+The launcher is committed at [`docs/ai-sdlc/bin/claude-bedrock`](bin/claude-bedrock).
 Symlink it onto your `PATH` — nothing to copy or keep in sync, and it auto-locates
 this repo from its own path for the credential auto-refresh (§3.2):
 
 ```bash
-ln -s "$(git rev-parse --show-toplevel)/doc/ai-sdlc/bin/claude-bedrock" ~/.local/bin/claude-bedrock
+ln -s "$(git rev-parse --show-toplevel)/docs/ai-sdlc/bin/claude-bedrock" ~/.local/bin/claude-bedrock
 ```
 
 Usage:

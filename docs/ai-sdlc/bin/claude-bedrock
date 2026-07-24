@@ -3,7 +3,7 @@
 # claude-bedrock — launch Claude Code against Amazon Bedrock (binbash SSO)
 #
 # Two SEPARATE Bedrock integrations live in this repo, in different accounts:
-#   • CI @claude PR reviewer  → apps-prd  (see doc/ai-sdlc/README.md §4)
+#   • CI @claude PR reviewer  → apps-prd  (see docs/ai-sdlc/README.md §4)
 #   • local human sessions    → this launcher (ACCOUNT + ROLE chosen at launch)
 #
 # You pick the ACCOUNT and SSO ROLE interactively (or via env); the launcher sets
@@ -33,7 +33,7 @@
 #   CLAUDE_BEDROCK_MODEL=us.anthropic.claude-sonnet-5 claude-bedrock
 #
 # Install (symlink this committed script onto your PATH):
-#   ln -s "$(git rev-parse --show-toplevel)/doc/ai-sdlc/bin/claude-bedrock" ~/.local/bin/claude-bedrock
+#   ln -s "$(git rev-parse --show-toplevel)/docs/ai-sdlc/bin/claude-bedrock" ~/.local/bin/claude-bedrock
 #
 # Mode-dependent env vars are deliberately kept OUT of settings.local.json, so the
 # values this wrapper exports are what take effect (a settings `env` block would
