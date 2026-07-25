@@ -1,7 +1,7 @@
 ---
 name: leverage-architect
 description: Expert in Binbash Leverage Reference Architecture patterns, OpenTofu/Terraform best practices, and AWS multi-account infrastructure design. Orchestrates other specialized agents for cross-cutting concerns.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__SearchSpecificAwsIaModules, mcp__terraform-mcp__RunCheckovScan, mcp__aws-documentation__search_documentation, mcp__aws-documentation__read_documentation
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__aws-documentation__search_documentation, mcp__aws-documentation__read_documentation, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 ---
 
 # Leverage Architect Agent
@@ -32,31 +32,35 @@ You are a specialized agent for the Binbash Leverage Reference Architecture. You
 - Consider multi-account impact: changes in one account may affect others through remote state
 
 ## MCP Integration (REQUIRED)
-### AWS Provider Documentation
+### Provider Documentation (AWS / AWSCC)
+Resolve the provider's library ID once, then query it per resource. Prefer the AWSCC
+provider for newer services, falling back to the AWS provider.
 ```text
-# Prefer AWSCC provider first
-mcp__terraform-mcp__SearchAwsccProviderDocs(
-  asset_name="awscc_<service>_<resource>",
-  asset_type="resource"
+mcp__plugin_context7_context7__resolve-library-id(
+  libraryName="Terraform AWS Cloud Control Provider",
+  query="awscc_<service>_<resource> resource arguments"
 )
-# Fall back to AWS provider
-mcp__terraform-mcp__SearchAwsProviderDocs(
-  asset_name="aws_<service>_<resource>",
-  asset_type="resource"
+mcp__plugin_context7_context7__query-docs(
+  libraryId="<id returned by resolve-library-id>",
+  query="awscc_<service>_<resource> required and optional arguments"
 )
 ```
 
 ### Module Discovery
 ```text
-# Check AWS-IA specialized modules first
-mcp__terraform-mcp__SearchSpecificAwsIaModules(query="<service>")
-# Then check Binbash module library or community modules
-mcp__terraform-mcp__SearchUserProvidedModule(module_url="<namespace>/<module>/<provider>")
+# 1. Binbash Leverage module library is authoritative for this repo:
+#    https://github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile
+# 2. Only if no Leverage module fits, look up a registry module:
+mcp__plugin_context7_context7__resolve-library-id(
+  libraryName="terraform-aws-modules/<module>",
+  query="<module> inputs and outputs"
+)
 ```
 
 ### Security Scanning
-```text
-mcp__terraform-mcp__RunCheckovScan(working_directory=".")
+```bash
+uvx checkov -d .          # run from the layer directory
+make pre-commit           # repo-wide hooks (terraform_fmt, JSON, private keys)
 ```
 
 ### AWS Documentation

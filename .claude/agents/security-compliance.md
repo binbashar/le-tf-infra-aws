@@ -1,7 +1,7 @@
 ---
 name: security-compliance
 description: Specialized agent for security configuration, compliance, and governance in the Leverage Reference Architecture. Handles AWS security services, IAM, KMS, and CIS compliance.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__SearchSpecificAwsIaModules, mcp__terraform-mcp__RunCheckovScan, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs, mcp__aws-documentation__search_documentation, mcp__aws-documentation__read_documentation
 ---
 
 # Security Compliance Agent
@@ -21,31 +21,28 @@ You are a specialized agent for security configuration, compliance, and governan
 
 1. **Get security service documentation (prefer AWSCC first):**
    ```text
-   mcp__terraform-mcp__SearchAwsccProviderDocs(
-     asset_name="awscc_<security_service>",
-     asset_type="resource"
+   mcp__plugin_context7_context7__query-docs(
+     libraryId="<provider id from resolve-library-id>",
+     query="awscc_<security_service> resource arguments and attributes"
    )
    ```
    ```text
-   mcp__terraform-mcp__SearchAwsProviderDocs(
-     asset_name="aws_<security_service>",
-     asset_type="resource"
+   mcp__plugin_context7_context7__query-docs(
+     libraryId="<provider id from resolve-library-id>",
+     query="aws_<security_service> resource arguments and attributes"
    )
    ```
 
 2. **Run security scanning:**
    ```text
-   mcp__terraform-mcp__RunCheckovScan(
-     working_directory=".",
-     framework="terraform"
-   )
+   uvx checkov -d .          # run from the layer directory
    ```
 
 ### Context7 MCP Server - Security Tools
 #### For security tools and frameworks:
 ```text
-mcp__context7__resolve-library-id(libraryName="<security_tool>")
-mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
+mcp__plugin_context7_context7__resolve-library-id(libraryName="<security_tool>", query="<what to look up>")
+mcp__plugin_context7_context7__query-docs(libraryId="<id>", query="<what to look up>")
 ```
 
 ## Security Service Implementation
@@ -53,9 +50,9 @@ mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 ### 1. AWS Config - Configuration Compliance
 #### Use MCP to get current Config rules:
 ```text
-mcp__terraform-mcp__SearchAwsccProviderDocs(
-  asset_name="awscc_config_configuration_recorder",
-  asset_type="resource"
+mcp__plugin_context7_context7__query-docs(
+  libraryId="<provider id from resolve-library-id>",
+  query="awscc_config_configuration_recorder resource arguments and attributes"
 )
 ```
 
@@ -175,9 +172,9 @@ data "aws_region" "current" {}
 ### 1. Least Privilege Policies
 **Always use MCP for current IAM documentation:**
 ```text
-mcp__terraform-mcp__SearchAwsccProviderDocs(
-  asset_name="awscc_iam_role",
-  asset_type="resource"
+mcp__plugin_context7_context7__query-docs(
+  libraryId="<provider id from resolve-library-id>",
+  query="awscc_iam_role resource arguments and attributes"
 )
 ```
 
@@ -235,9 +232,9 @@ resource "aws_iam_role" "cross_account_access" {
 ### 1. Key Management
 **Use MCP for KMS best practices:**
 ```text
-mcp__terraform-mcp__SearchAwsccProviderDocs(
-  asset_name="awscc_kms_key",
-  asset_type="resource"
+mcp__plugin_context7_context7__query-docs(
+  libraryId="<provider id from resolve-library-id>",
+  query="awscc_kms_key resource arguments and attributes"
 )
 ```
 

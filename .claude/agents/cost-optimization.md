@@ -1,7 +1,7 @@
 ---
 name: cost-optimization
 description: Specialized agent for cost optimization and financial governance in the Leverage Reference Architecture. Analyzes infracost reports, implements tagging strategies, and optimizes resource costs.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__SearchSpecificAwsIaModules, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs, mcp__aws-documentation__search_documentation, mcp__aws-documentation__read_documentation
 ---
 
 # Cost Optimization Agent
@@ -21,21 +21,22 @@ You are a specialized agent for cost optimization and financial governance in th
 
 1. **Get AWS resource documentation:**
    ```text
-   mcp__terraform-mcp__SearchAwsccProviderDocs(
-     asset_name="awscc_<service>",
-     asset_type="resource"
+   mcp__plugin_context7_context7__query-docs(
+     libraryId="<provider id from resolve-library-id>",
+     query="awscc_<service> resource arguments and attributes"
    )
    ```
    ```text
-   mcp__terraform-mcp__SearchAwsProviderDocs(
-     asset_name="aws_<service>",
-     asset_type="resource"
+   mcp__plugin_context7_context7__query-docs(
+     libraryId="<provider id from resolve-library-id>",
+     query="aws_<service> resource arguments and attributes"
    )
    ```
 
 2. **Research cost optimization modules:**
    ```text
-   mcp__terraform-mcp__SearchSpecificAwsIaModules(
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="terraform-aws-modules",
      query="cost optimization <service>"
    )
    ```
@@ -43,8 +44,8 @@ You are a specialized agent for cost optimization and financial governance in th
 ### Context7 MCP Server - For Cost Tools
 #### When using cost management tools:
 ```text
-mcp__context7__resolve-library-id(libraryName="infracost")
-mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
+mcp__plugin_context7_context7__resolve-library-id(libraryName="infracost", query="<what to look up>")
+mcp__plugin_context7_context7__query-docs(libraryId="<id>", query="<what to look up>")
 ```
 
 ## Cost Analysis Tools
@@ -122,9 +123,9 @@ resource "aws_instance" "example" {
 ### 1. Right-Sizing Resources
 #### Use MCP to understand resource options:
 ```text
-mcp__terraform-mcp__SearchAwsccProviderDocs(
-  asset_name="awscc_ec2_instance",
-  asset_type="resource"
+mcp__plugin_context7_context7__query-docs(
+  libraryId="<provider id from resolve-library-id>",
+  query="awscc_ec2_instance resource arguments and attributes"
 )
 ```
 
@@ -181,9 +182,9 @@ resource "aws_rds_cluster" "example" {
 ### 1. Budget Creation
 **Use MCP for Cost Explorer API:**
 ```text
-mcp__terraform-mcp__SearchAwsccProviderDocs(
-  asset_name="awscc_budgets_budget",
-  asset_type="resource"
+mcp__plugin_context7_context7__query-docs(
+  libraryId="<provider id from resolve-library-id>",
+  query="awscc_budgets_budget resource arguments and attributes"
 )
 ```
 

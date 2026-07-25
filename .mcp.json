@@ -1,12 +1,16 @@
 {
   "mcpServers": {
-    "aws-core": {
+    "aws-api": {
       "args": [
-        "awslabs.core-mcp-server@latest"
+        "awslabs.aws-api-mcp-server@latest"
       ],
       "command": "uvx",
       "env": {
+        "AWS_API_MCP_PROFILE_NAME": "bb-shared-devops",
+        "AWS_CONFIG_FILE": "${HOME}/.aws/bb/config",
+        "AWS_PROFILE": "bb-shared-devops",
         "AWS_REGION": "us-east-1",
+        "AWS_SHARED_CREDENTIALS_FILE": "${HOME}/.aws/bb/credentials",
         "FASTMCP_LOG_LEVEL": "ERROR"
       },
       "type": "stdio"
@@ -18,16 +22,6 @@
       "command": "uvx",
       "env": {
         "AWS_DOCUMENTATION_PARTITION": "aws"
-      },
-      "type": "stdio"
-    },
-    "terraform-mcp": {
-      "args": [
-        "awslabs.terraform-mcp-server@latest"
-      ],
-      "command": "uvx",
-      "env": {
-        "AWS_REGION": "us-east-1"
       },
       "type": "stdio"
     }

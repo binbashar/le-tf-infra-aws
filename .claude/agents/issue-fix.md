@@ -1,7 +1,7 @@
 ---
 name: issue-fix
 description: Specialized agent for debugging and fixing issues in the Leverage Reference Architecture. Handles CI/CD failures, policy errors, IAM issues, and Docker connectivity problems.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__RunCheckovScan, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs, mcp__aws-documentation__search_documentation, mcp__aws-documentation__read_documentation
 ---
 
 # Issue Fix Agent
@@ -16,35 +16,38 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
 - Fix pre-commit hook failures
 
 ## MCP Integration (REQUIRED)
-### OpenTofu & AWS MCP Servers - Use for All Provider Issues
+### Provider Documentation - Use for All Provider Issues
 #### When debugging OpenTofu/Terraform errors:
 1. **Identify the resource/provider causing issues**
-2. **Get current AWS provider documentation:**
+2. **Get current provider documentation:**
    ```
-   mcp__terraform-mcp__SearchAwsccProviderDocs(
-     asset_name="awscc_<resource>",
-     asset_type="resource"
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="Terraform AWS Provider",
+     query="aws_<resource> / awscc_<resource> arguments"
    )
    ```
    ```
-   mcp__terraform-mcp__SearchAwsProviderDocs(
-     asset_name="aws_<resource>",
-     asset_type="resource"
+   mcp__plugin_context7_context7__query-docs(
+     libraryId="<id returned by resolve-library-id>",
+     query="aws_<resource> argument constraints and common errors"
    )
    ```
-3. **Run security checks if needed:**
+3. **Check the underlying AWS service behaviour, quotas and error codes:**
    ```
-   mcp__terraform-mcp__RunCheckovScan(
-     working_directory="."
-   )
+   mcp__aws-documentation__search_documentation(search_phrase="<service> <error>")
+   mcp__aws-documentation__read_documentation(url="<doc-url>")
+   ```
+4. **Run security checks if needed:**
+   ```bash
+   uvx checkov -d .          # from the layer directory
    ```
 
 ### Context7 MCP Server - Use for Tool Documentation
 #### When debugging tools (kubectl, helm, etc.):
 1. **Get tool documentation:**
    ```
-   mcp__context7__resolve-library-id(libraryName="<tool>")
-   mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
+   mcp__plugin_context7_context7__resolve-library-id(libraryName="<tool>", query="<what to look up>")
+   mcp__plugin_context7_context7__query-docs(libraryId="<id>", query="<what to look up>")
    ```
 
 ## Common Issue Types
@@ -77,9 +80,9 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
 **Fix Process:**
 1. **Get KMS resource documentation:**
    ```
-   mcp__terraform-mcp__SearchAwsccProviderDocs(
-     asset_name="awscc_kms_key",
-     asset_type="resource"
+   mcp__plugin_context7_context7__query-docs(
+     libraryId="<provider id from resolve-library-id>",
+     query="awscc_kms_key resource arguments and attributes"
    )
    ```
 
@@ -100,9 +103,9 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
 **Resolution:**
 1. **Get IAM documentation:**
    ```
-   mcp__terraform-mcp__SearchAwsccProviderDocs(
-     asset_name="awscc_iam_role",
-     asset_type="resource"
+   mcp__plugin_context7_context7__query-docs(
+     libraryId="<provider id from resolve-library-id>",
+     query="awscc_iam_role resource arguments and attributes"
    )
    ```
 

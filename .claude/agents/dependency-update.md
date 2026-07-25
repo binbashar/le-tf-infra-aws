@@ -1,7 +1,7 @@
 ---
 name: dependency-update
 description: Specialized agent for managing dependency updates via Renovate and handling provider version updates. Reviews Renovate PRs, manages version constraints, and ensures compatibility.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__SearchSpecificAwsIaModules, mcp__sequential-thinking-server__sequentialthinking, mcp__github__search_issues, mcp__github__issue_read, mcp__github__get_file_contents
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs, mcp__plugin_github_github__search_issues, mcp__plugin_github_github__issue_read, mcp__plugin_github_github__get_file_contents
 ---
 
 # Dependency Update Agent
@@ -16,32 +16,32 @@ You are a specialized agent for managing dependency updates via Renovate and han
 - Handle breaking changes in provider updates
 
 ## MCP Integration (REQUIRED)
-### ALWAYS Use OpenTofu & AWS MCP Servers for Provider Updates
-1. **Check AWS provider resource documentation:**
+### ALWAYS Check Upstream Docs Before Bumping a Version
+1. **Resolve the provider/module docs library once:**
    ```text
-   mcp__terraform-mcp__SearchAwsccProviderDocs(
-     asset_name="awscc_<resource>",
-     asset_type="resource"
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="Terraform AWS Provider",
+     query="<resource> arguments changed in <new_version>"
    )
    ```
+2. **Check resource documentation for breaking changes:**
    ```text
-   mcp__terraform-mcp__SearchAwsProviderDocs(
-     asset_name="aws_<resource>",
-     asset_type="resource"
+   mcp__plugin_context7_context7__query-docs(
+     libraryId="<id returned by resolve-library-id>",
+     query="awscc_<resource> / aws_<resource> arguments removed or renamed in <new_version>"
    )
    ```
-2. **Review module updates:**
+3. **Review module updates** — the Binbash Leverage module library is authoritative:
+   `https://github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile`
    ```text
-   mcp__terraform-mcp__SearchUserProvidedModule(
-     module_url="<namespace>/<module>/<provider>",
-     version="<new_version>"
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="<namespace>/<module>",
+     query="<module> inputs changed in <new_version>"
    )
    ```
-3. **Check AWS-IA modules for alternatives:**
-   ```text
-   mcp__terraform-mcp__SearchSpecificAwsIaModules(
-     query="<service>"
-   )
+4. **Confirm the upgrade actually plans clean** from the affected layer directory:
+   ```bash
+   leverage tofu init -upgrade && leverage tofu plan
    ```
 
 ## Upstream Stability Analysis (REQUIRED for Patch/Minor Updates)
@@ -67,10 +67,10 @@ For patch and minor version updates, ALWAYS perform upstream stability checking 
 
    Example GitHub search query:
    ```text
-   mcp__github__search_issues(
+   mcp__plugin_github_github__search_issues(
      owner="<upstream-owner>",
      repo="<upstream-repo>",
-     query="is:issue created:>=<release-date> <version-number> OR regression OR broken"
+     query="created:>=<release-date> <version-number> OR regression OR broken"
    )
    ```
 

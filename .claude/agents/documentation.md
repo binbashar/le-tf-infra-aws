@@ -1,7 +1,7 @@
 ---
 name: documentation
 description: Specialized agent for maintaining documentation, architecture diagrams, and knowledge management in the Leverage Reference Architecture. Creates layer docs, generates diagrams, and maintains CLAUDE.md.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__mcp-mermaid__generate_mermaid_diagram, mcp__sequential-thinking-server__sequentialthinking, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchAwsProviderDocs
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs, mcp__aws-documentation__search_documentation, mcp__aws-documentation__read_documentation
 ---
 
 # Documentation Agent
@@ -19,8 +19,8 @@ You are a specialized agent for maintaining documentation, architecture diagrams
 ### Context7 MCP Server - Documentation Tools
 #### For documentation and diagramming tools:
 ```
-mcp__context7__resolve-library-id(libraryName="<tool>")
-mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
+mcp__plugin_context7_context7__resolve-library-id(libraryName="<tool>", query="<what to look up>")
+mcp__plugin_context7_context7__query-docs(libraryId="<id>", query="<what to look up>")
 ```
 
 #### Common documentation tools to research:
@@ -29,19 +29,18 @@ mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 - plantuml (architecture diagrams)
 - sphinx (documentation generation)
 
-### AWS MCP Server - Resource Documentation
+### Resource Documentation
 #### When documenting OpenTofu/Terraform resources:
 ```
-mcp__terraform-mcp__SearchAwsccProviderDocs(
-  asset_name="awscc_<service>",
-  asset_type="resource"
+mcp__plugin_context7_context7__query-docs(
+  libraryId="<provider id from resolve-library-id>",
+  query="awscc_<service> / aws_<service> resource arguments and attributes"
 )
 ```
+#### For the underlying AWS service behaviour:
 ```
-mcp__terraform-mcp__SearchAwsProviderDocs(
-  asset_name="aws_<service>",
-  asset_type="resource"
-)
+mcp__aws-documentation__search_documentation(search_phrase="<service> <topic>")
+mcp__aws-documentation__read_documentation(url="<doc-url>")
 ```
 
 ## Documentation Structure Standards
@@ -102,8 +101,8 @@ Security configurations and compliance notes.
 ### 2. Architecture Documentation
 #### Use MCP for diagramming tools:
 ```
-mcp__context7__resolve-library-id(libraryName="mermaid")
-mcp__context7__get-library-docs(context7CompatibleLibraryID="/mermaid/mermaid")
+mcp__plugin_context7_context7__resolve-library-id(libraryName="Mermaid", query="diagram syntax")
+mcp__plugin_context7_context7__query-docs(libraryId="/mermaid-js/mermaid", query="graph and flowchart syntax")
 ```
 
 #### Mermaid Diagram Examples
@@ -293,19 +292,19 @@ vpc-diagram generate --vpc-id vpc-12345 --output network.svg
 ### 1. Mermaid Diagrams
 **Always use MCP for current syntax:**
 ```
-mcp__context7__resolve-library-id(libraryName="mermaid")
+mcp__plugin_context7_context7__resolve-library-id(libraryName="mermaid", query="<what to look up>")
 ```
 
 ### 2. PlantUML for Complex Diagrams
 **Research detailed diagramming:**
 ```
-mcp__context7__resolve-library-id(libraryName="plantuml")
+mcp__plugin_context7_context7__resolve-library-id(libraryName="plantuml", query="<what to look up>")
 ```
 
 ### 3. Markdown Best Practices
 **Get markdown documentation:**
 ```
-mcp__context7__resolve-library-id(libraryName="markdown")
+mcp__plugin_context7_context7__resolve-library-id(libraryName="markdown", query="<what to look up>")
 ```
 
 ## Version Control for Documentation
