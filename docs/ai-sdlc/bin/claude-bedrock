@@ -9,8 +9,8 @@
 # You pick the ACCOUNT and SSO ROLE interactively (or via env); the launcher sets
 # the matching profile, the models that account actually has, and the credential
 # auto-refresh layer. Model availability differs per account:
-#   apps-prd      → Opus 4.8 / Sonnet 5 live today; Fable 5 needs the opt-in below
-#   data-science  → Opus 4.6 / Sonnet 4.6 (Opus 4.8, Sonnet 5 & Fable 5 quota pending)
+#   apps-prd      → Opus 5 / Sonnet 5 live today; Fable 5 needs the opt-in below
+#   data-science  → Opus 4.6 / Sonnet 4.6 (Opus 5, Sonnet 5 & Fable 5 quota pending)
 # Role: devops | datascientist (not everyone has DevOps; pick what you have).
 #
 # Fable 5 data-retention gate: unlike every other model here, Bedrock's Fable 5
@@ -56,8 +56,8 @@ interactive() { [[ "$headless" == 0 && -t 0 && -t 1 ]]; }
 if [[ -z "${CLAUDE_BEDROCK_ACCOUNT:-}" ]]; then
   if interactive; then
     echo "AWS account for this Amazon Bedrock session:" >&2
-    echo "  1) data-science  [default]  — Opus 4.6 / Sonnet 4.6 (Opus 4.8 & Sonnet 5 quota pending)" >&2
-    echo "  2) apps-prd      (prod)     — Opus 4.8 / Sonnet 5 live" >&2
+    echo "  1) data-science  [default]  — Opus 4.6 / Sonnet 4.6 (Opus 5 & Sonnet 5 quota pending)" >&2
+    echo "  2) apps-prd      (prod)     — Opus 5 / Sonnet 5 live" >&2
     printf "Account [1]: " >&2; read -r _a || _a=""
     case "$_a" in 2 | apps-prd | prd | prod) CLAUDE_BEDROCK_ACCOUNT="apps-prd" ;; *) CLAUDE_BEDROCK_ACCOUNT="data-science" ;; esac
   else
@@ -94,26 +94,26 @@ fi
 # --- Account-aware model set + /model picker descriptions ------------------
 # The NAME shown in /model stays the raw us.anthropic.* inference-profile ID
 # (unambiguous evidence you're on Bedrock). _DESCRIPTION labels each row's origin.
-# Availability differs per account — see the header. When data-science's Opus 4.8 /
+# Availability differs per account — see the header. When data-science's Opus 5 /
 # Sonnet 5 quota lands, promote them to the defaults here (and drop the "pending").
 case "$account" in
   apps-prd)
     refresh_layer_default="apps-prd/us-east-1/notifications"
-    default_model="us.anthropic.claude-opus-4-8"
-    opus="us.anthropic.claude-opus-4-8";                 opus_desc="Amazon Bedrock · apps-prd account (most capable Opus)"
+    default_model="us.anthropic.claude-opus-5"
+    opus="us.anthropic.claude-opus-5";                   opus_desc="Amazon Bedrock · apps-prd account (most capable Opus)"
     sonnet="us.anthropic.claude-sonnet-5";               sonnet_desc="Amazon Bedrock · apps-prd account (balanced)"
     haiku="us.anthropic.claude-haiku-4-5-20251001-v1:0"; haiku_desc="Amazon Bedrock · apps-prd account (fast, low-cost)"
     fable="us.anthropic.claude-fable-5";                 fable_desc="Amazon Bedrock · apps-prd account (Fable 5 — most capable, premium; needs provider_data_share opt-in)"
-    custom="us.anthropic.claude-opus-4-6-v1";            custom_desc="Amazon Bedrock · apps-prd account (Opus 4.6 fallback)"
+    custom="us.anthropic.claude-opus-4-8";               custom_desc="Amazon Bedrock · apps-prd account (Opus 4.8 fallback)"
     ;;
   data-science)
     refresh_layer_default="data-science/us-east-1/bedrock-agentcore"
-    default_model="us.anthropic.claude-opus-4-6-v1"      # Opus 4.8 quota still pending in this account
-    opus="us.anthropic.claude-opus-4-6-v1";              opus_desc="Amazon Bedrock · data-science account (Opus 4.6; 4.8 quota pending)"
+    default_model="us.anthropic.claude-opus-4-6-v1"      # Opus 5 quota still pending in this account
+    opus="us.anthropic.claude-opus-4-6-v1";              opus_desc="Amazon Bedrock · data-science account (Opus 4.6 — deprecated; Opus 5 quota pending)"
     sonnet="us.anthropic.claude-sonnet-4-6";             sonnet_desc="Amazon Bedrock · data-science account (Sonnet 4.6; 5 quota pending)"
     haiku="us.anthropic.claude-haiku-4-5-20251001-v1:0"; haiku_desc="Amazon Bedrock · data-science account (fast, low-cost)"
     fable="us.anthropic.claude-fable-5";                 fable_desc="Amazon Bedrock · data-science account (Fable 5 — quota pending; also needs provider_data_share opt-in)"
-    custom="us.anthropic.claude-opus-4-8";               custom_desc="Amazon Bedrock · data-science account (Opus 4.8 — quota pending)"
+    custom="us.anthropic.claude-opus-5";                 custom_desc="Amazon Bedrock · data-science account (Opus 5 — quota pending)"
     ;;
   *)
     echo "ERROR: unknown CLAUDE_BEDROCK_ACCOUNT '$account' (expected: data-science | apps-prd)." >&2

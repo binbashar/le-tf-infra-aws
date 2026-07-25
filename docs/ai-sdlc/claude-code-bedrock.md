@@ -99,8 +99,8 @@ the credential-refresh layer. Non-interactively (or under `-p`) it uses the env 
 
 | Account | Models available today | Default role |
 | --- | --- | --- |
-| **`data-science`** (default) | Opus 4.6 / Sonnet 4.6 / Haiku 4.5 — **Opus 4.8, Sonnet 5 & Fable 5 quota pending** (§5) | `devops` |
-| **`apps-prd`** (prod) | **Opus 4.8 / Sonnet 5** / Haiku 4.5 — live today; **Fable 5 live after the §5.1 data-retention opt-in** | `devops` |
+| **`data-science`** (default) | Opus 4.6 *(deprecated)* / Sonnet 4.6 / Haiku 4.5 — **Opus 5, Sonnet 5 & Fable 5 quota pending** (§5) | `devops` |
+| **`apps-prd`** (prod) | **Opus 5 / Sonnet 5** / Haiku 4.5 — live today; **Fable 5 live after the §5.1 data-retention opt-in** | `devops` |
 
 Not everyone has DevOps (some users only have DataScientist, etc.), so the role is a
 choice too. The launcher validates `bb-<account>-<role>` against your
@@ -149,18 +149,18 @@ ID (unambiguous evidence you're on Bedrock, not the native API). Example rows fo
 | Picker row (name — description) | Driven by |
 | --- | --- |
 | `us.anthropic.claude-sonnet-5` — *Amazon Bedrock · apps-prd account (balanced)* | `ANTHROPIC_DEFAULT_SONNET_MODEL` + `_DESCRIPTION` |
-| `us.anthropic.claude-opus-4-8` — *Amazon Bedrock · apps-prd account (most capable Opus)* | `ANTHROPIC_DEFAULT_OPUS_MODEL` + `_DESCRIPTION` |
+| `us.anthropic.claude-opus-5` — *Amazon Bedrock · apps-prd account (most capable Opus)* | `ANTHROPIC_DEFAULT_OPUS_MODEL` + `_DESCRIPTION` |
 | `us.anthropic.claude-haiku-…` — *Amazon Bedrock · apps-prd account (fast, low-cost)* | `ANTHROPIC_DEFAULT_HAIKU_MODEL` + `_DESCRIPTION` |
 | `us.anthropic.claude-fable-5` — *Amazon Bedrock · apps-prd account (Fable 5 — most capable, premium; needs provider_data_share opt-in)* | `ANTHROPIC_DEFAULT_FABLE_MODEL` + `_DESCRIPTION` |
-| `us.anthropic.claude-opus-4-6-v1` — *Amazon Bedrock · apps-prd account (Opus 4.6 fallback)* | `ANTHROPIC_CUSTOM_MODEL_OPTION` trio |
+| `us.anthropic.claude-opus-4-8` — *Amazon Bedrock · apps-prd account (Opus 4.8 fallback)* | `ANTHROPIC_CUSTOM_MODEL_OPTION` trio |
 
 **Fable is a first-class tier slot** (`ANTHROPIC_DEFAULT_FABLE_MODEL`) alongside Opus /
 Sonnet / Haiku — so it gets its own always-visible row **without** spending the single
-custom slot (which still holds the Opus 4.6 fallback). Selecting it, however, is gated
-on the account's data-retention mode — see **§5.1**.
+custom slot (which holds the previous-generation Opus fallback — Opus 4.8). Selecting it,
+however, is gated on the account's data-retention mode — see **§5.1**.
 
 A `data-science` session shows the same shape with that account's models (Opus 4.6 /
-Sonnet 4.6, Fable 5 marked "quota pending", plus Opus 4.8 as a "quota pending" custom
+Sonnet 4.6, Fable 5 marked "quota pending", plus Opus 5 as a "quota pending" custom
 row). There is exactly **one** custom slot: `ANTHROPIC_CUSTOM_MODEL_OPTION` (no numbered
 or array variant). For several *extra* non-tier models the mechanism is the
 `availableModels` / `modelOverrides` settings keys, but those live in a settings file
@@ -169,11 +169,11 @@ dual-mode wrapper.
 
 **Bedrock model-ID caveat:** IDs use the cross-region inference-profile form (`us.`
 prefix), but the **suffix is inconsistent across versions — don't extrapolate one ID
-from another.** Current-generation models are bare — Opus 4.8
-(`us.anthropic.claude-opus-4-8`), Sonnet 5 (`us.anthropic.claude-sonnet-5`) — while
-older ones carry suffixes: Opus 4.6 a `-v1`, Opus 4.5 a dated `-vN:0`, Haiku 4.5
-likewise (`us.anthropic.claude-haiku-4-5-20251001-v1:0`). Always confirm from the
-account:
+from another.** Current-generation models are bare — Opus 5
+(`us.anthropic.claude-opus-5`), Opus 4.8 (`us.anthropic.claude-opus-4-8`), Sonnet 5
+(`us.anthropic.claude-sonnet-5`) — while older ones carry suffixes: Opus 4.6 a `-v1`,
+Opus 4.5 a dated `-vN:0`, Haiku 4.5 likewise
+(`us.anthropic.claude-haiku-4-5-20251001-v1:0`). Always confirm from the account:
 
 ```bash
 aws bedrock list-inference-profiles --region us-east-1 --profile bb-<account>-devops \
@@ -193,11 +193,11 @@ principal in the account with `bedrock:InvokeModel*` can consume the model. Per
 
 Both `bedrock:*` grants are conditioned on `aws:RequestedRegion ∈
 {us-east-1, us-east-2, us-west-2}`, which covers the regions the `us.` cross-region
-inference profiles route to — so IAM is **not** what blocks a new model (verified: the
-DevOps role invokes Sonnet 4.6 / Opus 4.6 / Haiku 4.5 today). What's missing for a new
-model is gate 1/2 below, not IAM.
+inference profiles route to — so IAM is **not** what blocks a new model (verified: the same
+DevOps role invokes Opus 5 / Sonnet 5 in `apps-prd` and Opus 4.6 / Sonnet 4.6 in
+`data-science` today). What's missing for a new model is gate 1/2 below, not IAM.
 
-## 5. Model availability — the four gates (checked 2026-07-18, us-east-1)
+## 5. Model availability — the four gates (checked 2026-07-25, us-east-1)
 
 Four **independent** gates must all pass to invoke a model. A model can clear some and
 still refuse:
@@ -214,15 +214,19 @@ still refuse:
 
 | Model | `apps-prd` | `data-science` |
 | --- | --- | --- |
-| Opus 4.6, Sonnet 4.6, Haiku 4.5 | ✅ | ✅ |
-| **Opus 4.8** | ✅ | ⏳ **quota pending** |
+| Opus 4.6 *(deprecated — superseded by Opus 5)*, Sonnet 4.6, Haiku 4.5 | ✅ | ✅ |
+| **Opus 5** | ✅ | ⏳ **quota pending** |
+| Opus 4.8 *(previous-gen fallback — the custom `/model` row)* | ✅ | ⏳ **quota pending** |
 | **Sonnet 5** | ✅ | ⏳ **quota pending** |
 | **Fable 5** | ✅ **(after §5.1 opt-in — done 2026-07-18)** | ❌ quota pending **+** needs §5.1 opt-in |
 
-So **use `apps-prd` for Opus 4.8 / Sonnet 5 / Fable 5 today**; in `data-science` the launcher's
+Every ✅/⏳ above was re-verified on **2026-07-25** with a one-token `bedrock-runtime converse`
+per model per account — the only check that exercises all four gates at once.
+
+So **use `apps-prd` for Opus 5 / Sonnet 5 / Fable 5 today**; in `data-science` the launcher's
 `us.` profiles return *"not available for this account"* — a gate-1/2 (access/quota)
 block, **not** IAM. Heads-up: the pending Service Quotas cases you may see are for the
-separate **`global.*`** family (*Global cross-region* Opus 4.8 / Sonnet 5), which the
+separate **`global.*`** family (*Global cross-region* Opus 5 / Opus 4.8 / Sonnet 5), which the
 launcher does **not** use (and which the region condition blocks by design, §4) — so
 they won't unblock the launcher on their own. Turning on data-science's **`us.`**
 models is its own model-access + `us.`-quota step. Check a quota with:
@@ -272,7 +276,7 @@ what actually happens to a given model's data:
 | Model (this launcher) | `allowed_modes` | Under account = `provider_data_share` |
 | --- | --- | --- |
 | **Fable 5 / Mythos 5** | `["provider_data_share"]` | **Retained + shared with Anthropic** (≤30 d, trust & safety) — this is the whole point |
-| Opus 4.6/4.8, Sonnet 4.6/5, Haiku 4.5 | `["default","provider_data_share"]` | **AWS-only** — retained by AWS for abuse detection, **never shared with Anthropic** |
+| Opus 5, Opus 4.6/4.8, Sonnet 4.6/5, Haiku 4.5 | `["default","provider_data_share"]` | **AWS-only** — retained by AWS for abuse detection, **never shared with Anthropic** |
 
 So on `apps-prd` the **CI `@claude` PR reviewer runs on Sonnet, which is `default`-capable
 → its prompts/source stay AWS-only and are NOT shared with Anthropic.** The account-wide
@@ -352,7 +356,7 @@ Full reference: [Bedrock data-retention docs](https://docs.aws.amazon.com/bedroc
 
 | Symptom | Root cause | Fix |
 | --- | --- | --- |
-| `AccessDeniedException: <model> is not available for this account` (or a console `InvokeModelWithResponseStream` error) | Model **access or quota** not granted for that model **in that account** (gate 1/2, §5) — **not** IAM | Use `apps-prd` (has Opus 4.8 / Sonnet 5), or enable access + wait for the data-science quota case |
+| `AccessDeniedException: <model> is not available for this account` (or a console `InvokeModelWithResponseStream` error) | Model **access or quota** not granted for that model **in that account** (gate 1/2, §5) — **not** IAM | Use `apps-prd` (has Opus 5 / Sonnet 5), or enable access + wait for the data-science quota case |
 | `400 data retention mode 'default' is not available for this model` (Fable 5 / Mythos 5 only) | Account not opted into `provider_data_share` (gate 4, §5.1) — the model is `ACTIVE`; it's policy-gated, not missing | Set the **account** data-retention mode to `provider_data_share` per §5.1 — **account-wide setting** (sharing is per-model; only Fable/Mythos share — §5.1 table), get sign-off first |
 | `There's an issue with the selected model (us.anthropic....)`; debug log shows `dispatching to firstParty` | `CLAUDE_CODE_USE_BEDROCK` pinned/overridden by a settings `env` block — the Bedrock model ID went to the native Anthropic API (404) | Remove the key from every settings `env` block (§1) |
 | `403 The security token included in the request is invalid` | `AWS_PROFILE` pinned in a settings `env` block to a stale profile — it outranks the wrapper | Remove the `AWS_PROFILE` pin (§1); refresh credentials |
