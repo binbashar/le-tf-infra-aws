@@ -169,9 +169,10 @@ dual-mode wrapper.
 
 **Bedrock model-ID caveat:** IDs use the cross-region inference-profile form (`us.`
 prefix), but the **suffix is inconsistent across versions — don't extrapolate one ID
-from another.** Current-generation models are bare — Opus 5
-(`us.anthropic.claude-opus-5`), Opus 4.8 (`us.anthropic.claude-opus-4-8`), Sonnet 5
-(`us.anthropic.claude-sonnet-5`) — while older ones carry suffixes: Opus 4.6 a `-v1`,
+from another.** Both lists below are illustrative, not exhaustive. Current-generation
+models are bare — Opus 5 (`us.anthropic.claude-opus-5`), Opus 4.8
+(`us.anthropic.claude-opus-4-8`), Sonnet 5 (`us.anthropic.claude-sonnet-5`), Fable 5
+(`us.anthropic.claude-fable-5`) — while older ones carry suffixes: Opus 4.6 a `-v1`,
 Opus 4.5 a dated `-vN:0`, Haiku 4.5 likewise
 (`us.anthropic.claude-haiku-4-5-20251001-v1:0`). Always confirm from the account:
 
@@ -276,7 +277,7 @@ what actually happens to a given model's data:
 | Model (this launcher) | `allowed_modes` | Under account = `provider_data_share` |
 | --- | --- | --- |
 | **Fable 5 / Mythos 5** | `["provider_data_share"]` | **Retained + shared with Anthropic** (≤30 d, trust & safety) — this is the whole point |
-| Opus 5, Opus 4.6/4.8, Sonnet 4.6/5, Haiku 4.5 | `["default","provider_data_share"]` | **AWS-only** — retained by AWS for abuse detection, **never shared with Anthropic** |
+| Opus 5, Opus 4.6/4.8, Sonnet 4.6/5, Haiku 4.5 | `["default","provider_data_share"]` | **AWS-only** — the model *accepts* `provider_data_share` but never requires data to leave AWS's boundary; may be retained by AWS for abuse detection, **never shared with Anthropic** |
 
 So on `apps-prd` the **CI `@claude` PR reviewer runs on Sonnet, which is `default`-capable
 → its prompts/source stay AWS-only and are NOT shared with Anthropic.** The account-wide
@@ -285,8 +286,14 @@ request that a safety classifier declines and that falls back to Opus 4.8 via fa
 credit follows **Opus 4.8's** AWS-only rules for the fallback invocation, not Fable 5's.)
 
 **Why only these two models.** Every Claude model on Bedrock declares which retention
-modes it permits via `allowed_modes` (table above). Older models allow `default`, so they
-work under any account setting **and never leave AWS**. **Fable 5 and Mythos 5 declare
+modes it permits via `allowed_modes` (table above). Every other model in this launcher —
+**including Opus 5, despite being newer than Fable 5** — allows `default`, so it works
+under any account setting **and never leaves AWS**. AWS's canonical list of models that
+*require* retention names only Fable 5 and Mythos 5
+([abuse detection](https://docs.aws.amazon.com/bedrock/latest/userguide/abuse-detection.html);
+[data retention](https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html),
+which uses **Opus 4.8** as its worked example of a `["default","provider_data_share"]`
+model whose data "is retained by AWS only"). **Fable 5 and Mythos 5 declare
 `allowed_modes: ["provider_data_share"]` only** — they refuse `default` (and `none`),
 which is the trust-&-safety gate for frontier access.
 

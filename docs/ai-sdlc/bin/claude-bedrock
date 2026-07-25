@@ -56,8 +56,8 @@ interactive() { [[ "$headless" == 0 && -t 0 && -t 1 ]]; }
 if [[ -z "${CLAUDE_BEDROCK_ACCOUNT:-}" ]]; then
   if interactive; then
     echo "AWS account for this Amazon Bedrock session:" >&2
-    echo "  1) data-science  [default]  — Opus 4.6 / Sonnet 4.6 (Opus 5 & Sonnet 5 quota pending)" >&2
-    echo "  2) apps-prd      (prod)     — Opus 5 / Sonnet 5 live" >&2
+    echo "  1) data-science  [default]  — Opus 4.6 / Sonnet 4.6 (Opus 5, Sonnet 5 & Fable 5 quota pending)" >&2
+    echo "  2) apps-prd      (prod)     — Opus 5 / Sonnet 5 / Fable 5 live" >&2
     printf "Account [1]: " >&2; read -r _a || _a=""
     case "$_a" in 2 | apps-prd | prd | prod) CLAUDE_BEDROCK_ACCOUNT="apps-prd" ;; *) CLAUDE_BEDROCK_ACCOUNT="data-science" ;; esac
   else
@@ -95,7 +95,8 @@ fi
 # The NAME shown in /model stays the raw us.anthropic.* inference-profile ID
 # (unambiguous evidence you're on Bedrock). _DESCRIPTION labels each row's origin.
 # Availability differs per account — see the header. When data-science's Opus 5 /
-# Sonnet 5 quota lands, promote them to the defaults here (and drop the "pending").
+# Sonnet 5 quota lands, promote them to the defaults here (and drop the "pending");
+# its Fable 5 needs that quota *and* the account-wide provider_data_share opt-in above.
 case "$account" in
   apps-prd)
     refresh_layer_default="apps-prd/us-east-1/notifications"
