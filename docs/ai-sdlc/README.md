@@ -45,7 +45,7 @@ These run on every PR with no human action required.
 
 | Workflow | File | Purpose |
 | --- | --- | --- |
-| **Test and Lint** | [`.github/workflows/test-static-code-and-linting.yml`](../../.github/workflows/test-static-code-and-linting.yml) | Runs `make pre-commit` → `pre-commit run --all-files` (terraform_fmt, pretty-format-json, trailing-whitespace, private-key detection). |
+| **Test and Lint** | [`.github/workflows/test-static-code-and-linting.yml`](../../.github/workflows/test-static-code-and-linting.yml) | Runs the pre-commit hooks (terraform_fmt, pretty-format-json, trailing-whitespace, private-key detection). On a branch push it checks **only the files changed since the merge-base with `master`**, so an unrelated violation elsewhere can't fail your PR; a weekly schedule and `workflow_dispatch` still run the full `make pre-commit` → `pre-commit run --all-files` sweep to catch drift in untouched layers. |
 | **Infracost** | [`.github/workflows/infracost.yml`](../../.github/workflows/infracost.yml) | Posts a monthly cost-diff comment per layer ([`infracost.yml`](../../infracost.yml)). |
 | **GitGuardian** | GitHub App | Secret scanning across the diff. |
 
