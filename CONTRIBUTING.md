@@ -17,6 +17,18 @@ Please note we have a code of conduct, please follow it in all your interactions
    do not have permission to do that, you may request the second reviewer to merge it for you.
 
 
+### AI agent contributions
+
+If you are configuring an AI agent to open PRs against this repo — Claude Code, the
+`@claude` PR assistant, or the `release-management` plugin — it needs a GitHub token
+with the right scopes. `Contents: RW` is required for anything that pushes a branch,
+and GitHub's `403 Resource not accessible by personal access token` has three distinct
+causes that look identical from the outside.
+
+Scope tables, the resource-owner requirement, and how to discriminate those 403s:
+[`docs/ai-sdlc/github-token-scopes.md`](docs/ai-sdlc/github-token-scopes.md). The
+end-to-end review flow is in [`docs/ai-sdlc/README.md`](docs/ai-sdlc/README.md).
+
 ### Collaborate on fixes for security vulnerabilities in private forks
 
 Working in the open means that it is impossible to hide things. And yet, sometimes you will want

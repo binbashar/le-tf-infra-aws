@@ -8,6 +8,11 @@ runs at each step, and how the on-demand `@claude` assistant routes through
 > through Bedrock (data-science account) on demand — see
 > [`claude-code-bedrock.md`](claude-code-bedrock.md).
 
+> **Agent GitHub access:** which token and scopes an AI agent needs to open a PR
+> here, and how to tell apart the three causes of GitHub's ambiguous `403
+> Resource not accessible by personal access token` — see
+> [`github-token-scopes.md`](github-token-scopes.md).
+
 ![AI-Driven SDLC overview](../diagrams/ai-sdlc.png)
 
 > Source: [`docs/diagrams/ai-sdlc.py`](../diagrams/ai-sdlc.py) — re-render with
@@ -118,6 +123,7 @@ Maintainers read the AI + CI findings on the PR, then:
 ## Related references
 
 - Project conventions and commands: [`CLAUDE.md`](../../CLAUDE.md)
+- GitHub token scopes for AI agents: [`github-token-scopes.md`](github-token-scopes.md)
 - Workflows: [`.github/workflows/`](../../.github/workflows/)
 - Diagram sources & rendered PNGs: [`docs/diagrams/`](../diagrams/)
 - `@claude` action: [anthropics/claude-code-action](https://github.com/anthropics/claude-code-action)
