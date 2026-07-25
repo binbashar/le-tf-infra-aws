@@ -19,16 +19,27 @@ You are a specialized agent for cost optimization and financial governance in th
 ### OpenTofu & AWS MCP Servers - For Cost-Related Resources
 #### Before optimizing any resource:
 
-1. **Get AWS resource documentation:**
+1. **Get AWS resource documentation.** Resolve the provider library **first**, then pass
+   the id it returns to `query-docs`. Pick the library by resource prefix — `aws_*`
+   (`hashicorp/aws`) and `awscc_*` (`hashicorp/awscc`) are separate providers with
+   separate docs, so resolving one and querying the other returns the wrong schema:
    ```text
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="Terraform AWS Cloud Control Provider",   # for awscc_* resources
+     query="awscc_<service> resource arguments"
+   )
    mcp__plugin_context7_context7__query-docs(
-     libraryId="<provider id from resolve-library-id>",
+     libraryId="<id returned by resolve-library-id>",
      query="awscc_<service> resource arguments and attributes"
    )
    ```
    ```text
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="Terraform AWS Provider",                 # for aws_* resources
+     query="aws_<service> resource arguments"
+   )
    mcp__plugin_context7_context7__query-docs(
-     libraryId="<provider id from resolve-library-id>",
+     libraryId="<id returned by resolve-library-id>",
      query="aws_<service> resource arguments and attributes"
    )
    ```
@@ -180,10 +191,15 @@ resource "aws_rds_cluster" "example" {
 ## Cost Monitoring Implementation
 
 ### 1. Budget Creation
-**Use MCP for Cost Explorer API:**
+**Use MCP for the AWS Budgets resource** (this is `awscc_budgets_budget`, not Cost
+Explorer — resolve the AWSCC provider library first):
 ```text
+mcp__plugin_context7_context7__resolve-library-id(
+  libraryName="Terraform AWS Cloud Control Provider",
+  query="awscc_budgets_budget resource arguments"
+)
 mcp__plugin_context7_context7__query-docs(
-  libraryId="<provider id from resolve-library-id>",
+  libraryId="<id returned by resolve-library-id>",
   query="awscc_budgets_budget resource arguments and attributes"
 )
 ```

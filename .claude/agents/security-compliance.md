@@ -19,16 +19,28 @@ You are a specialized agent for security configuration, compliance, and governan
 ### OpenTofu & AWS MCP Servers - Security Resources Documentation
 #### Before implementing any security service:
 
-1. **Get security service documentation (prefer AWSCC first):**
+1. **Get security service documentation (prefer AWSCC first).** Resolve the provider
+   library **first**, then pass the id it returns to `query-docs`. Pick the library by
+   resource prefix — `aws_*` (`hashicorp/aws`) and `awscc_*` (`hashicorp/awscc`) are
+   separate providers with separate docs, so resolving one and querying the other
+   returns the wrong schema:
    ```text
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="Terraform AWS Cloud Control Provider",   # for awscc_* resources
+     query="awscc_<security_service> resource arguments"
+   )
    mcp__plugin_context7_context7__query-docs(
-     libraryId="<provider id from resolve-library-id>",
+     libraryId="<id returned by resolve-library-id>",
      query="awscc_<security_service> resource arguments and attributes"
    )
    ```
    ```text
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="Terraform AWS Provider",                 # for aws_* resources
+     query="aws_<security_service> resource arguments"
+   )
    mcp__plugin_context7_context7__query-docs(
-     libraryId="<provider id from resolve-library-id>",
+     libraryId="<id returned by resolve-library-id>",
      query="aws_<security_service> resource arguments and attributes"
    )
    ```

@@ -17,18 +17,22 @@ You are a specialized agent for managing dependency updates via Renovate and han
 
 ## MCP Integration (REQUIRED)
 ### ALWAYS Check Upstream Docs Before Bumping a Version
-1. **Resolve the provider/module docs library once:**
+1. **Resolve the docs library for the provider you are bumping.** Pick it by resource
+   prefix — `aws_*` (`hashicorp/aws`) and `awscc_*` (`hashicorp/awscc`) are separate
+   providers, released on separate version lines, with separate docs. Resolving one and
+   querying the other reports breaking changes from the wrong provider:
    ```text
    mcp__plugin_context7_context7__resolve-library-id(
-     libraryName="Terraform AWS Provider",
-     query="<resource> arguments changed in <new_version>"
+     libraryName="Terraform AWS Provider",                 # "Terraform AWS Cloud Control
+     query="aws_<resource> arguments changed in <new_version>"   # Provider" for awscc_*
    )
    ```
-2. **Check resource documentation for breaking changes:**
+2. **Check resource documentation for breaking changes**, querying the library resolved
+   for that same provider:
    ```text
    mcp__plugin_context7_context7__query-docs(
      libraryId="<id returned by resolve-library-id>",
-     query="awscc_<resource> / aws_<resource> arguments removed or renamed in <new_version>"
+     query="aws_<resource> arguments removed or renamed in <new_version>"
    )
    ```
 3. **Review module updates** — the Binbash Leverage module library is authoritative:

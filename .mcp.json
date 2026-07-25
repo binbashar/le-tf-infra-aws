@@ -11,7 +11,8 @@
         "AWS_PROFILE": "bb-shared-devops",
         "AWS_REGION": "us-east-1",
         "AWS_SHARED_CREDENTIALS_FILE": "${HOME}/.aws/bb/credentials",
-        "FASTMCP_LOG_LEVEL": "ERROR"
+        "FASTMCP_LOG_LEVEL": "ERROR",
+        "READ_OPERATIONS_ONLY": "true"
       },
       "type": "stdio"
     },

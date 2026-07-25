@@ -19,17 +19,28 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
 ### Provider Documentation - Use for All Provider Issues
 #### When debugging OpenTofu/Terraform errors:
 1. **Identify the resource/provider causing issues**
-2. **Get current provider documentation:**
-   ```
+2. **Get current provider documentation.** Pick the provider library by the failing
+   resource's prefix — `aws_*` (`hashicorp/aws`) and `awscc_*` (`hashicorp/awscc`) are
+   separate providers with separate docs, so resolving one and querying the other
+   returns the wrong schema and sends you chasing an argument that never existed:
+   ```text
    mcp__plugin_context7_context7__resolve-library-id(
-     libraryName="Terraform AWS Provider",
-     query="aws_<resource> / awscc_<resource> arguments"
+     libraryName="Terraform AWS Provider",                 # for aws_* resources
+     query="aws_<resource> arguments"
    )
-   ```
-   ```
    mcp__plugin_context7_context7__query-docs(
      libraryId="<id returned by resolve-library-id>",
      query="aws_<resource> argument constraints and common errors"
+   )
+   ```
+   ```text
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="Terraform AWS Cloud Control Provider",   # for awscc_* resources
+     query="awscc_<resource> arguments"
+   )
+   mcp__plugin_context7_context7__query-docs(
+     libraryId="<id returned by resolve-library-id>",
+     query="awscc_<resource> argument constraints and common errors"
    )
    ```
 3. **Check the underlying AWS service behaviour, quotas and error codes:**

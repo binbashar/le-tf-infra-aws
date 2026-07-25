@@ -31,14 +31,22 @@ mcp__plugin_context7_context7__query-docs(libraryId="<id>", query="<what to look
 
 ### Resource Documentation
 #### When documenting OpenTofu/Terraform resources:
-```
+Resolve the provider library **first**, then pass the id it returns to `query-docs`.
+Pick the library by resource prefix — `aws_*` (`hashicorp/aws`) and `awscc_*`
+(`hashicorp/awscc`) are separate providers with separate docs, so resolving one and
+querying the other returns the wrong schema:
+```text
+mcp__plugin_context7_context7__resolve-library-id(
+  libraryName="Terraform AWS Cloud Control Provider",   # "Terraform AWS Provider" for aws_*
+  query="awscc_<service> resource arguments"
+)
 mcp__plugin_context7_context7__query-docs(
-  libraryId="<provider id from resolve-library-id>",
-  query="awscc_<service> / aws_<service> resource arguments and attributes"
+  libraryId="<id returned by resolve-library-id>",
+  query="awscc_<service> resource arguments and attributes"
 )
 ```
 #### For the underlying AWS service behaviour:
-```
+```text
 mcp__aws-documentation__search_documentation(search_phrase="<service> <topic>")
 mcp__aws-documentation__read_documentation(url="<doc-url>")
 ```
@@ -100,9 +108,9 @@ Security configurations and compliance notes.
 
 ### 2. Architecture Documentation
 #### Use MCP for diagramming tools:
-```
+```text
 mcp__plugin_context7_context7__resolve-library-id(libraryName="Mermaid", query="diagram syntax")
-mcp__plugin_context7_context7__query-docs(libraryId="/mermaid-js/mermaid", query="graph and flowchart syntax")
+mcp__plugin_context7_context7__query-docs(libraryId="<id returned by resolve-library-id>", query="graph and flowchart syntax")
 ```
 
 #### Mermaid Diagram Examples
@@ -291,20 +299,23 @@ vpc-diagram generate --vpc-id vpc-12345 --output network.svg
 
 ### 1. Mermaid Diagrams
 **Always use MCP for current syntax:**
-```
+```text
 mcp__plugin_context7_context7__resolve-library-id(libraryName="mermaid", query="<what to look up>")
+mcp__plugin_context7_context7__query-docs(libraryId="<id returned by resolve-library-id>", query="<what to look up>")
 ```
 
 ### 2. PlantUML for Complex Diagrams
 **Research detailed diagramming:**
-```
+```text
 mcp__plugin_context7_context7__resolve-library-id(libraryName="plantuml", query="<what to look up>")
+mcp__plugin_context7_context7__query-docs(libraryId="<id returned by resolve-library-id>", query="<what to look up>")
 ```
 
 ### 3. Markdown Best Practices
 **Get markdown documentation:**
-```
+```text
 mcp__plugin_context7_context7__resolve-library-id(libraryName="markdown", query="<what to look up>")
+mcp__plugin_context7_context7__query-docs(libraryId="<id returned by resolve-library-id>", query="<what to look up>")
 ```
 
 ## Version Control for Documentation

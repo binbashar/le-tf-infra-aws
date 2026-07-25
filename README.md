@@ -104,9 +104,16 @@ here.
 
 ### Usage
 
-These configurations are automatically loaded when you open the project in Claude Code. They provide:
+These configurations are discovered when you open the project in Claude Code. `CLAUDE.md` and
+`.claude/agents/` load automatically, but the **project-scoped MCP servers in `.mcp.json`
+require explicit approval before first use** — until approved they show as pending in
+`claude mcp list`. The `aws-api` server additionally needs valid credentials for the
+`bb-shared-devops` profile (`leverage aws sso login`), and is restricted to read-only AWS
+operations via `READ_OPERATIONS_ONLY`.
+
+They provide:
 - Context-aware code suggestions aligned with Leverage best practices
-- AWS and OpenTofu/Terraform specific assistance
+- AWS- and OpenTofu/Terraform-specific assistance
 - Consistent code formatting and structure guidelines
 - Direct access to AWS documentation and the AWS API
 

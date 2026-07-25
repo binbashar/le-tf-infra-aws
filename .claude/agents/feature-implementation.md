@@ -19,16 +19,28 @@ You are a specialized agent for implementing new features and AWS services in th
 ### OpenTofu & AWS MCP Servers - MANDATORY for All Resources
 #### Before implementing any AWS service:
 
-1. **Search AWS provider documentation (preferred AWSCC first):**
+1. **Search AWS provider documentation (preferred AWSCC first).** Resolve the provider
+   library **first**, then pass the id it returns to `query-docs`. Pick the library by
+   resource prefix — `aws_*` (`hashicorp/aws`) and `awscc_*` (`hashicorp/awscc`) are
+   separate providers with separate docs, so resolving one and querying the other
+   returns the wrong schema:
    ```text
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="Terraform AWS Cloud Control Provider",   # for awscc_* resources
+     query="awscc_<service> resource arguments"
+   )
    mcp__plugin_context7_context7__query-docs(
-     libraryId="<provider id from resolve-library-id>",
+     libraryId="<id returned by resolve-library-id>",
      query="awscc_<service> resource arguments and attributes"
    )
    ```
    ```text
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="Terraform AWS Provider",                 # for aws_* resources
+     query="aws_<service> resource arguments"
+   )
    mcp__plugin_context7_context7__query-docs(
-     libraryId="<provider id from resolve-library-id>",
+     libraryId="<id returned by resolve-library-id>",
      query="aws_<service> resource arguments and attributes"
    )
    ```
