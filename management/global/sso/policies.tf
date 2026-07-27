@@ -132,13 +132,9 @@ data "aws_iam_policy_document" "devops" {
       "bcm-pricing-calculator:CreateWorkloadEstimate",
       "bcm-pricing-calculator:GetWorkloadEstimate",
       "bcm-pricing-calculator:UpdateWorkloadEstimate",
-      "bcm-pricing-calculator:DeleteWorkloadEstimate",
       "bcm-pricing-calculator:ListWorkloadEstimates",
       "bcm-pricing-calculator:CreateWorkloadEstimateUsage",
-      "bcm-pricing-calculator:ListWorkloadEstimateUsage",
-      "bcm-pricing-calculator:BatchCreateWorkloadEstimateUsage",
-      "bcm-pricing-calculator:BatchUpdateWorkloadEstimateUsage",
-      "bcm-pricing-calculator:BatchDeleteWorkloadEstimateUsage"
+      "bcm-pricing-calculator:ListWorkloadEstimateUsage"
     ]
     resources = ["*"]
     condition {
