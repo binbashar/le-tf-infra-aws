@@ -87,7 +87,7 @@ module "permission_sets" {
       relay_state                         = local.default_relay_state
       session_duration                    = local.default_session_duration
       tags                                = local.tags
-      inline_policy                       = ""
+      inline_policy                       = data.aws_iam_policy_document.marketplace_buyer.json
       policy_attachments                  = ["arn:aws:iam::aws:policy/AWSMarketplaceManageSubscriptions"]
       customer_managed_policy_attachments = []
     },
