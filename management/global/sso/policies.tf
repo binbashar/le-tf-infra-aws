@@ -243,6 +243,19 @@ data "aws_iam_policy_document" "github_automation" {
 }
 
 #------------------------------------------------------------------------------
+# Marketplace Buyer
+#------------------------------------------------------------------------------
+data "aws_iam_policy_document" "marketplace_buyer" {
+  statement {
+    sid = "LicenseManagerReadAccess"
+    actions = [
+      "license-manager:ListReceivedLicenses",
+    ]
+    resources = ["*"]
+  }
+}
+
+#------------------------------------------------------------------------------
 # Data Scientist
 #------------------------------------------------------------------------------
 data "aws_iam_policy_document" "data_scientist" {
