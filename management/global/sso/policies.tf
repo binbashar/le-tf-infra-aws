@@ -144,15 +144,7 @@ data "aws_iam_policy_document" "devops" {
   statement {
     sid = "BcmPricingCalculatorGlobalAccess"
     actions = [
-      "bcm-pricing-calculator:CreateWorkloadEstimate",
-      "bcm-pricing-calculator:GetWorkloadEstimate",
-      "bcm-pricing-calculator:ListWorkloadEstimates",
-      "bcm-pricing-calculator:UpdateWorkloadEstimate",
-      "bcm-pricing-calculator:DeleteWorkloadEstimate",
-      "bcm-pricing-calculator:CreateWorkloadEstimateUsage",
-      "bcm-pricing-calculator:ListWorkloadEstimateUsage",
-      "bcm-pricing-calculator:UpdateWorkloadEstimateUsage",
-      "bcm-pricing-calculator:DeleteWorkloadEstimateUsage",
+      "bcm-pricing-calculator:*",
       "ce:*",
       "pricing:*",
       "billing:*"
