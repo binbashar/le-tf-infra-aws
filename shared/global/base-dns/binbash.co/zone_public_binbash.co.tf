@@ -53,25 +53,13 @@ resource "aws_route53_record" "CNAME_mkt_studio_binbash_co" {
 }
 
 #
-# Vercel-hosted endpoints. Each hostname is issued its own CNAME target, so
-# the two values differ by design and are not interchangeable.
+# Vercel-hosted endpoint. Vercel issues a per-hostname CNAME target, so this
+# value is specific to this hostname and is not interchangeable with another.
 #
 resource "aws_route53_record" "CNAME_hq_binbash_co" {
   zone_id = aws_route53_zone.public.id
   name    = "hq.binbash.co"
   records = ["7c298364b5aed262.vercel-dns-017.com."]
-  type    = "CNAME"
-  ttl     = 300
-}
-
-# NOTE: created out-of-band before being codified here, then imported into
-# state. Its value is intentionally written without the trailing dot to match
-# what Route 53 already holds — adding one would rewrite a live record for no
-# functional gain. Other records in this zone are dot-less for the same reason.
-resource "aws_route53_record" "CNAME_investor_binbash_co" {
-  zone_id = aws_route53_zone.public.id
-  name    = "investor.binbash.co"
-  records = ["a8cf64c6e339687a.vercel-dns-017.com"]
   type    = "CNAME"
   ttl     = 300
 }
