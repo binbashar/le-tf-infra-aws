@@ -53,11 +53,8 @@ resource "aws_route53_record" "CNAME_mkt_studio_binbash_co" {
 }
 
 #
-# le-binbash-hq-portal (Vercel) — two hostnames, one project.
-# `hq` is the primary going forward; `investor` is the legacy hostname kept
-# alive so existing links keep working, and will be turned into a redirect
-# once `hq` is verified. Each Vercel domain gets its own project-specific
-# CNAME target, so the two values differ by design.
+# Vercel-hosted endpoints. Each hostname is issued its own CNAME target, so
+# the two values differ by design and are not interchangeable.
 #
 resource "aws_route53_record" "CNAME_hq_binbash_co" {
   zone_id = aws_route53_zone.public.id
@@ -69,8 +66,8 @@ resource "aws_route53_record" "CNAME_hq_binbash_co" {
 
 # NOTE: created out-of-band before being codified here, then imported into
 # state. Its value is intentionally written without the trailing dot to match
-# what Route 53 already holds — adding one would make the import plan rewrite
-# a live production record for no functional gain.
+# what Route 53 already holds — adding one would rewrite a live record for no
+# functional gain. Other records in this zone are dot-less for the same reason.
 resource "aws_route53_record" "CNAME_investor_binbash_co" {
   zone_id = aws_route53_zone.public.id
   name    = "investor.binbash.co"
