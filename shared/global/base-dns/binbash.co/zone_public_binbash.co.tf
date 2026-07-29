@@ -53,6 +53,18 @@ resource "aws_route53_record" "CNAME_mkt_studio_binbash_co" {
 }
 
 #
+# Vercel-hosted endpoint. Vercel issues a per-hostname CNAME target, so this
+# value is specific to this hostname and is not interchangeable with another.
+#
+resource "aws_route53_record" "CNAME_hq_binbash_co" {
+  zone_id = aws_route53_zone.public.id
+  name    = "hq.binbash.co"
+  records = ["7c298364b5aed262.vercel-dns-017.com."]
+  type    = "CNAME"
+  ttl     = 300
+}
+
+#
 # MX records
 #
 resource "aws_route53_record" "MX_gmail_binbash_co" {
