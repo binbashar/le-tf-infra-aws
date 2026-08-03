@@ -6,10 +6,12 @@
 # echo at `/.ws`). The Ealenn chart had no extraEnv knob and never shipped WS.
 #
 # Deployed as native kubernetes_* resources rather than a chart — jmalloc
-# publishes only an image, not a chart. The `echo-server` namespace was
-# originally created by the Ealenn helm release with `create_namespace = true`
-# and persisted through the helm uninstall (helm doesn't delete namespaces),
-# so we leave it unmanaged here and reference it by string.
+# publishes only an image, not a chart. The `echo-server` namespace used to be
+# left unmanaged here: it had been created by the old Ealenn helm release with
+# `create_namespace = true` and survived the uninstall, so referencing it by
+# string happened to work. That assumption dies with the cluster — on a
+# rebuilt cluster the namespace simply isn't there and every resource below
+# fails to apply. It's managed here now so the layer stands up from scratch.
 #
 # Routing: exposed via the private nginx-ingress controller (internal NLB,
 # reachable only over VPN). externaldns-private creates the Route53 record in
@@ -54,12 +56,20 @@ locals {
   echo_server_labels    = { app = "echo-server" }
 }
 
+resource "kubernetes_namespace" "echo_server" {
+  count = var.demo_apps.echo_server.enabled ? 1 : 0
+
+  metadata {
+    name = local.echo_server_namespace
+  }
+}
+
 resource "kubernetes_deployment" "echo_server" {
   count = var.demo_apps.echo_server.enabled ? 1 : 0
 
   metadata {
     name      = "echo-server"
-    namespace = local.echo_server_namespace
+    namespace = kubernetes_namespace.echo_server[0].metadata[0].name
     labels    = local.echo_server_labels
   }
 
@@ -101,7 +111,7 @@ resource "kubernetes_service" "echo_server" {
 
   metadata {
     name      = "echo-server"
-    namespace = local.echo_server_namespace
+    namespace = kubernetes_namespace.echo_server[0].metadata[0].name
     labels    = local.echo_server_labels
   }
   spec {
@@ -127,7 +137,7 @@ resource "kubernetes_ingress_v1" "echo_server" {
 
   metadata {
     name      = "echo-server"
-    namespace = local.echo_server_namespace
+    namespace = kubernetes_namespace.echo_server[0].metadata[0].name
     # Legacy annotation pattern used elsewhere in this repo (e.g. argo-cd):
     # ingress-nginx-private was launched with --ingress-class=private-apps,
     # so the controller filters by this annotation rather than the modern
@@ -180,7 +190,7 @@ resource "kubernetes_manifest" "echo_server_route_eg" {
     kind       = "HTTPRoute"
     metadata = {
       name      = "echo-server-eg"
-      namespace = "echo-server"
+      namespace = kubernetes_namespace.echo_server[0].metadata[0].name
     }
     spec = {
       parentRefs = [{
