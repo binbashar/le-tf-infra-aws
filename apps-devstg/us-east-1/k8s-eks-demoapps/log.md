@@ -572,3 +572,74 @@ directly.
 - Clean `tofu plan`, no drift.
 - All three Gateways carry distinct NLBs; total internal NLB count for
   this layer: 3 (nginx, kgateway, EG).
+
+# Day 3 — 2026-08-03
+
+## Outcome
+
+Full stand-up from a cold start (cluster had been torn down and NAT disabled
+by commit `5b0165ce`). Steps 1–5 applied; Step 6 (`k8s-workloads`) skipped
+per request. Standard `terraform.tfvars` component set, no local overrides.
+
+| Step | Layer | Result |
+|---|---|---|
+| 1 | `network` | 3 added (EIP + NAT GW + private route) — `nat-0deaf887913e16bfb` |
+| 2 | `cluster` | 50 added, ~26 min. EKS 1.31, 3 nodes Ready first try |
+| 3 | `identities` | 37 added |
+| 4 | `addons` | 4 added (coredns, kube-proxy, vpc-cni, ebs-csi) |
+| 5 | `k8s-components` | 3 passes, 34 resources; final `tofu plan` clean |
+
+No spot-capacity or cert-manager scheduling issues this run — the node-group
+hardening from `d8e9937e` appears to be holding.
+
+## k8s-components: three passes
+
+1. **Full apply (failed)** — aborted during its plan phase, nothing created.
+   `kubernetes_manifest.private_gateway_params` (`GatewayParameters`) and
+   `private_gw_eg_proxy` (`EnvoyProxy`) failed CRD validation. Note the
+   *standalone* `tofu plan` beforehand reported a clean `34 to add` without
+   these two — the plan under-reports what apply will validate, so a green
+   plan is not proof the apply will get past its own plan phase.
+2. **Stage 1, targeted** — 19 added:
+   `-target=kubernetes_manifest.gateway_api_crds -target=helm_release.kgateway_crds
+   -target=helm_release.kgateway -target=kubernetes_manifest.envoy_gateway_crds
+   -target=helm_release.envoy_gateway`.
+   Day-1/Day-2 used the kgateway targets only; **Envoy Gateway now needs the
+   same treatment**, so both CRD sources belong in Stage 1.
+3. **Stage 2, full apply (partial)** — 12 created, then the recurring AWS LBC
+   webhook race killed `certmanager` and `ingress_nginx_private`
+   (`no endpoints available for service "aws-load-balancer-webhook-service"`).
+4. **Stage 3, re-apply** — 10 added, 2 destroyed (the two failed helm releases
+   were recreated). Clean. Confirming plan: `No changes`.
+
+## Gotcha: `leverage tofu` exit code is not trustworthy
+
+`leverage tofu apply` returned **exit 0 on a failed apply** — twice, including
+one where zero resources were created. Anything that gates on `$?` (background
+job wrappers, CI, `&&` chains) will read a failure as success.
+
+Always grep the captured output for `Apply complete!` / `^Error:` instead of
+trusting the exit status. Also note `leverage` colorizes even when redirected,
+so strip ANSI first:
+
+```bash
+leverage tofu apply -auto-approve 2>&1 | sed -e 's/\x1b\[[0-9;]*m//g' > apply.log
+grep -E "^Apply complete|^Error:" apply.log
+```
+
+(A shell wrapper of the form `leverage tofu apply > log 2>&1; echo "EXIT=$?"`
+compounds this — `$?` there is the redirect's status, not tofu's.)
+
+## Validation
+
+- 3 nodes Ready, zero pods outside `Running`.
+- 22 gateway-related CRDs registered.
+- `GatewayClass` `kgateway` and `envoy-gateway` both Accepted=True.
+- Both Gateways PROGRAMMED=True with distinct internal NLBs:
+  - `private-gw` (kgateway) → `k8s-kgateway-privateg-f5d44b7874-...`
+  - `private-gw-eg` (Envoy Gateway) → `k8s-envoygat-envoyenv-7b8fa2cd58-...`
+- LE wildcard certs (DNS01, `*.aws.binbash.com.ar`) Ready=True at 4m07s:
+  `private-gw-wildcard` and `private-gw-eg-wildcard`.
+- Both `http` and `https` listeners Programmed=True on both Gateways once the
+  certs landed.
+
