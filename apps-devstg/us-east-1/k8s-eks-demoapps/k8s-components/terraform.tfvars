@@ -105,7 +105,6 @@ keda = {
 kgateway = {
   enabled               = true
   version               = "v2.2.3"
-  gateway_api_version   = "v1.4.0"
   experimental_features = false
 
   # Shared private path: kgateway-provisioned Envoy fronted by an LBC-managed
@@ -120,10 +119,14 @@ kgateway = {
 # distinct GatewayClass `envoy-gateway` and namespace `envoy-gateway-system`
 # so it coexists cleanly with kgateway. Workload HTTPRoutes attach via
 # parentRef pointing at `private-gw-eg`.
+#
+# `gateway_api_version` pins the upstream Gateway API CRD bundle shared by
+# both data planes — see networking-gateway-api.tf.
 #------------------------------------------------------------------------------
 envoy_gateway = {
-  enabled = true
-  version = "v1.7.2"
+  enabled             = true
+  version             = "v1.7.2"
+  gateway_api_version = "v1.4.0"
 
   private_gateway = {
     enabled = true

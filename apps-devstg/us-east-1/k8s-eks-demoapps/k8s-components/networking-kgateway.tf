@@ -6,43 +6,15 @@
 # since it consumes Gateway / HTTPRoute resources rather than Ingress ones.
 #
 # Install order (enforced via depends_on below):
-#   1. Upstream Gateway API CRDs (standard channel)
+#   1. Upstream Gateway API CRDs (standard channel) — these are shared with
+#      every other Gateway API data plane, so they live in
+#      networking-gateway-api.tf rather than here.
 #   2. kgateway CRDs (kgateway-specific CRDs like GatewayParameters, etc.)
 #   3. kgateway controller
 #
 # Docs: https://kgateway.dev/docs/envoy/latest/quickstart/
 #------------------------------------------------------------------------------
 
-#------------------------------------------------------------------------------
-# 1. Gateway API CRDs (upstream, standard channel).
-# Fetched from the pinned GitHub release and applied as individual manifests.
-#------------------------------------------------------------------------------
-data "http" "gateway_api_crds" {
-  count = var.kgateway.enabled ? 1 : 0
-  url   = local.gateway_api_crds_url
-}
-
-locals {
-  # Split the multi-document YAML into individual docs and keep only valid
-  # ones (drops comments, blank chunks, and any stray document separators).
-  # Keyed by resource name so the for_each map is stable across plans.
-  # The upstream YAML carries a `status: {}` stub on each CRD that the
-  # kubernetes_manifest provider forbids (server-managed field), so strip it.
-  _gateway_api_crds_body = try(data.http.gateway_api_crds[0].response_body, "")
-  gateway_api_crd_manifests = {
-    for doc in [
-      for chunk in split("\n---\n", local._gateway_api_crds_body) :
-      try(yamldecode(chunk), null)
-      ] : doc.metadata.name => {
-      for k, v in doc : k => v if k != "status"
-    } if doc != null && try(doc.kind, "") != ""
-  }
-}
-
-resource "kubernetes_manifest" "gateway_api_crds" {
-  for_each = local.gateway_api_crd_manifests
-  manifest = each.value
-}
 
 #------------------------------------------------------------------------------
 # 2. kgateway CRDs (kgateway-specific resources).

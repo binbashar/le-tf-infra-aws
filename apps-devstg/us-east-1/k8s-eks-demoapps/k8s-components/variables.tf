@@ -222,7 +222,6 @@ variable "kgateway" {
   type = object({
     enabled               = bool
     version               = string
-    gateway_api_version   = string
     experimental_features = bool
     private_gateway = object({
       enabled = bool
@@ -231,7 +230,6 @@ variable "kgateway" {
   default = {
     enabled               = false
     version               = "v2.2.3"
-    gateway_api_version   = "v1.4.0"
     experimental_features = false
     private_gateway = {
       enabled = false
@@ -239,21 +237,23 @@ variable "kgateway" {
   }
 }
 
-# Envoy Gateway shares the upstream Gateway API CRDs installed by the
-# kgateway path (see networking-kgateway.tf) — keep `var.kgateway.enabled`
-# = true while EG is in use, or factor those CRDs out into a standalone
-# resource gated on any Gateway API consumer.
+# `gateway_api_version` pins the upstream Gateway API CRD bundle shared by
+# every Gateway API consumer in this layer (kgateway and Envoy Gateway both
+# consume it) — see networking-gateway-api.tf. It hangs off this variable
+# rather than kgateway's so no single data plane owns shared plumbing.
 variable "envoy_gateway" {
   type = object({
-    enabled = bool
-    version = string
+    enabled             = bool
+    version             = string
+    gateway_api_version = string
     private_gateway = object({
       enabled = bool
     })
   })
   default = {
-    enabled = false
-    version = "v1.7.2"
+    enabled             = false
+    version             = "v1.7.2"
+    gateway_api_version = "v1.4.0"
     private_gateway = {
       enabled = false
     }
