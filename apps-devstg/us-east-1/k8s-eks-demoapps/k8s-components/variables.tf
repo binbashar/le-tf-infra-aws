@@ -218,29 +218,10 @@ variable "keda" {
   }
 }
 
-variable "kgateway" {
-  type = object({
-    enabled               = bool
-    version               = string
-    experimental_features = bool
-    private_gateway = object({
-      enabled = bool
-    })
-  })
-  default = {
-    enabled               = false
-    version               = "v2.2.3"
-    experimental_features = false
-    private_gateway = {
-      enabled = false
-    }
-  }
-}
-
-# `gateway_api_version` pins the upstream Gateway API CRD bundle shared by
-# every Gateway API consumer in this layer (kgateway and Envoy Gateway both
-# consume it) — see networking-gateway-api.tf. It hangs off this variable
-# rather than kgateway's so no single data plane owns shared plumbing.
+# Envoy Gateway is the Gateway API data plane for this layer and the chosen
+# replacement for nginx-ingress. `gateway_api_version` pins the upstream
+# Gateway API CRD bundle shared by any Gateway API consumer — it lives here
+# rather than in a data-plane-specific variable, see networking-gateway-api.tf.
 variable "envoy_gateway" {
   type = object({
     enabled             = bool

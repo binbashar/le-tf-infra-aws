@@ -98,30 +98,17 @@ keda = {
 }
 
 #------------------------------------------------------------------------------
-# Ingress: kgateway (test drive — Gateway API based controller, eventual
-# replacement for nginx-ingress). Safe to run alongside nginx since kgateway
-# uses Gateway API resources, not Ingress resources.
-#------------------------------------------------------------------------------
-kgateway = {
-  enabled               = true
-  version               = "v2.2.3"
-  experimental_features = false
-
-  # Shared private path: kgateway-provisioned Envoy fronted by an LBC-managed
-  # internal NLB. Workload HTTPRoutes attach via cross-namespace parentRef.
-  private_gateway = {
-    enabled = true
-  }
-}
-
-#------------------------------------------------------------------------------
-# Ingress: Envoy Gateway (CNCF, third parallel data plane). Same NLB pattern,
-# distinct GatewayClass `envoy-gateway` and namespace `envoy-gateway-system`
-# so it coexists cleanly with kgateway. Workload HTTPRoutes attach via
-# parentRef pointing at `private-gw-eg`.
+# Ingress: Envoy Gateway (CNCF, Gateway API based). Chosen as the replacement
+# for nginx-ingress after benchmarking it against kgateway and nginx — see
+# loadtest/test-results.md. Runs alongside nginx during the migration since it
+# consumes Gateway API resources, not Ingress ones.
 #
-# `gateway_api_version` pins the upstream Gateway API CRD bundle shared by
-# both data planes — see networking-gateway-api.tf.
+# `gateway_api_version` pins the shared upstream Gateway API CRD bundle
+# (Gateway, HTTPRoute, GatewayClass, …) — see networking-gateway-api.tf.
+#
+# Private path: EG-provisioned Envoy fronted by an LBC-managed internal NLB,
+# GatewayClass `envoy-gateway` in namespace `envoy-gateway-system`. Workload
+# HTTPRoutes attach via cross-namespace parentRef pointing at `private-gw-eg`.
 #------------------------------------------------------------------------------
 envoy_gateway = {
   enabled             = true
@@ -132,6 +119,7 @@ envoy_gateway = {
     enabled = true
   }
 }
+
 #------------------------------------------------------------------------------
 # Monitoring: Logging
 #------------------------------------------------------------------------------

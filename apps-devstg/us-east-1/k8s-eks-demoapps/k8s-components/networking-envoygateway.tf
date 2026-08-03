@@ -1,16 +1,16 @@
 #------------------------------------------------------------------------------
 # Envoy Gateway (CNCF, Envoy maintainers' official Gateway API implementation)
 # -----------------------------------------------------------------------------
-# Third parallel data plane in this layer alongside nginx-ingress and
-# kgateway. Same Gateway API CRDs (already installed by the kgateway file's
-# `kubernetes_manifest.gateway_api_crds`) — EG is partitioned from kgateway
-# via a separate GatewayClass (`envoy-gateway` here vs `kgateway`) and a
-# distinct controller string. No webhook conflicts; the two control planes
-# only reconcile Gateways whose `gatewayClassName` resolves to a
-# GatewayClass with their own controller name.
+# The Gateway API data plane for this layer and the chosen replacement for
+# nginx-ingress, picked over kgateway after benchmarking all three (see
+# loadtest/test-results.md). Runs alongside nginx-ingress during the
+# migration: EG reconciles Gateway API resources, nginx reconciles Ingress
+# ones, so the two never contend. EG only reconciles Gateways whose
+# `gatewayClassName` resolves to a GatewayClass carrying its own controller
+# string, which is what kept it partitioned from kgateway while both ran.
 #
 # Install order (enforced via depends_on):
-#   1. Upstream Gateway API CRDs (provided by networking-kgateway.tf)
+#   1. Upstream Gateway API CRDs (provided by networking-gateway-api.tf)
 #   2. EG CRDs (gateway.envoyproxy.io group only — gateway API toggled off
 #      so we don't clobber the standard-channel CRDs already in cluster)
 #   3. EG controller (with --skip-crds equivalent to avoid the same clobber)
@@ -24,7 +24,7 @@
 # (Gateway API standard + experimental + EG) bloats the helm release Secret
 # beyond etcd's 1 MB-per-object limit. Pulling the rendered CRDs YAML from
 # the EG release page and applying via kubernetes_manifest sidesteps this —
-# same pattern as the Gateway API CRDs in networking-kgateway.tf.
+# same pattern as the Gateway API CRDs in networking-gateway-api.tf.
 #------------------------------------------------------------------------------
 data "http" "envoy_gateway_crds" {
   count = var.envoy_gateway.enabled ? 1 : 0
@@ -78,9 +78,10 @@ resource "helm_release" "envoy_gateway" {
 #------------------------------------------------------------------------------
 # Shared private Gateway (`private-gw-eg`)
 # -----------------------------------------------------------------------------
-# Mirror of kgateway's `private-gw`. Distinct GatewayClass (`envoy-gateway`)
-# means EG reconciles this Gateway, kgateway does not. Same NLB pattern: an
-# AWS LBC-managed internal NLB fronts the EG-provisioned Envoy Service.
+# Platform-shared L7 entry point for VPN-only traffic. An AWS LBC-managed
+# internal NLB (target-type=ip) fronts the EG-provisioned Envoy Service.
+# Workloads attach via HTTPRoute.parentRef from any namespace
+# (allowedRoutes.namespaces.from = "All" on the https listener).
 #------------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------
@@ -90,10 +91,10 @@ resource "helm_release" "envoy_gateway" {
 # NLB targeting pod IPs directly.
 #
 # IMPORTANT: EG references EnvoyProxy at the GatewayClass level (via
-# `spec.parametersRef`), not at the Gateway level (where kgateway puts its
-# GatewayParameters). All Gateways using class `envoy-gateway` share these
-# params — fine for one Gateway today; if per-Gateway tuning ever needed,
-# create another GatewayClass with a different EnvoyProxy.
+# `spec.parametersRef`), not at the Gateway level. All Gateways using class
+# `envoy-gateway` therefore share these params — fine for one Gateway today;
+# if per-Gateway tuning is ever needed, create another GatewayClass with a
+# different EnvoyProxy.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "private_gw_eg_proxy" {
   count = var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled ? 1 : 0
@@ -138,9 +139,8 @@ resource "kubernetes_manifest" "private_gw_eg_proxy" {
 }
 
 #------------------------------------------------------------------------------
-# GatewayClass: cluster-scoped, named `envoy-gateway` (parallel to the
-# kgateway-installed `kgateway` class). Pinned to EG's controller string;
-# parametersRef points at the EnvoyProxy above.
+# GatewayClass: cluster-scoped, named `envoy-gateway`. Pinned to EG's
+# controller string; parametersRef points at the EnvoyProxy above.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "envoy_gateway_class" {
   count = var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled ? 1 : 0
@@ -222,9 +222,10 @@ resource "kubernetes_manifest" "private_gateway_eg" {
 }
 
 #------------------------------------------------------------------------------
-# Platform-shared HTTP→HTTPS redirector (mirror of kgateway's). Pinned to
-# the http listener via sectionName; matches all paths; 301 (Gateway API
-# rejects 308).
+# Platform-shared HTTP→HTTPS redirector. Pinned to the http listener via
+# sectionName; matches all paths; 301 (Gateway API rejects nginx's default
+# 308). App HTTPRoutes don't opt in — the http listener refuses their
+# attachment by namespace policy, so they reach the data plane only via 443.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "private_gateway_eg_https_redirect" {
   count = var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled ? 1 : 0
@@ -265,10 +266,15 @@ resource "kubernetes_manifest" "private_gateway_eg_https_redirect" {
 }
 
 #------------------------------------------------------------------------------
-# TLS for `private-gw-eg`: separate wildcard `*.aws.binbash.com.ar` Certificate
-# in the EG namespace, sharing the cluster-scoped ClusterIssuer with kgateway
-# (see `helm_release.cluster_issuer_binbash_aws` in networking-cluster-issuer.tf).
-# Same DNS01 / public-zone fall-through trick as kgateway.
+# TLS for `private-gw-eg`: wildcard `*.aws.binbash.com.ar` Certificate in the
+# EG namespace, issued by the cluster-scoped ClusterIssuer (see
+# `helm_release.cluster_issuer_binbash_aws` in networking-cluster-issuer.tf).
+#
+# DNS01 works despite `aws.binbash.com.ar` being a private-only zone: it has
+# no public NS delegation, so public lookups for `_acme-challenge.<host>`
+# resolve up the chain to the `binbash.com.ar` NS servers. cert-manager writes
+# the ACME TXT into the public zone (where its IRSA role has perms) and LE's
+# public validators read it from there. Same trick as the nginx-ingress flow.
 #------------------------------------------------------------------------------
 resource "helm_release" "private_gw_eg_tls" {
   count = var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled && var.certmanager.enabled ? 1 : 0

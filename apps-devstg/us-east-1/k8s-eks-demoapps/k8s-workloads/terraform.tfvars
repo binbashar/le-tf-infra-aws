@@ -2,8 +2,8 @@
 # Demo apps
 #==============================================================================
 # Per-app toggles for the workloads in this layer. Set `enabled = false` to
-# tear down an app on the next apply. The kgateway and Envoy Gateway HTTPRoutes
-# attached to echo-server come and go with `echo_server.enabled`.
+# tear down an app on the next apply. The Envoy Gateway HTTPRoute attached to
+# echo-server comes and goes with `echo_server.enabled`.
 #
 # google_microservices_dev and emojivoto are ArgoCD Applications and depend on
 # the argocd CRDs, which the k8s-components layer ships only when its

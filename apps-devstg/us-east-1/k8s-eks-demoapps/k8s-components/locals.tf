@@ -57,14 +57,6 @@ locals {
     for k, v in local.traefik_tags_map : "${k}=${v}"
   ]
 
-  #------------------------------------------------------------------------------
-  # kgateway settings
-  #------------------------------------------------------------------------------
-  kgateway_tags_map = merge(local.tags_map, { Component = "kgateway" })
-  kgateway_tags_list = [
-    for k, v in local.kgateway_tags_map : "${k}=${v}"
-  ]
-
   # Gateway API CRDs standard channel manifest (upstream GitHub release).
   # Shared by every Gateway API data plane — see networking-gateway-api.tf.
   gateway_api_crds_url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/${var.envoy_gateway.gateway_api_version}/standard-install.yaml"

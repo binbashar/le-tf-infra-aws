@@ -133,15 +133,6 @@ resource "kubernetes_namespace" "traefik_ingress" {
   }
 }
 
-resource "kubernetes_namespace" "kgateway" {
-  count = var.kgateway.enabled ? 1 : 0
-
-  metadata {
-    labels = local.labels
-    name   = "kgateway-system"
-  }
-}
-
 resource "kubernetes_namespace" "envoy_gateway" {
   count = var.envoy_gateway.enabled ? 1 : 0
 

@@ -15,12 +15,11 @@
 # reachable only over VPN). externaldns-private creates the Route53 record in
 # the private zone (aws.binbash.com.ar). No public exposure.
 #
-# Three parallel hostnames hit the same backend Service, one per data plane:
+# Two parallel hostnames hit the same backend Service, one per data plane:
 #   - echo-server.aws.binbash.com.ar      → nginx-ingress (Ingress, below)
-#   - echo-server-kg.aws.binbash.com.ar   → kgateway      (HTTPRoute → private-gw)
 #   - echo-server-eg.aws.binbash.com.ar   → Envoy Gateway (HTTPRoute → private-gw-eg)
 #
-# Smoke-testing (VPN required for all three):
+# Smoke-testing (VPN required for both):
 #
 #   # HTTP (returns the request as plain text, jmalloc-style):
 #   curl https://echo-server-eg.aws.binbash.com.ar/
@@ -29,10 +28,9 @@
 #   # HTTP/1.1, which matters for the nginx host: nginx-ingress negotiates
 #   # HTTP/2 via ALPN and `websocat 1.x` cannot do WS-over-HTTP/2 (RFC 8441),
 #   # so it errors with "I/O failure" against echo-server.aws…; wscat works
-#   # against all three hosts.
+#   # against both hosts.
 #   #   brew install wscat   (or: npm i -g wscat)
 #   wscat -c wss://echo-server.aws.binbash.com.ar/.ws       # nginx
-#   wscat -c wss://echo-server-kg.aws.binbash.com.ar/.ws    # kgateway
 #   wscat -c wss://echo-server-eg.aws.binbash.com.ar/.ws    # envoy-gateway
 #   # Type any line at the `>` prompt; jmalloc echoes it back prefixed with
 #   # a `Request served by …` line on first frame.
@@ -45,9 +43,10 @@
 #     -H "Sec-WebSocket-Version: 13" \
 #     https://echo-server.aws.binbash.com.ar/.ws
 #
-# kgateway requires `appProtocol = "kubernetes.io/ws"` on the Service port to
-# allow WS upgrades (see kubernetes_service.echo_server below); without it
-# kgateway's envoy returns 403 Forbidden on `/.ws` while still serving `/`.
+# The Service port carries `appProtocol = "kubernetes.io/ws"` (see
+# kubernetes_service.echo_server below) — the portable Gateway API signal that
+# the backend accepts WS upgrades. Neither nginx nor Envoy Gateway needs it,
+# but it costs nothing and keeps the backend implementation-agnostic.
 #------------------------------------------------------------------------------
 
 locals {
@@ -108,11 +107,11 @@ resource "kubernetes_service" "echo_server" {
   spec {
     selector = local.echo_server_labels
     # Gateway API v1.2+ standard signal that this backend accepts WebSocket
-    # upgrades (KEP-3726). kgateway honours it by enabling envoy upgrade_configs
-    # on routes pointing here; without it, kgateway's envoy returns 403 on
-    # `/.ws` upgrade requests. Envoy Gateway allows WS by default and nginx
-    # ignores the field, so this is effectively kgateway-specific but harmless
-    # everywhere else.
+    # upgrades (KEP-3726). Envoy Gateway allows WS by default and nginx
+    # ignores the field, so neither current path needs it — kept because it's
+    # the portable way to declare WS support and some implementations (e.g.
+    # kgateway, which this layer previously ran) reject `/.ws` upgrades
+    # without it. See the WebSocket notes in the file header.
     port {
       name         = "http"
       port         = 80
@@ -134,7 +133,7 @@ resource "kubernetes_ingress_v1" "echo_server" {
     # so the controller filters by this annotation rather than the modern
     # spec.ingressClassName / IngressClass resource.
     # cert-manager auto-issues the per-host LE cert via DNS01 (public zone
-    # fall-through, same trick the kgateway wildcard uses).
+    # fall-through, same trick the Envoy Gateway wildcard uses).
     annotations = {
       "kubernetes.io/ingress.class"    = "private-apps"
       "cert-manager.io/cluster-issuer" = "clusterissuer-binbash-cert-manager-clusterissuer"
@@ -166,43 +165,12 @@ resource "kubernetes_ingress_v1" "echo_server" {
 }
 
 #------------------------------------------------------------------------------
-# kgateway smoke test: parallel HTTPRoute attaching to the platform-shared
-# `private-gw` in `kgateway-system`. Distinct hostname (`echo-server-kg.…`)
-# so externaldns-private creates a separate Route53 record and there's no
-# overlap with the nginx Ingress path. TLS via the wildcard `*.aws.binbash.com.ar`
-# cert bound to the gateway's HTTPS listener.
-#------------------------------------------------------------------------------
-resource "kubernetes_manifest" "echo_server_route" {
-  count = var.demo_apps.echo_server.enabled ? 1 : 0
-
-  manifest = {
-    apiVersion = "gateway.networking.k8s.io/v1"
-    kind       = "HTTPRoute"
-    metadata = {
-      name      = "echo-server"
-      namespace = "echo-server"
-    }
-    spec = {
-      parentRefs = [{
-        name      = "private-gw"
-        namespace = "kgateway-system"
-      }]
-      hostnames = ["echo-server-kg.aws.binbash.com.ar"]
-      rules = [{
-        backendRefs = [{
-          name = "echo-server"
-          port = 80
-        }]
-      }]
-    }
-  }
-}
-
-#------------------------------------------------------------------------------
-# Envoy Gateway smoke test: third parallel HTTPRoute attaching to the
-# EG-managed `private-gw-eg` in `envoy-gateway-system`. Distinct hostname so
-# externaldns-private creates a separate Route53 record. Same backend
-# Service as the nginx + kgateway paths.
+# Envoy Gateway path: HTTPRoute attaching to the platform-shared
+# `private-gw-eg` in `envoy-gateway-system` via cross-namespace parentRef.
+# Distinct hostname from the nginx Ingress so externaldns-private creates a
+# separate Route53 record and the two paths don't overlap. Same backend
+# Service as the nginx path. TLS comes from the wildcard
+# `*.aws.binbash.com.ar` cert bound to the gateway's HTTPS listener.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "echo_server_route_eg" {
   count = var.demo_apps.echo_server.enabled ? 1 : 0

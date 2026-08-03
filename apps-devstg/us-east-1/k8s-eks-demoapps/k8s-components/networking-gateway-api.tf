@@ -1,25 +1,25 @@
 #------------------------------------------------------------------------------
 # Upstream Gateway API CRDs (standard channel)
 # -----------------------------------------------------------------------------
-# Shared plumbing for every Gateway API data plane in this layer — kgateway
-# and Envoy Gateway both consume these. Kept in its own file, rather than
-# inside one data plane's, so neither becomes load-bearing for the other:
-# previously these lived in networking-kgateway.tf gated on
-# `var.kgateway.enabled`, which meant disabling kgateway would have pulled the
-# CRDs out from under EG. The count is the OR of all consumers.
+# Shared plumbing for every Gateway API data plane in this layer. Kept in its
+# own file, rather than inside a specific data plane's, so no single
+# implementation becomes load-bearing for the others. Envoy Gateway is the
+# only consumer today (kgateway was removed once EG was picked as the
+# nginx-ingress replacement); gate the count on the OR of all consumers if
+# another one is ever added alongside it.
 #
 # Fetched from the pinned GitHub release and applied as individual manifests
 # rather than via a chart: the EG CRD bundle blows past etcd's 1 MB-per-Secret
 # limit when helm stores the release, so both CRD sets use this same
 # `data.http` + `kubernetes_manifest` for_each pattern.
 #
-# Install order (enforced via depends_on in each data plane's file):
+# Install order (enforced via depends_on in networking-envoygateway.tf):
 #   1. These upstream Gateway API CRDs (Gateway, HTTPRoute, GatewayClass, …)
-#   2. The data plane's own CRDs
-#   3. The data plane's controller
+#   2. Envoy Gateway's own CRDs (EnvoyProxy, SecurityPolicy, …)
+#   3. The Envoy Gateway controller
 #------------------------------------------------------------------------------
 data "http" "gateway_api_crds" {
-  count = (var.kgateway.enabled || var.envoy_gateway.enabled) ? 1 : 0
+  count = var.envoy_gateway.enabled ? 1 : 0
   url   = local.gateway_api_crds_url
 }
 

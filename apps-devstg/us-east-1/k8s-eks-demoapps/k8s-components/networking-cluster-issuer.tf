@@ -3,7 +3,6 @@
 # -----------------------------------------------------------------------------
 # Cluster-scoped LE issuer used by every data plane that runs in this layer
 # and needs a wildcard cert against the private base domain. Currently:
-#   - kgateway's `private-gw-wildcard` Certificate (private-gw)
 #   - envoy-gateway's `private-gw-eg-wildcard` Certificate (private-gw-eg)
 #
 # Lives in its own helm release (rather than baked into one data plane's TLS
@@ -28,8 +27,7 @@ locals {
 
 resource "helm_release" "cluster_issuer_binbash_aws" {
   count = var.certmanager.enabled && (
-    (var.kgateway.enabled && var.kgateway.private_gateway.enabled) ||
-    (var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled)
+    var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled
   ) ? 1 : 0
 
   name       = "cluster-issuer-binbash-aws"

@@ -643,3 +643,84 @@ compounds this — `$?` there is the redirect's status, not tofu's.)
 - Both `http` and `https` listeners Programmed=True on both Gateways once the
   certs landed.
 
+## kgateway removal — Envoy Gateway picked as the nginx-ingress replacement
+
+Decision: EG is the Gateway API data plane going forward; kgateway removed
+from the cluster and the code. nginx-ingress stays for now (it still serves
+the `Ingress` path during the migration).
+
+### The coupling that had to be broken first
+
+`networking-kgateway.tf` owned the *shared* upstream Gateway API CRDs
+(`data.http.gateway_api_crds` + `kubernetes_manifest.gateway_api_crds`),
+gated on `var.kgateway.enabled`. EG consumes those same CRDs. Deleting the
+file naively would have destroyed `Gateway`/`HTTPRoute`/`GatewayClass` CRDs
+out from under EG and taken `private-gw-eg` with them. (`variables.tf` had
+already flagged this: *"factor those CRDs out into a standalone resource
+gated on any Gateway API consumer"*.)
+
+Extracted them into **`networking-gateway-api.tf`**, keeping the resource
+addresses identical so terraform sees no diff — only the `count` gate moved
+from `var.kgateway.enabled` to `var.envoy_gateway.enabled`. The CRD version
+pin moved from `var.kgateway.gateway_api_version` to a new
+`var.envoy_gateway.gateway_api_version` (same `v1.4.0`, so no CRD churn).
+
+Verified by the plan: **0 to add, 0 to change, 7 to destroy**, with
+`kubernetes_manifest.gateway_api_crds`, `helm_release.cluster_issuer_binbash_aws`
+and `helm_release.externaldns_private` all absent from the destroy/change
+lists.
+
+### What was destroyed
+
+`helm_release.kgateway`, `helm_release.kgateway_crds`,
+`helm_release.private_gw_tls`, `kubernetes_manifest.private_gateway`,
+`kubernetes_manifest.private_gateway_params`,
+`kubernetes_manifest.private_gateway_https_redirect`,
+`kubernetes_namespace.kgateway`. Namespace terminated cleanly in 15s — no
+TargetGroupBinding finalizer hang this time (the Gateway is deleted before
+the namespace, so LBC tears the NLB down in order).
+
+### Orphan: the `kgateway` GatewayClass
+
+`helm uninstall` left the cluster-scoped `GatewayClass/kgateway` behind. It
+carries **no helm labels/annotations** — the kgateway *controller* creates it
+at runtime (`gatewayClass.enabled` in the chart values), so helm never owned
+it, and it lives on a CRD (`gatewayclasses.gateway.networking.k8s.io`) that
+deliberately survives. Removed manually:
+
+```bash
+kubectl delete gatewayclass kgateway
+```
+
+Worth remembering for any future data-plane removal: controller-created,
+cluster-scoped objects on shared CRDs won't come out with terraform or helm.
+A sweep of deployments/services/configmaps/secrets/serviceaccounts/
+clusterroles/clusterrolebindings/webhookconfigurations found nothing else.
+
+### Code touched
+
+| File | Change |
+|---|---|
+| `k8s-components/networking-gateway-api.tf` | **new** — shared Gateway API CRDs, gated on EG |
+| `k8s-components/networking-kgateway.tf` | deleted |
+| `k8s-components/chart-values/kgateway.yaml` | deleted |
+| `k8s-components/variables.tf` | `kgateway` variable removed; `gateway_api_version` added to `envoy_gateway` |
+| `k8s-components/terraform.tfvars` | `kgateway` block removed |
+| `k8s-components/locals.tf` | kgateway tags removed; CRD URL re-pointed |
+| `k8s-components/namespaces.tf` | `kgateway-system` namespace removed |
+| `k8s-components/networking-dns.tf` | external-dns `sources` gate → EG only |
+| `k8s-components/networking-cluster-issuer.tf` | kgateway clause dropped from `count` |
+| `k8s-workloads/echo_server.tf` | kgateway HTTPRoute + `echo-server-kg` host removed |
+| `loadtest/echo-server-k6.js`, `README.md`, `k6-job.yaml` | kgateway host dropped from the scenarios |
+
+`loadtest/test-results.md` left untouched — it's the record of the three-way
+benchmark that motivated the decision, so it still reports kgateway numbers.
+
+### Validation
+
+- `k8s-components`: `tofu plan` → `No changes`.
+- `k8s-workloads`: `tofu plan` → 4 to add, only `echo_server_route_eg`
+  (layer not applied; run as a code/CRD sanity check).
+- `GatewayClass` list: `envoy-gateway` only.
+- `private-gw-eg` still PROGRAMMED=True, `private-gw-eg-wildcard` Ready=True,
+  6 standard-channel Gateway API CRDs still registered, 0 `kgateway.dev` CRDs.
