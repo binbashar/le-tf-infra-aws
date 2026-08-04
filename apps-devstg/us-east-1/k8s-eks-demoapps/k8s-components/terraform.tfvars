@@ -106,9 +106,26 @@ keda = {
 # `gateway_api_version` pins the shared upstream Gateway API CRD bundle
 # (Gateway, HTTPRoute, GatewayClass, …) — see networking-gateway-api.tf.
 #
-# Private path: EG-provisioned Envoy fronted by an LBC-managed internal NLB,
-# GatewayClass `envoy-gateway` in namespace `envoy-gateway-system`. Workload
-# HTTPRoutes attach via cross-namespace parentRef pointing at `private-gw-eg`.
+# Two independent Gateways, each with its own GatewayClass, EnvoyProxy and NLB
+# (EG provisions one Envoy data plane per Gateway), both in the
+# `envoy-gateway-system` namespace. Workload HTTPRoutes pick one via a
+# cross-namespace parentRef:
+#
+#   private_gateway -> `private-gw-eg`, GatewayClass `envoy-gateway`
+#     Internal NLB, VPN-only. Hostnames: <app>.aws.binbash.com.ar
+#     Accepts HTTPRoutes from any namespace.
+#
+#   public_gateway  -> `public-gw-eg`, GatewayClass `envoy-gateway-public`
+#     Internet-facing NLB, restricted at the NLB's managed security group to
+#     `envoy_gateway_public_allowed_cidrs`. Hostnames: <app>.binbash.com.ar
+#     Accepts HTTPRoutes ONLY from namespaces labelled
+#     `gateway.binbash.com.ar/public-exposure=allowed`.
+#
+# The public allowlist is NOT set here: it holds operators' home/office IPs,
+# which shouldn't land in git history. It lives in the non-versioned
+# `allowlist.local.auto.tfvars` — copy `allowlist.local.auto.tfvars.example`
+# and fill it in. Planning the public gateway without it fails on a
+# precondition rather than exposing an open endpoint.
 #------------------------------------------------------------------------------
 envoy_gateway = {
   enabled             = true
@@ -116,6 +133,10 @@ envoy_gateway = {
   gateway_api_version = "v1.4.0"
 
   private_gateway = {
+    enabled = true
+  }
+
+  public_gateway = {
     enabled = true
   }
 }

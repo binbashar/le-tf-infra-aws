@@ -13,15 +13,35 @@
 # rebuilt cluster the namespace simply isn't there and every resource below
 # fails to apply. It's managed here now so the layer stands up from scratch.
 #
-# Routing: exposed via the private nginx-ingress controller (internal NLB,
-# reachable only over VPN). externaldns-private creates the Route53 record in
-# the private zone (aws.binbash.com.ar). No public exposure.
+# Routing: three hostnames hit the same backend Service.
 #
-# Two parallel hostnames hit the same backend Service, one per data plane:
-#   - echo-server.aws.binbash.com.ar      → nginx-ingress (Ingress, below)
-#   - echo-server-eg.aws.binbash.com.ar   → Envoy Gateway (HTTPRoute → private-gw-eg)
+#   - echo-server.aws.binbash.com.ar     → nginx-ingress (Ingress, below)
+#                                          Internal NLB, VPN only.
+#   - echo-server-eg.aws.binbash.com.ar  → Envoy Gateway, private-gw-eg
+#                                          Internal NLB, VPN only. Keeps the
+#                                          `-eg` suffix because nginx already
+#                                          owns the unsuffixed private name.
+#   - echo-server.binbash.com.ar         → Envoy Gateway, public-gw-eg
+#                                          Internet-facing NLB, reachable only
+#                                          from the CIDRs allowlisted in
+#                                          k8s-components' `envoy_gateway.
+#                                          public_gateway.allowed_cidrs`. No
+#                                          `-eg` suffix needed: nothing else
+#                                          publishes into the public zone, so
+#                                          this follows the plain
+#                                          <app>.binbash.com.ar convention.
 #
-# Smoke-testing (VPN required for both):
+# All three are HTTPS. The nginx path gets a per-host cert from cert-manager;
+# both Envoy Gateway paths inherit the wildcard bound to their gateway's HTTPS
+# listener (*.aws.binbash.com.ar and *.binbash.com.ar respectively).
+#
+# externaldns-private publishes the two `aws.` records into the private zone;
+# externaldns-public publishes the public one into binbash.com.ar.
+#
+# Smoke-testing (VPN required for the two private hosts; the public one
+# requires being on an allowlisted source IP):
+#
+#   curl https://echo-server.binbash.com.ar/
 #
 #   # HTTP (returns the request as plain text, jmalloc-style):
 #   curl https://echo-server-eg.aws.binbash.com.ar/
@@ -54,13 +74,26 @@
 locals {
   echo_server_namespace = "echo-server"
   echo_server_labels    = { app = "echo-server" }
+
+  # Gateways provisioned by the k8s-components layer. Referenced by name (that
+  # layer exports no outputs); keep in sync with networking-envoygateway.tf.
+  envoy_gateway_namespace = "envoy-gateway-system"
+  private_gateway_name    = "private-gw-eg"
+  public_gateway_name     = "public-gw-eg"
+
+  # `public-gw-eg`'s HTTPS listener only accepts HTTPRoutes from namespaces
+  # carrying this label — see `local.public_gw_eg_exposure_label` in
+  # k8s-components/locals.tf. Without it the HTTPRoute below is created but
+  # never attaches, and the app stays unreachable from the internet.
+  public_exposure_label = { "gateway.binbash.com.ar/public-exposure" = "allowed" }
 }
 
 resource "kubernetes_namespace" "echo_server" {
   count = var.demo_apps.echo_server.enabled ? 1 : 0
 
   metadata {
-    name = local.echo_server_namespace
+    name   = local.echo_server_namespace
+    labels = var.demo_apps.echo_server.public_endpoint ? local.public_exposure_label : {}
   }
 }
 
@@ -175,7 +208,7 @@ resource "kubernetes_ingress_v1" "echo_server" {
 }
 
 #------------------------------------------------------------------------------
-# Envoy Gateway path: HTTPRoute attaching to the platform-shared
+# Envoy Gateway, private path: HTTPRoute attaching to the platform-shared
 # `private-gw-eg` in `envoy-gateway-system` via cross-namespace parentRef.
 # Distinct hostname from the nginx Ingress so externaldns-private creates a
 # separate Route53 record and the two paths don't overlap. Same backend
@@ -194,10 +227,52 @@ resource "kubernetes_manifest" "echo_server_route_eg" {
     }
     spec = {
       parentRefs = [{
-        name      = "private-gw-eg"
-        namespace = "envoy-gateway-system"
+        name      = local.private_gateway_name
+        namespace = local.envoy_gateway_namespace
       }]
       hostnames = ["echo-server-eg.aws.binbash.com.ar"]
+      rules = [{
+        backendRefs = [{
+          name = "echo-server"
+          port = 80
+        }]
+      }]
+    }
+  }
+}
+
+#------------------------------------------------------------------------------
+# Envoy Gateway, public path: same backend Service, exposed on
+# `echo-server.binbash.com.ar` through `public-gw-eg`. TLS is the
+# `*.binbash.com.ar` wildcard bound to that gateway's HTTPS listener, and
+# externaldns-public creates the record in the public zone.
+#
+# Reachability is gated in two independent places, both in k8s-components:
+#   1. The namespace label applied above — without it the HTTPS listener
+#      refuses the attachment and this route resolves to nothing.
+#   2. The NLB security group, which only admits
+#      `envoy_gateway.public_gateway.allowed_cidrs`.
+#
+# There is no HTTP variant: the public gateway's port-80 listener only accepts
+# routes from its own namespace, and the redirector living there sends
+# everything to HTTPS.
+#------------------------------------------------------------------------------
+resource "kubernetes_manifest" "echo_server_route_eg_public" {
+  count = var.demo_apps.echo_server.enabled && var.demo_apps.echo_server.public_endpoint ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "echo-server-eg-public"
+      namespace = kubernetes_namespace.echo_server[0].metadata[0].name
+    }
+    spec = {
+      parentRefs = [{
+        name      = local.public_gateway_name
+        namespace = local.envoy_gateway_namespace
+      }]
+      hostnames = ["echo-server.binbash.com.ar"]
       rules = [{
         backendRefs = [{
           name = "echo-server"

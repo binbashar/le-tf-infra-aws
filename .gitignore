@@ -100,6 +100,14 @@ Thumbs.db
 #
 *common.tfvars
 #
+# Per-operator tfvars kept out of git (e.g. IP allowlists containing home or
+# office addresses). OpenTofu still auto-loads them since they end in
+# .auto.tfvars. A versioned .example sits next to each one.
+# NOTE: deliberately narrower than *.auto.tfvars — plain .auto.tfvars files are
+# a versioned convention in this repo (see */base-network/network.auto.tfvars).
+#
+*.local.auto.tfvars
+#
 # Scripts and Makefiles
 #
 /@bin/makefiles

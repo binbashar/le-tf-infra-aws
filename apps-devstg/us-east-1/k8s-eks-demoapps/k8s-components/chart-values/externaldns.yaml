@@ -21,6 +21,17 @@ provider: aws
 # Limit possible target zones by domain suffixes (optional)
 domainFilters:
   - ${filteredDomain}
+%{ if length(excludeDomains) > 0 ~}
+# Domain suffixes to exclude from `domainFilters` above. Needed because the
+# private base domain is a subdomain of the public one: without this, the
+# public release's `binbash.com.ar` filter also matches every private hostname
+# under `aws.binbash.com.ar` and would publish internal records (pointing at an
+# internal NLB) into the public zone.
+excludeDomains:
+%{ for domain in excludeDomains ~}
+  - ${domain}
+%{ endfor ~}
+%{ endif ~}
 # Limit possible target zones by zone id (optional)
 zoneIdFilters:
   - ${filteredZoneId}

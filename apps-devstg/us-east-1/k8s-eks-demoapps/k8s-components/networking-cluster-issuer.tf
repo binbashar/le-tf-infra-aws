@@ -2,21 +2,31 @@
 # Shared ACME ClusterIssuer (`clusterissuer-binbash-aws`)
 # -----------------------------------------------------------------------------
 # Cluster-scoped LE issuer used by every data plane that runs in this layer
-# and needs a wildcard cert against the private base domain. Currently:
+# and needs a wildcard cert. Currently:
 #   - envoy-gateway's `private-gw-eg-wildcard` Certificate (private-gw-eg)
+#   - envoy-gateway's `public-gw-eg-wildcard` Certificate (public-gw-eg)
 #
 # Lives in its own helm release (rather than baked into one data plane's TLS
 # bundle) so the data planes can be enabled/disabled independently without
 # either becoming load-bearing for the other.
 #
-# DNS01 solver targets the public Route53 zone explicitly. The private zone
-# `aws.binbash.com.ar` has no public NS delegation, so public DNS lookups for
-# `_acme-challenge.<host>.aws.binbash.com.ar` resolve up the chain to the
-# `binbash.com.ar` NS — cert-manager writes the TXT into the public zone
-# (where its IRSA role has write perms) and LE's public validators read it
-# from there. Pinning `hostedZoneID` to the public zone is what avoids
-# cert-manager auto-discovering the longer-suffix-match private zone (where
-# it has no perms and would fail).
+# Both DNS01 solvers target the public Route53 zone explicitly, for different
+# reasons:
+#
+#   - `binbash.com.ar` (public zone): the obvious case — the zone cert-manager
+#     must write the `_acme-challenge` TXT into IS the public zone.
+#
+#   - `aws.binbash.com.ar` (private zone): it has no public NS delegation, so
+#     public DNS lookups for `_acme-challenge.<host>.aws.binbash.com.ar`
+#     resolve up the chain to the `binbash.com.ar` NS — cert-manager writes the
+#     TXT into the public zone (where its IRSA role has write perms) and LE's
+#     public validators read it from there. Pinning `hostedZoneID` to the
+#     public zone is what avoids cert-manager auto-discovering the
+#     longer-suffix-match private zone (where it has no perms and would fail).
+#
+# Solver selection is longest-suffix-match on `dnsZones`, so a Certificate for
+# `*.aws.binbash.com.ar` picks the first solver and `*.binbash.com.ar` the
+# second, even though `binbash.com.ar` is a suffix of both.
 #
 # The bundle is rendered through binbashar/raw rather than `kubernetes_manifest`
 # so we sidestep plan-time cert-manager CRD discovery.
@@ -26,8 +36,9 @@ locals {
 }
 
 resource "helm_release" "cluster_issuer_binbash_aws" {
-  count = var.certmanager.enabled && (
-    var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled
+  count = var.certmanager.enabled && var.envoy_gateway.enabled && (
+    var.envoy_gateway.private_gateway.enabled ||
+    var.envoy_gateway.public_gateway.enabled
   ) ? 1 : 0
 
   name       = "cluster-issuer-binbash-aws"
@@ -53,6 +64,13 @@ resource "helm_release" "cluster_issuer_binbash_aws" {
               - selector:
                   dnsZones:
                     - ${local.private_base_domain}
+                dns01:
+                  route53:
+                    region: ${var.region}
+                    hostedZoneID: ${data.terraform_remote_state.shared-dns.outputs.aws_public_zone_id}
+              - selector:
+                  dnsZones:
+                    - ${local.public_base_domain}
                 dns01:
                   route53:
                     region: ${var.region}

@@ -222,12 +222,21 @@ variable "keda" {
 # replacement for nginx-ingress. `gateway_api_version` pins the upstream
 # Gateway API CRD bundle shared by any Gateway API consumer — it lives here
 # rather than in a data-plane-specific variable, see networking-gateway-api.tf.
+#
+# Two Gateways can be provisioned independently, each with its own GatewayClass,
+# EnvoyProxy and NLB (Envoy Gateway provisions one data plane per Gateway):
+#   - private_gateway: internal NLB, VPN-only, *.aws.binbash.com.ar
+#   - public_gateway:  internet-facing NLB, *.binbash.com.ar, locked down to
+#     `allowed_cidrs` at the NLB security group.
 variable "envoy_gateway" {
   type = object({
     enabled             = bool
     version             = string
     gateway_api_version = string
     private_gateway = object({
+      enabled = bool
+    })
+    public_gateway = object({
       enabled = bool
     })
   })
@@ -238,5 +247,31 @@ variable "envoy_gateway" {
     private_gateway = {
       enabled = false
     }
+    public_gateway = {
+      enabled = false
+    }
   }
+}
+
+# Source CIDRs allowed to reach the public gateway's internet-facing NLB.
+#
+# Deliberately NOT set in the versioned `terraform.tfvars`: the list is made of
+# operators' home/office addresses, which are personal data and don't belong in
+# git history. Populate it in `allowlist.local.auto.tfvars`, which OpenTofu
+# auto-loads and `.gitignore` excludes — copy
+# `allowlist.local.auto.tfvars.example` to get started.
+#
+# Rendered into the `load-balancer-source-ranges` annotation, which the AWS Load
+# Balancer Controller turns into ingress rules on the NLB's managed frontend
+# security group. An EMPTY list makes the LBC fall back to 0.0.0.0/0 and expose
+# the endpoint to the whole internet, so a precondition on the EnvoyProxy in
+# networking-envoygateway.tf refuses to plan in that state.
+#
+# It is a separate top-level variable rather than a field of `envoy_gateway`
+# because tfvars files can't merge into an object variable — setting one field
+# from a second file would mean restating the whole object.
+variable "envoy_gateway_public_allowed_cidrs" {
+  description = "CIDRs allowed to reach the public Envoy Gateway NLB. Set in the non-versioned allowlist.local.auto.tfvars."
+  type        = list(string)
+  default     = []
 }

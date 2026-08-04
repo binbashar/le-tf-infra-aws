@@ -6,6 +6,11 @@ variable "demo_apps" {
   type = object({
     echo_server = object({
       enabled = bool
+      # Publishes echo-server.binbash.com.ar through the public Envoy Gateway
+      # and labels its namespace so the gateway's HTTPS listener accepts the
+      # attachment. Requires `envoy_gateway.public_gateway.enabled = true` in
+      # the k8s-components layer.
+      public_endpoint = bool
     })
     google_microservices_dev = object({
       enabled = bool

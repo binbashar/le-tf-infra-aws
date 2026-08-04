@@ -69,6 +69,17 @@ locals {
     for k, v in local.envoy_gateway_tags_map : "${k}=${v}"
   ]
   private_gw_eg_wildcard_cert_secret = "private-gw-eg-wildcard-tls"
+  public_gw_eg_wildcard_cert_secret  = "public-gw-eg-wildcard-tls"
+
+  # Namespaces may only attach HTTPRoutes to the public Gateway when they carry
+  # this label. Unlike the private Gateway (which accepts routes from every
+  # namespace, since reaching it already requires VPN), the public one is
+  # opt-in: a workload can't put itself on the internet just by writing an
+  # HTTPRoute — a cluster admin has to label its namespace first.
+  public_gw_eg_exposure_label = {
+    key   = "gateway.binbash.com.ar/public-exposure"
+    value = "allowed"
+  }
 
   #------------------------------------------------------------------------------
   # ALB Ingress settings

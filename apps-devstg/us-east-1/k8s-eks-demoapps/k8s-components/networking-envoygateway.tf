@@ -91,10 +91,10 @@ resource "helm_release" "envoy_gateway" {
 # NLB targeting pod IPs directly.
 #
 # IMPORTANT: EG references EnvoyProxy at the GatewayClass level (via
-# `spec.parametersRef`), not at the Gateway level. All Gateways using class
-# `envoy-gateway` therefore share these params — fine for one Gateway today;
-# if per-Gateway tuning is ever needed, create another GatewayClass with a
-# different EnvoyProxy.
+# `spec.parametersRef`), not at the Gateway level. Every Gateway that needs
+# different infra parameters therefore needs its own GatewayClass — which is
+# exactly why the public gateway further down carries a second
+# GatewayClass/EnvoyProxy pair rather than reusing this one.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "private_gw_eg_proxy" {
   count = var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled ? 1 : 0
@@ -302,6 +302,273 @@ resource "helm_release" "private_gw_eg_tls" {
           dnsNames:
             - ${local.private_base_domain}
             - "*.${local.private_base_domain}"
+    EOF
+  ]
+
+  depends_on = [
+    helm_release.cluster_issuer_binbash_aws,
+  ]
+}
+
+#------------------------------------------------------------------------------
+# Shared public Gateway (`public-gw-eg`)
+# -----------------------------------------------------------------------------
+# Internet-facing counterpart of `private-gw-eg`. Same shape (EnvoyProxy ->
+# GatewayClass -> Gateway -> HTTP→HTTPS redirect -> wildcard cert), with three
+# deliberate differences:
+#
+#   1. The NLB is `internet-facing` and lands in the VPC's public subnets
+#      (tagged `kubernetes.io/role/elb` by the network sublayer). Targets are
+#      still pod IPs in the private subnets.
+#
+#   2. Access is restricted to `var.envoy_gateway.public_gateway.allowed_cidrs`
+#      at the NLB's security group, not at L7. This matters: the NLB uses
+#      `target-type=ip` and does NOT preserve the client IP for IP targets, so
+#      an Envoy-level CIDR match (SecurityPolicy `principal.clientCIDRs`) would
+#      compare against the NLB's own address unless proxy protocol v2 were
+#      enabled. Filtering at the security group sidesteps that entirely and
+#      drops disallowed traffic before it ever reaches a pod.
+#
+#   3. `allowedRoutes` on the HTTPS listener is a label Selector, not `All`.
+#      A namespace has to be explicitly labelled (see
+#      `local.public_gw_eg_exposure_label`) before anything in it can attach an
+#      HTTPRoute — writing an HTTPRoute is not, by itself, enough to publish a
+#      workload to the internet.
+#
+# Hostname scheme: `<app>.binbash.com.ar` (public zone), vs
+# `<app>.aws.binbash.com.ar` on the private gateway.
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# EnvoyProxy for the public data plane. Identical node scheduling to the
+# private one; the LBC annotations differ in `scheme` and add the source-range
+# allowlist.
+#
+# On `load-balancer-source-ranges`: when
+# `service.beta.kubernetes.io/aws-load-balancer-security-groups` is absent the
+# LBC creates and manages a frontend security group for the NLB, and renders
+# this annotation into its ingress rules. If the annotation were omitted the
+# LBC would default the group to 0.0.0.0/0 — hence the precondition below,
+# which fails the plan rather than silently publishing an open endpoint. It
+# lives here rather than as a variable validation so it only fires when the
+# public gateway is actually being provisioned.
+#------------------------------------------------------------------------------
+resource "kubernetes_manifest" "public_gw_eg_proxy" {
+  count = var.envoy_gateway.enabled && var.envoy_gateway.public_gateway.enabled ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.envoyproxy.io/v1alpha1"
+    kind       = "EnvoyProxy"
+    metadata = {
+      name      = "public-gw-eg-proxy"
+      namespace = kubernetes_namespace.envoy_gateway[0].id
+    }
+    spec = {
+      provider = {
+        type = "Kubernetes"
+        kubernetes = {
+          envoyDeployment = {
+            pod = {
+              nodeSelector = { stack = "tools" }
+              tolerations = [{
+                key      = "stack"
+                operator = "Equal"
+                value    = "tools"
+                effect   = "NoSchedule"
+              }]
+            }
+          }
+          envoyService = {
+            annotations = {
+              "service.beta.kubernetes.io/aws-load-balancer-type"            = "external"
+              "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "ip"
+              "service.beta.kubernetes.io/aws-load-balancer-scheme"          = "internet-facing"
+              "service.beta.kubernetes.io/load-balancer-source-ranges"       = join(",", var.envoy_gateway_public_allowed_cidrs)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = length(var.envoy_gateway_public_allowed_cidrs) > 0
+      error_message = "envoy_gateway_public_allowed_cidrs must not be empty while the public gateway is enabled: the AWS Load Balancer Controller would default the NLB's security group to 0.0.0.0/0 and expose the endpoint to the entire internet. Set it in allowlist.local.auto.tfvars (see allowlist.local.auto.tfvars.example)."
+    }
+  }
+
+  depends_on = [
+    helm_release.envoy_gateway,
+  ]
+}
+
+#------------------------------------------------------------------------------
+# GatewayClass for the public data plane. Same controller string as the
+# private one — EG reconciles both — but a distinct name so it can point at
+# its own EnvoyProxy.
+#------------------------------------------------------------------------------
+resource "kubernetes_manifest" "envoy_gateway_class_public" {
+  count = var.envoy_gateway.enabled && var.envoy_gateway.public_gateway.enabled ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "GatewayClass"
+    metadata = {
+      name = "envoy-gateway-public"
+    }
+    spec = {
+      controllerName = "gateway.envoyproxy.io/gatewayclass-controller"
+      parametersRef = {
+        group     = "gateway.envoyproxy.io"
+        kind      = "EnvoyProxy"
+        name      = kubernetes_manifest.public_gw_eg_proxy[0].manifest.metadata.name
+        namespace = kubernetes_namespace.envoy_gateway[0].id
+      }
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.public_gw_eg_proxy,
+  ]
+}
+
+#------------------------------------------------------------------------------
+# The public Gateway.
+# - `http` listener: namespaces.from = "Same", so only the redirect HTTPRoute
+#   below attaches — app routes are HTTPS-only by construction, same as the
+#   private gateway.
+# - `https` listener: namespaces.from = "Selector". See point 3 in the section
+#   header — this is the opt-in gate for internet exposure.
+#------------------------------------------------------------------------------
+resource "kubernetes_manifest" "public_gateway_eg" {
+  count = var.envoy_gateway.enabled && var.envoy_gateway.public_gateway.enabled ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "Gateway"
+    metadata = {
+      name      = "public-gw-eg"
+      namespace = kubernetes_namespace.envoy_gateway[0].id
+    }
+    spec = {
+      gatewayClassName = "envoy-gateway-public"
+      listeners = [
+        {
+          name     = "http"
+          protocol = "HTTP"
+          port     = 80
+          allowedRoutes = {
+            namespaces = { from = "Same" }
+          }
+        },
+        {
+          name     = "https"
+          protocol = "HTTPS"
+          port     = 443
+          allowedRoutes = {
+            namespaces = {
+              from = "Selector"
+              selector = {
+                matchLabels = {
+                  (local.public_gw_eg_exposure_label.key) = local.public_gw_eg_exposure_label.value
+                }
+              }
+            }
+          }
+          tls = {
+            mode = "Terminate"
+            certificateRefs = [{
+              name = local.public_gw_eg_wildcard_cert_secret
+            }]
+          }
+        },
+      ]
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.envoy_gateway_class_public,
+    helm_release.alb_ingress,
+    helm_release.public_gw_eg_tls,
+  ]
+}
+
+#------------------------------------------------------------------------------
+# HTTP→HTTPS redirector for the public gateway. Mirror of the private one.
+#------------------------------------------------------------------------------
+resource "kubernetes_manifest" "public_gateway_eg_https_redirect" {
+  count = var.envoy_gateway.enabled && var.envoy_gateway.public_gateway.enabled ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "public-gw-eg-https-redirect"
+      namespace = kubernetes_namespace.envoy_gateway[0].id
+    }
+    spec = {
+      parentRefs = [{
+        name        = kubernetes_manifest.public_gateway_eg[0].manifest.metadata.name
+        sectionName = "http"
+      }]
+      rules = [{
+        matches = [{
+          path = {
+            type  = "PathPrefix"
+            value = "/"
+          }
+        }]
+        filters = [{
+          type = "RequestRedirect"
+          requestRedirect = {
+            scheme     = "https"
+            statusCode = 301
+          }
+        }]
+      }]
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.public_gateway_eg,
+  ]
+}
+
+#------------------------------------------------------------------------------
+# TLS for `public-gw-eg`: wildcard `*.binbash.com.ar`, issued by the same
+# ClusterIssuer as the private wildcard (second solver — see
+# networking-cluster-issuer.tf).
+#
+# The apex `binbash.com.ar` is deliberately NOT in `dnsNames`: nothing in this
+# cluster serves the apex, and leaving it out keeps the ACME validation off the
+# corporate root record. Add it here if that ever changes.
+#------------------------------------------------------------------------------
+resource "helm_release" "public_gw_eg_tls" {
+  count = var.envoy_gateway.enabled && var.envoy_gateway.public_gateway.enabled && var.certmanager.enabled ? 1 : 0
+
+  name       = "public-gw-eg-tls"
+  namespace  = kubernetes_namespace.envoy_gateway[0].id
+  repository = "https://binbashar.github.io/helm-charts/"
+  chart      = "raw"
+  version    = "0.1.0"
+
+  values = [
+    <<-EOF
+    resources:
+      - apiVersion: cert-manager.io/v1
+        kind: Certificate
+        metadata:
+          name: public-gw-eg-wildcard
+          namespace: ${kubernetes_namespace.envoy_gateway[0].id}
+        spec:
+          secretName: ${local.public_gw_eg_wildcard_cert_secret}
+          issuerRef:
+            kind: ClusterIssuer
+            name: ${local.shared_clusterissuer_name}
+          commonName: "*.${local.public_base_domain}"
+          dnsNames:
+            - "*.${local.public_base_domain}"
     EOF
   ]
 
