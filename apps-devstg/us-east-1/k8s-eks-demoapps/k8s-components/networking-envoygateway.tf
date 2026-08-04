@@ -121,10 +121,43 @@ resource "kubernetes_manifest" "private_gw_eg_proxy" {
               }]
             }
           }
+          # target-type `instance` (NLB -> worker NodePort -> pod), not `ip`.
+          #
+          # This exists to preserve the client IP, ahead of moving
+          # `echo-server.aws.binbash.com.ar` off nginx-ingress onto this
+          # gateway. On `ip` target groups AWS defaults
+          # `preserve_client_ip.enabled` to false for TCP, so Envoy sees the
+          # connection as coming from the NLB and writes *that* into
+          # `X-Forwarded-For` — blinding anything downstream that keys on
+          # client IP. On `instance` target groups AWS preserves the source IP
+          # and it cannot be disabled, so there is no companion attribute to
+          # set; the target-type alone is the fix.
+          #
+          # Requires `externalTrafficPolicy: Local` or kube-proxy SNATs the
+          # source away again. Envoy Gateway already defaults the provisioned
+          # Service to `Local`, so nothing to set here — but do not assume that
+          # if the EG version changes.
+          #
+          # The trade: `loadtest/test-results.md` found a small, repeatable
+          # client-side timeout tail (0.04-0.11% across three scenarios) on
+          # nginx's `instance`-target NLB that never appeared on either
+          # `ip`-target path, attributed to the extra NodePort / target-health
+          # layer. That attribution is explicitly unconfirmed in that document.
+          # This was chosen deliberately: it makes the nginx cutover
+          # behaviour-identical at the network layer, so a data-plane change
+          # and a network change do not land at the same time. Revisit
+          # `ip` + `preserve_client_ip.enabled=true`, or PROXY protocol v2 with
+          # EG `clientIPDetection`, once nginx is retired and the benchmark can
+          # measure the tail instead of inheriting it blind.
+          #
+          # NOTE: `instance` does NOT bring back `X-Real-Ip`,
+          # `X-Forwarded-Host`, `X-Forwarded-Port` or `X-Scheme`. Those are
+          # nginx synthesising headers Envoy does not emit, and no target-type
+          # changes that.
           envoyService = {
             annotations = {
               "service.beta.kubernetes.io/aws-load-balancer-type"            = "external"
-              "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "ip"
+              "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "instance"
               "service.beta.kubernetes.io/aws-load-balancer-scheme"          = "internal"
             }
           }
