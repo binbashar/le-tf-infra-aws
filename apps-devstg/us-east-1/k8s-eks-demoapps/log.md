@@ -804,3 +804,523 @@ away the reason it was chosen. Two better options, neither tried yet:
    targets.
 
 This needs resolving before nginx-ingress is actually retired, not after.
+
+## Public Envoy Gateway with an IP allowlist (commit `82089bbe`)
+
+Added an internet-facing counterpart to `private-gw-eg`, so the layer now has
+both a VPN-only and a public HTTPS entry point. `echo-server` gained a third
+hostname, `echo-server.binbash.com.ar`, alongside its two private ones.
+
+EG resolves `EnvoyProxy` through `GatewayClass.parametersRef`, not per Gateway,
+so the public data plane needed its own GatewayClass (`envoy-gateway-public`)
+rather than reusing `envoy-gateway`. Naming is asymmetric as a result — the
+private class kept its original name because `gatewayClassName` is immutable
+and renaming would recreate the Gateway and its NLB.
+
+Three decisions worth remembering:
+
+1. **The allowlist is enforced at the NLB security group, not in Envoy.** The
+   NLB uses `target-type: ip` and does not preserve the client address, so a
+   `SecurityPolicy` with `principal.clientCIDRs` would match against the load
+   balancer's own IP. Confirmed empirically: requests arrive at Envoy with
+   `X-Forwarded-For: 10.1.132.115` (the NLB ENI). Same root cause as the
+   client-IP gotcha logged above — worth solving once, for both.
+2. **The CIDR list is a standalone variable** read from
+   `allowlist.local.auto.tfvars`, which `.gitignore` excludes
+   (`*.local.auto.tfvars` — deliberately narrower than `*.auto.tfvars`, which
+   is a versioned convention elsewhere in this repo). It is top-level rather
+   than a field of `envoy_gateway` because tfvars files cannot merge into an
+   object variable. A `precondition` on the `EnvoyProxy` fails the plan when
+   the list is empty, since the LBC would otherwise default the SG to
+   `0.0.0.0/0`.
+3. **The public HTTPS listener uses an `allowedRoutes` label Selector**, not
+   `from: All`. A namespace must carry
+   `gateway.binbash.com.ar/public-exposure=allowed` before anything in it can
+   attach, so writing an HTTPRoute is not by itself enough to reach the
+   internet.
+
+Supporting changes: a second DNS01 solver on the shared ClusterIssuer for the
+public zone (backing a `*.binbash.com.ar` wildcard, apex deliberately excluded);
+`externaldns-public` now watches `gateway-httproute` and drops its
+`annotationFilter` (annotation filters apply across *all* sources, so keeping it
+would have silently excluded every HTTPRoute), with a new
+`excludeDomains: [aws.binbash.com.ar]` to stop the public release's
+`binbash.com.ar` filter from publishing private hostnames into the public zone.
+
+### Gotcha: how *not* to verify an IP allowlist
+
+The first negative test was a false pass, for two compounding reasons:
+
+- **`WebFetch` egresses from the operator's own machine**, not from remote
+  infrastructure — verified against `api.ipify.org`, which returned the same
+  IPv4 as a local `curl -4 https://ifconfig.me`. It cannot serve as an
+  "external" vantage point.
+- **Security groups are stateful.** After tightening the rules, an established
+  keep-alive connection kept working. Visible in the backend logs as two
+  requests five minutes apart from the *same* source port
+  (`10.1.3.159:46936`).
+
+What actually proves it: an A/B on the allowlist itself — real CIDR → `HTTP
+200`; `192.0.2.0/24` (TEST-NET) → timeout from the same client; restore →
+`200` again. Force fresh connections with `curl --no-keepalive`.
+
+## Teardown (Day 3 → Day 4, ~23:30 local)
+
+Destroyed in reverse order, keeping the VPC per the `5b0165ce` pattern.
+
+| Layer | Result |
+|---|---|
+| `k8s-workloads` | 6 destroyed |
+| `k8s-components` | 4 passes — see below |
+| `addons` | 4 destroyed |
+| `identities` | 37 destroyed |
+| `cluster` | 50 destroyed, clean |
+| `network` | 3 destroyed — NAT GW, EIP, private route. VPC kept |
+
+The `network` step ran after an interruption: the per-profile credentials for
+the *network* account had gone stale mid-teardown. The SSO token itself was
+still valid for hours, so `leverage tofu refresh-credentials` was enough — no
+interactive `leverage aws sso login` was needed. Worth checking the token
+expiry before assuming a re-login is required.
+
+Final state verified: no EKS clusters, load balancers, EC2 instances, NAT
+gateways, EIPs, or `k8s-*` security groups. VPC `vpc-0c2dd28735d0250c3` remains
+with a clean `No changes` plan, ready for a fast re-spin — flip
+`vpc_enable_nat_gateway` back to `true` before re-running the `cluster` layer.
+
+Waited a full `external-dns` sync cycle (~100 s) between `k8s-workloads` and
+`k8s-components` so the Route53 records were removed while the controller was
+still alive. Both zones verified empty before continuing.
+
+### The finalizer deadlock — this will recur
+
+Terraform deleted the helm releases for the Envoy Gateway controller **and the
+AWS Load Balancer Controller before the `Service`s of type LoadBalancer that
+they manage**. All three Services were left holding the
+`service.k8s.aws/resources` finalizer, which only the LBC can remove — with no
+LBC left, `envoy-gateway-system` sat in `Terminating` indefinitely and the
+destroy timed out (`context deadline exceeded`).
+
+The LBC did manage to delete the three NLBs in AWS before it went away, so
+nothing was left billing. That was luck, not design: had it died a moment
+earlier, three orphaned NLBs would have survived every subsequent destroy.
+
+Recovery: strip the finalizers by hand
+(`kubectl patch svc <name> -n <ns> -p '{"metadata":{"finalizers":null}}'
+--type=merge`), after confirming the AWS resources were already gone. The
+namespace then terminated on its own.
+
+**Fix to make:** `depends_on` tying the controller helm releases
+(`alb_ingress`, `envoy_gateway`) to the Gateways/Ingress objects they manage,
+so Terraform tears them down last.
+
+> **Correction (Day 4).** The diagnosis above is wrong, and acting on it would
+> have been a no-op: those `depends_on` were *already in place* during this
+> teardown. The ordering was never the problem — the cleanup is asynchronous.
+> See "The finalizer deadlock, re-diagnosed" under Day 4 for what actually
+> fixes it.
+
+### Second blocker: `kubernetes_manifest` validates at plan time
+
+Once the CRDs were gone, `tofu destroy` failed on
+`kubernetes_manifest.{private,public}_gw_eg_proxy` with
+`no matches for kind "EnvoyProxy"` — the provider validates the manifest
+against the live API during *plan*, even for resources no longer in state.
+Worked around with `-target` on the three remaining resources, which prunes the
+rest of the graph. Setting the layer's `enabled` toggles to `false` before
+destroying would also work, at the cost of touching versioned code.
+
+## Outstanding (uncommitted) changes
+
+- `network/terraform.tfvars` — `vpc_enable_nat_gateway = false`, applied to AWS
+  but not committed.
+- `shared/us-east-1/tools-atlantis-ecs/main.tf` — removed a hardcoded personal
+  IP from an ALB security-group rule. That layer is not deployed, so no plan or
+  apply was run. The same IP remains in published history (commit `e7f6bfb8`,
+  PR #880).
+- `k8s-components/allowlist.local.auto.tfvars` — gitignored by design, but
+  **required**: without it the public gateway fails its precondition. Recreate
+  from `allowlist.local.auto.tfvars.example` if the working tree is cleaned.
+
+The branch is 6 commits ahead of origin and nothing has been pushed.
+
+# Day 4 — 2026-08-04
+
+## Outcome
+
+Full re-spin of the stack that was torn down ~10 hours earlier, plus the
+destroy-ordering fix from backlog item 1. About an hour of wall clock, most of
+it the EKS control plane.
+
+| Layer | Result |
+|---|---|
+| `network` | 3 added — NAT GW, EIP, private route. Mirror of the teardown |
+| `cluster` | 50 added — EKS 1.34.9 / AL2023, 3 spot nodes |
+| `identities` | 37 added |
+| `addons` | 4 added — vpc-cni, coredns, kube-proxy, ebs-csi |
+| `k8s-components` | 14 CRDs + controller (stage 1), then 24 resources (stage 2) |
+| `k8s-workloads` | 6 added |
+
+Re-enabling the NAT gateway was just `git checkout` on
+`network/terraform.tfvars` — the only uncommitted delta in that file was the
+`vpc_enable_nat_gateway` flip, so restoring the committed state is the whole
+"cost-up" step.
+
+Stale per-profile credentials for the *network* account showed up again at the
+start, with the SSO token still valid — `leverage tofu refresh-credentials`,
+same as during the teardown. Worth trying before an interactive re-login.
+
+## The finalizer deadlock, re-diagnosed
+
+Backlog item 1 asked for `depends_on` tying the controllers to the objects they
+manage. **That was already there**, and predates the teardown that deadlocked:
+
+- `networking-envoygateway.tf` private gateway → `alb_ingress`, commit
+  `416a6f32a` (2026-05-05)
+- ditto for the public gateway, commit `82089bbe` (2026-08-03 22:43) — roughly
+  45 minutes *before* the 23:30 teardown
+
+So Terraform did delete the Gateways before the controllers, and the Services
+still hung. The ordering was never the issue.
+
+The real mechanism is **asynchronous garbage collection**. Deleting a `Gateway`
+returns as soon as the CR is gone from etcd, but the derived `Service` of type
+LoadBalancer is collected by the Envoy Gateway controller some seconds later,
+and only then does the LBC delete the NLB and strip its
+`service.k8s.aws/resources` finalizer. Terraform waits for none of that — it
+moves straight on to destroying both controllers, killing them mid-cleanup.
+No `depends_on` can express "wait for a controller to finish reconciling".
+
+The fix is a drain gate — `time_sleep.controller_drain` in
+`networking-ingress.tf`, `destroy_duration = "180s"`. The dependency direction
+is inverted from what reads naturally: the sleep depends on the *controllers*,
+and the managed objects depend on the *sleep*, so the reverse-order destroy
+produces
+
+```
+Gateways / ingress controllers  ->  [ wait 180s ]  ->  LBC + Envoy Gateway
+```
+
+Attached to: both Envoy Gateways, `nginx_apps`, `traefik_apps`,
+`ingress_nginx_private` and `traefik`. That last pair is a separate, genuine
+gap found along the way — both own a `Service` of type LoadBalancer and had **no
+ordering declared at all** against `alb_ingress`, so nothing stopped Terraform
+from killing the LBC first. Requires the `time` provider, added to `config.tf`.
+
+Cost: 180s added to every destroy. **Not yet exercised against a real destroy** —
+it only gets validated at the next teardown.
+
+## k8s-components: the two-stage apply, again
+
+Same plan-time CRD validation problem as Day 2, now with Envoy Gateway instead
+of kgateway. A fresh cluster has no `gateway.envoyproxy.io` CRDs, so the
+`EnvoyProxy` manifests fail the plan with `no matches for kind "EnvoyProxy"`.
+
+```
+leverage tofu apply -target=kubernetes_manifest.gateway_api_crds \
+                    -target=kubernetes_manifest.envoy_gateway_crds \
+                    -target=helm_release.envoy_gateway
+```
+
+After that the full plan is clean (24 to add). Worth folding into the layer's
+own docs eventually — this is the third time it has bitten.
+
+## Gotcha: the CRD downloads are flaky over the VPN
+
+Both `data "http"` blocks (Gateway API CRDs, EG CRDs) failed with
+`net/http: TLS handshake timeout` on two of four attempts, and the http
+provider gives up after **1** attempt. The same file from the host took 12s,
+so the VPN is the likely culprit. Plain retries got through.
+
+Two traps this creates:
+
+- The failure is silent-ish in its consequences: `try(..., "")` on the response
+  body turns a failed fetch into an *empty* `for_each` map, so a targeted apply
+  reports `0 added` / `No changes` rather than an error.
+- Because of that, one of the intermediate retries succeeded without being
+  noticed, and a later attempt reported "no changes" that looked like a
+  failure. Confirming against the cluster (`kubectl get crd`, pod age) settled
+  it — the state, not the apply output, is the source of truth here.
+
+A `retry` block on both `data "http"` blocks would remove this entirely. Not
+done yet.
+
+## Red herring: NLB health-check convergence
+
+Shortly after the apply, both target groups of the **public** gateway read
+`unhealthy` (`Target.FailedHealthChecks` on port 10080) while the private
+gateway and nginx were healthy. The asymmetry pointed straight at the IP
+allowlist, and a fair amount of digging went into security groups before the
+obvious check: the node SG already allowed the shared `k8s-traffic-*` SG on
+10080-32113, and the health-check config was byte-identical between the two.
+
+Re-polling a few minutes later: both healthy. It was simply convergence — an
+internet-facing NLB takes longer to register targets than an internal one.
+**Re-check before investigating asymmetric health between two NLBs.**
+
+## Validation
+
+All pods `Running`, both Gateways `PROGRAMMED=True`, both GatewayClasses
+`ACCEPTED=True`, both wildcard certs issued (the private one via DNS01 took
+~4 min — the HTTPS listener and its `443` target group only appear once the
+cert lands), all six target groups healthy, no orphaned TargetGroupBindings.
+
+| Endpoint | Path | Result |
+|---|---|---|
+| `echo-server.aws.binbash.com.ar` | nginx private ingress | `200` |
+| `echo-server-eg.aws.binbash.com.ar` | private Envoy Gateway | `200` |
+| `echo-server.binbash.com.ar` | public Envoy Gateway (allowlist) | `200` |
+
+The allowlist still held yesterday's `/32` and the egress IP had not changed,
+so no edit was needed. The negative case was **not** re-tested — that needs the
+A/B on the allowlist itself described under Day 3.
+
+One wrinkle: with the VPN up, the local resolver returns nothing for
+`echo-server.binbash.com.ar`, even though the record is live and correct.
+Confirmed via `dig @8.8.8.8` and curled with `--resolve`. A VPN DNS artifact,
+not an infrastructure fault — but it makes the public endpoint look broken from
+the operator's machine.
+
+Also worth noting: `external-dns` syncs every **3 minutes** (`Interval:3m0s`),
+not the ~100s assumed during the teardown. Records for a freshly applied
+workload can take that long to appear.
+
+## nginx → Envoy migration: planned, and the client-IP blocker cleared
+
+Backlog item 2 started here. The inventory it asked for came back smaller than
+expected: **echo-server is the only live nginx consumer.** `kubectl get
+ingress -A` returns exactly one object; argocd, gatus, goldilocks and
+`apps_ingress` all sit at `enabled = false`. The migration surface is one
+Ingress, not a set.
+
+### The constraint that shapes the cutover
+
+`externaldns-private` watches `sources = ["ingress", "gateway-httproute"]`
+under a single `txtOwnerId` with policy `sync`. One instance, both worlds, same
+zone. If the nginx Ingress and an Envoy HTTPRoute claim
+`echo-server.aws.binbash.com.ar` simultaneously, external-dns holds two
+different targets for one record and the winner depends on its internal dedup
+order. So the hostname can only be claimed by one object at a time — unless the
+other is hidden from external-dns.
+
+Also worth knowing, because it is a lever people reach for and it does not
+exist here: the records are ALIAS to an NLB, and Route53 imposes the target's
+TTL (60 s) on ALIAS. You cannot pre-lower it to speed up a flip.
+
+**Chosen approach — dark launch.** A HTTPRoute carrying the new hostname with
+`external-dns.alpha.kubernetes.io/controller` set to a value external-dns
+ignores, validated with `curl --resolve` straight at the Envoy NLB, then one
+apply that removes the host from the Ingress and drops the annotation. It is
+the only option that exercises the real hostname, real cert and real path
+before DNS moves. The final state should fold the hostname into the existing
+`echo-server-eg` HTTPRoute as a second entry, so the `-eg` name stays live as
+an instant rollback and its later removal is a one-line delete.
+
+### Client IP: fixed, and the received wisdom was wrong
+
+Retiring nginx was blocked on the Day-3 finding that `X-Forwarded-For` carries
+the NLB's own address on the Envoy path. Fixed by moving `private-gw-eg`'s NLB
+to `nlb-target-type: instance` — one annotation. Verified end to end:
+
+| | before | after |
+|---|---|---|
+| envoy `X-Forwarded-For` | `10.1.34.126` (the NLB) | `172.18.7.44` (real client) |
+
+Two details worth keeping. `preserve_client_ip` is **not** a companion setting:
+on `instance` target groups AWS preserves the source IP and it cannot be
+disabled, so the target-type alone is the whole fix. And it needs
+`externalTrafficPolicy: Local`, which Envoy Gateway already defaults to — so
+nothing had to be set, but do not assume that across EG upgrades.
+
+The change was adopted expecting to pay for it with nginx's timeout tail, which
+five scenarios had pinned on `instance` mode. **That turned out to be false.**
+S6 in `loadtest/test-results.md` is the controlled test that was never run:
+with both data planes on identical `instance`-target plumbing, envoy logged
+**zero** failures over 450 k requests and nginx logged 425 (0.09%) in the same
+window. The tail is nginx's, not the target-type's — and the long-standing
+"nginx → envoy → kgateway" latency ordering was partly an artifact of the
+target-type difference, since the two are indistinguishable on equal footing.
+
+The first attempt at that run was voided by spot interruptions that reclaimed
+both the k6 node and the Envoy `tools` node, and `ttlSecondsAfterFinished: 600`
+then garbage-collected the failed Job before its logs could be read. The TTL
+has been removed from `k6-job.yaml`; the comment defending it was wrong on the
+facts (it claimed the surviving Namespace kept logs browsable — logs live in
+the pod, which the Job deletes with itself).
+
+### Decisions taken
+
+- **The `tools` node group stays at desired = 1.** When it was reclaimed
+  mid-run the private gateway had zero healthy targets until Envoy
+  rescheduled — with `instance` + `Local`, only nodes running an Envoy pod pass
+  the health check, and an ALIAS record with `EvaluateTargetHealth: true`
+  returns NODATA rather than merely failing. Accepted deliberately: this is a
+  disposable test cluster, not a permanent one. Revisit (desired = 2 plus a
+  `topologySpreadConstraint`) only if that ever changes.
+- **The public gateway stays on `ip` targets.** Its NLB carries the allowlist
+  in its security group, and preserving client IP changes which source address
+  the node's SG rules are evaluated against. Deliberately not bundled with the
+  private-gateway change.
+- **The inverse benchmark (nginx on `ip` targets) is declined** — nginx is
+  being replaced, so the answer changes nothing actionable.
+
+## Executing the migration — nginx-ingress retired
+
+Ran the four steps the same day the plan was written. `echo-server` was the
+only consumer, so this was one hostname moving between data planes.
+
+**(a) Dark launch.** A transient HTTPRoute carrying
+`echo-server.aws.binbash.com.ar` with
+`external-dns.alpha.kubernetes.io/controller: none-cutover-dark-launch`, so
+Envoy would route the name while external-dns kept publishing nginx's record.
+Separate route rather than a second hostname on `echo-server-eg`, because that
+annotation is per-resource and would have un-published the `-eg` record too.
+
+Validated with `curl --resolve` straight at the Envoy NLB: HTTP 200 on the real
+hostname, valid TLS off the wildcard with no `-k`, and `X-Forwarded-For`
+carrying the real client IP. Confirmed it stayed dark across two full 3-minute
+sync cycles — external-dns logged `All records are already up to date` every
+cycle and the ALIAS still pointed at `k8s-ingressn-…`. So the `controller`
+annotation is honoured on the `gateway-httproute` source in v0.14.0, which had
+been an assumption up to that point.
+
+**(b) The cutover.** One apply: hostname added to `echo-server-eg`, transient
+route destroyed, nginx Ingress destroyed. The Ingress was deleted outright
+rather than emptied — that host was its only rule. The ALIAS flipped to the
+Envoy NLB **160 s** later, inside the expected window.
+
+This opened a real gap: DNS still pointed at nginx while nginx no longer had a
+route for the name, so the hostname 404s for up to one sync cycle plus the 60 s
+ALIAS TTL. The `-eg` name covered it.
+
+> **This was avoidable, and calling it inherent to DNS-based cutovers (as this
+> entry first did) was wrong.** The mistake was bundling "stop serving the old
+> path" into the same apply that moved DNS. DNS is eventually consistent; the
+> Ingress deletion is not.
+>
+> The fix is to invert *which* object is hidden from external-dns. Annotate the
+> **nginx Ingress** with
+> `external-dns.alpha.kubernetes.io/controller: none` and leave it in place:
+> nginx-ingress does not read that annotation, so it keeps serving, while
+> external-dns stops seeing it and the HTTPRoute becomes the only source for
+> the name. The ALIAS repoints while *both* data planes still answer — clients
+> on the new record go through Envoy, clients on a cached record still get 200
+> from nginx. Only once DNS has fully propagated is the Ingress deleted.
+>
+> Correct order, four applies instead of three:
+> 1. Dark launch on a transient hidden route; validate with `curl --resolve`.
+> 2. Hostname onto the main HTTPRoute **plus** the ignore annotation on the
+>    Ingress — do not delete it.
+> 3. Wait one sync + TTL, verify over real DNS.
+> 4. Delete the Ingress, then disable nginx.
+>
+> The repoint itself contributes nothing: external-dns issues an UPSERT and the
+> Route53 change is atomic, so a resolver sees the old target or the new one,
+> never NXDOMAIN — the observed 160 s flip was a clean repoint, not a
+> delete-then-create. If a future migration needs a *percentage* canary rather
+> than merely a gapless flip, that is a different mechanism: Route53 weighted
+> records via external-dns `set-identifier`.
+>
+> Use this ordering for the next data-plane migration. It was not re-tested
+> here because nginx is already gone.
+
+**(c) Retiring `-eg`.** Dropped from `hostnames`; policy `sync` deleted the
+Route53 record within 20 s.
+
+**(d) nginx off.** `nginx_controller.enabled = false` → 2 destroyed (helm
+release + namespace) in 1m45s. **No finalizer deadlock** — the namespace
+terminated on its own, no orphaned TargetGroupBindings, and the nginx NLB was
+removed in AWS. That is the expected outcome when the LBC outlives what it
+manages, which is exactly what the Day-4 drain gate is meant to guarantee at
+teardown; this run only exercised the easy half of it (the controllers were
+never in scope), so the gate itself is still unverified.
+
+`local.private_ingress_class` was kept, not deleted, with a note explaining it
+is now a dead class: argocd, kube-prometheus-stack, uptime-kuma, gatus and
+goldilocks still reference it, all disabled. Re-enabling any of them produces
+an Ingress no controller will serve; they need HTTPRoutes against
+`private-gw-eg` instead. Keeping the local means those references still resolve
+and the warning stays attached to them.
+
+Final state: two hostnames, both on Envoy Gateway, both 200, client IP
+preserved, and only two NLBs left in the account.
+
+### AWS WAF is not deployed at all
+
+Backlog item 4 reads as though WAF has to be preserved across the migration.
+It does not: nothing in this stack has a WebACL attached. The only traces are
+IAM permissions on the LB controller role (so it *could* associate one) and
+`apps-devstg/us-east-1/security-firewall --`, whose trailing ` --` marks it
+excluded from deployment. `apps_ingress`, the ALB→nginx path it would have
+attached to, is also disabled. So item 4 is "decide whether to build this",
+not "avoid breaking it" — and it does **not** block the echo-server cutover.
+
+## Outstanding (uncommitted) changes — updated
+
+- `network/terraform.tfvars` — **restored** to `vpc_enable_nat_gateway = true`
+  and applied. No longer a pending delta.
+- `k8s-components/{config.tf,networking-ingress.tf,networking-envoygateway.tf}`
+  — the drain-gate fix described above. Applied, not committed.
+- `shared/us-east-1/tools-atlantis-ecs/main.tf` — unchanged from Day 3; still
+  the hardcoded-IP removal on an undeployed layer.
+- `k8s-components/allowlist.local.auto.tfvars` — still gitignored and still
+  required.
+
+# Next session — backlog
+
+Ordered by dependency, not priority.
+
+1. ~~**Fix the destroy ordering.**~~ **Done (Day 4)**, though not as written —
+   the `depends_on` this item asked for already existed. The fix was a
+   `time_sleep.controller_drain` drain gate; see "The finalizer deadlock,
+   re-diagnosed". **Still unverified**: it only proves itself on the next full
+   teardown, which must run without manual finalizer surgery.
+
+2. ~~**Plan the nginx → Envoy Gateway migration.**~~ **Done (Day 4)** — see
+   "nginx → Envoy migration: planned" above. Inventory: echo-server is the only
+   live consumer. Cutover approach: dark launch. The client-IP blocker is
+   fixed, not deferred. Item 4 turned out **not** to constrain this — nothing
+   has a WebACL attached, so it need not be settled first.
+
+3. ~~**Execute the migration.**~~ **Done (Day 4)** — nginx-ingress is gone. See
+   "Executing the migration" above for how each step went.
+
+   Still unresolved, not a blocker: Envoy does not emit `X-Real-Ip`,
+   `X-Forwarded-Host`, `X-Forwarded-Port` or `X-Scheme`, which nginx
+   synthesised. No target-type changes that. Nothing consumes them today, but
+   it is now unrecoverable-by-config for anything that later wants them.
+
+4. **Evaluate how to put AWS WAF in front of Envoy.** Reframed on Day 4: this
+   is a greenfield decision, not a preservation problem. **No WebACL is
+   attached to anything in this stack** — the only traces are IAM permissions
+   on the LB controller role and the deployment-excluded
+   `security-firewall --` layer. It does not gate item 3. The crux: AWS WAF
+   attaches to CloudFront, ALB, API Gateway, AppSync, Cognito, App Runner and
+   Verified Access — **not to NLB**, which is what the Envoy Gateways are
+   fronted by today. Options to compare: CloudFront with the NLB as a custom
+   origin; an ALB in front with a `TargetGroupBinding` onto the Envoy pods;
+   provisioning an ALB directly via the LBC's Gateway API support instead of a
+   Service of type LoadBalancer; or dropping AWS WAF for an in-Envoy
+   equivalent. Each has different consequences for TLS termination and for the
+   IP allowlist, which currently lives on the NLB security group.
+
+5. **Rewrite the Envoy Gateway implementation docs.** `networking-envoygateway.tf`
+   is now ~600 lines and carries most of the reasoning in comments — Day 4's
+   target-type rationale made it longer, not shorter. Split the file or move
+   the narrative into a layer README, and fold in the visual comparison built
+   on Day 3 (published artifact; local copy at
+   `~/Desktop/envoy-gateway-vs-nginx.html`). Target: readable without having to
+   reconstruct the history from this log.
+
+6. **Add a `retry` block to the two `data "http"` CRD downloads.** They fail
+   with `TLS handshake timeout` over the VPN and the provider gives up after
+   one attempt, which turns into a confusing `0 added` rather than a clean
+   error (empty `for_each` via `try(..., "")`). Bites on every re-spin.
+
+7. **Decide the public gateway's target-type.** The private gateway moved to
+   `instance` on Day 4; the public one was deliberately left on `ip`, so the
+   two are now inconsistent. The open question is how client-IP preservation
+   interacts with the allowlist living in the NLB security group — with the
+   client IP preserved, the node's SG rules are evaluated against the client
+   address rather than the NLB's. Worth settling now that S6 has shown
+   `instance` costs nothing in reliability.
