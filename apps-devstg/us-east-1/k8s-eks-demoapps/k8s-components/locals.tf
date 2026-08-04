@@ -38,8 +38,23 @@ locals {
   # Ingress settings
   #------------------------------------------------------------------------------
   # Ingress classes identify the different ingress controllers we have
-  public_ingress_class  = "public-apps"  # DemoApps
-  private_ingress_class = "private-apps" # E.g. ArgoCD
+  public_ingress_class = "public-apps" # DemoApps
+
+  # DEAD CLASS — nothing serves it. `ingress_nginx_private` was the only
+  # controller watching `private-apps` and it is disabled: private L7 traffic
+  # now goes through Envoy Gateway (`private-gw-eg`) via HTTPRoutes, not
+  # Ingresses. Traefik would claim the same class but is disabled too.
+  #
+  # Still referenced by the chart values of argocd (cicd-argo.tf),
+  # kube-prometheus-stack (monitoring-metrics.tf) and uptime-kuma
+  # (monitoring-other.tf), plus hardcoded as the literal `private-apps` in
+  # chart-values/{gatus,goldilocks}.yaml. Every one of those components is
+  # currently `enabled = false`, so nothing renders and nothing breaks — but
+  # re-enabling any of them yields an Ingress no controller will ever pick up.
+  # Whoever does that needs to give it an HTTPRoute against `private-gw-eg`
+  # instead. Kept rather than deleted so those references still resolve and
+  # this note stays attached to them.
+  private_ingress_class = "private-apps"
 
   #------------------------------------------------------------------------------
   # Nginx Ingress settings

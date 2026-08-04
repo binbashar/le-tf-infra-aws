@@ -13,49 +13,42 @@
 # rebuilt cluster the namespace simply isn't there and every resource below
 # fails to apply. It's managed here now so the layer stands up from scratch.
 #
-# Routing: three hostnames hit the same backend Service.
+# Routing: two hostnames hit the same backend Service, both on Envoy Gateway.
 #
-#   - echo-server.aws.binbash.com.ar     → nginx-ingress (Ingress, below)
+#   - echo-server.aws.binbash.com.ar     → Envoy Gateway, private-gw-eg
 #                                          Internal NLB, VPN only.
-#   - echo-server-eg.aws.binbash.com.ar  → Envoy Gateway, private-gw-eg
-#                                          Internal NLB, VPN only. Keeps the
-#                                          `-eg` suffix because nginx already
-#                                          owns the unsuffixed private name.
 #   - echo-server.binbash.com.ar         → Envoy Gateway, public-gw-eg
 #                                          Internet-facing NLB, reachable only
 #                                          from the CIDRs allowlisted in
 #                                          k8s-components' `envoy_gateway.
-#                                          public_gateway.allowed_cidrs`. No
-#                                          `-eg` suffix needed: nothing else
-#                                          publishes into the public zone, so
-#                                          this follows the plain
-#                                          <app>.binbash.com.ar convention.
+#                                          public_gateway.allowed_cidrs`.
 #
-# All three are HTTPS. The nginx path gets a per-host cert from cert-manager;
-# both Envoy Gateway paths inherit the wildcard bound to their gateway's HTTPS
-# listener (*.aws.binbash.com.ar and *.binbash.com.ar respectively).
+# Both follow the plain <app>.<zone> convention. There used to be a third,
+# `echo-server-eg.aws.binbash.com.ar`, carrying an `-eg` suffix purely because
+# nginx-ingress owned the unsuffixed private name; the nginx → Envoy migration
+# moved that name here and the suffixed one was retired with it.
 #
-# externaldns-private publishes the two `aws.` records into the private zone;
+# Both are HTTPS and inherit the wildcard bound to their gateway's HTTPS
+# listener (*.aws.binbash.com.ar and *.binbash.com.ar respectively) — no
+# per-host cert-manager Certificate is involved any more.
+#
+# externaldns-private publishes the `aws.` record into the private zone;
 # externaldns-public publishes the public one into binbash.com.ar.
 #
-# Smoke-testing (VPN required for the two private hosts; the public one
-# requires being on an allowlisted source IP):
-#
-#   curl https://echo-server.binbash.com.ar/
+# Smoke-testing (VPN required for the private host; the public one requires
+# being on an allowlisted source IP):
 #
 #   # HTTP (returns the request as plain text, jmalloc-style):
-#   curl https://echo-server-eg.aws.binbash.com.ar/
+#   curl https://echo-server.aws.binbash.com.ar/
+#   curl https://echo-server.binbash.com.ar/
 #
-#   # WebSocket — `wscat` is the simplest interactive client. It defaults to
-#   # HTTP/1.1, which matters for the nginx host: nginx-ingress negotiates
-#   # HTTP/2 via ALPN and `websocat 1.x` cannot do WS-over-HTTP/2 (RFC 8441),
-#   # so it errors with "I/O failure" against echo-server.aws…; wscat works
-#   # against both hosts.
+#   # WebSocket — `wscat` is the simplest interactive client.
 #   #   brew install wscat   (or: npm i -g wscat)
-#   wscat -c wss://echo-server.aws.binbash.com.ar/.ws       # nginx
-#   wscat -c wss://echo-server-eg.aws.binbash.com.ar/.ws    # envoy-gateway
+#   wscat -c wss://echo-server.aws.binbash.com.ar/.ws
 #   # Type any line at the `>` prompt; jmalloc echoes it back prefixed with
 #   # a `Request served by …` line on first frame.
+#   # (The old HTTP/2-vs-`websocat 1.x` caveat here applied to nginx's ALPN
+#   # negotiation and died with the nginx path.)
 #
 #   # Raw upgrade handshake check via curl (forces HTTP/1.1 so it works
 #   # everywhere, prints the `101 Switching Protocols` response):
@@ -165,55 +158,30 @@ resource "kubernetes_service" "echo_server" {
   }
 }
 
-resource "kubernetes_ingress_v1" "echo_server" {
-  count = var.demo_apps.echo_server.enabled ? 1 : 0
-
-  metadata {
-    name      = "echo-server"
-    namespace = kubernetes_namespace.echo_server[0].metadata[0].name
-    # Legacy annotation pattern used elsewhere in this repo (e.g. argo-cd):
-    # ingress-nginx-private was launched with --ingress-class=private-apps,
-    # so the controller filters by this annotation rather than the modern
-    # spec.ingressClassName / IngressClass resource.
-    # cert-manager auto-issues the per-host LE cert via DNS01 (public zone
-    # fall-through, same trick the Envoy Gateway wildcard uses).
-    annotations = {
-      "kubernetes.io/ingress.class"    = "private-apps"
-      "cert-manager.io/cluster-issuer" = "clusterissuer-binbash-cert-manager-clusterissuer"
-    }
-  }
-  spec {
-    tls {
-      hosts       = ["echo-server.aws.binbash.com.ar"]
-      secret_name = "echo-server-tls"
-    }
-    rule {
-      host = "echo-server.aws.binbash.com.ar"
-      http {
-        path {
-          path      = "/"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = "echo-server"
-              port {
-                number = 80
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
+#------------------------------------------------------------------------------
+# The nginx Ingress that used to own `echo-server.aws.binbash.com.ar` was
+# removed here — the hostname now lives on the `echo-server-eg` HTTPRoute above
+# and is served by the Envoy private gateway. It was deleted rather than
+# emptied because that host was its only rule, so stripping it would have left
+# an Ingress with nothing in it.
+#
+# Two things went with it: the per-host cert-manager Certificate/Secret
+# (`echo-server-tls`, triggered by the `cert-manager.io/cluster-issuer`
+# annotation), now superseded by the `*.aws.binbash.com.ar` wildcard bound to
+# the gateway's HTTPS listener; and the last live consumer of the
+# `private-apps` ingress class.
+#
+# Rolling back means re-adding this resource and waiting out a fresh DNS01
+# issuance (~4 min). During the cutover itself the `-eg` hostname served as the
+# instant rollback; it has since been retired, so that shortcut is gone.
+#------------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------
 # Envoy Gateway, private path: HTTPRoute attaching to the platform-shared
 # `private-gw-eg` in `envoy-gateway-system` via cross-namespace parentRef.
-# Distinct hostname from the nginx Ingress so externaldns-private creates a
-# separate Route53 record and the two paths don't overlap. Same backend
-# Service as the nginx path. TLS comes from the wildcard
-# `*.aws.binbash.com.ar` cert bound to the gateway's HTTPS listener.
+# Owns `echo-server.aws.binbash.com.ar` outright since the nginx migration.
+# TLS comes from the wildcard `*.aws.binbash.com.ar` cert bound to the
+# gateway's HTTPS listener.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "echo_server_route_eg" {
   count = var.demo_apps.echo_server.enabled ? 1 : 0
@@ -230,7 +198,12 @@ resource "kubernetes_manifest" "echo_server_route_eg" {
         name      = local.private_gateway_name
         namespace = local.envoy_gateway_namespace
       }]
-      hostnames = ["echo-server-eg.aws.binbash.com.ar"]
+      # The `-eg` suffix is gone. It only ever existed because nginx owned the
+      # unsuffixed private name; once the cutover moved that name here, the
+      # suffixed one was redundant and was dropped. external-dns runs policy
+      # `sync`, so removing it from this list is enough — the Route53 record is
+      # deleted on the next reconcile, no manual cleanup.
+      hostnames = ["echo-server.aws.binbash.com.ar"]
       rules = [{
         backendRefs = [{
           name = "echo-server"
@@ -296,10 +269,6 @@ moved {
 moved {
   from = kubernetes_service.echo_server
   to   = kubernetes_service.echo_server[0]
-}
-moved {
-  from = kubernetes_ingress_v1.echo_server
-  to   = kubernetes_ingress_v1.echo_server[0]
 }
 moved {
   from = kubernetes_manifest.echo_server_route

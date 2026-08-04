@@ -8,8 +8,15 @@ ingress = {
 
   # ########################
   # CAN NOT SET BOTH TO TRUE
+  #
+  # Both false since the nginx → Envoy Gateway migration: private L7 traffic
+  # goes through `private-gw-eg` via HTTPRoutes now, so no Ingress controller
+  # watches `private-apps` any more. See the note on
+  # `local.private_ingress_class` in locals.tf before re-enabling either — the
+  # components still wired to that class would need HTTPRoutes instead.
+  # `apps_ingress` below depends on one of these being on, and is off too.
   nginx_controller = {
-    enabled = true
+    enabled = false
   }
   traefik = {
     enabled = false
