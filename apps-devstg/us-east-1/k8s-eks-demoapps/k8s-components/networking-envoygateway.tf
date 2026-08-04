@@ -79,7 +79,7 @@ resource "helm_release" "envoy_gateway" {
 # Shared private Gateway (`private-gw-eg`)
 # -----------------------------------------------------------------------------
 # Platform-shared L7 entry point for VPN-only traffic. An AWS LBC-managed
-# internal NLB (target-type=ip) fronts the EG-provisioned Envoy Service.
+# internal NLB (target-type=instance) fronts the EG-provisioned Envoy Service.
 # Workloads attach via HTTPRoute.parentRef from any namespace
 # (allowedRoutes.namespaces.from = "All" on the https listener).
 #------------------------------------------------------------------------------
@@ -138,17 +138,17 @@ resource "kubernetes_manifest" "private_gw_eg_proxy" {
           # Service to `Local`, so nothing to set here — but do not assume that
           # if the EG version changes.
           #
-          # The trade: `loadtest/test-results.md` found a small, repeatable
-          # client-side timeout tail (0.04-0.11% across three scenarios) on
-          # nginx's `instance`-target NLB that never appeared on either
-          # `ip`-target path, attributed to the extra NodePort / target-health
-          # layer. That attribution is explicitly unconfirmed in that document.
-          # This was chosen deliberately: it makes the nginx cutover
-          # behaviour-identical at the network layer, so a data-plane change
-          # and a network change do not land at the same time. Revisit
-          # `ip` + `preserve_client_ip.enabled=true`, or PROXY protocol v2 with
-          # EG `clientIPDetection`, once nginx is retired and the benchmark can
-          # measure the tail instead of inheriting it blind.
+          # The trade this was expected to carry turned out not to exist.
+          # `loadtest/test-results.md` had found a small, repeatable client-side
+          # timeout tail (0.04-0.11%) on nginx's `instance`-target NLB that
+          # never appeared on either `ip`-target path, and attributed it to the
+          # extra NodePort / target-health layer. S6 in that document is the
+          # controlled test: with both data planes on identical `instance`
+          # plumbing, Envoy logged zero failures over 450 k requests while nginx
+          # logged 425. The tail was nginx's, not the target-type's. Nothing to
+          # revisit here — `ip` + `preserve_client_ip.enabled=true` and PROXY
+          # protocol v2 with EG `clientIPDetection` are both strictly more
+          # moving parts for the same result.
           #
           # NOTE: `instance` does NOT bring back `X-Real-Ip`,
           # `X-Forwarded-Host`, `X-Forwarded-Port` or `X-Scheme`. Those are
@@ -356,15 +356,15 @@ resource "helm_release" "private_gw_eg_tls" {
 #
 #   1. The NLB is `internet-facing` and lands in the VPC's public subnets
 #      (tagged `kubernetes.io/role/elb` by the network sublayer). Targets are
-#      still pod IPs in the private subnets.
+#      the worker nodes in the private subnets, same as the private gateway.
 #
-#   2. Access is restricted to `var.envoy_gateway.public_gateway.allowed_cidrs`
-#      at the NLB's security group, not at L7. This matters: the NLB uses
-#      `target-type=ip` and does NOT preserve the client IP for IP targets, so
-#      an Envoy-level CIDR match (SecurityPolicy `principal.clientCIDRs`) would
-#      compare against the NLB's own address unless proxy protocol v2 were
-#      enabled. Filtering at the security group sidesteps that entirely and
-#      drops disallowed traffic before it ever reaches a pod.
+#   2. Access is restricted to `var.envoy_gateway_public_allowed_cidrs` at the
+#      NLB's security group, not at L7. The allowlist sits on the NLB's own
+#      frontend security group and is evaluated on inbound client traffic
+#      before the load balancer forwards anything, so disallowed traffic never
+#      reaches a pod (and is not billed). This is independent of target-type —
+#      see the note on `nlb-target-type` below for why preserving the client IP
+#      does not disturb it.
 #
 #   3. `allowedRoutes` on the HTTPS listener is a label Selector, not `All`.
 #      A namespace has to be explicitly labelled (see
@@ -415,10 +415,48 @@ resource "kubernetes_manifest" "public_gw_eg_proxy" {
               }]
             }
           }
+          # target-type `instance`, matching the private gateway. Both data
+          # planes now preserve the client IP; see the long note on the private
+          # EnvoyProxy above for the mechanics.
+          #
+          # This was deliberately left on `ip` when the private gateway moved,
+          # on the theory that preserving the client IP would break the CIDR
+          # allowlist: with preservation on, packets arrive at the node with the
+          # client's address as the source, so any node-side rule written as a
+          # CIDR would no longer match the NLB. That theory does not apply here,
+          # for two independent reasons:
+          #
+          #   - The allowlist is not a node-side rule. It lives on the NLB's own
+          #     frontend security group (`k8s-<ns>-<svc>-<hash>`, created by the
+          #     LBC from `load-balancer-source-ranges`) and is evaluated on
+          #     inbound client traffic at the load balancer. Nothing downstream
+          #     of the NLB participates in it, so the target-type is irrelevant
+          #     to it.
+          #   - The node-side rule the LBC does write is a *security group
+          #     reference*, not a CIDR: it allows the shared backend group
+          #     `k8s-traffic-<cluster>-<hash>`, which the LBC attaches to the
+          #     NLB itself. AWS documents security group referencing as working
+          #     "even if you enable client IP preservation", and the private
+          #     gateway has been running on exactly that combination since Day 4.
+          #
+          # So the allowlist keeps working unchanged and does not need to be
+          # duplicated onto the node security group.
+          #
+          # Two consequences worth knowing:
+          #   - `externalTrafficPolicy: Local` (EG's default, already set) means
+          #     only nodes running a public Envoy pod pass the health check.
+          #     With the `tools` node group at desired = 1 that is a single
+          #     point of failure — the same one the private gateway already
+          #     accepted deliberately for this disposable cluster.
+          #   - Envoy now sees the real client address, which makes L7 CIDR
+          #     matching (SecurityPolicy `principal.clientCIDRs`) viable without
+          #     proxy protocol v2. Not used today — the security group is
+          #     cheaper and drops traffic earlier — but it is now an option for
+          #     the WAF question.
           envoyService = {
             annotations = {
               "service.beta.kubernetes.io/aws-load-balancer-type"            = "external"
-              "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "ip"
+              "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "instance"
               "service.beta.kubernetes.io/aws-load-balancer-scheme"          = "internet-facing"
               "service.beta.kubernetes.io/load-balancer-source-ranges"       = join(",", var.envoy_gateway_public_allowed_cidrs)
             }

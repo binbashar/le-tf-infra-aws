@@ -1266,6 +1266,89 @@ not "avoid breaking it" — and it does **not** block the echo-server cutover.
 - `k8s-components/allowlist.local.auto.tfvars` — still gitignored and still
   required.
 
+# Day 5 — 2026-08-04
+
+## Both gateways on `instance` targets — backlog item 7 closed
+
+Item 7 asked how client-IP preservation would interact with the allowlist
+living in the NLB security group, on the assumption that preserving the client
+IP changes which source address the node's SG rules are evaluated against. The
+assumption was wrong, in two independent ways, and neither needed a test to
+settle — the answer was already in the account.
+
+**The allowlist is not a node-side rule.** It sits on the NLB's own frontend
+security group, `k8s-envoygat-envoyenv-e0db197f0c` ("[k8s] Managed
+SecurityGroup for LoadBalancer"), which the LBC creates from
+`load-balancer-source-ranges` and attaches to the load balancer. Inbound client
+traffic is evaluated there, before the NLB forwards anything. Nothing
+downstream participates, so the target-type cannot affect it.
+
+**The node-side rule the LBC does write is a security group reference, not a
+CIDR.** On `sg-00953d82a3d596107`:
+
+```
+sgr-04104ba726c8d0b4b  tcp 10080-31307  ref sg-0386a4cd7cdcd1884  elbv2.k8s.aws/targetGroupBinding=shared
+```
+
+`sg-0386a4cd7cdcd1884` is `k8s-traffic-bbappsdevstgeksdemoapps-*`, the shared
+backend group the LBC attaches to the NLB itself. AWS documents this exact
+construction as surviving client-IP preservation:
+
+> Referencing the security group associated with your Network Load Balancer in
+> the security groups associated with your targets ensures that your targets
+> accept traffic from your Network Load Balancer even if you enable client IP
+> preservation for your Network Load Balancer.
+> — [load-balancer-security-groups](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-security-groups.html)
+
+And the private gateway has been the running proof since Day 4: `instance`
+targets, `preserve_client_ip.enabled=true`, authorised by that same reference,
+serving 200 with the real client IP. The public gateway was the only thing left
+on `ip` / `preserve_client_ip=false`.
+
+**The change.** One annotation on `public_gw_eg_proxy`, `ip` → `instance`. Full
+plan was `0 to add, 1 to change, 0 to destroy` — no collateral drift. Applied
+in 1 s; the LBC then reconciled asynchronously:
+
+| | before | after |
+|---|---|---|
+| public TGs | `ip`, ports 10080/10443 | `instance`, NodePorts 31771/31955 |
+| `preserve_client_ip` | `false` | `true` |
+| health check | `traffic-port` | 30959 (`healthCheckNodePort`) |
+| public `X-Forwarded-For` | the NLB | `186.122.225.19` (real client) |
+| allowlist SG | `186.122.225.19/32` on 80/443 | unchanged |
+
+The node SG rule was recomputed rather than widened as expected: `10080-31307`
+became `30385-31955` under a new rule id. It now spans both gateways' NodePorts
+and both health-check ports, and dropped 10080/10443 because no `ip` targets
+remain — so the rule came out *tighter*, not looser. No manual SG work was
+needed at any point.
+
+Both endpoints verified 200 afterwards. The private path is unregressed
+(`X-Forwarded-For: 172.18.7.44`, the VPN address). No interruption was observed
+on the public hostname during the swap — the LBC brought the new target groups
+to healthy before moving the listeners.
+
+**What this costs.** With `instance` + `externalTrafficPolicy: Local`, only
+nodes running a public Envoy pod pass the health check; the other two nodes sit
+`unhealthy` by design. With `tools` at desired = 1 that is a single point of
+failure, now inherited by the public endpoint as well as the private one. It is
+the same trade Day 4 accepted deliberately for a disposable cluster — but it is
+now the whole ingress surface, so if this cluster ever stops being disposable,
+`tools` at desired = 2 plus a `topologySpreadConstraint` covers both gateways
+at once.
+
+**What it buys, beyond consistency.** Envoy on the public path now sees the
+real client address, which makes an L7 CIDR match (`SecurityPolicy`
+`principal.clientCIDRs`) viable without proxy protocol v2. Not adopted — the
+security group is cheaper and drops traffic before it reaches a pod — but it is
+now a live option for item 4.
+
+Also folded in: three comments that had gone stale on Day 4. The private
+gateway's section header still said `target-type=ip`; the public header's
+point 2 still justified `ip` with the reasoning refuted above; and the
+"trade" paragraph still asked to revisit the timeout tail once nginx was
+retired, which S6 already settled (the tail was nginx's, not the target-type's).
+
 # Next session — backlog
 
 Ordered by dependency, not priority.
@@ -1304,6 +1387,11 @@ Ordered by dependency, not priority.
    equivalent. Each has different consequences for TLS termination and for the
    IP allowlist, which currently lives on the NLB security group.
 
+   Day 5 note: the last option got cheaper. Both gateways now preserve the
+   client IP, so an in-Envoy `SecurityPolicy` can match on the real client
+   CIDR without proxy protocol v2 — the objection that killed it when this
+   item was written no longer holds.
+
 5. **Rewrite the Envoy Gateway implementation docs.** `networking-envoygateway.tf`
    is now ~600 lines and carries most of the reasoning in comments — Day 4's
    target-type rationale made it longer, not shorter. Split the file or move
@@ -1317,10 +1405,11 @@ Ordered by dependency, not priority.
    one attempt, which turns into a confusing `0 added` rather than a clean
    error (empty `for_each` via `try(..., "")`). Bites on every re-spin.
 
-7. **Decide the public gateway's target-type.** The private gateway moved to
-   `instance` on Day 4; the public one was deliberately left on `ip`, so the
-   two are now inconsistent. The open question is how client-IP preservation
-   interacts with the allowlist living in the NLB security group — with the
-   client IP preserved, the node's SG rules are evaluated against the client
-   address rather than the NLB's. Worth settling now that S6 has shown
-   `instance` costs nothing in reliability.
+7. ~~**Decide the public gateway's target-type.**~~ **Done (Day 5)** — moved to
+   `instance`; both gateways are now consistent and both preserve the client
+   IP. The premise of this item was wrong: the allowlist lives on the NLB's
+   own frontend security group, not on the nodes, and the node-side rule the
+   LBC writes is a security group *reference*, which AWS documents as
+   surviving client-IP preservation. See "Both gateways on `instance`
+   targets" above. Item 4 gains an option from this: Envoy can now match on
+   the real client CIDR at L7.
