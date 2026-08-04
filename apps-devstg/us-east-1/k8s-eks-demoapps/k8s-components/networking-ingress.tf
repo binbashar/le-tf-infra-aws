@@ -19,6 +19,55 @@ resource "helm_release" "alb_ingress" {
 }
 
 #------------------------------------------------------------------------------
+# Controller Drain Gate
+# -----------------------------------------------------------------------------
+# This resource exists purely to make `tofu destroy` survivable. It has no
+# effect on a normal apply.
+#
+# THE PROBLEM
+# Every object that ends up as a `Service` of type LoadBalancer (the Envoy
+# Gateways, the nginx/traefik controllers) gets the `service.k8s.aws/resources`
+# finalizer attached by the AWS Load Balancer Controller. Only the LBC can
+# remove that finalizer. If the LBC helm release is destroyed first, the
+# Services hang in `Terminating` forever, their namespace never terminates, and
+# the destroy fails with `context deadline exceeded`.
+#
+# WHY `depends_on` ALONE IS NOT ENOUGH
+# The Gateways already declare `depends_on = [helm_release.alb_ingress]`, so
+# Terraform does delete them before the controllers. That ordering was in place
+# during the teardown that deadlocked anyway, because the cleanup is
+# *asynchronous*: deleting a `Gateway` returns as soon as the CR is gone, but
+# the derived `Service` is garbage collected by the Envoy Gateway controller
+# some seconds later, and only then does the LBC get to delete the NLB and
+# strip its finalizer. Terraform does not wait for any of that -- it moves
+# straight on to destroying the controllers, killing them mid-cleanup.
+#
+# THE FIX
+# `destroy_duration` holds the destroy graph open between the two groups. On
+# destroy the order becomes:
+#
+#   Gateways / ingress controllers  ->  [ wait 180s ]  ->  LBC + Envoy Gateway
+#
+# which is exactly the window the controllers need to finish garbage collecting.
+# The dependency direction is inverted from what reads naturally: this resource
+# depends on the *controllers*, and the objects they manage depend on *it*, so
+# that Terraform's reverse-order destroy produces the sequence above.
+#
+# 180s is deliberately generous -- NLB deletion is the slow step and a teardown
+# is never time critical.
+#------------------------------------------------------------------------------
+resource "time_sleep" "controller_drain" {
+  count = var.ingress.alb_controller.enabled || var.envoy_gateway.enabled ? 1 : 0
+
+  destroy_duration = "180s"
+
+  depends_on = [
+    helm_release.alb_ingress,
+    helm_release.envoy_gateway,
+  ]
+}
+
+#------------------------------------------------------------------------------
 # Nginx Ingress (Private): Route inside traffic to services in the cluster.
 #------------------------------------------------------------------------------
 resource "helm_release" "ingress_nginx_private" {
@@ -33,6 +82,12 @@ resource "helm_release" "ingress_nginx_private" {
       ingressClass = local.private_ingress_class,
       tags         = join(",", local.nginx_ingress_tags_list)
     })
+  ]
+
+  # Owns a Service of type LoadBalancer, so it must be torn down before the LBC
+  # -- see the drain gate above.
+  depends_on = [
+    time_sleep.controller_drain,
   ]
 }
 
@@ -52,6 +107,12 @@ resource "helm_release" "traefik" {
       tags         = join(",", local.traefik_tags_list)
 
     })
+  ]
+
+  # Owns a Service of type LoadBalancer, so it must be torn down before the LBC
+  # -- see the drain gate above.
+  depends_on = [
+    time_sleep.controller_drain,
   ]
 }
 
@@ -144,7 +205,10 @@ resource "kubernetes_ingress_v1" "nginx_apps" {
 
   depends_on = [
     helm_release.alb_ingress,
-    helm_release.ingress_nginx_private
+    helm_release.ingress_nginx_private,
+    # Backs an ALB provisioned by the LBC, which is likewise deleted
+    # asynchronously -- see the drain gate above.
+    time_sleep.controller_drain,
   ]
 }
 
@@ -239,6 +303,9 @@ resource "kubernetes_ingress_v1" "traefik_apps" {
 
   depends_on = [
     helm_release.alb_ingress,
-    helm_release.traefik
+    helm_release.traefik,
+    # Backs an ALB provisioned by the LBC, which is likewise deleted
+    # asynchronously -- see the drain gate above.
+    time_sleep.controller_drain,
   ]
 }

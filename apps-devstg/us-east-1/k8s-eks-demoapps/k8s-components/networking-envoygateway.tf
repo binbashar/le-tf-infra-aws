@@ -218,6 +218,10 @@ resource "kubernetes_manifest" "private_gateway_eg" {
     kubernetes_manifest.envoy_gateway_class,
     helm_release.alb_ingress,
     helm_release.private_gw_eg_tls,
+    # Provisions a Service of type LoadBalancer via the Envoy Gateway
+    # controller. The drain gate keeps both controllers alive long enough to
+    # garbage collect it on destroy -- see networking-ingress.tf.
+    time_sleep.controller_drain,
   ]
 }
 
@@ -491,6 +495,10 @@ resource "kubernetes_manifest" "public_gateway_eg" {
     kubernetes_manifest.envoy_gateway_class_public,
     helm_release.alb_ingress,
     helm_release.public_gw_eg_tls,
+    # Provisions a Service of type LoadBalancer via the Envoy Gateway
+    # controller. The drain gate keeps both controllers alive long enough to
+    # garbage collect it on destroy -- see networking-ingress.tf.
+    time_sleep.controller_drain,
   ]
 }
 

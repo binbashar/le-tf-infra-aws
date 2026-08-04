@@ -37,6 +37,7 @@ terraform {
     helm       = "~> 2.11"
     http       = "~> 3.4"
     kubernetes = "~> 2.23"
+    time       = "~> 0.11"
   }
 
   backend "s3" {
