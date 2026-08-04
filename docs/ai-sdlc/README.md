@@ -6,7 +6,8 @@ runs at each step, and how the on-demand `@claude` assistant routes through
 
 > **Local sessions too:** developers can route their own Claude Code sessions
 > through Bedrock (data-science account) on demand — see
-> [`claude-code-bedrock.md`](claude-code-bedrock.md).
+> [`claude-code-bedrock.md`](claude-code-bedrock.md), whose §0 diagrams the
+> launcher's components end to end.
 
 > **Agent GitHub access:** which token and scopes an AI agent needs to open a PR
 > here, and how to tell apart the three causes of GitHub's ambiguous `403

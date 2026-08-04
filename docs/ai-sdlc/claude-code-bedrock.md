@@ -20,6 +20,41 @@ claude            → native Anthropic API (subscription login)            [defa
 claude-bedrock    → Amazon Bedrock — account + role chosen at launch      [opt-in]
 ```
 
+## 0. The components at a glance
+
+![claude-bedrock — local Claude Code session on Amazon Bedrock](../diagrams/claude-bedrock-local.png)
+
+> Source: [`docs/diagrams/claude-bedrock-local.py`](../diagrams/claude-bedrock-local.py) —
+> re-render with `python3 docs/diagrams/claude-bedrock-local.py` (requires
+> `pip install diagrams` and `brew install graphviz librsvg`).
+
+The numbered edges are one launch, end to end. Steps **1–5** are the launcher wiring up the
+session; **6–7** are the inference call:
+
+| # | What happens | Detail |
+| --- | --- | --- |
+| 1 | The wrapper prompts for **account + role** → sets `AWS_PROFILE=bb-<account>-<role>`, then runs an STS preflight | §3.1 |
+| 2–3 | Stale temp keys → `leverage tofu refresh-credentials` mints fresh ones into `~/.aws/bb/credentials` | §3.2 |
+| 4 | `aws configure export-credentials` materializes that profile as **env keys** for the session | §1 |
+| 5 | `exec claude` with `CLAUDE_CODE_USE_BEDROCK=1`, `ANTHROPIC_MODEL`, and the `/model` tier slots | §3.3 |
+| 6 | Claude Code calls the Bedrock **Converse API** (SigV4) as the account's SSO role | §4 |
+| 7 | The `us.anthropic.*` cross-region inference profile streams the completion back | §5 |
+
+Three things worth reading off the diagram:
+
+- **Plain `claude` (top-left) never enters this path** — it stays on the native Anthropic
+  API. The wrapper is the only thing that flips a session to Bedrock, which is why the
+  mode-dependent variables must stay out of every settings `env` block — the dashed
+  `settings.local.json` edge is that hazard, not part of the flow (§1).
+- **Nothing holds long-lived keys.** Every credential in cluster 2 is temporary, derived
+  from your SSO session; the wrapper confers no access of its own and fails closed (§3.2).
+- **The four gates sit on the model, not in the request path** — IAM is only gate 3, so a
+  model you're fully permitted to call can still refuse (§5).
+
+The CI `@claude` PR reviewer is *not* in this diagram: it's the separate integration in the
+same `apps-prd` account, drawn in [`ci-claude-review.png`](../diagrams/ci-claude-review.png)
+([`README.md`](README.md) §4).
+
 ---
 
 ## 1. How the routing works (and why it broke before)
