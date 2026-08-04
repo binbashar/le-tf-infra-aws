@@ -724,3 +724,83 @@ benchmark that motivated the decision, so it still reports kgateway numbers.
 - `GatewayClass` list: `envoy-gateway` only.
 - `private-gw-eg` still PROGRAMMED=True, `private-gw-eg-wildcard` Ready=True,
   6 standard-channel Gateway API CRDs still registered, 0 `kgateway.dev` CRDs.
+
+## echo-server deployed on both data planes — and the client-IP gotcha
+
+Deployed `k8s-workloads` with `echo_server.enabled = true` to validate nginx
+and Envoy Gateway side by side. 5 added (the namespace is new, see below).
+
+| Host | Data plane | HTTPS | TLS | HTTP |
+|---|---|---|---|---|
+| `echo-server.aws.binbash.com.ar` | nginx-ingress | 200 | LE cert, verified | 308 → https |
+| `echo-server-eg.aws.binbash.com.ar` | Envoy Gateway | 200 | LE wildcard, verified | 301 → https |
+
+Both served by the same pod. The 308/301 split is expected, not a defect:
+Gateway API only permits 301/302, so the EG redirect HTTPRoute uses 301 while
+nginx keeps its default 308.
+
+### Namespace had to be brought under terraform
+
+`echo_server.tf` referenced the `echo-server` namespace by string and left it
+unmanaged, on the theory that it survived from the old Ealenn helm release
+(helm doesn't delete namespaces on uninstall). That holds only until the
+cluster is rebuilt — which this layer does routinely. On the fresh cluster
+the namespace didn't exist and all four resources would have failed to apply.
+Added `kubernetes_namespace.echo_server` and switched every resource to
+reference it by attribute so terraform infers the ordering (commit
+`fea11b3b`).
+
+### The client IP does not survive the Envoy Gateway path
+
+echo-server echoes the request verbatim, which makes the two paths trivially
+diffable. Two levels of difference showed up.
+
+**Cosmetic — injected header sets:**
+
+| | nginx | Envoy Gateway |
+|---|---|---|
+| headers | `X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Port`, `X-Forwarded-Proto`, `X-Forwarded-Scheme`, `X-Real-Ip`, `X-Request-Id`, `X-Scheme` | `X-Forwarded-For`, `X-Forwarded-Proto`, `X-Request-Id`, `X-Envoy-External-Address` |
+| `X-Request-Id` format | 32-char hex | UUID |
+
+Migration note: any app reading `X-Real-Ip` or `X-Forwarded-Host` breaks on
+EG — nginx synthesises those, EG does not.
+
+**Functional — `X-Forwarded-For` is wrong on the EG path:**
+
+- nginx → `10.1.49.167`, the actual client pod IP
+- EG → `10.1.56.214`, which is the EG NLB's own IP
+
+Root cause confirmed against the AWS API (not inferred from the header
+alone):
+
+| | nginx NLB | EG NLB |
+|---|---|---|
+| target-type | `instance` | `ip` |
+| `preserve_client_ip.enabled` | **true** | **false** |
+| `proxy_protocol_v2.enabled` | false | false |
+
+nginx-private's target groups are `instance` type (NLB → worker NodePort,
+`externalTrafficPolicy: Local`), where AWS preserves the source IP and it
+can't be turned off. EG's are `ip` type (NLB → Envoy pod ENI directly), and
+for `ip` target groups on TCP, AWS defaults `preserve_client_ip` to **false**.
+Envoy therefore sees the connection as originating from the NLB and puts that
+in `X-Forwarded-For`.
+
+Impact: behind EG as configured today, anything keying on client IP — rate
+limiting, allow-lists, audit logging, geo — is blind.
+
+The tension: `ip` target-type is precisely what makes EG faster (no NodePort
+hop) and what keeps it clear of the client-side timeout tail the benchmark
+found on nginx's `instance` path. So flipping EG to `instance` targets trades
+away the reason it was chosen. Two better options, neither tried yet:
+
+1. `preserve_client_ip.enabled=true` on the target group, via
+   `service.beta.kubernetes.io/aws-load-balancer-target-group-attributes` in
+   the `EnvoyProxy` `envoyService.annotations`. One-line change, but client-IP
+   preservation on `ip` targets can break traffic that leaves and re-enters
+   the same node (hairpinning).
+2. Proxy protocol v2 on the NLB plus EG `clientIPDetection` configured to
+   parse it. More moving parts, but it's the AWS-recommended route for `ip`
+   targets.
+
+This needs resolving before nginx-ingress is actually retired, not after.

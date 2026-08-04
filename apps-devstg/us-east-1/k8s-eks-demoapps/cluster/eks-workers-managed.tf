@@ -75,9 +75,12 @@ module "cluster" {
   # Define Managed Nodes Groups (MNG's) default settings
   eks_managed_node_group_defaults = {
     # Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS
-    ami_type       = var.ami_type
-    disk_size      = 50
-    instance_types = ["t3.medium", "t3a.medium", "t2.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
+    ami_type  = var.ami_type
+    disk_size = 50
+    # Nitro-only: AL2023 (see var.ami_type) needs ENA + NVMe, so Xen generations
+    # like t2 are excluded — they would be accepted by the spot allocator and
+    # then fail to boot.
+    instance_types = ["t3.medium", "t3a.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
     k8s_labels     = local.tags
     # IMPORTANT: setting this to true is only necessary during the initial bootstrap
     # of the cluster, otherwise the built-in VPC CNI won't start. Then, after you get
@@ -126,7 +129,7 @@ module "cluster" {
       max_size       = 6
       min_size       = 2
       capacity_type  = "SPOT"
-      instance_types = ["t3.medium", "t3a.medium", "t2.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
+      instance_types = ["t3.medium", "t3a.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
       labels         = merge(local.tags, { "stack" = "standard" })
     }
 
@@ -138,7 +141,7 @@ module "cluster" {
       max_size       = 6
       min_size       = 1
       capacity_type  = "SPOT"
-      instance_types = ["t3.medium", "t3a.medium", "t2.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
+      instance_types = ["t3.medium", "t3a.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
       labels         = merge(local.tags, { "stack" = "tools" })
       taints = {
         tools = {
