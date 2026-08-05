@@ -1620,16 +1620,49 @@ current spec:
 | cpu | 10m | 50m | **15m** |
 | memory | 32Mi | 64Mi | **100Mi** |
 
-The memory limit is below what VPA thinks the container actually needs, which
-means echo-server is a plausible OOMKill under load — worth remembering next
-time the loadtest numbers look strange. Not changed here; the point of this
-exercise was to get the recommendation surface working, and re-specing the
-demo app mid-session would invalidate the benchmark history in
-`loadtest/test-results.md`.
+The memory limit sits below what VPA thinks the container needs. **Won't-fix**
+— echo-server is a throwaway test app, and re-specing it would invalidate the
+benchmark history in `loadtest/test-results.md` for no gain. Noted only because
+an OOMKill would surface as client-side timeouts, which is the same signature
+the Day 3/4 latency work chased.
 
 The dashboard renders the namespace with its QoS breakdown over the gateway,
 so the whole chain — label → Goldilocks controller → VPA recommender →
 metrics-server → dashboard → HTTPRoute — is confirmed working end to end.
+
+## Envoy Gateway docs
+
+Backlog item 5. The narrative moved out of `networking-envoygateway.tf` into
+`k8s-components/README.md` (~200 lines), written for someone who already knows
+Ingress and has read a Gateway API overview — so it explains nothing about what
+an HTTPRoute is and everything about what is peculiar here.
+
+Sections, in the order they earn their place: topology (mermaid + a
+private-vs-public table), the copy-pasteable recipe for exposing an app, five
+decisions that surprise people, an nginx-annotation → Gateway-API translation
+table, and the operational gotchas that have actually bitten — two-stage apply,
+flaky CRD downloads, the DNS negative-cache trap, the destroy drain gate, and
+how to read `Accepted` / `ResolvedRefs` when a route does not serve.
+
+The `.tf` dropped from 657 to 574 lines and its comments from ~310 to 142.
+Everything that survives is line-level "why this value" — the DNS01
+trick that lets a private-only zone pass ACME, why `301` and not `308`, why
+`load-balancer-source-ranges` needs a precondition. The file was **not** split:
+the public gateway's comments constantly reference the private one, and the two
+are best read side by side behind `#===` banners.
+
+**A claim I had to walk back while writing it.** The first draft said
+`private-apps` and `public-apps` were both dead classes. Only the first is.
+`public-apps` belongs to the AWS Load Balancer Controller, which is enabled —
+an Ingress on that class still provisions an ALB. Nothing uses it today
+(`apps_ingress` is off), but it matters for item 4: an ALB is already
+reachable in one flag, and WAF attaches to ALB.
+
+Also fixed the layer README, which still told people to open
+`argocd.us-east-1.devstg.aws.binbash.com.ar` and read
+`argocd-initial-admin-secret` — neither of which exists. The hostname is
+`argocd.aws.binbash.com.ar` and the password comes from Secrets Manager, so
+that secret is never created.
 
 # Next session — backlog
 
@@ -1650,10 +1683,9 @@ Ordered by dependency, not priority.
 3. ~~**Execute the migration.**~~ **Done (Day 4)** — nginx-ingress is gone. See
    "Executing the migration" above for how each step went.
 
-   Still unresolved, not a blocker: Envoy does not emit `X-Real-Ip`,
-   `X-Forwarded-Host`, `X-Forwarded-Port` or `X-Scheme`, which nginx
-   synthesised. No target-type changes that. Nothing consumes them today, but
-   it is now unrecoverable-by-config for anything that later wants them.
+   The missing nginx-synthesised headers (`X-Real-Ip`, `X-Forwarded-Host`,
+   `X-Forwarded-Port`, `X-Scheme`) were **closed on Day 5, won't-fix**: nothing
+   consumes them and nothing is planned to.
 
 4. **Evaluate how to put AWS WAF in front of Envoy.** Reframed on Day 4: this
    is a greenfield decision, not a preservation problem. **No WebACL is
@@ -1674,13 +1706,9 @@ Ordered by dependency, not priority.
    CIDR without proxy protocol v2 — the objection that killed it when this
    item was written no longer holds.
 
-5. **Rewrite the Envoy Gateway implementation docs.** `networking-envoygateway.tf`
-   is now ~600 lines and carries most of the reasoning in comments — Day 4's
-   target-type rationale made it longer, not shorter. Split the file or move
-   the narrative into a layer README, and fold in the visual comparison built
-   on Day 3 (published artifact; local copy at
-   `~/Desktop/envoy-gateway-vs-nginx.html`). Target: readable without having to
-   reconstruct the history from this log.
+5. ~~**Rewrite the Envoy Gateway implementation docs.**~~ **Done (Day 5)** —
+   `k8s-components/README.md`, ~200 lines, aimed at readers who already know
+   Ingress and have seen Gateway API. See "Envoy Gateway docs" above.
 
 6. ~~**Convert the remaining `private-apps` consumers to HTTPRoutes.**~~
    **Done (Day 5)** — all five converted and upgraded, plus vpa and

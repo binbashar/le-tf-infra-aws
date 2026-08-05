@@ -1,19 +1,17 @@
 #------------------------------------------------------------------------------
-# Envoy Gateway (CNCF, Envoy maintainers' official Gateway API implementation)
+# Envoy Gateway — the L7 data plane for this cluster
 # -----------------------------------------------------------------------------
-# The Gateway API data plane for this layer and the chosen replacement for
-# nginx-ingress, picked over kgateway after benchmarking all three (see
-# loadtest/test-results.md). Runs alongside nginx-ingress during the
-# migration: EG reconciles Gateway API resources, nginx reconciles Ingress
-# ones, so the two never contend. EG only reconciles Gateways whose
-# `gatewayClassName` resolves to a GatewayClass carrying its own controller
-# string, which is what kept it partitioned from kgateway while both ran.
+# ** Read README.md in this directory first. ** It covers the topology, how to
+# expose an app, the decisions that surprise people, and the operational
+# gotchas. This file keeps only the reasoning that belongs to specific lines.
 #
-# Install order (enforced via depends_on):
-#   1. Upstream Gateway API CRDs (provided by networking-gateway-api.tf)
-#   2. EG CRDs (gateway.envoyproxy.io group only — gateway API toggled off
-#      so we don't clobber the standard-channel CRDs already in cluster)
-#   3. EG controller (with --skip-crds equivalent to avoid the same clobber)
+# Install order, enforced by depends_on:
+#   1. Upstream Gateway API CRDs (networking-gateway-api.tf)
+#   2. EG CRDs, `gateway.envoyproxy.io` group only
+#   3. EG controller
+#
+# Steps 2 and 3 both avoid shipping the standard-channel Gateway API CRDs so
+# they cannot clobber the ones step 1 owns.
 #
 # Docs: https://gateway.envoyproxy.io/docs/
 #------------------------------------------------------------------------------
@@ -75,26 +73,15 @@ resource "helm_release" "envoy_gateway" {
   ]
 }
 
-#------------------------------------------------------------------------------
-# Shared private Gateway (`private-gw-eg`)
-# -----------------------------------------------------------------------------
-# Platform-shared L7 entry point for VPN-only traffic. An AWS LBC-managed
-# internal NLB (target-type=instance) fronts the EG-provisioned Envoy Service.
-# Workloads attach via HTTPRoute.parentRef from any namespace
-# (allowedRoutes.namespaces.from = "All" on the https listener).
-#------------------------------------------------------------------------------
+#==============================================================================
+# Private Gateway (`private-gw-eg`) — VPN-only, internal NLB
+#==============================================================================
 
 #------------------------------------------------------------------------------
-# EnvoyProxy: parameters consumed by the GatewayClass below. Carries node
-# scheduling for the EG-provisioned Envoy data-plane Deployment + the three
-# AWS LBC annotations that turn the auto-created Service into an internal
-# NLB targeting pod IPs directly.
-#
-# IMPORTANT: EG references EnvoyProxy at the GatewayClass level (via
-# `spec.parametersRef`), not at the Gateway level. Every Gateway that needs
-# different infra parameters therefore needs its own GatewayClass — which is
-# exactly why the public gateway further down carries a second
-# GatewayClass/EnvoyProxy pair rather than reusing this one.
+# EnvoyProxy: node scheduling for the EG-provisioned data plane, plus the LBC
+# annotations that shape the Service it creates. Consumed by the GatewayClass
+# below — EG reads EnvoyProxy at the *GatewayClass* level, which is why the
+# public gateway needs a class of its own rather than reusing this one.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "private_gw_eg_proxy" {
   count = var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled ? 1 : 0
@@ -121,39 +108,21 @@ resource "kubernetes_manifest" "private_gw_eg_proxy" {
               }]
             }
           }
-          # target-type `instance` (NLB -> worker NodePort -> pod), not `ip`.
-          #
-          # This exists to preserve the client IP, ahead of moving
-          # `echo-server.aws.binbash.com.ar` off nginx-ingress onto this
-          # gateway. On `ip` target groups AWS defaults
+          # target-type `instance` (NLB -> NodePort -> pod), not `ip`, to
+          # preserve the client IP. On `ip` target groups AWS defaults
           # `preserve_client_ip.enabled` to false for TCP, so Envoy sees the
-          # connection as coming from the NLB and writes *that* into
-          # `X-Forwarded-For` — blinding anything downstream that keys on
-          # client IP. On `instance` target groups AWS preserves the source IP
-          # and it cannot be disabled, so there is no companion attribute to
-          # set; the target-type alone is the fix.
+          # NLB as the peer and writes *that* into `X-Forwarded-For`. On
+          # `instance` the source IP is preserved and cannot be disabled — the
+          # target-type alone is the whole fix, there is no companion attribute.
           #
-          # Requires `externalTrafficPolicy: Local` or kube-proxy SNATs the
-          # source away again. Envoy Gateway already defaults the provisioned
-          # Service to `Local`, so nothing to set here — but do not assume that
-          # if the EG version changes.
+          # Depends on `externalTrafficPolicy: Local`, or kube-proxy SNATs the
+          # source away again. EG already defaults the provisioned Service to
+          # `Local` — nothing to set, but do not assume it across EG upgrades.
           #
-          # The trade this was expected to carry turned out not to exist.
-          # `loadtest/test-results.md` had found a small, repeatable client-side
-          # timeout tail (0.04-0.11%) on nginx's `instance`-target NLB that
-          # never appeared on either `ip`-target path, and attributed it to the
-          # extra NodePort / target-health layer. S6 in that document is the
-          # controlled test: with both data planes on identical `instance`
-          # plumbing, Envoy logged zero failures over 450 k requests while nginx
-          # logged 425. The tail was nginx's, not the target-type's. Nothing to
-          # revisit here — `ip` + `preserve_client_ip.enabled=true` and PROXY
-          # protocol v2 with EG `clientIPDetection` are both strictly more
-          # moving parts for the same result.
-          #
-          # NOTE: `instance` does NOT bring back `X-Real-Ip`,
-          # `X-Forwarded-Host`, `X-Forwarded-Port` or `X-Scheme`. Those are
-          # nginx synthesising headers Envoy does not emit, and no target-type
-          # changes that.
+          # This was expected to cost a small latency tail. It does not: S6 in
+          # loadtest/test-results.md put both data planes on identical
+          # `instance` plumbing and the tail turned out to be nginx's, not the
+          # target-type's.
           envoyService = {
             annotations = {
               "service.beta.kubernetes.io/aws-load-balancer-type"            = "external"
@@ -172,8 +141,8 @@ resource "kubernetes_manifest" "private_gw_eg_proxy" {
 }
 
 #------------------------------------------------------------------------------
-# GatewayClass: cluster-scoped, named `envoy-gateway`. Pinned to EG's
-# controller string; parametersRef points at the EnvoyProxy above.
+# GatewayClass, cluster-scoped. Pinned to EG's controller string so only EG
+# reconciles Gateways naming it.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "envoy_gateway_class" {
   count = var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled ? 1 : 0
@@ -201,12 +170,10 @@ resource "kubernetes_manifest" "envoy_gateway_class" {
 }
 
 #------------------------------------------------------------------------------
-# The Gateway itself.
-# - `http` listener: namespaces.from = "Same" so only platform routes (i.e.
-#   the redirect HTTPRoute below) attach. App HTTPRoutes can't see this
-#   listener, so they're HTTPS-only by construction.
-# - `https` listener: namespaces.from = "All" + TLS Terminate against the
-#   EG-namespace wildcard secret.
+# The Gateway. `http` accepts routes only from this namespace, so the redirect
+# below is the only thing on port 80 and app routes are HTTPS-only by
+# construction. `https` accepts from anywhere — reaching this NLB already
+# requires VPN.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "private_gateway_eg" {
   count = var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled ? 1 : 0
@@ -259,10 +226,8 @@ resource "kubernetes_manifest" "private_gateway_eg" {
 }
 
 #------------------------------------------------------------------------------
-# Platform-shared HTTP→HTTPS redirector. Pinned to the http listener via
-# sectionName; matches all paths; 301 (Gateway API rejects nginx's default
-# 308). App HTTPRoutes don't opt in — the http listener refuses their
-# attachment by namespace policy, so they reach the data plane only via 443.
+# HTTP→HTTPS redirector, pinned to the http listener via sectionName. 301
+# because Gateway API rejects nginx's default 308.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "private_gateway_eg_https_redirect" {
   count = var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled ? 1 : 0
@@ -303,15 +268,14 @@ resource "kubernetes_manifest" "private_gateway_eg_https_redirect" {
 }
 
 #------------------------------------------------------------------------------
-# TLS for `private-gw-eg`: wildcard `*.aws.binbash.com.ar` Certificate in the
-# EG namespace, issued by the cluster-scoped ClusterIssuer (see
-# `helm_release.cluster_issuer_binbash_aws` in networking-cluster-issuer.tf).
+# TLS for `private-gw-eg`: the `*.aws.binbash.com.ar` wildcard bound to the
+# HTTPS listener above.
 #
-# DNS01 works despite `aws.binbash.com.ar` being a private-only zone: it has
-# no public NS delegation, so public lookups for `_acme-challenge.<host>`
-# resolve up the chain to the `binbash.com.ar` NS servers. cert-manager writes
-# the ACME TXT into the public zone (where its IRSA role has perms) and LE's
-# public validators read it from there. Same trick as the nginx-ingress flow.
+# Worth knowing: DNS01 works even though `aws.binbash.com.ar` is a private-only
+# zone. It has no public NS delegation, so public lookups for
+# `_acme-challenge.<host>` fall up the chain to the `binbash.com.ar` NS
+# servers; cert-manager writes the TXT into the public zone (where its IRSA
+# role has permissions) and Let's Encrypt reads it from there.
 #------------------------------------------------------------------------------
 resource "helm_release" "private_gw_eg_tls" {
   count = var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled && var.certmanager.enabled ? 1 : 0
@@ -347,48 +311,25 @@ resource "helm_release" "private_gw_eg_tls" {
   ]
 }
 
-#------------------------------------------------------------------------------
-# Shared public Gateway (`public-gw-eg`)
-# -----------------------------------------------------------------------------
-# Internet-facing counterpart of `private-gw-eg`. Same shape (EnvoyProxy ->
-# GatewayClass -> Gateway -> HTTP→HTTPS redirect -> wildcard cert), with three
-# deliberate differences:
-#
-#   1. The NLB is `internet-facing` and lands in the VPC's public subnets
-#      (tagged `kubernetes.io/role/elb` by the network sublayer). Targets are
-#      the worker nodes in the private subnets, same as the private gateway.
-#
-#   2. Access is restricted to `var.envoy_gateway_public_allowed_cidrs` at the
-#      NLB's security group, not at L7. The allowlist sits on the NLB's own
-#      frontend security group and is evaluated on inbound client traffic
-#      before the load balancer forwards anything, so disallowed traffic never
-#      reaches a pod (and is not billed). This is independent of target-type —
-#      see the note on `nlb-target-type` below for why preserving the client IP
-#      does not disturb it.
-#
-#   3. `allowedRoutes` on the HTTPS listener is a label Selector, not `All`.
-#      A namespace has to be explicitly labelled (see
-#      `local.public_gw_eg_exposure_label`) before anything in it can attach an
-#      HTTPRoute — writing an HTTPRoute is not, by itself, enough to publish a
-#      workload to the internet.
-#
-# Hostname scheme: `<app>.binbash.com.ar` (public zone), vs
-# `<app>.aws.binbash.com.ar` on the private gateway.
+#==============================================================================
+# Public Gateway (`public-gw-eg`) — internet-facing NLB, CIDR-allowlisted
+#==============================================================================
+# Same shape as the private one. It differs in three ways, all covered in
+# README.md: an `internet-facing` NLB in the public subnets, a CIDR allowlist
+# on that NLB's security group, and an HTTPS listener that only accepts routes
+# from namespaces carrying an opt-in label.
 #------------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------
-# EnvoyProxy for the public data plane. Identical node scheduling to the
-# private one; the LBC annotations differ in `scheme` and add the source-range
-# allowlist.
+# EnvoyProxy for the public data plane.
 #
-# On `load-balancer-source-ranges`: when
-# `service.beta.kubernetes.io/aws-load-balancer-security-groups` is absent the
-# LBC creates and manages a frontend security group for the NLB, and renders
-# this annotation into its ingress rules. If the annotation were omitted the
-# LBC would default the group to 0.0.0.0/0 — hence the precondition below,
-# which fails the plan rather than silently publishing an open endpoint. It
-# lives here rather than as a variable validation so it only fires when the
-# public gateway is actually being provisioned.
+# On `load-balancer-source-ranges`: with no
+# `aws-load-balancer-security-groups` annotation the LBC creates and manages a
+# frontend SG for the NLB and renders this list into its ingress rules. Omit
+# the annotation and the LBC defaults that group to 0.0.0.0/0 — hence the
+# precondition below, which fails the plan instead of silently publishing an
+# open endpoint. It is a precondition rather than a variable validation so it
+# only fires when the public gateway is actually being provisioned.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "public_gw_eg_proxy" {
   count = var.envoy_gateway.enabled && var.envoy_gateway.public_gateway.enabled ? 1 : 0
@@ -415,44 +356,22 @@ resource "kubernetes_manifest" "public_gw_eg_proxy" {
               }]
             }
           }
-          # target-type `instance`, matching the private gateway. Both data
-          # planes now preserve the client IP; see the long note on the private
-          # EnvoyProxy above for the mechanics.
+          # target-type `instance`, matching the private gateway — see the note
+          # there for the mechanics.
           #
-          # This was deliberately left on `ip` when the private gateway moved,
-          # on the theory that preserving the client IP would break the CIDR
-          # allowlist: with preservation on, packets arrive at the node with the
-          # client's address as the source, so any node-side rule written as a
-          # CIDR would no longer match the NLB. That theory does not apply here,
-          # for two independent reasons:
+          # This was held back on `ip` at first, on the theory that preserving
+          # the client IP would break the CIDR allowlist. It does not, for two
+          # independent reasons: the allowlist lives on the NLB's own frontend
+          # SG and is evaluated before the LB forwards anything, and the
+          # node-side rule the LBC writes is a security-group *reference* to
+          # the shared backend group, which AWS documents as working "even if
+          # you enable client IP preservation". So it needs no duplication onto
+          # the node SG.
           #
-          #   - The allowlist is not a node-side rule. It lives on the NLB's own
-          #     frontend security group (`k8s-<ns>-<svc>-<hash>`, created by the
-          #     LBC from `load-balancer-source-ranges`) and is evaluated on
-          #     inbound client traffic at the load balancer. Nothing downstream
-          #     of the NLB participates in it, so the target-type is irrelevant
-          #     to it.
-          #   - The node-side rule the LBC does write is a *security group
-          #     reference*, not a CIDR: it allows the shared backend group
-          #     `k8s-traffic-<cluster>-<hash>`, which the LBC attaches to the
-          #     NLB itself. AWS documents security group referencing as working
-          #     "even if you enable client IP preservation", and the private
-          #     gateway has been running on exactly that combination since Day 4.
-          #
-          # So the allowlist keeps working unchanged and does not need to be
-          # duplicated onto the node security group.
-          #
-          # Two consequences worth knowing:
-          #   - `externalTrafficPolicy: Local` (EG's default, already set) means
-          #     only nodes running a public Envoy pod pass the health check.
-          #     With the `tools` node group at desired = 1 that is a single
-          #     point of failure — the same one the private gateway already
-          #     accepted deliberately for this disposable cluster.
-          #   - Envoy now sees the real client address, which makes L7 CIDR
-          #     matching (SecurityPolicy `principal.clientCIDRs`) viable without
-          #     proxy protocol v2. Not used today — the security group is
-          #     cheaper and drops traffic earlier — but it is now an option for
-          #     the WAF question.
+          # Side effect worth knowing: Envoy now sees the real client address,
+          # so an L7 CIDR match (SecurityPolicy `principal.clientCIDRs`) is
+          # viable without proxy protocol v2. Unused — the SG is cheaper and
+          # drops traffic earlier — but it is an option if WAF gets revisited.
           envoyService = {
             annotations = {
               "service.beta.kubernetes.io/aws-load-balancer-type"            = "external"
@@ -509,12 +428,10 @@ resource "kubernetes_manifest" "envoy_gateway_class_public" {
 }
 
 #------------------------------------------------------------------------------
-# The public Gateway.
-# - `http` listener: namespaces.from = "Same", so only the redirect HTTPRoute
-#   below attaches — app routes are HTTPS-only by construction, same as the
-#   private gateway.
-# - `https` listener: namespaces.from = "Selector". See point 3 in the section
-#   header — this is the opt-in gate for internet exposure.
+# The public Gateway. `http` behaves like the private one. `https` uses a label
+# Selector rather than `All`: this is the opt-in gate for internet exposure, so
+# writing an HTTPRoute is not by itself enough to publish a workload — a
+# cluster admin has to label the namespace first.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "public_gateway_eg" {
   count = var.envoy_gateway.enabled && var.envoy_gateway.public_gateway.enabled ? 1 : 0

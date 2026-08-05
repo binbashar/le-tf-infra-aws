@@ -190,10 +190,20 @@ Note you can use the [binbash Leverage kubectl command](https://leverage.binbash
 
 ### Connecting to ArgoCD
   1. Since we’re deploying a private K8s cluster you’ll need to be connected to the VPN
-  2. From your web browser access to https://argocd.us-east-1.devstg.aws.binbash.com.ar/
-  3. Considering the current `4.5.7` version we are using the default password it's stored in a secret.
-    1. To obtain it, use this command: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`  
-  4. As Username, the default user is **admin**.
+  2. From your web browser access to https://argocd.aws.binbash.com.ar/
+  3. Username is **admin**. The password is *not* the chart's generated one —
+     `configs.secret.argocdServerAdminPassword` is set from the
+     `/k8s-eks-demoapps/argocdserveradminpassword` secret in AWS Secrets Manager,
+     which holds a bcrypt hash. Get the plaintext from whoever provisioned it;
+     `argocd-initial-admin-secret` is not created when the password is supplied
+     this way.
+  4. For the CLI, `--grpc-web` is required — see `k8s-components/README.md`:
+     `argocd login argocd.aws.binbash.com.ar --grpc-web`
+
+### Ingress and exposing apps
+All L7 exposure goes through Envoy Gateway, not Ingress. See
+[`k8s-components/README.md`](k8s-components/README.md) for the topology, how to
+publish an app on the private or public gateway, and the operational gotchas.
 
 ## Post-initial Orchestration
 After the initial orchestration, the typical flow could include multiple tasks. In other words, there won't be a normal flow but you some of the operations you would need to perform are:
