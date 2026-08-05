@@ -1664,15 +1664,70 @@ Also fixed the layer README, which still told people to open
 `argocd.aws.binbash.com.ar` and the password comes from Secrets Manager, so
 that secret is never created.
 
+## Teardown (Day 5 → Day 6) — the drain gate works
+
+Reverse-order destroy keeping the VPC. **Clean on the first pass, every layer,
+no manual intervention at any point.**
+
+| Layer | Result |
+|---|---|
+| `k8s-workloads` | 5 destroyed |
+| `k8s-components` | 7 HTTPRoutes first, then **50 destroyed** in one pass |
+| `addons` | 4 destroyed |
+| `identities` | 37 destroyed |
+| `cluster` | 50 destroyed |
+| `network` | `vpc_enable_nat_gateway = false`, applied. VPC kept |
+
+### Backlog item 1 is now actually verified
+
+`time_sleep.controller_drain` has been carrying a "still unverified — it only
+proves itself on the next full teardown" caveat since Day 4. This was that
+teardown, and it passed: `k8s-components` destroyed all 50 resources in a
+single pass with **no `context deadline exceeded`, no namespace stuck
+`Terminating`, and no finalizer surgery** — the failure mode that cost an hour
+on Day 3 and produced three Services holding `service.k8s.aws/resources` with
+no controller left to remove it.
+
+Verified after: zero namespaces beyond the four built-ins, zero LoadBalancer
+Services, zero TargetGroupBindings, zero PVCs.
+
+### Deleting the routes first, deliberately
+
+The Day-4 lesson — remove DNS-producing objects while external-dns is still
+alive — applied to this layer's *own* seven hostnames, not just the workload's.
+A targeted destroy of the seven `*_route_eg` resources went first; external-dns
+cleared all seven Route53 records within a sync cycle, leaving only the
+unrelated `vpn.aws.binbash.com.ar`. Then the full layer destroy ran.
+
+Without that step the records would have outlived external-dns. Not fatal —
+policy `sync` plus a stable `txtOwnerId` means the next re-spin adopts and
+deletes them — but it costs nothing to do it in the right order, and it keeps
+the zone honest in between.
+
+Note `-target` worked here, where it was refused earlier in the day: the
+`moved` blocks that made targeting illegal had already been applied, so there
+were no pending moves left to cover.
+
+### Final sweep
+
+EKS clusters, running instances, NAT gateways, EIPs, load balancers, target
+groups, EBS volumes and `k8s-*`/`eks-*` security groups: **all empty.** VPC
+`vpc-0c2dd28735d0250c3` remains `available` with a clean `No changes` plan.
+
+Two things survive on purpose and are free: the argo-rollouts CRDs, which helm
+keeps by resource policy and which went with the cluster anyway, and the VPC
+itself. Flip `vpc_enable_nat_gateway` back to `true` before re-running
+`cluster` on the next re-spin.
+
 # Next session — backlog
 
 Ordered by dependency, not priority.
 
-1. ~~**Fix the destroy ordering.**~~ **Done (Day 4)**, though not as written —
-   the `depends_on` this item asked for already existed. The fix was a
-   `time_sleep.controller_drain` drain gate; see "The finalizer deadlock,
-   re-diagnosed". **Still unverified**: it only proves itself on the next full
-   teardown, which must run without manual finalizer surgery.
+1. ~~**Fix the destroy ordering.**~~ **Done (Day 4), verified (Day 5)** — not
+   as written: the `depends_on` this item asked for already existed, and the
+   fix was a `time_sleep.controller_drain` drain gate. The Day 5 → 6 teardown
+   was its first real test and it passed clean, first pass, no finalizer
+   surgery. Item closed.
 
 2. ~~**Plan the nginx → Envoy Gateway migration.**~~ **Done (Day 4)** — see
    "nginx → Envoy migration: planned" above. Inventory: echo-server is the only
