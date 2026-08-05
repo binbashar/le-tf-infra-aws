@@ -1593,13 +1593,43 @@ external-dns creates it caches the NXDOMAIN for 15 minutes.
 - **Alertmanager stays off.** Its only receiver needs
   `/notifications/alertmanager` in the shared account and that secret does not
   exist. Enabling it fails the plan at the data source, so it needs the secret
-  created first — not something to invent. Its route row is gated on the same
-  flag, so nothing dangles.
-- **Goldilocks shows an empty dashboard**, and that is upstream behaviour, not
-  a defect: it only creates VPA objects for namespaces labelled
-  `goldilocks.fairwinds.com/enabled=true`, and none are. Which namespaces to
-  profile is a policy call. VPA runs in recommendation-only mode
-  (`admissionController: false`), so labelling is read-only and safe.
+  created first — not something to invent. Its route is gated on the same flag,
+  so nothing dangles.
+
+## Goldilocks, actually profiling something
+
+The empty dashboard above was upstream behaviour, not a defect — Goldilocks
+only creates VPA objects for namespaces labelled
+`goldilocks.fairwinds.com/enabled=true`. `echo-server` is the one real workload
+on this cluster, so that is the namespace that got the label, added to
+`kubernetes_namespace.echo_server` in the k8s-workloads layer (in-place update,
+nothing recreated).
+
+It observes rather than mutates: VPA runs recommendation-only
+(`admissionController: false`), so the VPA object comes up in mode `Off` and
+never rewrites the Deployment's requests. The label is applied
+unconditionally rather than behind a variable — k8s-workloads cannot see
+whether k8s-components enabled Goldilocks, and a label no controller reads
+costs nothing.
+
+Recommendations landed in about 30 s, and they are not flattering to the
+current spec:
+
+| | requests | limits | VPA target |
+|---|---|---|---|
+| cpu | 10m | 50m | **15m** |
+| memory | 32Mi | 64Mi | **100Mi** |
+
+The memory limit is below what VPA thinks the container actually needs, which
+means echo-server is a plausible OOMKill under load — worth remembering next
+time the loadtest numbers look strange. Not changed here; the point of this
+exercise was to get the recommendation surface working, and re-specing the
+demo app mid-session would invalidate the benchmark history in
+`loadtest/test-results.md`.
+
+The dashboard renders the namespace with its QoS breakdown over the gateway,
+so the whole chain — label → Goldilocks controller → VPA recommender →
+metrics-server → dashboard → HTTPRoute — is confirmed working end to end.
 
 # Next session — backlog
 
