@@ -202,13 +202,6 @@ module "atlantis" {
         cidr_ipv6   = "2a0a:a440::/29"
         description = "Github Hooks"
       }
-      oj = {
-        from_port   = 443
-        to_port     = 443
-        ip_protocol = "tcp"
-        cidr_ipv4   = "186.122.225.19/32"
-        description = "OJ"
-      }
     }
   }
   alb_subnets = data.terraform_remote_state.vpc.outputs.public_subnets
