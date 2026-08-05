@@ -96,20 +96,52 @@ resource "helm_release" "argocd" {
 }
 
 #------------------------------------------------------------------------------
-# ArgoCD is exposed at `argocd.aws.binbash.com.ar` via the `argocd` row in
-# networking-httproutes.tf. Replacing the chart's nginx Ingress moved three
-# things, not one:
+# ArgoCD exposure. Replaces the nginx Ingress the chart used to render; see
+# `local.private_gw_parent_refs` in locals.tf for the conventions every private
+# route follows. Three things moved with the Ingress, not one:
 #
-#   - TLS. The Ingress requested its own cert-manager Certificate; the
-#     gateway's HTTPS listener already terminates with the
-#     `*.aws.binbash.com.ar` wildcard.
-#   - The hostname. It was `argocd.demo.devstg.aws.binbash.com.ar`, three
-#     labels below the private base domain, which that wildcard does not
-#     cover. See the flattening note in networking-httproutes.tf.
+#   - TLS. It requested its own cert-manager Certificate; the gateway's HTTPS
+#     listener already terminates with the `*.aws.binbash.com.ar` wildcard.
+#   - The hostname. `argocd.demo.devstg.aws.binbash.com.ar` sat three labels
+#     below the private base domain, which that wildcard does not cover.
 #   - The backend protocol. `nginx.ingress.kubernetes.io/backend-protocol:
 #     HTTPS` became `server.insecure` in the chart values — argocd-server drops
 #     to plain HTTP rather than the gateway learning to re-encrypt.
 #------------------------------------------------------------------------------
+resource "kubernetes_manifest" "argocd_route_eg" {
+  count = local.private_gw_enabled && var.argocd.enabled ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "argocd-server"
+      namespace = kubernetes_namespace.argocd[0].id
+    }
+    spec = {
+      parentRefs = local.private_gw_parent_refs
+      hostnames  = [local.argocd_host]
+      rules = [{
+        backendRefs = [{
+          # The chart names this `<release>-server`. Port 80 is the cleartext
+          # one; it only serves traffic because of `server.insecure`.
+          name = "argocd-server"
+          port = 80
+        }]
+      }]
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.private_gateway_eg,
+    helm_release.argocd,
+  ]
+}
+
+moved {
+  from = kubernetes_manifest.private_gw_routes["argocd"]
+  to   = kubernetes_manifest.argocd_route_eg[0]
+}
 
 #------------------------------------------------------------------------------
 # ArgoCD Image Updater
@@ -170,4 +202,45 @@ resource "helm_release" "argo_rollouts" {
     kubernetes_manifest.private_gateway_eg,
     helm_release.certmanager
   ]
+}
+
+#------------------------------------------------------------------------------
+# Argo Rollouts dashboard exposure. The old Ingress carried
+# `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`, copy-pasted from
+# ArgoCD and wrong here — the dashboard serves plain HTTP on 3100 and never had
+# TLS of its own. It also pinned `paths: [/rollouts]`; with a hostname to
+# itself there is no sub-path to carve out, so this routes the root. The app
+# still self-redirects to `/rollouts/`, which is its own doing.
+#------------------------------------------------------------------------------
+resource "kubernetes_manifest" "argo_rollouts_route_eg" {
+  count = local.private_gw_enabled && var.argocd.rollouts.enabled && var.argocd.rollouts.dashboard.enabled ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "argo-rollouts-dashboard"
+      namespace = kubernetes_namespace.argocd[0].id
+    }
+    spec = {
+      parentRefs = local.private_gw_parent_refs
+      hostnames  = ["rollouts.${local.private_base_domain}"]
+      rules = [{
+        backendRefs = [{
+          name = "argo-rollouts-dashboard"
+          port = 3100
+        }]
+      }]
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.private_gateway_eg,
+    helm_release.argo_rollouts,
+  ]
+}
+
+moved {
+  from = kubernetes_manifest.private_gw_routes["rollouts"]
+  to   = kubernetes_manifest.argo_rollouts_route_eg[0]
 }

@@ -74,6 +74,43 @@ EOT
 }
 
 #------------------------------------------------------------------------------
+# Uptime Kuma exposure. See `local.private_gw_parent_refs` in locals.tf for the
+# conventions every private route follows.
+#------------------------------------------------------------------------------
+resource "kubernetes_manifest" "uptime_kuma_route_eg" {
+  count = local.private_gw_enabled && var.uptime_kuma.enabled ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "uptime-kuma"
+      namespace = kubernetes_namespace.monitoring_other[0].id
+    }
+    spec = {
+      parentRefs = local.private_gw_parent_refs
+      hostnames  = ["kuma.${local.private_base_domain}"]
+      rules = [{
+        backendRefs = [{
+          name = "uptime-kuma"
+          port = 3001
+        }]
+      }]
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.private_gateway_eg,
+    helm_release.uptime_kuma,
+  ]
+}
+
+moved {
+  from = kubernetes_manifest.private_gw_routes["kuma"]
+  to   = kubernetes_manifest.uptime_kuma_route_eg[0]
+}
+
+#------------------------------------------------------------------------------
 # Gatus: Monitor HTTP, TCP, ICMP and DNS.
 #
 # Chart repository changed from minicloudlabs to TwiN's, which is Gatus's own
@@ -86,9 +123,6 @@ EOT
 # renamed `config.endpoints` upstream, so the pinned values had been invalid
 # against any recent Gatus. That went unnoticed only because the component has
 # been disabled.
-#
-# Exposed at `gatus.aws.binbash.com.ar` via the `gatus` row in
-# networking-httproutes.tf.
 #------------------------------------------------------------------------------
 resource "helm_release" "gatus" {
   count      = var.gatus.enabled ? 1 : 0
@@ -108,4 +142,41 @@ resource "helm_release" "gatus" {
     helm_release.certmanager,
     helm_release.externaldns_private
   ]
+}
+
+#------------------------------------------------------------------------------
+# Gatus exposure. See `local.private_gw_parent_refs` in locals.tf for the
+# conventions every private route follows.
+#------------------------------------------------------------------------------
+resource "kubernetes_manifest" "gatus_route_eg" {
+  count = local.private_gw_enabled && var.gatus.enabled ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "gatus"
+      namespace = kubernetes_namespace.monitoring_other[0].id
+    }
+    spec = {
+      parentRefs = local.private_gw_parent_refs
+      hostnames  = ["gatus.${local.private_base_domain}"]
+      rules = [{
+        backendRefs = [{
+          name = "gatus"
+          port = 80
+        }]
+      }]
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.private_gateway_eg,
+    helm_release.gatus,
+  ]
+}
+
+moved {
+  from = kubernetes_manifest.private_gw_routes["gatus"]
+  to   = kubernetes_manifest.gatus_route_eg[0]
 }

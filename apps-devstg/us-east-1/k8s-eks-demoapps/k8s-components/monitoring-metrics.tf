@@ -111,3 +111,112 @@ resource "helm_release" "kube_prometheus_stack" {
     })
   ]
 }
+
+#--------------------------------------------------------------------------------
+# kube-prometheus-stack exposure: one route per UI. See
+# `local.private_gw_parent_refs` in locals.tf for the conventions every private
+# route follows.
+#
+# The counts mirror `helm_release.kube_prometheus_stack` exactly, and
+# Alertmanager's carries the extra `alertmanager.enabled` term its chart values
+# are gated on — so the route can never outlive the workload and publish a
+# Route53 record that 503s.
+#
+# Grafana's `root_url` and Prometheus's `externalUrl` in the chart values have
+# to agree with the hostnames below: both build self-referential links (share
+# URLs, OAuth redirects, the `generatorURL` on every alert) from them, and left
+# implicit they derive from the Service name and point somewhere unreachable.
+#--------------------------------------------------------------------------------
+resource "kubernetes_manifest" "grafana_route_eg" {
+  count = local.private_gw_enabled && var.prometheus.kube_stack.enabled && !var.cost_optimization.cost_analyzer ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "kube-prometheus-stack-grafana"
+      namespace = kubernetes_namespace.prometheus[0].id
+    }
+    spec = {
+      parentRefs = local.private_gw_parent_refs
+      hostnames  = ["grafana.${local.private_base_domain}"]
+      rules = [{
+        backendRefs = [{
+          name = "kube-prometheus-stack-grafana"
+          port = 80
+        }]
+      }]
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.private_gateway_eg,
+    helm_release.kube_prometheus_stack,
+  ]
+}
+
+resource "kubernetes_manifest" "prometheus_route_eg" {
+  count = local.private_gw_enabled && var.prometheus.kube_stack.enabled && !var.cost_optimization.cost_analyzer ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "kube-prometheus-stack-prometheus"
+      namespace = kubernetes_namespace.prometheus[0].id
+    }
+    spec = {
+      parentRefs = local.private_gw_parent_refs
+      hostnames  = ["prometheus.${local.private_base_domain}"]
+      rules = [{
+        backendRefs = [{
+          name = "kube-prometheus-stack-prometheus"
+          port = 9090
+        }]
+      }]
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.private_gateway_eg,
+    helm_release.kube_prometheus_stack,
+  ]
+}
+
+resource "kubernetes_manifest" "alertmanager_route_eg" {
+  count = local.private_gw_enabled && var.prometheus.kube_stack.enabled && !var.cost_optimization.cost_analyzer && var.prometheus.kube_stack.alertmanager.enabled ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "kube-prometheus-stack-alertmanager"
+      namespace = kubernetes_namespace.prometheus[0].id
+    }
+    spec = {
+      parentRefs = local.private_gw_parent_refs
+      hostnames  = ["alertmanager.${local.private_base_domain}"]
+      rules = [{
+        backendRefs = [{
+          name = "kube-prometheus-stack-alertmanager"
+          port = 9093
+        }]
+      }]
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.private_gateway_eg,
+    helm_release.kube_prometheus_stack,
+  ]
+}
+
+moved {
+  from = kubernetes_manifest.private_gw_routes["grafana"]
+  to   = kubernetes_manifest.grafana_route_eg[0]
+}
+
+moved {
+  from = kubernetes_manifest.private_gw_routes["prometheus"]
+  to   = kubernetes_manifest.prometheus_route_eg[0]
+}

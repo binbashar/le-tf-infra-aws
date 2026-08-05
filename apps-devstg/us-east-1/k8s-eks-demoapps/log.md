@@ -1482,19 +1482,26 @@ upgrade-path migrations apply. It will not be that easy next time — `helm
 upgrade` does not touch CRDs, so the *next* bump needs them applied by hand
 first.
 
-### One route table instead of seven route resources
+### Each route lives with its component
 
-`networking-httproutes.tf` holds a single `for_each` over a map of rows, one
-per hostname, and the ArgoCD route from earlier today was folded into it with a
-`moved` block (plan confirmed the address change carried no diff). The reason
-is not line count: "what is reachable on the private gateway?" was becoming a
-question you answered by grepping seven chart-values files, and seven
-near-identical manifests drift — one ends up with a stale port and nobody finds
-out until it 404s. Adding a row is now the whole job of publishing something
-privately.
+Service names and ports came from `helm template` against the exact pinned
+versions, not from upstream docs.
 
-Service names and ports in that table came from `helm template` against the
-exact pinned versions, not from upstream docs.
+These were first written as a single `for_each` route table in a
+`networking-httproutes.tf`, on the argument that "what is reachable on the
+private gateway?" should be answerable in one place. **Reverted at Diego's
+request** — the repo's convention is that a component owns its file, and a
+route belongs next to the `helm_release` it exposes so that turning a component
+on or off is one file, not two. Backing it out was seven `moved` blocks and a
+`0 to add, 0 to change, 0 to destroy` plan; all seven endpoints re-verified 200
+afterwards.
+
+What survives of the consolidation is the part that was actually shared:
+`local.private_gw_enabled` and `local.private_gw_parent_refs` in locals.tf,
+which also carry the conventions comment every route points back to. Splitting
+the resources back out bought something too — each route now depends only on
+its own release, where the `for_each` had to depend on all seven because
+`for_each` cannot express a per-key dependency.
 
 ### Hostnames, flattened
 
@@ -1547,10 +1554,11 @@ migration shim (the class still declares the in-tree
 rewrites it onto `ebs.csi.aws.com`).
 
 **Staging the apply was impossible.** The `moved` block for the ArgoCD route
-makes `-target` illegal — OpenTofu refuses to plan unless the targets cover
-every moved instance, and the route table depends on all seven releases, which
-pulls the whole graph back in. Pre-scaling the `tools` node group out of band
-was blocked, so the full apply ran against 5 free pod slots for 13 new pods.
+made `-target` illegal — OpenTofu refuses to plan unless the targets cover
+every moved instance, and the then-centralised route table depended on all
+seven releases, which pulled the whole graph back in. Pre-scaling the `tools`
+node group out of band was blocked, so the full apply ran against 5 free pod
+slots for 13 new pods.
 The cluster-autoscaler handled it: a second `tools` node joined mid-apply and
 everything scheduled. Only the two failures above needed intervention.
 
@@ -1647,8 +1655,9 @@ Ordered by dependency, not priority.
 6. ~~**Convert the remaining `private-apps` consumers to HTTPRoutes.**~~
    **Done (Day 5)** — all five converted and upgraded, plus vpa and
    metrics-server that came along as dependencies. Seven hostnames on
-   `private-gw-eg`, one route table, no consumers of the dead class left. See
-   "The rest of the `private-apps` consumers" above.
+   `private-gw-eg`, each route declared next to its own `helm_release`, and no
+   consumers of the dead class left. See "The rest of the `private-apps`
+   consumers" above.
 
    Two follow-ups it produced:
 

@@ -89,6 +89,44 @@ locals {
   private_gw_eg_wildcard_cert_secret = "private-gw-eg-wildcard-tls"
   public_gw_eg_wildcard_cert_secret  = "public-gw-eg-wildcard-tls"
 
+  #----------------------------------------------------------------------------
+  # Shared by every private HTTPRoute. Each route lives next to the
+  # `helm_release` it exposes — argocd's in cicd-argo.tf, grafana's in
+  # monitoring-metrics.tf, and so on — so that turning a component on or off is
+  # one file, not two. These two locals are the only part worth factoring out.
+  #
+  # Conventions those routes all follow, all of them load-bearing:
+  #
+  #   - **Hostname is one label below the private base domain**, i.e.
+  #     `<app>.aws.binbash.com.ar`. That is what the wildcard cert bound to the
+  #     gateway's HTTPS listener covers. The older
+  #     `<app>.demo.devstg.aws.binbash.com.ar` scheme sat three labels down and
+  #     a single-label wildcard does not match it, so every component would
+  #     have needed a certificate of its own. Flattening is what lets one
+  #     shared cert serve all of them.
+  #   - **No TLS block, no cert-manager annotation.** The gateway terminates.
+  #   - **No HTTP variant.** `private-gw-eg`'s port-80 listener only accepts
+  #     routes from its own namespace, and the redirector living there sends
+  #     everything to HTTPS — so attaching here is HTTPS-only by construction.
+  #   - **Plain HTTP upstream.** Every backend serves cleartext inside the
+  #     cluster. The one that did not, argocd-server, was told to stop
+  #     (`server.insecure`) rather than have the gateway re-encrypt.
+  #
+  # external-dns watches `gateway-httproute`, so the Route53 record follows
+  # from the `hostnames` field with no extra annotation, and deleting a route
+  # deletes the record on the next reconcile (policy `sync`).
+  #----------------------------------------------------------------------------
+  private_gw_enabled = var.envoy_gateway.enabled && var.envoy_gateway.private_gateway.enabled
+
+  # Cross-namespace parentRef. No ReferenceGrant needed: the gateway's HTTPS
+  # listener sets `allowedRoutes.namespaces.from = All`, and grants are only
+  # required for cross-namespace *backendRefs* — every route here resolves a
+  # Service in its own namespace.
+  private_gw_parent_refs = [{
+    name      = "private-gw-eg"
+    namespace = "envoy-gateway-system"
+  }]
+
   # Namespaces may only attach HTTPRoutes to the public Gateway when they carry
   # this label. Unlike the private Gateway (which accepts routes from every
   # namespace, since reaching it already requires VPN), the public one is
