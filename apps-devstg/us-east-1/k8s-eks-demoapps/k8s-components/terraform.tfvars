@@ -72,8 +72,11 @@ scaling = {
     enabled = false
   }
 
+  # Required by goldilocks, which has no recommender of its own and reads the
+  # VPA objects. Enabling it also switches on metrics-server (see the
+  # `helm_release.metrics_server` count expression).
   vpa = {
-    enabled = false
+    enabled = true
   }
 
   cluster_autoscaling = {
@@ -89,7 +92,7 @@ scaling = {
 # Scaling: Goldilocks
 #------------------------------------------------------------------------------
 goldilocks = {
-  enabled = false
+  enabled = true
 }
 
 
@@ -168,8 +171,15 @@ logging = {
 # KubePrometheusStack
 prometheus = {
   kube_stack = {
-    enabled = false
+    enabled = true
 
+    # Off because the secret its only receiver needs,
+    # `/notifications/alertmanager` in the shared account, does not exist —
+    # `helm_release.kube_prometheus_stack` reads it through a
+    # `data.aws_secretsmanager_secret_version`, so flipping this without
+    # creating the secret fails the plan. The chart values are gated on this
+    # same flag, so Alertmanager and its HTTPRoute both stay absent rather than
+    # rendering a workload with an empty `slack_api_url`.
     alertmanager = {
       enabled = false
     }
@@ -204,14 +214,14 @@ kwatch = {
 # Monitoring: Uptime Kuma
 #------------------------------------------------------------------------------
 uptime_kuma = {
-  enabled = false
+  enabled = true
 }
 
 #------------------------------------------------------------------------------
 # Monitoring: Gatus
 #------------------------------------------------------------------------------
 gatus = {
-  enabled = false
+  enabled = true
 }
 
 #------------------------------------------------------------------------------
@@ -228,10 +238,10 @@ argocd = {
   }
 
   rollouts = {
-    enabled = false
+    enabled = true
 
     dashboard = {
-      enabled = false
+      enabled = true
     }
   }
 }

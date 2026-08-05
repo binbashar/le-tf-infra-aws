@@ -1460,6 +1460,139 @@ bumping a chart that cannot be deployed and verified is a guess, not an upgrade.
 `argo-rollouts` also still renders an Ingress on the dead `private-apps` class
 and needs the same HTTPRoute conversion whenever it is turned on.
 
+## The rest of the `private-apps` consumers, converted and upgraded
+
+Backlog item 6, done the same day it was written. Seven hostnames now sit on
+`private-gw-eg` and the dead ingress class has no consumers left.
+
+| component | chart before | chart after | app |
+|---|---|---|---|
+| kube-prometheus-stack | 52.1.0 | 88.1.4 | Prometheus operator v0.93.0 |
+| goldilocks | 5.3.0 | 10.5.0 | v4.14.1 |
+| uptime-kuma | 2.25.0 | 4.1.0 | 2.3.0 |
+| gatus | 1.1.4 (minicloudlabs) | 1.5.0 (**TwiN**) | v5.34.0 |
+| argo-rollouts | 2.40.8 | 2.41.1 | v1.9.1 |
+| vpa | 0.5.0 | 4.12.5 | 1.6.0 |
+| metrics-server | 5.8.4 (**Bitnami**) | 3.13.1 (**kubernetes-sigs**) | 0.8.1 |
+
+**All seven were fresh installs, not upgrades** — every one had been
+`enabled = false`. That is what made a 36-major jump on kube-prometheus-stack
+tractable: Helm installs the 88.1.4 CRDs from scratch, so none of the chart's
+upgrade-path migrations apply. It will not be that easy next time — `helm
+upgrade` does not touch CRDs, so the *next* bump needs them applied by hand
+first.
+
+### One route table instead of seven route resources
+
+`networking-httproutes.tf` holds a single `for_each` over a map of rows, one
+per hostname, and the ArgoCD route from earlier today was folded into it with a
+`moved` block (plan confirmed the address change carried no diff). The reason
+is not line count: "what is reachable on the private gateway?" was becoming a
+question you answered by grepping seven chart-values files, and seven
+near-identical manifests drift — one ends up with a stale port and nobody finds
+out until it 404s. Adding a row is now the whole job of publishing something
+privately.
+
+Service names and ports in that table came from `helm template` against the
+exact pinned versions, not from upstream docs.
+
+### Hostnames, flattened
+
+Every component moved from `<app>.demo.devstg.aws.binbash.com.ar` to
+`<app>.aws.binbash.com.ar`. Not cosmetic: the wildcard bound to the gateway's
+HTTPS listener is `*.aws.binbash.com.ar`, which matches exactly one label. Kept
+at three labels deep, all seven would have needed certificates of their own,
+which is most of the reason to have a shared gateway in the first place. Free
+to change because every one of them was disabled — nobody held the old URLs.
+
+### Four latent bugs surfaced by turning things on
+
+None of these were caused by the conversion; they were sitting in config that
+had never been executed.
+
+1. **`metrics-server` 5.8.4 no longer exists.** Bitnami's 2025 catalog change
+   purged old versions from the public repo (they survive only under
+   `bitnamilegacy`) and moved images behind a subscription. Rather than chase a
+   newer Bitnami pin into that licensing question, this moved to the chart the
+   metrics-server maintainers publish. Values schema differs: Bitnami took
+   `extraArgs` as a map, upstream takes `args` as a list.
+   **`kube_state_metrics` (2.2.24) and `node_exporter` (2.2.4) have the same
+   dead pins** — left alone deliberately, see the backlog.
+2. **Gatus's config could not have worked.** The values used `config.services`;
+   Gatus renamed that to `config.endpoints` and v5 rejects the old key. Found
+   while switching repos.
+3. **Alertmanager was hardcoded `enabled: true`** while its variable was false,
+   so it would have rendered with an empty `slack_api_url` — a config it
+   refuses to start on. Now gated on the same variable as its route. Its
+   Ingress also referenced `clusterissuer-arta-...`, a ClusterIssuer from a
+   different project that does not exist here.
+4. **argo-rollouts carried `backend-protocol: HTTPS`**, copy-pasted from
+   ArgoCD. The rollouts dashboard serves plain HTTP on 3100 and never had TLS.
+
+### Two things that actually broke during the apply
+
+**uptime-kuma timed out and left a failed release.** Its PVC came out with *no*
+StorageClass at all — the chart's `volume.storageClassName` defaults to `""`,
+and `gp2` here is not annotated as the cluster default. A classless PVC never
+binds and never errors; it sits Pending until Helm's 5-minute timeout. Fixed by
+naming `gp2` explicitly. Recovering needed `helm uninstall uptime-kuma -n
+monitoring-other` first, because a failed release is not in Terraform state but
+still owns the name.
+
+Worth generalising: **this cluster has no default StorageClass**, so every
+chart that provisions storage must be told which class to use. Verified `gp2`
+works at all by binding a probe PVC first — it does, in 20s, through the CSI
+migration shim (the class still declares the in-tree
+`kubernetes.io/aws-ebs` provisioner, which 1.34 no longer has; the shim
+rewrites it onto `ebs.csi.aws.com`).
+
+**Staging the apply was impossible.** The `moved` block for the ArgoCD route
+makes `-target` illegal — OpenTofu refuses to plan unless the targets cover
+every moved instance, and the route table depends on all seven releases, which
+pulls the whole graph back in. Pre-scaling the `tools` node group out of band
+was blocked, so the full apply ran against 5 free pod slots for 13 new pods.
+The cluster-autoscaler handled it: a second `tools` node joined mid-apply and
+everything scheduled. Only the two failures above needed intervention.
+
+### Validation
+
+All seven return 200 with valid TLS off the shared wildcard, and each app's
+self-redirect lands on its own hostname — which is what proves Grafana's
+`root_url` and Prometheus's `externalUrl` were set correctly rather than
+defaulting to the Service name:
+
+| host | | redirects to |
+|---|---|---|
+| argocd | 200 | — |
+| rollouts | 200 | `/rollouts/` |
+| goldilocks | 200 | `/namespaces` |
+| gatus | 200 | — |
+| kuma | 200 | `/setup-database` |
+| grafana | 200 | `/login` |
+| prometheus | 200 | `/query` |
+
+All seven HTTPRoutes report `Accepted=True ResolvedRefs=True`, external-dns
+created all seven Route53 records, the three PVCs (20Gi Prometheus, 5Gi
+Grafana, 4Gi Kuma) are Bound, `kubectl top nodes` returns data, and
+`leverage tofu plan` is clean.
+
+Validation used `curl --resolve` against the private NLB rather than real DNS,
+on the lesson from the ArgoCD entry above: querying a private name before
+external-dns creates it caches the NXDOMAIN for 15 minutes.
+
+### Not done, deliberately
+
+- **Alertmanager stays off.** Its only receiver needs
+  `/notifications/alertmanager` in the shared account and that secret does not
+  exist. Enabling it fails the plan at the data source, so it needs the secret
+  created first — not something to invent. Its route row is gated on the same
+  flag, so nothing dangles.
+- **Goldilocks shows an empty dashboard**, and that is upstream behaviour, not
+  a defect: it only creates VPA objects for namespaces labelled
+  `goldilocks.fairwinds.com/enabled=true`, and none are. Which namespaces to
+  profile is a policy call. VPA runs in recommendation-only mode
+  (`admissionController: false`), so labelling is read-only and safe.
+
 # Next session — backlog
 
 Ordered by dependency, not priority.
@@ -1511,17 +1644,23 @@ Ordered by dependency, not priority.
    `~/Desktop/envoy-gateway-vs-nginx.html`). Target: readable without having to
    reconstruct the history from this log.
 
-6. **Convert the remaining `private-apps` consumers to HTTPRoutes.** ArgoCD is
-   done (Day 5) and is the worked example. Still on the dead ingress class,
-   all currently disabled: argo-rollouts (`cicd-argo.tf`),
-   kube-prometheus-stack (`monitoring-metrics.tf`), uptime-kuma
-   (`monitoring-other.tf`), and gatus + goldilocks, which hardcode the literal
-   `private-apps` in their chart values. Each needs the same three moves
-   ArgoCD needed — hostname flattened to one label under the private base
-   domain, TLS dropped in favour of the gateway listener, and a backend-protocol
-   decision. Bump their charts at the same time (argo-rollouts 2.40.8 → 2.41.1,
-   argocd-image-updater 0.14.0 → 1.2.4); they were left pinned because a chart
-   that cannot be deployed cannot be verified.
+6. ~~**Convert the remaining `private-apps` consumers to HTTPRoutes.**~~
+   **Done (Day 5)** — all five converted and upgraded, plus vpa and
+   metrics-server that came along as dependencies. Seven hostnames on
+   `private-gw-eg`, one route table, no consumers of the dead class left. See
+   "The rest of the `private-apps` consumers" above.
+
+   Two follow-ups it produced:
+
+   - **`kube_state_metrics` (bitnami 2.2.24) and `node_exporter` (bitnami
+     2.2.4) still carry dead pins** — the same Bitnami catalog purge that
+     broke metrics-server. Both are gated off by
+     `prometheus.external.dependencies.enabled`, and kube-prometheus-stack
+     ships its own of each, so the honest fix is probably to delete these two
+     releases rather than repoint them. Decide which.
+   - **`argocd-image-updater` (0.14.0, latest 1.2.4) is still pinned and
+     disabled.** Left alone on the same reasoning as before: a chart that
+     cannot be deployed cannot be verified.
 
 7. **Add a `retry` block to the two `data "http"` CRD downloads.** They fail
    with `TLS handshake timeout` over the VPN and the provider gives up after

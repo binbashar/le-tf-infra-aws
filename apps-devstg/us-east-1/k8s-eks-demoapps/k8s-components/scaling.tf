@@ -7,7 +7,7 @@ resource "helm_release" "vpa" {
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://charts.fairwinds.com/stable"
   chart      = "vpa"
-  version    = "0.5.0"
+  version    = "4.12.5"
   values     = [file("chart-values/vpa.yaml")]
   depends_on = [helm_release.metrics_server]
 }
@@ -142,6 +142,15 @@ resource "helm_release" "keda_http_add_on" {
 
 # ------------------------------------------------------------------------------
 # Goldilocks: tune up resource requests and limits.
+#
+# Hard dependency on VPA, not just an ordering preference: Goldilocks has no
+# recommender of its own, it reads the VPA objects it creates per namespace.
+# With `scaling.vpa.enabled = false` the dashboard installs and renders an
+# empty table forever. Enabling goldilocks therefore means enabling VPA, which
+# in turn pulls in metrics-server (see its count expression above).
+#
+# Exposed at `goldilocks.aws.binbash.com.ar` via the `goldilocks` row in
+# networking-httproutes.tf.
 # ------------------------------------------------------------------------------
 resource "helm_release" "goldilocks" {
   count      = var.goldilocks.enabled ? 1 : 0
@@ -149,11 +158,7 @@ resource "helm_release" "goldilocks" {
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://charts.fairwinds.com/stable"
   chart      = "goldilocks"
-  version    = "5.3.0"
-  values = [
-    templatefile("chart-values/goldilocks.yaml", {
-      goldilocksHost = "goldilocks.${local.platform}.${local.private_base_domain}"
-    })
-  ]
+  version    = "10.5.0"
+  values     = [file("chart-values/goldilocks.yaml")]
   depends_on = [helm_release.vpa]
 }

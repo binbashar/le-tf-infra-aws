@@ -40,22 +40,23 @@ locals {
   # Ingress classes identify the different ingress controllers we have
   public_ingress_class = "public-apps" # DemoApps
 
-  # DEAD CLASS — nothing serves it. `ingress_nginx_private` was the only
-  # controller watching `private-apps` and it is disabled: private L7 traffic
-  # now goes through Envoy Gateway (`private-gw-eg`) via HTTPRoutes, not
-  # Ingresses. Traefik would claim the same class but is disabled too.
+  # DEAD CLASS — nothing serves it, and as of the HTTPRoute conversion nothing
+  # consumes it either. `ingress_nginx_private` was the only controller
+  # watching `private-apps` and it is disabled; traefik would claim the same
+  # class and is disabled too. Private L7 traffic goes through Envoy Gateway
+  # (`private-gw-eg`) via HTTPRoutes — see networking-httproutes.tf for the
+  # full list of what is published and on which hostname.
   #
-  # Still referenced by the chart values of argo-rollouts (cicd-argo.tf),
-  # kube-prometheus-stack (monitoring-metrics.tf) and uptime-kuma
-  # (monitoring-other.tf), plus hardcoded as the literal `private-apps` in
-  # chart-values/{gatus,goldilocks}.yaml. Every one of those components is
-  # currently `enabled = false`, so nothing renders and nothing breaks — but
-  # re-enabling any of them yields an Ingress no controller will ever pick up.
-  # Whoever does that needs to give it an HTTPRoute against `private-gw-eg`
-  # instead. ArgoCD is the worked example of that conversion — see
-  # `kubernetes_manifest.argocd_route_eg` and the `server.insecure` note in
-  # chart-values/argo-cd.yaml. Kept rather than deleted so those references
-  # still resolve and this note stays attached to them.
+  # The only two references left are the nginx and traefik chart values in
+  # networking-ingress.tf, i.e. the controllers that would *serve* the class
+  # rather than anything that would *use* it. That is the right place for the
+  # name to live. Every former consumer — argocd, argo-rollouts,
+  # kube-prometheus-stack (×3 hostnames), uptime-kuma, gatus and goldilocks —
+  # now has a row in the route table instead.
+  #
+  # Kept rather than deleted because re-enabling either controller still needs
+  # a class name, and because this note is the explanation for why an Ingress
+  # written against `private-apps` would silently never be picked up.
   private_ingress_class = "private-apps"
 
   #------------------------------------------------------------------------------

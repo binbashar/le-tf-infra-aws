@@ -1,23 +1,14 @@
 # Whether the dashboard component should be installed
 dashboard:
   enabled: true
+  # Chart 10.x defaults this to 2. One is enough for a read-only dashboard, and
+  # the `tools` node group runs at desired = 1 behind a 17-pod ceiling per
+  # t3.medium — a second replica just pushes something else into a scale-up.
   replicaCount: 1
 
+  # No Ingress. Exposed at `goldilocks.aws.binbash.com.ar` by the `goldilocks`
+  # row in networking-httproutes.tf. The gateway's HTTPS listener terminates
+  # TLS, so the cert-manager Certificate this used to request is gone, and with
+  # it the hardcoded `private-apps` ingress class that nothing serves.
   ingress:
-    enabled: true
-    annotations:
-      kubernetes.io/tls-acme: "true"
-      # Associate this ingress with the following ingress controller
-      kubernetes.io/ingress.class: private-apps
-      # Use the following cert-manager clusterissuer
-      cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
-      # The backend is expecting to handle HTTPS
-      #nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-    hosts:
-      - host: ${goldilocksHost}
-        paths:
-          - /
-    tls:
-      - secretName: goldilocks-server-tls
-        hosts:
-          - ${goldilocksHost}
+    enabled: false

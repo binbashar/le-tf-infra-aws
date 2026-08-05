@@ -96,60 +96,20 @@ resource "helm_release" "argocd" {
 }
 
 #------------------------------------------------------------------------------
-# ArgoCD exposure: HTTPRoute on the platform-shared `private-gw-eg`.
+# ArgoCD is exposed at `argocd.aws.binbash.com.ar` via the `argocd` row in
+# networking-httproutes.tf. Replacing the chart's nginx Ingress moved three
+# things, not one:
 #
-# Replaces the nginx Ingress the chart used to render. Three things moved with
-# it:
-#
-#   - TLS. The gateway's HTTPS listener terminates with the
-#     `*.aws.binbash.com.ar` wildcard, so the per-app cert-manager Certificate
-#     the Ingress used to request is gone.
+#   - TLS. The Ingress requested its own cert-manager Certificate; the
+#     gateway's HTTPS listener already terminates with the
+#     `*.aws.binbash.com.ar` wildcard.
 #   - The hostname. It was `argocd.demo.devstg.aws.binbash.com.ar`, three
-#     labels below the private base domain — which the single-label wildcard
-#     does not cover, so it would have needed its own certificate. Flattened to
-#     `argocd.aws.binbash.com.ar`, matching how echo-server names itself. Safe
-#     to change because ArgoCD had been `enabled = false`, so no one held the
-#     old URL.
-#   - The backend protocol. The Ingress annotated
-#     `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`; the equivalent
-#     here is `server.insecure` in the chart values, which drops argocd-server
-#     to plain HTTP instead of teaching the gateway to re-encrypt.
-#
-# There is no HTTP variant: `private-gw-eg`'s port-80 listener only accepts
-# routes from its own namespace, and the redirector living there sends
-# everything to HTTPS.
+#     labels below the private base domain, which that wildcard does not
+#     cover. See the flattening note in networking-httproutes.tf.
+#   - The backend protocol. `nginx.ingress.kubernetes.io/backend-protocol:
+#     HTTPS` became `server.insecure` in the chart values — argocd-server drops
+#     to plain HTTP rather than the gateway learning to re-encrypt.
 #------------------------------------------------------------------------------
-resource "kubernetes_manifest" "argocd_route_eg" {
-  count = var.argocd.enabled ? 1 : 0
-
-  manifest = {
-    apiVersion = "gateway.networking.k8s.io/v1"
-    kind       = "HTTPRoute"
-    metadata = {
-      name      = "argocd-server"
-      namespace = kubernetes_namespace.argocd[0].id
-    }
-    spec = {
-      parentRefs = [{
-        name      = kubernetes_manifest.private_gateway_eg[0].manifest.metadata.name
-        namespace = kubernetes_namespace.envoy_gateway[0].id
-      }]
-      hostnames = [local.argocd_host]
-      rules = [{
-        backendRefs = [{
-          # The chart names this `<release>-server`. Port 80 is the cleartext
-          # one; it only serves traffic because of `server.insecure`.
-          name = "argocd-server"
-          port = 80
-        }]
-      }]
-    }
-  }
-
-  depends_on = [
-    helm_release.argocd,
-  ]
-}
 
 #------------------------------------------------------------------------------
 # ArgoCD Image Updater
@@ -196,12 +156,10 @@ resource "helm_release" "argo_rollouts" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-rollouts"
-  version    = "2.40.8"
+  version    = "2.41.1"
   values = [
     templatefile("chart-values/argo-rollouts.yaml", {
       enableDashboard = var.argocd.rollouts.dashboard.enabled,
-      rolloutsHost    = "rollouts.${local.platform}.${local.private_base_domain}",
-      ingressClass    = local.private_ingress_class,
       nodeSelector    = local.tools_nodeSelector,
       tolerations     = local.tools_tolerations
     })
@@ -209,7 +167,7 @@ resource "helm_release" "argo_rollouts" {
 
   depends_on = [
     helm_release.alb_ingress,
-    helm_release.ingress_nginx_private,
+    kubernetes_manifest.private_gateway_eg,
     helm_release.certmanager
   ]
 }
