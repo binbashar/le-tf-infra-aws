@@ -79,14 +79,33 @@ locals {
   # k8s-components/locals.tf. Without it the HTTPRoute below is created but
   # never attaches, and the app stays unreachable from the internet.
   public_exposure_label = { "gateway.binbash.com.ar/public-exposure" = "allowed" }
+
+  # Opts this namespace into Goldilocks (k8s-components/scaling.tf). Goldilocks
+  # only creates VPA objects for namespaces carrying this label, so without it
+  # its dashboard renders an empty table — which is why echo-server, the one
+  # real workload on this cluster, is the namespace that gets it.
+  #
+  # This observes; it does not mutate. VPA runs recommendation-only
+  # (`admissionController: false` in chart-values/vpa.yaml), so the label
+  # produces resource *recommendations* for the echo-server Deployment and
+  # never rewrites its requests or limits. Inert when Goldilocks is not
+  # installed — nothing else reads the label.
+  #
+  # Applied unconditionally rather than behind a variable: this layer has no
+  # visibility into whether k8s-components enabled Goldilocks, and a label no
+  # controller reads costs nothing.
+  goldilocks_label = { "goldilocks.fairwinds.com/enabled" = "true" }
 }
 
 resource "kubernetes_namespace" "echo_server" {
   count = var.demo_apps.echo_server.enabled ? 1 : 0
 
   metadata {
-    name   = local.echo_server_namespace
-    labels = var.demo_apps.echo_server.public_endpoint ? local.public_exposure_label : {}
+    name = local.echo_server_namespace
+    labels = merge(
+      local.goldilocks_label,
+      var.demo_apps.echo_server.public_endpoint ? local.public_exposure_label : {},
+    )
   }
 }
 
