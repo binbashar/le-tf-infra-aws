@@ -28,7 +28,6 @@ data "aws_iam_policy_document" "devops" {
       "bedrock-agentcore:*",
       "billing:Get*",
       "billing:List*",
-      "ce:*",
       "cloudformation:*",
       "cloudfront:*",
       "cloudshell:*",
@@ -127,14 +126,7 @@ data "aws_iam_policy_document" "devops" {
       "wafv2:*",
       "wellarchitected:*",
       "workspaces-web:*",
-      "workspaces:*",
-      "pricing:*",
-      "bcm-pricing-calculator:CreateWorkloadEstimate",
-      "bcm-pricing-calculator:GetWorkloadEstimate",
-      "bcm-pricing-calculator:UpdateWorkloadEstimate",
-      "bcm-pricing-calculator:ListWorkloadEstimates",
-      "bcm-pricing-calculator:CreateWorkloadEstimateUsage",
-      "bcm-pricing-calculator:ListWorkloadEstimateUsage"
+      "workspaces:*"
     ]
     resources = ["*"]
     condition {
@@ -147,6 +139,18 @@ data "aws_iam_policy_document" "devops" {
         "us-west-2"
       ]
     }
+  }
+
+  statement {
+    sid = "BcmPricingCalculatorGlobalAccess"
+    actions = [
+      "bcm-pricing-calculator:*",
+      "ce:*",
+      "pricing:*",
+      "billing:*"
+    ]
+    effect    = "Allow"
+    resources = ["*"]
   }
 
   statement {
