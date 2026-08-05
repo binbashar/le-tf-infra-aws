@@ -45,15 +45,17 @@ locals {
   # now goes through Envoy Gateway (`private-gw-eg`) via HTTPRoutes, not
   # Ingresses. Traefik would claim the same class but is disabled too.
   #
-  # Still referenced by the chart values of argocd (cicd-argo.tf),
+  # Still referenced by the chart values of argo-rollouts (cicd-argo.tf),
   # kube-prometheus-stack (monitoring-metrics.tf) and uptime-kuma
   # (monitoring-other.tf), plus hardcoded as the literal `private-apps` in
   # chart-values/{gatus,goldilocks}.yaml. Every one of those components is
   # currently `enabled = false`, so nothing renders and nothing breaks — but
   # re-enabling any of them yields an Ingress no controller will ever pick up.
   # Whoever does that needs to give it an HTTPRoute against `private-gw-eg`
-  # instead. Kept rather than deleted so those references still resolve and
-  # this note stays attached to them.
+  # instead. ArgoCD is the worked example of that conversion — see
+  # `kubernetes_manifest.argocd_route_eg` and the `server.insecure` note in
+  # chart-values/argo-cd.yaml. Kept rather than deleted so those references
+  # still resolve and this note stays attached to them.
   private_ingress_class = "private-apps"
 
   #------------------------------------------------------------------------------
@@ -111,6 +113,12 @@ locals {
   # Argo Settings
   #------------------------------------------------------------------------------
   argocd_slack_notifications_channel = "le-tools-monitoring"
+
+  # One label below the private base domain, so the `*.aws.binbash.com.ar`
+  # wildcard bound to `private-gw-eg`'s HTTPS listener covers it. The old
+  # `argocd.${local.platform}.${local.private_base_domain}` form sat three
+  # labels down and would have needed a certificate of its own.
+  argocd_host = "argocd.${local.private_base_domain}"
 
   #------------------------------------------------------------------------------
   # Tools Node Group: Selectors and Tolerations

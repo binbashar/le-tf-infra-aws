@@ -1349,6 +1349,117 @@ point 2 still justified `ip` with the reasoning refuted above; and the
 "trade" paragraph still asked to revisit the timeout tail once nginx was
 retired, which S6 already settled (the tail was nginx's, not the target-type's).
 
+## ArgoCD on Envoy Gateway, then upgraded v2.14 → v3.5
+
+First component converted from the dead `private-apps` ingress class to an
+HTTPRoute — the conversion the Day-4 note said every re-enabled component would
+need. Done in two applies on purpose: get the routing working on the version
+already pinned, *then* upgrade, so a routing failure and an upgrade failure
+could not be mistaken for each other.
+
+### Three things moved, not one
+
+The chart's Ingress did more than route. Replacing it meant replacing all of it:
+
+- **TLS.** The Ingress asked cert-manager for its own certificate via
+  `kubernetes.io/tls-acme`. The gateway's HTTPS listener already terminates
+  with the `*.aws.binbash.com.ar` wildcard, so that Certificate is simply gone.
+- **The hostname.** It was
+  `argocd.demo.devstg.aws.binbash.com.ar` — three labels below the private base
+  domain, which a single-label wildcard does **not** cover. Kept as-is it would
+  have needed a certificate of its own, which defeats the point of a shared
+  gateway. Flattened to `argocd.aws.binbash.com.ar` (new `local.argocd_host`),
+  matching how echo-server names itself. Free to change because ArgoCD had been
+  `enabled = false`, so no one held the old URL.
+- **The backend protocol.** The Ingress carried
+  `nginx.ingress.kubernetes.io/backend-protocol: HTTPS` because argocd-server
+  runs its own TLS. There is no Gateway API equivalent that is as cheap: the
+  options are a `BackendTLSPolicy` (experimental, needs CA config) or telling
+  argocd-server to stop doing TLS. Took the second — `configs.params.server.insecure: true`.
+  Without it the gateway's cleartext hop gets a 307 to `https://`, which the
+  gateway re-terminates, and the browser sees an infinite redirect.
+
+`depends_on` also had to move off `helm_release.ingress_nginx_private` (count 0
+since the retirement) onto `kubernetes_manifest.private_gateway_eg`.
+
+### The gRPC caveat
+
+With `server.insecure`, argocd-server multiplexes gRPC and HTTP on one port
+over h2c, and Envoy speaks HTTP/1.1 upstream by default — so plain
+`argocd login` cannot negotiate gRPC. Two ways out:
+
+- `argocd login argocd.aws.binbash.com.ar --grpc-web`, which tunnels gRPC over
+  HTTP/1.1. Verified: a grpc-web probe returns 200.
+- `appProtocol: kubernetes.io/h2c` on the server Service port, which Envoy
+  Gateway honours to switch the upstream to HTTP/2. Not done — the chart does
+  not expose that field, so it would need a patch resource.
+
+Worth knowing for later: the chart has since grown **native Gateway API
+support** (`server.httproute.enabled`, plus a separate `server.grpcroute` for
+the CLI and `server.backendTLSPolicy` for an HTTPS backend). All three are
+flagged EXPERIMENTAL upstream. The hand-written `kubernetes_manifest` was kept
+because it was already verified and does not move under us on a chart bump, but
+`grpcroute` is the clean fix for the CLI if that ever matters.
+
+### The upgrade: 7.9.1 → 10.2.3 (Argo CD v2.14.11 → v3.5.0)
+
+Three major chart versions. What actually applied to this config:
+
+- **10.0.0** flips `global.networkPolicy.create` false → true, so the chart now
+  ships NetworkPolicies. This was the one with real potential to break the
+  Envoy path. Left at the upstream default rather than disabled, and verified:
+  `networkpolicy/argocd-server` has `ingress: [{}]` — an empty rule, which
+  admits every source — so Envoy reaches it. Checked rather than assumed.
+- **9.0.0** dropped the `configs.params` defaults from values.yaml but kept the
+  override interface, so `server.insecure` still applies as written.
+- **9.1.0**'s redis-ha selector breakage does not apply — single-replica redis.
+- **8.0.0** is the v2 → v3 jump. Nothing to migrate: no Applications exist, and
+  the admin password and both repository credentials are re-rendered from
+  Secrets Manager every apply.
+
+Applied in 2m43s, all six pods healthy, route still `Accepted=True
+ResolvedRefs=True`.
+
+### Validation
+
+| check | result |
+|---|---|
+| UI over the gateway | 200, zero redirects, valid TLS off the wildcard (no `-k`) |
+| `GET /api/version` | `{"Version":"v3.5.0"}` |
+| grpc-web probe | 200 over HTTP/2 |
+| `POST /api/v1/session` | 401 — **expected**, see below |
+| HTTPRoute status | `Accepted=True ResolvedRefs=True` |
+| NetworkPolicy | `argocd-server` ingress `[{}]`, does not block Envoy |
+
+The 401 is a pass, not a failure. The Secrets Manager value is a bcrypt hash
+(`$2b$`, 60 chars) — that is what `configs.secret.argocdServerAdminPassword`
+expects — and it arrives in `argocd-secret` byte-identical. Sending the hash as
+the password had to be rejected. What it proves is the whole path: the POST
+reached argocd-server's gRPC `SessionService` through the gateway and was
+processed, which the server log confirms.
+
+### Gotcha: don't `dig` a private record before it exists
+
+Polling `argocd.aws.binbash.com.ar` while external-dns was still on its 3-minute
+cycle cached the NXDOMAIN, and the `aws.binbash.com.ar` SOA carries TTL 900 — so
+the name stayed unresolvable locally for 15 minutes after the record was
+actually created, long after `aws route53 list-resource-record-sets` showed a
+correct ALIAS to the private NLB. `dig` eventually cleared; macOS `curl` goes
+through mDNSResponder and holds it longer (`sudo dscacheutil -flushcache; sudo
+killall -HUP mDNSResponder` if you don't want to wait).
+
+Validate with `curl --resolve <host>:443:<nlb-ip>` *first* and only check real
+DNS once external-dns has logged the CREATE. Same discipline as the Day-4 dark
+launch, for a different reason.
+
+### Not touched
+
+`argocd-image-updater` (chart 0.14.0, latest 1.2.4) and `argo-rollouts` (2.40.8,
+latest 2.41.1) are both still `enabled = false`. Left on their pinned versions:
+bumping a chart that cannot be deployed and verified is a guess, not an upgrade.
+`argo-rollouts` also still renders an Ingress on the dead `private-apps` class
+and needs the same HTTPRoute conversion whenever it is turned on.
+
 # Next session — backlog
 
 Ordered by dependency, not priority.
@@ -1400,12 +1511,24 @@ Ordered by dependency, not priority.
    `~/Desktop/envoy-gateway-vs-nginx.html`). Target: readable without having to
    reconstruct the history from this log.
 
-6. **Add a `retry` block to the two `data "http"` CRD downloads.** They fail
+6. **Convert the remaining `private-apps` consumers to HTTPRoutes.** ArgoCD is
+   done (Day 5) and is the worked example. Still on the dead ingress class,
+   all currently disabled: argo-rollouts (`cicd-argo.tf`),
+   kube-prometheus-stack (`monitoring-metrics.tf`), uptime-kuma
+   (`monitoring-other.tf`), and gatus + goldilocks, which hardcode the literal
+   `private-apps` in their chart values. Each needs the same three moves
+   ArgoCD needed — hostname flattened to one label under the private base
+   domain, TLS dropped in favour of the gateway listener, and a backend-protocol
+   decision. Bump their charts at the same time (argo-rollouts 2.40.8 → 2.41.1,
+   argocd-image-updater 0.14.0 → 1.2.4); they were left pinned because a chart
+   that cannot be deployed cannot be verified.
+
+7. **Add a `retry` block to the two `data "http"` CRD downloads.** They fail
    with `TLS handshake timeout` over the VPN and the provider gives up after
    one attempt, which turns into a confusing `0 added` rather than a clean
    error (empty `for_each` via `try(..., "")`). Bites on every re-spin.
 
-7. ~~**Decide the public gateway's target-type.**~~ **Done (Day 5)** — moved to
+8. ~~**Decide the public gateway's target-type.**~~ **Done (Day 5)** — moved to
    `instance`; both gateways are now consistent and both preserve the client
    IP. The premise of this item was wrong: the allowlist lives on the NLB's
    own frontend security group, not on the nodes, and the node-side rule the

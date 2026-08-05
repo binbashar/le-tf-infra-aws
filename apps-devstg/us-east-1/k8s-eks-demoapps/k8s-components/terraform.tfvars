@@ -218,7 +218,7 @@ gatus = {
 # CICD | Argo
 #------------------------------------------------------------------------------
 argocd = {
-  enabled = false
+  enabled = true
 
   enableWebTerminal   = true
   enableNotifications = false
