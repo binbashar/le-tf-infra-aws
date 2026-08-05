@@ -34,7 +34,7 @@ session; **6–7** are the inference call:
 | # | What happens | Detail |
 | --- | --- | --- |
 | 1 | The wrapper prompts for **account + role** → sets `AWS_PROFILE=bb-<account>-<role>`, then runs an STS preflight | §3.1 |
-| 2–3 | Stale temp keys → `leverage tofu refresh-credentials` mints fresh ones into `~/.aws/bb/credentials` | §3.2 |
+| 2–3 | Stale temp keys → `leverage tofu refresh-credentials` mints fresh ones into `~/.aws/bb/credentials`. **`role=devops` only** — that layer mints the DevOps profile, so any other role needs its creds already minted, else the launcher exits with the manual hint | §3.2 |
 | 4 | `aws configure export-credentials` materializes that profile as **env keys** for the session | §1 |
 | 5 | `exec claude` with `CLAUDE_CODE_USE_BEDROCK=1`, `ANTHROPIC_MODEL`, and the `/model` tier slots | §3.3 |
 | 6 | Claude Code calls the Bedrock **Converse API** (SigV4) as the account's SSO role | §4 |

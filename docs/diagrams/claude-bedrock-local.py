@@ -10,7 +10,10 @@ inference profile, subject to the four model-availability gates.
 Plain `claude` stays on the native Anthropic API — drawn as the parallel default
 path so the dual-mode nature of the setup is obvious. The dashed
 `settings.local.json` edge is the precedence hazard (a settings `env` block
-overrides the wrapper's exports), not a step in the flow.
+overrides the wrapper's exports), not a step in the flow. The red edge off the
+refresh node is the fail-closed abort: the auto-refresh only covers
+`role=devops`, so any other role (or an expired SSO session) exits with the
+manual hint instead of reaching step 4.
 
 Companion to docs/ai-sdlc/claude-code-bedrock.md §0; the step numbers, cluster
 names and per-account model lists track that doc (§3.1-§5).
@@ -32,7 +35,7 @@ simple-icons.org, rasterized to 512px PNGs under docs/diagrams/icons/.
 
 import os
 
-from diagrams import Diagram, Cluster, Edge
+from diagrams import Diagram, Cluster, Edge, Node
 from diagrams.aws.management import OrganizationsAccount
 from diagrams.aws.ml import Bedrock
 from diagrams.aws.security import IAMAWSSts, IAMRole, SingleSignOn
@@ -84,6 +87,8 @@ C_AUTO = "#6c757d"          # grey   — automatic / launcher-driven steps
 C_HUMAN = "#0d6efd"         # blue   — human actions
 C_CLAUDE = "#d97757"        # orange — Anthropic / Bedrock inference path
 C_OK = "#198754"            # green  — successful response
+# Extends the house palette with Bootstrap's danger red, for the one path that aborts.
+C_STOP = "#dc3545"          # red    — launcher exits (fails closed)
 
 with Diagram(
     "claude-bedrock — local Claude Code session on Amazon Bedrock",
@@ -103,17 +108,45 @@ with Diagram(
         settings = Document("settings.local.json\n(env block)")
 
     # The native (non-Bedrock) default path — untouched by this setup.
-    anthropic_api = Internet("native Anthropic API\n(subscription login)")
+    # width: diagrams pins every node to a fixed 1.4in box, so a label wider than that
+    # overflows it — and graphviz clips incoming edges to the *box*, landing this node's
+    # arrowhead on top of the text. Widen the box to enclose the label; imagescale keeps
+    # the icon's aspect ratio, so it renders at the same size as its siblings.
+    anthropic_api = Internet("native Anthropic API\n(subscription login)", width="2.6")
 
     # ---------- 2. Credentials ----------
     with Cluster("2. Credentials  (Leverage SSO — no long-lived keys)", graph_attr=cluster_attr):
         sts = IAMAWSSts("STS preflight\nget-caller-identity")
         sso = SingleSignOn("IAM Identity Center\nleverage aws sso login\n(browser, manual)")
+        # The auto-refresh is gated on role=devops in the launcher: that layer mints the
+        # DevOps profile, so any other role must already have valid creds or it exits.
         refresh = Custom(
-            "leverage tofu\nrefresh-credentials\n(auto)",
+            "leverage tofu\nrefresh-credentials\n(auto — role=devops only)",
             f"{ICONS}/opentofu.png",
         )
         creds = Storage("~/.aws/bb/\ncredentials")
+        # Raw Node (no icon) so fillcolor/color actually apply: the flowchart StartEnd
+        # terminator is a fixed pale-green raster image, which ignores them and clashes
+        # with the palette. This is an outcome, not a component — a shape, not a logo.
+        halt = Node(
+            "exit 1\nmanual hint\n(fails closed)",
+            shape="box",
+            style="rounded,filled",
+            fillcolor="#f8d7da",
+            color=C_STOP,
+            fontcolor="#842029",
+            fontname="Helvetica",
+            fontsize="13",
+            penwidth="1.5",
+            # The diagram-wide node defaults (labelloc=b, fixedsize=true, 1.4x1.4) exist to
+            # hang a caption under an icon; without an icon they pin the text to the bottom
+            # border of a fixed frame. Centre it and let the box size to the text.
+            labelloc="c",
+            fixedsize="false",
+            width="0",
+            height="0",
+            margin="0.22,0.16",
+        )
 
     # ---------- Claude Code in Bedrock mode ----------
     # Un-clustered on purpose: it runs on your machine, but sits after the credentials in
@@ -163,6 +196,13 @@ with Diagram(
     sts >> Edge(label="2. stale keys", style="dashed", color=C_AUTO) >> refresh
     sso >> Edge(label="valid SSO\nsession", color=C_HUMAN) >> refresh
     refresh >> Edge(label="3. mint\ntemp keys", color=C_AUTO) >> creds
+    # Non-DevOps roles (and an expired SSO session) never reach step 4 — they exit here.
+    refresh >> Edge(
+        label="other roles /\nno SSO session",
+        style="dashed",
+        color=C_STOP,
+        constraint="false",
+    ) >> halt
     creds >> Edge(label="4. export-credentials\n→ env keys", color=C_AUTO) >> claude_code
     launcher >> Edge(label="5. exec claude\n(mode env vars)", color=C_CLAUDE) >> claude_code
 
