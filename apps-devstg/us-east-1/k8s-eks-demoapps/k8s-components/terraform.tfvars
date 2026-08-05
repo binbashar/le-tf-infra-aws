@@ -72,11 +72,13 @@ scaling = {
     enabled = false
   }
 
-  # Required by goldilocks, which has no recommender of its own and reads the
-  # VPA objects. Enabling it also switches on metrics-server (see the
-  # `helm_release.metrics_server` count expression).
+  # Off with goldilocks, which was its only consumer — VPA has no recommender
+  # of its own and nothing else reads the VPA objects. Note this flag also
+  # gates metrics-server (see the `helm_release.metrics_server` count
+  # expression), so turning it off takes `kubectl top` with it. Nothing else
+  # depends on that today: HPA is off above.
   vpa = {
-    enabled = true
+    enabled = false
   }
 
   cluster_autoscaling = {
@@ -92,7 +94,7 @@ scaling = {
 # Scaling: Goldilocks
 #------------------------------------------------------------------------------
 goldilocks = {
-  enabled = true
+  enabled = false
 }
 
 
@@ -171,7 +173,7 @@ logging = {
 # KubePrometheusStack
 prometheus = {
   kube_stack = {
-    enabled = true
+    enabled = false
 
     # Off because the secret its only receiver needs,
     # `/notifications/alertmanager` in the shared account, does not exist —
@@ -214,21 +216,21 @@ kwatch = {
 # Monitoring: Uptime Kuma
 #------------------------------------------------------------------------------
 uptime_kuma = {
-  enabled = true
+  enabled = false
 }
 
 #------------------------------------------------------------------------------
 # Monitoring: Gatus
 #------------------------------------------------------------------------------
 gatus = {
-  enabled = true
+  enabled = false
 }
 
 #------------------------------------------------------------------------------
 # CICD | Argo
 #------------------------------------------------------------------------------
 argocd = {
-  enabled = true
+  enabled = false
 
   enableWebTerminal   = true
   enableNotifications = false
@@ -237,8 +239,11 @@ argocd = {
     enabled = false
   }
 
+  # Gated independently of `argocd.enabled` above (see cicd-argo.tf), so this
+  # has to come down on its own — leaving it true keeps Rollouts and its
+  # dashboard installed with no Argo CD alongside them.
   rollouts = {
-    enabled = true
+    enabled = false
 
     dashboard = {
       enabled = true

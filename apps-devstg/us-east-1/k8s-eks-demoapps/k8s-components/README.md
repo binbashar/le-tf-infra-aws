@@ -152,15 +152,14 @@ leverage tofu apply \
 
 then the full plan is clean.
 
-**The CRD downloads are flaky over the VPN.** The two `data "http"` blocks pull
-release YAML from GitHub and hit `TLS handshake timeout`; the provider gives up
-after one attempt and the failure shows up as a confusing `0 added` rather than
-an error. Just retry.
-
-**Do not `dig` a private hostname before external-dns creates it.** The
-`aws.binbash.com.ar` SOA carries TTL 900, so one early query caches the NXDOMAIN
-for 15 minutes. Validate with `curl --resolve <host>:443:<nlb-ip>` and only
-check real DNS after external-dns logs the `CREATE`.
+**Do not `dig` a hostname before external-dns creates it.** One early query
+caches the NXDOMAIN, and how long you pay for it depends on the zone: the
+private `aws.binbash.com.ar` SOA carries TTL 900, so 15 minutes — but the
+public `binbash.com.ar` SOA carries `minimum=86400`, so **24 hours**. Validate
+with `curl --resolve <host>:443:<nlb-ip>` and only check real DNS after
+external-dns logs the `CREATE`. If you have already poisoned it, public
+resolvers are unaffected (`dig @8.8.8.8 …`); locally,
+`sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder`.
 
 **Destroys need the drain gate.** Envoy Gateway provisions Services of type
 LoadBalancer that the AWS LB Controller collects. Destroying both controllers in
@@ -186,6 +185,44 @@ created. That is health-check convergence, not misconfiguration. Also note that
 with `instance` targets and `externalTrafficPolicy: Local`, only nodes actually
 running an Envoy pod ever pass the check — the rest are `unhealthy` by design.
 
+## Re-vendoring the CRD bundles
+
+Both CRD sets live in `crds/`, committed, rather than being fetched from GitHub
+at plan time. The version is in the filename and the path is built from the
+same variable that drives the chart, so bumping one without the other fails on
+a missing file instead of silently pairing a new chart with old CRDs.
+
+To bump either version, edit `terraform.tfvars` and then re-download to match:
+
+```bash
+# Gateway API — must match envoy_gateway.gateway_api_version
+V=v1.4.0
+curl -sL -o crds/gateway-api-standard-$V.yaml \
+  https://github.com/kubernetes-sigs/gateway-api/releases/download/$V/standard-install.yaml
+
+# Envoy Gateway — must match envoy_gateway.version
+V=v1.7.2
+curl -sL -o crds/envoy-gateway-crds-$V.yaml \
+  https://github.com/envoyproxy/gateway/releases/download/$V/envoy-gateway-crds.yaml
+```
+
+Then `git rm` the superseded file. Keep the downloaded bytes untouched — the
+files are excluded from the `trailing-whitespace` hook precisely so they stay
+identical to the upstream release asset.
+
+Expect a large diff and do not try to read it line by line; what you are
+reviewing is the version bump and the fact that the bundle came from the
+matching release, not 40k lines of OpenAPI schema. Note that a plan after
+re-vendoring will show real changes to `kubernetes_manifest.*_crds` — that is
+the CRD schema delta, and it is the one moment where the two-stage apply
+matters again.
+
+Why vendored at all: a `for_each` built from a network read can go empty for
+reasons outside the config, and empty means destroy — which for these keys
+would take every Gateway and HTTPRoute in the cluster with it. Secondarily, a
+version tag pins a URL and not a payload (GitHub release assets are mutable),
+and vendoring makes plan/apply hermetic so Atlantis needs no egress to GitHub.
+
 ## Why Envoy Gateway
 
 Benchmarked against nginx-ingress and kgateway; see `../loadtest/test-results.md`
@@ -199,6 +236,7 @@ NLB target types.
 
 | file                          | what                                                       |
 | ----------------------------- | ---------------------------------------------------------- |
+| `crds/`                       | vendored upstream CRD bundles, version-stamped filenames     |
 | `networking-gateway-api.tf`   | upstream Gateway API CRDs (shared by any data plane)        |
 | `networking-envoygateway.tf`  | EG CRDs, controller, both Gateways + their classes and TLS  |
 | `networking-ingress.tf`       | AWS LB Controller (`public-apps`), drain gate, retired nginx |

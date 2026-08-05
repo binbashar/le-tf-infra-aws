@@ -20,17 +20,19 @@
 # 1. EG CRDs (gateway.envoyproxy.io group only)
 # We deliberately bypass the `gateway-crds-helm` subchart: its chart archive
 # (Gateway API standard + experimental + EG) bloats the helm release Secret
-# beyond etcd's 1 MB-per-object limit. Pulling the rendered CRDs YAML from
-# the EG release page and applying via kubernetes_manifest sidesteps this —
-# same pattern as the Gateway API CRDs in networking-gateway-api.tf.
+# beyond etcd's 1 MB-per-object limit. Applying the rendered CRDs YAML via
+# kubernetes_manifest sidesteps this — same pattern as the Gateway API CRDs in
+# networking-gateway-api.tf.
+#
+# Vendored under crds/ for the reasons documented in networking-gateway-api.tf,
+# with the version in the filename so a bump of `version` below that forgets to
+# re-vendor fails on a missing file rather than pairing new chart with old CRDs.
 #------------------------------------------------------------------------------
-data "http" "envoy_gateway_crds" {
-  count = var.envoy_gateway.enabled ? 1 : 0
-  url   = "https://github.com/envoyproxy/gateway/releases/download/${var.envoy_gateway.version}/envoy-gateway-crds.yaml"
-}
-
 locals {
-  _envoy_gateway_crds_body = try(data.http.envoy_gateway_crds[0].response_body, "")
+  envoy_gateway_crds_path = "${path.module}/crds/envoy-gateway-crds-${var.envoy_gateway.version}.yaml"
+
+  # Guarded on the flag — see networking-gateway-api.tf.
+  _envoy_gateway_crds_body = var.envoy_gateway.enabled ? file(local.envoy_gateway_crds_path) : ""
   envoy_gateway_crd_manifests = {
     for doc in [
       for chunk in split("\n---\n", local._envoy_gateway_crds_body) :

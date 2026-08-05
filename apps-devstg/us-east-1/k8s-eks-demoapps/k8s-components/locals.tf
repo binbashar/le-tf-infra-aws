@@ -75,9 +75,12 @@ locals {
     for k, v in local.traefik_tags_map : "${k}=${v}"
   ]
 
-  # Gateway API CRDs standard channel manifest (upstream GitHub release).
+  # Gateway API CRDs standard channel manifest, vendored under crds/.
   # Shared by every Gateway API data plane — see networking-gateway-api.tf.
-  gateway_api_crds_url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/${var.envoy_gateway.gateway_api_version}/standard-install.yaml"
+  # The filename carries the version so a bump of `gateway_api_version` that
+  # forgets to re-vendor fails loudly on a missing file instead of silently
+  # applying the old CRDs against a new chart.
+  gateway_api_crds_path = "${path.module}/crds/gateway-api-standard-${var.envoy_gateway.gateway_api_version}.yaml"
 
   #------------------------------------------------------------------------------
   # Envoy Gateway settings
