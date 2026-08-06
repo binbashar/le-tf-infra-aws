@@ -285,6 +285,65 @@ resource "kubernetes_manifest" "echo_server_route_eg_public" {
 }
 
 #------------------------------------------------------------------------------
+# Per-application source-IP filtering for the public hostname.
+#
+# This is the Gateway API translation of nginx-ingress's
+# `whitelist-source-range` annotation: the restriction is declared by the
+# application, next to its own route, rather than centrally at the perimeter.
+# An app with no policy is reachable by anyone the load balancer admits, which
+# is what an Ingress without the annotation does.
+#
+# Enforced at L7 by Envoy, which means it depends on Envoy having the real
+# client address. Behind the ALB that comes from the `ClientTrafficPolicy` in
+# k8s-components (`numTrustedHops`) -- without it every request would appear to
+# come from the load balancer and this policy would match all of them or none.
+# Behind an NLB the address is preserved at L4 and no policy is needed.
+#
+# `defaultAction = Deny` rather than relying on the absence of a match: an
+# authorization rule set that only lists allows, with a permissive default,
+# fails open on a typo.
+#------------------------------------------------------------------------------
+resource "kubernetes_manifest" "echo_server_public_ip_allowlist" {
+  count = var.demo_apps.echo_server.enabled && var.demo_apps.echo_server.public_endpoint && var.demo_apps.echo_server.restrict_public_access ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.envoyproxy.io/v1alpha1"
+    kind       = "SecurityPolicy"
+    metadata = {
+      name      = "echo-server-public-ip-allowlist"
+      namespace = kubernetes_namespace.echo_server[0].metadata[0].name
+    }
+    spec = {
+      targetRefs = [{
+        group = "gateway.networking.k8s.io"
+        kind  = "HTTPRoute"
+        name  = kubernetes_manifest.echo_server_route_eg_public[0].manifest.metadata.name
+      }]
+      authorization = {
+        defaultAction = "Deny"
+        rules = [{
+          action = "Allow"
+          principal = {
+            clientCIDRs = var.echo_server_public_allowed_cidrs
+          }
+        }]
+      }
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = length(var.echo_server_public_allowed_cidrs) > 0
+      error_message = "echo_server_public_allowed_cidrs must not be empty while echo_server.restrict_public_access is true: the SecurityPolicy would deny every request, including your own. Set it in allowlist.local.auto.tfvars (see allowlist.local.auto.tfvars.example), or set restrict_public_access = false to publish the hostname openly."
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.echo_server_route_eg_public,
+  ]
+}
+
+#------------------------------------------------------------------------------
 # State address shifts when `count` was introduced on the resources above.
 # These let `tofu apply` reconcile the existing live objects from
 # `kubernetes_*.echo_server` to `kubernetes_*.echo_server[0]` without a

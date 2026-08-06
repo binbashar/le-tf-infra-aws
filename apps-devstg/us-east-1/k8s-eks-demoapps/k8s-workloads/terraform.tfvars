@@ -17,6 +17,10 @@ demo_apps = {
     # the two private hostnames. Depends on
     # `envoy_gateway.public_gateway.enabled` in k8s-components.
     public_endpoint = true
+    # Restricts that hostname to `echo_server_public_allowed_cidrs` inside
+    # Envoy — the per-application filtering an nginx `whitelist-source-range`
+    # annotation performs. Set the list in allowlist.local.auto.tfvars.
+    restrict_public_access = true
   }
   google_microservices_dev = {
     enabled = false
