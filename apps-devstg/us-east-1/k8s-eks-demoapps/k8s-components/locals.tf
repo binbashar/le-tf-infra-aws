@@ -140,6 +140,14 @@ locals {
     value = "allowed"
   }
 
+  # Which load balancer fronts the public gateway — see the `frontend` field on
+  # `var.envoy_gateway.public_gateway`. Split out because a dozen `count` and
+  # conditional expressions read it, and the two are mutually exclusive.
+  public_gw_eg_enabled  = var.envoy_gateway.enabled && var.envoy_gateway.public_gateway.enabled
+  public_gw_eg_on_alb   = local.public_gw_eg_enabled && var.envoy_gateway.public_gateway.frontend == "alb"
+  public_gw_eg_on_nlb   = local.public_gw_eg_enabled && var.envoy_gateway.public_gateway.frontend == "nlb"
+  public_gw_eg_svc_name = "public-gw-eg-envoy"
+
   #------------------------------------------------------------------------------
   # ALB Ingress settings
   #------------------------------------------------------------------------------
@@ -147,7 +155,26 @@ locals {
   alb_ingress_to_nginx_ingress_tags_list = [
     for k, v in local.alb_ingress_to_nginx_ingress_tags_map : "${k}=${v}"
   ]
-  eks_alb_logging_prefix = var.ingress.apps_ingress.logging.prefix != "" ? var.ingress.apps_ingress.logging.prefix : data.terraform_remote_state.cluster.outputs.cluster_name
+
+  envoy_apps_alb_tags_map = merge(local.tags_map, { Component = "alb-envoy-gateway" })
+  envoy_apps_alb_tags_list = [
+    for k, v in local.envoy_apps_alb_tags_map : "${k}=${v}"
+  ]
+
+  # Hostnames the ALB frontend serves and publishes.
+  #
+  # They have to be named here rather than discovered: externaldns-public reads
+  # the Ingress, and an Ingress with no `host` gives it nothing to publish,
+  # while the HTTPRoutes that do carry hostnames are hidden from it precisely
+  # so the two do not both claim the same record.
+  #
+  # The duplication with k8s-workloads is a known rough edge of this shape --
+  # adding a public app means editing this list as well as its HTTPRoute. It is
+  # tolerable while there is one. The way out, if this grows, is to let each
+  # HTTPRoute publish its own record with
+  # `external-dns.alpha.kubernetes.io/target` pinned to the ALB.
+  public_gw_eg_alb_hostnames = ["echo-server.${local.public_base_domain}"]
+  eks_alb_logging_prefix     = var.ingress.apps_ingress.logging.prefix != "" ? var.ingress.apps_ingress.logging.prefix : data.terraform_remote_state.cluster.outputs.cluster_name
 
   load_balancer_attributes = var.ingress.apps_ingress.logging.enabled ? "access_logs.s3.enabled=${var.ingress.apps_ingress.logging.enabled},access_logs.s3.bucket=${var.project}-${var.environment}-alb-logs,access_logs.s3.prefix=${local.eks_alb_logging_prefix}" : "access_logs.s3.enabled=${var.ingress.apps_ingress.logging.enabled}"
 

@@ -325,16 +325,33 @@ resource "helm_release" "private_gw_eg_tls" {
 #------------------------------------------------------------------------------
 # EnvoyProxy for the public data plane.
 #
-# On `load-balancer-source-ranges`: with no
-# `aws-load-balancer-security-groups` annotation the LBC creates and manages a
-# frontend SG for the NLB and renders this list into its ingress rules. Omit
-# the annotation and the LBC defaults that group to 0.0.0.0/0 — hence the
-# precondition below, which fails the plan instead of silently publishing an
-# open endpoint. It is a precondition rather than a variable validation so it
-# only fires when the public gateway is actually being provisioned.
+# The Service this renders depends on `public_gateway.frontend`:
+#
+#   nlb — type LoadBalancer. The annotations below make the LBC provision an
+#         internet-facing NLB and render `load-balancer-source-ranges` into the
+#         frontend security group it manages. Omit that annotation and the LBC
+#         defaults the group to 0.0.0.0/0 — hence the precondition, which fails
+#         the plan instead of silently publishing an open endpoint.
+#
+#   alb — type ClusterIP, no annotations, no Service-provisioned load balancer.
+#         `kubernetes_ingress_v1.envoy_apps` in networking-ingress.tf asks the
+#         LBC for an ALB pointing at this Service instead, and carries the same
+#         allowlist as `inbound-cidrs` plus its own copy of the precondition.
+#
+# `envoyService.name` is pinned so the Ingress can reference the Service by a
+# known name: left to itself EG derives `envoy-<ns>-<gateway>-<hash>`, which is
+# stable but not knowable at write time.
+#
+# On `nlb-target-type: instance` — this was held back on `ip` at first, on the
+# theory that preserving the client IP would break the CIDR allowlist. It does
+# not, for two independent reasons: the allowlist lives on the NLB's own
+# frontend SG and is evaluated before the LB forwards anything, and the
+# node-side rule the LBC writes is a security-group *reference* to the shared
+# backend group, which AWS documents as working "even if you enable client IP
+# preservation". So it needs no duplication onto the node SG.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "public_gw_eg_proxy" {
-  count = var.envoy_gateway.enabled && var.envoy_gateway.public_gateway.enabled ? 1 : 0
+  count = local.public_gw_eg_enabled ? 1 : 0
 
   manifest = {
     apiVersion = "gateway.envoyproxy.io/v1alpha1"
@@ -358,30 +375,24 @@ resource "kubernetes_manifest" "public_gw_eg_proxy" {
               }]
             }
           }
-          # target-type `instance`, matching the private gateway — see the note
-          # there for the mechanics.
-          #
-          # This was held back on `ip` at first, on the theory that preserving
-          # the client IP would break the CIDR allowlist. It does not, for two
-          # independent reasons: the allowlist lives on the NLB's own frontend
-          # SG and is evaluated before the LB forwards anything, and the
-          # node-side rule the LBC writes is a security-group *reference* to
-          # the shared backend group, which AWS documents as working "even if
-          # you enable client IP preservation". So it needs no duplication onto
-          # the node SG.
-          #
-          # Side effect worth knowing: Envoy now sees the real client address,
-          # so an L7 CIDR match (SecurityPolicy `principal.clientCIDRs`) is
-          # viable without proxy protocol v2. Unused — the SG is cheaper and
-          # drops traffic earlier — but it is an option if WAF gets revisited.
-          envoyService = {
-            annotations = {
-              "service.beta.kubernetes.io/aws-load-balancer-type"            = "external"
-              "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "instance"
-              "service.beta.kubernetes.io/aws-load-balancer-scheme"          = "internet-facing"
-              "service.beta.kubernetes.io/load-balancer-source-ranges"       = join(",", var.envoy_gateway_public_allowed_cidrs)
-            }
-          }
+          # `annotations` is merged in rather than set to `{}` under the ALB
+          # frontend: the provider serialises an empty map as `null`, which the
+          # CRD rejects ("must be of type object"). Omitting the key is the only
+          # way to say "no annotations".
+          envoyService = merge(
+            {
+              name = local.public_gw_eg_svc_name
+              type = local.public_gw_eg_on_alb ? "ClusterIP" : "LoadBalancer"
+            },
+            local.public_gw_eg_on_alb ? {} : {
+              annotations = {
+                "service.beta.kubernetes.io/aws-load-balancer-type"            = "external"
+                "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "instance"
+                "service.beta.kubernetes.io/aws-load-balancer-scheme"          = "internet-facing"
+                "service.beta.kubernetes.io/load-balancer-source-ranges"       = join(",", var.envoy_gateway_public_allowed_cidrs)
+              }
+            },
+          )
         }
       }
     }
@@ -390,7 +401,7 @@ resource "kubernetes_manifest" "public_gw_eg_proxy" {
   lifecycle {
     precondition {
       condition     = length(var.envoy_gateway_public_allowed_cidrs) > 0
-      error_message = "envoy_gateway_public_allowed_cidrs must not be empty while the public gateway is enabled: the AWS Load Balancer Controller would default the NLB's security group to 0.0.0.0/0 and expose the endpoint to the entire internet. Set it in allowlist.local.auto.tfvars (see allowlist.local.auto.tfvars.example)."
+      error_message = "envoy_gateway_public_allowed_cidrs must not be empty while the public gateway is enabled: the AWS Load Balancer Controller would default the load balancer's security group to 0.0.0.0/0 and expose the endpoint to the entire internet. Set it in allowlist.local.auto.tfvars (see allowlist.local.auto.tfvars.example)."
     }
   }
 
@@ -430,13 +441,26 @@ resource "kubernetes_manifest" "envoy_gateway_class_public" {
 }
 
 #------------------------------------------------------------------------------
-# The public Gateway. `http` behaves like the private one. `https` uses a label
-# Selector rather than `All`: this is the opt-in gate for internet exposure, so
-# writing an HTTPRoute is not by itself enough to publish a workload — a
-# cluster admin has to label the namespace first.
+# The public Gateway. Both listeners use a label Selector rather than `All`:
+# this is the opt-in gate for internet exposure, so writing an HTTPRoute is not
+# by itself enough to publish a workload — a cluster admin has to label the
+# namespace first.
+#
+# Which listener actually carries public traffic depends on the frontend:
+#
+#   nlb — `https`, terminating the wildcard below. `http` exists only for the
+#         redirector, which bounces everything to HTTPS.
+#   alb — `http`. The ALB terminates TLS off its ACM certificate and forwards
+#         cleartext, so this is the real public path and there is nothing to
+#         redirect. `https` stays configured but unused — it is what a later
+#         move to `backend-protocol: HTTPS` would need.
+#
+# `http` carries the Selector in both cases. Under `nlb` that is redundant
+# (only the redirector attaches), but leaving the two listeners inconsistent
+# would mean the gate silently disappears when the frontend flips.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "public_gateway_eg" {
-  count = var.envoy_gateway.enabled && var.envoy_gateway.public_gateway.enabled ? 1 : 0
+  count = local.public_gw_eg_enabled ? 1 : 0
 
   manifest = {
     apiVersion = "gateway.networking.k8s.io/v1"
@@ -453,7 +477,14 @@ resource "kubernetes_manifest" "public_gateway_eg" {
           protocol = "HTTP"
           port     = 80
           allowedRoutes = {
-            namespaces = { from = "Same" }
+            namespaces = {
+              from = "Selector"
+              selector = {
+                matchLabels = {
+                  (local.public_gw_eg_exposure_label.key) = local.public_gw_eg_exposure_label.value
+                }
+              }
+            }
           }
         },
         {
@@ -494,9 +525,15 @@ resource "kubernetes_manifest" "public_gateway_eg" {
 
 #------------------------------------------------------------------------------
 # HTTP→HTTPS redirector for the public gateway. Mirror of the private one.
+#
+# Only under the `nlb` frontend. With an ALB in front the redirect belongs on
+# the ALB (`actions.ssl-redirect`, see networking-ingress.tf), which bounces the
+# client before any traffic reaches the cluster. Leaving this attached as well
+# would 301 every request the ALB forwards over its cleartext hop, sending
+# clients into a loop.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "public_gateway_eg_https_redirect" {
-  count = var.envoy_gateway.enabled && var.envoy_gateway.public_gateway.enabled ? 1 : 0
+  count = local.public_gw_eg_on_nlb ? 1 : 0
 
   manifest = {
     apiVersion = "gateway.networking.k8s.io/v1"
@@ -572,5 +609,154 @@ resource "helm_release" "public_gw_eg_tls" {
 
   depends_on = [
     helm_release.cluster_issuer_binbash_aws,
+  ]
+}
+
+#------------------------------------------------------------------------------
+# Health check target for the ALB frontend.
+#
+# An ALB health check needs a path that answers 200. Envoy has none to offer:
+# a request that matches no route returns 404, so a health check against the
+# data listener fails on an otherwise healthy gateway. This is not specific to
+# Envoy Gateway — every Envoy-based ingress hits it, and each solves it the
+# same way. Istio ships a dedicated endpoint on :15021; kgateway's own AWS ALB
+# guide has you declare a route that answers with a fixed 200. This is that,
+# using Envoy Gateway's `HTTPRouteFilter`.
+#
+# Deliberately on the data listener rather than Envoy's readiness endpoint
+# (:19001/ready). Readiness reports whether the *process* is up; it stays green
+# while the listener is broken, the certificate failed to load or the Gateway
+# never reached `Programmed`. This path traverses the listener and the route
+# engine, so a healthy check means the thing that serves traffic works.
+#
+# It answers 200 to anyone who asks. That is intentional and leaks nothing —
+# a fixed response that touches no backend.
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+# Trust the ALB's forwarded headers.
+#
+# Without this Envoy treats the ALB as the client: it reports the ALB's pod-CIDR
+# address as the origin and overwrites `X-Forwarded-Proto` with `http`, since
+# the ALB→Envoy hop is cleartext. Two consequences, one cosmetic and one not:
+#
+#   - Any backend that builds self-referential URLs from `X-Forwarded-Proto`
+#     emits `http://` links, and one that redirects to its own canonical URL
+#     loops — the ALB sends the client back over HTTPS, Envoy tells the backend
+#     it was HTTP, the backend redirects again.
+#   - `SecurityPolicy` CIDR matching would compare against the ALB's address, so
+#     a per-route IP allowlist would match everything or nothing.
+#
+# `numTrustedHops` covers both: upstream documents it as deciding the origin
+# client's address *and* whether `x-forwarded-proto` is trusted. One hop,
+# because exactly one proxy (the ALB) sits in front.
+#
+# Counting is from the right of the XFF Envoy receives, which is what makes it
+# safe: a client that sends its own `X-Forwarded-For` gets the real address
+# appended by the ALB to the right of the forgery, so the rightmost entry is
+# still the address AWS observed.
+#
+# Scoped to the public Gateway, and only under the ALB frontend. The private
+# Gateway must NOT get this: nothing sits in front of it, its NLB preserves the
+# client address at L4, and trusting a client-supplied XFF there would let
+# anyone claim any source IP.
+#------------------------------------------------------------------------------
+resource "kubernetes_manifest" "public_gw_eg_client_traffic_policy" {
+  count = local.public_gw_eg_on_alb ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.envoyproxy.io/v1alpha1"
+    kind       = "ClientTrafficPolicy"
+    metadata = {
+      name      = "public-gw-eg-trust-alb"
+      namespace = kubernetes_namespace.envoy_gateway[0].id
+    }
+    spec = {
+      targetRefs = [{
+        group = "gateway.networking.k8s.io"
+        kind  = "Gateway"
+        name  = kubernetes_manifest.public_gateway_eg[0].manifest.metadata.name
+      }]
+      clientIPDetection = {
+        xForwardedFor = {
+          numTrustedHops = 1
+        }
+      }
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.public_gateway_eg,
+  ]
+}
+
+resource "kubernetes_manifest" "public_gw_eg_healthz_filter" {
+  count = local.public_gw_eg_on_alb ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.envoyproxy.io/v1alpha1"
+    kind       = "HTTPRouteFilter"
+    metadata = {
+      name      = "public-gw-eg-healthz"
+      namespace = kubernetes_namespace.envoy_gateway[0].id
+    }
+    spec = {
+      directResponse = {
+        statusCode = 200
+        body = {
+          type   = "Inline"
+          inline = "ok"
+        }
+      }
+    }
+  }
+
+  depends_on = [
+    helm_release.envoy_gateway,
+  ]
+}
+
+resource "kubernetes_manifest" "public_gw_eg_healthz_route" {
+  count = local.public_gw_eg_on_alb ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "public-gw-eg-healthz"
+      namespace = kubernetes_namespace.envoy_gateway[0].id
+      annotations = {
+        # Nothing here should reach DNS: the hostname is published by the ALB's
+        # Ingress, and this route deliberately carries no hostname at all so it
+        # answers on whatever Host the health check sends.
+        "external-dns.alpha.kubernetes.io/controller" = "none"
+      }
+    }
+    spec = {
+      parentRefs = [{
+        name        = kubernetes_manifest.public_gateway_eg[0].manifest.metadata.name
+        sectionName = "http"
+      }]
+      rules = [{
+        matches = [{
+          path = {
+            type  = "Exact"
+            value = "/healthz"
+          }
+        }]
+        filters = [{
+          type = "ExtensionRef"
+          extensionRef = {
+            group = "gateway.envoyproxy.io"
+            kind  = "HTTPRouteFilter"
+            name  = kubernetes_manifest.public_gw_eg_healthz_filter[0].manifest.metadata.name
+          }
+        }]
+      }]
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.public_gateway_eg,
+    kubernetes_manifest.public_gw_eg_healthz_filter,
   ]
 }

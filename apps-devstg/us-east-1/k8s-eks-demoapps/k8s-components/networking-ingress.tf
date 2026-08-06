@@ -309,3 +309,125 @@ resource "kubernetes_ingress_v1" "traefik_apps" {
     time_sleep.controller_drain,
   ]
 }
+
+#------------------------------------------------------------------------------
+# Apps Ingress: ALB in front of the public Envoy Gateway
+# -----------------------------------------------------------------------------
+# Only under `envoy_gateway.public_gateway.frontend = "alb"`. This is the
+# topology the cluster is modelled on -- an ALB terminating TLS with an ACM
+# certificate in front of an in-cluster ingress data plane, which then carries
+# its own routing and (later) its own TLS to the workloads:
+#
+#   Internet => ALB (ACM, WAF) => Envoy Gateway (pods) => App (service)
+#
+# It replaces the internet-facing NLB the Gateway's own Service would otherwise
+# provision; the two never coexist. Compare `nginx_apps` above, which is the
+# same shape with nginx-ingress as the data plane.
+#
+# Three annotations carry most of the design:
+#
+#   group.name       -- distinct from `apps`. The LBC merges every Ingress
+#                       sharing a group onto ONE ALB, so reusing the name would
+#                       mutate the existing balancer rather than provision a
+#                       dedicated one. The group name is baked into the ALB's
+#                       name and tags, so changing it later recreates the ALB.
+#   healthcheck-path -- `/healthz`, answered by a fixed-200 route on the gateway
+#                       (see networking-envoygateway.tf). Envoy returns 404 for
+#                       an unmatched path, so the default `/` would fail the
+#                       check on a perfectly healthy gateway.
+#   inbound-cidrs    -- the same allowlist the NLB frontend puts on its security
+#                       group. The reference topology leaves the ALB open and
+#                       filters per-application further in; this keeps the
+#                       endpoint closed until that per-route filtering exists.
+#
+# `backend-protocol` stays HTTP: the ALB terminates TLS and forwards cleartext
+# to the gateway's `http` listener. Moving to HTTPS is what the reference
+# topology actually does, and it needs the health check rethought first --
+# ALB health checks send no SNI, which an HTTPS listener with a hostname may
+# refuse.
+#------------------------------------------------------------------------------
+resource "kubernetes_ingress_v1" "envoy_apps" {
+  count                  = local.public_gw_eg_on_alb ? 1 : 0
+  wait_for_load_balancer = true
+
+  metadata {
+    name      = "envoy-apps"
+    namespace = kubernetes_namespace.envoy_gateway[0].id
+    annotations = {
+      "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
+      "alb.ingress.kubernetes.io/group.name"       = "apps-eg"
+      "alb.ingress.kubernetes.io/target-type"      = "ip"
+      "alb.ingress.kubernetes.io/backend-protocol" = "HTTP"
+
+      "alb.ingress.kubernetes.io/healthcheck-protocol" = "HTTP"
+      "alb.ingress.kubernetes.io/healthcheck-path"     = "/healthz"
+      "alb.ingress.kubernetes.io/healthcheck-port"     = "traffic-port"
+
+      "alb.ingress.kubernetes.io/certificate-arn"      = data.terraform_remote_state.certs.outputs.certificate_arn
+      "alb.ingress.kubernetes.io/listen-ports"         = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+      "alb.ingress.kubernetes.io/actions.ssl-redirect" = "{\"Type\": \"redirect\", \"RedirectConfig\": { \"Protocol\": \"HTTPS\", \"Port\": \"443\", \"StatusCode\": \"HTTP_301\" } }"
+
+      "alb.ingress.kubernetes.io/inbound-cidrs" = join(",", var.envoy_gateway_public_allowed_cidrs)
+      "alb.ingress.kubernetes.io/tags"          = join(",", local.envoy_apps_alb_tags_list)
+    }
+  }
+
+  spec {
+    ingress_class_name = local.public_ingress_class
+
+    # One rule per hostname rather than a single catch-all: externaldns-public
+    # publishes what it finds in `host`, and the routes that carry the same
+    # hostnames are hidden from it to avoid a double claim on the record.
+    dynamic "rule" {
+      for_each = toset(local.public_gw_eg_alb_hostnames)
+
+      content {
+        host = rule.value
+
+        http {
+          path {
+            path      = "/"
+            path_type = "Prefix"
+            backend {
+              service {
+                name = "ssl-redirect"
+                port {
+                  name = "use-annotation"
+                }
+              }
+            }
+          }
+
+          path {
+            path      = "/"
+            path_type = "Prefix"
+            backend {
+              service {
+                name = local.public_gw_eg_svc_name
+                port {
+                  number = 80
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = length(var.envoy_gateway_public_allowed_cidrs) > 0
+      error_message = "envoy_gateway_public_allowed_cidrs must not be empty while the public gateway is on the ALB frontend: `inbound-cidrs` would be empty and the AWS Load Balancer Controller would leave the ALB's security group open to 0.0.0.0/0. Set it in allowlist.local.auto.tfvars (see allowlist.local.auto.tfvars.example)."
+    }
+  }
+
+  depends_on = [
+    helm_release.alb_ingress,
+    kubernetes_manifest.public_gateway_eg,
+    kubernetes_manifest.public_gw_eg_healthz_route,
+    # Backs an ALB provisioned by the LBC, which is deleted asynchronously --
+    # see the drain gate above.
+    time_sleep.controller_drain,
+  ]
+}

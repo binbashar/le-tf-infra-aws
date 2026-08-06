@@ -238,6 +238,24 @@ variable "envoy_gateway" {
     })
     public_gateway = object({
       enabled = bool
+      # Which AWS load balancer fronts the public gateway.
+      #
+      #   "nlb" — an internet-facing NLB provisioned by the Envoy Gateway
+      #           controller from the Gateway's own Service. TLS terminates in
+      #           Envoy off the `*.binbash.com.ar` wildcard, and the CIDR
+      #           allowlist is enforced on the NLB's frontend security group.
+      #
+      #   "alb" — no Service-provisioned load balancer at all: the Gateway's
+      #           Service drops to ClusterIP and an Ingress asks the AWS Load
+      #           Balancer Controller for an ALB in front of it. TLS terminates
+      #           on the ALB off an ACM certificate, and the allowlist moves to
+      #           the ALB's `inbound-cidrs`.
+      #
+      # The two are mutually exclusive by construction, so flipping this one
+      # word is the whole rollback. "alb" mirrors the topology this cluster is
+      # modelled on (ALB + ACM + WAF in front of the ingress data plane); see
+      # README.md.
+      frontend = string
     })
   })
   default = {
@@ -248,8 +266,14 @@ variable "envoy_gateway" {
       enabled = false
     }
     public_gateway = {
-      enabled = false
+      enabled  = false
+      frontend = "nlb"
     }
+  }
+
+  validation {
+    condition     = contains(["nlb", "alb"], var.envoy_gateway.public_gateway.frontend)
+    error_message = "envoy_gateway.public_gateway.frontend must be either \"nlb\" or \"alb\"."
   }
 }
 

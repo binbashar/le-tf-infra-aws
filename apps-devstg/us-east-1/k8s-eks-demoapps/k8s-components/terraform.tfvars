@@ -148,8 +148,13 @@ envoy_gateway = {
     enabled = true
   }
 
+  # `frontend = "alb"` puts an ALB with an ACM certificate in front of the
+  # gateway and drops its Service to ClusterIP, replacing the internet-facing
+  # NLB. This is the topology the cluster is modelled on; "nlb" is the previous
+  # shape and flipping this one word is the whole rollback.
   public_gateway = {
-    enabled = true
+    enabled  = true
+    frontend = "alb"
   }
 }
 

@@ -240,14 +240,20 @@ resource "kubernetes_manifest" "echo_server_route_eg" {
 # externaldns-public creates the record in the public zone.
 #
 # Reachability is gated in two independent places, both in k8s-components:
-#   1. The namespace label applied above — without it the HTTPS listener
-#      refuses the attachment and this route resolves to nothing.
-#   2. The NLB security group, which only admits
-#      `envoy_gateway.public_gateway.allowed_cidrs`.
+#   1. The namespace label applied above — without it the listener refuses the
+#      attachment and this route resolves to nothing.
+#   2. The allowlist on whichever load balancer fronts the gateway.
 #
-# There is no HTTP variant: the public gateway's port-80 listener only accepts
-# routes from its own namespace, and the redirector living there sends
-# everything to HTTPS.
+# No `sectionName`: the route attaches to every listener whose hostname is
+# compatible. Which one actually carries traffic depends on
+# `envoy_gateway.public_gateway.frontend` — the HTTPS listener under `nlb`, the
+# HTTP one under `alb`, where the ALB has already terminated TLS.
+#
+# `external-dns/controller: none` because under the ALB frontend the record is
+# published from that ALB's Ingress. Without it both objects claim the same
+# hostname under one `txtOwnerId` and external-dns picks a winner by its own
+# dedup order. Harmless under `nlb`, where the Ingress does not exist — but
+# leaving it unconditional keeps the two frontends from differing here.
 #------------------------------------------------------------------------------
 resource "kubernetes_manifest" "echo_server_route_eg_public" {
   count = var.demo_apps.echo_server.enabled && var.demo_apps.echo_server.public_endpoint ? 1 : 0
@@ -258,6 +264,9 @@ resource "kubernetes_manifest" "echo_server_route_eg_public" {
     metadata = {
       name      = "echo-server-eg-public"
       namespace = kubernetes_namespace.echo_server[0].metadata[0].name
+      annotations = {
+        "external-dns.alpha.kubernetes.io/controller" = "none"
+      }
     }
     spec = {
       parentRefs = [{
