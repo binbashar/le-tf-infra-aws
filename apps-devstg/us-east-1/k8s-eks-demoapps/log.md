@@ -8,11 +8,25 @@ layer ordering, apply counts, credential refreshes, node scheduling — are left
 out; see `README.md` for orchestration and `k8s-components/README.md` for the
 ingress topology.
 
-**Current state (2026-08-05).** EKS 1.34.9 on AL2023, spot nodes. Ingress is
-Envoy Gateway only, on two Gateways: private (VPN) and public (IP-allowlisted).
-The component set has been trimmed to the platform plus one workload —
-`echo-server` is the only hostname, served on both gateways with the real
-client IP preserved.
+**What this cluster is for.** It models a production topology being migrated
+off nginx-ingress, so that the migration can be rehearsed here rather than
+there. That topology is:
+
+| | modelled setup | here |
+|---|---|---|
+| public | ALB + ACM + WAF → nginx pods → app | ALB + ACM (+ WAF, pending) → **Envoy** → app |
+| private | NLB → nginx pods → app | NLB → **Envoy** → app |
+| DNS | external-dns private + public, on Ingress | same, on Ingress + HTTPRoute |
+| certs | cert-manager per Ingress | one wildcard per Gateway listener |
+
+The perimeter is meant to stay recognisable; the data plane is what changes.
+**Reintroducing nginx here is never an option** — replacing it is the point.
+
+**Current state (2026-08-06).** Torn down. Everything below the VPC is gone;
+`vpc-0c2dd28735d0250c3` is kept for a fast re-spin and
+`network/terraform.tfvars` sits at `vpc_enable_nat_gateway = false`. When up it
+is EKS 1.34.9 on AL2023 with spot nodes, `echo-server` the only workload, and
+both public and private paths on Envoy Gateway.
 
 ---
 
@@ -26,6 +40,7 @@ client IP preserved.
 | 4 | 2026-08-04 | Client-IP defect fixed; **nginx-ingress retired**. Destroy-ordering fixed with a drain gate. |
 | 5 | 2026-08-04 | Both gateways unified on `instance` targets. All remaining components converted from the dead ingress class to HTTPRoutes and upgraded. |
 | 6 | 2026-08-05 | Teardown verified the drain gate. Re-spin, then **component set trimmed** to echo-server. CRD bundles **vendored**. |
+| 7 | 2026-08-06 | **ALB in front of the public Envoy Gateway**, replacing its NLB. Per-route IP filtering moved into Envoy; perimeter opened. |
 
 ---
 
@@ -150,6 +165,97 @@ putting the version in the filename and building the path from the same variable
 that drives the chart, so a bump that forgets to re-vendor fails at plan time on
 a missing file. Verified. Re-vendoring is documented in `k8s-components/README.md`.
 
+### The public path runs on an ALB, not an NLB
+
+Selected by `envoy_gateway.public_gateway.frontend`, `"nlb"` or `"alb"`. The
+two are mutually exclusive and everything hangs off that one word, so the
+rollback is a single-token edit; the NLB path is gated off rather than deleted.
+Under `alb` the Gateway's Service drops to ClusterIP — with `envoyService.name`
+pinned, since EG otherwise derives a hash-suffixed name the Ingress cannot
+reference — and an Ingress asks the LBC for an ALB in front of it.
+
+This was validated as a POC before being adopted. Four things came out of it
+that were not obvious beforehand:
+
+**An ALB health check against Envoy 404s.** Envoy has no `/healthz` to offer:
+a request matching no route returns 404, so the default `/` fails the check on
+a perfectly healthy gateway. Not an Envoy Gateway defect — every Envoy-based
+ingress hits it, Istio ships a dedicated endpoint on `:15021` and kgateway's
+own AWS ALB guide answers it with a route returning a fixed 200. Solved the
+same way, via `HTTPRouteFilter.directResponse`.
+
+Deliberately *not* Envoy's readiness endpoint on `:19001/ready`: readiness
+reports that the process is up and stays green while the listener is broken,
+the certificate failed to load, or the Gateway never reached `Programmed`. The
+`/healthz` route traverses the listener and the route engine, so a passing
+check means the thing that serves traffic works.
+
+A pleasant accident: requesting `/healthz` on a real hostname is answered by
+the *application*, not the fixed response, because Gateway API ranks hostname
+specificity above path specificity. The ALB's check arrives with `Host: <ip>`,
+matches no hostname, and falls through to the fixed 200. Applications keep
+their own `/healthz`.
+
+**`ClientTrafficPolicy` with `numTrustedHops: 1` is load-bearing.** Without it
+Envoy treats the ALB as the client: it overwrites `X-Forwarded-Proto` with
+`http` — so a backend building self-referential URLs emits `http://` links and
+one redirecting to its canonical URL loops — and reports the ALB's address as
+the origin, which would make any CIDR match hit everything or nothing. One
+field covers both; upstream documents `numTrustedHops` as deciding the origin
+address *and* whether `x-forwarded-proto` is trusted.
+
+Counting from the right of XFF is what makes it safe, and it was tested rather
+than assumed: a client-supplied `X-Forwarded-For: 1.2.3.4` still resolves to
+the address AWS observed, because the ALB appends that to the right of the
+forgery. **The private Gateway must not get this policy** — nothing sits in
+front of it, and trusting a client-supplied XFF there would let anyone claim
+any source IP. Side effect worth knowing: `X-Envoy-External-Address` disappears
+on the ALB path.
+
+**Public HTTPRoutes must be hidden from external-dns.** Once the Gateway's
+Service is ClusterIP its address is a cluster-internal IP, and external-dns
+watching `gateway-httproute` publishes *that* into the public zone. Observed
+live before the annotation was applied:
+`echo-server.binbash.com.ar → 10.100.194.250`. The record comes from the ALB's
+Ingress instead, and ownership transferred between the two sources in one sync
+cycle.
+
+**`group.name` is what separates two ALBs from one.** The LBC merges every
+Ingress sharing a group onto a single balancer, so the Envoy lane needs its own
+(`apps-eg`, against the pre-existing `apps`). The name is baked into the ALB's
+name and tags, so changing it later recreates the balancer.
+
+### Access control is per-application, and the perimeter is open
+
+The modelled setup filters public-vs-restricted with an nginx
+`whitelist-source-range` annotation — at the application, not at the perimeter.
+The Gateway API translation is a `SecurityPolicy` with
+`authorization.rules[].principal.clientCIDRs` attached to the app's own
+HTTPRoute.
+
+Envoy policies can only target resources in their own namespace, which forces
+the policy to live in k8s-workloads next to the route. That constraint turned
+out to point at the right answer: the annotation being replaced carries a value
+that belongs to the application. So there are two lists on purpose —
+`envoy_gateway_public_allowed_cidrs` (who may reach the cluster, on the load
+balancer) and `echo_server_public_allowed_cidrs` (who may reach this app,
+inside Envoy). They hold the same value only while there is one operator.
+
+`defaultAction: Deny` rather than relying on the absence of a match: a rule set
+that only lists allows, with a permissive default, fails open on a typo.
+
+With that in place the ALB was opened to `0.0.0.0/0`, matching the modelled
+setup. The perimeter allowlist had always been a stand-in, and keeping it
+closed would be a second place to forget as well as a mask — a route whose
+policy is broken looks fine from inside the allowlist. `open_to_internet`
+exists so that "open" is written down: the same state was reachable by leaving
+the CIDR list empty, which is indistinguishable from having forgotten to fill
+it in. **Empty means mistake; the flag means decision.**
+
+Verified with the perimeter open, which is the configuration where a broken
+policy is actually exposed: allowed CIDR → 200, `192.0.2.0/24` → 403
+`RBAC: access denied`, restored → 200.
+
 ### Destroy ordering: a drain gate, not `depends_on`
 
 The first teardown deadlocked with Services stuck in `Terminating` holding
@@ -265,6 +371,19 @@ fails — a green plan is not proof.
 fails on manifests no longer in state. Work around with `-target`, or set the
 layer's `enabled` toggles to false first.
 
+**An empty map is not an empty map.** The kubernetes provider serialises `{}`
+as `null`, which a CRD requiring an object rejects
+(`must be of type object: "null"`). To say "no annotations", omit the key —
+`merge()` a conditional fragment in rather than setting the field to `{}`.
+
+**Prove an allowlist by A/B on the list itself.** A 200 only shows the request
+arrived, not that anything was discriminated. Swap the real CIDR for
+`192.0.2.0/24` (TEST-NET), expect a denial, then restore. Use
+`curl --no-keepalive` — security groups are stateful, so an established
+connection survives a rule change and reads as a false pass. And note
+`WebFetch` egresses from the operator's own machine, so it is not an external
+vantage point.
+
 **Do not `dig` a hostname before external-dns creates it.** One early query
 caches the NXDOMAIN. The private zone's SOA gives 15 minutes; `binbash.com.ar`
 carries `minimum=86400`, so **24 hours** on a public hostname. Validate with
@@ -355,6 +474,26 @@ objects first and let external-dns clear the records while it is still alive.
 Not fatal if skipped — policy `sync` plus a stable `txtOwnerId` means the next
 re-spin adopts and deletes them — but it keeps the zone honest in between.
 
+**Which objects those are changed with the ALB.** The public record is now
+published by `kubernetes_ingress_v1.envoy_apps`, not by the HTTPRoute, so that
+Ingress is what gets the targeted destroy first. The routes are hidden from
+external-dns and produce nothing.
+
+The 2026-08-06 teardown ran clean on the first pass at every layer —
+`k8s-workloads` 6, `k8s-components` 40 in a single pass with no finalizer
+surgery (the drain gate covers the ALB as well as the NLBs), `addons` 4,
+`identities` 37, `cluster` 50, `network` 3 with the VPC kept. Afterwards: zero
+EKS clusters, load balancers, target groups, instances, NAT gateways, EIPs, EBS
+volumes or `k8s-*`/`eks-*` security groups.
+
+One piece of litter survived: a TXT record `a-echo-server.binbash.com.ar` whose
+external-dns ownership label still names
+`httproute/echo-server/echo-server-eg-public`. It is a leftover of the
+ownership transfer from HTTPRoute to Ingress — the registry record for the old
+owner was never reclaimed. Inert (there is no A record beside it) and the owner
+ID matches, so the next re-spin should adopt it, but it is worth knowing it is
+there before diagnosing anything odd about that hostname.
+
 ---
 
 ## Backlog
@@ -364,28 +503,33 @@ Envoy migration (planned and executed), the Envoy docs rewrite, the full
 HTTPRoute conversion, both gateways on `instance` targets, and the CRD download
 fix — superseded by vendoring, which removed the `data "http"` blocks entirely.
 
-**4. Evaluate how to put AWS WAF in front of Envoy.** The only one left.
+**4. Put AWS WAF in front of Envoy.** The only one left, and mostly resolved by
+the ALB work — what remains is small.
 
-This is a greenfield decision, not a preservation problem: **no WebACL is
-attached to anything in this stack.** The only traces are IAM permissions on the
-LB controller role and the deployment-excluded `security-firewall --` layer.
+The item was originally framed around a constraint: AWS WAF attaches to
+CloudFront, ALB, API Gateway, AppSync, Cognito, App Runner and Verified Access
+— **not to NLB**, which was what fronted both Gateways. That made it look like
+a choice between CloudFront, an ALB, or dropping AWS WAF for an in-Envoy
+equivalent.
 
-The crux: AWS WAF attaches to CloudFront, ALB, API Gateway, AppSync, Cognito,
-App Runner and Verified Access — **not to NLB**, which is what both Envoy
-Gateways are fronted by. Options to compare:
+The framing was wrong, and clarifying the purpose of this cluster dissolved it.
+The setup being modelled *already runs ALB + WAF*, so the ALB was never the
+obstacle to route around — it was the target. CloudFront and Cloudflare were
+ruled out, `ext_authz` rejected on the grounds that body inspection needs
+buffering and without bodies a WAF misses half of what it is for, and
+Coraza-on-Wasm kept only as a side experiment (EG 1.7.2 does support
+`EnvoyExtensionPolicy` with `wasm`, verified against the vendored CRDs).
 
-- CloudFront with the NLB as a custom origin
-- an ALB in front with a `TargetGroupBinding` onto the Envoy pods
-- provisioning an ALB directly via the LBC's Gateway API support instead of a
-  Service of type LoadBalancer
-- dropping AWS WAF for an in-Envoy `SecurityPolicy`
+With the ALB in place, what is left is: the `alb.ingress.kubernetes.io/wafv2-acl-arn`
+annotation, and deploying `apps-devstg/us-east-1/security-firewall --`, whose
+trailing ` --` currently excludes it. That layer already carries a
+`terraform-aws-waf-webaclv2` module with the AWS managed rule groups mapped to
+the OWASP Top 10 plus a rate-limit rule, and the LBC's IAM role already holds
+`wafv2:AssociateWebACL`. The WebACL must be `REGIONAL` scope for an ALB.
 
-Each has different consequences for TLS termination and for the IP allowlist,
-which currently lives on the NLB security group. Two notes that moved the
-options since the item was written: both gateways now preserve the client IP, so
-the in-Envoy route can match on the real client CIDR without proxy protocol v2;
-and `public-apps` is **not** a dead ingress class — it belongs to the AWS Load
-Balancer Controller, which is enabled, so an ALB is one flag away.
+Worth keeping in mind: the WebACL attaches to the load balancer and is
+indifferent to what sits behind it. Whatever else the migration disturbs, the
+WAF tier is not part of it.
 
 ### Open follow-ups
 
@@ -399,9 +543,13 @@ Balancer Controller, which is enabled, so an ALB is one flag away.
 
 ## Uncommitted by design
 
-- `network/terraform.tfvars` — `vpc_enable_nat_gateway` flipped to `true` for
-  the current spin. The committed default stays `false`.
-- `k8s-components/allowlist.local.auto.tfvars` — gitignored, but **required**.
+- `network/terraform.tfvars` — `vpc_enable_nat_gateway`, flipped to `true` for
+  a spin and back to `false` on teardown. The committed default stays `false`.
+- `k8s-components/allowlist.local.auto.tfvars` — gitignored. Required unless
+  `public_gateway.open_to_internet` is true, which it now is.
+- `k8s-workloads/allowlist.local.auto.tfvars` — gitignored, and **required**
+  while `echo_server.restrict_public_access` is true. This is the one that
+  actually keeps the public hostname closed now that the perimeter is open.
 - `shared/us-east-1/tools-atlantis-ecs/main.tf` — removal of a hardcoded
   personal IP from an ALB security-group rule, on an undeployed layer, so never
   planned or applied. The same IP remains in published history (commit
