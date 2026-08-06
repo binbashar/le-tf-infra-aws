@@ -367,7 +367,7 @@ resource "kubernetes_ingress_v1" "envoy_apps" {
       "alb.ingress.kubernetes.io/listen-ports"         = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
       "alb.ingress.kubernetes.io/actions.ssl-redirect" = "{\"Type\": \"redirect\", \"RedirectConfig\": { \"Protocol\": \"HTTPS\", \"Port\": \"443\", \"StatusCode\": \"HTTP_301\" } }"
 
-      "alb.ingress.kubernetes.io/inbound-cidrs" = join(",", var.envoy_gateway_public_allowed_cidrs)
+      "alb.ingress.kubernetes.io/inbound-cidrs" = join(",", local.public_gw_eg_source_ranges)
       "alb.ingress.kubernetes.io/tags"          = join(",", local.envoy_apps_alb_tags_list)
     }
   }
@@ -417,8 +417,8 @@ resource "kubernetes_ingress_v1" "envoy_apps" {
 
   lifecycle {
     precondition {
-      condition     = length(var.envoy_gateway_public_allowed_cidrs) > 0
-      error_message = "envoy_gateway_public_allowed_cidrs must not be empty while the public gateway is on the ALB frontend: `inbound-cidrs` would be empty and the AWS Load Balancer Controller would leave the ALB's security group open to 0.0.0.0/0. Set it in allowlist.local.auto.tfvars (see allowlist.local.auto.tfvars.example)."
+      condition     = var.envoy_gateway.public_gateway.open_to_internet || length(var.envoy_gateway_public_allowed_cidrs) > 0
+      error_message = "envoy_gateway_public_allowed_cidrs must not be empty while the public gateway is on the ALB frontend and `open_to_internet` is false: `inbound-cidrs` would be empty and the AWS Load Balancer Controller would leave the ALB's security group open to 0.0.0.0/0 anyway — as an accident rather than a decision. Either set the list in allowlist.local.auto.tfvars (see allowlist.local.auto.tfvars.example), or set `open_to_internet = true` to say the perimeter is open on purpose."
     }
   }
 

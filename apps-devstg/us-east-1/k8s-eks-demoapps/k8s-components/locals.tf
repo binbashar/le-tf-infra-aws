@@ -148,6 +148,11 @@ locals {
   public_gw_eg_on_nlb   = local.public_gw_eg_enabled && var.envoy_gateway.public_gateway.frontend == "nlb"
   public_gw_eg_svc_name = "public-gw-eg-envoy"
 
+  # What the public frontend admits. `0.0.0.0/0` only when someone asked for it
+  # through `open_to_internet` — an empty allowlist is treated as a mistake, not
+  # as consent, and is caught by a precondition instead.
+  public_gw_eg_source_ranges = var.envoy_gateway.public_gateway.open_to_internet ? ["0.0.0.0/0"] : var.envoy_gateway_public_allowed_cidrs
+
   #------------------------------------------------------------------------------
   # ALB Ingress settings
   #------------------------------------------------------------------------------

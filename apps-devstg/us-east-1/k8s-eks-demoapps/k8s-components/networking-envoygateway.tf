@@ -389,7 +389,7 @@ resource "kubernetes_manifest" "public_gw_eg_proxy" {
                 "service.beta.kubernetes.io/aws-load-balancer-type"            = "external"
                 "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "instance"
                 "service.beta.kubernetes.io/aws-load-balancer-scheme"          = "internet-facing"
-                "service.beta.kubernetes.io/load-balancer-source-ranges"       = join(",", var.envoy_gateway_public_allowed_cidrs)
+                "service.beta.kubernetes.io/load-balancer-source-ranges"       = join(",", local.public_gw_eg_source_ranges)
               }
             },
           )
@@ -400,8 +400,8 @@ resource "kubernetes_manifest" "public_gw_eg_proxy" {
 
   lifecycle {
     precondition {
-      condition     = length(var.envoy_gateway_public_allowed_cidrs) > 0
-      error_message = "envoy_gateway_public_allowed_cidrs must not be empty while the public gateway is enabled: the AWS Load Balancer Controller would default the load balancer's security group to 0.0.0.0/0 and expose the endpoint to the entire internet. Set it in allowlist.local.auto.tfvars (see allowlist.local.auto.tfvars.example)."
+      condition     = var.envoy_gateway.public_gateway.open_to_internet || length(var.envoy_gateway_public_allowed_cidrs) > 0
+      error_message = "envoy_gateway_public_allowed_cidrs must not be empty while the public gateway is enabled and `open_to_internet` is false: the AWS Load Balancer Controller would default the load balancer's security group to 0.0.0.0/0 anyway — as an accident rather than a decision. Either set the list in allowlist.local.auto.tfvars (see allowlist.local.auto.tfvars.example), or set `open_to_internet = true` to say the perimeter is open on purpose."
     }
   }
 

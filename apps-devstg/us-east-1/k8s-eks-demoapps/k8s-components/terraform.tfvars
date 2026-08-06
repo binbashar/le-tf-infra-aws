@@ -152,9 +152,15 @@ envoy_gateway = {
   # gateway and drops its Service to ClusterIP, replacing the internet-facing
   # NLB. This is the topology the cluster is modelled on; "nlb" is the previous
   # shape and flipping this one word is the whole rollback.
+  # `open_to_internet` matches the modelled topology: the ALB admits everyone
+  # and access control lives per-application, as a SecurityPolicy on each route
+  # (see k8s-workloads). Set it back to false to also close the perimeter to
+  # `envoy_gateway_public_allowed_cidrs` — useful while a route's own policy is
+  # still being written, but note it then masks whether that policy works.
   public_gateway = {
-    enabled  = true
-    frontend = "alb"
+    enabled          = true
+    frontend         = "alb"
+    open_to_internet = true
   }
 }
 

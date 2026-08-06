@@ -256,6 +256,19 @@ variable "envoy_gateway" {
       # modelled on (ALB + ACM + WAF in front of the ingress data plane); see
       # README.md.
       frontend = string
+      # Whether the frontend admits the whole internet instead of
+      # `envoy_gateway_public_allowed_cidrs`.
+      #
+      # True is what the modelled topology actually runs: the perimeter is open
+      # and access control lives per-application, as a SecurityPolicy on each
+      # route (see k8s-workloads). Keeping the perimeter closed as well is
+      # defence in depth, but it is also a second place to forget, and it masks
+      # whether the per-route filtering really works.
+      #
+      # This flag exists so that "open" is a decision someone wrote down. The
+      # same state is otherwise reachable by leaving the CIDR list empty, which
+      # is indistinguishable from having forgotten to fill it in.
+      open_to_internet = bool
     })
   })
   default = {
@@ -266,8 +279,9 @@ variable "envoy_gateway" {
       enabled = false
     }
     public_gateway = {
-      enabled  = false
-      frontend = "nlb"
+      enabled          = false
+      frontend         = "nlb"
+      open_to_internet = false
     }
   }
 
