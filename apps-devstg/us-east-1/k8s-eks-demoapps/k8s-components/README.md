@@ -7,10 +7,9 @@ accepted by the API server and then ignored forever, because nothing watches
 it any more.
 
 `public-apps` is *not* dead: it belongs to the AWS Load Balancer Controller,
-which is running. An Ingress on that class still provisions an ALB. That path
-is unused today (`ingress.apps_ingress` is off) but it is the reason an ALB
-remains an option — relevant if AWS WAF ever comes up, since WAF attaches to
-ALB and not to the NLBs the gateways use.
+which is running, and the public path depends on it. An Ingress on that class
+provisions the ALB that fronts the public gateway — that is how ACM, the health
+check and AWS WAF attach, none of which can attach to an NLB.
 
 Assumes you know Ingress and have read a Gateway API overview. Everything below
 is what is specific to *this* cluster.
@@ -20,11 +19,11 @@ is what is specific to *this* cluster.
 ```mermaid
 flowchart LR
   vpn[VPN client] --> nlb1[Internal NLB]
-  net[Internet<br/>allowlisted CIDRs only] --> nlb2[Internet-facing NLB<br/>frontend SG = allowlist]
+  net[Internet] --> alb["ALB<br/>ACM cert, health check, WAF hook"]
 
   subgraph egns["namespace: envoy-gateway-system"]
-    nlb1 --> gw1["Gateway<br/>private-gw-eg"]
-    nlb2 --> gw2["Gateway<br/>public-gw-eg"]
+    nlb1 --> gw1["Gateway<br/>private-gw-eg<br/>Service: LoadBalancer"]
+    alb --> gw2["Gateway<br/>public-gw-eg<br/>Service: ClusterIP"]
   end
 
   gw1 --> r1[HTTPRoutes<br/>from any namespace]
@@ -33,23 +32,103 @@ flowchart LR
   r2 --> svc
 ```
 
-|                | `private-gw-eg`            | `public-gw-eg`                      |
-| -------------- | -------------------------- | ----------------------------------- |
-| GatewayClass   | `envoy-gateway`            | `envoy-gateway-public`              |
-| NLB            | internal, VPN-only         | internet-facing                     |
-| Hostnames      | `<app>.aws.binbash.com.ar` | `<app>.binbash.com.ar`              |
-| Wildcard cert  | `*.aws.binbash.com.ar`     | `*.binbash.com.ar`                  |
-| Who may attach | any namespace              | namespaces carrying an opt-in label |
-| Access control | VPN                        | CIDR allowlist on the NLB's SG      |
+|                | `private-gw-eg`            | `public-gw-eg`                        |
+| -------------- | -------------------------- | ------------------------------------- |
+| GatewayClass   | `envoy-gateway`            | `envoy-gateway-public`                |
+| Frontend       | internal NLB, VPN-only     | internet-facing **ALB**               |
+| Gateway's Svc  | `LoadBalancer`             | `ClusterIP` — the ALB reaches it      |
+| TLS terminates | Envoy, off the wildcard    | the ALB, off an ACM certificate       |
+| Hostnames      | `<app>.aws.binbash.com.ar` | `<app>.binbash.com.ar`                |
+| Wildcard cert  | `*.aws.binbash.com.ar`     | `*.binbash.com.ar`                    |
+| Who may attach | any namespace              | namespaces carrying an opt-in label   |
+| Access control | VPN                        | per-route `SecurityPolicy` in Envoy   |
 
-Both run `nlb-target-type: instance`, so **the client IP reaches Envoy** and
-`X-Forwarded-For` is real on both paths.
+The private gateway runs `nlb-target-type: instance`, so **the client IP reaches
+Envoy** and `X-Forwarded-For` is real. The public one gets the client IP from
+the ALB's `X-Forwarded-For` instead, via a `ClientTrafficPolicy` with
+`numTrustedHops: 1` — see "Six things that will surprise you".
+
+The frontend is selected by `envoy_gateway.public_gateway.frontend`; `"nlb"` is
+the previous shape and flipping that one word is the whole rollback.
 
 Each Gateway gets its own GatewayClass because Envoy Gateway binds `EnvoyProxy`
 (the per-gateway infra config: LB annotations, node scheduling) at the
 **GatewayClass** level via `spec.parametersRef`, not at the Gateway level. Two
 gateways needing different LB annotations therefore need two classes. Envoy
 Gateway provisions one Envoy data plane Deployment + one Service per Gateway.
+
+## Components, and how each is exposed
+
+Nine of the ten components running here expose nothing at all — they are
+controllers and platform plumbing. **`echo-server` is the only workload with an
+endpoint**, and the only thing in the cluster that uses both APIs at once.
+
+| running today                                     | namespace              | exposure                                          |
+| ------------------------------------------------- | ---------------------- | ------------------------------------------------- |
+| aws-load-balancer-controller                       | `alb-ingress`          | none — it *materialises* ALBs from Ingress objects |
+| envoy-gateway                                      | `envoy-gateway-system` | none — it materialises the Gateways                |
+| cert-manager                                       | `certmanager`          | none                                               |
+| clusterissuer-binbash, cluster-issuer-binbash-aws  | `certmanager`          | none — ClusterIssuers                              |
+| private-gw-eg-tls, public-gw-eg-tls                | `envoy-gateway-system` | none — listener Certificates                       |
+| external-dns, private and public                   | `externaldns`          | none                                               |
+| cluster-autoscaler                                 | `monitoring-metrics`   | none                                               |
+| **echo-server** (from `k8s-workloads`)             | `echo-server`          | **both** — see below                               |
+
+The objects that actually carry exposure:
+
+| object                        | kind        | what it does                                              |
+| ----------------------------- | ----------- | --------------------------------------------------------- |
+| `private-gw-eg`               | Gateway API | its Service is `LoadBalancer` → internal NLB → Envoy       |
+| `public-gw-eg`                | Gateway API | its Service is `ClusterIP`; provisions nothing             |
+| `envoy-apps`                  | **Ingress** | asks the LBC for the ALB: ACM, health check, WAF hook      |
+| `echo-server-eg`              | HTTPRoute   | `echo-server.aws.binbash.com.ar` on the private gateway    |
+| `echo-server-eg-public`       | HTTPRoute   | `echo-server.binbash.com.ar` on the public gateway         |
+| `private-gw-eg-https-redirect`| HTTPRoute   | platform: 80 → 443                                         |
+| `public-gw-eg-healthz`        | HTTPRoute   | platform: the fixed-200 the ALB's health check needs       |
+
+### Why echo-server is "both"
+
+On the public path the two APIs do different, complementary jobs:
+
+```
+private:  NLB ──────────────► Envoy ──► app     Gateway API alone
+public:   ALB ──────────────► Envoy ──► app     Ingress + Gateway API
+          ▲                   ▲
+          │                   └─ HTTPRoute: routing by hostname
+          └─ Ingress: obtains the ALB, ACM, health check, WAF
+```
+
+The **Ingress routes no application traffic**. It exists so the LBC provisions
+an ALB and hangs ACM, the health check and (when enabled) the WebACL off it. The
+**HTTPRoute** does the actual hostname routing. That is why the public gateway's
+Service is `ClusterIP`: it has nothing to provision, the ALB reaches it.
+
+### Switched off, exposure already written
+
+All on **Gateway API** — converted during the nginx migration, so enabling one
+needs no networking work: `argocd`, `argo-rollouts`, `grafana`, `prometheus`,
+`alertmanager`, `uptime-kuma`, `gatus`, `goldilocks`, each with its own
+`*_route_eg` HTTPRoute.
+
+`traefik` is the exception: the last component here that would expose over
+**Ingress** (`traefik_apps`), and the only consumer left of
+`var.ingress.apps_ingress`.
+
+### Switched off, no exposure
+
+`external-secrets`, `cluster-secrets-manager`, `vpa`, `metrics-server`, `keda`,
+`keda-http-add-on`, `cluster-overprovisioner`, `cluster-proportional-autoscaler`,
+`kube-state-metrics`, `node-exporter`, `kube-prometheus-stack`, `datadog-agent`,
+`kwatch`, `fluentbit`, `fluentd-awses`, `fluentd-selfhosted`, `k8s-event-logger`,
+`kube-resource-report`, `cost-analyzer`, `argocd-image-updater`.
+
+### There is no third mechanism
+
+No NodePort, no standalone `LoadBalancer` Service. The cluster's only
+`LoadBalancer` Service is the one Envoy Gateway derives from `private-gw-eg` —
+Gateway API's own plumbing, not an alternative route in. Everything that enters
+goes through Gateway API, and the single appearance of Ingress is the one that
+goes to fetch an ALB.
 
 ## Exposing an app
 
@@ -85,26 +164,42 @@ In Terraform, put the route next to the `helm_release` it exposes (see
 `cicd-argo.tf`, `monitoring-metrics.tf`), and reuse
 `local.private_gw_parent_refs` / `local.private_gw_enabled` from `locals.tf`.
 
-## Five things that will surprise you
+## Six things that will surprise you
 
 **Hostnames are one label deep.** `app.aws.binbash.com.ar`, never
 `app.demo.devstg.aws.binbash.com.ar`. A single-label wildcard does not match
 three labels, so a deeper name silently needs its own certificate and defeats
 the point of a shared gateway.
 
-**The public allowlist is a security group, not an Envoy policy.** It lives on
-the LBC-managed frontend SG of the internet-facing NLB, populated from
-`envoy_gateway_public_allowed_cidrs` (kept out of git in
-`allowlist.local.auto.tfvars` — copy the `.example`). Traffic is dropped at the
-load balancer, before any pod and before you are billed for it. A plan with the
-list empty fails a precondition rather than publishing an open endpoint.
+**Access control is per-application, and the perimeter is open.** The ALB admits
+everyone (`public_gateway.open_to_internet`), and filtering happens per route as
+a `SecurityPolicy` with `authorization.rules[].principal.clientCIDRs` and
+`defaultAction: Deny`. Envoy Gateway policies only target same-namespace
+resources, which puts each policy in the app's own layer — the faithful
+translation of a per-Ingress annotation. There are therefore two independent
+lists on purpose: `envoy_gateway_public_allowed_cidrs` (the perimeter, here) and
+per-app lists such as `echo_server_public_allowed_cidrs` (in `k8s-workloads`),
+both kept out of git in `allowlist.local.auto.tfvars` — copy the `.example`.
+Closing the perimeter as well is defence in depth, but it also masks whether the
+per-route policy works.
 
-**Client-IP preservation does not break that allowlist**, which is the usual
-worry. The allowlist is evaluated on the NLB itself, and the node-side rule the
-AWS Load Balancer Controller writes is a *security-group reference* to the
-shared backend SG — which
-[AWS documents](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-security-groups.html)
-as working "even if you enable client IP preservation".
+**`numTrustedHops: 1` is load-bearing on the public path, and only there.**
+Without it Envoy treats the ALB as the client: it overwrites
+`X-Forwarded-Proto` with `http`, which loops any app that builds its own URLs,
+and it reports the ALB's address as the origin, which would make CIDR matching
+useless. Counting from the *right* of `X-Forwarded-For` resists forgery — a
+client-sent `X-Forwarded-For: 1.2.3.4` still resolves to the address AWS
+observed. The private gateway must **not** get this policy. Side effect:
+`X-Envoy-External-Address` disappears on the public lane.
+
+**Prove an allowlist from inside the cluster, not by editing it.** A 200 from
+your own machine only shows the request arrived. A throwaway pod egresses
+through the NAT Gateway, so its address is by construction not on any operator
+allowlist: `kubectl run probe --rm -i --restart=Never --image=curlimages/curl
+--command -- curl -s -o /dev/null -w '%{http_code}\n' https://<host>/` should
+answer `403`, with `RBAC: access denied` in the body — that string is Envoy's
+RBAC filter specifically, where the ALB would refuse the connection and a
+routing miss would be 404.
 
 **Backends serve cleartext.** TLS ends at the gateway; the hop to the Service is
 plain HTTP. An app that insists on doing its own TLS must be told to stop —
@@ -239,7 +334,7 @@ NLB target types.
 | `crds/`                       | vendored upstream CRD bundles, version-stamped filenames     |
 | `networking-gateway-api.tf`   | upstream Gateway API CRDs (shared by any data plane)        |
 | `networking-envoygateway.tf`  | EG CRDs, controller, both Gateways + their classes and TLS  |
-| `networking-ingress.tf`       | AWS LB Controller (`public-apps`), drain gate, retired nginx |
+| `networking-ingress.tf`       | AWS LB Controller (`public-apps`), drain gate, the public ALB Ingress, traefik |
 | `networking-dns.tf`           | external-dns, private and public                            |
 | `networking-cluster-issuer.tf`| cert-manager ClusterIssuer backing both wildcards           |
 | `locals.tf`                   | route conventions, `private_gw_parent_refs`                 |
