@@ -26,7 +26,7 @@ resource "helm_release" "alb_ingress" {
 #
 # THE PROBLEM
 # Every object that ends up as a `Service` of type LoadBalancer (the Envoy
-# Gateways, the nginx/traefik controllers) gets the `service.k8s.aws/resources`
+# Gateways, the traefik controller) gets the `service.k8s.aws/resources`
 # finalizer attached by the AWS Load Balancer Controller. Only the LBC can
 # remove that finalizer. If the LBC helm release is destroyed first, the
 # Services hang in `Terminating` forever, their namespace never terminates, and
@@ -68,34 +68,14 @@ resource "time_sleep" "controller_drain" {
 }
 
 #------------------------------------------------------------------------------
-# Nginx Ingress (Private): Route inside traffic to services in the cluster.
-#------------------------------------------------------------------------------
-resource "helm_release" "ingress_nginx_private" {
-  count      = var.ingress.nginx_controller.enabled && !var.ingress.traefik.enabled ? 1 : 0
-  name       = "ingress-nginx-private"
-  namespace  = kubernetes_namespace.ingress_nginx[0].id
-  repository = "https://kubernetes.github.io/ingress-nginx"
-  chart      = "ingress-nginx"
-  version    = "4.14.3"
-  values = [
-    templatefile("chart-values/ingress-nginx.yaml", {
-      ingressClass = local.private_ingress_class,
-      tags         = join(",", local.nginx_ingress_tags_list)
-    })
-  ]
-
-  # Owns a Service of type LoadBalancer, so it must be torn down before the LBC
-  # -- see the drain gate above.
-  depends_on = [
-    time_sleep.controller_drain,
-  ]
-}
-
-#------------------------------------------------------------------------------
 # Traefik (Private): Route inside traffic to services in the cluster.
 #------------------------------------------------------------------------------
+# The only Ingress-API controller left in this layer. It used to be one of a
+# mutually exclusive pair with nginx-ingress, which is why the count read
+# `!nginx && traefik`; nginx is gone and the exclusion went with it.
+#------------------------------------------------------------------------------
 resource "helm_release" "traefik" {
-  count      = !var.ingress.nginx_controller.enabled && var.ingress.traefik.enabled ? 1 : 0
+  count      = var.ingress.traefik.enabled ? 1 : 0
   name       = "traefik-ingress-private"
   namespace  = kubernetes_namespace.traefik_ingress[0].id
   repository = "https://helm.traefik.io/traefik"
@@ -117,103 +97,6 @@ resource "helm_release" "traefik" {
 }
 
 #------------------------------------------------------------------------------
-# Apps Ingress ALB2Nginx
-# -----------------------------------------------------------------------------
-# This ingress object defines the attributes of an Application Load Balancer
-# (ALB) which will be created by the ALB Ingress Controller. Such LB will serve
-# as an entrypoint for traffic that needs to reach any services hosted in the
-# cluster.
-# When using an internet-facing ALB, the traffic flow will work as follows:
-#
-#   Internet => ALB => Nginx Ingress (pods) => App (service)
-#
-# There is also the option to use an internal ALB, in which case the traffic
-# will work like this:
-#
-#   VPN => ALB => Nginx Ingress (pods) => App (service)
-#
-#------------------------------------------------------------------------------
-resource "kubernetes_ingress_v1" "nginx_apps" {
-  count                  = var.ingress.apps_ingress.enabled && var.ingress.alb_controller.enabled && var.ingress.nginx_controller.enabled && !var.ingress.traefik.enabled ? 1 : 0
-  wait_for_load_balancer = true
-
-  metadata {
-    name      = "apps"
-    namespace = kubernetes_namespace.ingress_nginx[0].id
-    annotations = {
-      # This is used by the ALB Ingress
-      # This annotation is deprecated in newer K8s versions as per https://kubernetes.io/docs/concepts/services-networking/ingress/#deprecated-annotation
-      # Use spec.ingressClassName (ingress_class_name) instead
-      # "kubernetes.io/ingress.class" = "${local.public_ingress_class}"
-      # Load balancer type: internet-facing or internal
-      "alb.ingress.kubernetes.io/scheme" = var.ingress.apps_ingress.type
-      # Group this LB under a custom group so it's not shared with other groups
-      "alb.ingress.kubernetes.io/group.name" = "apps"
-      # Nginx provides an endpoint for health checks
-      "alb.ingress.kubernetes.io/healthcheck-path" = "/healthz"
-      # Use the AWS ACM certificate we created for this
-      "alb.ingress.kubernetes.io/certificate-arn" = data.terraform_remote_state.certs.outputs.certificate_arn
-      # Enable ports 80 and 443
-      "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
-      # Define the SSL Redirect action
-      "alb.ingress.kubernetes.io/actions.ssl-redirect" = "{\"Type\": \"redirect\", \"RedirectConfig\": { \"Protocol\": \"HTTPS\", \"Port\": \"443\", \"StatusCode\": \"HTTP_301\" } }"
-      # Use HTTPS as we are forwarding to the https port of the nginx-ingress service
-      "alb.ingress.kubernetes.io/backend-protocol" = "HTTPS"
-      # Define resource tags
-      "alb.ingress.kubernetes.io/tags" = join(",", local.alb_ingress_to_nginx_ingress_tags_list)
-      # Filter traffic by IP addresses
-      # NOTE: this is highly recommended when using an internet-facing ALB
-      "alb.ingress.kubernetes.io/inbound-cidrs" = "0.0.0.0/0"
-      # ALB access logs
-      "alb.ingress.kubernetes.io/load-balancer-attributes" = "${local.load_balancer_attributes}"
-    }
-  }
-
-  spec {
-    ingress_class_name = local.public_ingress_class
-    rule {
-      http {
-        path {
-          path      = "/"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = "ssl-redirect"
-              port {
-                name = "use-annotation"
-              }
-            }
-          }
-        }
-
-        path {
-          path      = "/"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = "ingress-nginx-private-controller"
-              port {
-                number = 443
-              }
-            }
-          }
-        }
-
-      }
-    }
-  }
-
-  depends_on = [
-    helm_release.alb_ingress,
-    helm_release.ingress_nginx_private,
-    # Backs an ALB provisioned by the LBC, which is likewise deleted
-    # asynchronously -- see the drain gate above.
-    time_sleep.controller_drain,
-  ]
-}
-
-
-#------------------------------------------------------------------------------
 # Apps Ingress ALB2Traefik
 # -----------------------------------------------------------------------------
 # This ingress object defines the attributes of an Application Load Balancer
@@ -231,7 +114,7 @@ resource "kubernetes_ingress_v1" "nginx_apps" {
 #
 #------------------------------------------------------------------------------
 resource "kubernetes_ingress_v1" "traefik_apps" {
-  count                  = var.ingress.apps_ingress.enabled && var.ingress.alb_controller.enabled && !var.ingress.nginx_controller.enabled && var.ingress.traefik.enabled ? 1 : 0
+  count                  = var.ingress.apps_ingress.enabled && var.ingress.alb_controller.enabled && var.ingress.traefik.enabled ? 1 : 0
   wait_for_load_balancer = true
 
   metadata {
@@ -247,7 +130,7 @@ resource "kubernetes_ingress_v1" "traefik_apps" {
       "alb.ingress.kubernetes.io/scheme" = var.ingress.apps_ingress.type
       # Group this LB under a custom group so it's not shared with other groups
       "alb.ingress.kubernetes.io/group.name" = "apps"
-      # Nginx provides an endpoint for health checks
+      # Traefik provides an endpoint for health checks
       "alb.ingress.kubernetes.io/healthcheck-path" = "/ping"
       # Use the AWS ACM certificate we created for this
       "alb.ingress.kubernetes.io/certificate-arn" = data.terraform_remote_state.certs.outputs.certificate_arn
@@ -255,10 +138,10 @@ resource "kubernetes_ingress_v1" "traefik_apps" {
       "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
       # Define the SSL Redirect action
       "alb.ingress.kubernetes.io/actions.ssl-redirect" = "{\"Type\": \"redirect\", \"RedirectConfig\": { \"Protocol\": \"HTTPS\", \"Port\": \"443\", \"StatusCode\": \"HTTP_301\" } }"
-      # Use HTTPS as we are forwarding to the https port of the nginx-ingress service
+      # Use HTTPS as we are forwarding to the https port of the traefik service
       "alb.ingress.kubernetes.io/backend-protocol" = "HTTPS"
       # Define resource tags
-      "alb.ingress.kubernetes.io/tags" = join(",", local.alb_ingress_to_nginx_ingress_tags_list)
+      "alb.ingress.kubernetes.io/tags" = join(",", local.alb_ingress_to_private_ingress_tags_list)
       # Filter traffic by IP addresses
       # NOTE: this is highly recommended when using an internet-facing ALB
       "alb.ingress.kubernetes.io/inbound-cidrs" = "0.0.0.0/0"
@@ -321,8 +204,8 @@ resource "kubernetes_ingress_v1" "traefik_apps" {
 #   Internet => ALB (ACM, WAF) => Envoy Gateway (pods) => App (service)
 #
 # It replaces the internet-facing NLB the Gateway's own Service would otherwise
-# provision; the two never coexist. Compare `nginx_apps` above, which is the
-# same shape with nginx-ingress as the data plane.
+# provision; the two never coexist. Compare `traefik_apps` above, which is the
+# same shape with a different data plane behind the ALB.
 #
 # Four annotations carry most of the design:
 #

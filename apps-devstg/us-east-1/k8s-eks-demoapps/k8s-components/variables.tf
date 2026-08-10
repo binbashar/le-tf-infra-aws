@@ -3,9 +3,8 @@
 #=============================#
 variable "ingress" {
   type = object({
-    alb_controller   = map(any)
-    nginx_controller = map(any)
-    traefik          = map(any)
+    alb_controller = map(any)
+    traefik        = map(any)
     apps_ingress = object({
       enabled = bool
       type    = string
@@ -19,11 +18,6 @@ variable "ingress" {
     alb_controller = {
       enabled = true
     }
-
-    nginx_controller = {
-      enabled = true
-    }
-
 
     traefik = {
       enabled = false

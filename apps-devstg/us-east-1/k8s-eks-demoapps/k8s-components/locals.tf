@@ -41,31 +41,22 @@ locals {
   public_ingress_class = "public-apps" # DemoApps
 
   # DEAD CLASS — nothing serves it, and as of the HTTPRoute conversion nothing
-  # consumes it either. `ingress_nginx_private` was the only controller
-  # watching `private-apps` and it is disabled; traefik would claim the same
-  # class and is disabled too. Private L7 traffic goes through Envoy Gateway
-  # (`private-gw-eg`) via HTTPRoutes — see networking-httproutes.tf for the
-  # full list of what is published and on which hostname.
+  # consumes it either. traefik is the only controller left that would claim
+  # `private-apps`, and it is disabled. Private L7 traffic goes through Envoy
+  # Gateway (`private-gw-eg`) via HTTPRoutes — see networking-httproutes.tf for
+  # the full list of what is published and on which hostname.
   #
-  # The only two references left are the nginx and traefik chart values in
-  # networking-ingress.tf, i.e. the controllers that would *serve* the class
+  # The only reference left is the traefik chart values in
+  # networking-ingress.tf, i.e. the controller that would *serve* the class
   # rather than anything that would *use* it. That is the right place for the
   # name to live. Every former consumer — argocd, argo-rollouts,
   # kube-prometheus-stack (×3 hostnames), uptime-kuma, gatus and goldilocks —
   # now has a row in the route table instead.
   #
-  # Kept rather than deleted because re-enabling either controller still needs
-  # a class name, and because this note is the explanation for why an Ingress
-  # written against `private-apps` would silently never be picked up.
+  # Kept rather than deleted because re-enabling traefik still needs a class
+  # name, and because this note is the explanation for why an Ingress written
+  # against `private-apps` would silently never be picked up.
   private_ingress_class = "private-apps"
-
-  #------------------------------------------------------------------------------
-  # Nginx Ingress settings
-  #------------------------------------------------------------------------------
-  nginx_ingress_tags_map = merge(local.tags_map, { Component = "nginx-ingress" })
-  nginx_ingress_tags_list = [
-    for k, v in local.nginx_ingress_tags_map : "${k}=${v}"
-  ]
 
   #------------------------------------------------------------------------------
   # Traefik Ingress settings
@@ -156,9 +147,12 @@ locals {
   #------------------------------------------------------------------------------
   # ALB Ingress settings
   #------------------------------------------------------------------------------
-  alb_ingress_to_nginx_ingress_tags_map = merge(local.tags_map, { Component = "alb-ingress" })
-  alb_ingress_to_nginx_ingress_tags_list = [
-    for k, v in local.alb_ingress_to_nginx_ingress_tags_map : "${k}=${v}"
+  # Tags for the ALB that fronts the private-class ingress controller. Named for
+  # the role rather than the controller since nginx-ingress was removed and
+  # traefik inherited it.
+  alb_ingress_to_private_ingress_tags_map = merge(local.tags_map, { Component = "alb-ingress" })
+  alb_ingress_to_private_ingress_tags_list = [
+    for k, v in local.alb_ingress_to_private_ingress_tags_map : "${k}=${v}"
   ]
 
   envoy_apps_alb_tags_map = merge(local.tags_map, { Component = "alb-envoy-gateway" })

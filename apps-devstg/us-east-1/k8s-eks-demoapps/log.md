@@ -46,7 +46,7 @@ below — the point of the exercise was the rehearsal, not leaving it running.
 | 5 | 2026-08-04 | Both gateways unified on `instance` targets. All remaining components converted from the dead ingress class to HTTPRoutes and upgraded. |
 | 6 | 2026-08-05 | Teardown verified the drain gate. Re-spin, then **component set trimmed** to echo-server. CRD bundles **vendored**. |
 | 7 | 2026-08-06 | **ALB in front of the public Envoy Gateway**, replacing its NLB. Per-route IP filtering moved into Envoy; perimeter opened. |
-| 8 | 2026-08-10 | Re-spun from scratch. **AWS WAF attached to the ALB, verified, then detached and destroyed** — backlog item 4 closed. **Managed add-ons caught up to 1.34**, `vpc-cni` stepwise. |
+| 8 | 2026-08-10 | Re-spun from scratch. **AWS WAF attached to the ALB, verified, then detached and destroyed** — backlog item 4 closed. **Managed add-ons caught up to 1.34**, `vpc-cni` stepwise. **nginx-ingress removed from the code.** |
 
 ---
 
@@ -72,6 +72,36 @@ Removal leftover worth generalising: `helm uninstall` left `GatewayClass/kgatewa
 behind, carrying no helm metadata — the *controller* creates it at runtime, so
 helm never owned it. **Controller-created, cluster-scoped objects on shared CRDs
 do not come out with terraform or helm.**
+
+**nginx-ingress left the code on day 8**, having left the cluster on day 4. It
+had been sitting at `enabled = false` since, which is what made the removal
+cheap: nothing nginx-shaped was in state, so deleting it is a pure code change
+and `tofu plan` returning `No changes` *is* the verification. Gone:
+`helm_release.ingress_nginx_private`, `kubernetes_namespace.ingress_nginx`,
+`kubernetes_ingress_v1.nginx_apps`, the `nginx_controller` flag and its
+`terraform.tfvars` block, the `nginx_ingress_tags_*` locals and
+`chart-values/ingress-nginx.yaml`.
+
+**traefik stays**, by decision — it was never used here either, but it is not
+what this cluster is about. Removing nginx from beside it did require untangling
+them: the two counts encoded a mutual exclusion (`nginx && !traefik` against
+`!nginx && traefik`), which collapses to plain `traefik.enabled` now that there
+is nothing to be exclusive with. `var.ingress.apps_ingress` and
+`local.load_balancer_attributes` survive for the same reason — it is
+`traefik_apps`, not the Envoy ALB, that consumes them. The Envoy Ingress has its
+own tags local and does not set `load-balancer-attributes` at all. If traefik
+ever goes, all of that goes with it.
+
+`local.alb_ingress_to_nginx_ingress_tags_*` was renamed to
+`..._to_private_ingress_tags_*` — traefik inherited it, and a local named after
+a component that no longer exists is exactly the residue a removal is for.
+
+What deliberately did **not** change: every historical mention of nginx in this
+journal, `k8s-components/README.md`, `cicd-argo.tf`, `networking-envoygateway.tf`,
+`echo_server.tf` and `loadtest/`. The `whitelist-source-range` annotation this
+cluster set out to translate, the 308 redirect Gateway API rejects, the
+benchmark that settled it — deleting the code is not a reason to delete the
+reasoning, and this file is a decision record.
 
 ### The client IP, and a piece of received wisdom that was wrong
 

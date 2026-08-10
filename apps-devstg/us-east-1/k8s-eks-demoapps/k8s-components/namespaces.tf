@@ -43,15 +43,6 @@ resource "kubernetes_namespace" "monitoring_alerts" {
   }
 }
 
-resource "kubernetes_namespace" "ingress_nginx" {
-  count = var.ingress.nginx_controller.enabled ? 1 : 0
-
-  metadata {
-    labels = local.labels
-    name   = "ingress-nginx"
-  }
-}
-
 resource "kubernetes_namespace" "alb_ingress" {
   count = var.ingress.alb_controller.enabled ? 1 : 0
 

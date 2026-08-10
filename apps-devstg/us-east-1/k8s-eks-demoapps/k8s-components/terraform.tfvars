@@ -6,24 +6,20 @@ ingress = {
     enabled = true
   }
 
-  # ########################
-  # CAN NOT SET BOTH TO TRUE
-  #
-  # Both false since the nginx → Envoy Gateway migration: private L7 traffic
-  # goes through `private-gw-eg` via HTTPRoutes now, so no Ingress controller
-  # watches `private-apps` any more. See the note on
-  # `local.private_ingress_class` in locals.tf before re-enabling either — the
-  # components still wired to that class would need HTTPRoutes instead.
-  # `apps_ingress` below depends on one of these being on, and is off too.
-  nginx_controller = {
-    enabled = false
-  }
+  # The last Ingress-API controller in this layer, and off. nginx-ingress used
+  # to sit beside it as a mutually exclusive alternative and was removed
+  # outright — replacing it is the whole point of this cluster, so it is never
+  # coming back. Since the nginx → Envoy Gateway migration, private L7 traffic
+  # goes through `private-gw-eg` via HTTPRoutes, so nothing watches
+  # `private-apps` any more. See the note on `local.private_ingress_class` in
+  # locals.tf before enabling this — the components once wired to that class
+  # have HTTPRoutes now, not Ingresses.
+  # `apps_ingress` below depends on this being on, and is off too.
   traefik = {
     enabled = false
   }
-  # ########################
 
-  # create an ingress to send traffic from ALB to Nginx/Traefik
+  # create an ingress to send traffic from ALB to Traefik
   apps_ingress = {
     enabled = false
     # Load balancer type: internet-facing or internal
