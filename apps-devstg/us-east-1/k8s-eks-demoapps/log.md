@@ -22,14 +22,17 @@ there. That topology is:
 The perimeter is meant to stay recognisable; the data plane is what changes.
 **Reintroducing nginx here is never an option** — replacing it is the point.
 
-**Current state (2026-08-10).** Up. EKS 1.34.9 on AL2023 with spot nodes,
-`echo-server` the only workload, both public and private paths on Envoy Gateway.
-`network/terraform.tfvars` is at `vpc_enable_nat_gateway = true` while it runs.
+**Current state (2026-08-10).** Torn down. Everything below the VPC is gone;
+`vpc-0c2dd28735d0250c3` is kept for a fast re-spin and
+`network/terraform.tfvars` is back at `vpc_enable_nat_gateway = false`, matching
+the committed default, so the working tree is clean. When up it is EKS 1.34.9 on
+AL2023 with spot nodes, `echo-server` the only workload, and both public and
+private paths on Envoy Gateway.
 
-**No WAF is deployed right now.** It was built, attached, verified and then
-taken back down the same day: `waf_enabled = false`, the association removed by
-hand, and `security-firewall` destroyed (3 resources, clean first pass, because
-the disassociation came first). The code is all in place, so re-attaching is
+**No WAF is deployed.** It was built, attached, verified and taken back down the
+same day: `waf_enabled = false`, the association removed by hand, and
+`security-firewall` destroyed (3 resources, clean first pass, because the
+disassociation came first). The code is all in place, so re-attaching is
 applying that layer and flipping the flag. Everything learned doing it is kept
 below — the point of the exercise was the rehearsal, not leaving it running.
 
@@ -46,7 +49,7 @@ below — the point of the exercise was the rehearsal, not leaving it running.
 | 5 | 2026-08-04 | Both gateways unified on `instance` targets. All remaining components converted from the dead ingress class to HTTPRoutes and upgraded. |
 | 6 | 2026-08-05 | Teardown verified the drain gate. Re-spin, then **component set trimmed** to echo-server. CRD bundles **vendored**. |
 | 7 | 2026-08-06 | **ALB in front of the public Envoy Gateway**, replacing its NLB. Per-route IP filtering moved into Envoy; perimeter opened. |
-| 8 | 2026-08-10 | Re-spun from scratch. **AWS WAF attached to the ALB, verified, then detached and destroyed** — backlog item 4 closed. **Managed add-ons caught up to 1.34**, `vpc-cni` stepwise. **nginx-ingress removed from the code.** |
+| 8 | 2026-08-10 | Re-spun from scratch, then torn down again. **AWS WAF attached to the ALB, verified, then detached and destroyed** — backlog item 4 closed. **Managed add-ons caught up to 1.34**, `vpc-cni` stepwise. **nginx-ingress removed from the code.** |
 
 ---
 
@@ -634,6 +637,18 @@ re-spin adopts and deletes them — but it keeps the zone honest in between.
 published by `kubernetes_ingress_v1.envoy_apps`, not by the HTTPRoute, so that
 Ingress is what gets the targeted destroy first. The routes are hidden from
 external-dns and produce nothing.
+
+**Do it for every zone, not just the one this note calls out.** The Day 8
+teardown got the public record right — targeted destroy of the Ingress, then
+wait and watch it clear — and then got the private one wrong by destroying
+`k8s-workloads` and `k8s-components` back to back. `externaldns-private` never
+saw a reconcile between losing the HTTPRoute and being deleted itself, and
+`echo-server.aws.binbash.com.ar` survived as an orphaned A + TXT pair aliasing
+an NLB that no longer existed. Removed by hand with
+`aws route53 change-resource-record-sets`. The rule is about the *sync window*,
+not about any particular object: after deleting the last thing that owns a
+record, wait a full external-dns cycle and check **both** zones before moving on
+to the layer that removes external-dns.
 
 The 2026-08-06 teardown ran clean on the first pass at every layer —
 `k8s-workloads` 6, `k8s-components` 40 in a single pass with no finalizer
