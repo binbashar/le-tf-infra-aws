@@ -91,6 +91,21 @@ data "terraform_remote_state" "certs" {
   }
 }
 
+# The AWS WAF WebACL attached to the ALB frontend. Counted rather than
+# unconditional: with `waf_enabled = false` this layer must still plan on its
+# own, and reading a remote state that has never been applied yields an empty
+# outputs map whose missing key only surfaces at apply time.
+data "terraform_remote_state" "firewall" {
+  count   = var.envoy_gateway.public_gateway.waf_enabled ? 1 : 0
+  backend = "s3"
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "apps-devstg/security-firewall/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "shared-dns" {
   backend = "s3"
   config = {

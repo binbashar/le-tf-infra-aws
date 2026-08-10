@@ -269,6 +269,18 @@ variable "envoy_gateway" {
       # same state is otherwise reachable by leaving the CIDR list empty, which
       # is indistinguishable from having forgotten to fill it in.
       open_to_internet = bool
+      # Whether to attach the AWS WAF WebACL published by the
+      # `apps-devstg/us-east-1/security-firewall` layer to the ALB frontend.
+      #
+      # Only meaningful with `frontend = "alb"` — WAF does not attach to an NLB,
+      # which is the constraint that made the ALB the target rather than the
+      # obstacle (see README.md). A precondition rejects the combination instead
+      # of silently ignoring it.
+      #
+      # Turning this on makes this layer read the firewall layer's remote state,
+      # so that layer has to be applied first. Off, the data source is not read
+      # at all and the layer plans standalone.
+      waf_enabled = bool
     })
   })
   default = {
@@ -282,12 +294,18 @@ variable "envoy_gateway" {
       enabled          = false
       frontend         = "nlb"
       open_to_internet = false
+      waf_enabled      = false
     }
   }
 
   validation {
     condition     = contains(["nlb", "alb"], var.envoy_gateway.public_gateway.frontend)
     error_message = "envoy_gateway.public_gateway.frontend must be either \"nlb\" or \"alb\"."
+  }
+
+  validation {
+    condition     = !var.envoy_gateway.public_gateway.waf_enabled || var.envoy_gateway.public_gateway.frontend == "alb"
+    error_message = "envoy_gateway.public_gateway.waf_enabled requires frontend = \"alb\": AWS WAF cannot attach to an NLB."
   }
 }
 

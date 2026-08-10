@@ -324,7 +324,7 @@ resource "kubernetes_ingress_v1" "traefik_apps" {
 # provision; the two never coexist. Compare `nginx_apps` above, which is the
 # same shape with nginx-ingress as the data plane.
 #
-# Three annotations carry most of the design:
+# Four annotations carry most of the design:
 #
 #   group.name       -- distinct from `apps`. The LBC merges every Ingress
 #                       sharing a group onto ONE ALB, so reusing the name would
@@ -339,6 +339,11 @@ resource "kubernetes_ingress_v1" "traefik_apps" {
 #                       group. The reference topology leaves the ALB open and
 #                       filters per-application further in; this keeps the
 #                       endpoint closed until that per-route filtering exists.
+#   wafv2-acl-arn    -- the WebACL from the `security-firewall` layer, added
+#                       only under `public_gateway.waf_enabled`. The controller
+#                       makes the association, because nothing that plans before
+#                       the ALB exists can know its ARN. See
+#                       `local.envoy_apps_waf_annotations`.
 #
 # `backend-protocol` stays HTTP: the ALB terminates TLS and forwards cleartext
 # to the gateway's `http` listener. Moving to HTTPS is what the reference
@@ -353,7 +358,7 @@ resource "kubernetes_ingress_v1" "envoy_apps" {
   metadata {
     name      = "envoy-apps"
     namespace = kubernetes_namespace.envoy_gateway[0].id
-    annotations = {
+    annotations = merge({
       "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
       "alb.ingress.kubernetes.io/group.name"       = "apps-eg"
       "alb.ingress.kubernetes.io/target-type"      = "ip"
@@ -369,7 +374,7 @@ resource "kubernetes_ingress_v1" "envoy_apps" {
 
       "alb.ingress.kubernetes.io/inbound-cidrs" = join(",", local.public_gw_eg_source_ranges)
       "alb.ingress.kubernetes.io/tags"          = join(",", local.envoy_apps_alb_tags_list)
-    }
+    }, local.envoy_apps_waf_annotations)
   }
 
   spec {

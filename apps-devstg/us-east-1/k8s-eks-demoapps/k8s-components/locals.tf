@@ -166,6 +166,31 @@ locals {
     for k, v in local.envoy_apps_alb_tags_map : "${k}=${v}"
   ]
 
+  # The WAF association, as an annotation fragment merged into the Ingress
+  # rather than a `wafv2_web_acl_association` resource.
+  #
+  # The Load Balancer Controller owns this ALB: its ARN does not exist when
+  # either this layer or the firewall layer plans, and it is a different ARN
+  # after every cluster re-spin. Handing the controller the WebACL ARN and
+  # letting it make the association is the only form that survives that — and it
+  # is also what the setup being modelled does, where the WAF is attached by an
+  # annotation on each Ingress.
+  #
+  # The annotation is always present, empty when off -- NOT omitted. Verified
+  # the hard way: removing the annotation leaves the WebACL associated. The
+  # controller reads an absent `wafv2-acl-arn` as "no opinion, not mine to
+  # manage" and never touches the existing association, so `waf_enabled = false`
+  # with the key omitted silently left the WAF in the request path. An empty
+  # value is what it reads as an explicit request to disassociate.
+  #
+  # This is the opposite of the `{}`-serialises-as-`null` trap on the EG CRDs,
+  # where the fix *is* to omit the key. Ingress annotations are a plain string
+  # map with no schema, and here the empty string is a meaningful value rather
+  # than an absent one.
+  envoy_apps_waf_annotations = {
+    "alb.ingress.kubernetes.io/wafv2-acl-arn" = var.envoy_gateway.public_gateway.waf_enabled ? data.terraform_remote_state.firewall[0].outputs.wafv2_regional_alb_arn : ""
+  }
+
   # Hostnames the ALB frontend serves and publishes.
   #
   # They have to be named here rather than discovered: externaldns-public reads

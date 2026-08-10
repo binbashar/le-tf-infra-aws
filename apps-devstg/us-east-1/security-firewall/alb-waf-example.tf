@@ -11,6 +11,11 @@ locals {
 }
 
 module "security_group_waf_example" {
+  # Both flags, not just `create_sg`: that one suppresses the security group
+  # while leaving its rules in the graph, and each rule then resolves
+  # `security_group_id` to null and fails the plan. `create` covers the group
+  # and its rules together.
+  create    = var.alb_waf_example.enabled
   create_sg = var.alb_waf_example.enabled
   source    = "github.com/binbashar/terraform-aws-security-group.git?ref=v4.17.2"
 

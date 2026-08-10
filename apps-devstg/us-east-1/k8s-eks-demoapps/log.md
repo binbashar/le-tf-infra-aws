@@ -22,11 +22,16 @@ there. That topology is:
 The perimeter is meant to stay recognisable; the data plane is what changes.
 **Reintroducing nginx here is never an option** — replacing it is the point.
 
-**Current state (2026-08-06).** Torn down. Everything below the VPC is gone;
-`vpc-0c2dd28735d0250c3` is kept for a fast re-spin and
-`network/terraform.tfvars` sits at `vpc_enable_nat_gateway = false`. When up it
-is EKS 1.34.9 on AL2023 with spot nodes, `echo-server` the only workload, and
-both public and private paths on Envoy Gateway.
+**Current state (2026-08-10).** Up. EKS 1.34.9 on AL2023 with spot nodes,
+`echo-server` the only workload, both public and private paths on Envoy Gateway.
+`network/terraform.tfvars` is at `vpc_enable_nat_gateway = true` while it runs.
+
+**No WAF is deployed right now.** It was built, attached, verified and then
+taken back down the same day: `waf_enabled = false`, the association removed by
+hand, and `security-firewall` destroyed (3 resources, clean first pass, because
+the disassociation came first). The code is all in place, so re-attaching is
+applying that layer and flipping the flag. Everything learned doing it is kept
+below — the point of the exercise was the rehearsal, not leaving it running.
 
 ---
 
@@ -41,6 +46,7 @@ both public and private paths on Envoy Gateway.
 | 5 | 2026-08-04 | Both gateways unified on `instance` targets. All remaining components converted from the dead ingress class to HTTPRoutes and upgraded. |
 | 6 | 2026-08-05 | Teardown verified the drain gate. Re-spin, then **component set trimmed** to echo-server. CRD bundles **vendored**. |
 | 7 | 2026-08-06 | **ALB in front of the public Envoy Gateway**, replacing its NLB. Per-route IP filtering moved into Envoy; perimeter opened. |
+| 8 | 2026-08-10 | Re-spun from scratch. **AWS WAF attached to the ALB, verified, then detached and destroyed** — backlog item 4 closed. |
 
 ---
 
@@ -376,13 +382,79 @@ as `null`, which a CRD requiring an object rejects
 (`must be of type object: "null"`). To say "no annotations", omit the key —
 `merge()` a conditional fragment in rather than setting the field to `{}`.
 
-**Prove an allowlist by A/B on the list itself.** A 200 only shows the request
-arrived, not that anything was discriminated. Swap the real CIDR for
-`192.0.2.0/24` (TEST-NET), expect a denial, then restore. Use
-`curl --no-keepalive` — security groups are stateful, so an established
-connection survives a rule change and reads as a false pass. And note
-`WebFetch` egresses from the operator's own machine, so it is not an external
-vantage point.
+**Prove an allowlist with a request from a different source, not by editing the
+list.** A 200 only shows the request arrived, not that anything was
+discriminated — if the policy were missing entirely the operator would still
+get 200.
+
+The cheap way to get a second vantage point is **from inside the cluster**: a
+throwaway pod egresses through the NAT Gateway, so its public address is the
+NAT EIP, which is by construction not on any operator allowlist.
+
+```
+kubectl run probe --rm -i --restart=Never --image=curlimages/curl:8.11.1 \
+  --command -- curl -s -m 25 -o /dev/null -w '%{http_code}\n' \
+  https://echo-server.binbash.com.ar/
+```
+
+Verified 2026-08-10: `403` with the body `RBAC: access denied` from the pod
+against `200` from the operator's machine. Same URL, same config, only the
+source address differs, so the SecurityPolicy is genuinely discriminating on
+source IP. The body matters — `RBAC: access denied` is Envoy's RBAC filter
+specifically, where the ALB would have refused the connection and a routing
+miss would be 404.
+
+It also proves something the config-editing version cannot: that
+`numTrustedHops` extracts the origin address correctly. If Envoy were reading
+the ALB as the client, both requests would present the *same* address and land
+the same way. That they diverge is the proof.
+
+The older approach — swap the real CIDR for `192.0.2.0/24` (TEST-NET), expect a
+denial, restore — is still the only way to test a CIDR *boundary*, since the
+source address is not selectable here. But it mutates config to test behaviour,
+and a failed apply mid-swap leaves the endpoint either locked or open, so
+prefer the pod. Whichever is used, `curl --no-keepalive`: an established
+connection survives a rule change and reads as a false pass. And note `WebFetch`
+egresses from the operator's own machine, so it is not a second vantage point
+at all.
+
+**A WAF in COUNT needs the same treatment, and the logs supply it.** Every
+request returns 200 whether or not a rule matched, so response codes prove
+nothing at all. Send a probe that *should* match — `?q=1' OR '1'='1` trips
+`SQLi_QUERYARGUMENTS` — and read `aws-waf-logs-wafv2-apps`:
+`nonTerminatingMatchingRules` carries the COUNT, and the rule group's
+`terminatingRule` shows the action it would have taken in enforce mode. An
+empty log is the real failure signal, because it means the WebACL is
+associated but not in the request path.
+
+**`create_sg = false` is not `create = false`.** On
+`terraform-aws-security-group`, the first suppresses the group and leaves its
+rules in the graph, where each resolves `security_group_id` to null and fails
+the plan with `Missing required argument`. Pass both. This sat latent in
+`security-firewall` for as long as its demo ALB was switched on, and surfaced
+the moment it was switched off.
+
+**A WebACL cannot be deleted while it is associated.** The association belongs
+to the ALB, which belongs to the Ingress in `k8s-components` — so that layer
+(or at least `kubernetes_ingress_v1.envoy_apps`) has to go before
+`security-firewall`. Same shape as the drain gate: the thing holding the
+reference is not the thing that owns it in Terraform.
+
+**The Load Balancer Controller attaches a WebACL but never detaches one.**
+Confirmed against v2.13.4, both ways: removing `wafv2-acl-arn` from the Ingress
+leaves the WebACL associated, and so does setting it to the empty string. The
+controller acts on a non-empty ARN and otherwise has no opinion — an absent or
+empty annotation means "not mine to manage", not "remove it". The apply reports
+success and the config reads as WAF-off while every request is still being
+inspected, which is the dangerous half of this: the failure is silent and in
+the *safe* direction on the way in, and in the *misleading* direction on the
+way out.
+
+Detaching is therefore a separate act:
+`aws wafv2 disassociate-web-acl --resource-arn <alb-arn>`. Nothing in Terraform
+state represents the association, so this creates no drift — it is the mirror
+of how the association was made. Verify with `get-web-acl-for-resource`, which
+returns an empty result once it is gone; do not trust the plan.
 
 **Do not `dig` a hostname before external-dns creates it.** One early query
 caches the NXDOMAIN. The private zone's SOA gives 15 minutes; `binbash.com.ar`
@@ -498,13 +570,13 @@ there before diagnosing anything odd about that hostname.
 
 ## Backlog
 
-**1-3, 5-8 are done.** Destroy ordering (drain gate, verified), the nginx →
+**All of 1-8 are done.** Destroy ordering (drain gate, verified), the nginx →
 Envoy migration (planned and executed), the Envoy docs rewrite, the full
-HTTPRoute conversion, both gateways on `instance` targets, and the CRD download
-fix — superseded by vendoring, which removed the `data "http"` blocks entirely.
+HTTPRoute conversion, both gateways on `instance` targets, the CRD download
+fix — superseded by vendoring, which removed the `data "http"` blocks entirely
+— and, as of 2026-08-10, the WAF.
 
-**4. Put AWS WAF in front of Envoy.** The only one left, and mostly resolved by
-the ALB work — what remains is small.
+**4. Put AWS WAF in front of Envoy. Done 2026-08-10.**
 
 The item was originally framed around a constraint: AWS WAF attaches to
 CloudFront, ALB, API Gateway, AppSync, Cognito, App Runner and Verified Access
@@ -520,12 +592,54 @@ buffering and without bodies a WAF misses half of what it is for, and
 Coraza-on-Wasm kept only as a side experiment (EG 1.7.2 does support
 `EnvoyExtensionPolicy` with `wasm`, verified against the vendored CRDs).
 
-With the ALB in place, what is left is: the `alb.ingress.kubernetes.io/wafv2-acl-arn`
-annotation, and deploying `apps-devstg/us-east-1/security-firewall --`, whose
-trailing ` --` currently excludes it. That layer already carries a
-`terraform-aws-waf-webaclv2` module with the AWS managed rule groups mapped to
-the OWASP Top 10 plus a rate-limit rule, and the LBC's IAM role already holds
-`wafv2:AssociateWebACL`. The WebACL must be `REGIONAL` scope for an ALB.
+What it took, once the ALB was there:
+
+- **`apps-devstg/us-east-1/security-firewall` renamed out of its ` --`
+  exclusion** and applied — three resources: the WebACL, its logging
+  configuration and the `aws-waf-logs-wafv2-apps` log group. `infracost.yml`
+  needed the path updated to match, and the rename puts the layer into
+  Atlantis autodiscover.
+- **The association is made by the Load Balancer Controller**, from
+  `alb.ingress.kubernetes.io/wafv2-acl-arn` on `kubernetes_ingress_v1.envoy_apps`,
+  not by a `wafv2_web_acl_association` resource. Nothing that plans before the
+  ALB exists can know its ARN, and the ARN changes on every re-spin — and this
+  is also how the modelled setup attaches its WAF. The firewall layer therefore
+  owns the WebACL and never an association; `alb_waf_example.enabled` goes to
+  `false` so it stops provisioning a throwaway ALB to associate with.
+  **It is one-way** — the controller attaches but never detaches; see the
+  gotcha below before trusting `waf_enabled = false`.
+- **The ARN crosses layers by remote state**, behind
+  `envoy_gateway.public_gateway.waf_enabled`, with the data source itself
+  `count`ed so `k8s-components` still plans standalone with the WAF off. A
+  second `validation` rejects `waf_enabled` with `frontend = "nlb"` rather than
+  ignoring it.
+- **The LBC's IAM role already held `wafv2:AssociateWebACL`** — verified, not
+  assumed. Nothing to add in `identities`.
+
+**Two managed rule groups were dropped rather than counted.**
+`AWSManagedRulesBotControlRuleSet`, because its `CategoryHttpLibrary` signal
+targets exactly the non-browser clients every check against this cluster uses,
+and `AWSManagedRulesATPRuleSet`, because it was aimed at
+`login_path = "/api/1/signin"`, which nothing here serves. Each bills about
+$10/month on top of the WebACL, so both were paying to protect nothing while
+threatening to break the tests. The remaining six run at priorities 0-5.
+
+**Everything starts in COUNT.** The WebACL observes and logs without blocking;
+a rule is promoted to `block` only after its counted requests show no
+legitimate traffic caught. Verified live, and the log entry is the whole point:
+
+```
+action: ALLOW, terminatingRuleId: Default_Action
+nonTerminatingMatchingRules: [ AWSManagedRulesSQLiRuleSet → COUNT,
+  SQL_INJECTION in ALL_QUERY_ARGS, field "q" ]
+ruleGroupList: SQLi → terminatingRule { SQLi_QUERYARGUMENTS, action: BLOCK }
+clientIp: <operator>, country: AR, user-agent: curl/8.7.1
+```
+
+The request was allowed, the WAF recorded that it *would* have blocked it, and
+`clientIp` is the real client rather than the ALB. That last part is not the
+`numTrustedHops` work paying off — the WAF sits in front of Envoy and reads the
+address AWS observed directly.
 
 Worth keeping in mind: the WebACL attaches to the load balancer and is
 indifferent to what sits behind it. Whatever else the migration disturbs, the

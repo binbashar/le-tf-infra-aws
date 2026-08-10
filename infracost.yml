@@ -682,7 +682,7 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
-  - path: "apps-devstg/us-east-1/security-firewall --"
+  - path: "apps-devstg/us-east-1/security-firewall"
     terraform_var_files:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
