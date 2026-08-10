@@ -533,13 +533,28 @@ logs the CREATE. Public resolvers are unaffected; locally,
 `sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder`.
 external-dns syncs every **3 minutes**.
 
-**The AWS LBC webhook race.** On a first apply the LBC's mutating webhook is
-registered before its pods are ready, so any release creating a Service fails
-with `no endpoints available for service "aws-load-balancer-webhook-service"`.
-Hit on Day 1, 2, 3 and 6. Wait for the LBC pods, then retry. **A helm release
-that failed is not in Terraform state but still owns its name**, so recovery
-needs `helm uninstall <name> -n <ns>` first. Same family as the drain gate:
-Terraform waits for a release to finish, not for its controller to be *ready*.
+**The AWS LBC webhook race — preventable, not just recoverable.** On a first
+apply the LBC's mutating webhook is registered before its pods are ready, so any
+release creating a Service fails with `no endpoints available for service
+"aws-load-balancer-webhook-service"`. Hit on Day 1, 2, 3 and 6.
+
+**Prevent it by giving the LBC an apply of its own**, between the CRD stage and
+the full apply:
+
+```
+leverage tofu apply -target=helm_release.alb_ingress
+kubectl -n alb-ingress get pods      # both Running before continuing
+leverage tofu apply
+```
+
+Day 8 stood the whole stack up this way and the race did not fire — 23 of 23
+resources on the first pass. It costs one extra targeted apply and is the same
+two-stage shape the CRDs already force, so it may as well be the default order.
+
+If it does fire: wait for the LBC pods, then retry. **A helm release that failed
+is not in Terraform state but still owns its name**, so recovery needs
+`helm uninstall <name> -n <ns>` first. Same family as the drain gate: Terraform
+waits for a release to finish, not for its controller to be *ready*.
 
 **This cluster has no default StorageClass.** `gp2` exists but is not annotated
 as default, and a classless PVC never binds and never errors — it sits Pending
@@ -719,8 +734,11 @@ WAF tier is not part of it.
 - **`kube_state_metrics` and `node_exporter` carry dead Bitnami pins.** Largely
   moot now: they are gated off, and kube-prometheus-stack — the argument for
   deleting rather than repointing them — is itself gone.
-- **A readiness gate for the LBC webhook race** would close the last recurring
-  first-apply failure, in the same spirit as the drain gate.
+- **A readiness gate for the LBC webhook race** would codify in the config what
+  is currently an ordering convention — apply `helm_release.alb_ingress` on its
+  own, wait for its pods, then apply the rest. That order prevents the failure
+  (verified Day 8), so this is now about not having to remember it rather than
+  about the failure still being open.
 
 ---
 
