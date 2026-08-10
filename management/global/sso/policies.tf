@@ -6,6 +6,8 @@ data "aws_iam_policy_document" "devops" {
     sid = "MultiServiceFullAccessCustom"
     actions = [
       "access-analyzer:*",
+      "account:Get*",
+      "account:List*",
       "acm:*",
       "airflow:*",
       "aidevops:*",
@@ -15,6 +17,7 @@ data "aws_iam_policy_document" "devops" {
       "appconfig:*",
       "application-autoscaling:*",
       "apprunner:*",
+      "appsync:*",
       "athena:*",
       "autoscaling:*",
       "aws-marketplace:*",
@@ -23,6 +26,8 @@ data "aws_iam_policy_document" "devops" {
       "backup:*",
       "bedrock:*",
       "bedrock-agentcore:*",
+      "billing:Get*",
+      "billing:List*",
       "ce:*",
       "cloudformation:*",
       "cloudfront:*",
@@ -58,6 +63,7 @@ data "aws_iam_policy_document" "devops" {
       "execute-api:*",
       "firehose:*",
       "fms:*",
+      "freetier:*",
       "glue:*",
       "guardduty:*",
       "health:*",
@@ -73,6 +79,7 @@ data "aws_iam_policy_document" "devops" {
       "logs:*",
       "network-firewall:*",
       "networkmanager:*",
+      "notifications:*",
       "pipes:*",
       "q:*",
       "quicksight:*",
@@ -88,6 +95,8 @@ data "aws_iam_policy_document" "devops" {
       "route53domains:*",
       "route53resolver:*",
       "s3:*",
+      "s3files:*",
+      "s3vectors:*",
       "sagemaker:*",
       "scheduler:*",
       "secretsmanager:*",
@@ -112,13 +121,20 @@ data "aws_iam_policy_document" "devops" {
       "textract:*",
       "transfer:*",
       "trustedadvisor:*",
+      "uxc:*",
       "waf-regional:*",
       "waf:*",
       "wafv2:*",
       "wellarchitected:*",
       "workspaces-web:*",
       "workspaces:*",
-      "pricing:*"
+      "pricing:*",
+      "bcm-pricing-calculator:CreateWorkloadEstimate",
+      "bcm-pricing-calculator:GetWorkloadEstimate",
+      "bcm-pricing-calculator:UpdateWorkloadEstimate",
+      "bcm-pricing-calculator:ListWorkloadEstimates",
+      "bcm-pricing-calculator:CreateWorkloadEstimateUsage",
+      "bcm-pricing-calculator:ListWorkloadEstimateUsage"
     ]
     resources = ["*"]
     condition {
@@ -227,6 +243,19 @@ data "aws_iam_policy_document" "github_automation" {
 }
 
 #------------------------------------------------------------------------------
+# Marketplace Buyer
+#------------------------------------------------------------------------------
+data "aws_iam_policy_document" "marketplace_buyer" {
+  statement {
+    sid = "LicenseManagerReadAccess"
+    actions = [
+      "license-manager:ListReceivedLicenses",
+    ]
+    resources = ["*"]
+  }
+}
+
+#------------------------------------------------------------------------------
 # Data Scientist
 #------------------------------------------------------------------------------
 data "aws_iam_policy_document" "data_scientist" {
@@ -289,6 +318,7 @@ data "aws_iam_policy_document" "data_scientist" {
       "route53domains:*",
       "route53resolver:*",
       "s3:*",
+      "s3vectors:*",
       "sagemaker:*",
       "secretsmanager:*",
       "sns:*",
@@ -316,7 +346,7 @@ data "aws_iam_policy_document" "data_scientist" {
   }
 }
 
-data "aws_iam_policy_document" "marketplaceseller" {
+data "aws_iam_policy_document" "marketplaceandpartnercentral" {
   statement {
     sid = "FullSupportAccess"
     actions = [

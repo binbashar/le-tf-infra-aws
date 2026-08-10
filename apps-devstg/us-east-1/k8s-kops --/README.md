@@ -1,12 +1,3 @@
-<div align="center">
-    <img src="../../%40doc/figures/binbash.png"
-    alt="binbash" width="250"/>
-</div>
-<div align="right">
-  <img src="../../%40doc/figures/binbash-leverage-terraform.png"
-  alt="leverage" width="130"/>
-</div>
-
 # Reference Architecture: Terraform AWS Kubernetes Kops Cluster
 
 ## Kops Pre-requisites

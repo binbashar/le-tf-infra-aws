@@ -90,36 +90,56 @@ For more details, see the [configuration files documentation](https://leverage.b
 
 ## AI Development Configs
 
-This repository includes pre-configured settings for AI-powered development tools to enhance productivity and maintain consistency across the codebase.
+This repository includes pre-configured settings for AI-powered development to enhance
+productivity and maintain consistency across the codebase. **[Claude Code](CLAUDE.md) is the
+team's standard AI development tool** — it is the only AI tooling configuration maintained
+here.
 
-### Supported IDE/AI Tools
-
-- **[Cursor IDE](.cursor/)** - AI-first code editor with project-specific rules
-  - [`.cursor/rules/`](.cursor/rules/) - Markdown rules for OpenTofu/Terraform best practices
-  - [`.cursor/mcp.json`](.cursor/mcp.json) - MCP server configurations for AWS and OpenTofu/Terraform documentation
-
-- **[Kiro IDE](.kiro/)** - AI development environment with steering documents
-  - [`.kiro/steering/`](.kiro/steering/) - Comprehensive documentation about the project structure, tech stack, and best practices
-  - [`.kiro/settings/mcp.json`](.kiro/settings/mcp.json) - MCP configurations for enhanced AWS/OpenTofu/Terraform support
+### Claude Code
 
 - **[Claude Code](CLAUDE.md)** - Anthropic's AI coding assistant
   - [`CLAUDE.md`](CLAUDE.md) - Project instructions and context for Claude
   - [`.claude/agents/`](.claude/agents/) - Specialized agent definitions (architect, security, terraform-layer, etc.)
-  - [`.mcp.json`](.mcp.json) - Root-level MCP server configurations (AWS Core, AWS Documentation, Terraform)
+  - [`.mcp.json`](.mcp.json) - Root-level MCP server configurations (AWS API, AWS Documentation)
 
 ### Usage
 
-These configurations are automatically loaded when you open the project in the respective IDE/tool. They provide:
+These configurations are discovered when you open the project in Claude Code. `CLAUDE.md` and
+`.claude/agents/` load automatically, but the **project-scoped MCP servers in `.mcp.json`
+require explicit approval before first use** — until approved they show as pending in
+`claude mcp list`. The `aws-api` server additionally needs valid credentials for the
+`bb-shared-devops` profile (`leverage aws sso login`), and is restricted to read-only AWS
+operations via `READ_OPERATIONS_ONLY`.
+
+They provide:
 - Context-aware code suggestions aligned with Leverage best practices
-- AWS and OpenTofu/Terraform specific assistance
+- AWS- and OpenTofu/Terraform-specific assistance
 - Consistent code formatting and structure guidelines
-- Direct access to AWS documentation and OpenTofu/Terraform registry
+- Direct access to AWS documentation and the AWS API
 
 ### Learn More
 
-- [Cursor Documentation](https://cursor.sh/docs)
 - [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
 - [MCP Protocol Specification](https://modelcontextprotocol.io/)
+
+## AI-Driven SDLC
+
+Every PR is reviewed by **CodeRabbit AI** and **Gemini Code Assist** (both
+auto-trigger on open / sync), gated by CI checks (`Test and Lint`, `Infracost`,
+`GitGuardian`), and can be inspected on demand by **`@claude`** — which routes
+through **Amazon Bedrock** (Anthropic Claude Sonnet 4.6) rather than the public
+Anthropic API, so prompts and code stay inside our `apps-prd` AWS account.
+
+See [`docs/ai-sdlc/`](docs/ai-sdlc/) for the full workflow, configuration knobs,
+and architecture diagrams.
+
+### Claude Code on AWS Bedrock (local sessions)
+
+Local Claude Code sessions can also route through **Amazon Bedrock** in the
+`data-science` account on demand — via a `claude-bedrock` launcher that flips a
+single session to Bedrock while plain `claude` keeps using the native Anthropic
+API. Setup, model entitlements/quotas, and troubleshooting:
+[`docs/ai-sdlc/claude-code-bedrock.md`](docs/ai-sdlc/claude-code-bedrock.md).
 
 ## Leverage CLI Reference
 

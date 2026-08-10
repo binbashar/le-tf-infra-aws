@@ -1,7 +1,7 @@
 ---
 name: feature-implementation
 description: Specialized agent for implementing new features and AWS services in the Leverage Reference Architecture. Handles new service integration, reference architectures, and multi-account/region patterns.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__SearchSpecificAwsIaModules, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs, mcp__aws-documentation__search_documentation, mcp__aws-documentation__read_documentation
 ---
 
 # Feature Implementation Agent
@@ -19,39 +19,53 @@ You are a specialized agent for implementing new features and AWS services in th
 ### OpenTofu & AWS MCP Servers - MANDATORY for All Resources
 #### Before implementing any AWS service:
 
-1. **Search AWS provider documentation (preferred AWSCC first):**
+1. **Search AWS provider documentation (preferred AWSCC first).** Resolve the provider
+   library **first**, then pass the id it returns to `query-docs`. Pick the library by
+   resource prefix — `aws_*` (`hashicorp/aws`) and `awscc_*` (`hashicorp/awscc`) are
+   separate providers with separate docs, so resolving one and querying the other
+   returns the wrong schema:
    ```text
-   mcp__terraform-mcp__SearchAwsccProviderDocs(
-     asset_name="awscc_<service>",
-     asset_type="resource"
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="Terraform AWS Cloud Control Provider",   # for awscc_* resources
+     query="awscc_<service> resource arguments"
+   )
+   mcp__plugin_context7_context7__query-docs(
+     libraryId="<id returned by resolve-library-id>",
+     query="awscc_<service> resource arguments and attributes"
    )
    ```
    ```text
-   mcp__terraform-mcp__SearchAwsProviderDocs(
-     asset_name="aws_<service>",
-     asset_type="resource"
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="Terraform AWS Provider",                 # for aws_* resources
+     query="aws_<service> resource arguments"
+   )
+   mcp__plugin_context7_context7__query-docs(
+     libraryId="<id returned by resolve-library-id>",
+     query="aws_<service> resource arguments and attributes"
    )
    ```
 
 2. **Search for specialized AWS-IA modules first:**
    ```text
-   mcp__terraform-mcp__SearchSpecificAwsIaModules(
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="terraform-aws-modules",
      query="<service> <use-case>"
    )
    ```
 
 3. **Search for community modules if needed:**
    ```text
-   mcp__terraform-mcp__SearchUserProvidedModule(
-     module_url="<namespace>/<module-name>/<provider>"
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="<namespace>/<module-name>/<provider>",
+     query="module inputs and outputs"
    )
    ```
 
 ### Context7 MCP Server - For Integration Documentation
 #### When integrating tools (Helm, Kustomize, etc.):
 ```text
-mcp__context7__resolve-library-id(libraryName="<tool>")
-mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
+mcp__plugin_context7_context7__resolve-library-id(libraryName="<tool>", query="<what to look up>")
+mcp__plugin_context7_context7__query-docs(libraryId="<id>", query="<what to look up>")
 ```
 
 ## Implementation Patterns
@@ -61,9 +75,9 @@ mcp__context7__get-library-docs(context7CompatibleLibraryID="<id>")
 
 ```bash
 # Step 1: Research with MCP
-mcp__terraform-mcp__SearchAwsccProviderDocs(
-  asset_name="awscc_eks_cluster",
-  asset_type="resource"
+mcp__plugin_context7_context7__query-docs(
+  libraryId="<provider id from resolve-library-id>",
+  query="awscc_eks_cluster resource arguments and attributes"
 )
 
 # Step 2: Create layer structure
@@ -125,7 +139,7 @@ data-science/us-east-1/
 3. **Use MCP for accurate resource syntax:**
    ```
    # Always verify resource arguments with current docs
-   mcp__terraform-mcp__SearchAwsccProviderDocs(asset_name="awscc_<resource>")
+   mcp__plugin_context7_context7__query-docs(libraryId="<provider id>", query="awscc_<resource> arguments")
    ```
 
 ### Phase 3: Testing
@@ -151,9 +165,9 @@ data-science/us-east-1/
 
 ### EKS Implementation
 ```text
-mcp__terraform-mcp__SearchAwsccProviderDocs(
-  asset_name="awscc_eks_cluster",
-  asset_type="resource"
+mcp__plugin_context7_context7__query-docs(
+  libraryId="<provider id from resolve-library-id>",
+  query="awscc_eks_cluster resource arguments and attributes"
 )
 ```
 - Cluster configuration
@@ -163,9 +177,9 @@ mcp__terraform-mcp__SearchAwsccProviderDocs(
 
 ### RDS/Aurora Implementation
 ```text
-mcp__terraform-mcp__SearchAwsccProviderDocs(
-  asset_name="awscc_rds_db_cluster",
-  asset_type="resource"
+mcp__plugin_context7_context7__query-docs(
+  libraryId="<provider id from resolve-library-id>",
+  query="awscc_rds_db_cluster resource arguments and attributes"
 )
 ```
 - Subnet groups and security
@@ -175,9 +189,9 @@ mcp__terraform-mcp__SearchAwsccProviderDocs(
 
 ### Lambda Implementation
 ```text
-mcp__terraform-mcp__SearchAwsccProviderDocs(
-  asset_name="awscc_lambda_function",
-  asset_type="resource"
+mcp__plugin_context7_context7__query-docs(
+  libraryId="<provider id from resolve-library-id>",
+  query="awscc_lambda_function resource arguments and attributes"
 )
 ```
 - Function configuration

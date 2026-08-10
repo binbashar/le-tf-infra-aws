@@ -12,7 +12,7 @@ resource "aws_cloudwatch_event_target" "lambda_target" {
 
 # CloudWatch Alarm for Lambda Errors
 module "lambda_error_alarm" {
-  source = "github.com/binbashar/terraform-aws-cloudwatch-alarms.git?ref=1.3.2"
+  source = "github.com/binbashar/terraform-aws-cloudwatch-alarms.git?ref=v1.3.3"
 
   alarm_name          = "MonthlyServicesUsageLambdaErrors"
   alarm_description   = "Alert when MonthlyServicesUsage Lambda function encounters errors"

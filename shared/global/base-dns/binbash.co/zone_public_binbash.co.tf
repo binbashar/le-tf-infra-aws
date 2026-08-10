@@ -44,10 +44,22 @@ resource "aws_route53_record" "CNAME_ai_lab_binbash_co" {
   ttl     = 300
 }
 
-resource "aws_route53_record" "CNAME_event_studio_binbash_co" {
+resource "aws_route53_record" "CNAME_mkt_studio_binbash_co" {
   zone_id = aws_route53_zone.public.id
-  name    = "event-studio.binbash.co"
+  name    = "mkt-studio.binbash.co"
   records = ["c86285d79d05996d.vercel-dns-016.com."]
+  type    = "CNAME"
+  ttl     = 300
+}
+
+#
+# Vercel-hosted endpoint. Vercel issues a per-hostname CNAME target, so this
+# value is specific to this hostname and is not interchangeable with another.
+#
+resource "aws_route53_record" "CNAME_hq_binbash_co" {
+  zone_id = aws_route53_zone.public.id
+  name    = "hq.binbash.co"
+  records = ["7c298364b5aed262.vercel-dns-017.com."]
   type    = "CNAME"
   ttl     = 300
 }
@@ -88,6 +100,9 @@ resource "aws_route53_record" "TXT_google_domain_verification" {
   zone_id = aws_route53_zone.public.id
   name    = "binbash.co"
   type    = "TXT"
-  records = ["google-site-verification=7-ckJxbKpPRrcQ-foy3UIkImTGlp60MUtDgzfudJZmM"]
-  ttl     = 300
+  records = [
+    "google-site-verification=7-ckJxbKpPRrcQ-foy3UIkImTGlp60MUtDgzfudJZmM",
+    "linkedin-site-verification=bbe1c109-7cab-456f-9669-2f66982d41bf",
+  ]
+  ttl = 300
 }

@@ -1,10 +1,11 @@
 locals {
   tags = {
-    Terraform   = "true"
-    Environment = var.environment
-    Purpose     = "bedrock-agentcore"
-    Layer       = "bedrock-agentcore"
-    Service     = "bedrock-agentcore"
+    Terraform    = "true"
+    Environment  = var.environment
+    Purpose      = "bedrock-agentcore"
+    Layer        = "bedrock-agentcore"
+    Service      = "bedrock-agentcore"
+    "aws-apn-id" = "pc:b6t445987ttlzwgcll8zdt8nv"
   }
 
   name_prefix = lower(replace("${var.project}-${var.environment}-agentcore", "_", "-"))

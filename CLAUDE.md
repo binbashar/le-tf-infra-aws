@@ -66,6 +66,40 @@ This is the **Binbash Leverage Reference Architecture** - a comprehensive OpenTo
 - **Obfuscate PGP keys, ARNs with account IDs, and any IAM credential identifiers** before posting plan outputs
 - When posting `leverage tofu plan` output to PRs, always review and redact sensitive values before sharing
 
+### Standard workflow: posting a `tofu plan` to a PR for review
+
+Every infra change is reviewed via its plan **before** it is applied — **never `apply` from
+automation or from the PR; applying is a human step after approval.** Attach the plan to the
+PR with this exact, repeatable procedure so no sensitive data leaks:
+
+1. **Generate** the plan from the layer directory, with color codes off:
+   ```bash
+   cd {account}/{region}/{layer}
+   .venv/bin/leverage tofu plan -no-color > /tmp/plan.txt 2>&1
+   ```
+2. **Keep only the execution-plan action section** — everything from
+   `OpenTofu will perform the following actions:` through
+   `Plan: N to add, N to change, N to destroy.` **Drop the `Refreshing state... [id=...]`
+   log**: those lines embed account IDs (inside ARNs), IAM usernames, account aliases and
+   resource IDs, and add no review value — whereas the action section shows changed
+   attributes as `(known after apply)` and is inherently free of those identifiers.
+   ```bash
+   awk '/will perform the following actions/{f=1} f' /tmp/plan.txt > /tmp/plan-clean.txt
+   ```
+3. **Redact + scan** the excerpt as belt-and-suspenders. Write to a new file rather than
+   editing in place — `sed -i` is non-portable (BSD/macOS requires `-i ''`, GNU/Linux requires
+   bare `-i`), and this procedure must run on both macOS and Linux (CI). The scan must print nothing:
+   ```bash
+   sed -E 's/[0-9]{12}/<ACCOUNT_NAME_ACCOUNT_ID>/g; s/(AKIA|ASIA)[A-Z0-9]{16}/***/g' /tmp/plan-clean.txt > /tmp/plan-redacted.txt
+   grep -nE '[0-9]{12}|arn:aws:iam::[0-9]|AKIA|ASIA|-----BEGIN' /tmp/plan-redacted.txt   # expect no output
+   ```
+   Use the named placeholder form, e.g. `<MANAGEMENT_ACCOUNT_ID>` (see the bullets above).
+4. **Embed** the redacted excerpt (`/tmp/plan-redacted.txt`) in the PR body inside a collapsible `<details>` block with a
+   ```` ```text ```` fence (keep the What / Why / References sections intact). Never paste the
+   raw refresh log.
+5. **Review only — do not apply or merge from automation.** A human runs `leverage tofu apply`
+   after approval. Never commit the `tfplan` binary (see the Git rule above).
+
 ## Essential Commands
 
 ### Leverage CLI via uv
@@ -73,6 +107,8 @@ The `leverage` CLI is installed in a local venv managed by [uv](https://docs.ast
 ```bash
 .venv/bin/leverage <command>
 ```
+
+**Important — `leverage tofu` is a wrapper, not native tofu.** Reference: [leverage tofu docs](https://leverage.binbash.co/user-guide/leverage-cli/reference/tofu/tofu/). It only exposes a curated subset of subcommands: `apply`, `destroy`, `force-unlock`, `format`, `import`, `init`, `output`, `plan`, `refresh-credentials`, `validate`, `validate-layout`, `version`. Native tofu subcommands like `state`, `shell`, `console`, `providers`, `workspace`, `graph`, `show`, `get` are **not** available via the wrapper. For state inspection or other unsupported operations, use the native `tofu` binary directly with the layer's backend config (loading the same AWS profile from `*/config/backend.tfvars`).
 
 ### Authentication and Setup
 ```bash
@@ -118,11 +154,8 @@ leverage tofu validate
 # Format code (recursive)
 leverage tofu fmt -recursive
 
-# Run tests
-leverage tofu test
-
-# Open shell in container for debugging
-leverage tofu shell
+# Run tests (not exposed by leverage wrapper — use native tofu)
+tofu test
 ```
 
 ### Secret Management
@@ -140,12 +173,13 @@ leverage run encrypt          # encrypts secrets.dec.tf -> secrets.enc, deletes 
 leverage tofu plan -target=resource.name
 leverage tofu apply -target=resource.name
 
-# State management
-leverage tofu state list
-leverage tofu state show resource.name
+# State management (not exposed by leverage wrapper — use native tofu directly,
+# loading the AWS profile from the layer's backend.tfvars)
+tofu state list
+tofu state show resource.name
 
-# Force unlock state (use with caution)
-echo "tofu force-unlock -force <LOCK_ID>" | leverage tofu shell
+# Force unlock state (use with caution; supported by the leverage wrapper)
+leverage tofu force-unlock -force <LOCK_ID>
 ```
 
 ## Architecture Overview
@@ -263,7 +297,7 @@ Profile naming: `{project}-{account}-devops` (e.g., `bb-shared-devops`, `bb-netw
 - Each account has its own S3 backend with DynamoDB locking
 - State files stored per layer: `{account}/{layer-path}/terraform.tfstate`
 - Remote state references enable cross-layer data sharing
-- Force unlock only when necessary: `echo "tofu force-unlock -force <LOCK_ID>" | leverage tofu shell`
+- Force unlock only when necessary: `leverage tofu force-unlock -force <LOCK_ID>`
 
 ### Module Sources
 Modules are sourced from GitHub repositories:
@@ -276,6 +310,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - Project prefix: `${var.project}-${var.environment}-{resource}`
 - AWS profiles: `{project}-{account}-devops` (e.g., `bb-shared-devops`, `bb-network-devops`)
 - Tags: Consistent tagging with `Terraform`, `Environment`, `Layer` via `local.tags`
+- **PRM compliance tag (`aws-apn-id`)**: Present in `data-science/us-east-1/bedrock-agent-kyb`, `bedrock-agentcore`, and `bedrock-kyb-bda` for AWS Partner Revenue Measurement attribution. Value `pc:b6t445987ttlzwgcll8zdt8nv` maps to AWS Marketplace product `prod-zw4ehbg5ayh2m`. **Do NOT add this tag to other layers without explicit Partner Development Manager approval** — the product code attributes consumption to a specific Marketplace listing. For Bedrock model invocations specifically, Resource Tagging only works for Amazon/OSS models via an Application Inference Profile; Anthropic Claude invocations need the User Agent String method instead. See [AWS PRM Bedrock docs](https://docs.aws.amazon.com/PRM/latest/aws-prm-onboarding-guide/bedrock-best-practices.html).
 
 ### Version Constraints
 - **OpenTofu**: >= 1.0.9 to ~> 1.6 (varies by layer; primary IaC tool)
@@ -294,7 +329,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 ## Important Development Notes
 
 ### Critical Rules
-1. **Always use Leverage CLI** - Never use direct `tofu` or `terraform` commands, always use `leverage tofu` (or `leverage tf` shorthand)
+1. **Prefer the Leverage CLI** - Use `leverage tofu` (or `leverage tf` shorthand) for all supported subcommands (`apply`, `destroy`, `force-unlock`, `format`, `import`, `init`, `output`, `plan`, `refresh-credentials`, `validate`, `validate-layout`, `version`). For unsupported subcommands (`state`, `shell`, `console`, `providers`, `workspace`, `graph`, `show`, `get`, `test`), fall back to the native `tofu` binary, loading the same AWS profile from the layer's `*/config/backend.tfvars`
 2. **Always work from specific layer directories** - Commands must be run from layer paths, not repository root
 3. **Check layer dependencies** before making changes using `leverage run layer_dependency`
 4. **Respect multi-account boundaries** - Changes in one account may affect others through remote state
@@ -305,7 +340,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 7. **Cost awareness** - Run `make infracost-breakdown` before applying significant changes
 8. **Security-first** - Follow AWS Well-Architected Framework and Leverage security guidelines
 9. **Documentation** - Reference official [Leverage Documentation](https://leverage.binbash.co) for guidance
-10. **Testing** - Use `leverage tofu test` for module unit tests and integrate with CI/CD
+10. **Testing** - Use native `tofu test` for module unit tests (the leverage wrapper does not expose `test`) and integrate with CI/CD
 11. **Code quality** - Always run `leverage tofu fmt` and `leverage tofu validate` before commits
 12. **Atlantis integration** - The repository uses Atlantis for automated OpenTofu/Terraform workflows
 
@@ -317,6 +352,15 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - Slack notifications on pipeline success/failure
 - PR template at `.github/PULL_REQUEST_TEMPLATE.md` uses What? / Why? / References format
 
+### @claude on PRs
+
+This repo has the [`anthropics/claude-code-action`](https://github.com/anthropics/claude-code-action) workflow installed (`.github/workflows/claude.yml`). Mention `@claude` in a PR/issue/review comment to trigger an automated review or change.
+
+- **Authentication**: routes through **Amazon Bedrock** using repo-level secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ASSUME_ROLE_ARN_APPS_PRD_ACCOUNT`) configured at `Settings → Secrets and variables → Actions`. The account-suffixed secret name leaves room to add `AWS_ASSUME_ROLE_ARN_<OTHER>_ACCOUNT` secrets in future workflows that target a different account with the same `machine.github.actions.le-cli` credentials.
+- **Configuration**: optional repository variables `BEDROCK_MODEL_ID` (defaults to `us.anthropic.claude-sonnet-4-6`) and `AWS_REGION` (defaults to `us-east-1`). Names match the AI Use Case Lab app env vars so the same mental model applies on both sides.
+- **Permissions**: only users with write access to this repo can invoke `@claude`. On this public repo, that gate is what keeps external commenters from draining the Bedrock budget.
+- **Troubleshooting**: if a `@claude` invocation never replies, check the workflow run under the **Actions** tab. `issue_comment`-triggered workflows always run from the **default branch** version of `claude.yml`, so changes to the workflow file in a PR won't take effect until the PR is merged to `master`.
+
 ### Common GitHub Usernames
 - exe → `exequielrafaela`, OJ (Diego Ojeda) → `diego-ojeda-binbash`, Alex → `Alx-binbash`
 
@@ -326,6 +370,24 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 If you encounter errors like "stat /bin/tofu: no such file or directory":
 - Use `leverage tofu` (or `leverage tf` shorthand) instead of direct `tofu` commands
 - This maps to OpenTofu and avoids container path issues
+
+### Apple Silicon: AWS provider 6.x hangs with an x86_64 tofu (Rosetta)
+**Symptom**: `tofu validate`/`plan` never completes on layers pinning `aws ~> 6.0` —
+`terraform-provider-aws` processes spin at ~100% CPU indefinitely, or init/validate fails
+with "timeout while waiting for plugin to start". AWS provider 4.x works, 5.x is flaky,
+6.x (observed with 6.50.0) effectively hangs.
+
+**Cause**: an x86_64 `tofu` binary in PATH (check with `file $(which tofu)`) runs under
+Rosetta 2 on Apple Silicon and selects `darwin_amd64` providers; the AWS provider 6.x
+schema load does not complete under emulation. `leverage tofu` invokes the same PATH
+binary (no Docker on recent Leverage CLI), so it hangs identically.
+
+**Fix**: use a native `darwin_arm64` OpenTofu (install one, or download a release zip to
+`/tmp` for a one-off). When (re)generating `.terraform.lock.hcl`, include hashes for all
+platforms so Atlantis/CI (linux) and both macOS architectures verify:
+```bash
+tofu providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_amd64 -platform=darwin_arm64
+```
 
 ### AWS CC Provider Issues
 When working with AWS Cloud Control API resources (awscc_*):
@@ -341,15 +403,15 @@ When working with AWS Cloud Control API resources (awscc_*):
 ### State Lock Issues
 If encountering state lock errors:
 ```bash
-# Force unlock (use with caution)
-echo "tofu force-unlock -force <LOCK_ID>" | leverage tofu shell
+# Force unlock (use with caution; supported by the leverage wrapper)
+leverage tofu force-unlock -force <LOCK_ID>
 ```
 
 ### Debugging
-For interactive debugging:
+The `leverage tofu` wrapper does not expose `shell` (or other native tofu subcommands like `console`, `state`, `providers`, `workspace`, `graph`, `show`, `get`). For interactive debugging or to use any unsupported subcommand, run the native `tofu` binary directly from the layer directory, loading the AWS profile from `*/config/backend.tfvars`:
 ```bash
-# Open shell in container
-leverage tofu shell
+tofu console
+tofu state list
 ```
 
 ## Documentation Sources

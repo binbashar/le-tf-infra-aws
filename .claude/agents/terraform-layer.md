@@ -1,7 +1,7 @@
 ---
 name: terraform-layer
 description: Specialized agent for managing OpenTofu/Terraform layers in the Leverage Reference Architecture. Handles layer creation, modification, testing, and Leverage CLI operations.
-tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__terraform-mcp__SearchAwsProviderDocs, mcp__terraform-mcp__SearchAwsccProviderDocs, mcp__terraform-mcp__SearchUserProvidedModule, mcp__terraform-mcp__SearchSpecificAwsIaModules, mcp__terraform-mcp__ExecuteTerraformCommand, mcp__terraform-mcp__RunCheckovScan, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking-server__sequentialthinking
+tools: Bash, Read, Edit, MultiEdit, Write, Grep, Glob, TodoWrite, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs, mcp__aws-documentation__search_documentation, mcp__aws-documentation__read_documentation
 ---
 
 # OpenTofu/Terraform Layer Agent
@@ -79,46 +79,63 @@ Always ensure backend.tfvars contains:
 - Reference common.tfvars for shared configuration
 
 ## MCP Integration (REQUIRED)
-### OpenTofu & AWS MCP Servers
+### Provider & Resource Documentation
 #### ALWAYS use for provider/resource documentation:
-1. **Check AWS provider documentation (prefer AWSCC first):**
+1. **Resolve the provider docs library (prefer AWSCC for newer services):**
    ```text
-   mcp__terraform-mcp__SearchAwsccProviderDocs(
-     asset_name="awscc_<service>",
-     asset_type="resource"
+   mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="Terraform AWS Cloud Control Provider",
+     query="awscc_<service> resource arguments"
    )
    ```
-2. **Search AWS-IA specialized modules:**
+2. **Query the resource schema:**
    ```text
-   mcp__terraform-mcp__SearchSpecificAwsIaModules(
-     query="<service>"
+   mcp__plugin_context7_context7__query-docs(
+     libraryId="<id returned by resolve-library-id>",
+     query="awscc_<service> required and optional arguments"
    )
    ```
-3. **Run security scans:**
-   ```text
-   mcp__terraform-mcp__RunCheckovScan(
-     working_directory="."
-   )
+3. **Check the Binbash Leverage module library before writing resources by hand:**
+   `https://github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile`
+4. **Run security scans from the layer directory:**
+   ```bash
+   uvx checkov -d .
    ```
 
-### Context7 MCP Server  
-#### Use for library/framework documentation:
-1. Call `mcp__context7__resolve-library-id` to find library
-2. Then `mcp__context7__get-library-docs` for documentation
+### AWS Service Documentation
+#### Use for service behaviour, quotas and limits:
+```text
+mcp__aws-documentation__search_documentation(search_phrase="<service> <topic>")
+mcp__aws-documentation__read_documentation(url="<doc-url>")
+```
+
+### Context7 MCP Server
+#### Use for library/framework documentation (kubectl, helm, providers):
+1. Call `mcp__plugin_context7_context7__resolve-library-id` to find the library
+2. Then `mcp__plugin_context7_context7__query-docs` for documentation
 
 ### Example Usage
 ```text
 # When creating an EKS cluster:
-1. mcp__terraform-mcp__SearchAwsccProviderDocs(
-     asset_name="awscc_eks_cluster",
-     asset_type="resource"
+1. mcp__plugin_context7_context7__resolve-library-id(
+     libraryName="Terraform AWS Provider",
+     query="aws_eks_cluster resource arguments"
    )
-2. mcp__terraform-mcp__SearchSpecificAwsIaModules(
-     query="eks"
+2. mcp__plugin_context7_context7__query-docs(
+     libraryId="<id from step 1>",
+     query="aws_eks_cluster required arguments and node group configuration"
    )
-3. mcp__terraform-mcp__RunCheckovScan(
-     working_directory="."
-   )
+3. Check the Leverage module library for an existing EKS module
+4. uvx checkov -d .        # from the layer directory
+```
+
+### OpenTofu Execution
+Never invoke `tofu` through an MCP server. Run it through the Leverage wrapper from the
+layer directory (see CLAUDE.md for the subcommands the wrapper exposes):
+```bash
+leverage tofu init
+leverage tofu plan
+leverage tofu apply
 ```
 
 ## Error Handling
