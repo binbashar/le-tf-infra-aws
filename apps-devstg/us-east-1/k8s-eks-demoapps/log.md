@@ -46,7 +46,7 @@ below — the point of the exercise was the rehearsal, not leaving it running.
 | 5 | 2026-08-04 | Both gateways unified on `instance` targets. All remaining components converted from the dead ingress class to HTTPRoutes and upgraded. |
 | 6 | 2026-08-05 | Teardown verified the drain gate. Re-spin, then **component set trimmed** to echo-server. CRD bundles **vendored**. |
 | 7 | 2026-08-06 | **ALB in front of the public Envoy Gateway**, replacing its NLB. Per-route IP filtering moved into Envoy; perimeter opened. |
-| 8 | 2026-08-10 | Re-spun from scratch. **AWS WAF attached to the ALB, verified, then detached and destroyed** — backlog item 4 closed. |
+| 8 | 2026-08-10 | Re-spun from scratch. **AWS WAF attached to the ALB, verified, then detached and destroyed** — backlog item 4 closed. **Managed add-ons caught up to 1.34**, `vpc-cni` stepwise. |
 
 ---
 
@@ -361,6 +361,45 @@ Deliberately still off: **Alertmanager** (needs `/notifications/alertmanager` in
 the shared account, which does not exist — enabling it fails the plan at the
 data source) and **argocd-image-updater** (a chart that cannot be deployed
 cannot be verified, so bumping its pin would be a guess).
+
+---
+
+### The add-ons were left three minors behind, and kube-proxy is now unpinned
+
+The 1.34 upgrade moved the control plane and the nodes and left every managed
+add-on in `addons/locals.tf` at its 1.31-era pin. EKS surfaced it as two
+UPGRADE_READINESS insights in ERROR: `kube-proxy version skew` ("three or more
+versions behind the cluster control plane version") and `EKS add-on version
+compatibility`. The first is not cosmetic — that is outside the supported skew.
+
+`kube-proxy` lost its `addon_version` entirely. `addons.tf` already falls
+through to `data.aws_eks_addon_version`, which resolves against the cluster's
+own Kubernetes version, so the version now follows the cluster by construction.
+Its supported skew is *defined* relative to the control plane, which makes a pin
+a standing invitation to forget it on the next upgrade — precisely what
+happened. The other three keep explicit pins: they have release cycles of their
+own, so pinning buys reproducibility rather than costing correctness.
+
+`vpc-cni` was upgraded **one minor at a time** — 1.18.5 → 1.19.6 → 1.20.5 →
+1.21.2 → 1.22.4 — rather than in one jump, per AWS's guidance for the CNI. Each
+step is its own `-target`ed apply followed by the same check: the `aws-node`
+DaemonSet rolled, the add-on `ACTIVE` with no health issues, a freshly created
+pod getting an IP and resolving both cluster and public DNS and reaching the
+internet, and both echo-server hostnames still answering 200. A fresh pod is
+the load-bearing part — an existing pod keeps its networking across an
+`aws-node` restart, so only a new one exercises the upgraded CNI.
+
+The in-place stepwise path was chosen over simply fixing the pins and letting
+the next re-spin install them clean. Fixing the pins is what this cluster
+needs; rehearsing the upgrade is what the migration it models needs.
+
+**The insights lag, and they are not about today.** They are evaluated against
+the *next* Kubernetes version — `kubernetesVersion: 1.35` on this cluster, so
+the `compatibleVersions` they report are floors for 1.35 and copying them as
+pins would leave you a version behind again. They also refresh on a schedule of
+their own (roughly daily) with no API to force it, so both stayed ERROR after
+the upgrade with a `lastRefreshTime` from before it. Verify by comparing the
+installed versions against the reported floors rather than waiting.
 
 ---
 
