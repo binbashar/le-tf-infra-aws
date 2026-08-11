@@ -264,7 +264,10 @@ variable "envoy_gateway" {
       # is indistinguishable from having forgotten to fill it in.
       open_to_internet = bool
       # Whether to attach the AWS WAF WebACL published by the
-      # `apps-devstg/us-east-1/security-firewall` layer to the ALB frontend.
+      # `apps-devstg/us-east-1/security-firewall --` layer to the ALB frontend.
+      # That layer carries the ` --` exclusion because the WebACL is held ready
+      # rather than deployed; turning this on means renaming it out of the
+      # exclusion and applying it first (its backend key does not change).
       #
       # Only meaningful with `frontend = "alb"` — WAF does not attach to an NLB,
       # which is the constraint that made the ALB the target rather than the

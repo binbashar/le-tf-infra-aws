@@ -32,9 +32,13 @@ private paths on Envoy Gateway.
 **No WAF is deployed.** It was built, attached, verified and taken back down the
 same day: `waf_enabled = false`, the association removed by hand, and
 `security-firewall` destroyed (3 resources, clean first pass, because the
-disassociation came first). The code is all in place, so re-attaching is
-applying that layer and flipping the flag. Everything learned doing it is kept
-below — the point of the exercise was the rehearsal, not leaving it running.
+disassociation came first). The layer then went back behind the ` --` exclusion
+it came from, since that marker tracks the deployed set and this is a capability
+held ready rather than one this cluster runs. The code is all in place, so
+re-attaching is: rename `security-firewall --` → `security-firewall`, restore
+its `infracost.yml` path, apply the layer, set `waf_enabled = true`. Everything
+learned doing it is kept below — the point of the exercise was the rehearsal,
+not leaving it running.
 
 ---
 
@@ -693,11 +697,16 @@ Coraza-on-Wasm kept only as a side experiment (EG 1.7.2 does support
 
 What it took, once the ALB was there:
 
-- **`apps-devstg/us-east-1/security-firewall` renamed out of its ` --`
-  exclusion** and applied — three resources: the WebACL, its logging
-  configuration and the `aws-waf-logs-wafv2-apps` log group. `infracost.yml`
-  needed the path updated to match, and the rename puts the layer into
-  Atlantis autodiscover.
+- **`apps-devstg/us-east-1/security-firewall --` renamed out of its ` --`
+  exclusion for the rehearsal** and applied — three resources: the WebACL, its
+  logging configuration and the `aws-waf-logs-wafv2-apps` log group.
+  `infracost.yml` needed the path updated to match, and while renamed the layer
+  sits in Atlantis autodiscover. **It went back behind the ` --` marker
+  afterwards**, together with the `infracost.yml` path: the marker means "not
+  part of the deployed set", and this layer is a capability that is ready and
+  switched off, not one this cluster runs. Re-enabling it is that rename plus
+  the flag — the backend key is `apps-devstg/security-firewall/terraform.tfstate`
+  either way, so the directory name never touches the state.
 - **The association is made by the Load Balancer Controller**, from
   `alb.ingress.kubernetes.io/wafv2-acl-arn` on `kubernetes_ingress_v1.envoy_apps`,
   not by a `wafv2_web_acl_association` resource. Nothing that plans before the

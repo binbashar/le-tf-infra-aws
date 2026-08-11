@@ -153,8 +153,9 @@ envoy_gateway = {
   # (see k8s-workloads). Set it back to false to also close the perimeter to
   # `envoy_gateway_public_allowed_cidrs` — useful while a route's own policy is
   # still being written, but note it then masks whether that policy works.
-  # `waf_enabled` attaches the WebACL owned by the `security-firewall` layer,
-  # which must be applied first. Every rule in it currently runs in COUNT, so it
+  # `waf_enabled` attaches the WebACL owned by the `security-firewall --` layer,
+  # which is excluded from the deployed set and must be renamed out of that
+  # exclusion and applied first. Every rule in it currently runs in COUNT, so it
   # observes and logs without blocking; promoting rules to `block` is a change
   # in that layer, not here.
   public_gateway = {

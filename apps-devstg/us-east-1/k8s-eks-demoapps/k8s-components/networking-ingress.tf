@@ -222,7 +222,7 @@ resource "kubernetes_ingress_v1" "traefik_apps" {
 #                       group. The reference topology leaves the ALB open and
 #                       filters per-application further in; this keeps the
 #                       endpoint closed until that per-route filtering exists.
-#   wafv2-acl-arn    -- the WebACL from the `security-firewall` layer, added
+#   wafv2-acl-arn    -- the WebACL from the `security-firewall --` layer, added
 #                       only under `public_gateway.waf_enabled`. The controller
 #                       makes the association, because nothing that plans before
 #                       the ALB exists can know its ARN. See
