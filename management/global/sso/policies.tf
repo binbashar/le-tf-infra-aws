@@ -126,7 +126,10 @@ data "aws_iam_policy_document" "devops" {
       "wafv2:*",
       "wellarchitected:*",
       "workspaces-web:*",
-      "workspaces:*"
+      "workspaces:*",
+      "ce:*",
+      "pricing:*",
+      "billing:*"
     ]
     resources = ["*"]
     condition {
@@ -139,18 +142,6 @@ data "aws_iam_policy_document" "devops" {
         "us-west-2"
       ]
     }
-  }
-
-  statement {
-    sid = "BcmPricingCalculatorGlobalAccess"
-    actions = [
-      "bcm-pricing-calculator:*",
-      "ce:*",
-      "pricing:*",
-      "billing:*"
-    ]
-    effect    = "Allow"
-    resources = ["*"]
   }
 
   statement {
