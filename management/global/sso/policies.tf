@@ -28,6 +28,7 @@ data "aws_iam_policy_document" "devops" {
       "bedrock-agentcore:*",
       "billing:Get*",
       "billing:List*",
+      "ce:*",
       "cloudformation:*",
       "cloudfront:*",
       "cloudshell:*",
@@ -127,9 +128,7 @@ data "aws_iam_policy_document" "devops" {
       "wellarchitected:*",
       "workspaces-web:*",
       "workspaces:*",
-      "ce:*",
-      "pricing:*",
-      "billing:*"
+      "pricing:*"
     ]
     resources = ["*"]
     condition {
