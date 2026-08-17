@@ -37,20 +37,6 @@ terraform {
 #=============================#
 
 #
-# data type from output for dns
-#
-data "terraform_remote_state" "shared-dns" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-shared-devops"
-    bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/dns/binbash.com.ar/terraform.tfstate"
-  }
-}
-
-#
 # data type from output for dns (binbash.co zone)
 #
 data "terraform_remote_state" "shared-dns-binbash-co" {

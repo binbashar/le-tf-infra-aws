@@ -39,6 +39,17 @@ terraform {
 #
 # data type from output for security certs
 #
+# STALE — this layer is disabled (trailing " --"), and the `certificate_arn`
+# output it reads no longer exists upstream. It exposed the *.binbash.com.ar
+# certificate, which expired 2026-07-09 attached to nothing and INELIGIBLE for
+# renewal; it was deleted from apps-prd/us-east-1/security-certs rather than
+# replaced, because every apply on that layer failed on it. See #1143.
+#
+# Re-enabling this layer therefore requires provisioning its own certificate for
+# www.binbash.com.ar / statics.binbash.com.ar first. Before doing that, check
+# whether the layer is wanted at all: binbash.com.ar is now served by other
+# infrastructure and 301s to binbash.co, which app-binbash-web serves.
+#
 data "terraform_remote_state" "certificates" {
   backend = "s3"
 
