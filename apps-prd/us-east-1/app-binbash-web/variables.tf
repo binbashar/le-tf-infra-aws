@@ -52,13 +52,14 @@ variable "dns_cutover_enabled" {
     www.binbash.co at this distribution. THIS IS THE CUTOVER — true takes the
     marketing site off Wix.
 
-    Defaults to false so the layer can be applied, deployed to and verified on
-    the distribution's own *.cloudfront.net domain without moving live traffic.
-    The shared base-dns layer must give up its www CNAME and apex A record
-    first; see the ordering note in dns.tf.
+    Was false through build-out and verification, so the layer could be applied,
+    deployed to and checked end-to-end on the distribution's own
+    *.cloudfront.net domain without moving live traffic. Set to true at the
+    cutover on 2026-08-17, after the shared base-dns layer gave up its www CNAME
+    and apex A record; see the ordering note in dns.tf.
   EOT
   type        = bool
-  default     = false
+  default     = true
 }
 
 #
