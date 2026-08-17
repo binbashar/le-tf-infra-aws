@@ -1,30 +1,27 @@
 # app-binbash-web
 
-Static frontend hosting for **binbash-web**, the Next.js rebuild of
-`www.binbash.co` migrated page-by-page out of Wix. Follows the Leverage
-**"app frontend on AWS"** pattern: a fully static app served from a private S3
-origin behind CloudFront, deployed by the app repository's CI through a
-least-privilege GitHub OIDC role — no long-lived AWS keys, near-zero monthly
-cost.
+Serves **`binbash.co` and `www.binbash.co`** — the Next.js rebuild of the company
+marketing site, migrated page-by-page out of Wix. Follows the Leverage **"app
+frontend on AWS"** pattern: a fully static app served from a private S3 origin
+behind CloudFront, deployed by the app repository's CI through a least-privilege
+GitHub OIDC role — no long-lived AWS keys, near-zero monthly cost.
 
 Second instance of the pattern established by
 [`app-aws-startups-accelerate`](../app-aws-startups-accelerate/) (issue #1085);
 this layer is issue #1141.
 
-**Staged at `www-next.binbash.co`.** Production `www.binbash.co` keeps being
-served by Wix — the DNS cutover is a separate wave and explicitly not part of
-this layer yet.
+**Live since 2026-08-17.** Wix no longer serves these names.
 
 ## What this layer provisions
 
 | Concern | Resources |
 | --- | --- |
-| **Serving** | CloudFront distribution (`PriceClass_100`, TLS 1.2+, compression) with a private S3 origin (OAC, SSE, SSL-enforced, public access blocked) and a viewer-request CloudFront Function rewriting directory-style URLs to `index.html`; 403/404 mapped to the app's `404.html` |
-| **DNS / TLS** | A/AAAA alias records in the shared account public zone (cross-account `aws.shared-route53` provider); ACM certificate consumed from the `security-certs` layer via remote state |
-| **Deploy identity** | Deploy role limited to `s3 sync` and CloudFront invalidation, trust scoped via the `sub` claim to `var.github_repository` @ `var.github_branch`. The account-wide GitHub OIDC provider is **looked up, not created** — see below |
-| **Operations** | CloudFront access logs (dedicated bucket, `var.log_expiration_days` expiry) and CloudWatch alarms wired to the `notifications` layer SNS topic — `5xxErrorRate` always, `TotalErrorRate` only once the staging gate is off (see below) |
-| **Staging guardrails** | `X-Robots-Tag: noindex, nofollow` response headers policy + HTTP Basic gate — both temporary, see below |
-| **Phase 2 (disabled)** | `backend-stub.tf` documents the contact-form backend and the cutover redirect map; intentionally not provisioned |
+| **Serving** | CloudFront distribution (`PriceClass_100`, TLS 1.2+, compression) with a private S3 origin (OAC, SSE-S3, SSL-enforced, public access blocked); 403/404 mapped to the app's `404.html` |
+| **Redirects + pretty URLs** | One viewer-request CloudFront Function serving the Wix→binbash-web 301 map and rewriting directory-style URLs to `index.html` |
+| **DNS / TLS** | A/AAAA alias records for both names in the shared account public zone (cross-account `aws.shared-route53` provider); ACM certificate (`binbash.co` + SAN `www.binbash.co`) consumed from the `security-certs` layer via remote state |
+| **Deploy identity** | Deploy role limited to `s3 sync` and CloudFront invalidation, trust scoped via the `sub` claim to `var.github_repository` @ `var.github_branch`. The account-wide GitHub OIDC provider is **looked up, not created** |
+| **Operations** | CloudFront access logs (dedicated bucket, `var.log_expiration_days` expiry) and `5xxErrorRate` / `TotalErrorRate` CloudWatch alarms wired to the `notifications` layer SNS topic |
+| **Phase 2 (disabled)** | `backend-stub.tf` documents the contact-form backend; intentionally not provisioned |
 
 ## Three things that differ from the layer this was cloned from
 
@@ -35,83 +32,71 @@ this layer yet.
    ownership to a dedicated identities layer.
 
 2. **Resources are named after `local.app_name` (`binbash-web`), not the
-   hostname.** The bucket is `bb-apps-prd-binbash-web`, not
-   `bb-apps-prd-www-next`: the staging hostname is temporary, the bucket is not,
-   and renaming an S3 bucket means recreating it and re-syncing the whole site.
-   `local.app_subdomain` feeds `local.app_fqdn` and nothing else.
+   hostname.** The bucket is `bb-apps-prd-binbash-web-origin`. Keeping the name
+   independent of the hostname is why this layer could be built and verified
+   against a staging hostname and then retargeted at production without
+   recreating the bucket and re-syncing the site.
 
-3. **The staging gate lives inside the pretty-URL function.** CloudFront permits
-   only one function per event type per cache behavior, so the Basic-Auth check
-   could not be a second `viewer-request` association — it is merged into
-   `cloudfront-function.tf`. Viewer-request runs before the cache lookup, so the
-   check is enforced on cache hits too.
+3. **The redirect map lives in the pretty-URL function.** CloudFront permits
+   only one function per event type per cache behavior, so both jobs are merged
+   into `cloudfront-function.tf`. Redirects are evaluated first, so an old Wix
+   path is never rewritten to an `index.html` that does not exist.
 
-## Staging guardrails (all of this comes off at cutover)
+## The redirect map (`redirects.tf`)
 
-`staging.tf` holds two separate protections. They come off in the same change
-that points production at this distribution, not before. The cutover is:
+31 routes changed path in the migration out of Wix; without a 301 each of those
+indexed URLs would 404 and the accumulated search ranking would be thrown away.
+Four retirements are handled alongside (`/blog` and `/post/*` → the Medium
+publication, `/testimonials` → the Clutch profile, `/event-list` → `/events`,
+`/top-rated` and `/recipes/*` → `/`).
 
-1. set `var.staging_access_gate_enabled = false`,
-2. delete `staging.tf`,
-3. delete its two references — the `response_headers_policy_id` argument in
-   `cdn.tf` and the gate block in `cloudfront-function.tf`.
+**The 31 path-changing rows are generated, not hand-written.** They come from the
+`MIGRATED` table in the app repo's own test,
+`bb-ai-sales-tools:apps/binbash-web/lib/content/__tests__/migrated-routes.test.ts`,
+which the app repo keeps in step as pages migrate. Regenerate from there rather
+than editing rows by hand — that table has 53 entries, of which the 22 whose path
+did not change are correctly absent here.
 
-- **`X-Robots-Tag: noindex, nofollow`** so this build never competes with the
-  live Wix site in search results.
-- **HTTP Basic auth**, because `noindex` is a request to well-behaved crawlers,
-  not access control. This hostname is public the moment the certificate issues
-  (ACM publishes to Certificate Transparency logs) and the alias lands in the
-  public `binbash.co` zone.
+Query strings survive internal redirects, so `utm_*` campaign attribution is not
+lost on the hop. Off-site targets get a clean URL.
 
-The password is generated by `random_password` and **never written to this
-repository, which is public**. After apply:
+## Known gap: `/contact` returns 404
 
-```bash
-leverage tofu output    staging_basic_auth_username
-leverage tofu output -raw staging_basic_auth_password
-```
+The app hardcodes `https://www.binbash.co/contact` in ~23 source files as a
+placeholder that pointed at the **Wix** form. That hostname no longer serves Wix,
+so every contact CTA on the site currently 404s. This was accepted deliberately at
+cutover; the real page ships from the app repo separately. A row in `redirects.tf`
+can point `/contact` at an interim destination in one apply if needed.
 
-Because the gate answers unauthenticated requests with `401`, smoke tests need
-the credential — including the `X-Robots-Tag` check:
+## The DNS cutover
 
-```bash
-curl -sI -u "$USER:$PASS" https://www-next.binbash.co/ | grep -i x-robots-tag
-curl -sI            https://www-next.binbash.co/          # expect 401
-```
+`var.dns_cutover_enabled` gates the alias records in `dns.tf`. It was `false`
+through build-out so the layer could be applied, deployed to and verified
+end-to-end on the distribution's own `*.cloudfront.net` domain without moving live
+traffic — `leverage tofu output verification_url` still prints that URL, which
+remains the way to test a change before it reaches visitors.
 
-Know what this gate is and is not. It is one shared credential, not per-user,
-not individually revocable, and — inherent to gating with a CloudFront Function
-— it is readable in plaintext from the *deployed* function's published source by
-anyone holding `cloudfront:GetFunction` in this account. It keeps the unfinished
-site off the public internet; it is not a secret-bearing control. Do not reuse
-this password anywhere else.
-
-The gate does not affect deploys: CI writes through the S3 and CloudFront APIs,
-not through the distribution.
-
-It does, however, affect monitoring. CloudFront's `*ErrorRate` metrics are
-computed from [the response's status
-code](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/viewing-cloudfront-metrics.html),
-so while the gate is up every unauthenticated crawler hit is a `401` — a 4xx —
-and `TotalErrorRate` sits near 100%. No threshold in `(0, 100]` can make that
-alarm meaningful, so it is not created until `staging_access_gate_enabled` goes
-false. The `5xxErrorRate` alarm is unaffected (401 is 4xx, not 5xx) and covers
-real failures throughout staging.
+The shared `base-dns` layer previously owned both names and had to give them up
+first: Route 53 rejects an A record at a name that still has a CNAME, so `www` was
+a destroy-then-create. See the ordering note in `dns.tf`. The apex MX (Google
+Workspace) and TXT records are a different record type at the same name and were
+unaffected.
 
 ## If an alarm fires
 
-`bb-apps-prd-binbash-web-cf-5xx-error-rate` is the only alarm live during
-staging. Before assuming an outage, check request volume for the period: the
-alarm already gates on `var.alarm_min_requests_per_period`, so a fire means
-real 5xx responses, not scanner noise. Most likely causes, in order:
+Both alarms gate on `var.alarm_min_requests_per_period`, so a fire means real
+errors rather than scanner noise. Likely causes, in order:
 
 1. The CloudFront Function failed at runtime — a function execution error
    surfaces to viewers as a `502`. Check `FunctionExecutionErrors` on
    `bb-apps-prd-binbash-web-pretty-urls` in CloudWatch.
-2. The origin bucket lost its policy or OAC wiring, so CloudFront cannot read
-   it.
-3. A bad deploy left `/404.html` missing, so the custom error response itself
-   fails.
+2. The origin bucket lost its policy or OAC wiring, so CloudFront cannot read it.
+3. A bad deploy left `/404.html` missing, so the custom error response itself fails.
+
+Note `*ErrorRate` is computed from **the response's** status code, so anything the
+viewer-request function returns itself counts. The 301s it serves today do not
+(3xx is neither 4xx nor 5xx), but a future change returning 4xx directly would
+move `TotalErrorRate` and this alarm would need rethinking at the same time.
 
 Rollback is a redeploy: the bucket content is fully rebuildable from the app
 repo's CI (`RPO` 0 — the source of truth is git; `RTO` is one workflow run).
@@ -119,14 +104,14 @@ repo's CI (`RPO` 0 — the source of truth is git; `RTO` is one workflow run).
 ## Deployment
 
 1. Apply `apps-prd/us-east-1/security-certs` first — this layer consumes its
-   ACM certificate ARN (`binbash_web_certificate_arn`) via
-   `terraform_remote_state` and cannot plan until the certificate exists.
+   ACM certificate ARN (`binbash_web_certificate_arn`) via `terraform_remote_state`.
+   Note that layer currently fails on an unrelated expired certificate — issue #1143.
 2. From this directory: `leverage tofu init && leverage tofu plan && leverage tofu apply`
    (requires valid `bb-apps-prd-devops` and `bb-shared-devops` credentials).
 
 ## Handoff to the app repository
 
-Set these as **repo Actions variables** on `binbashar/bb-ai-sales-tools`
+Set as **repo Actions variables** on `binbashar/bb-ai-sales-tools`
 (`Settings → Secrets and variables → Actions → Variables`). The `BINBASH_WEB_`
 prefix is deliberate: both static-deploy workflows live in the same repo, and
 unprefixed names would collide so each app deployed into the other's bucket.
@@ -139,12 +124,12 @@ unprefixed names would collide so each app deployed into the other's bucket.
 
 ## App-specific documentation
 
-The application details (migration plan, redirect map, CI deploy workflow,
-build requirements) live in the app repository — private:
+The application details (migration plan, CI deploy workflow, build requirements)
+live in the app repository — private:
 [`binbashar/bb-ai-sales-tools` → `apps/binbash-web`](https://github.com/binbashar/bb-ai-sales-tools/tree/main/apps/binbash-web)
 
-Its `deploy-binbash-web.yml` runs a two-pass `s3 sync`: immutable
-`_next/static/` assets first and never `--delete`d, then HTML with `--delete`
-and `--exclude "_next/static/*"`, so a visitor mid-deploy on the previous build
-never hits a `ChunkLoadError`. Nothing in this layer's bucket policy interferes
-with that ordering.
+Its `deploy-binbash-web.yml` runs a two-pass `s3 sync`: immutable `_next/static/`
+assets first and never `--delete`d, then HTML with `--delete` and
+`--exclude "_next/static/*"`, so a visitor mid-deploy on the previous build never
+hits a `ChunkLoadError`. Nothing in this layer's bucket policy interferes with
+that ordering.

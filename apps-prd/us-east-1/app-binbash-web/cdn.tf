@@ -1,6 +1,6 @@
 #
-# Static S3 Bucket + CloudFront CDN for the binbash-web app, staged at
-# www-next.binbash.co
+# Static S3 Bucket + CloudFront CDN for the binbash-web app, serving
+# binbash.co and www.binbash.co
 # (Next.js static export published by the app repo CI via `aws s3 sync`)
 #
 module "binbash_web" {
