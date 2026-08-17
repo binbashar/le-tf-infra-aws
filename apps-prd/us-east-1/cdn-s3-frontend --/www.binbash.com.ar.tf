@@ -11,6 +11,8 @@ module "www_binbash_com_ar" {
   cors_allowed_origins = ["www.${local.public_domain}"]
 
   # Certificate settings
+  # This output was removed upstream — see the note on
+  # data.terraform_remote_state.certificates in config.tf (#1143).
   acm_certificate_arn = data.terraform_remote_state.certificates.outputs.certificate_arn
   price_class         = "PriceClass_100"
 
