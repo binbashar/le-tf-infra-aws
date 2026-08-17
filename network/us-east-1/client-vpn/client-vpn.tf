@@ -19,8 +19,10 @@ module "vpn_sso_sg" {
 }
 
 resource "aws_ec2_client_vpn_endpoint" "sso" {
-  description            = local.vpn_name
-  vpc_id                 = local.vpc_id
+  description = local.vpn_name
+  vpc_id      = local.vpc_id
+  # This output was removed upstream — see the note on
+  # data.terraform_remote_state.certs in config.tf (#1145).
   server_certificate_arn = data.terraform_remote_state.certs.outputs.certificate_arn
   client_cidr_block      = local.cidr
   split_tunnel           = local.split_tunnel

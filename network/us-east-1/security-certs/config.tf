@@ -36,16 +36,11 @@ terraform {
 # Data sources                #
 #=============================#
 
+# This layer currently declares no certificates — see #1145. The `aws.shared` provider alias above
+# is kept deliberately: any certificate added here needs it, because ACM DNS validation records for
+# these domains live in the shared account's Route 53 zones.
 #
-# data type from output for dns
-#
-data "terraform_remote_state" "shared-dns" {
-  backend = "s3"
-
-  config = {
-    region  = var.region
-    profile = "${var.project}-shared-devops"
-    bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/dns/binbash.com.ar/terraform.tfstate"
-  }
-}
+# The `shared-dns` remote state data source that used to live here was removed with the certificate.
+# Unlike an inert provider declaration, a data source is read on every plan — so keeping it would
+# cost a cross-account S3 read for nothing, and would rot silently if the upstream output shape
+# changed. Re-add it alongside whatever certificate needs it.

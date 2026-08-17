@@ -41,6 +41,17 @@ data "terraform_remote_state" "keys" {
   }
 }
 
+# STALE — the `certificate_arn` output this reads no longer exists. It exposed the
+# `*.binbash.com.ar` certificate, which expired 2026-02-12 attached to nothing and INELIGIBLE for
+# renewal, and was deleted from `network/us-east-1/security-certs` rather than replaced. See #1145.
+#
+# Deploying this layer therefore needs a server certificate provisioned first. Note what kind: this
+# endpoint uses `type = "federated-authentication"` (SAML via AWS SSO), so only a **server**
+# certificate is required — there is no client/mutual-auth CA to import. A public ACM certificate
+# covering the endpoint's DNS name is the normal choice, and `security-certs` is where it belongs.
+#
+# This is not the only thing gating a deploy: `client-vpn.tf` reads `saml-metadata.xml`, which is
+# gitignored and must be created by hand first (see this layer's README).
 data "terraform_remote_state" "certs" {
   backend = "s3"
   config = {
