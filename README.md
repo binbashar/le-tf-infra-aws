@@ -157,13 +157,23 @@ leverage tofu init              # Initialize the layer
 leverage tofu plan              # Preview changes
 leverage tofu apply             # Apply changes
 leverage tofu destroy           # Destroy infrastructure
-leverage tofu fmt               # Format code
+leverage tofu format            # Format code (always recursive)
+leverage tofu format -check     # Check formatting without rewriting
 leverage tofu validate          # Validate configuration
-leverage tofu state list        # List resources in state
-leverage tofu state show <res>  # Show a specific resource in state
 ```
 
 > `leverage tf` is a shorthand alias for `leverage tofu`. Both run OpenTofu.
+
+> The wrapper exposes only a curated subset of subcommands: `apply`, `destroy`, `force-unlock`,
+> `format`, `import`, `init`, `output`, `plan`, `refresh-credentials`, `validate`,
+> `validate-layout`, `version`. Note it is `format`, **not** `fmt`. For anything else — `state`,
+> `show`, `console`, `providers`, `workspace`, `graph`, `get`, `test` — run the native `tofu`
+> binary from the layer directory, loading the AWS profile from the layer's `config/backend.tfvars`:
+>
+> ```bash
+> tofu state list                 # List resources in state
+> tofu state show <res>           # Show a specific resource in state
+> ```
 
 ## Release Management
 ### [Reference Architecture | Releases](https://github.com/binbashar/le-tf-infra-aws/releases)

@@ -224,7 +224,7 @@ Location: `/renovate.json`
 3. **Validation checks:**
    ```bash
    # Format check
-   leverage tofu fmt -check
+   leverage tofu format -check
 
    # Validation
    leverage tofu validate
@@ -232,8 +232,8 @@ Location: `/renovate.json`
    # Plan without applying
    leverage tofu plan -out=tfplan
 
-   # Review plan
-   leverage tofu show tfplan
+   # Review plan — `show` is not exposed by the wrapper, use native tofu
+   tofu show tfplan
    ```
 
 ## Handling Breaking Changes

@@ -38,7 +38,8 @@ This is the **Binbash Leverage Reference Architecture** - a comprehensive OpenTo
 - Use variables and locals for all configurable values; avoid hardcoding
 - Structure files logically: main config, locals, variables, outputs, modules
 - Follow the [Leverage AWS directory structure](https://leverage.binbash.co/user-guide/ref-architecture-aws/dir-structure)
-- Always run `leverage tofu fmt` for formatting and `leverage tofu validate` for validation
+- Always run `leverage tofu format` for formatting and `leverage tofu validate` for validation
+  (the subcommand is `format`, not `fmt` — `fmt` errors with `No such command`)
 
 ### Module Guidelines
 - **Always prefer Binbash Leverage modules** - Check the [module library](https://github.com/binbashar/le-dev-tools/blob/master/terraform/Makefile) first
@@ -151,8 +152,11 @@ leverage run layer_dependency
 # Validate configuration
 leverage tofu validate
 
-# Format code (recursive)
-leverage tofu fmt -recursive
+# Format code — always recursive, the wrapper appends -recursive for you
+leverage tofu format
+
+# Check formatting without rewriting (extra args pass through to `tofu fmt`)
+leverage tofu format -check
 
 # Run tests (not exposed by leverage wrapper — use native tofu)
 tofu test
@@ -341,12 +345,13 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 8. **Security-first** - Follow AWS Well-Architected Framework and Leverage security guidelines
 9. **Documentation** - Reference official [Leverage Documentation](https://leverage.binbash.co) for guidance
 10. **Testing** - Use native `tofu test` for module unit tests (the leverage wrapper does not expose `test`) and integrate with CI/CD
-11. **Code quality** - Always run `leverage tofu fmt` and `leverage tofu validate` before commits
+11. **Code quality** - Always run `leverage tofu format` and `leverage tofu validate` before commits
 12. **Atlantis integration** - The repository uses Atlantis for automated OpenTofu/Terraform workflows
 
 ### CI / Pre-commit
 - CI job "Test and Lint" runs `make pre-commit` → `pre-commit run --all-files`
-- Includes `terraform_fmt` hook — always run `leverage tofu fmt -recursive` before pushing
+- Includes `terraform_fmt` hook — always run `leverage tofu format` before pushing (it is already
+  recursive; the hook itself is a pre-commit hook name, unrelated to the wrapper's subcommand)
 - `pretty-format-json` hook sorts keys alphabetically and autofixes — ensure JSON files have sorted keys before pushing
 - **Infracost** workflow for cost impact analysis on PRs
 - Slack notifications on pipeline success/failure

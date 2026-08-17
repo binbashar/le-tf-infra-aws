@@ -41,7 +41,7 @@ leverage tofu init
 leverage tofu plan
 leverage tofu apply
 leverage tofu destroy
-leverage tofu fmt
+leverage tofu format
 
 # Validation
 leverage tofu validate
@@ -65,7 +65,7 @@ Always ensure backend.tfvars contains:
 - `key` - State file path (auto-generated)
 
 ## Testing Requirements
-1. Run `leverage tofu fmt` to format code
+1. Run `leverage tofu format` to format code
 2. Run `leverage tofu validate` to check syntax
 3. Run `leverage tofu plan` to preview changes
 4. Check for security issues with `tfsec` or `checkov`
