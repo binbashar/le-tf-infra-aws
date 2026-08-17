@@ -163,12 +163,18 @@ leverage tofu validate          # Validate configuration
 ```
 
 > `leverage tf` is a shorthand alias for `leverage tofu`. Both run OpenTofu.
-
+>
 > The wrapper exposes only a curated subset of subcommands: `apply`, `destroy`, `force-unlock`,
 > `format`, `import`, `init`, `output`, `plan`, `refresh-credentials`, `validate`,
-> `validate-layout`, `version`. Note it is `format`, **not** `fmt`. For anything else — `state`,
-> `show`, `console`, `providers`, `workspace`, `graph`, `get`, `test` — run the native `tofu`
-> binary from the layer directory, loading the AWS profile from the layer's `config/backend.tfvars`:
+> `validate-layout`, `version`. Note it is `format`, **not** `fmt` — and `format` is already
+> recursive, being equivalent to `tofu fmt -recursive`. See the
+> [leverage tofu reference](https://leverage.binbash.co/user-guide/leverage-cli/reference/tofu/tofu/).
+> That page does not currently cover `force-unlock` or `refresh-credentials`; the list above comes
+> from `leverage tofu --help` on the pinned CLI, which is the authority.
+>
+> For anything else — `state`, `show`, `console`, `providers`, `workspace`, `graph`, `get`, `test` —
+> run the native `tofu` binary from the layer directory, loading the AWS profile from the layer's
+> `config/backend.tfvars`:
 >
 > ```bash
 > tofu state list                 # List resources in state
