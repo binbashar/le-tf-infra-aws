@@ -22,7 +22,7 @@ this layer yet.
 | **Serving** | CloudFront distribution (`PriceClass_100`, TLS 1.2+, compression) with a private S3 origin (OAC, SSE, SSL-enforced, public access blocked) and a viewer-request CloudFront Function rewriting directory-style URLs to `index.html`; 403/404 mapped to the app's `404.html` |
 | **DNS / TLS** | A/AAAA alias records in the shared account public zone (cross-account `aws.shared-route53` provider); ACM certificate consumed from the `security-certs` layer via remote state |
 | **Deploy identity** | Deploy role limited to `s3 sync` and CloudFront invalidation, trust scoped via the `sub` claim to `var.github_repository` @ `var.github_branch`. The account-wide GitHub OIDC provider is **looked up, not created** — see below |
-| **Operations** | CloudFront access logs (dedicated bucket, `var.log_expiration_days` expiry) and `5xxErrorRate`/`TotalErrorRate` CloudWatch alarms wired to the `notifications` layer SNS topic |
+| **Operations** | CloudFront access logs (dedicated bucket, `var.log_expiration_days` expiry) and CloudWatch alarms wired to the `notifications` layer SNS topic — `5xxErrorRate` always, `TotalErrorRate` only once the staging gate is off (see below) |
 | **Staging guardrails** | `X-Robots-Tag: noindex, nofollow` response headers policy + HTTP Basic gate — both temporary, see below |
 | **Phase 2 (disabled)** | `backend-stub.tf` documents the contact-form backend and the cutover redirect map; intentionally not provisioned |
 
@@ -48,10 +48,13 @@ this layer yet.
 
 ## Staging guardrails (all of this comes off at cutover)
 
-`staging.tf` holds two separate protections; removing that file plus its two
-references (the `response_headers_policy_id` argument in `cdn.tf` and the gate
-block in `cloudfront-function.tf`) is the entire rollback. They come off in the
-same change that points production at this distribution, not before.
+`staging.tf` holds two separate protections. They come off in the same change
+that points production at this distribution, not before. The cutover is:
+
+1. set `var.staging_access_gate_enabled = false`,
+2. delete `staging.tf`,
+3. delete its two references — the `response_headers_policy_id` argument in
+   `cdn.tf` and the gate block in `cloudfront-function.tf`.
 
 - **`X-Robots-Tag: noindex, nofollow`** so this build never competes with the
   live Wix site in search results.
@@ -78,6 +81,15 @@ curl -sI            https://www-next.binbash.co/          # expect 401
 
 The gate does not affect deploys: CI writes through the S3 and CloudFront APIs,
 not through the distribution.
+
+It does, however, affect monitoring. CloudFront's `*ErrorRate` metrics are
+computed from [the response's status
+code](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/viewing-cloudfront-metrics.html),
+so while the gate is up every unauthenticated crawler hit is a `401` — a 4xx —
+and `TotalErrorRate` sits near 100%. No threshold in `(0, 100]` can make that
+alarm meaningful, so it is not created until `staging_access_gate_enabled` goes
+false. The `5xxErrorRate` alarm is unaffected (401 is 4xx, not 5xx) and covers
+real failures throughout staging.
 
 ## Deployment
 

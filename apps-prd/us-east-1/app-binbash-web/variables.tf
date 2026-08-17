@@ -46,6 +46,21 @@ variable "create_github_oidc_provider" {
 #
 # Staging access gate (removed at cutover — see staging.tf)
 #
+variable "staging_access_gate_enabled" {
+  description = <<-EOT
+    Whether the staging HTTP Basic gate is in force. Set to false as part of the
+    cutover, in the same change that deletes staging.tf and points production
+    www.binbash.co at this distribution.
+
+    This also controls whether the CloudFront TotalErrorRate alarm exists: those
+    metrics are computed from the response status code, so while the gate is up
+    every unauthenticated crawler hit is a 401 — a 4xx — and TotalErrorRate sits
+    near 100%. See the comment in monitoring.tf.
+  EOT
+  type        = bool
+  default     = true
+}
+
 variable "staging_basic_auth_username" {
   description = <<-EOT
     Username half of the HTTP Basic credential gating the staging site. Only the

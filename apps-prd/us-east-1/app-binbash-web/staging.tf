@@ -3,9 +3,11 @@
 #
 # EVERYTHING IN THIS FILE COMES OFF AT CUTOVER — in the same change that points
 # production www.binbash.co at this distribution, never before, or the
-# unfinished site is briefly open and indexable. Removing this file plus the two
-# references to it (response_headers_policy_id in cdn.tf and the gate block in
-# cloudfront-function.tf) is the whole rollback.
+# unfinished site is briefly open and indexable. The rollback is: set
+# var.staging_access_gate_enabled = false (which also restores the
+# TotalErrorRate alarm, see monitoring.tf), delete this file, and delete its two
+# references — response_headers_policy_id in cdn.tf and the gate block in
+# cloudfront-function.tf.
 #
 # Two distinct concerns, deliberately both present:
 #
