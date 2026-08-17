@@ -1,8 +1,8 @@
 #
 # Phase-2 placeholder (intentionally disabled).
 #
-# Two pieces of this app are known to be missing and will most likely land in
-# this layer, but neither is provisioned yet:
+# One piece of this app is known to be missing and will most likely land in
+# this layer:
 #
 #   - Contact form backend. /contact is the one page of the Wix migration still
 #     unbuilt, blocked on a form-backend decision (managed form service vs
@@ -10,14 +10,15 @@
 #     and a send policy here, mirroring apps-prd/us-east-1/app-ai-lab/ses.tf.
 #     Do NOT provision API resources until that decision is made.
 #
-#   - The cutover redirect map. 31 migrated routes changed path relative to Wix
-#     (/venture -> /services/venture-capitals, /channel-partners ->
-#     /partners/affiliate-partners, the eight /services-catalog/* children, ...)
-#     plus retirements (/testimonials -> Clutch, /blog and /post/* ->
-#     medium.com/binbash-inc, ...). That map has no Terraform artefact anywhere
-#     yet; it becomes either a second CloudFront Function or a merge into
-#     cloudfront-function.tf, which is why that function is per-app rather than
-#     shared with app-aws-startups-accelerate.
+#     Until it ships, /contact returns 404: the app hardcodes
+#     https://www.binbash.co/contact as a placeholder pointing at the Wix form,
+#     and that hostname no longer serves Wix. A row in redirects.tf can point it
+#     at an interim destination without any backend at all.
+#
+# The cutover redirect map that this file used to list as missing now exists —
+# see redirects.tf (local.wix_redirects_migrated / _retired) and the function in
+# cloudfront-function.tf that serves it. Keeping that function per-app rather
+# than sharing it with app-aws-startups-accelerate is what left room for it.
 #
 # See: https://github.com/binbashar/le-tf-infra-aws/issues/1141
 #
