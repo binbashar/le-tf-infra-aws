@@ -23,6 +23,13 @@
 #
 #   leverage tofu output -raw staging_basic_auth_password
 #
+# Scope of the control: one shared credential, not per-user, not individually
+# revocable, and — inherent to gating with a CloudFront Function rather than a
+# flaw here — readable in plaintext from the deployed function's published
+# source by anyone holding cloudfront:GetFunction in this account. It keeps the
+# unfinished site off the public internet; it is not a secret-bearing control,
+# so this password must not be reused anywhere else.
+#
 
 #
 # Access control

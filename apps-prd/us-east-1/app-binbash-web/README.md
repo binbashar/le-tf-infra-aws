@@ -79,6 +79,13 @@ curl -sI -u "$USER:$PASS" https://www-next.binbash.co/ | grep -i x-robots-tag
 curl -sI            https://www-next.binbash.co/          # expect 401
 ```
 
+Know what this gate is and is not. It is one shared credential, not per-user,
+not individually revocable, and — inherent to gating with a CloudFront Function
+— it is readable in plaintext from the *deployed* function's published source by
+anyone holding `cloudfront:GetFunction` in this account. It keeps the unfinished
+site off the public internet; it is not a secret-bearing control. Do not reuse
+this password anywhere else.
+
 The gate does not affect deploys: CI writes through the S3 and CloudFront APIs,
 not through the distribution.
 
