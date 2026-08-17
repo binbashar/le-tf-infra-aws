@@ -224,17 +224,23 @@ Location: `/renovate.json`
 3. **Validation checks:**
    ```bash
    # Format check
-   leverage tofu fmt -check
+   leverage tofu format -check
 
    # Validation
    leverage tofu validate
 
-   # Plan without applying
-   leverage tofu plan -out=tfplan
+   # Plan without applying — write the binary plan OUTSIDE the repo, never commit tfplan
+   plan_file="$(mktemp -t tfplan)"
+   leverage tofu plan -out="$plan_file"
 
-   # Review plan
-   leverage tofu show tfplan
+   # Review plan — `show` is not exposed by the wrapper, use native tofu
+   tofu show "$plan_file"
+   rm -f "$plan_file"
    ```
+
+   Before pasting any plan output into a PR, follow the redaction procedure in CLAUDE.md
+   ("Standard workflow: posting a `tofu plan` to a PR for review") — drop the refresh log and
+   replace account IDs with named placeholders.
 
 ## Handling Breaking Changes
 1. **Identify affected resources** using MCP server

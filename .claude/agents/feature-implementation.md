@@ -152,7 +152,7 @@ data-science/us-east-1/
 
 2. **Format and lint:**
    ```bash
-   leverage tofu fmt
+   leverage tofu format
    pre-commit run --files *.tf
    ```
 

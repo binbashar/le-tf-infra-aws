@@ -78,7 +78,7 @@ You are a specialized agent for debugging and fixing issues in the Leverage Refe
    ```bash
    # Navigate to specific layer
    cd {account}/{region}/{layer}
-   leverage tofu fmt -recursive
+   leverage tofu format
    ```
 
 3. **Use MCP to verify syntax:**
