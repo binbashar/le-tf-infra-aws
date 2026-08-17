@@ -1,11 +1,10 @@
 #
-# Viewer-request CloudFront Function. Does two jobs, in one function on purpose:
-# CloudFront allows only ONE function per event type per cache behavior, so the
-# staging gate cannot be a second viewer-request association — a second one is
-# rejected, and the pretty-URL rewrite is not optional.
+# Viewer-request CloudFront Function. Two jobs, in one function on purpose:
+# CloudFront allows only ONE function per event type per cache behavior, so
+# these cannot be two separate associations.
 #
-# 1. Staging access gate (removed at cutover — see staging.tf). Viewer-request
-#    runs before the cache lookup, so the check is enforced on cache hits too.
+# 1. Serve the Wix -> binbash-web redirect map as 301s (see redirects.tf), plus
+#    the two prefix retirements that cannot be written as exact matches.
 #
 # 2. Rewrite pretty URLs to the objects produced by the Next.js static export
 #    (`output: "export"` + `trailingSlash: true`, which writes every route as
@@ -19,38 +18,70 @@
 # with `trailingSlash: false` Next exports `{route}.html` instead and this
 # function would need to append ".html" rather than "/index.html".
 #
-# The function is cloned per app rather than shared with
-# app-aws-startups-accelerate: the name is already namespaced per app, and
-# sharing one would couple two apps' deploys for no benefit. The cutover
-# redirect map (31 changed paths plus the retirements) most likely lands here.
+# Redirects are evaluated BEFORE the rewrite so an old Wix path never gets
+# rewritten to an index.html that does not exist and 404s on the way past.
 #
 resource "aws_cloudfront_function" "pretty_urls" {
   name    = "${var.project}-${var.environment}-${local.app_name}-pretty-urls"
   runtime = "cloudfront-js-2.0"
-  comment = "Staging Basic-Auth gate + rewrite directory-style URIs to their index.html object"
+  comment = "Wix->binbash-web 301 redirects + rewrite directory-style URIs to their index.html object"
   publish = true
 
   code = <<-EOT
+    var REDIRECTS = ${jsonencode(local.wix_redirects)};
+
+    var MEDIUM = 'https://medium.com/binbash-inc';
+
+    // Rebuild the query string so utm_* campaign parameters survive an
+    // internal redirect. request.querystring is an object, not a string.
+    function query(request) {
+      var q = request.querystring;
+      var parts = [];
+      for (var k in q) {
+        var v = q[k].value;
+        parts.push(v ? k + '=' + v : k);
+      }
+      return parts.length ? '?' + parts.join('&') : '';
+    }
+
+    function moved(location) {
+      return {
+        statusCode: 301,
+        statusDescription: 'Moved Permanently',
+        headers: {
+          'location': { value: location },
+          'cache-control': { value: 'max-age=3600' }
+        }
+      };
+    }
+
     function handler(event) {
       var request = event.request;
-
-      // --- staging access gate (remove at cutover, together with staging.tf) ---
-      var auth = request.headers.authorization;
-      if (!auth || auth.value !== '${local.staging_basic_auth_header}') {
-        return {
-          statusCode: 401,
-          statusDescription: 'Unauthorized',
-          headers: {
-            'www-authenticate': { value: 'Basic realm="${local.app_fqdn} (staging)"' },
-            'cache-control': { value: 'no-store' },
-            'x-robots-tag': { value: 'noindex, nofollow' }
-          }
-        };
-      }
-
-      // --- pretty URLs ---
       var uri = request.uri;
 
+      // Look up without a trailing slash so /venture and /venture/ both match.
+      var key = (uri.length > 1 && uri.endsWith('/')) ? uri.slice(0, -1) : uri;
+
+      // --- 1. redirects -----------------------------------------------------
+      var target = REDIRECTS[key];
+      if (target) {
+        // Off-site targets are absolute and get a clean URL; on-site targets
+        // keep the query string.
+        return moved(target.indexOf('http') === 0 ? target : target + query(request));
+      }
+
+      // Prefix retirements. The Wix blog lived at /post/<slug>; it is now the
+      // Medium publication, which has no per-post mapping, so the whole prefix
+      // collapses to the publication root. /recipes/* was Wix demo content
+      // that was never ours and goes home.
+      if (key === '/post' || key.indexOf('/post/') === 0) {
+        return moved(MEDIUM);
+      }
+      if (key === '/recipes' || key.indexOf('/recipes/') === 0) {
+        return moved('/' + query(request));
+      }
+
+      // --- 2. pretty URLs ---------------------------------------------------
       if (uri.endsWith('/')) {
         // Directory path: serve its index document
         request.uri = uri + 'index.html';

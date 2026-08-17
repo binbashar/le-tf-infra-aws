@@ -15,9 +15,9 @@ output "aws_startups_accelerate_certificate_arn" {
 }
 
 #
-# Certificate: www-next.binbash.co
+# Certificate: binbash.co + www.binbash.co (binbash-web production site)
 #
 output "binbash_web_certificate_arn" {
-  description = "The www-next.binbash.co certificate ARN"
+  description = "The binbash.co / www.binbash.co certificate ARN"
   value       = aws_acm_certificate.binbash_web.arn
 }

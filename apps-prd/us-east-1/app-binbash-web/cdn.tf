@@ -11,7 +11,7 @@ module "binbash_web" {
   # see locals.tf. The FQDN only ever appears in aliases.
   namespace = "${var.project}-${var.environment}"
   name      = local.app_name
-  aliases   = [local.app_fqdn]
+  aliases   = local.app_aliases
 
   # Certificate settings (ACM cert in us-east-1, from the security-certs layer)
   acm_certificate_arn = data.terraform_remote_state.certificates.outputs.binbash_web_certificate_arn
@@ -25,11 +25,9 @@ module "binbash_web" {
   default_root_object = "index.html"
   index_document      = "index.html"
 
-  # Staging only: serve X-Robots-Tag: noindex, nofollow (see staging.tf)
-  response_headers_policy_id = aws_cloudfront_response_headers_policy.staging_noindex.id
-
-  # Staging Basic-Auth gate + pretty-URL rewrite, merged into a single function:
-  # CloudFront permits only one function per event type per cache behavior.
+  # Wix->binbash-web 301 redirects + pretty-URL rewrite, merged into a single
+  # function: CloudFront permits only one function per event type per cache
+  # behavior.
   function_association = [{
     event_type   = "viewer-request"
     function_arn = aws_cloudfront_function.pretty_urls.arn

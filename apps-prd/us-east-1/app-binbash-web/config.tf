@@ -23,8 +23,6 @@ terraform {
   required_providers {
     # terraform-aws-cloudfront-s3-cdn v2.x requires aws >= 6.13
     aws = "~> 6.0"
-    # Staging HTTP Basic credential, see staging.tf
-    random = "~> 3.6"
   }
 
   backend "s3" {

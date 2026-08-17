@@ -55,7 +55,7 @@ provider "registry.opentofu.org/hashicorp/local" {
 
 provider "registry.opentofu.org/hashicorp/random" {
   version     = "3.9.0"
-  constraints = ">= 2.2.0, ~> 3.6"
+  constraints = ">= 2.2.0"
   hashes = [
     "h1:8EQU5KSxezcjo/phRSe69rDOI0lk4pSaggj7FsskYp8=",
     "h1:U8KXqGCoNI9/guYbTvzgdtVk3fRthoG0UXwm1JoEpIs=",

@@ -14,8 +14,13 @@ output "cf_domain_name" {
 }
 
 output "app_fqdn" {
-  description = "Public FQDN serving the app (staging)"
+  description = "Public FQDN serving the app"
   value       = local.app_fqdn
+}
+
+output "verification_url" {
+  description = "Hit this to verify the site before the DNS cutover — the distribution's own domain, which works regardless of where binbash.co points"
+  value       = "https://${module.binbash_web.cf_domain_name}/"
 }
 
 output "deploy_role_arn" {
@@ -23,16 +28,7 @@ output "deploy_role_arn" {
   value       = aws_iam_role.github_actions_deploy.arn
 }
 
-#
-# Staging access gate (removed at cutover — see staging.tf)
-#
-output "staging_basic_auth_username" {
-  description = "Username for the staging HTTP Basic gate"
-  value       = var.staging_basic_auth_username
-}
-
-output "staging_basic_auth_password" {
-  description = "Password for the staging HTTP Basic gate. Read with `leverage tofu output -raw staging_basic_auth_password` — it is generated, never committed to this public repo."
-  value       = random_password.staging_basic_auth.result
-  sensitive   = true
+output "redirect_count" {
+  description = "Number of Wix->binbash-web 301 redirects served by the CloudFront Function (see redirects.tf)"
+  value       = length(local.wix_redirects)
 }

@@ -12,20 +12,16 @@
 # (var.alarm_min_requests_per_period): below the floor the expression reports
 # 0 and the alarm stays OK; at or above it the true error rate is evaluated.
 #
-# Staging interaction — why TotalErrorRate is not created while the gate is up:
-# CloudFront's *ErrorRate metrics are computed from THE RESPONSE's status code
-# ("the percentage of all viewer requests for which the response's HTTP status
-# code is 4xx or 5xx" — https://docs.aws.amazon.com/AmazonCloudFront/latest/
-# DeveloperGuide/viewing-cloudfront-metrics.html), not from the origin's. A 401
-# returned by the viewer-request function in cloudfront-function.tf is therefore
-# a 4xx like any other, and while the staging gate is up essentially every
-# unauthenticated crawler hit is one — TotalErrorRate sits near 100%, sails past
-# the min-requests floor on bot traffic alone, and the alarm pages continuously.
-# No threshold in (0, 100] can make it meaningful in that state, so it is simply
-# not created until var.staging_access_gate_enabled goes false at cutover.
-#
-# The 5xx alarm is unaffected (401 is 4xx, not 5xx) and stays on throughout, so
-# real origin and distribution failures are still covered during staging.
+# A note for whoever touches these next: CloudFront's *ErrorRate metrics are
+# computed from THE RESPONSE's status code ("the percentage of all viewer
+# requests for which the response's HTTP status code is 4xx or 5xx" —
+# https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/viewing-cloudfront-metrics.html),
+# not from the origin's. Anything the viewer-request function in
+# cloudfront-function.tf returns itself counts too. That is fine for the 301
+# redirects it serves today (3xx is neither 4xx nor 5xx), but if a future change
+# has that function return 4xx directly — an auth gate, a 410 for retired
+# content — TotalErrorRate will climb accordingly and this alarm needs
+# rethinking at the same time.
 #
 resource "aws_cloudwatch_metric_alarm" "cf_5xx_error_rate" {
   alarm_name          = "${var.project}-${var.environment}-${local.app_name}-cf-5xx-error-rate"
@@ -79,8 +75,6 @@ resource "aws_cloudwatch_metric_alarm" "cf_5xx_error_rate" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "cf_total_error_rate" {
-  count = var.staging_access_gate_enabled ? 0 : 1
-
   alarm_name          = "${var.project}-${var.environment}-${local.app_name}-cf-total-error-rate"
   alarm_description   = "CloudFront TotalErrorRate >= ${var.alarm_total_error_rate_threshold}% over a period with >= ${var.alarm_min_requests_per_period} requests for ${local.app_fqdn}"
   comparison_operator = "GreaterThanOrEqualToThreshold"
