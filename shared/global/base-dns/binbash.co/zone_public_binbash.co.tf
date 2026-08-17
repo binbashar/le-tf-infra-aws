@@ -9,24 +9,27 @@ resource "aws_route53_zone" "public" {
 #
 # A records
 #
-resource "aws_route53_record" "A_binbash_co" {
-  zone_id = aws_route53_zone.public.id
-  name    = "binbash.co"
-  records = ["185.230.63.107"]
-  type    = "A"
-  ttl     = 300
-}
-
+# binbash.co (apex) and www.binbash.co previously pointed at Wix here:
+#
+#   A     binbash.co      185.230.63.107
+#   CNAME www.binbash.co  pointing.wixdns.net
+#
+# Both moved to apps-prd/us-east-1/app-binbash-web/dns.tf as Route 53 ALIAS
+# records for the binbash-web CloudFront distribution, as part of the migration
+# off Wix (see issue #1141). They live in that layer rather than here because an
+# alias record needs the distribution's domain name and hosted zone id, and
+# reading those from this layer would make the two layers depend on each other
+# in both directions — this layer already supplies the zone id that layer uses.
+#
+# Ordering, if this is ever re-done: the CNAME above had to be destroyed BEFORE
+# the A/AAAA aliases could be created, because Route 53 rejects any other record
+# type at a name that has a CNAME.
+#
+# The apex MX (Google Workspace) and TXT records below are a different record
+# type at the same name and were unaffected by the cutover.
 #
 # CNAME records
 #
-resource "aws_route53_record" "CNAME_www_binbash_co" {
-  zone_id = aws_route53_zone.public.id
-  name    = "www.binbash.co"
-  records = ["pointing.wixdns.net"]
-  type    = "CNAME"
-  ttl     = 300
-}
 
 resource "aws_route53_record" "CNAME_leverage_binbash_co" {
   zone_id = aws_route53_zone.public.id
