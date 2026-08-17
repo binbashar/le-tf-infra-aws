@@ -98,6 +98,24 @@ alarm meaningful, so it is not created until `staging_access_gate_enabled` goes
 false. The `5xxErrorRate` alarm is unaffected (401 is 4xx, not 5xx) and covers
 real failures throughout staging.
 
+## If an alarm fires
+
+`bb-apps-prd-binbash-web-cf-5xx-error-rate` is the only alarm live during
+staging. Before assuming an outage, check request volume for the period: the
+alarm already gates on `var.alarm_min_requests_per_period`, so a fire means
+real 5xx responses, not scanner noise. Most likely causes, in order:
+
+1. The CloudFront Function failed at runtime — a function execution error
+   surfaces to viewers as a `502`. Check `FunctionExecutionErrors` on
+   `bb-apps-prd-binbash-web-pretty-urls` in CloudWatch.
+2. The origin bucket lost its policy or OAC wiring, so CloudFront cannot read
+   it.
+3. A bad deploy left `/404.html` missing, so the custom error response itself
+   fails.
+
+Rollback is a redeploy: the bucket content is fully rebuildable from the app
+repo's CI (`RPO` 0 — the source of truth is git; `RTO` is one workflow run).
+
 ## Deployment
 
 1. Apply `apps-prd/us-east-1/security-certs` first — this layer consumes its
