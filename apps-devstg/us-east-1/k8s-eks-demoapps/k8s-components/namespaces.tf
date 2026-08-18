@@ -43,15 +43,6 @@ resource "kubernetes_namespace" "monitoring_alerts" {
   }
 }
 
-resource "kubernetes_namespace" "ingress_nginx" {
-  count = var.ingress.nginx_controller.enabled ? 1 : 0
-
-  metadata {
-    labels = local.labels
-    name   = "ingress-nginx"
-  }
-}
-
 resource "kubernetes_namespace" "alb_ingress" {
   count = var.ingress.alb_controller.enabled ? 1 : 0
 
@@ -130,5 +121,22 @@ resource "kubernetes_namespace" "traefik_ingress" {
   metadata {
     labels = local.labels
     name   = "traefik"
+  }
+}
+
+resource "kubernetes_namespace" "envoy_gateway" {
+  count = var.envoy_gateway.enabled ? 1 : 0
+
+  metadata {
+    # The public-exposure label is what lets this namespace's own platform
+    # routes attach to the public Gateway's listeners, both of which gate on it
+    # (the HTTP→HTTPS redirector under the `nlb` frontend, the `/healthz`
+    # responder under `alb`). It is not a workload opt-in here: the namespace
+    # holds no workloads, only the gateways themselves.
+    labels = merge(
+      local.labels,
+      local.public_gw_eg_enabled ? { (local.public_gw_eg_exposure_label.key) = local.public_gw_eg_exposure_label.value } : {},
+    )
+    name = "envoy-gateway-system"
   }
 }

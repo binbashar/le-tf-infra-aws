@@ -15,6 +15,10 @@ repos:
       - id: trailing-whitespace
         args:
           - --markdown-linebreak-ext=md
+        # Vendored upstream CRD bundles must stay byte-identical to the release
+        # asset they came from — that identity is the whole point of vendoring
+        # them. Autofixing whitespace would quietly break it.
+        exclude: ^apps-devstg/us-east-1/k8s-eks-demoapps/k8s-components/crds/
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.55.0

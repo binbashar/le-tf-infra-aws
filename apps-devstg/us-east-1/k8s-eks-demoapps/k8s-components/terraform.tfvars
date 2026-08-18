@@ -3,20 +3,23 @@
 #------------------------------------------------------------------------------
 ingress = {
   alb_controller = {
-    enabled = false
-  }
-
-  # ########################
-  # CAN NOT SET BOTH TO TRUE
-  nginx_controller = {
     enabled = true
   }
+
+  # The last Ingress-API controller in this layer, and off. nginx-ingress used
+  # to sit beside it as a mutually exclusive alternative and was removed
+  # outright — replacing it is the whole point of this cluster, so it is never
+  # coming back. Since the nginx → Envoy Gateway migration, private L7 traffic
+  # goes through `private-gw-eg` via HTTPRoutes, so nothing watches
+  # `private-apps` any more. See the note on `local.private_ingress_class` in
+  # locals.tf before enabling this — the components once wired to that class
+  # have HTTPRoutes now, not Ingresses.
+  # `apps_ingress` below depends on this being on, and is off too.
   traefik = {
     enabled = false
   }
-  # ########################
 
-  # create an ingress to send traffic from ALB to Nginx/Traefik
+  # create an ingress to send traffic from ALB to Traefik
   apps_ingress = {
     enabled = false
     # Load balancer type: internet-facing or internal
@@ -46,7 +49,7 @@ dns_sync = {
   }
 
   public = {
-    enabled = false
+    enabled = true
   }
 }
 
@@ -54,7 +57,7 @@ dns_sync = {
 # Secrets Management
 #------------------------------------------------------------------------------
 external_secrets = {
-  enabled = true
+  enabled = false
 }
 
 #------------------------------------------------------------------------------
@@ -65,6 +68,11 @@ scaling = {
     enabled = false
   }
 
+  # Off with goldilocks, which was its only consumer — VPA has no recommender
+  # of its own and nothing else reads the VPA objects. Note this flag also
+  # gates metrics-server (see the `helm_release.metrics_server` count
+  # expression), so turning it off takes `kubectl top` with it. Nothing else
+  # depends on that today: HPA is off above.
   vpa = {
     enabled = false
   }
@@ -96,6 +104,68 @@ keda = {
     enabled = false
   }
 }
+
+#------------------------------------------------------------------------------
+# Ingress: Envoy Gateway (CNCF, Gateway API based). Chosen as the replacement
+# for nginx-ingress after benchmarking it against kgateway and nginx — see
+# loadtest/test-results.md. Runs alongside nginx during the migration since it
+# consumes Gateway API resources, not Ingress ones.
+#
+# `gateway_api_version` pins the shared upstream Gateway API CRD bundle
+# (Gateway, HTTPRoute, GatewayClass, …) — see networking-gateway-api.tf.
+#
+# Two independent Gateways, each with its own GatewayClass, EnvoyProxy and NLB
+# (EG provisions one Envoy data plane per Gateway), both in the
+# `envoy-gateway-system` namespace. Workload HTTPRoutes pick one via a
+# cross-namespace parentRef:
+#
+#   private_gateway -> `private-gw-eg`, GatewayClass `envoy-gateway`
+#     Internal NLB, VPN-only. Hostnames: <app>.aws.binbash.com.ar
+#     Accepts HTTPRoutes from any namespace.
+#
+#   public_gateway  -> `public-gw-eg`, GatewayClass `envoy-gateway-public`
+#     Internet-facing NLB, restricted at the NLB's managed security group to
+#     `envoy_gateway_public_allowed_cidrs`. Hostnames: <app>.binbash.com.ar
+#     Accepts HTTPRoutes ONLY from namespaces labelled
+#     `gateway.binbash.com.ar/public-exposure=allowed`.
+#
+# The public allowlist is NOT set here: it holds operators' home/office IPs,
+# which shouldn't land in git history. It lives in the non-versioned
+# `allowlist.local.auto.tfvars` — copy `allowlist.local.auto.tfvars.example`
+# and fill it in. Planning the public gateway without it fails on a
+# precondition rather than exposing an open endpoint.
+#------------------------------------------------------------------------------
+envoy_gateway = {
+  enabled             = true
+  version             = "v1.7.2"
+  gateway_api_version = "v1.4.0"
+
+  private_gateway = {
+    enabled = true
+  }
+
+  # `frontend = "alb"` puts an ALB with an ACM certificate in front of the
+  # gateway and drops its Service to ClusterIP, replacing the internet-facing
+  # NLB. This is the topology the cluster is modelled on; "nlb" is the previous
+  # shape and flipping this one word is the whole rollback.
+  # `open_to_internet` matches the modelled topology: the ALB admits everyone
+  # and access control lives per-application, as a SecurityPolicy on each route
+  # (see k8s-workloads). Set it back to false to also close the perimeter to
+  # `envoy_gateway_public_allowed_cidrs` — useful while a route's own policy is
+  # still being written, but note it then masks whether that policy works.
+  # `waf_enabled` attaches the WebACL owned by the `security-firewall --` layer,
+  # which is excluded from the deployed set and must be renamed out of that
+  # exclusion and applied first. Every rule in it currently runs in COUNT, so it
+  # observes and logs without blocking; promoting rules to `block` is a change
+  # in that layer, not here.
+  public_gateway = {
+    enabled          = true
+    frontend         = "alb"
+    open_to_internet = true
+    waf_enabled      = false
+  }
+}
+
 #------------------------------------------------------------------------------
 # Monitoring: Logging
 #------------------------------------------------------------------------------
@@ -116,8 +186,15 @@ logging = {
 # KubePrometheusStack
 prometheus = {
   kube_stack = {
-    enabled = true
+    enabled = false
 
+    # Off because the secret its only receiver needs,
+    # `/notifications/alertmanager` in the shared account, does not exist —
+    # `helm_release.kube_prometheus_stack` reads it through a
+    # `data.aws_secretsmanager_secret_version`, so flipping this without
+    # creating the secret fails the plan. The chart values are gated on this
+    # same flag, so Alertmanager and its HTTPRoute both stay absent rather than
+    # rendering a workload with an empty `slack_api_url`.
     alertmanager = {
       enabled = false
     }
@@ -166,20 +243,23 @@ gatus = {
 # CICD | Argo
 #------------------------------------------------------------------------------
 argocd = {
-  enabled = true
+  enabled = false
 
   enableWebTerminal   = true
   enableNotifications = false
 
   image_updater = {
-    enabled = true
+    enabled = false
   }
 
+  # Gated independently of `argocd.enabled` above (see cicd-argo.tf), so this
+  # has to come down on its own — leaving it true keeps Rollouts and its
+  # dashboard installed with no Argo CD alongside them.
   rollouts = {
-    enabled = true
+    enabled = false
 
     dashboard = {
-      enabled = false
+      enabled = true
     }
   }
 }

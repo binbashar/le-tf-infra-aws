@@ -1,8 +1,14 @@
 # -------------------------------------------------------------------------------------------
 # AlertManager
 # -------------------------------------------------------------------------------------------
+# Gated on the variable rather than hardcoded `true`. The Slack config below
+# is the only receiver, and its webhook comes from the
+# `/notifications/alertmanager` secret, which is read only when
+# `prometheus.kube_stack.alertmanager.enabled` is set. Hardcoding `true` while
+# the variable was false rendered an Alertmanager whose `slack_api_url` was the
+# empty string — a config it rejects at startup.
 alertmanager:
-  enabled: true
+  enabled: ${alertmanagerEnabled}
 
   config:
     global:
@@ -37,19 +43,16 @@ alertmanager:
       {{ end }}
       {{ end }}
 
+  # No Ingress. Published at `alertmanager.aws.binbash.com.ar` by the
+  # `alertmanager` row in networking-httproutes.tf. Note that row is gated on
+  # the same variable as this block, so the route disappears with the workload.
+  #
+  # Its cert-manager annotation also pointed at a ClusterIssuer that does not
+  # exist here (`clusterissuer-arta-...`, from a different project) — a
+  # copy-paste that would have left this hostname without a certificate. Moot
+  # now: the gateway terminates TLS with the shared wildcard.
   ingress:
-    enabled: true
-    annotations:
-      kubernetes.io/tls-acme: 'true'
-      kubernetes.io/ingress.class: ${privateIngressClass}
-      cert-manager.io/cluster-issuer: clusterissuer-arta-cert-manager-clusterissuer
-    hosts:
-      - alertmanager.${platform}.${privateBaseDomain}
-    path: /
-    tls:
-      - secretName: alertmananager-tls
-        hosts:
-        - alertmanager.${platform}.${privateBaseDomain}
+    enabled: false
 
   alertmanagerSpec:
     nodeSelector: ${nodeSelector}
@@ -78,19 +81,18 @@ grafana:
     annotations:
       eks.amazonaws.com/role-arn: ${grafanaRoleArn}
 
+  # No Ingress. Published at `grafana.aws.binbash.com.ar` by the `grafana` row
+  # in networking-httproutes.tf.
   ingress:
-    enabled: true
-    annotations:
-      kubernetes.io/tls-acme: 'true'
-      kubernetes.io/ingress.class: ${privateIngressClass}
-      cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
-    hosts:
-      - grafana.${platform}.${privateBaseDomain}
-    path: /
-    tls:
-      - secretName: grafana-tls
-        hosts:
-          - grafana.${platform}.${privateBaseDomain}
+    enabled: false
+
+  # Grafana builds absolute URLs (share links, OAuth redirects, alert
+  # notification links) from this. Left implicit it derives from the Service
+  # name and every such link points somewhere unreachable.
+  "grafana.ini":
+    server:
+      domain: grafana.${privateBaseDomain}
+      root_url: "https://grafana.${privateBaseDomain}"
 
   nodeSelector: ${nodeSelector}
   tolerations: ${tolerations}
@@ -129,26 +131,32 @@ kube-state-metrics:
 prometheus:
   enabled: true
 
+  # No Ingress. Published at `prometheus.aws.binbash.com.ar` by the
+  # `prometheus` row in networking-httproutes.tf.
   ingress:
-    enabled: true
-    annotations:
-      kubernetes.io/tls-acme: 'true'
-      kubernetes.io/ingress.class: ${privateIngressClass}
-      cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
-    hosts:
-      - prometheus.${platform}.${privateBaseDomain}
-    path: /
-    tls:
-      - secretName: prometheus-tls
-        hosts:
-          - prometheus.${platform}.${privateBaseDomain}
+    enabled: false
 
   prometheusSpec:
     nodeSelector: ${nodeSelector}
     tolerations: ${tolerations}
 
+    # Same reason as Grafana's root_url: the web UI builds self-referential
+    # links (and the Alertmanager `generatorURL` on every alert) from this.
+    externalUrl: "https://prometheus.${privateBaseDomain}"
+
+    # 30d against the 20Gi claim below. This is a demo cluster that gets torn
+    # down nightly, so retention is effectively bounded by the teardown, not by
+    # this number — but leaving it at 30d keeps the volume from being the thing
+    # that fills up if the cluster is left running over a weekend.
     retention: 30d
 
+    # `gp2` is the only StorageClass on this cluster and it still declares the
+    # in-tree `kubernetes.io/aws-ebs` provisioner, which no longer exists in
+    # Kubernetes 1.34. It works anyway: the CSI migration shim rewrites the
+    # claim onto `ebs.csi.aws.com` (the aws-ebs-csi-driver EKS addon). Verified
+    # by binding a probe PVC before enabling this — it bound in 20s. Note the
+    # class is *not* marked default, so every claim here has to name it
+    # explicitly or it hangs Pending forever.
     storageSpec:
       volumeClaimTemplate:
         spec:

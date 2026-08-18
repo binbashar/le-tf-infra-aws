@@ -1,0 +1,24 @@
+# Kustomization for the echo-server data-plane benchmark.
+#
+# `configMapGenerator` keeps echo-server-k6.js as the single source of truth —
+# the file can be run locally with `k6 run echo-server-k6.js` and the ConfigMap
+# referenced by k6-job.yaml gets generated from the same file at apply time.
+#
+# `disableNameSuffixHash: true` keeps the ConfigMap name stable (the Job's
+# spec.template.spec.volumes[].configMap.name is a fixed string in k6-job.yaml).
+# The Job is immutable, so re-runs are `kubectl delete -k . && kubectl apply -k .`.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: loadtest
+
+resources:
+  - k6-job.yaml
+
+configMapGenerator:
+  - name: echo-server-k6
+    files:
+      - echo-server-k6.js
+
+generatorOptions:
+  disableNameSuffixHash: true

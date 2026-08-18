@@ -1,14 +1,11 @@
 # EKS Cluster reference layer
 
 ## Overview
-This documentation should help you understand the different pieces that make up this
-EKS Cluster.
+This documentation should help you understand the different pieces that make up the EKS cluster.
 With such understanding you should be able to create your copies of this
 layer that are modified to serve other goals, such as having a platform per environment.
 
-More info on EKS Cluster [here](https://binbash.atlassian.net/wiki/spaces/BDPS/pages/2326560793/Leverage+Kubernetes+Platform+EKS CLUSTER).
-
-Terraform code to orchestrate and deploy our EKS CLUSTER (cluster, network, k8s resources) reference
+Terraform/OpenTofu code to orchestrate and deploy our EKS CLUSTER (cluster, network, k8s resources) reference
 architecture. Consider that we already have an [AWS Landing Zone](https://github.com/binbashar/le-tf-infra-aws)
 deployed as baseline which allow us to create, extend and enable new components on its grounds.
 
@@ -16,25 +13,69 @@ deployed as baseline which allow us to create, extend and enable new components 
 The EKS layer (`apps-devstg/us-east-1/k8s-eks-demoapps`) is divided into sublayers which
 have clear, specific purposes.
 
-### The "network" layer
-This is where we define the VPC resources for this cluster.
+- `network/` is where we define the VPC resources for this cluster.
+- `cluster/` is used to define the cluster attributes such as node groups and kubernetes version.
+- `identities/` defines EKS IRSA roles that are later on assumed by roles running in the cluster.
+- `addons/` is used to set different EKS managed Addons on the cluster.
+- `k8s-components/` defines the base cluster components such as ingress controllers, certificate managers, dns managers, ci/cd components, and more.
+- `k8s-workloads/` defines the cluster workloads such as web-apps, apis, back-end microservices, etc.
 
-### The "cluster" layer
-This is used to define the cluster attributes such as node groups and kubernetes version.
+## Orchestration
+These are the steps to orchestrate the demoapps cluster. They can be used for spinning up the cluster and also for tearing it down if followed in reverse order.
 
-### The "identities" layer
-This layer defines EKS IRSA roles that are later on assumed by roles running in the cluster.
+### Pre-requisites
+- The code is heavily organized around the Binbash Leverage -- it follows its conventions.
+- EKS code is organized in the following sublayers:
+    - `network`: VPC resources.
+    - `cluster`: EKS cluster and nodes.
+    - `identities`: EKS IRSA policies and roles.
+    - `addons`: EKS add-ons.
+    - `k8s-components`: cluster components for networking, monitoring, security, scaling, ci/cd, and more.
+    - `k8s-workloads`: demo apps.
+- The Binbash Leverage CLI must be installed and available in the system PATH.
+- The same applies to `kubectl` and the `aws` CLI -- they are useful for troubleshooting.
+- The code has been migrated to OpenTofu, therefore keep in mind the following:
+    - You must use `leverage tofu *` commands for init, plan, and apply.
+    - Other commands are not proxied through `leverage`, just run `tofu` (which must be installed for that to work)
+- Since the cluster API is configured to be privately accessible, VPN access is required. Prompt the user that as a reminder before you continue.
 
-### The "addons" layer
-This layer is used to set different EKS managed Addons on the cluster.
+### Step 1
+- Go to the `network` sublayer.
+- Enable the NAT Gateway.
+- Plan, verify, and apply.
+- Applying takes usually takes 2-3 minutes. Be prepared.
+- If the NAT Gateway is already deployed, that's fine, notify the user and move on.
 
-### The "k8s-components" layer
-This here defines the base cluster components such as ingress controllers, certificate managers, dns managers, ci/cd components, and more.
+### Step 2
+- Go to the `cluster` sublayer.
+- Plan, verify, and apply.
+- Applying takes usually takes 15-25 minutes. Really prepare for that.
+- This is the key step that requires VPN access. If that has not been covered applying may not succeed.
 
-### The "k8s-workloads" layer
-This here defines the cluster workloads such as web-apps, apis, back-end microservices, etc.
+### Step 3
+- Go to the `identities` sublayer.
+- Plan, verify, and apply.
 
-## Important: read this if you are copying the EKS CLUSTER layer to stand up a new platform
+### Step 4
+- Go to the `addons` sublayer.
+- Plan, verify, and apply.
+
+### Step 5
+- Go to the `k8s-components` sublayer.
+- This sublayer usually requires more involvement from the user to customize which components he wants to deploy.
+- Prompt the user if he would like an standard setup (using `terraform.tfvars` defaults) or a custom one. If he chooses the latter, guide the user through the process of choosing which components to enable and install.
+- Plan, verify, and apply.
+- Applying this might take several minutes, depending on the components that need to be installed. Really prepare for that.
+- There might be dependencies between some of the components. For instance, maybe an autoscaler will be needed first if there is another component that deploys too many pods or pods that require high resources usage.
+
+### Step 6
+- Go to the `k8s-workloads` sublayer.
+- This layer is optional. Prompt the user on whether he would like to install it.
+- This layer depends on several cluster components in order to fully work.
+- The endpoints created for the demo apps are private so VPN access is required.
+- Plan, verify, and apply.
+
+## Creating a new cluster using the existing setup as reference
 The typical use cases would be:
 - You need to set up a new platform in a new account
 - Or you need to set up another platform in an existing account which already has a platform
@@ -58,7 +99,6 @@ new account that the cluster layers depend on, they are:
     - A similar procedure to create this layer. Get this layer from `devstg`, replace references to `devstg` with `prd`, and then run init & apply.
 
 ### Create the EKS CLUSTER
-
 The basic flow is:
 
 - Base EKS
@@ -76,7 +116,6 @@ Following the [leverage terraform workflow](https://leverage.binbash.com.ar/user
 The EKS CLUSTER layers need to be orchestrated in the following order:
 
 #### The base
-
 1. Network
     1. Open the `locals.tf` file and make sure the VPC CIDR and subnets are correct.
        1. Check the CIDR/subnets definition that were made for DevStg and Prd clusters and avoid segments overlapping.
@@ -172,7 +211,6 @@ The EKS CLUSTER layers need to be orchestrated in the following order:
    3. **Apply the layer**: `leverage tf apply`
 
 #### EKS CLUSTER's K8s EKS Cluster Components and Workloads deployment
-
 1. Cluster Components (k8s-components)
     1. Note that EKS CLUSTER has a set of default components, anyway you can use the `terraform.tfvars` file to configure which components get installed
     2. Important: For private repo integrations after ArgoCD was successfully installed you will need to create this secret object in the cluster. Before creating the secret you need to update it to add the private SSH key that will grant ArgoCD permission to read the repository where the application definition files can be located. Note that this manual step is only a workaround that could be automated to simplify the orchestration.
@@ -189,11 +227,21 @@ to the VPN** since all our implementations are via private endpoints (private VP
 Note you can use the [binbash Leverage kubectl command](https://leverage.binbash.co/user-guide/leverage-cli/reference/kubectl/) to access the cluster.
 
 ### Connecting to ArgoCD
-  1. Since we’re deploying a private K8s cluster you’ll need to be connected to the VPN
-  2. From your web browser access to https://argocd.us-east-1.devstg.aws.binbash.com.ar/
-  3. Considering the current `4.5.7` version we are using the default password it's stored in a secret.
-    1. To obtain it, use this command: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`  
-  4. As Username, the default user is **admin**.
+1. Since we’re deploying a private K8s cluster you’ll need to be connected to the VPN
+2. From your web browser access to https://argocd.aws.binbash.com.ar/
+3. Username is **admin**. The password is *not* the chart's generated one —
+    `configs.secret.argocdServerAdminPassword` is set from the
+    `/k8s-eks-demoapps/argocdserveradminpassword` secret in AWS Secrets Manager,
+    which holds a bcrypt hash. Get the plaintext from whoever provisioned it;
+    `argocd-initial-admin-secret` is not created when the password is supplied
+    this way.
+4. For the CLI, `--grpc-web` is required — see `k8s-components/README.md`:
+    `argocd login argocd.aws.binbash.com.ar --grpc-web`
+
+### Ingress and exposing apps
+All L7 exposure goes through Envoy Gateway, not Ingress. See
+[`k8s-components/README.md`](k8s-components/README.md) for the topology, how to
+publish an app on the private or public gateway, and the operational gotchas.
 
 ## Post-initial Orchestration
 After the initial orchestration, the typical flow could include multiple tasks. In other words, there won't be a normal flow but you some of the operations you would need to perform are:

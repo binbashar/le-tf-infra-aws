@@ -1,0 +1,12 @@
+# Envoy Gateway controller values
+# Docs: https://gateway.envoyproxy.io/docs/install/install-helm/
+#
+# Schedule the controller pod on the tools node group (consistent with other
+# cluster-wide controllers in this layer). The data-plane Envoy pods that EG
+# provisions per Gateway are configured via the EnvoyProxy CR and pinned to
+# the same node group there.
+
+deployment:
+  pod:
+    nodeSelector: ${nodeSelector}
+    tolerations: ${tolerations}

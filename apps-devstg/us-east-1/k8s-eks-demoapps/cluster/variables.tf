@@ -1,19 +1,28 @@
 #===========================================#
 # K8s EKS                                   #
 #===========================================#
+# EKS does not allow skipping minor versions — each bump is one hop, applied
+# and verified before the next. Node AMIs follow this value automatically.
 variable "cluster_version" {
   description = "Kubernetes version to use for the EKS cluster."
   type        = string
-  default     = "1.31"
+  default     = "1.34"
 }
-# Note that for K8s versions 1.32 and earlier the AMI type could be "AL2_x86_64"
-# For newer versions the newer "AL2023" images must be used, e.g. "AL2023_x86_64_STANDARD"
+# Amazon Linux 2 is gone from EKS 1.33 onwards — AWS publishes no AL2 AMI for
+# 1.33+, only AL2023 (verify with:
+# `aws ssm get-parameter --name /aws/service/eks/optimized-ami/<ver>/amazon-linux-2/recommended/image_id`).
+# Migrated to AL2023 while still on 1.31, deliberately ahead of the version
+# bumps, so a substrate change and a version jump never land in the same apply.
+#
+# AL2023 requires Nitro-based instances (ENA + NVMe) — keep Xen generations
+# such as t2 out of `instance_types` below or those nodes will never boot.
+#
+# Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS.
 # Ref: https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-deprecation-faqs.html
-# Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS
 variable "ami_type" {
   description = "The AMI type to be used when creating nodes"
   type        = string
-  default     = "AL2_x86_64"
+  default     = "AL2023_x86_64_STANDARD"
 }
 
 

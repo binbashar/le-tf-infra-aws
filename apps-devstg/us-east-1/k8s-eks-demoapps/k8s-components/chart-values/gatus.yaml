@@ -1,13 +1,18 @@
 #------------------------------------------------------------------------------
-# Configure endpoint to monitor
+# Endpoints to monitor
+#
+# `endpoints`, not `services` — Gatus renamed the key upstream and v5 rejects
+# the old one. The previous version of this file still used `services`, so it
+# could not have worked against any recent Gatus; it survived because the
+# component has been disabled.
 #------------------------------------------------------------------------------
 config:
-  services:
+  endpoints:
     - name: Binbash
       url: https://binbash.com.ar
       interval: 30s
       conditions:
-        - '[STATUS] == 200'
+        - "[STATUS] == 200"
       # alerts:
       #   - type: slack
       #     enabled: true
@@ -17,12 +22,18 @@ config:
       url: https://leverage.binbash.com.ar
       interval: 30s
       conditions:
-        - '[STATUS] == 200'
-      # alerts:
-      #   - type: slack
-      #     enabled: true
-      #     description: "healthcheck failed 3 times in a row"
-      #     send-on-resolved: true
+        - "[STATUS] == 200"
+    # Dogfooding: the demo endpoint, reached the way the internet reaches it.
+    # Exercises the public Envoy Gateway, its NLB and the wildcard cert every
+    # interval. Note the request leaves the cluster and comes back in through
+    # the internet-facing NLB, so it only passes while the egress NAT address
+    # is on `envoy_gateway_public_allowed_cidrs` — if this endpoint is the only
+    # one red, check the allowlist before suspecting the gateway.
+    - name: Echo Server (public gateway)
+      url: https://echo-server.binbash.com.ar
+      interval: 60s
+      conditions:
+        - "[STATUS] == 200"
 
 #------------------------------------------------------------------------------
 # Alerting settings
@@ -32,21 +43,18 @@ config:
 #     webhook-url: "https://hooks.slack.com/services/**********/**********/**********"
 
 #------------------------------------------------------------------------------
-# Ingress settings
+# Exposure
+#
+# No Ingress. Gatus is published at `gatus.aws.binbash.com.ar` by the `gatus`
+# row in networking-httproutes.tf, and the gateway's HTTPS listener terminates
+# TLS — so the cert-manager Certificate and the hardcoded `private-apps`
+# ingress class that used to live here are both gone.
 #------------------------------------------------------------------------------
 ingress:
-  enabled: true
-  annotations:
-    kubernetes.io/tls-acme: "true"
-    # Associate this ingress with the following ingress controller
-    kubernetes.io/ingress.class: private-apps
-    # Use the following cert-manager clusterissuer
-    cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
-    # The backend is expecting to handle HTTPS
-    #nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-  hosts:
-    - ${gatusHost}
-  tls:
-    - secretName: gatus-server-tls
-      hosts:
-        - ${gatusHost}
+  enabled: false
+
+#------------------------------------------------------------------------------
+# Scheduling: tools node group, same as every other platform component.
+#------------------------------------------------------------------------------
+nodeSelector: ${nodeSelector}
+tolerations: ${tolerations}
