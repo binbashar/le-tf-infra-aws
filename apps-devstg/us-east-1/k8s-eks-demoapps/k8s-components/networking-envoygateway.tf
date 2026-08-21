@@ -613,26 +613,6 @@ resource "helm_release" "public_gw_eg_tls" {
 }
 
 #------------------------------------------------------------------------------
-# Health check target for the ALB frontend.
-#
-# An ALB health check needs a path that answers 200. Envoy has none to offer:
-# a request that matches no route returns 404, so a health check against the
-# data listener fails on an otherwise healthy gateway. This is not specific to
-# Envoy Gateway — every Envoy-based ingress hits it, and each solves it the
-# same way. Istio ships a dedicated endpoint on :15021; kgateway's own AWS ALB
-# guide has you declare a route that answers with a fixed 200. This is that,
-# using Envoy Gateway's `HTTPRouteFilter`.
-#
-# Deliberately on the data listener rather than Envoy's readiness endpoint
-# (:19001/ready). Readiness reports whether the *process* is up; it stays green
-# while the listener is broken, the certificate failed to load or the Gateway
-# never reached `Programmed`. This path traverses the listener and the route
-# engine, so a healthy check means the thing that serves traffic works.
-#
-# It answers 200 to anyone who asks. That is intentional and leaks nothing —
-# a fixed response that touches no backend.
-#------------------------------------------------------------------------------
-#------------------------------------------------------------------------------
 # Trust the ALB's forwarded headers.
 #
 # Without this Envoy treats the ALB as the client: it reports the ALB's pod-CIDR
@@ -689,6 +669,26 @@ resource "kubernetes_manifest" "public_gw_eg_client_traffic_policy" {
   ]
 }
 
+#------------------------------------------------------------------------------
+# Health check target for the ALB frontend.
+#
+# An ALB health check needs a path that answers 200. Envoy has none to offer:
+# a request that matches no route returns 404, so a health check against the
+# data listener fails on an otherwise healthy gateway. This is not specific to
+# Envoy Gateway — every Envoy-based ingress hits it, and each solves it the
+# same way. Istio ships a dedicated endpoint on :15021; kgateway's own AWS ALB
+# guide has you declare a route that answers with a fixed 200. This is that,
+# using Envoy Gateway's `HTTPRouteFilter`.
+#
+# Deliberately on the data listener rather than Envoy's readiness endpoint
+# (:19001/ready). Readiness reports whether the *process* is up; it stays green
+# while the listener is broken, the certificate failed to load or the Gateway
+# never reached `Programmed`. This path traverses the listener and the route
+# engine, so a healthy check means the thing that serves traffic works.
+#
+# It answers 200 to anyone who asks. That is intentional and leaks nothing —
+# a fixed response that touches no backend.
+#------------------------------------------------------------------------------
 resource "kubernetes_manifest" "public_gw_eg_healthz_filter" {
   count = local.public_gw_eg_on_alb ? 1 : 0
 
@@ -715,6 +715,9 @@ resource "kubernetes_manifest" "public_gw_eg_healthz_filter" {
   ]
 }
 
+# The route that binds that filter to `/healthz` on the public Gateway's HTTP
+# listener. Carries no hostname, so it answers whatever Host the ALB's health
+# check sends.
 resource "kubernetes_manifest" "public_gw_eg_healthz_route" {
   count = local.public_gw_eg_on_alb ? 1 : 0
 

@@ -306,7 +306,7 @@ variable "envoy_gateway" {
   }
 }
 
-# Source CIDRs allowed to reach the public gateway's internet-facing NLB.
+# Source CIDRs allowed to reach the public gateway's internet-facing frontend.
 #
 # Deliberately NOT set in the versioned `terraform.tfvars`: the list is made of
 # operators' home/office addresses, which are personal data and don't belong in
@@ -314,17 +314,24 @@ variable "envoy_gateway" {
 # auto-loads and `.gitignore` excludes — copy
 # `allowlist.local.auto.tfvars.example` to get started.
 #
-# Rendered into the `load-balancer-source-ranges` annotation, which the AWS Load
-# Balancer Controller turns into ingress rules on the NLB's managed frontend
-# security group. An EMPTY list makes the LBC fall back to 0.0.0.0/0 and expose
-# the endpoint to the whole internet, so a precondition on the EnvoyProxy in
-# networking-envoygateway.tf refuses to plan in that state.
+# Consulted only while `envoy_gateway.public_gateway.open_to_internet` is false.
+# When it is true — the modelled topology — `local.public_gw_eg_source_ranges`
+# short-circuits to 0.0.0.0/0 and this list goes unread; access control then
+# lives per application, as a SecurityPolicy on each route.
+#
+# In the closed state it is rendered into whichever allowlist the frontend
+# offers: `load-balancer-source-ranges`, which the AWS Load Balancer Controller
+# turns into ingress rules on the NLB's managed frontend security group under
+# `frontend = "nlb"`, or the Ingress' `inbound-cidrs` under `frontend = "alb"`.
+# An EMPTY list there makes the LBC fall back to 0.0.0.0/0 and expose the
+# endpoint to the whole internet, so preconditions in networking-envoygateway.tf
+# and networking-ingress.tf refuse to plan in that state.
 #
 # It is a separate top-level variable rather than a field of `envoy_gateway`
 # because tfvars files can't merge into an object variable — setting one field
 # from a second file would mean restating the whole object.
 variable "envoy_gateway_public_allowed_cidrs" {
-  description = "CIDRs allowed to reach the public Envoy Gateway NLB. Set in the non-versioned allowlist.local.auto.tfvars."
+  description = "CIDRs allowed to reach the public Envoy Gateway frontend (ALB or NLB) while open_to_internet is false. Set in the non-versioned allowlist.local.auto.tfvars."
   type        = list(string)
   default     = []
 }

@@ -90,7 +90,7 @@ The objects that actually carry exposure:
 
 On the public path the two APIs do different, complementary jobs:
 
-```
+```text
 private:  NLB ──────────────► Envoy ──► app     Gateway API alone
 public:   ALB ──────────────► Envoy ──► app     Ingress + Gateway API
           ▲                   ▲
@@ -321,8 +321,7 @@ and vendoring makes plan/apply hermetic so Atlantis needs no egress to GitHub.
 ## Why Envoy Gateway
 
 Benchmarked against nginx-ingress and kgateway; see `../loadtest/test-results.md`
-for the numbers and `~/Desktop/envoy-gateway-vs-nginx.html` for the visual
-comparison. Short version: on identical `instance`-target plumbing Envoy logged
+for the numbers. Short version: on identical `instance`-target plumbing Envoy logged
 zero failures over 450k requests where nginx logged 425, and the long-standing
 "nginx is faster" reading turned out to be an artifact of comparing different
 NLB target types.

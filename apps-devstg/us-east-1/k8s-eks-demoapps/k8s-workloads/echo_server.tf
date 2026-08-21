@@ -18,10 +18,11 @@
 #   - echo-server.aws.binbash.com.ar     → Envoy Gateway, private-gw-eg
 #                                          Internal NLB, VPN only.
 #   - echo-server.binbash.com.ar         → Envoy Gateway, public-gw-eg
-#                                          Internet-facing NLB, reachable only
-#                                          from the CIDRs allowlisted in
-#                                          k8s-components' `envoy_gateway.
-#                                          public_gateway.allowed_cidrs`.
+#                                          Internet-facing ALB, open at the
+#                                          perimeter. This hostname is closed
+#                                          by its own SecurityPolicy, from
+#                                          `echo_server_public_allowed_cidrs`
+#                                          in this layer.
 #
 # Both follow the plain <app>.<zone> convention. There used to be a third,
 # `echo-server-eg.aws.binbash.com.ar`, carrying an `-eg` suffix purely because

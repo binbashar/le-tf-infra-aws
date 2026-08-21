@@ -35,7 +35,9 @@ These are the steps to orchestrate the demoapps cluster. They can be used for sp
 - The Binbash Leverage CLI must be installed and available in the system PATH.
 - The same applies to `kubectl` and the `aws` CLI -- they are useful for troubleshooting.
 - The code has been migrated to OpenTofu, therefore keep in mind the following:
-    - You must use `leverage tofu *` commands for init, plan, and apply.
+    - You must use `leverage tofu *` commands for init, plan, and apply. The
+      steps below write `leverage tf *` and `leverage terraform *`, which are
+      aliases of that same wrapper.
     - Other commands are not proxied through `leverage`, just run `tofu` (which must be installed for that to work)
 - Since the cluster API is configured to be privately accessible, VPN access is required. Prompt the user that as a reminder before you continue.
 

@@ -14,7 +14,9 @@ locals {
   # plane — a pin is a standing invitation to forget it on the next cluster
   # upgrade, which is exactly what happened: the 1.34 upgrade moved the control
   # plane and the nodes and left every add-on here at its 1.31-era version,
-  # putting kube-proxy three minors behind and out of the supported skew.
+  # putting kube-proxy three minors behind the control plane — the edge of the
+  # supported skew rather than past it, but not a place to arrive at by
+  # forgetting.
   # The other three have release cycles of their own, so pinning them buys
   # reproducibility rather than costing correctness.
   addons_available = {

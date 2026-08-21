@@ -124,16 +124,18 @@ keda = {
 #     Accepts HTTPRoutes from any namespace.
 #
 #   public_gateway  -> `public-gw-eg`, GatewayClass `envoy-gateway-public`
-#     Internet-facing NLB, restricted at the NLB's managed security group to
-#     `envoy_gateway_public_allowed_cidrs`. Hostnames: <app>.binbash.com.ar
+#     Internet-facing ALB (see `frontend` below), open at the perimeter, with
+#     access control per application as a SecurityPolicy on each route.
+#     Hostnames: <app>.binbash.com.ar
 #     Accepts HTTPRoutes ONLY from namespaces labelled
 #     `gateway.binbash.com.ar/public-exposure=allowed`.
 #
 # The public allowlist is NOT set here: it holds operators' home/office IPs,
 # which shouldn't land in git history. It lives in the non-versioned
 # `allowlist.local.auto.tfvars` — copy `allowlist.local.auto.tfvars.example`
-# and fill it in. Planning the public gateway without it fails on a
-# precondition rather than exposing an open endpoint.
+# and fill it in. It is only consulted while `open_to_internet = false`, which
+# is not the modelled topology; in that state, planning the public gateway
+# without it fails on a precondition rather than exposing an open endpoint.
 #------------------------------------------------------------------------------
 envoy_gateway = {
   enabled             = true

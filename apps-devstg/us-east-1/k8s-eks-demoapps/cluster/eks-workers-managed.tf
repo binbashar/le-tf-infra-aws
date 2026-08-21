@@ -80,6 +80,11 @@ module "cluster" {
     # Nitro-only: AL2023 (see var.ami_type) needs ENA + NVMe, so Xen generations
     # like t2 are excluded — they would be accepted by the spot allocator and
     # then fail to boot.
+    #
+    # The single source of truth for every node group: the module resolves each
+    # attribute as `try(each.value.X, eks_managed_node_group_defaults.X, ...)`
+    # (node_groups.tf:324 in v20.37.2), so a group only needs its own list to
+    # *differ* from this one.
     instance_types = ["t3.medium", "t3a.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
     k8s_labels     = local.tags
     # IMPORTANT: setting this to true is only necessary during the initial bootstrap
@@ -125,24 +130,22 @@ module "cluster" {
     # Standard, Spot, single node group across all AZs
     # ---------------------------------------------------------------
     standard_spot = {
-      desired_size   = 2
-      max_size       = 6
-      min_size       = 2
-      capacity_type  = "SPOT"
-      instance_types = ["t3.medium", "t3a.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
-      labels         = merge(local.tags, { "stack" = "standard" })
+      desired_size  = 2
+      max_size      = 6
+      min_size      = 2
+      capacity_type = "SPOT"
+      labels        = merge(local.tags, { "stack" = "standard" })
     }
 
     # ---------------------------------------------------------------
     # Tools, Spot, single node group across all AZs
     # ---------------------------------------------------------------
     tools_spot = {
-      desired_size   = 1
-      max_size       = 6
-      min_size       = 1
-      capacity_type  = "SPOT"
-      instance_types = ["t3.medium", "t3a.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
-      labels         = merge(local.tags, { "stack" = "tools" })
+      desired_size  = 1
+      max_size      = 6
+      min_size      = 1
+      capacity_type = "SPOT"
+      labels        = merge(local.tags, { "stack" = "tools" })
       taints = {
         tools = {
           key    = "stack"

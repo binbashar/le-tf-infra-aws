@@ -14,12 +14,14 @@
 # addresses. Populate `allowlist.local.auto.tfvars`, which OpenTofu auto-loads
 # and .gitignore excludes; copy the .example next to it to get started.
 #
-# An empty list means "no restriction": the SecurityPolicy is not created and
-# the hostname is reachable by anyone the perimeter admits. That is the
-# behaviour an application with no annotation has today, so it is the honest
-# default -- but it is a *silent* one, which is why enabling it is opt-in
-# through `echo_server.restrict_public_access` rather than inferred from the
-# list being non-empty.
+# Restriction is opt-in through `echo_server.restrict_public_access` rather
+# than inferred from this list being non-empty: that flag alone decides whether
+# the SecurityPolicy is created. With it off, the hostname is reachable by
+# anyone the perimeter admits -- the behaviour an application with no
+# annotation has today, and a *silent* one, which is why an empty list does not
+# quietly land there. With it ON and this list empty the policy would deny
+# every request, including your own, so a precondition on the SecurityPolicy
+# fails the plan instead.
 variable "echo_server_public_allowed_cidrs" {
   description = "CIDRs permitted to reach echo-server's public hostname. Enforced by an Envoy SecurityPolicy on its HTTPRoute."
   type        = list(string)

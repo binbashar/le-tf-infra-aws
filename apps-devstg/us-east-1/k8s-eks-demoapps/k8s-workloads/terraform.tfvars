@@ -14,7 +14,7 @@ demo_apps = {
   echo_server = {
     enabled = true
     # Adds echo-server.binbash.com.ar via the public Envoy Gateway, on top of
-    # the two private hostnames. Depends on
+    # the private hostname. Depends on
     # `envoy_gateway.public_gateway.enabled` in k8s-components.
     public_endpoint = true
     # Restricts that hostname to `echo_server_public_allowed_cidrs` inside

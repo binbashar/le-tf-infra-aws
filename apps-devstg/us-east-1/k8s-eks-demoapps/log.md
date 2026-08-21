@@ -763,6 +763,15 @@ WAF tier is not part of it.
   own, wait for its pods, then apply the rest. That order prevents the failure
   (verified Day 8), so this is now about not having to remember it rather than
   about the failure still being open.
+- **Three locks still carry a single `h1:` hash.** The review caught it in
+  `k8s-workloads`, which is now regenerated for all four platforms; the same
+  asymmetry remains in `cluster` (`kubernetes`, `local`, `tls`),
+  `identities` (`tls`) and `k8s-components` (`kubernetes`, `time`). It only
+  bites under `-lockfile=readonly`, which is how Atlantis runs: a platform with
+  no `h1:` of its own fails instead of rewriting the lock. Fix is one command
+  per layer — `tofu providers lock -platform=linux_amd64 -platform=linux_arm64
+  -platform=darwin_amd64 -platform=darwin_arm64` — held back here only to keep
+  the review diff to what was asked.
 
 ---
 

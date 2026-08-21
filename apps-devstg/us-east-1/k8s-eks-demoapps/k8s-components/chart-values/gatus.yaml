@@ -24,11 +24,16 @@ config:
       conditions:
         - "[STATUS] == 200"
     # Dogfooding: the demo endpoint, reached the way the internet reaches it.
-    # Exercises the public Envoy Gateway, its NLB and the wildcard cert every
+    # Exercises the public Envoy Gateway, its ALB and the wildcard cert every
     # interval. Note the request leaves the cluster and comes back in through
-    # the internet-facing NLB, so it only passes while the egress NAT address
-    # is on `envoy_gateway_public_allowed_cidrs` — if this endpoint is the only
-    # one red, check the allowlist before suspecting the gateway.
+    # the internet-facing frontend, so its source address is the egress NAT
+    # EIP, not a cluster address. That passes freely while the perimeter is
+    # open (`open_to_internet = true`) and echo-server publishes its hostname
+    # unrestricted. Close either one and this check needs the NAT EIP on that
+    # allowlist — `envoy_gateway_public_allowed_cidrs` for the perimeter,
+    # `echo_server_public_allowed_cidrs` for the route's own SecurityPolicy —
+    # so if this endpoint is the only one red, check those before suspecting
+    # the gateway.
     - name: Echo Server (public gateway)
       url: https://echo-server.binbash.com.ar
       interval: 60s
