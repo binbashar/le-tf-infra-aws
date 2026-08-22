@@ -12,7 +12,7 @@
 #
 #      /                     -> /index.html  (default root object)
 #      /pricing/             -> /pricing/index.html
-#      /solutions/genai      -> /solutions/genai/index.html
+#      /solutions/ai-and-agents -> /solutions/ai-and-agents/index.html
 #
 # NOTE: this path layout must agree with the app's `trailingSlash` setting —
 # with `trailingSlash: false` Next exports `{route}.html` instead and this

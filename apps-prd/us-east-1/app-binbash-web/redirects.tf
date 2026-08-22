@@ -2,7 +2,9 @@
 # Wix -> binbash-web redirect map, served as 301s by the viewer-request
 # CloudFront Function (see cloudfront-function.tf).
 #
-# WHY THIS EXISTS: 31 routes changed path in the migration out of Wix. Without
+# WHY THIS EXISTS: 31 routes changed path in the migration out of Wix, and a
+# further 2 (plus their locale variants) were renamed by the app AFTER that
+# migration — see post_migration_renames below. Without
 # these, every one of those URLs — all of them indexed, many of them linked
 # from outside — 404s the moment DNS cuts over, throwing away the accumulated
 # search ranking of the old site. 301 (not 302) is deliberate: it is the status
@@ -35,8 +37,8 @@ locals {
     "/cloud-partner/cast-ai"              = "/partners/cast-ai"
     "/competition"                        = "/leverage/competition"
     "/founders"                           = "/people/founders"
-    "/genai"                              = "/solutions/genai"
-    "/genai/exclusivegenai"               = "/solutions/genai/exclusive-genai"
+    "/genai"                              = "/solutions/ai-and-agents"
+    "/genai/exclusivegenai"               = "/solutions/ai-and-agents/exclusive-genai"
     "/how-we-work"                        = "/people/how-we-work"
     "/kashio"                             = "/case-studies/kashio"
     "/letsbuildyourstartup"               = "/events/lets-build-your-startup"
@@ -67,5 +69,34 @@ locals {
     "/top-rated"    = "/"
   }
 
-  wix_redirects = merge(local.wix_redirects_migrated, local.wix_redirects_retired)
+  # Routes THIS SITE renamed after the Wix migration — not Wix paths.
+  #
+  # Distinct from wix_redirects_migrated above, whose keys are paths Wix still
+  # serves. These keys are paths binbash-web itself published and then moved,
+  # so anything that linked or bookmarked them in the interim 404s without a
+  # row here. They are generated from the same MIGRATED table in the app repo:
+  # a row whose value changes between releases needs its OLD value adding here.
+  #
+  # /solutions/genai -> /solutions/ai-and-agents (binbashar/bb-ai-sales-tools#202,
+  # PRD F-AIAGENTS-01). The child moved with the parent, and BOTH rows are
+  # required: lookup is an exact match on the map (see cloudfront-function.tf),
+  # so a parent row does not cover its children.
+  #
+  # The locale variants are listed explicitly for the same reason — the function
+  # matches the whole path, so /es/... and /pt/... are separate keys, not a
+  # prefix of the bare one.
+  post_migration_renames = {
+    "/solutions/genai"                    = "/solutions/ai-and-agents"
+    "/solutions/genai/exclusive-genai"    = "/solutions/ai-and-agents/exclusive-genai"
+    "/es/solutions/genai"                 = "/es/solutions/ai-and-agents"
+    "/es/solutions/genai/exclusive-genai" = "/es/solutions/ai-and-agents/exclusive-genai"
+    "/pt/solutions/genai"                 = "/pt/solutions/ai-and-agents"
+    "/pt/solutions/genai/exclusive-genai" = "/pt/solutions/ai-and-agents/exclusive-genai"
+  }
+
+  wix_redirects = merge(
+    local.wix_redirects_migrated,
+    local.wix_redirects_retired,
+    local.post_migration_renames,
+  )
 }
