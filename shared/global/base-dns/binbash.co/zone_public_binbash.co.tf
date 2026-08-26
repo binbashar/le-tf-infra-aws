@@ -99,6 +99,11 @@ resource "aws_route53_record" "TXT_github_binbash_co" {
 #
 # TXT records
 #
+# Route 53 allows a single TXT rrset per name, so every apex verification string
+# has to live in this one resource. Its name is historical (it held only the
+# Google one originally) - renaming it would delete and recreate the rrset,
+# briefly dropping all verifications at once, so it stays as is.
+#
 resource "aws_route53_record" "TXT_google_domain_verification" {
   zone_id = aws_route53_zone.public.id
   name    = "binbash.co"
@@ -106,6 +111,7 @@ resource "aws_route53_record" "TXT_google_domain_verification" {
   records = [
     "google-site-verification=7-ckJxbKpPRrcQ-foy3UIkImTGlp60MUtDgzfudJZmM",
     "linkedin-site-verification=bbe1c109-7cab-456f-9669-2f66982d41bf",
+    "anthropic-domain-verification-jcv3w0=g6sw9GAekRtiZCemfuqS1lP56",
   ]
   ttl = 300
 }
