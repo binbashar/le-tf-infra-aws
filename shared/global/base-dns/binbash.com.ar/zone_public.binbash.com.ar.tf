@@ -88,12 +88,27 @@ resource "aws_route53_record" "aws_public_hosted_zone_1_TXT_record_4" {
   ttl     = 300
 }
 
+#
+# Route 53 allows a single TXT rrset per name, so the apex SPF record and every
+# apex domain-verification string share this one resource. Adding a verification
+# here means editing this list - a second aws_route53_record at "binbash.com.ar"
+# of type TXT would collide with this one rather than coexist.
+#
+# The openai-domain-verification string was added out of band in the console and
+# is adopted here so it stops being drift: without it in this list, the next
+# apply of this layer would rewrite the rrset and drop it.
+#
 resource "aws_route53_record" "aws_public_hosted_zone_TXT_record_google_spf" {
   zone_id = aws_route53_zone.aws_public_hosted_zone_1.id
   name    = "binbash.com.ar"
   type    = "TXT"
-  records = ["v=spf1 include:_spf.google.com ~all", "google-site-verification=LaYgwNHSBPq2LZnpW91PQVbpCcUtVKicSPgRablVl1w"]
-  ttl     = 300
+  records = [
+    "v=spf1 include:_spf.google.com ~all",
+    "google-site-verification=LaYgwNHSBPq2LZnpW91PQVbpCcUtVKicSPgRablVl1w",
+    "openai-domain-verification=dv-f7CZqJtxT4VSGs2ZPI7UqVGO",
+    "anthropic-domain-verification-vxpxwm=PScWzFZs7RntoG6SQgD7c3MGp",
+  ]
+  ttl = 300
 }
 
 #
