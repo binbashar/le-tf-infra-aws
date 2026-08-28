@@ -10,7 +10,9 @@ resource "helm_release" "certmanager" {
   version    = "v1.19.3"
   values = [
     templatefile("chart-values/certmanager.yaml", {
-      roleArn = data.terraform_remote_state.cluster-identities.outputs.certmanager_role_arn
+      roleArn      = data.terraform_remote_state.cluster-identities.outputs.certmanager_role_arn
+      nodeSelector = local.tools_nodeSelector
+      tolerations  = local.tools_tolerations
     })
   ]
 }

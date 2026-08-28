@@ -27,9 +27,20 @@ serviceAccount:
   annotations:
     eks.amazonaws.com/role-arn: ${roleArn}
 
-# Skip the post-install API sanity-check job. It runs as a k8s Job with no
-# tolerations/nodeSelector and was getting stuck in Pending: the apps node hits
-# pod-density limits and the tools node has a `stack: tools` taint it doesn't
-# tolerate. cert-manager itself works without it; this is just a one-shot probe.
+# The post-install API sanity-check job. It used to be disabled because it ran
+# as a Job with no scheduling hints and got stuck in Pending: the apps node hits
+# pod-density limits and the tools node carries a `stack: tools` taint. Giving
+# it the same nodeSelector/tolerations every other platform component gets is
+# what the previous comment implied and never did — the chart exposes both keys.
+# cert-manager works without it, so this buys a fail-fast signal on a webhook
+# that is not answering yet, not functionality.
+#
+# Note the chart declares the Job as `helm.sh/hook: post-install` with no
+# `post-upgrade`: flipping this to true on a release that already exists does
+# nothing until the next fresh install. Verified 2026-08-28 by applying the
+# rendered hook (`helm get hooks`) by hand — it landed on the tools node and
+# exited with "The cert-manager API is ready".
 startupapicheck:
-  enabled: false
+  enabled: true
+  nodeSelector: ${nodeSelector}
+  tolerations: ${tolerations}

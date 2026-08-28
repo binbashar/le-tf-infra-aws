@@ -146,6 +146,44 @@ resource "kubernetes_deployment" "echo_server" {
               memory = "32Mi"
             }
           }
+
+          # This backend is reachable from the internet, so the two pieces of
+          # hygiene that matter for it are here rather than left to the demo's
+          # informality.
+          #
+          # The probe hits `/` because echo-server answers 200 on every path;
+          # there is no dedicated health endpoint to prefer. What it buys is
+          # that the Service stops sending traffic to a pod whose process died
+          # but whose container has not been restarted yet -- the window where
+          # the gateway returns 503s that look like a routing fault.
+          readiness_probe {
+            http_get {
+              path = "/"
+              port = "http"
+            }
+            initial_delay_seconds = 2
+            period_seconds        = 10
+            timeout_seconds       = 2
+          }
+
+          # `jmalloc/echo-server` is a static Go binary that serves HTTP on
+          # 8080 and writes nothing, so it needs none of what this drops: no
+          # root, no writable filesystem, no capabilities, no privilege
+          # escalation. 8080 is above 1024, so an unprivileged UID can bind it.
+          security_context {
+            run_as_non_root            = true
+            run_as_user                = 65534
+            allow_privilege_escalation = false
+            read_only_root_filesystem  = true
+
+            capabilities {
+              drop = ["ALL"]
+            }
+
+            seccomp_profile {
+              type = "RuntimeDefault"
+            }
+          }
         }
       }
     }

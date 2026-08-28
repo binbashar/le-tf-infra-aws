@@ -26,6 +26,11 @@ variable "echo_server_public_allowed_cidrs" {
   description = "CIDRs permitted to reach echo-server's public hostname. Enforced by an Envoy SecurityPolicy on its HTTPRoute."
   type        = list(string)
   default     = []
+
+  validation {
+    condition     = alltrue([for c in var.echo_server_public_allowed_cidrs : can(cidrhost(c, 0))])
+    error_message = "Every entry must be a CIDR block with an explicit prefix length, e.g. 203.0.113.4/32 rather than 203.0.113.4: the value goes into a SecurityPolicy's clientCIDRs, where a malformed entry is rejected by Envoy at admission rather than at plan time."
+  }
 }
 
 variable "demo_apps" {

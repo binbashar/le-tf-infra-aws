@@ -158,6 +158,17 @@ resource "helm_release" "goldilocks" {
   version    = "10.5.0"
   values     = [file("chart-values/goldilocks.yaml")]
   depends_on = [helm_release.vpa]
+
+  # The dependency above is an ordering hint; this is the contract. Without VPA
+  # the chart installs happily and the dashboard renders an empty table
+  # forever, which is indistinguishable from a broken route. Failing the plan
+  # trades a silent wrong answer for a loud one.
+  lifecycle {
+    precondition {
+      condition     = var.scaling.vpa.enabled
+      error_message = "goldilocks requires scaling.vpa.enabled = true: it has no recommender of its own and reads the VPA objects it creates per namespace, so with VPA off the dashboard would render an empty table forever."
+    }
+  }
 }
 
 # ------------------------------------------------------------------------------

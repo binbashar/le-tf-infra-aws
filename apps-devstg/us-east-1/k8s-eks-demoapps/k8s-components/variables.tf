@@ -334,4 +334,9 @@ variable "envoy_gateway_public_allowed_cidrs" {
   description = "CIDRs allowed to reach the public Envoy Gateway frontend (ALB or NLB) while open_to_internet is false. Set in the non-versioned allowlist.local.auto.tfvars."
   type        = list(string)
   default     = []
+
+  validation {
+    condition     = alltrue([for c in var.envoy_gateway_public_allowed_cidrs : can(cidrhost(c, 0))])
+    error_message = "Every entry must be a CIDR block with an explicit prefix length, e.g. 203.0.113.4/32 rather than 203.0.113.4: the value is rendered verbatim into a load balancer annotation, where a bare address is accepted by the API and then silently matches nothing."
+  }
 }

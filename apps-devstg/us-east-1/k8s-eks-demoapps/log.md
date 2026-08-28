@@ -634,8 +634,12 @@ the flip to `true` is a local working change and not something to commit.
 
 Before destroying `k8s-workloads` / `k8s-components`, delete the DNS-producing
 objects first and let external-dns clear the records while it is still alive.
-Not fatal if skipped — policy `sync` plus a stable `txtOwnerId` means the next
-re-spin adopts and deletes them — but it keeps the zone honest in between.
+**Fatal if skipped — corrected 2026-08-28**, see "Orphaned registry records are
+a landmine" below. The earlier reading here was that policy `sync` plus a stable
+`txtOwnerId` meant the next re-spin would adopt and delete the leftovers, and
+that skipping the step merely left the zone untidy. It does not: a leftover
+whose *name* collides with a record external-dns must create takes the whole
+controller down.
 
 **Which objects those are changed with the ALB.** The public record is now
 published by `kubernetes_ingress_v1.envoy_apps`, not by the HTTPRoute, so that
@@ -665,9 +669,65 @@ One piece of litter survived: a TXT record `a-echo-server.binbash.com.ar` whose
 external-dns ownership label still names
 `httproute/echo-server/echo-server-eg-public`. It is a leftover of the
 ownership transfer from HTTPRoute to Ingress — the registry record for the old
-owner was never reclaimed. Inert (there is no A record beside it) and the owner
-ID matches, so the next re-spin should adopt it, but it is worth knowing it is
-there before diagnosing anything odd about that hostname.
+owner was never reclaimed. That one really is inert, and the 2026-08-28 re-spin
+confirmed it: the public controller ran clean beside it. But see the next
+section for why that is luck rather than adoption.
+
+### Orphaned registry records are a landmine, not litter — 2026-08-28
+
+The 2026-08-28 re-spin came up with `externaldns-private` in
+`CrashLoopBackOff`, ten restarts, on a cluster that was otherwise healthy:
+
+```
+Desired change: CREATE cname-echo-server.aws.binbash.com.ar TXT
+Desired change: CREATE echo-server.aws.binbash.com.ar A
+Desired change: CREATE echo-server.aws.binbash.com.ar TXT
+Failure in zone aws.binbash.com.ar.: InvalidChangeBatch: [Tried to create
+  resource record set [name='cname-echo-server.aws.binbash.com.ar.',
+  type='TXT'] but it already exists]
+fatal: failed to submit all changes for the following zones
+```
+
+The private zone held **only** `cname-echo-server.aws.binbash.com.ar` TXT —
+owner `devstg-eks-demo-prv`, resource `httproute/echo-server/echo-server-eg`,
+with no A and no plain TXT beside it. Exactly the residue the Day 8 teardown
+left by destroying `k8s-workloads` and `k8s-components` back to back.
+
+Three things to keep:
+
+- **external-dns keys its registry on the plain `<host>` TXT.** The `cname-`
+  prefixed record alone does not mark the hostname as already published, so it
+  plans a CREATE for all three records. Route53 rejects a batch in which any
+  one change conflicts, so the two records that *were* missing never get
+  written either.
+- **v0.14.0 treats a rejected batch as `fatal`.** The process exits, the pod
+  crashloops, and every other hostname in that zone stops being reconciled.
+  `gatus` and `goldilocks` only had records because they were published before
+  echo-server's route existed.
+- **Whether leftovers are harmless comes down to name collision, not
+  ownership.** `a-echo-server.binbash.com.ar` in the public zone is inert
+  because external-dns publishes `cname-echo-server` + `echo-server` there and
+  never needs that name. The private `cname-echo-server` was fatal because it
+  is precisely the name the controller had to create. Same owner ID in both
+  cases — the owner ID is what makes a record *adoptable* in principle, and it
+  buys nothing when the API call fails before adoption is ever considered.
+
+Recovery is one `DELETE` of the orphan (kept in the shared account, so
+`--profile bb-shared-devops`), then let the controller retry — deleting the
+crashlooping pod skips the backoff:
+
+```bash
+aws route53 change-resource-record-sets --hosted-zone-id <PRIVATE_ZONE_ID> \
+  --profile bb-shared-devops --change-batch '{"Changes":[{"Action":"DELETE",
+  "ResourceRecordSet":{"Name":"cname-echo-server.aws.binbash.com.ar.",
+  "Type":"TXT","TTL":300,"ResourceRecords":[{"Value":"\"<the exact TXT value>\""}]}}]}'
+kubectl delete pod -n externaldns -l app.kubernetes.io/instance=externaldns-private
+```
+
+It came back `1/1 Running`, created the full triple on the first reconcile, and
+all four hostnames answered: `echo-server.aws` 200, `gatus.aws` 200,
+`goldilocks.aws` 301 → `/namespaces` 200 (the app's own redirect), and
+`echo-server.binbash.com.ar` 200 through the ALB.
 
 ---
 

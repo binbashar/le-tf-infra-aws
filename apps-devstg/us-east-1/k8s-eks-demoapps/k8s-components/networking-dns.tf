@@ -20,11 +20,20 @@ resource "helm_release" "externaldns_private" {
       # enabled, Gateway API HTTPRoutes too. Watching `gateway-httproute`
       # without its CRD installed makes the controller fatally crash, so gate
       # it on the Gateway API consumers (OR them if more are ever added).
-      # Drop the Ingress-class annotation filter — it would silently exclude all
-      # HTTPRoutes (which don't carry the kubernetes.io/ingress.class annotation).
-      # Domain filtering above already scopes records to aws.binbash.com.ar.
-      sources          = var.envoy_gateway.enabled ? ["ingress", "gateway-httproute"] : ["ingress"]
-      annotationFilter = ""
+      #
+      # `annotationFilter` follows the same condition, mirroring the public
+      # release below. With Envoy Gateway on it must be empty: the filter
+      # applies across all sources, so an Ingress-class filter would silently
+      # exclude every HTTPRoute, none of which carries
+      # `kubernetes.io/ingress.class`. With Envoy Gateway off the only source
+      # is `ingress`, and without the filter this release would also claim
+      # Ingress objects belonging to other classes. `domainFilters` confines
+      # the records to aws.binbash.com.ar either way, so this is about not
+      # claiming other controllers' objects rather than about wrong records.
+      sources = var.envoy_gateway.enabled ? ["ingress", "gateway-httproute"] : ["ingress"]
+      annotationFilter = var.envoy_gateway.enabled ? "" : (
+        "kubernetes.io/ingress.class=${local.private_ingress_class}"
+      )
       # Nothing to exclude: `aws.binbash.com.ar` has no subdomains carved out
       # for another release. The reverse is not true — see the public release.
       excludeDomains     = []
