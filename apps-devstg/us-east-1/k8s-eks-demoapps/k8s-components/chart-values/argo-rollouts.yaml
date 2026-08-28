@@ -15,8 +15,8 @@ dashboard:
   tolerations: ${tolerations}
 
   # No Ingress. The dashboard is exposed at `rollouts.aws.binbash.com.ar` by
-  # the `rollouts` row in networking-httproutes.tf; TLS comes from the
-  # gateway's HTTPS listener.
+  # the chart's own `httproute` below; TLS comes from the gateway's HTTPS
+  # listener.
   #
   # Two things from the old Ingress were dropped rather than translated:
   #   - `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`. That was copied
@@ -27,3 +27,12 @@ dashboard:
   #     hostname now, so there is no sub-path to carve out.
   ingress:
     enabled: false
+
+  # The chart's own key renders this route: same object the hand-written
+  # `kubernetes_manifest` produced, but applied server-side by Helm, so it
+  # needs no Gateway API CRD registered at plan time.
+  httproute:
+    enabled: true
+    parentRefs: ${parentRefs}
+    hostnames:
+      - ${rolloutsHost}

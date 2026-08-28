@@ -100,6 +100,10 @@ resource "helm_release" "kube_prometheus_stack" {
       # links resolve. `privateIngressClass` and `platform` are gone with the
       # Ingresses.
       privateBaseDomain        = local.private_base_domain
+      parentRefs               = jsonencode(local.private_gw_parent_refs)
+      grafanaHost              = "grafana.${local.private_base_domain}"
+      prometheusHost           = "prometheus.${local.private_base_domain}"
+      alertmanagerHost         = "alertmanager.${local.private_base_domain}"
       alertmanagerEnabled      = var.prometheus.kube_stack.alertmanager.enabled
       alertmanagerSlackWebhook = var.prometheus.kube_stack.alertmanager.enabled ? jsondecode(data.aws_secretsmanager_secret_version.alertmanager_slack_webhook[0].secret_string)["webhook"] : ""
       alertmanagerSlackChannel = var.prometheus.kube_stack.alertmanager.enabled ? jsondecode(data.aws_secretsmanager_secret_version.alertmanager_slack_webhook[0].secret_string)["channel"] : ""
@@ -126,97 +130,4 @@ resource "helm_release" "kube_prometheus_stack" {
 # to agree with the hostnames below: both build self-referential links (share
 # URLs, OAuth redirects, the `generatorURL` on every alert) from them, and left
 # implicit they derive from the Service name and point somewhere unreachable.
-#--------------------------------------------------------------------------------
-resource "kubernetes_manifest" "grafana_route_eg" {
-  count = local.private_gw_enabled && var.prometheus.kube_stack.enabled && !var.cost_optimization.cost_analyzer ? 1 : 0
 
-  manifest = {
-    apiVersion = "gateway.networking.k8s.io/v1"
-    kind       = "HTTPRoute"
-    metadata = {
-      name      = "kube-prometheus-stack-grafana"
-      namespace = kubernetes_namespace.prometheus[0].id
-    }
-    spec = {
-      parentRefs = local.private_gw_parent_refs
-      hostnames  = ["grafana.${local.private_base_domain}"]
-      rules = [{
-        backendRefs = [{
-          name = "kube-prometheus-stack-grafana"
-          port = 80
-        }]
-      }]
-    }
-  }
-
-  depends_on = [
-    kubernetes_manifest.private_gateway_eg,
-    helm_release.kube_prometheus_stack,
-  ]
-}
-
-resource "kubernetes_manifest" "prometheus_route_eg" {
-  count = local.private_gw_enabled && var.prometheus.kube_stack.enabled && !var.cost_optimization.cost_analyzer ? 1 : 0
-
-  manifest = {
-    apiVersion = "gateway.networking.k8s.io/v1"
-    kind       = "HTTPRoute"
-    metadata = {
-      name      = "kube-prometheus-stack-prometheus"
-      namespace = kubernetes_namespace.prometheus[0].id
-    }
-    spec = {
-      parentRefs = local.private_gw_parent_refs
-      hostnames  = ["prometheus.${local.private_base_domain}"]
-      rules = [{
-        backendRefs = [{
-          name = "kube-prometheus-stack-prometheus"
-          port = 9090
-        }]
-      }]
-    }
-  }
-
-  depends_on = [
-    kubernetes_manifest.private_gateway_eg,
-    helm_release.kube_prometheus_stack,
-  ]
-}
-
-resource "kubernetes_manifest" "alertmanager_route_eg" {
-  count = local.private_gw_enabled && var.prometheus.kube_stack.enabled && !var.cost_optimization.cost_analyzer && var.prometheus.kube_stack.alertmanager.enabled ? 1 : 0
-
-  manifest = {
-    apiVersion = "gateway.networking.k8s.io/v1"
-    kind       = "HTTPRoute"
-    metadata = {
-      name      = "kube-prometheus-stack-alertmanager"
-      namespace = kubernetes_namespace.prometheus[0].id
-    }
-    spec = {
-      parentRefs = local.private_gw_parent_refs
-      hostnames  = ["alertmanager.${local.private_base_domain}"]
-      rules = [{
-        backendRefs = [{
-          name = "kube-prometheus-stack-alertmanager"
-          port = 9093
-        }]
-      }]
-    }
-  }
-
-  depends_on = [
-    kubernetes_manifest.private_gateway_eg,
-    helm_release.kube_prometheus_stack,
-  ]
-}
-
-moved {
-  from = kubernetes_manifest.private_gw_routes["grafana"]
-  to   = kubernetes_manifest.grafana_route_eg[0]
-}
-
-moved {
-  from = kubernetes_manifest.private_gw_routes["prometheus"]
-  to   = kubernetes_manifest.prometheus_route_eg[0]
-}

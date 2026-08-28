@@ -43,8 +43,10 @@ locals {
   # DEAD CLASS — nothing serves it, and as of the HTTPRoute conversion nothing
   # consumes it either. traefik is the only controller left that would claim
   # `private-apps`, and it is disabled. Private L7 traffic goes through Envoy
-  # Gateway (`private-gw-eg`) via HTTPRoutes — see networking-httproutes.tf for
-  # the full list of what is published and on which hostname.
+  # Gateway (`private-gw-eg`) via HTTPRoutes. Each component publishes its own:
+  # through its chart's native route key where the chart has one, and through a
+  # `kubernetes_manifest` next to its `helm_release` where it does not
+  # (uptime-kuma).
   #
   # The only reference left is the traefik chart values in
   # networking-ingress.tf, i.e. the controller that would *serve* the class

@@ -43,9 +43,9 @@ alertmanager:
       {{ end }}
       {{ end }}
 
-  # No Ingress. Published at `alertmanager.aws.binbash.com.ar` by the
-  # `alertmanager` row in networking-httproutes.tf. Note that row is gated on
-  # the same variable as this block, so the route disappears with the workload.
+  # No Ingress. Published at `alertmanager.aws.binbash.com.ar` by the chart's
+  # own `route.main` below, which lives inside this same gated block, so the
+  # route disappears with the workload.
   #
   # Its cert-manager annotation also pointed at a ClusterIssuer that does not
   # exist here (`clusterissuer-arta-...`, from a different project) — a
@@ -53,6 +53,18 @@ alertmanager:
   # now: the gateway terminates TLS with the shared wildcard.
   ingress:
     enabled: false
+
+  # `enabled: true` unconditionally is safe: the chart guards this template on
+  # `alertmanager.enabled` above, so with the workload off the route is not
+  # rendered at all (verified by templating the chart with both flags set that
+  # way). That is the same coupling the hand-written manifest expressed through
+  # its `count`.
+  route:
+    main:
+      enabled: true
+      parentRefs: ${parentRefs}
+      hostnames:
+        - ${alertmanagerHost}
 
   alertmanagerSpec:
     nodeSelector: ${nodeSelector}
@@ -81,10 +93,20 @@ grafana:
     annotations:
       eks.amazonaws.com/role-arn: ${grafanaRoleArn}
 
-  # No Ingress. Published at `grafana.aws.binbash.com.ar` by the `grafana` row
-  # in networking-httproutes.tf.
+  # No Ingress. Published at `grafana.aws.binbash.com.ar` by the chart's own
+  # `route.main` below.
   ingress:
     enabled: false
+
+  # The chart's own key renders this route: same object the hand-written
+  # `kubernetes_manifest` produced, but applied server-side by Helm, so it
+  # needs no Gateway API CRD registered at plan time.
+  route:
+    main:
+      enabled: true
+      parentRefs: ${parentRefs}
+      hostnames:
+        - ${grafanaHost}
 
   # Grafana builds absolute URLs (share links, OAuth redirects, alert
   # notification links) from this. Left implicit it derives from the Service
@@ -131,10 +153,20 @@ kube-state-metrics:
 prometheus:
   enabled: true
 
-  # No Ingress. Published at `prometheus.aws.binbash.com.ar` by the
-  # `prometheus` row in networking-httproutes.tf.
+  # No Ingress. Published at `prometheus.aws.binbash.com.ar` by the chart's own
+  # `route.main` below.
   ingress:
     enabled: false
+
+  # The chart's own key renders this route: same object the hand-written
+  # `kubernetes_manifest` produced, but applied server-side by Helm, so it
+  # needs no Gateway API CRD registered at plan time.
+  route:
+    main:
+      enabled: true
+      parentRefs: ${parentRefs}
+      hostnames:
+        - ${prometheusHost}
 
   prometheusSpec:
     nodeSelector: ${nodeSelector}

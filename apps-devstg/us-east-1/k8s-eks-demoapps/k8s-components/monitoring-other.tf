@@ -45,8 +45,10 @@ resource "helm_release" "uptime_kuma" {
   version    = "4.1.0"
   values = [
     <<-EOT
-      # No Ingress. Exposed at `kuma.aws.binbash.com.ar` by the `kuma` row in
-      # networking-httproutes.tf, with TLS terminated at the gateway.
+      # No Ingress. Exposed at `kuma.aws.binbash.com.ar` by
+      # `kubernetes_manifest.uptime_kuma_route_eg` below, with TLS terminated
+      # at the gateway. This is the one component whose route is still written
+      # by hand: chart 4.1.0 exposes `ingress` and nothing for Gateway API.
       ingress:
         enabled: false
 
@@ -134,7 +136,9 @@ resource "helm_release" "gatus" {
   values = [
     templatefile("chart-values/gatus.yaml", {
       nodeSelector = local.tools_nodeSelector,
-      tolerations  = local.tools_tolerations
+      tolerations  = local.tools_tolerations,
+      parentRefs   = jsonencode(local.private_gw_parent_refs),
+      host         = "gatus.${local.private_base_domain}"
     })
   ]
   depends_on = [
@@ -144,39 +148,3 @@ resource "helm_release" "gatus" {
   ]
 }
 
-#------------------------------------------------------------------------------
-# Gatus exposure. See `local.private_gw_parent_refs` in locals.tf for the
-# conventions every private route follows.
-#------------------------------------------------------------------------------
-resource "kubernetes_manifest" "gatus_route_eg" {
-  count = local.private_gw_enabled && var.gatus.enabled ? 1 : 0
-
-  manifest = {
-    apiVersion = "gateway.networking.k8s.io/v1"
-    kind       = "HTTPRoute"
-    metadata = {
-      name      = "gatus"
-      namespace = kubernetes_namespace.monitoring_other[0].id
-    }
-    spec = {
-      parentRefs = local.private_gw_parent_refs
-      hostnames  = ["gatus.${local.private_base_domain}"]
-      rules = [{
-        backendRefs = [{
-          name = "gatus"
-          port = 80
-        }]
-      }]
-    }
-  }
-
-  depends_on = [
-    kubernetes_manifest.private_gateway_eg,
-    helm_release.gatus,
-  ]
-}
-
-moved {
-  from = kubernetes_manifest.private_gw_routes["gatus"]
-  to   = kubernetes_manifest.gatus_route_eg[0]
-}

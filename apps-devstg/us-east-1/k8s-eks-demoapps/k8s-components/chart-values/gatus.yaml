@@ -50,13 +50,26 @@ config:
 #------------------------------------------------------------------------------
 # Exposure
 #
-# No Ingress. Gatus is published at `gatus.aws.binbash.com.ar` by the `gatus`
-# row in networking-httproutes.tf, and the gateway's HTTPS listener terminates
-# TLS — so the cert-manager Certificate and the hardcoded `private-apps`
-# ingress class that used to live here are both gone.
+# No Ingress. The chart's own `gateway.route` publishes
+# `gatus.aws.binbash.com.ar` on the private Gateway, and that listener
+# terminates TLS — so the cert-manager Certificate and the hardcoded
+# `private-apps` ingress class that used to live here are both gone.
+#
+# Using the chart's key rather than a hand-written `kubernetes_manifest` is
+# what the review asked for, and it is strictly better here: the object it
+# renders is identical (same name, same hostname, same :80 backend) and Helm
+# applies it server-side, so it does not need the Gateway API CRDs registered
+# at plan time.
 #------------------------------------------------------------------------------
 ingress:
   enabled: false
+
+gateway:
+  route:
+    enabled: true
+    parentRefs: ${parentRefs}
+    hosts:
+      - ${host}
 
 #------------------------------------------------------------------------------
 # Scheduling: tools node group, same as every other platform component.

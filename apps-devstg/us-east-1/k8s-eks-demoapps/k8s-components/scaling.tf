@@ -156,8 +156,16 @@ resource "helm_release" "goldilocks" {
   repository = "https://charts.fairwinds.com/stable"
   chart      = "goldilocks"
   version    = "10.5.0"
-  values     = [file("chart-values/goldilocks.yaml")]
-  depends_on = [helm_release.vpa]
+  values = [
+    templatefile("chart-values/goldilocks.yaml", {
+      parentRefs = jsonencode(local.private_gw_parent_refs),
+      host       = "goldilocks.${local.private_base_domain}"
+    })
+  ]
+  depends_on = [
+    helm_release.vpa,
+    kubernetes_manifest.private_gateway_eg,
+  ]
 
   # The dependency above is an ordering hint; this is the contract. Without VPA
   # the chart installs happily and the dashboard renders an empty table
@@ -171,44 +179,3 @@ resource "helm_release" "goldilocks" {
   }
 }
 
-# ------------------------------------------------------------------------------
-# Goldilocks dashboard exposure. See `local.private_gw_parent_refs` in locals.tf
-# for the conventions every private route follows.
-#
-# The dashboard renders an empty table until a namespace carries the label
-# `goldilocks.fairwinds.com/enabled=true` — that is what makes it create VPA
-# objects. Reaching this hostname and finding nothing is the expected
-# out-of-the-box state, not a broken route.
-# ------------------------------------------------------------------------------
-resource "kubernetes_manifest" "goldilocks_route_eg" {
-  count = local.private_gw_enabled && var.goldilocks.enabled ? 1 : 0
-
-  manifest = {
-    apiVersion = "gateway.networking.k8s.io/v1"
-    kind       = "HTTPRoute"
-    metadata = {
-      name      = "goldilocks-dashboard"
-      namespace = kubernetes_namespace.monitoring_metrics[0].id
-    }
-    spec = {
-      parentRefs = local.private_gw_parent_refs
-      hostnames  = ["goldilocks.${local.private_base_domain}"]
-      rules = [{
-        backendRefs = [{
-          name = "goldilocks-dashboard"
-          port = 80
-        }]
-      }]
-    }
-  }
-
-  depends_on = [
-    kubernetes_manifest.private_gateway_eg,
-    helm_release.goldilocks,
-  ]
-}
-
-moved {
-  from = kubernetes_manifest.private_gw_routes["goldilocks"]
-  to   = kubernetes_manifest.goldilocks_route_eg[0]
-}

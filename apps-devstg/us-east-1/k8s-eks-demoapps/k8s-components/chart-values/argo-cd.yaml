@@ -48,13 +48,28 @@ repoServer:
 # ---------------------------------------------------------
 server:
   # No Ingress. The `private-apps` ingress class is dead -- nginx-ingress was
-  # retired and nothing watches it. Exposure is an HTTPRoute attached to the
-  # platform-shared `private-gw-eg` Envoy Gateway; see `kubernetes_manifest`
-  # `argocd_route_eg` in cicd-argo.tf. TLS and the certificate come from the
-  # gateway's HTTPS listener (the `*.aws.binbash.com.ar` wildcard), so there is
-  # no per-app cert-manager Certificate here any more.
+  # retired and nothing watches it. Exposure is the chart's own `httproute`,
+  # attached to the platform-shared `private-gw-eg` Envoy Gateway. TLS and the
+  # certificate come from the gateway's HTTPS listener (the
+  # `*.aws.binbash.com.ar` wildcard), so there is no per-app cert-manager
+  # Certificate here any more.
   ingress:
     enabled: false
+
+  # The chart's own key renders this route: same object the hand-written
+  # `kubernetes_manifest` produced, but applied server-side by Helm, so it
+  # needs no Gateway API CRD registered at plan time.
+  #
+  # Note the chart points the backendRef at the Service's `https` port (443)
+  # where the hand-written route used `http` (80). Equivalent here: both ports
+  # target 8080, `server.insecure` above makes that port plain HTTP, and
+  # neither port carries an appProtocol, so Envoy stays cleartext upstream
+  # either way.
+  httproute:
+    enabled: true
+    parentRefs: ${parentRefs}
+    hostnames:
+      - ${argocdHost}
 
 
 # ---------------------------------------------------------

@@ -52,7 +52,9 @@ resource "helm_release" "argocd" {
   version = "10.2.3"
   values = [
     templatefile("chart-values/argo-cd.yaml", {
+      parentRefs                 = jsonencode(local.private_gw_parent_refs),
       argoHost                   = local.argocd_host,
+      argocdHost                 = local.argocd_host,
       enableWebTerminal          = var.argocd.enableWebTerminal,
       enableNotifications        = var.argocd.enableNotifications,
       slackNotificationsAppToken = var.argocd.enableNotifications ? jsondecode(data.aws_secretsmanager_secret_version.argocd_slack_notifications_app_oauth[0].secret_string)["slack_app_oauth_token"] : "",
@@ -107,41 +109,6 @@ resource "helm_release" "argocd" {
 #   - The backend protocol. `nginx.ingress.kubernetes.io/backend-protocol:
 #     HTTPS` became `server.insecure` in the chart values — argocd-server drops
 #     to plain HTTP rather than the gateway learning to re-encrypt.
-#------------------------------------------------------------------------------
-resource "kubernetes_manifest" "argocd_route_eg" {
-  count = local.private_gw_enabled && var.argocd.enabled ? 1 : 0
-
-  manifest = {
-    apiVersion = "gateway.networking.k8s.io/v1"
-    kind       = "HTTPRoute"
-    metadata = {
-      name      = "argocd-server"
-      namespace = kubernetes_namespace.argocd[0].id
-    }
-    spec = {
-      parentRefs = local.private_gw_parent_refs
-      hostnames  = [local.argocd_host]
-      rules = [{
-        backendRefs = [{
-          # The chart names this `<release>-server`. Port 80 is the cleartext
-          # one; it only serves traffic because of `server.insecure`.
-          name = "argocd-server"
-          port = 80
-        }]
-      }]
-    }
-  }
-
-  depends_on = [
-    kubernetes_manifest.private_gateway_eg,
-    helm_release.argocd,
-  ]
-}
-
-moved {
-  from = kubernetes_manifest.private_gw_routes["argocd"]
-  to   = kubernetes_manifest.argocd_route_eg[0]
-}
 
 #------------------------------------------------------------------------------
 # ArgoCD Image Updater
@@ -191,6 +158,8 @@ resource "helm_release" "argo_rollouts" {
   version    = "2.41.1"
   values = [
     templatefile("chart-values/argo-rollouts.yaml", {
+      parentRefs      = jsonencode(local.private_gw_parent_refs),
+      rolloutsHost    = "rollouts.${local.private_base_domain}",
       enableDashboard = var.argocd.rollouts.dashboard.enabled,
       nodeSelector    = local.tools_nodeSelector,
       tolerations     = local.tools_tolerations
@@ -211,36 +180,3 @@ resource "helm_release" "argo_rollouts" {
 # TLS of its own. It also pinned `paths: [/rollouts]`; with a hostname to
 # itself there is no sub-path to carve out, so this routes the root. The app
 # still self-redirects to `/rollouts/`, which is its own doing.
-#------------------------------------------------------------------------------
-resource "kubernetes_manifest" "argo_rollouts_route_eg" {
-  count = local.private_gw_enabled && var.argocd.rollouts.enabled && var.argocd.rollouts.dashboard.enabled ? 1 : 0
-
-  manifest = {
-    apiVersion = "gateway.networking.k8s.io/v1"
-    kind       = "HTTPRoute"
-    metadata = {
-      name      = "argo-rollouts-dashboard"
-      namespace = kubernetes_namespace.argocd[0].id
-    }
-    spec = {
-      parentRefs = local.private_gw_parent_refs
-      hostnames  = ["rollouts.${local.private_base_domain}"]
-      rules = [{
-        backendRefs = [{
-          name = "argo-rollouts-dashboard"
-          port = 3100
-        }]
-      }]
-    }
-  }
-
-  depends_on = [
-    kubernetes_manifest.private_gateway_eg,
-    helm_release.argo_rollouts,
-  ]
-}
-
-moved {
-  from = kubernetes_manifest.private_gw_routes["rollouts"]
-  to   = kubernetes_manifest.argo_rollouts_route_eg[0]
-}
