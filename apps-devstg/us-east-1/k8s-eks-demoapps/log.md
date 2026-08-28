@@ -813,6 +813,50 @@ Worth keeping in mind: the WebACL attaches to the load balancer and is
 indifferent to what sits behind it. Whatever else the migration disturbs, the
 WAF tier is not part of it.
 
+### Preserving the wildcard Secrets — 2026-08-28
+
+Let's Encrypt allows **5 duplicate certificates per week** for an identical set
+of identifiers, and a new ACME account does not reset it. This layer asks for
+two fixed sets — `aws.binbash.com.ar` + `*.aws.binbash.com.ar`, and
+`*.binbash.com.ar` — so a week with six rebuilds stops issuing, and the second
+set is the corporate wildcard, whose blast radius is outside this layer.
+
+**The cheap fix is not to re-issue at all.** Verified on this cluster:
+
+- cert-manager does **not** put an `ownerReference` on the TLS Secret (the
+  default `--enable-certificate-owner-ref=false`), so the Secret outlives the
+  `Certificate` that produced it.
+- Destroying and re-creating `helm_release.private_gw_eg_tls` — which deletes
+  the `Certificate` and creates it again — left the Secret in place, and the
+  new `Certificate` went `Ready` **reusing it**: same `notBefore`
+  (`Aug 28 19:36:06 2026`), same serial (`0539A5CE…`), no new `Order`, no
+  `Challenge`, and `Events: <none>`. cert-manager did not talk to ACME at all.
+
+So the procedure across a teardown is to carry the two Secrets over:
+
+```bash
+# before the teardown
+kubectl get secret private-gw-eg-wildcard-tls public-gw-eg-wildcard-tls \
+  -n envoy-gateway-system -o yaml > wildcards.yaml
+
+# after the re-spin, once the namespace exists and before cert-manager
+# reconciles the new Certificates
+kubectl apply -n envoy-gateway-system -f wildcards.yaml
+```
+
+Strip `resourceVersion`, `uid` and `creationTimestamp` from the snapshot before
+re-applying. A certificate is valid for 90 days, so a Secret is worth
+preserving for roughly a month of rehearsals before renewal makes it moot.
+
+**The fallback is `certmanager.acme_staging = true`**, which points both
+ClusterIssuers at Let's Encrypt's staging directory — far looser limits,
+untrusted certificates by design, so browsers and `curl` will complain. Use it
+when the Secrets are gone, or when the issuance path itself is what is being
+rehearsed. The account key is suffixed `-staging` so the two environments do
+not share one registration; note the chart-based issuer derives its key name
+from the release name and cannot do that, but nothing requests certificates
+through it today.
+
 ### Open follow-ups
 
 - **`kube_state_metrics` and `node_exporter` carry dead Bitnami pins.** Largely

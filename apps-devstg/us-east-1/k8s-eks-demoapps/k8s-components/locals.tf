@@ -213,6 +213,31 @@ locals {
   # wildcard bound to `private-gw-eg`'s HTTPS listener covers it. The old
   # `argocd.${local.platform}.${local.private_base_domain}` form sat three
   # labels down and would have needed a certificate of its own.
+  #------------------------------------------------------------------------------
+  # ACME endpoint. Production unless `certmanager.acme_staging` says otherwise.
+  #
+  # The reason to have the switch: Let's Encrypt allows 5 duplicate
+  # certificates per week for an identical set of identifiers, and this cluster
+  # asks for two fixed sets — `aws.binbash.com.ar` + `*.aws.binbash.com.ar` and
+  # `*.binbash.com.ar`. The second one is the corporate wildcard, so exhausting
+  # its quota is felt outside this layer. A rehearsal that will be torn down
+  # and rebuilt several times in a week belongs on staging, whose limits are
+  # far looser and whose certificates are untrusted by design.
+  #
+  # It is a fallback, not the primary defence: preserving the issued Secrets
+  # across a teardown costs nothing and re-issues nothing — see "Preserving the
+  # wildcard Secrets" in log.md. Use this when the Secrets are gone, or when
+  # the issuance path itself is what is being rehearsed.
+  #
+  # The account key is per environment on purpose. An ACME account key is
+  # registered with one directory; pointing the same key at the other server
+  # makes cert-manager register a second account with it, which works but
+  # leaves one Secret holding an identity on two servers.
+  #------------------------------------------------------------------------------
+  acme_staging     = try(var.certmanager.acme_staging, false)
+  acme_server      = local.acme_staging ? "https://acme-staging-v02.api.letsencrypt.org/directory" : "https://acme-v02.api.letsencrypt.org/directory"
+  acme_account_key = "${local.shared_clusterissuer_name}-account-key${local.acme_staging ? "-staging" : ""}"
+
   argocd_host = "argocd.${local.private_base_domain}"
 
   #------------------------------------------------------------------------------

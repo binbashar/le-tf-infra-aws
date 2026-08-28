@@ -56,10 +56,10 @@ resource "helm_release" "cluster_issuer_binbash_aws" {
           name: ${local.shared_clusterissuer_name}
         spec:
           acme:
-            server: https://acme-v02.api.letsencrypt.org/directory
+            server: ${local.acme_server}
             email: info@binbash.com.ar
             privateKeySecretRef:
-              name: ${local.shared_clusterissuer_name}-account-key
+              name: ${local.acme_account_key}
             solvers:
               - selector:
                   dnsZones:
