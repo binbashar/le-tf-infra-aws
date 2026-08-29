@@ -225,9 +225,9 @@ locals {
   # far looser and whose certificates are untrusted by design.
   #
   # It is a fallback, not the primary defence: preserving the issued Secrets
-  # across a teardown costs nothing and re-issues nothing — see "Preserving the
-  # wildcard Secrets" in log.md. Use this when the Secrets are gone, or when
-  # the issuance path itself is what is being rehearsed.
+  # across a teardown costs nothing and re-issues nothing — see "Certificates"
+  # in PLATFORM-NOTES.md. Use this when the Secrets are gone, or when the
+  # issuance path itself is what is being rehearsed.
   #
   # The account key is per environment on purpose. An ACME account key is
   # registered with one directory; pointing the same key at the other server
