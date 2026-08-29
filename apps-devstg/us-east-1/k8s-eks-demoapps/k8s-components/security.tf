@@ -10,7 +10,9 @@ resource "helm_release" "certmanager" {
   version    = "v1.19.3"
   values = [
     templatefile("chart-values/certmanager.yaml", {
-      roleArn = data.terraform_remote_state.cluster-identities.outputs.certmanager_role_arn
+      roleArn      = data.terraform_remote_state.cluster-identities.outputs.certmanager_role_arn
+      nodeSelector = local.tools_nodeSelector
+      tolerations  = local.tools_tolerations
     })
   ]
 }
@@ -27,9 +29,10 @@ resource "helm_release" "clusterissuer_binbash" {
   version    = "0.3.0"
   values = [
     templatefile("chart-values/clusterissuer-binbash.yaml", {
-      email  = "info@binbash.com.ar",
-      domain = local.public_base_domain,
-      region = var.region
+      acmeServer = local.acme_server,
+      email      = "info@binbash.com.ar",
+      domain     = local.public_base_domain,
+      region     = var.region
     })
   ]
   depends_on = [helm_release.certmanager]

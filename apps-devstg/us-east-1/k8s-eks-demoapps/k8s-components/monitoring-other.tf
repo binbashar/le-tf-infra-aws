@@ -28,8 +28,8 @@ resource "helm_release" "datadog_agent" {
 #   Kuma. You need to create the admin user, configure settings, and create
 #   any endpoints you want to monitor through Kuma's UI.
 # - Additionally, since this is a stateful application, it relies on persistent
-#   volumes to survive any crashes. Version 2.14.x depends on the EBS CSI to
-#   provision the volume the pod needs.
+#   volumes to survive any crashes. It depends on the EBS CSI driver (an EKS
+#   addon, see the `addons` sublayer) to provision the volume the pod needs.
 #
 # ROADMAP
 # - High-availability and scalability (possibly by moving away from SQLite)
@@ -42,46 +42,109 @@ resource "helm_release" "uptime_kuma" {
   namespace  = kubernetes_namespace.monitoring_other[0].id
   repository = "https://helm.irsigler.cloud"
   chart      = "uptime-kuma"
-  version    = "2.25.0"
+  version    = "4.1.0"
   values = [
     <<-EOT
+      # No Ingress. Exposed at `kuma.aws.binbash.com.ar` by
+      # `kubernetes_manifest.uptime_kuma_route_eg` below, with TLS terminated
+      # at the gateway. This is the one component whose route is still written
+      # by hand: chart 4.1.0 exposes `ingress` and nothing for Gateway API.
       ingress:
+        enabled: false
+
+      # `gp2` has to be named explicitly. It is the only StorageClass on this
+      # cluster and it is NOT annotated as the default, so the chart's empty
+      # `storageClassName` produced a PVC with no class at all — which never
+      # binds and never errors, it just sits Pending until the helm release
+      # times out. That is exactly how this failed the first time.
+      volume:
         enabled: true
-        annotations:
-          kubernetes.io/tls-acme: "true"
-          kubernetes.io/ingress.class: ${local.private_ingress_class}
-          cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
-        hosts:
-          - host: kuma.${local.platform}.${local.private_base_domain}
-            paths:
-              - path: /
-                pathType: ImplementationSpecific
-        tls:
-          - secretName: kuma-tls
-            hosts:
-              - kuma.${local.platform}.${local.private_base_domain}
+        storageClassName: gp2
+
+      # Pin to the tools node group, same as every other platform component
+      # here. The chart takes these as plain maps rather than the JSON strings
+      # the templatefile-based charts want, so `local.tools_*` do not apply.
+      nodeSelector:
+        stack: tools
+      tolerations:
+        - key: stack
+          operator: Equal
+          value: tools
+          effect: NoSchedule
 EOT
   ]
 }
 
 #------------------------------------------------------------------------------
+# Uptime Kuma exposure. See `local.private_gw_parent_refs` in locals.tf for the
+# conventions every private route follows.
+#------------------------------------------------------------------------------
+resource "kubernetes_manifest" "uptime_kuma_route_eg" {
+  count = local.private_gw_enabled && var.uptime_kuma.enabled ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "uptime-kuma"
+      namespace = kubernetes_namespace.monitoring_other[0].id
+    }
+    spec = {
+      parentRefs = local.private_gw_parent_refs
+      hostnames  = ["kuma.${local.private_base_domain}"]
+      rules = [{
+        backendRefs = [{
+          name = "uptime-kuma"
+          port = 3001
+        }]
+      }]
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.private_gateway_eg,
+    helm_release.uptime_kuma,
+  ]
+}
+
+moved {
+  from = kubernetes_manifest.private_gw_routes["kuma"]
+  to   = kubernetes_manifest.uptime_kuma_route_eg[0]
+}
+
+#------------------------------------------------------------------------------
 # Gatus: Monitor HTTP, TCP, ICMP and DNS.
+#
+# Chart repository changed from minicloudlabs to TwiN's, which is Gatus's own
+# author's. minicloudlabs had stalled: its newest chart (3.4.6) still ships
+# app v5.11.0, while TwiN's 1.5.0 ships v5.34.0. Since the ask was the latest
+# stable *Gatus*, the app version is what decides, and the chart version number
+# going "down" from 1.1.4 to 1.5.0 is just a different repo's numbering.
+#
+# The switch also forced the config rewrite below: `config.services` was
+# renamed `config.endpoints` upstream, so the pinned values had been invalid
+# against any recent Gatus. That went unnoticed only because the component has
+# been disabled.
 #------------------------------------------------------------------------------
 resource "helm_release" "gatus" {
   count      = var.gatus.enabled ? 1 : 0
   name       = "gatus"
   namespace  = kubernetes_namespace.monitoring_other[0].id
-  repository = "https://minicloudlabs.github.io/helm-charts"
+  repository = "https://twin.github.io/helm-charts"
   chart      = "gatus"
-  version    = "1.1.4"
+  version    = "1.5.0"
   values = [
     templatefile("chart-values/gatus.yaml", {
-      gatusHost = "gatus.${local.platform}.${local.private_base_domain}"
+      nodeSelector = local.tools_nodeSelector,
+      tolerations  = local.tools_tolerations,
+      parentRefs   = jsonencode(local.private_gw_parent_refs),
+      host         = "gatus.${local.private_base_domain}"
     })
   ]
   depends_on = [
-    helm_release.ingress_nginx_private,
+    kubernetes_manifest.private_gateway_eg,
     helm_release.certmanager,
     helm_release.externaldns_private
   ]
 }
+

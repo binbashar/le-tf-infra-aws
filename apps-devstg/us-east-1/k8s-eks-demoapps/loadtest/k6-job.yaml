@@ -1,0 +1,74 @@
+# k6-job.yaml — Namespace + Job for the echo-server data-plane benchmark.
+# The k6 script (echo-server-k6.js) is mounted via a ConfigMap that
+# kustomization.yaml generates from the .js file — that way the .js stays
+# the single source of truth and can also be run locally with `k6 run …`.
+#
+# Run with `kubectl apply -k .` from this directory (NOT `kubectl apply -f`).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: loadtest
+  labels:
+    app.kubernetes.io/name: echo-server-k6
+    app.kubernetes.io/part-of: eks-demoapps-loadtest
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: echo-server-k6
+  namespace: loadtest
+  labels:
+    app.kubernetes.io/name: echo-server-k6
+    app.kubernetes.io/part-of: eks-demoapps-loadtest
+spec:
+  # NO `ttlSecondsAfterFinished`. It used to be 600, on the theory that the
+  # surviving Namespace kept the logs browsable — it does not. Deleting the Job
+  # deletes its pod, and the pod is where the k6 summary lives. A run that
+  # ended while nobody was watching (credentials expired mid-wait, spot
+  # reclaimed the generator node) was garbage collected before it could be read,
+  # taking the only copy of the result with it.
+  #
+  # Re-runs are already `kubectl delete -k . && kubectl apply -k .` per
+  # kustomization.yaml, so nothing depended on the auto-clean anyway.
+  #
+  # `backoffLimit: 0` is deliberate: a non-zero exit is a real signal (a failed
+  # k6 threshold, a broken HTTPRoute), and retrying would bury it. The cost is
+  # that an infrastructure kill — every node group here is SPOT — also voids
+  # the run. If that keeps happening, retry the run rather than raising this,
+  # so a genuine threshold failure stays distinguishable from a reclaimed node.
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: echo-server-k6
+    spec:
+      restartPolicy: Never
+      # Pin to the apps node group — the tools group is tainted
+      # `stack=tools:NoSchedule` for platform controllers and we don't want a
+      # load generator landing alongside the Envoy data plane we're measuring.
+      nodeSelector:
+        stack: standard
+      containers:
+        - name: k6
+          image: grafana/k6:0.50.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - run
+            - --summary-trend-stats=avg,min,med,p(90),p(95),p(99),max
+            - /scripts/echo-server-k6.js
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+              readOnly: true
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+      volumes:
+        - name: script
+          configMap:
+            name: echo-server-k6

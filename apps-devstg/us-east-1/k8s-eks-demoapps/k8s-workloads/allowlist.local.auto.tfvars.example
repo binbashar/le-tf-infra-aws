@@ -1,0 +1,31 @@
+#------------------------------------------------------------------------------
+# Template for `allowlist.local.auto.tfvars`.
+#
+#   cp allowlist.local.auto.tfvars.example allowlist.local.auto.tfvars
+#
+# Then replace the placeholder with the public IPs allowed to reach
+# echo-server's public hostname. The real file is excluded by the root
+# .gitignore (*.local.auto.tfvars) because the list is made of operators'
+# home/office addresses.
+#
+# OpenTofu auto-loads any *.auto.tfvars in the layer directory, so no extra
+# -var-file flag is needed.
+#
+# Notes:
+#   - This is the *application's* allowlist, enforced inside Envoy by a
+#     SecurityPolicy on echo-server's HTTPRoute. It is deliberately separate
+#     from `envoy_gateway_public_allowed_cidrs` in k8s-components, which is the
+#     gateway's perimeter allowlist on the load balancer. The two answer
+#     different questions -- "who may reach the cluster" vs "who may reach this
+#     app" -- and only hold the same value while there is one operator.
+#   - Required while `demo_apps.echo_server.restrict_public_access = true`.
+#     Leaving it empty fails the plan on a precondition rather than silently
+#     denying every request.
+#   - Matching depends on Envoy seeing the real client address. Behind the ALB
+#     that comes from the ClientTrafficPolicy in k8s-components; if that were
+#     removed, every request would look like it came from the load balancer.
+#   - Find your current address with: curl -4 https://ifconfig.me
+#------------------------------------------------------------------------------
+echo_server_public_allowed_cidrs = [
+  # "203.0.113.10/32", # <your-name>
+]

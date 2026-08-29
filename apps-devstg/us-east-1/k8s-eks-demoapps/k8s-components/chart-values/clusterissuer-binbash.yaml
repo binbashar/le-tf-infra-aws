@@ -1,6 +1,13 @@
 clusterissuer:
   acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
+    # Same switch as the shared issuer in networking-cluster-issuer.tf. Note
+    # this chart derives `privateKeySecretRef` from the release name and does
+    # not expose it, so flipping environments re-registers the *same* account
+    # key against the other directory instead of keeping one key per server.
+    # Legal ACME and it works; just know the Secret then holds an identity on
+    # both. Nothing here requests certificates today — the gateways use the
+    # shared issuer.
+    server: ${acmeServer}
     email: ${email}
 
   selector:

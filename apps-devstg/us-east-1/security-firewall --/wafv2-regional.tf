@@ -20,13 +20,30 @@ module "wafv2_regional_alb" {
     sampled_requests_enabled   = true
   }
 
+  # Every rule starts in COUNT. Nothing here blocks on a first apply -- the
+  # WebACL only observes and logs what it *would* have done, which is the only
+  # honest way to size the blast radius before turning it on. Promote a rule to
+  # `block` (or `action = "block"` for the rate limit) once its counted
+  # requests in `aws-waf-logs-wafv2-apps` show no legitimate traffic caught.
+  #
+  # Two rule groups the upstream layer ships were dropped rather than counted:
+  #
+  #   AWSManagedRulesBotControlRuleSet -- its CategoryHttpLibrary signal targets
+  #     exactly the non-browser clients every check against this cluster uses
+  #     (`curl`), and it bills ~$10/month on top of the WebACL.
+  #   AWSManagedRulesATPRuleSet -- was pointed at `login_path = "/api/1/signin"`,
+  #     which no workload here serves, so it protected nothing for the same
+  #     ~$10/month.
+  #
+  # Both are worth revisiting for a workload that has real logins and real
+  # browser traffic; neither is worth it here.
   rules = [
     ###Custom IP Rate Based Rule
     {
       name     = "CustomRulesIpRateLimitBasedRuleSet"
       priority = "0"
 
-      action = "block"
+      action = "count"
 
       visibility_config = {
         cloudwatch_metrics_enabled = true
@@ -43,7 +60,7 @@ module "wafv2_regional_alb" {
       name     = "AWSManagedRulesAmazonIpReputationList"
       priority = "1"
 
-      override_action = "none"
+      override_action = "count"
 
       visibility_config = {
         cloudwatch_metrics_enabled = true
@@ -60,7 +77,7 @@ module "wafv2_regional_alb" {
       name     = "AWSManagedRulesAnonymousIpList"
       priority = "2"
 
-      override_action = "none"
+      override_action = "count"
 
       visibility_config = {
         cloudwatch_metrics_enabled = true
@@ -74,27 +91,10 @@ module "wafv2_regional_alb" {
       }
     },
     {
-      name     = "AWSManagedRulesBotControlRuleSet"
+      name     = "AWSManagedRulesCommonRuleSet"
       priority = "3"
 
-      override_action = "none"
-
-      visibility_config = {
-        cloudwatch_metrics_enabled = true
-        metric_name                = "AWSManagedRulesBotControlRuleSet-Metrics"
-        sampled_requests_enabled   = true
-      }
-
-      managed_rule_group_statement = {
-        name        = "AWSManagedRulesBotControlRuleSet"
-        vendor_name = "AWS"
-      }
-    },
-    {
-      name     = "AWSManagedRulesCommonRuleSet"
-      priority = "4"
-
-      override_action = "none"
+      override_action = "count"
 
       visibility_config = {
         cloudwatch_metrics_enabled = true
@@ -112,9 +112,9 @@ module "wafv2_regional_alb" {
     },
     {
       name     = "AWSManagedRulesKnownBadInputsRuleSet"
-      priority = "5"
+      priority = "4"
 
-      override_action = "none"
+      override_action = "count"
 
       visibility_config = {
         cloudwatch_metrics_enabled = true
@@ -129,9 +129,9 @@ module "wafv2_regional_alb" {
     },
     {
       name     = "AWSManagedRulesSQLiRuleSet"
-      priority = "6"
+      priority = "5"
 
-      override_action = "none"
+      override_action = "count"
 
       visibility_config = {
         cloudwatch_metrics_enabled = true
@@ -142,33 +142,6 @@ module "wafv2_regional_alb" {
       managed_rule_group_statement = {
         name        = "AWSManagedRulesSQLiRuleSet"
         vendor_name = "AWS"
-      }
-    },
-    {
-      name     = "AWSManagedRulesATPRuleSet"
-      priority = "7"
-
-      override_action = "none"
-
-      visibility_config = {
-        cloudwatch_metrics_enabled = true
-        metric_name                = "AWSManagedRulesATPRuleSet-Metrics"
-        sampled_requests_enabled   = true
-      }
-
-      managed_rule_group_statement = {
-        name        = "AWSManagedRulesATPRuleSet"
-        vendor_name = "AWS"
-        managed_rule_group_configs = {
-          aws_managed_rules_atp_rule_set = {
-            login_path = "/api/1/signin"
-            request_inspection = {
-              password_field = "/password"
-              username_field = "/username"
-              payload_type   = "JSON"
-            }
-          }
-        }
       }
     }
   ]

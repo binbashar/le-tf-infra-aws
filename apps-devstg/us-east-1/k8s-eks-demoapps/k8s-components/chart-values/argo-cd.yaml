@@ -14,6 +14,25 @@ configs:
   cm:
     exec.enabled: "${enableWebTerminal}"
 
+  params:
+    # Serve plain HTTP. TLS is terminated at the Envoy Gateway's HTTPS
+    # listener, and the hop from Envoy to this Service is cleartext inside the
+    # cluster. Without this argocd-server runs its own TLS and answers the
+    # gateway's cleartext request with a 307 to https://, which the gateway
+    # then re-terminates -- an infinite redirect from the browser's point of
+    # view. This is the documented setting for running behind a
+    # TLS-terminating proxy.
+    #
+    # Consequence for the CLI: with `server.insecure` argocd-server multiplexes
+    # gRPC and HTTP on the same port using h2c, and Envoy speaks HTTP/1.1
+    # upstream by default, so plain `argocd login` cannot negotiate gRPC. Use
+    # `argocd login argocd.aws.binbash.com.ar --grpc-web`, which tunnels gRPC
+    # over HTTP/1.1. The alternative is `appProtocol: kubernetes.io/h2c` on the
+    # server Service port, which Envoy Gateway honours to switch the upstream
+    # to HTTP/2 -- not done here because the chart does not expose that field
+    # and it would need a patch resource to set it.
+    server.insecure: true
+
 # ---------------------------------------------------------
 # Repository Server
 # ---------------------------------------------------------
@@ -28,17 +47,29 @@ repoServer:
 # Server
 # ---------------------------------------------------------
 server:
+  # No Ingress. The `private-apps` ingress class is dead -- nginx-ingress was
+  # retired and nothing watches it. Exposure is the chart's own `httproute`,
+  # attached to the platform-shared `private-gw-eg` Envoy Gateway. TLS and the
+  # certificate come from the gateway's HTTPS listener (the
+  # `*.aws.binbash.com.ar` wildcard), so there is no per-app cert-manager
+  # Certificate here any more.
   ingress:
+    enabled: false
+
+  # The chart's own key renders this route: same object the hand-written
+  # `kubernetes_manifest` produced, but applied server-side by Helm, so it
+  # needs no Gateway API CRD registered at plan time.
+  #
+  # Note the chart points the backendRef at the Service's `https` port (443)
+  # where the hand-written route used `http` (80). Equivalent here: both ports
+  # target 8080, `server.insecure` above makes that port plain HTTP, and
+  # neither port carries an appProtocol, so Envoy stays cleartext upstream
+  # either way.
+  httproute:
     enabled: true
-    annotations:
-      kubernetes.io/tls-acme: "true"
-      # Associate this ingress with the following ingress controller
-      kubernetes.io/ingress.class: ${ingressClass}
-      # Use the following cert-manager clusterissuer
-      cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
-      # The backend (ArgoCD Server) is expecting to handle HTTPS
-      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-    tls: true
+    parentRefs: ${parentRefs}
+    hostnames:
+      - ${argocdHost}
 
 
 # ---------------------------------------------------------

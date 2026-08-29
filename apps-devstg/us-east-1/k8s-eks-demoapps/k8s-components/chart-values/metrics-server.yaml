@@ -1,8 +1,19 @@
-# Disable Kubernetes CA validation in Kind
-extraArgs:
-  kubelet-insecure-tls: true
-  # kubelet-preferred-address-types: InternalIP
+# Upstream kubernetes-sigs chart, not Bitnami — see the note on
+# `helm_release.metrics_server`. `args` is a list appended to the chart's
+# `defaultArgs`, where Bitnami's `extraArgs` was a map.
 
-# Create the API service under "v1beta1.metrics.k8s.io"
+# The kubelet serving certificate on EKS nodes is signed by the cluster CA but
+# issued for the node's hostname, so the default verification fails and every
+# scrape errors with `x509: cannot validate certificate`. The alternative is
+# distributing the kubelet serving CA to metrics-server; not worth it here.
+args:
+  - --kubelet-insecure-tls
+
+# Registers the v1beta1.metrics.k8s.io APIService. VPA's recommender and any
+# HPA read through it, so without this both sit idle with no data.
 apiService:
   create: true
+
+# Tools node group, same as every other platform component.
+nodeSelector: ${nodeSelector}
+tolerations: ${tolerations}

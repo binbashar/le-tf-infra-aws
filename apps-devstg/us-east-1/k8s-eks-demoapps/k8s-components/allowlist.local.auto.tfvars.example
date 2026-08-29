@@ -1,0 +1,26 @@
+#------------------------------------------------------------------------------
+# Template for `allowlist.local.auto.tfvars`.
+#
+#   cp allowlist.local.auto.tfvars.example allowlist.local.auto.tfvars
+#
+# Then replace the placeholder with the public IPs that should reach the public
+# Envoy Gateway (`public-gw-eg`). The real file is excluded by the root
+# .gitignore (*.local.auto.tfvars) because the list is made of operators'
+# home/office addresses.
+#
+# OpenTofu auto-loads any *.auto.tfvars in the layer directory, so no extra
+# -var-file flag is needed.
+#
+# Notes:
+#   - Required while `envoy_gateway.public_gateway.enabled = true`. Leaving it
+#     empty fails the plan on a precondition: the AWS Load Balancer Controller
+#     would otherwise default the NLB's security group to 0.0.0.0/0.
+#   - Rules are created for TCP/80 and TCP/443 only.
+#   - IPv4 only today — the NLB is provisioned with ipAddressType=ipv4, so an
+#     IPv6 client can't reach it at all. Adding IPv6 entries here would require
+#     switching the NLB to dualstack first.
+#   - Find your current address with: curl -4 https://ifconfig.me
+#------------------------------------------------------------------------------
+envoy_gateway_public_allowed_cidrs = [
+  # "203.0.113.10/32", # <your-name>
+]

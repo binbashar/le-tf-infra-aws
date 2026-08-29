@@ -14,21 +14,25 @@ dashboard:
   nodeSelector: ${nodeSelector}
   tolerations: ${tolerations}
 
+  # No Ingress. The dashboard is exposed at `rollouts.aws.binbash.com.ar` by
+  # the chart's own `httproute` below; TLS comes from the gateway's HTTPS
+  # listener.
+  #
+  # Two things from the old Ingress were dropped rather than translated:
+  #   - `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`. That was copied
+  #     from argocd and was wrong here — the rollouts dashboard serves plain
+  #     HTTP on 3100 and never had TLS to speak. It was harmless only because
+  #     the component has been disabled.
+  #   - `paths: [/rollouts]`. The dashboard serves from the root of its own
+  #     hostname now, so there is no sub-path to carve out.
   ingress:
-    enabled: ${enableDashboard}
-    annotations:
-      kubernetes.io/tls-acme: "true"
-      # Associate this ingress with the following ingress controller
-      kubernetes.io/ingress.class: ${ingressClass}
-      # Use the following cert-manager clusterissuer
-      cert-manager.io/cluster-issuer: clusterissuer-binbash-cert-manager-clusterissuer
-      # The backend (ArgoCD Server) is expecting to handle HTTPS
-      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-    hosts:
+    enabled: false
+
+  # The chart's own key renders this route: same object the hand-written
+  # `kubernetes_manifest` produced, but applied server-side by Helm, so it
+  # needs no Gateway API CRD registered at plan time.
+  httproute:
+    enabled: true
+    parentRefs: ${parentRefs}
+    hostnames:
       - ${rolloutsHost}
-    paths:
-      - /rollouts
-    tls:
-      - secretName: argorollouts-server-tls
-        hosts:
-          - ${rolloutsHost}

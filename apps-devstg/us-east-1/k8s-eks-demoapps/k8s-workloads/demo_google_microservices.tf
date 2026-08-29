@@ -16,6 +16,8 @@ locals {
   ]
 }
 resource "kubernetes_manifest" "google_microservices_dev" {
+  count = var.demo_apps.google_microservices_dev.enabled ? 1 : 0
+
   computed_fields = [
     "metadata.labels",
     "metadata.annotations",
@@ -81,6 +83,11 @@ resource "kubernetes_manifest" "google_microservices_dev" {
   }
 }
 
+
+moved {
+  from = kubernetes_manifest.google_microservices_dev
+  to   = kubernetes_manifest.google_microservices_dev[0]
+}
 
 #------------------------------------------------------------------------------
 # DemoApp: Google Microservices (PRD)

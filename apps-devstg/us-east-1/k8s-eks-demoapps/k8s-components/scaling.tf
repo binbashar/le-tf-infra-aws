@@ -7,7 +7,7 @@ resource "helm_release" "vpa" {
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://charts.fairwinds.com/stable"
   chart      = "vpa"
-  version    = "0.5.0"
+  version    = "4.12.5"
   values     = [file("chart-values/vpa.yaml")]
   depends_on = [helm_release.metrics_server]
 }
@@ -142,6 +142,12 @@ resource "helm_release" "keda_http_add_on" {
 
 # ------------------------------------------------------------------------------
 # Goldilocks: tune up resource requests and limits.
+#
+# Hard dependency on VPA, not just an ordering preference: Goldilocks has no
+# recommender of its own, it reads the VPA objects it creates per namespace.
+# With `scaling.vpa.enabled = false` the dashboard installs and renders an
+# empty table forever. Enabling goldilocks therefore means enabling VPA, which
+# in turn pulls in metrics-server (see its count expression above).
 # ------------------------------------------------------------------------------
 resource "helm_release" "goldilocks" {
   count      = var.goldilocks.enabled ? 1 : 0
@@ -149,11 +155,27 @@ resource "helm_release" "goldilocks" {
   namespace  = kubernetes_namespace.monitoring_metrics[0].id
   repository = "https://charts.fairwinds.com/stable"
   chart      = "goldilocks"
-  version    = "5.3.0"
+  version    = "10.5.0"
   values = [
     templatefile("chart-values/goldilocks.yaml", {
-      goldilocksHost = "goldilocks.${local.platform}.${local.private_base_domain}"
+      parentRefs = jsonencode(local.private_gw_parent_refs),
+      host       = "goldilocks.${local.private_base_domain}"
     })
   ]
-  depends_on = [helm_release.vpa]
+  depends_on = [
+    helm_release.vpa,
+    kubernetes_manifest.private_gateway_eg,
+  ]
+
+  # The dependency above is an ordering hint; this is the contract. Without VPA
+  # the chart installs happily and the dashboard renders an empty table
+  # forever, which is indistinguishable from a broken route. Failing the plan
+  # trades a silent wrong answer for a loud one.
+  lifecycle {
+    precondition {
+      condition     = var.scaling.vpa.enabled
+      error_message = "goldilocks requires scaling.vpa.enabled = true: it has no recommender of its own and reads the VPA objects it creates per namespace, so with VPA off the dashboard would render an empty table forever."
+    }
+  }
 }
+

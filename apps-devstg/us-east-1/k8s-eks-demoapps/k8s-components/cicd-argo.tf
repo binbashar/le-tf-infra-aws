@@ -31,11 +31,30 @@ resource "helm_release" "argocd" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
-  version    = "7.9.1"
+  # 10.2.3 -> Argo CD v3.5.0. Jumped from 7.9.1 (v2.14.11) after confirming the
+  # Envoy Gateway integration worked on the old version, so a routing problem
+  # and an upgrade problem could not be confused for each other.
+  #
+  # Breaking changes across that range that actually touch this config:
+  #   - 10.0.0 flips `global.networkPolicy.create` false -> true, so the chart
+  #     now ships NetworkPolicies. The one guarding argocd-server has to admit
+  #     the Envoy pods from `envoy-gateway-system` or the HTTPRoute below
+  #     resolves to a black hole. Left at the upstream default deliberately —
+  #     it is the security-sensible setting and the integration is verified
+  #     against it rather than around it.
+  #   - 9.0.0 dropped `configs.params` defaults from values.yaml but kept the
+  #     override interface, so `server.insecure` still applies as written.
+  #   - 9.1.0's redis-ha selector breakage does not apply: this runs the
+  #     single-replica redis, not redis-ha.
+  #   - 8.0.0 is the Argo CD v2 -> v3 jump. No state to migrate here: no
+  #     Applications exist, and the admin password and both repository
+  #     credentials are re-rendered from Secrets Manager on every apply.
+  version = "10.2.3"
   values = [
     templatefile("chart-values/argo-cd.yaml", {
-      argoHost                   = "argocd.${local.platform}.${local.private_base_domain}",
-      ingressClass               = local.private_ingress_class,
+      parentRefs                 = jsonencode(local.private_gw_parent_refs),
+      argoHost                   = local.argocd_host,
+      argocdHost                 = local.argocd_host,
       enableWebTerminal          = var.argocd.enableWebTerminal,
       enableNotifications        = var.argocd.enableNotifications,
       slackNotificationsAppToken = var.argocd.enableNotifications ? jsondecode(data.aws_secretsmanager_secret_version.argocd_slack_notifications_app_oauth[0].secret_string)["slack_app_oauth_token"] : "",
@@ -73,10 +92,23 @@ resource "helm_release" "argocd" {
 
   depends_on = [
     helm_release.alb_ingress,
-    helm_release.ingress_nginx_private,
+    kubernetes_manifest.private_gateway_eg,
     helm_release.certmanager
   ]
 }
+
+#------------------------------------------------------------------------------
+# ArgoCD exposure. Replaces the nginx Ingress the chart used to render; see
+# `local.private_gw_parent_refs` in locals.tf for the conventions every private
+# route follows. Three things moved with the Ingress, not one:
+#
+#   - TLS. It requested its own cert-manager Certificate; the gateway's HTTPS
+#     listener already terminates with the `*.aws.binbash.com.ar` wildcard.
+#   - The hostname. `argocd.demo.devstg.aws.binbash.com.ar` sat three labels
+#     below the private base domain, which that wildcard does not cover.
+#   - The backend protocol. `nginx.ingress.kubernetes.io/backend-protocol:
+#     HTTPS` became `server.insecure` in the chart values — argocd-server drops
+#     to plain HTTP rather than the gateway learning to re-encrypt.
 
 #------------------------------------------------------------------------------
 # ArgoCD Image Updater
@@ -123,12 +155,12 @@ resource "helm_release" "argo_rollouts" {
   namespace  = kubernetes_namespace.argocd[0].id
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-rollouts"
-  version    = "2.40.9"
+  version    = "2.41.1"
   values = [
     templatefile("chart-values/argo-rollouts.yaml", {
+      parentRefs      = jsonencode(local.private_gw_parent_refs),
+      rolloutsHost    = "rollouts.${local.private_base_domain}",
       enableDashboard = var.argocd.rollouts.dashboard.enabled,
-      rolloutsHost    = "rollouts.${local.platform}.${local.private_base_domain}",
-      ingressClass    = local.private_ingress_class,
       nodeSelector    = local.tools_nodeSelector,
       tolerations     = local.tools_tolerations
     })
@@ -136,7 +168,15 @@ resource "helm_release" "argo_rollouts" {
 
   depends_on = [
     helm_release.alb_ingress,
-    helm_release.ingress_nginx_private,
+    kubernetes_manifest.private_gateway_eg,
     helm_release.certmanager
   ]
 }
+
+#------------------------------------------------------------------------------
+# Argo Rollouts dashboard exposure. The old Ingress carried
+# `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`, copy-pasted from
+# ArgoCD and wrong here — the dashboard serves plain HTTP on 3100 and never had
+# TLS of its own. It also pinned `paths: [/rollouts]`; with a hostname to
+# itself there is no sub-path to carve out, so this routes the root. The app
+# still self-redirects to `/rollouts/`, which is its own doing.
