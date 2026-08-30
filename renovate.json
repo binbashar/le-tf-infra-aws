@@ -124,6 +124,14 @@
       "matchPackageNames": [
         "hashicorp/vault"
       ]
+    },
+    {
+      "allowedVersions": "<3.14",
+      "description": "Cap CI Python below 3.14: leverage CLI declares requires-python >=3.9,<3.14 (up to 3.1.0). Lift once upstream supports 3.14.",
+      "enabled": true,
+      "matchPackageNames": [
+        "python"
+      ]
     }
   ],
   "prConcurrentLimit": 5,
