@@ -3,7 +3,7 @@
 #=============================#
 module "mwaa" {
   source  = "aws-ia/mwaa/aws"
-  version = "0.0.7"
+  version = "0.0.8"
 
   # Basic Configuration
   name              = local.mwaa_name
