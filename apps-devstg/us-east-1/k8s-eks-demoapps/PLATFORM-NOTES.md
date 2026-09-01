@@ -22,12 +22,13 @@ there. That topology is:
 The perimeter is meant to stay recognisable; the data plane is what changes.
 **Reintroducing nginx here is never an option** — replacing it is the point.
 
-**Current state (2026-08-28).** Torn down. Everything below the VPC is gone;
-`vpc-0c2dd28735d0250c3` is kept for a fast re-spin, with the `network` layer
-applied and `vpc_enable_nat_gateway = false`. Note that resting state: `network`
-is *applied without a NAT*, never destroyed — see "Tearing down". When up it is
-EKS 1.34 on AL2023 with spot nodes and both public and private paths on Envoy
-Gateway.
+**Current state (2026-09-01).** Up, on `terraform-aws-eks` **v21.25.0**. Spun up
+to validate that bump (see "The v20 → v21 module bump" below) and due to come
+back down. When torn down, the resting state is: everything below the VPC gone,
+`vpc-0c2dd28735d0250c3` kept for a fast re-spin, `network` applied with
+`vpc_enable_nat_gateway = false`. Note that resting state: `network` is *applied
+without a NAT*, never destroyed — see "Tearing down". Up it is EKS 1.34 on AL2023
+with spot nodes and both public and private paths on Envoy Gateway.
 
 **No WAF is deployed.** It was built, attached, verified and taken back down the
 same day; the code is all in place behind the ` --` exclusion. See "AWS WAF"
@@ -50,6 +51,7 @@ below for what re-attaching costs.
 
 ---
 | 9 | 2026-08-28 | Re-spun to verify the PR #1136 review items. **Component HTTPRoutes moved onto the charts' native keys.** ACME endpoint made switchable; Secret preservation proven. Torn down again, both DNS zones clean. |
+| 10 | 2026-09-01 | **`terraform-aws-eks` v20.37.2 → v21.25.0**, `aws-auth` → access entries, AWS provider → 6.x. Three latent no-op inputs fixed. Re-spun end to end to validate it; three defects found that no plan could catch. |
 
 ---
 
@@ -458,6 +460,150 @@ the upgrade with a `lastRefreshTime` from before it. Verify by comparing the
 installed versions against the reported floors rather than waiting.
 
 ---
+
+### The v20 → v21 module bump, and three things a plan cannot catch
+
+`terraform-aws-eks` went from `v20.37.2` to **`v21.25.0`** on 2026-09-01, which
+also forced the AWS provider from `~> 5.74` to `~> 6.59` (v21's floor). The
+timing was deliberate: the stack was torn down, so the bump landed as a
+greenfield create — `Plan: 49 to add, 0 to change, 0 to destroy` — with no state
+moves and no node-group replacements.
+
+The mechanical part was the easy part: the `cluster_*` prefix is stripped from
+most inputs, `eks_managed_node_group_defaults` is gone (as is every other
+`*_defaults` variable — the module iterates `eks_managed_node_groups` directly
+with no merge step, so `local.node_group_defaults` + `merge()` restores the
+single-source-of-truth property by hand), and the `aws-auth` submodule is gone.
+
+**The upgrade guide's scariest line is wrong for this layer.** It warns that the
+IRSA OIDC issuer URL moves to the dual-stack `oidc-eks` endpoint. It does not:
+v21.25.0 still sets `aws_iam_openid_connect_provider.url` from the cluster's own
+issuer, and the `oidc-eks` form is only a *new output*
+(`cluster_dualstack_oidc_issuer_url`). The issuer came out as
+`oidc.eks.us-east-1.amazonaws.com` as always, so the 12 IRSA roles in
+`identities` and the cross-account provider in `shared` were never at risk.
+
+What the guide does *not* warn about is the three defects below. All three were
+found by applying — every one of them plans clean.
+
+#### 1. A fresh v21 cluster has no CNI, so no node ever joins
+
+v21 hardcodes `bootstrap_self_managed_addons = false` and no longer exposes it as
+a variable. v20 defaulted it to `null`, so the argument was omitted and the AWS
+API default of `true` applied: **EKS installed self-managed kube-proxy, CoreDNS
+and VPC CNI when the cluster came up.** That is what let nodes join on Days 1–9,
+and why the `addons` layer — two layers later, after `identities` — could behave
+as an upgrade rather than a first install. Its
+`resolve_conflicts_on_create = "OVERWRITE"` exists precisely to convert those
+self-managed daemonsets into managed add-ons.
+
+Under v21 that ordering deadlocks. Observed: `aws eks list-addons` returned `[]`,
+three instances came up and sat there, and both node groups blocked at
+`Still creating...` for 16 minutes, because a node cannot reach `Ready` without a
+CNI. They would have burned their full create timeout and failed.
+
+The CNI is now installed from the `cluster` layer via `local.bootstrap_addons`
+with **`before_compute = true`**, which the module routes to
+`aws_eks_addon.before_compute` — created ahead of the node groups. It carries no
+`service_account_role_arn`, because the IRSA role for it lives in `identities`,
+which cannot exist yet on a fresh cluster; the CNI runs on the node instance
+role, which already carries `AmazonEKS_CNI_Policy` via
+`iam_role_attach_cni_policy`. `most_recent = false` is set explicitly, because
+that default flipped to `true` in v21 and would otherwise resolve the newest
+published CNI on every apply instead of the default for the cluster's Kubernetes
+version — unwanted drift on the one add-on that has needed stepwise upgrades
+here before (see "The add-ons were left three minors behind").
+
+**`vpc-cni` is correspondingly absent from the `addons` layer.** Declaring it in
+both places fails with `ResourceInUseException`. The consequence, noted in both
+files: the `eks_addons_vpc_cni` IRSA role in `identities` is now unused.
+
+#### 2. Access entries reject SSO role ARNs with the IAM path stripped
+
+The `aws-auth` ConfigMap wanted IAM Identity Center role ARNs with the
+`/aws-reserved/sso.amazonaws.com/` path removed, and the old `map_roles`
+followed that convention. **It does not carry over.** Access entries validate
+that the principal exists, so the path-less form is rejected:
+
+```text
+InvalidParameterException: The specified principalArn is invalid: invalid principal.
+```
+
+Use the ARN verbatim, path included. EKS stores it as given — the service-linked
+`AWSServiceRoleForAmazonEKS` entry it creates for itself is path-ful too — so
+there is no normalisation diff to chase.
+
+Two more things about that migration. `enable_cluster_creator_admin_permissions`
+is now **`false`** on purpose: the module merges the flag's bootstrap entry into
+`access_entries` by *map key*, not by principal, so with the SSO DevOps role
+listed explicitly the flag would produce two `aws_eks_access_entry` resources for
+one principal and fail with `ResourceInUseException`. And EKS access policies are
+**not** IAM policies — they live under `arn:aws:eks::aws:cluster-access-policy/`,
+and the IAM form fails with `The policyArn parameter format is not valid`.
+
+Fixed on the way: the pinned SSO role ARN had gone stale. The permission-set
+suffix is generated by Identity Center and changes when the permission set is
+recreated, so that aws-auth entry had been granting nothing. It is resolved via
+`data.aws_iam_roles` now rather than pinned.
+
+#### 3. IMDS hop limit 1 breaks the Load Balancer Controller
+
+v21 drops the node groups' IMDS `http_put_response_hop_limit` from 2 to **1**,
+which puts instance metadata out of reach of anything inside a pod. Verified
+directly: a throwaway pod cannot get an IMDS token, while IRSA keeps working.
+
+That is a *hardening* win, and everything here authenticates via IRSA — but the
+AWS Load Balancer Controller discovers its **VPC ID** from IMDS, which IRSA has
+nothing to do with. Both replicas crash-looped and the Helm release timed out
+with `context deadline exceeded`:
+
+```text
+unable to initialize AWS cloud: failed to get VPC ID: failed to fetch VPC ID
+from instance metadata
+```
+
+The fix is to pass `vpcId` and `region` to the chart explicitly, which is what
+AWS documents, and which is better than raising the hop limit back to 2: it
+removes the IMDS dependency instead of reopening metadata to every pod on the
+node. The VPC ID reaches `k8s-components` as a new `vpc_id` output on the
+`cluster` layer, rather than a sixth `terraform_remote_state` block.
+
+**Note the shape of this failure**, because it generalises: the symptom named
+neither IMDS, nor hop limits, nor the module bump. Anything else in a cluster
+that reads instance metadata from a pod will fail the same opaque way after this
+upgrade.
+
+#### Three inputs that were silently doing nothing
+
+v20 typed the node-group defaults as `any`, which discarded unknown keys without
+complaint. v21's typed object turns them into hard errors, which surfaced two of
+these; the third came out of reading the plan.
+
+- **`k8s_labels = local.tags`** was never a real input — the submodule's key is
+  `labels`. Those tags never landed as Kubernetes labels. The per-group `labels`
+  are the ones that always worked.
+- **`disk_size = 50`** had been a no-op since 2023. The module sets
+  `disk_size = use_custom_launch_template ? null : disk_size`, and
+  `use_custom_launch_template` defaults to `true`, so the size has to come from
+  the launch template. Every node on Days 1–9 ran on the AL2023 AMI default of
+  20 GiB. Now delivered for real via `block_device_mappings` (50 GiB gp3,
+  encrypted). Identical logic in v20.37.2 and v21.25.0 — a latent bug, not a v21
+  regression.
+- **`data.terraform_remote_state.cluster-identities`** in `cluster/config.tf` was
+  dead code declaring a false *reverse* dependency on `identities`, which
+  actually depends on `cluster`. Removed, along with `data.aws_eks_cluster` and
+  the whole `kubernetes` provider — which existed only to feed the aws-auth
+  ConfigMap. **The `cluster` layer no longer touches the Kubernetes API at all,
+  so it no longer needs VPN access.**
+
+#### Also worth knowing
+
+Two other v21 defaults are left alone but written down in `cluster/variables.tf`:
+`use_latest_ami_release_version` is now `true`, so an apply following an AWS AMI
+release will roll the nodes; and `enable_monitoring` is now `false`, which is
+what this cluster wants. `control_plane_egress_mode` — the one-way switch for
+routing control-plane egress through your own VPC — becomes available in v21 but
+is deliberately not touched here.
 
 ### DNS cutovers: hide the old backend, do not delete it
 
