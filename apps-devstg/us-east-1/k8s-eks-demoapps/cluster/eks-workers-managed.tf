@@ -159,7 +159,12 @@ module "cluster" {
   cloudwatch_log_group_retention_in_days = var.cluster_log_retention_in_days
 
   # EKS Managed Add-ons
-  addons = local.addons_enabled
+  #
+  # `local.bootstrap_addons` holds only the VPC CNI, which has to exist before
+  # the nodes can join -- see the comment on that local. Everything else lives
+  # in the `addons` layer. `local.addons_enabled` is the (normally empty)
+  # opt-in hook described at the bottom of `locals.tf`.
+  addons = merge(local.bootstrap_addons, local.addons_enabled)
 
   # Define tags (notice we are appending here tags required by the cluster autoscaler)
   tags = merge(local.tags,
