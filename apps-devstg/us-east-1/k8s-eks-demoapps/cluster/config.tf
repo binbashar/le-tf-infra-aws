@@ -6,13 +6,6 @@ provider "aws" {
   profile = var.profile
 }
 
-
-provider "kubernetes" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-}
-
 #
 # Backend Config (partial)
 #
@@ -20,8 +13,8 @@ terraform {
   required_version = "~> 1.6"
 
   required_providers {
-    aws        = "~> 5.74"
-    kubernetes = "~> 2.23"
+    # terraform-aws-eks v21 requires the AWS provider >= 6.59.
+    aws = "~> 6.59"
   }
 
   backend "s3" {
@@ -33,18 +26,20 @@ terraform {
 # Data Sources
 #
 
-data "aws_eks_cluster" "cluster" {
-  name = module.cluster.cluster_name
+# The `kubernetes` provider used to live here purely to feed the `aws-auth`
+# submodule, which v21 removed. This layer holds no `kubernetes_*` resources, so
+# the provider -- and the `aws_eks_cluster_auth` token data source that fed it --
+# are gone. A useful side effect: applying this layer no longer touches the
+# (private) Kubernetes API, so it no longer needs VPN access. Cluster access is
+# granted through EKS access entries instead; see `locals.tf`.
 
-  depends_on = [module.cluster]
+# Resolves the IAM Identity Center DevOps permission set role, whose name suffix
+# is generated and changes whenever the permission set is recreated. See
+# `local.sso_devops_role_arn`.
+data "aws_iam_roles" "sso_devops" {
+  name_regex  = "AWSReservedSSO_DevOps_.*"
+  path_prefix = "/aws-reserved/sso.amazonaws.com/"
 }
-
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.cluster.cluster_name
-
-  depends_on = [module.cluster]
-}
-
 
 data "terraform_remote_state" "cluster-vpc" {
   backend = "s3"
@@ -53,16 +48,6 @@ data "terraform_remote_state" "cluster-vpc" {
     profile = var.profile
     bucket  = var.bucket
     key     = "apps-devstg/k8s-eks-demoapps/network/terraform.tfstate"
-  }
-}
-
-data "terraform_remote_state" "cluster-identities" {
-  backend = "s3"
-  config = {
-    region  = var.region
-    profile = var.profile
-    bucket  = var.bucket
-    key     = "apps-devstg/k8s-eks-demoapps/identities/terraform.tfstate"
   }
 }
 
