@@ -22,13 +22,13 @@ there. That topology is:
 The perimeter is meant to stay recognisable; the data plane is what changes.
 **Reintroducing nginx here is never an option** — replacing it is the point.
 
-**Current state (2026-09-01).** Up, on `terraform-aws-eks` **v21.25.0**. Spun up
-to validate that bump (see "The v20 → v21 module bump" below) and due to come
-back down. When torn down, the resting state is: everything below the VPC gone,
-`vpc-0c2dd28735d0250c3` kept for a fast re-spin, `network` applied with
+**Current state (2026-09-01).** Torn down, after a full re-spin that validated
+the `terraform-aws-eks` **v21.25.0** bump (see "The v20 → v21 module bump"
+below). Everything below the VPC is gone; `vpc-0c2dd28735d0250c3` is kept for a
+fast re-spin, with the `network` layer applied and
 `vpc_enable_nat_gateway = false`. Note that resting state: `network` is *applied
-without a NAT*, never destroyed — see "Tearing down". Up it is EKS 1.34 on AL2023
-with spot nodes and both public and private paths on Envoy Gateway.
+without a NAT*, never destroyed — see "Tearing down". When up it is EKS 1.34 on
+AL2023 with spot nodes and both public and private paths on Envoy Gateway.
 
 **No WAF is deployed.** It was built, attached, verified and taken back down the
 same day; the code is all in place behind the ` --` exclusion. See "AWS WAF"
@@ -51,7 +51,7 @@ below for what re-attaching costs.
 
 ---
 | 9 | 2026-08-28 | Re-spun to verify the PR #1136 review items. **Component HTTPRoutes moved onto the charts' native keys.** ACME endpoint made switchable; Secret preservation proven. Torn down again, both DNS zones clean. |
-| 10 | 2026-09-01 | **`terraform-aws-eks` v20.37.2 → v21.25.0**, `aws-auth` → access entries, AWS provider → 6.x. Three latent no-op inputs fixed. Re-spun end to end to validate it; three defects found that no plan could catch. |
+| 10 | 2026-09-01 | **`terraform-aws-eks` v20.37.2 → v21.25.0**, `aws-auth` → access entries, AWS provider → 6.x. Three latent no-op inputs fixed. Re-spun end to end to validate it — both routes 200, zero drift on all six layers — then torn down. Three defects found that no plan could catch. |
 
 ---
 
@@ -747,6 +747,27 @@ Then the rest, in reverse dependency order: `k8s-components` → `addons` ->
 records cleared on the Ingress destroy, eighteen private ones in a single batch
 after the component releases went, leaving only the known-inert `a-echo-server`
 TXT.
+
+**The 2026-09-01 teardown got the public half right and the private half wrong**,
+which is worth recording because the failure is asymmetric and easy to repeat.
+`kubernetes_ingress_v1.envoy_apps` was destroyed on its own and the public record
+was *polled until it disappeared* before anything else moved — clean. But
+`k8s-workloads` was then chained straight into the `k8s-components` destroy
+without the same wait-and-check on the private zone, so external-dns-private went
+down inside its own sync window and left three records behind:
+`echo-server.aws.binbash.com.ar` A and TXT, and `cname-echo-server.aws...` TXT.
+
+Note that the rule above already says to do this — "wait a full external-dns
+cycle (3 minutes) and check both zones before moving on to the layer that removes
+external-dns". The trap is that the public step *feels* like the DNS step,
+because it is the one that gets its own targeted destroy. It is only half of it.
+The private records have no dedicated destroy of their own, so the pause has to
+be deliberate.
+
+Cleaned up with a single `change-resource-record-sets` DELETE batch. That
+`cname-` TXT in particular cannot be left: unlike the inert `a-echo-server` one
+in the public zone, a stale `cname-<host>` registry record collides on the next
+spin and crash-loops the external-dns controller.
 
 **Destroy ordering is a drain gate, not `depends_on`.**
 
