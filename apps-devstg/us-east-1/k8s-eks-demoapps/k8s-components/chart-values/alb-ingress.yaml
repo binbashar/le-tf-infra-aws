@@ -1,6 +1,22 @@
 # Kubernetes cluster name
 clusterName: ${clusterName}
 
+# VPC and region, passed explicitly rather than discovered.
+#
+# The controller's default is to read the VPC ID from EC2 instance metadata. That
+# stopped working when terraform-aws-eks v21 dropped the node groups' IMDS
+# `http_put_response_hop_limit` to 1, which puts IMDS out of reach of anything
+# running inside a pod. The controller crash-looped with
+#
+#   unable to initialize AWS cloud: failed to get VPC ID: failed to fetch VPC ID
+#   from instance metadata
+#
+# Supplying both values is the fix AWS documents, and it is better than raising
+# the hop limit back to 2: it removes the IMDS dependency instead of reopening
+# metadata to every pod on the node.
+vpcId: ${vpcId}
+region: ${region}
+
 # The ingress class (we are making the default value very explicit)
 # This is NOT the load balancer type, just an ingress controller identifier
 ingressClass: ${ingressClass}

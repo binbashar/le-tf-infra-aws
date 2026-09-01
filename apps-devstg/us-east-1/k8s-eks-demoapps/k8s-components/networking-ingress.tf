@@ -11,6 +11,8 @@ resource "helm_release" "alb_ingress" {
   values = [
     templatefile("chart-values/alb-ingress.yaml", {
       clusterName        = data.terraform_remote_state.cluster.outputs.cluster_name,
+      vpcId              = data.terraform_remote_state.cluster.outputs.vpc_id,
+      region             = var.region,
       ingressClass       = local.public_ingress_class,
       serviceAccountName = "alb-ingress",
       roleArn            = data.terraform_remote_state.cluster-identities.outputs.aws_lb_controller_role_arn,
