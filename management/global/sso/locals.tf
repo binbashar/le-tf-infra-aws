@@ -20,6 +20,7 @@ locals {
       groups = [
         "datascientists",
         "administrators",
+        "kiropro",
       ]
     }
     "angelo.fenoglio" = {
@@ -62,6 +63,7 @@ locals {
       groups = [
         "administrators",
         "devops",
+        "kiropro",
       ]
     }
     "dorian.machado" = {
@@ -90,6 +92,7 @@ locals {
         "devops",
         "datascientists",
         "marketplaceandpartnercentral",
+        "kiropro",
       ]
     }
     "ezequiel.godoy" = {
@@ -379,6 +382,18 @@ locals {
     managementmarketplaceaipublishers = {
       name        = "ManagementMarketplaceAIPublishers"
       description = "Provides access to publish AI products in AWS Marketplace and Partner Central from the Management account."
+    }
+    #
+    # NOTE Subscription-only group: it is intentionally NOT referenced by any
+    # permission set in account_assignments.tf, so it grants no AWS access.
+    # It exists so that Kiro Pro seats are assigned once to the group in the
+    # Kiro console (Kiro has no public API / OpenTofu resource for subscription
+    # assignment), while seat membership stays managed as code here.
+    # Ref: https://kiro.dev/docs/enterprise/subscribe/
+    #
+    kiropro = {
+      name        = "KiroPro"
+      description = "Members hold a Kiro Pro (USD 20/user/month) subscription, assigned to this group in the Kiro console."
     }
   }
 
