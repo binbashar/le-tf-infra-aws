@@ -552,10 +552,16 @@ v21 drops the node groups' IMDS `http_put_response_hop_limit` from 2 to **1**,
 which puts instance metadata out of reach of anything inside a pod. Verified
 directly: a throwaway pod cannot get an IMDS token, while IRSA keeps working.
 
-That is a *hardening* win, and everything here authenticates via IRSA — but the
-AWS Load Balancer Controller discovers its **VPC ID** from IMDS, which IRSA has
-nothing to do with. Both replicas crash-looped and the Helm release timed out
-with `context deadline exceeded`:
+That is a *hardening* win. Workloads and controllers here authenticate via IRSA,
+so none of them care — with one exception worth naming, since it decides which
+role keeps `AmazonEKS_CNI_Policy`: the bootstrap VPC CNI has no
+`service_account_role_arn` and runs on the **node instance role** (see defect 1
+above). It reads no metadata either, so the hop limit does not affect it.
+
+Authentication was never the exposure. **Reading IMDS for *data* is**, and the
+AWS Load Balancer Controller does exactly that: it discovers its **VPC ID** from
+instance metadata, which IRSA has nothing to do with. Both replicas crash-looped
+and the Helm release timed out with `context deadline exceeded`:
 
 ```text
 unable to initialize AWS cloud: failed to get VPC ID: failed to fetch VPC ID

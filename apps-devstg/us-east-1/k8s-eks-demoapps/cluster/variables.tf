@@ -69,11 +69,19 @@ variable "use_managed_addons" {
 #
 #   * IMDS `http_put_response_hop_limit` is now 1 (was 2). A hop limit of 1
 #     means pods can no longer reach the instance metadata service, only
-#     processes on the host can. Everything in this cluster authenticates via
-#     IRSA, so nothing should notice -- but a workload that reads IMDS from
-#     inside a container is the one thing this bump can break. Set
-#     `metadata_options.http_put_response_hop_limit = 2` on the affected node
-#     group if that ever happens, rather than globally.
+#     processes on the host can. Workloads and controllers here authenticate via
+#     IRSA and are unaffected by that -- the VPC CNI is the exception, and it
+#     reads no metadata either; it uses the node instance role (see
+#     `iam_role_attach_cni_policy` in `locals.tf`).
+#
+#     Authentication was never the risk, though. **Something that reads IMDS for
+#     *data* is**, and one thing here did: the AWS Load Balancer Controller
+#     discovers its VPC ID from instance metadata, and crash-looped until it was
+#     passed `vpcId`/`region` explicitly (see `k8s-components`). Prefer that fix
+#     -- tell the component what it needs -- over
+#     `metadata_options.http_put_response_hop_limit = 2`, which reopens metadata
+#     to every pod on the node group. If the hop limit must be raised, do it on
+#     the affected group rather than globally.
 #
 #   * `use_latest_ami_release_version` is now true (was false). Node groups
 #     resolve the newest AMI release for their `ami_type` at plan time, so an

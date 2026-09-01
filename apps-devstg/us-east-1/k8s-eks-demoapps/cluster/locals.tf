@@ -152,9 +152,22 @@ locals {
         }
       }
     }
-    # IMPORTANT: setting this to true is only necessary during the initial bootstrap
-    # of the cluster, otherwise the built-in VPC CNI won't start. Then, after you get
-    # the VPC CNI add-on installed, you can set this to false.
+    # DO NOT set this to false. The comment that used to sit here said this was
+    # only needed during initial bootstrap and could be turned off once the VPC
+    # CNI add-on was installed. That was true while the add-on came from the
+    # `addons` layer *with* a `service_account_role_arn` -- IRSA gave `aws-node`
+    # its own role, so the node role no longer needed the CNI permissions.
+    #
+    # It is no longer true. Since the CNI moved into `local.bootstrap_addons`
+    # above it runs without IRSA, because the role for it lives in `identities`,
+    # which cannot exist yet on a fresh cluster. `aws-node` therefore uses the
+    # node instance role permanently, and this attachment is what gives it the
+    # EC2 permissions pod networking needs. Turning it off breaks the CNI.
+    #
+    # To get back to IRSA for the CNI: give the bootstrap add-on a
+    # `service_account_role_arn` on a later apply (the `use_managed_addons`
+    # three-step dance at the bottom of this file is the existing hook for that),
+    # verify `aws-node` is using it, and only then drop this.
     iam_role_attach_cni_policy = true
   }
 
