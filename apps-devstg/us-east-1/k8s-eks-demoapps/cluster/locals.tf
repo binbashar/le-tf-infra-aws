@@ -90,12 +90,12 @@ locals {
   # versions and IRSA roles. Consequently `vpc-cni` must NOT also be declared
   # there, or that layer's create fails with `ResourceInUseException`.
   #
-  # No `service_account_role_arn`: the IRSA role for the CNI lives in
-  # `identities`, which cannot exist yet on a fresh cluster. The CNI runs on the
-  # node instance role instead, which carries `AmazonEKS_CNI_Policy` via
-  # `iam_role_attach_cni_policy` below. No version pin either -- the add-on
-  # resolves the default for the cluster's Kubernetes version, and the `addons`
-  # layer is where versions are chosen deliberately.
+  # `service_account_role_arn` points at a role created in THIS layer
+  # (`irsa-vpc-cni.tf`), not in `identities` — read the comment there, it is the
+  # whole reason the CNI gets its own identity instead of borrowing the node
+  # role's. No version pin -- the add-on resolves the default for the cluster's
+  # Kubernetes version, and the `addons` layer is where versions are chosen
+  # deliberately.
   bootstrap_addons = {
     vpc-cni = {
       before_compute = true
@@ -106,6 +106,7 @@ locals {
       most_recent                 = false
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
+      service_account_role_arn    = module.irsa_vpc_cni.iam_role_arn
     }
   }
 
@@ -152,23 +153,25 @@ locals {
         }
       }
     }
-    # DO NOT set this to false. The comment that used to sit here said this was
-    # only needed during initial bootstrap and could be turned off once the VPC
-    # CNI add-on was installed. That was true while the add-on came from the
-    # `addons` layer *with* a `service_account_role_arn` -- IRSA gave `aws-node`
-    # its own role, so the node role no longer needed the CNI permissions.
+    # `false` on purpose, and it is the point of `irsa-vpc-cni.tf`.
     #
-    # It is no longer true. Since the CNI moved into `local.bootstrap_addons`
-    # above it runs without IRSA, because the role for it lives in `identities`,
-    # which cannot exist yet on a fresh cluster. `aws-node` therefore uses the
-    # node instance role permanently, and this attachment is what gives it the
-    # EC2 permissions pod networking needs. Turning it off breaks the CNI.
+    # This attaches `AmazonEKS_CNI_Policy` to the *node instance role*, which
+    # means every pod that can reach the node's credentials inherits ENI and
+    # subnet write permissions. AWS's own guidance is to give `aws-node` a
+    # dedicated role via IRSA and then remove the policy from the node role, and
+    # that is exactly what happens now: `local.bootstrap_addons.vpc-cni` carries
+    # a `service_account_role_arn`, so the CNI has its own scoped credentials
+    # from the moment the cluster exists.
     #
-    # To get back to IRSA for the CNI: give the bootstrap add-on a
-    # `service_account_role_arn` on a later apply (the `use_managed_addons`
-    # three-step dance at the bottom of this file is the existing hook for that),
-    # verify `aws-node` is using it, and only then drop this.
-    iam_role_attach_cni_policy = true
+    # It was `true` for one commit, while the CNI briefly ran on the node role --
+    # v21 forced the CNI to be installed before the nodes, and the role for it
+    # was still stranded in the `identities` layer, which runs afterwards. Moving
+    # the role into this layer removed that constraint.
+    #
+    # If you ever set this back to `true`, also drop the add-on's
+    # `service_account_role_arn`, or you will have two credential paths and no
+    # clear answer about which one `aws-node` is using.
+    iam_role_attach_cni_policy = false
   }
 
   # ---------------------------------------------------------------------------

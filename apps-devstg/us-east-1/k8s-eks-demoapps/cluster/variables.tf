@@ -69,10 +69,9 @@ variable "use_managed_addons" {
 #
 #   * IMDS `http_put_response_hop_limit` is now 1 (was 2). A hop limit of 1
 #     means pods can no longer reach the instance metadata service, only
-#     processes on the host can. Workloads and controllers here authenticate via
-#     IRSA and are unaffected by that -- the VPC CNI is the exception, and it
-#     reads no metadata either; it uses the node instance role (see
-#     `iam_role_attach_cni_policy` in `locals.tf`).
+#     processes on the host can. Nothing here is affected: every component,
+#     the VPC CNI included, authenticates via IRSA rather than through the
+#     node's credentials.
 #
 #     Authentication was never the risk, though. **Something that reads IMDS for
 #     *data* is**, and one thing here did: the AWS Load Balancer Controller

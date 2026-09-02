@@ -22,9 +22,9 @@ there. That topology is:
 The perimeter is meant to stay recognisable; the data plane is what changes.
 **Reintroducing nginx here is never an option** — replacing it is the point.
 
-**Current state (2026-09-01).** Torn down, after a full re-spin that validated
-the `terraform-aws-eks` **v21.25.0** bump (see "The v20 → v21 module bump"
-below). Everything below the VPC is gone; `vpc-0c2dd28735d0250c3` is kept for a
+**Current state (2026-09-01).** Torn down, after two re-spins that validated the
+`terraform-aws-eks` **v21.25.0** bump and then the CNI's move onto its own IRSA
+role (see "The v20 → v21 module bump" below). Everything below the VPC is gone; `vpc-0c2dd28735d0250c3` is kept for a
 fast re-spin, with the `network` layer applied and
 `vpc_enable_nat_gateway = false`. Note that resting state: `network` is *applied
 without a NAT*, never destroyed — see "Tearing down". When up it is EKS 1.34 on
@@ -51,7 +51,7 @@ below for what re-attaching costs.
 
 ---
 | 9 | 2026-08-28 | Re-spun to verify the PR #1136 review items. **Component HTTPRoutes moved onto the charts' native keys.** ACME endpoint made switchable; Secret preservation proven. Torn down again, both DNS zones clean. |
-| 10 | 2026-09-01 | **`terraform-aws-eks` v20.37.2 → v21.25.0**, `aws-auth` → access entries, AWS provider → 6.x. Three latent no-op inputs fixed. Re-spun end to end to validate it — both routes 200, zero drift on all six layers — then torn down. Three defects found that no plan could catch. |
+| 10 | 2026-09-01 | **`terraform-aws-eks` v20.37.2 → v21.25.0**, `aws-auth` → access entries, AWS provider → 6.x. Three latent no-op inputs fixed. Re-spun end to end to validate it — both routes 200, zero drift on all six layers — then torn down. Three defects found that no plan could catch. Then the **VPC CNI's IRSA role moved into the `cluster` layer**, so the CNI stops borrowing the node instance role and `AmazonEKS_CNI_Policy` comes off it entirely. |
 
 ---
 
@@ -504,19 +504,52 @@ CNI. They would have burned their full create timeout and failed.
 
 The CNI is now installed from the `cluster` layer via `local.bootstrap_addons`
 with **`before_compute = true`**, which the module routes to
-`aws_eks_addon.before_compute` — created ahead of the node groups. It carries no
-`service_account_role_arn`, because the IRSA role for it lives in `identities`,
-which cannot exist yet on a fresh cluster; the CNI runs on the node instance
-role, which already carries `AmazonEKS_CNI_Policy` via
-`iam_role_attach_cni_policy`. `most_recent = false` is set explicitly, because
-that default flipped to `true` in v21 and would otherwise resolve the newest
-published CNI on every apply instead of the default for the cluster's Kubernetes
-version — unwanted drift on the one add-on that has needed stepwise upgrades
-here before (see "The add-ons were left three minors behind").
+`aws_eks_addon.before_compute` — created ahead of the node groups.
+`most_recent = false` is set explicitly, because that default flipped to `true`
+in v21 and would otherwise resolve the newest published CNI on every apply
+instead of the default for the cluster's Kubernetes version — unwanted drift on
+the one add-on that has needed stepwise upgrades here before (see "The add-ons
+were left three minors behind").
+
+**And its IRSA role moved into this layer too** (`cluster/irsa-vpc-cni.tf`),
+which is the part worth understanding, because it is not where the convention
+would put it.
+
+The first cut of this fix left the add-on without a `service_account_role_arn`,
+on the reasoning that the CNI's role lived in `identities` and `identities` runs
+*after* the cluster. `aws-node` therefore borrowed the **node instance role**,
+which had to keep `AmazonEKS_CNI_Policy` attached — so every pod that could reach
+the node's credentials inherited ENI and subnet write permissions. That is
+exactly what AWS tells you not to do, and it was a regression against the
+pre-v21 setup, where the `addons` layer *did* give the CNI its own role.
+
+The constraint looked structural and was not. A role in `identities` is a role
+the bootstrap add-on can never reference on a fresh cluster — that circularity is
+what the three-step `use_managed_addons` dance was working around. Putting the
+role in the cluster layer collapses it into one chain OpenTofu orders by itself:
+
+```text
+cluster + OIDC provider  ->  IRSA role  ->  vpc-cni add-on  ->  node groups
+```
+
+One apply, no dance, and `aws-node` has scoped credentials from the first second
+the cluster exists — so `iam_role_attach_cni_policy` is now **`false`** and the
+node role never carries CNI permissions at all.
+
+One subtlety in `irsa-vpc-cni.tf`, since it looks like a pointless indirection:
+`provider_url` is derived from `module.cluster.oidc_provider_arn` rather than from
+`cluster_oidc_issuer_url`. IAM rejects a trust policy naming an OIDC provider
+that does not exist yet, and the issuer URL is read off the *cluster* resource,
+not off the provider — using it would let the role be created first and fail with
+`MalformedPolicyDocument: Invalid principal in policy`. Deriving the same string
+from the provider's own ARN makes the dependency real. Note this does **not**
+create a cycle, despite the role sitting between two things inside
+`module.cluster`: OpenTofu's graph is per-resource, not per-module.
 
 **`vpc-cni` is correspondingly absent from the `addons` layer.** Declaring it in
-both places fails with `ResourceInUseException`. The consequence, noted in both
-files: the `eks_addons_vpc_cni` IRSA role in `identities` is now unused.
+both places fails with `ResourceInUseException`. And `identities` no longer
+defines a CNI role or exports `eks_addons_vpc_cni` — that role *is* the one in
+`cluster/irsa-vpc-cni.tf` now, moved rather than deleted.
 
 #### 2. Access entries reject SSO role ARNs with the IAM path stripped
 
@@ -552,13 +585,11 @@ v21 drops the node groups' IMDS `http_put_response_hop_limit` from 2 to **1**,
 which puts instance metadata out of reach of anything inside a pod. Verified
 directly: a throwaway pod cannot get an IMDS token, while IRSA keeps working.
 
-That is a *hardening* win. Workloads and controllers here authenticate via IRSA,
-so none of them care — with one exception worth naming, since it decides which
-role keeps `AmazonEKS_CNI_Policy`: the bootstrap VPC CNI has no
-`service_account_role_arn` and runs on the **node instance role** (see defect 1
-above). It reads no metadata either, so the hop limit does not affect it.
+That is a *hardening* win, and nothing here is affected: every component,
+the VPC CNI included, authenticates via IRSA rather than through the node's
+credentials (see defect 1 — the CNI's own role is what made that true).
 
-Authentication was never the exposure. **Reading IMDS for *data* is**, and the
+Authentication was never the exposure anyway. **Reading IMDS for *data* is**, and the
 AWS Load Balancer Controller does exactly that: it discovers its **VPC ID** from
 instance metadata, which IRSA has nothing to do with. Both replicas crash-looped
 and the Helm release timed out with `context deadline exceeded`:

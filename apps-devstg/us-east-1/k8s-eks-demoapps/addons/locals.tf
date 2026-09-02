@@ -27,9 +27,10 @@ locals {
   # `local.bootstrap_addons` there. Declaring it here as well would fail with
   # `ResourceInUseException`.
   #
-  # Consequence: the CNI runs on the node instance role rather than the
-  # `eks_addons_vpc_cni` IRSA role from `identities`, which is now unused. The
-  # node role carries `AmazonEKS_CNI_Policy` via `iam_role_attach_cni_policy`.
+  # The CNI keeps its own IRSA identity: its role moved to the `cluster` layer
+  # (`irsa-vpc-cni.tf`) so the bootstrap add-on can reference it in the same
+  # apply, which is something a role in `identities` could never be. There is
+  # correspondingly no `eks_addons_vpc_cni` output in that layer any more.
   addons_available = {
     coredns = {
       addon_version               = "v1.12.4-eksbuild.18"
