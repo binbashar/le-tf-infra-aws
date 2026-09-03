@@ -133,19 +133,59 @@ repository and the rule must match both: ` --` with a leading space (`databases-
 docs alone would silently treat several disabled layers as active — and hard-fail PRs on
 dormant infrastructure. Match on the trailing `--`, not on `" --"`.
 
-### Version resolution
+### Version and engine resolution
 
-A pin's version is resolved in this order, first match wins:
+Values arrive from `python-hcl2` as interpolation strings (`"${local.engine}"`,
+`"${var.cluster_version}"`), so **both** `var.` and `local.` must be dereferenced. This was
+validated by prototyping the resolver against the real tree; the rules below are what it
+took to find all six pins with no false positives.
 
-1. A literal at the resource or module argument (`cluster_version = "1.34"`).
-2. `var.<name>` → an override in `config/common.tfvars` or `{account}/config/account.tfvars`.
-3. `var.<name>` → the `default` in the layer's `variables.tf`.
+A value is resolved in this order, first match wins:
 
-No `.tfvars` in the tree currently sets either variable, so step 3 is what resolves the one
-active EKS pin today. Step 2 exists anyway because skipping it would report a stale default
-while a tfvars override supplies the real value — a **false negative**, which is the failure
-this guardrail must not have. A `var` that resolves through none of the three yields
-`UNKNOWN`; it is never assumed safe.
+1. A literal (`cluster_version = "1.34"`, `engine = "mysql"`).
+2. `${var.<name>}` → an override in `config/common.tfvars` or `{account}/config/account.tfvars`.
+3. `${var.<name>}` → the `default` in the layer's `variables.tf`.
+4. `${local.<name>}` → the value in any `locals` block in the same layer.
+
+Step 4 is not optional: `apps-devstg/us-east-1/databases-aurora-pgsql --` declares
+`engine = "${local.engine}"` with `aurora-postgresql` in its `locals.tf`. A resolver handling
+only `var.` would fail to match the allow-list and skip the layer entirely. No `.tfvars`
+currently sets either variable, so step 3 resolves the one active EKS pin today; step 2 exists
+because reporting a stale default while a tfvars override supplies the real value is a **false
+negative**, the one failure this guardrail must not have. A reference resolving through none of
+the four yields `UNKNOWN` — never assumed safe.
+
+### RDS major-version derivation
+
+`rds:DescribeDBMajorEngineVersions` takes a **major** version, but the pins in the tree are
+full versions (`8.0.41`, `14.18`, `5.7`, `14.8`). The mapping is engine-specific:
+
+| Engine | Major version | Example |
+| --- | --- | --- |
+| `mysql`, `aurora-mysql` | first **two** dot-components | `8.0.41` → `8.0`; `5.7` → `5.7` |
+| `postgres`, `aurora-postgresql` | first component only | `14.18` → `14`; `14.8` → `14` |
+
+When the block already carries a `major_engine_version` argument — as
+`databases-mysql --` (`8.0`) and `databases-pgsql --` (`14`) do — that value wins over
+derivation.
+
+### `python-hcl2` serialization options (required)
+
+`python-hcl2` v8 keeps surrounding quotes on keys and string values and injects
+`__is_block__` / `__comments__` metadata. The parser must be constructed as:
+
+```python
+from hcl2.utils import SerializationOptions
+
+OPTS = SerializationOptions(
+    with_comments=False,      # drop __comments__ noise
+    explicit_blocks=False,    # drop __is_block__ markers
+    strip_string_quotes=True, # "1.34" not '"1.34"'
+)
+```
+
+`with_meta=True` does **not** yield line numbers under these options, so `Pin.source` gets its
+line from a plain text scan of the file for the key — see Task 3.
 
 ### Data model
 
