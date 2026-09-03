@@ -26,7 +26,9 @@ This repository contains all OpenTofu/Terraform configuration files used to crea
 - [Leverage CLI](https://leverage.binbash.co/user-guide/leverage-cli/installation/) (v2.2.0+)
 - [OpenTofu](https://opentofu.org/docs/intro/install/) (>= 1.6)
 - AWS SSO access configured for the target accounts
-- [uv](https://docs.astral.sh/uv/) (recommended for Python/Leverage CLI management)
+- [uv](https://docs.astral.sh/uv/) (recommended for Python/Leverage CLI management; also provides
+  `uvx`, which the Claude Code plugin MCP servers are launched with — see
+  [AI Development Configs](#ai-development-configs))
 
 ### Installation
 
@@ -100,6 +102,7 @@ here.
 - **[Claude Code](CLAUDE.md)** - Anthropic's AI coding assistant
   - [`CLAUDE.md`](CLAUDE.md) - Project instructions and context for Claude
   - [`.claude/agents/`](.claude/agents/) - Specialized agent definitions (architect, security, terraform-layer, etc.)
+  - [`.claude/settings.json`](.claude/settings.json) - Enabled plugins and the `bb-ai-marketplace` tag pin
   - [`.mcp.json`](.mcp.json) - Root-level MCP server configurations (AWS API, AWS Documentation)
 
 ### Usage
@@ -116,6 +119,29 @@ They provide:
 - AWS- and OpenTofu/Terraform-specific assistance
 - Consistent code formatting and structure guidelines
 - Direct access to AWS documentation and the AWS API
+
+### Plugins
+
+[`.claude/settings.json`](.claude/settings.json) enables a set of Claude Code plugins and pins
+[`binbashar/bb-ai-marketplace`](https://github.com/binbashar/bb-ai-marketplace) to a **released
+tag** — adopting a newer plugin version is a deliberate bump of that pin, never a branch that
+moves under us. Plugins that bundle an MCP server (`aws-cost-estimation`, `aws-finops`) launch it
+with `uvx`, so [uv](https://docs.astral.sh/uv/) must be installed, and they need a Claude Code
+restart plus a one-time per-server trust prompt before first use.
+
+### AWS cost analysis (FinOps)
+
+The **`aws-finops`** plugin analyses *actual* AWS spend from the Organizations management (payer)
+account: `/aws-finops-investigate` (baseline + month-over-month deltas, anomaly triage, tag
+hygiene, forecast vs budget) and `/aws-finops-optimize` (right-sizing, Savings Plans coverage,
+per-service waste). Reports land in [`docs/finops/`](docs/finops/) and are committed, so each run
+can be diffed against the last.
+
+Setup, the AWS-side prerequisites this repo provisions, and how to launch a session against the
+management profile: [`docs/finops/README.md`](docs/finops/README.md).
+
+> Not to be confused with `make infracost-breakdown` or the `aws-cost-estimation` plugin, which
+> price a *proposed* change before it is applied.
 
 ### Learn More
 
