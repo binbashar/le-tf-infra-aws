@@ -18,6 +18,7 @@ have clear, specific purposes.
 - `identities/` defines EKS IRSA roles that are later on assumed by roles running in the cluster.
 - `addons/` is used to set different EKS managed Addons on the cluster.
 - `k8s-components/` defines the base cluster components such as ingress controllers, certificate managers, dns managers, ci/cd components, and more.
+- `secrets/` owns the AWS Secrets Manager entries the workloads read through External Secrets.
 - `k8s-workloads/` defines the cluster workloads such as web-apps, apis, back-end microservices, etc.
 
 ## Orchestration
@@ -31,6 +32,7 @@ These are the steps to orchestrate the demoapps cluster. They can be used for sp
     - `identities`: EKS IRSA policies and roles.
     - `addons`: EKS add-ons.
     - `k8s-components`: cluster components for networking, monitoring, security, scaling, ci/cd, and more.
+    - `secrets`: Secrets Manager entries consumed from the cluster via External Secrets. Only needed by the `google-microservices` demo app; apply it before `k8s-workloads`.
     - `k8s-workloads`: demo apps.
 - The Binbash Leverage CLI must be installed and available in the system PATH.
 - The same applies to `kubectl` and the `aws` CLI -- they are useful for troubleshooting.
@@ -71,11 +73,16 @@ These are the steps to orchestrate the demoapps cluster. They can be used for sp
 - There might be dependencies between some of the components. For instance, maybe an autoscaler will be needed first if there is another component that deploys too many pods or pods that require high resources usage.
 
 ### Step 6
+- Go to the `secrets` sublayer and apply it.
+- Only `google-microservices` needs it, through an `ExternalSecret` that reads `/k8s-eks-demoapps/test-secrets`. Skip it and that app's `paymentservice` never starts.
+
+### Step 7
 - Go to the `k8s-workloads` sublayer.
 - This layer is optional. Prompt the user on whether he would like to install it.
-- This layer depends on several cluster components in order to fully work.
+- This layer depends on several cluster components in order to fully work. Two of the three demo apps are Argo CD `Application`s, and their `kubernetes_manifest` resources validate against the live API at *plan* time — so `k8s-components` must have installed Argo CD before this layer can even be planned.
 - The endpoints created for the demo apps are private so VPN access is required.
 - Plan, verify, and apply.
+- See `k8s-workloads/README.md` for what each app needs and how to smoke-test it.
 
 ## Creating a new cluster using the existing setup as reference
 The typical use cases would be:

@@ -55,9 +55,16 @@ dns_sync = {
 
 #------------------------------------------------------------------------------
 # Secrets Management
+#
+# On because the google-microservices demo asks for it: its kustomize base
+# ships an `ExternalSecret` pointing at the `cluster-secrets-manager`
+# ClusterSecretStore this flag creates, and `paymentservice` reads the Secret it
+# produces through a `secretKeyRef` with no `optional`, so the pod never starts
+# without it. Source value is `/k8s-eks-demoapps/test-secrets` in this account,
+# owned by the `secrets` layer.
 #------------------------------------------------------------------------------
 external_secrets = {
-  enabled = false
+  enabled = true
 }
 
 #------------------------------------------------------------------------------
@@ -245,11 +252,15 @@ gatus = {
 # CICD | Argo
 #------------------------------------------------------------------------------
 argocd = {
-  enabled = false
+  enabled = true
 
   enableWebTerminal   = true
   enableNotifications = false
 
+  # Still off. It writes back to the app repositories over git, and with the
+  # tags those repos pin today the update would be a no-op anyway — so it would
+  # be verified by nothing while being able to commit. Enabling it is its own
+  # exercise; see PLATFORM-NOTES.md.
   image_updater = {
     enabled = false
   }
@@ -257,8 +268,13 @@ argocd = {
   # Gated independently of `argocd.enabled` above (see cicd-argo.tf), so this
   # has to come down on its own — leaving it true keeps Rollouts and its
   # dashboard installed with no Argo CD alongside them.
+  #
+  # Required by emojivoto, not optional alongside it: that app's kustomize base
+  # declares its workloads as `kind: Rollout`, so without the CRDs this chart
+  # installs, the Application syncs to a resource type the API server does not
+  # know.
   rollouts = {
-    enabled = false
+    enabled = true
 
     dashboard = {
       enabled = true

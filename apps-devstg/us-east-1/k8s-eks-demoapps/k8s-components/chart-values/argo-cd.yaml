@@ -15,6 +15,29 @@ configs:
     exec.enabled: "${enableWebTerminal}"
 
   params:
+    # Diff server-side, against a dry-run apply, instead of comparing the git
+    # manifest to the live object field by field.
+    #
+    # Without it every Application here sits permanently `OutOfSync` while
+    # being `Healthy`, and `argocd app diff` prints nothing — the worst kind of
+    # false signal, because it trains you to ignore the sync status. The cause
+    # is defaulted fields on **custom** resources: the API server writes
+    # `ports[].protocol: TCP` into emojivoto's `Rollout`s and ESO writes its
+    # policy defaults into google-microservices' `ExternalSecret`, and Argo CD
+    # cannot tell a server default from a drift on a CRD-typed object the way
+    # it can for built-in kinds. Server-side diff asks the API server what the
+    # manifest *would* produce, so defaults are on both sides and cancel.
+    #
+    # `ServerSideApply=true` in each Application's `syncOptions` does not
+    # imply this — that governs how a sync writes, this governs how a
+    # comparison reads. Both are wanted.
+    #
+    # Global rather than the per-Application
+    # `argocd.argoproj.io/compare-options: ServerSideDiff=true` annotation:
+    # the problem is structural, not particular to these two apps, and every
+    # workload that arrives with a CRD will hit it.
+    controller.diff.server.side: "true"
+
     # Serve plain HTTP. TLS is terminated at the Envoy Gateway's HTTPS
     # listener, and the hop from Envoy to this Service is cleartext inside the
     # cluster. Without this argocd-server runs its own TLS and answers the

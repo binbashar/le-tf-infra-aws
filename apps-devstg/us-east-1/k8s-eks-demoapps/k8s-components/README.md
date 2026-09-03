@@ -59,9 +59,9 @@ Gateway provisions one Envoy data plane Deployment + one Service per Gateway.
 
 ## Components, and how each is exposed
 
-Nine of the ten components running here expose nothing at all — they are
-controllers and platform plumbing. **`echo-server` is the only workload with an
-endpoint**, and the only thing in the cluster that uses both APIs at once.
+Most of what runs here exposes nothing at all — it is controllers and platform
+plumbing. **`echo-server` is the only workload that uses both APIs at once**;
+the other two workloads are private-only.
 
 | running today                                     | namespace              | exposure                                          |
 | ------------------------------------------------- | ---------------------- | ------------------------------------------------- |
@@ -72,7 +72,12 @@ endpoint**, and the only thing in the cluster that uses both APIs at once.
 | private-gw-eg-tls, public-gw-eg-tls                | `envoy-gateway-system` | none — listener Certificates                       |
 | external-dns, private and public                   | `externaldns`          | none                                               |
 | cluster-autoscaler                                 | `monitoring-metrics`   | none                                               |
+| external-secrets + `cluster-secrets-manager`       | `external-secrets`     | none — a ClusterSecretStore                        |
+| argo-cd                                            | `argocd`               | private — `argocd.aws.binbash.com.ar`              |
+| argo-rollouts (+ dashboard)                        | `argocd`               | private — `rollouts.aws.binbash.com.ar`            |
 | **echo-server** (from `k8s-workloads`)             | `echo-server`          | **both** — see below                               |
+| **emojivoto** (from `k8s-workloads`, via Argo CD)  | `emojivoto`            | private — `emojivoto.aws.binbash.com.ar`           |
+| **google-microservices** (idem)                    | `demo-google-microservices-dev` | private — `gmd.aws.binbash.com.ar`       |
 
 The objects that actually carry exposure:
 
@@ -83,6 +88,9 @@ The objects that actually carry exposure:
 | `envoy-apps`                  | **Ingress** | asks the LBC for the ALB: ACM, health check, WAF hook      |
 | `echo-server-eg`              | HTTPRoute   | `echo-server.aws.binbash.com.ar` on the private gateway    |
 | `echo-server-eg-public`       | HTTPRoute   | `echo-server.binbash.com.ar` on the public gateway         |
+| `emojivoto-eg`                | HTTPRoute   | `emojivoto.aws.binbash.com.ar` on the private gateway      |
+| `google-microservices-dev-eg` | HTTPRoute   | `gmd.aws.binbash.com.ar` on the private gateway            |
+| `argocd-server`, `argo-rollouts-dashboard` | HTTPRoute | rendered by their own charts, private gateway |
 | `private-gw-eg-https-redirect`| HTTPRoute   | platform: 80 → 443                                         |
 | `public-gw-eg-healthz`        | HTTPRoute   | platform: the fixed-200 the ALB's health check needs       |
 
@@ -106,9 +114,11 @@ Service is `ClusterIP`: it has nothing to provision, the ALB reaches it.
 ### Switched off, exposure already written
 
 All on **Gateway API** — converted during the nginx migration, so enabling one
-needs no networking work: `argocd`, `argo-rollouts`, `grafana`, `prometheus`,
-`alertmanager`, `uptime-kuma`, `gatus`, `goldilocks`, each with its own
-`*_route_eg` HTTPRoute.
+needs no networking work: `grafana`, `prometheus`, `alertmanager`,
+`uptime-kuma`, `gatus`, `goldilocks`, each with its own route. `argocd` and
+`argo-rollouts` were on this list until Day 11, when the GitOps workloads
+brought them back; theirs are the first two routes here rendered by the charts'
+own keys to have actually served traffic.
 
 `traefik` is the exception: the last component here that would expose over
 **Ingress** (`traefik_apps`), and the only consumer left of

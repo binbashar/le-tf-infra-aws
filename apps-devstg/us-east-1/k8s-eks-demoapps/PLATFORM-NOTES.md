@@ -22,13 +22,20 @@ there. That topology is:
 The perimeter is meant to stay recognisable; the data plane is what changes.
 **Reintroducing nginx here is never an option** — replacing it is the point.
 
-**Current state (2026-09-01).** Torn down, after two re-spins that validated the
-`terraform-aws-eks` **v21.25.0** bump and then the CNI's move onto its own IRSA
-role (see "The v20 → v21 module bump" below). Everything below the VPC is gone; `vpc-0c2dd28735d0250c3` is kept for a
-fast re-spin, with the `network` layer applied and
-`vpc_enable_nat_gateway = false`. Note that resting state: `network` is *applied
-without a NAT*, never destroyed — see "Tearing down". When up it is EKS 1.34 on
-AL2023 with spot nodes and both public and private paths on Envoy Gateway.
+**Current state (2026-09-03).** **Up.** Re-spun to bring the two GitOps demo
+apps — **emojivoto** and **google-microservices** — into service alongside
+echo-server, which had been the only workload since the Day 6 trim. That took
+Argo CD, Argo Rollouts and External Secrets back on, and added a seventh layer
+to the spin (`secrets`). Three private hostnames answer 200, both Applications
+are `Synced`/`Healthy`, and all seven layers plan `No changes`. See "The GitOps
+workloads" below for the five defects that surfaced, none of which a plan could
+catch.
+
+When up it is EKS 1.34 on AL2023 with spot nodes and both public and private
+paths on Envoy Gateway. The resting state, when torn down, is everything below
+the VPC gone: `vpc-0c2dd28735d0250c3` is kept for a fast re-spin, with the
+`network` layer *applied without a NAT* (`vpc_enable_nat_gateway = false`) and
+never destroyed — see "Tearing down".
 
 **No WAF is deployed.** It was built, attached, verified and taken back down the
 same day; the code is all in place behind the ` --` exclusion. See "AWS WAF"
@@ -48,10 +55,9 @@ below for what re-attaching costs.
 | 6 | 2026-08-05 | Teardown verified the drain gate. Re-spin, then **component set trimmed** to echo-server. CRD bundles **vendored**. |
 | 7 | 2026-08-06 | **ALB in front of the public Envoy Gateway**, replacing its NLB. Per-route IP filtering moved into Envoy; perimeter opened. |
 | 8 | 2026-08-10 | Re-spun from scratch, then torn down again. **AWS WAF attached to the ALB, verified, then detached and destroyed** — backlog item 4 closed. **Managed add-ons caught up to 1.34**, `vpc-cni` stepwise. **nginx-ingress removed from the code.** |
-
----
 | 9 | 2026-08-28 | Re-spun to verify the PR #1136 review items. **Component HTTPRoutes moved onto the charts' native keys.** ACME endpoint made switchable; Secret preservation proven. Torn down again, both DNS zones clean. |
 | 10 | 2026-09-01 | **`terraform-aws-eks` v20.37.2 → v21.25.0**, `aws-auth` → access entries, AWS provider → 6.x. Three latent no-op inputs fixed. Re-spun end to end to validate it — both routes 200, zero drift on all six layers — then torn down. Three defects found that no plan could catch. Then the **VPC CNI's IRSA role moved into the `cluster` layer**, so the CNI stops borrowing the node instance role and `AmazonEKS_CNI_Policy` comes off it entirely. |
+| 11 | 2026-09-03 | **emojivoto and google-microservices brought up**, the first workloads here delivered by Argo CD rather than by Terraform. Argo CD, Argo Rollouts and External Secrets back on; the `secrets` layer joins the spin. Five defects found, all apply-only. |
 
 ---
 
@@ -414,6 +420,12 @@ or telling argocd-server to stop doing TLS. Took the second
 (`configs.params.server.insecure: true`); without it the gateway's cleartext hop
 gets a 307 and the browser sees an infinite redirect.
 
+**Verified live on Day 11**, which it had not been: the chart was bumped 7.9.1 →
+10.2.3 (Argo CD v2.14.11 → v3.5.0) while the component was switched off, so
+until then the whole configuration — including the NetworkPolicies 10.0.0 turns
+on, which have to admit the Envoy pods — had only ever been templated. It came
+up clean on the first apply, route included.
+
 Consequence: argocd-server multiplexes gRPC and HTTP over h2c while Envoy speaks
 HTTP/1.1 upstream, so plain `argocd login` cannot negotiate gRPC. Use
 `--grpc-web`. The clean fix, if it ever matters, is `appProtocol:
@@ -667,6 +679,134 @@ on ALIAS, so it cannot be pre-lowered to speed up a flip. A *percentage* canary
 would need Route53 weighted records via external-dns `set-identifier` — a
 different mechanism.
 
+### The GitOps workloads, and five things a plan cannot catch
+
+Day 11 added the two demo apps that had been sitting in `k8s-workloads` behind
+`enabled = false` since before the Day 6 trim: **emojivoto** and
+**google-microservices** (Online Boutique). They are a different kind of thing
+from echo-server, which Terraform deploys as native `kubernetes_*` resources.
+These are **Argo CD `Application`s** — Terraform writes one object each and Argo
+CD produces the workloads from kustomize overlays in other repositories. Turning
+them on is therefore turning on the layer's whole GitOps path, which is the
+point of them being here at all.
+
+What that dragged back in, all in `k8s-components`:
+
+| flag | why it is not optional |
+|---|---|
+| `argocd.enabled` | the `Application` CRD. `kubernetes_manifest` validates against the live API at *plan* time, so `k8s-workloads` cannot even plan before this is applied |
+| `argocd.rollouts.enabled` | emojivoto's workloads are `kind: Rollout` (blue/green), not Deployments. Evaluated independently of `argocd.enabled`, so both flags move together |
+| `external_secrets.enabled` | google-microservices' base ships an `ExternalSecret`, and `paymentservice` reads the Secret it produces with a `secretKeyRef` carrying no `optional` |
+
+Plus the **`secrets` layer**, applied for the first time, which owns
+`/k8s-eks-demoapps/test-secrets` — the source of that Secret. Spin order is now
+`network → cluster → identities → addons → k8s-components → secrets →
+k8s-workloads`.
+
+Everything below was found by applying. Every one of them planned clean.
+
+**1. The `ClusterSecretStore` was written against a version the API no longer
+serves.** `security.tf` declared it `external-secrets.io/v1beta1`. ESO 0.20.4
+still *ships* `v1beta1` in the CRD — which is why reading the CRD bundle and
+counting version names says it is there — but it ships it with **`served:
+false`**, kept only so objects already stored under it can be converted on read.
+Helm resolves kinds against discovery, so the release fails outright:
+
+```
+resource mapping not found for name: "cluster-secrets-manager"
+no matches for kind "ClusterSecretStore" in version "external-secrets.io/v1beta1"
+```
+
+Fixed by moving the manifest to `v1`. Check `served`, not just presence:
+`kubectl get crd clustersecretstores.external-secrets.io -o jsonpath=...`.
+
+**2. Argo CD held a credential for a repository that no longer takes one.**
+`cicd-argo.tf` configured deploy keys for both app repositories from Secrets
+Manager. `le-demo-apps` was made **public** in April 2025 and its deploy key was
+deleted from GitHub at the same time — `gh api repos/binbashar/le-demo-apps/keys`
+returns an empty list — while the orphaned private key stayed in Secrets Manager
+and stayed wired into the chart. The Application failed with
+`ComparisonError: ssh: handshake failed … no supported methods remain` while its
+health still read **`Healthy`**, because nothing had been deployed to be
+unhealthy: sync status and health status fail independently, and only one of
+them was telling the truth.
+
+Fixed by reading that repository anonymously over HTTPS and deleting the
+credential — a public repo needs none. The deploy-key path is still exercised by
+google-microservices, whose repository really is private.
+
+**3. `vote-bot` could never have applied.** Its `TTL` env var is written
+`value: 600` in `le-demo-apps` — a YAML integer where the API demands a string.
+Confirmed *before* applying by rendering the overlay locally with
+`kubectl kustomize`, which is the cheap way to inspect what Argo CD will send.
+Corrected from here with a strategic-merge patch on the Application rather than
+in the repository, so the fix ships with the consumer; it belongs upstream
+eventually.
+
+**4. Both overlays still carried nginx Ingresses**, at
+`<app>.demo.devstg.aws.binbash.com.ar` on the `private-apps` class. That class
+has served nothing since nginx-ingress was retired, and the hostname sits three
+labels below the private base domain, which the gateway's wildcard cannot cover
+— so they route nothing. They are **not** inert, though: each carries
+`cert-manager.io/cluster-issuer`, so ingress-shim would request a real ACME
+certificate per hostname, against the rate limit, for names nothing can reach.
+Deleted from the Application with kustomize's `$patch: delete`, and the routing
+replaced by an `HTTPRoute` per app in `k8s-workloads`, one label deep like every
+other route here.
+
+**5. Argo CD reported both apps permanently `OutOfSync` while `argocd app diff`
+printed nothing.** The worst kind of false signal — it trains you to stop
+reading the sync status. The cause is defaulted fields on **custom** resources:
+the API server writes `ports[].protocol: TCP` into emojivoto's `Rollout`s and
+ESO writes its policy defaults into the `ExternalSecret`, and Argo CD cannot
+tell a server default from real drift on a CRD-typed object the way it can for
+built-in kinds.
+
+The fix is **server-side diff** — `controller.diff.server.side: "true"` in
+`configs.params`, which asks the API server what the manifest *would* produce so
+defaults appear on both sides and cancel. Global rather than the per-Application
+`argocd.argoproj.io/compare-options` annotation, because the problem is
+structural and every workload arriving with a CRD hits it.
+
+Two things about enabling it, in the order they bite. It is **not** implied by
+`ServerSideApply=true` in an Application's `syncOptions` — that governs how a
+sync writes, this governs how a comparison reads. And restarting the
+application-controller, which the Argo CD docs do tell you to do, is **not
+enough**: the controller keeps its cached comparison across the restart, so both
+apps still read `OutOfSync` afterwards. What clears it is a hard refresh:
+
+```
+kubectl -n argocd annotate application <app> argocd.argoproj.io/refresh=hard --overwrite
+```
+
+Both went `Synced` within a sync cycle of that.
+
+**A sixth, caught at `validate` rather than at apply**, worth recording because
+it blocks the `secrets` layer entirely: `terraform-aws-secrets-manager` 0.13.0
+validates `version_stages` with
+`var.version_stages == null || alltrue([for stage in var.version_stages : …])`.
+HCL evaluates both operands of `||` rather than short-circuiting, so the `for`
+runs against the `null` default and validation fails before anything can be
+planned. Upstream fixed it with `coalesce()` in a later tag, which also raises
+the floor to OpenTofu >= 1.11 and AWS provider >= 5.0 — neither of which that
+layer meets. Passing `version_stages = ["AWSCURRENT"]` explicitly is the
+documented usage and changes nothing about the secret, since it is the
+provider's own default.
+
+**What the two apps actually verify, beyond "the pods are Running".**
+`loadgenerator` and `vote-bot` are left on: they are the only sustained traffic
+this cluster has ever had, which is what makes the autoscaler and any metric
+worth looking at. Past that, the tests that mean something are the ones that
+traverse a whole chain:
+
+- **A completed checkout on google-microservices.** `paymentservice` reads
+  `TEST_SECRET` from the `app-secrets` Secret with no `optional`, so an order
+  that returns a confirmation number proves Secrets Manager → IRSA → ESO →
+  Kubernetes Secret → pod end to end. A 200 on the home page proves none of it.
+- **A vote on emojivoto**, which crosses `web` → `voting-svc` over gRPC, and the
+  Rollouts reporting `stable == current` — the blue/green promotion actually
+  completed rather than the app merely being up.
+
 ### Latent bugs surfaced by turning components on, and the Day 6 trim
 
 None were caused by the HTTPRoute conversion; they were sitting in config that
@@ -688,17 +828,28 @@ both flags have to move together or Rollouts installs with no Argo CD beside it.
 Deliberately still off: **Alertmanager**, which needs
 `/notifications/alertmanager` in the shared account — enabling it fails the plan
 at the data source, which is also why its route is the one piece of the chart
-migration never exercised live — and **argocd-image-updater**, since a chart
-that cannot be deployed cannot be verified.
+migration never exercised live — and **argocd-image-updater**. Argo CD, Argo
+Rollouts and External Secrets came back on Day 11 with the two GitOps workloads;
+the image updater did not, because it writes back to the app repositories over
+git and, with the tags those repositories pin today, the update would be a no-op
+— it would be able to commit while being verified by nothing.
 
 ---
 
 ## Spinning up
 
-Order is `network → cluster → identities → addons → k8s-components ->
+Order is `network → cluster → identities → addons → k8s-components → secrets →
 k8s-workloads`, with `vpc_enable_nat_gateway = true` in `network` first -
 without a NAT the nodes never join. `README.md` has the per-layer detail; what
 follows is only what goes wrong.
+
+**`secrets` is the seventh layer and is easy to forget**, because it was never
+part of the spin until Day 11 and its state had been empty since 2025. It owns
+`/k8s-eks-demoapps/test-secrets`, which google-microservices' `ExternalSecret`
+reads; skip it and that app's `paymentservice` sits in
+`CreateContainerConfigError` and every checkout fails, two layers away from the
+cause. It goes after `k8s-components` (which installs ESO) and before
+`k8s-workloads`, though in truth only "before the app syncs" matters.
 
 **`k8s-components` needs a two-stage apply on a fresh cluster.**
 `kubernetes_manifest` validates against the live API at *plan* time, so
@@ -729,6 +880,12 @@ If it does fire: wait for the LBC pods, then retry. **A helm release that failed
 is not in Terraform state but still owns its name**, so recovery needs
 `helm uninstall <name> -n <ns>` first. Same family as the drain gate: Terraform
 waits for a release to finish, not for its controller to be *ready*.
+
+**`k8s-workloads` cannot plan before Argo CD exists.** Its two `Application`
+resources are `kubernetes_manifest`, which validates against the live API at
+plan time, so the layer fails on a missing CRD rather than on anything of its
+own. Same shape as the CRD problem in `k8s-components`, one layer further out;
+the documented order already handles it.
 
 **The kubeconfig goes stale on every re-spin.** `~/.kube/bb/apps-devstg` and
 `~/.kube/bb/config` pin the previous cluster's API endpoint, so `kubectl` fails
@@ -774,10 +931,20 @@ moving on to the layer that removes external-dns. Which objects those are:
   what publishes the record. The public HTTPRoutes are hidden from external-dns
   and produce nothing.
 - **private** — the component helm releases that carry a hostname, plus
-  `k8s-workloads` for echo-server's.
+  `k8s-workloads` for the three workload hostnames. **Since Day 11 that is three
+  records, not one**: `echo-server`, `emojivoto` and `gmd`, each with its A, its
+  TXT and its `cname-` TXT. The two new ones come from HTTPRoutes owned by
+  Terraform, so destroying `k8s-workloads` removes them the same way — but there
+  is three times as much to check before moving on.
 
 Then the rest, in reverse dependency order: `k8s-components` → `addons` ->
 `identities` → `cluster` → `network`.
+
+**`secrets` is not part of that chain.** It holds one Secrets Manager entry
+costing about USD 0.40/month and nothing else depends on it, so the cheap and
+correct thing is to leave it applied across teardowns — destroying it starts a
+7-day recovery window on the secret name, which a re-spin inside that window then
+has to fight. Destroy it only when the cluster is being retired for good.
 
 **Skipping the DNS step is fatal, not untidy** — see the next section. The
 2026-08-28 teardown followed it and both zones came out clean: three public
@@ -1066,6 +1233,23 @@ only 301/302 redirects, rejecting nginx's default 308.
 - **Alertmanager's chart-rendered route has never run.** The workload stays off
   for want of a secret, so that one route of the seven is verified by templating
   only.
+- **Two fixes belong upstream, not in this repo.** Both app overlays are
+  corrected from the consumer side with `spec.source.kustomize.patches`, which
+  is the right place for the *deployment* to disagree with the manifests but the
+  wrong place for the manifests to be wrong: `binbashar/le-demo-apps` renders
+  `vote-bot`'s `TTL` as a YAML integer, which the API rejects outright, and both
+  repositories still carry nginx `Ingress` objects on the dead `private-apps`
+  class with `cert-manager.io/cluster-issuer` annotations. Fixing them there
+  makes four of the five patches here redundant.
+- **The `le-demo-apps` deploy key is orphaned in Secrets Manager.**
+  `/repositories/le-demo-apps/deploy_key` in the shared account no longer
+  matches any key on the (now public) repository, and nothing reads it since
+  Day 11. Deleting it is someone's call, not this layer's.
+- **`argocd-image-updater` is still unverified**, and is now the only Argo
+  component that is. The obstacle is no longer that it cannot be deployed — Argo
+  CD is up — but that verifying it means letting it commit to the app
+  repositories, and the tags they pin make the update a no-op anyway. Doing it
+  properly means pushing a new image tag first.
 
 ---
 
