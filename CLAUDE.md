@@ -171,6 +171,31 @@ leverage run decrypt          # decrypts secrets.enc -> secrets.dec.tf
 leverage run encrypt          # encrypts secrets.dec.tf -> secrets.enc, deletes plaintext
 ```
 
+### FinOps: analysing actual AWS spend
+The **`aws-finops`** plugin (`bb-ai-marketplace`, enabled in `.claude/settings.json`) reads the
+**management (payer) account** through the bundled `awslabs.billing-cost-management-mcp-server`
+MCP server. It is **MCP-only by design and never falls back to the AWS CLI** — if the MCP is not
+connected, stop and fix the setup rather than reaching for `aws ce ...`.
+
+```text
+/leverage-aws-creds-check --management-only   # preflight; must pass first
+/aws-finops-investigate                       # what is happening with the bill
+/aws-finops-optimize                          # how to reduce it
+```
+
+- Reports are written to `docs/finops/` and **committed** — each run is diffed against the last.
+- The MCP inherits `AWS_PROFILE` from the shell that launched Claude Code, so a management
+  profile (`bb-management-administrator`) must be exported **before** the session starts; it
+  cannot be fixed from inside one.
+- `docs/finops/known-charges.md` and `docs/finops/accepted-exceptions.md` are Phase 0
+  suppression lists. Add a row when a run flags something the team decides is expected; never
+  put dollar amounts in `known-charges.md` (that would let any amount pass under a known name).
+- Cost Explorer bills **$0.01/request** — a full run is ~10–20 calls.
+- Full runbook and the AWS-side prerequisites: `docs/finops/README.md`.
+
+> Distinct from `make infracost-breakdown` and the `aws-cost-estimation` plugin, which price a
+> *proposed* change. `aws-finops` reads money already spent.
+
 ### Advanced Operations
 ```bash
 # Targeted operations for efficiency
@@ -329,6 +354,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - **`infracost.yml`**: Defines cost analysis entries for every layer across all accounts
 - **`renovate.json`**: Automated dependency updates
 - **`.pre-commit-config.yaml`**: Enforces `terraform_fmt`, JSON validation, trailing whitespace, private key detection
+- **`.claude/settings.json`**: Enabled Claude Code plugins and the `bb-ai-marketplace` marketplace pin. Always pin `extraKnownMarketplaces.*.source.ref` to a **released tag**, never a branch or a bare commit — the tag is the public contract the marketplace repo maintains. Adopting a new plugin version is a deliberate bump of that ref, and takes effect only after a Claude Code restart
 
 ## Important Development Notes
 
