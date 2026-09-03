@@ -1,7 +1,7 @@
 # FinOps — AWS cost analysis for the Reference Architecture
 
 How we analyse **actual** AWS spend for the binbash Organization: the
-[`aws-finops`](https://github.com/binbashar/bb-ai-marketplace/tree/master/plugins/aws-finops)
+[`aws-finops`](https://github.com/binbashar/bb-ai-marketplace/tree/v1.6.0/plugins/aws-finops)
 Claude Code plugin, the AWS-side prerequisites this repo provisions for it, and
 the reports it drops in this directory.
 
@@ -52,17 +52,24 @@ the Cost Explorer `LINKED_ACCOUNT` dimension.
 | Prerequisite | Where it is managed |
 | --- | --- |
 | Cost Explorer | Enabled account-wide (no OpenTofu resource exists; activated once in the console) |
-| Cost Anomaly Detection monitor | `management/global/aws-finops-agent/cost-anomaly.tf` — `aws_ce_anomaly_monitor` — **pending [PR #1115](https://github.com/binbashar/le-tf-infra-aws/pull/1115)** |
+| Cost Anomaly Detection | A default AWS-services monitor is auto-configured when Cost Explorer is enabled; an explicit `aws_ce_anomaly_monitor` comes with **[PR #1115](https://github.com/binbashar/le-tf-infra-aws/pull/1115)** (`management/global/aws-finops-agent/cost-anomaly.tf`) |
 | Compute Optimizer opt-in | `management/global/aws-finops-agent/compute-optimizer.tf` — `aws_computeoptimizer_enrollment_status` — **pending [PR #1115](https://github.com/binbashar/le-tf-infra-aws/pull/1115)** |
 | Cost Optimization Hub — org trusted access | [`management/global/organizations/organization.tf`](../../management/global/organizations/organization.tf) — `cost-optimization-hub.bcm.amazonaws.com` in `aws_service_access_principals` |
 | Cost Optimization Hub — org-wide enrollment | [`management/global/organizations/cost_optimization_hub_enabling.tf`](../../management/global/organizations/cost_optimization_hub_enabling.tf) — `aws_costoptimizationhub_enrollment_status` |
 | Read-only IAM for the plugin | [`management/global/base-identities/role_policies.tf`](../../management/global/base-identities/role_policies.tf) — `aws_iam_policy.aws_finops_readonly_access`, attached to `DeployMaster` |
 
-Each service takes **24–48 h to populate data** after first activation, so a run
-immediately after enabling one will legitimately come back empty. Until PR #1115
-merges and applies, `/aws-finops-investigate`'s anomaly phase and
-`/aws-finops-optimize`'s right-sizing phase have no source data — the rest of both
-reports still works.
+Data readiness differs per service, so a run right after enabling one will
+legitimately come back thin:
+
+| Service | When data appears |
+| --- | --- |
+| Cost Explorer | Current month in **~24 h**; the previous 13 months take a **few days longer**. Refreshed at least daily thereafter ([docs](https://docs.aws.amazon.com/cost-management/latest/userguide/ce-enable.html)) |
+| Cost Anomaly Detection | Enabling Cost Explorer **auto-configures** a default AWS-services monitor and a daily summary subscription, so some anomaly data exists already; PR #1115 adds an explicit `DIMENSIONAL`/`SERVICE` monitor alongside it |
+| Compute Optimizer | Up to **24 h** after opt-in, and only for resources with **≥ 30 h** of CloudWatch metric history |
+| Cost Optimization Hub | Imports from Compute Optimizer and Savings Plans; recommendations **refresh daily**, so it is only as fresh as its upstreams |
+
+Until PR #1115 merges and applies, `/aws-finops-optimize`'s right-sizing phase has
+no Compute Optimizer source data — the rest of both reports still works.
 
 > The `Administrator` SSO permission set already covers every call the plugin
 > makes. `aws_finops_readonly_access` exists so the plugin can also run under
@@ -102,8 +109,12 @@ Then, in the session:
 Each skill writes its report into this directory. **Commit them** — the point of
 keeping them in-tree is diffing this month's run against the last one.
 
-> **Cost note.** The Cost Explorer API charges **$0.01 per request**; a full run is
-> ~10–20 calls, so **$0.10–$0.20 per report**. Not free, not a reason to hesitate.
+> **Cost note.** The Cost Explorer API charges **$0.01 per _paginated_ request** —
+> a query whose result spans several pages bills once per page, not once per call
+> ([docs](https://docs.aws.amazon.com/cost-management/latest/userguide/ce-api-best-practices.html)).
+> A full run is ~10–20 calls, so **$0.10–$0.20 per report** when they come back
+> single-page, which is the normal case at this org's size. Not free, not a reason
+> to hesitate — but not a figure to quote at a much larger org either.
 
 ---
 

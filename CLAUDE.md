@@ -190,7 +190,7 @@ connected, stop and fix the setup rather than reaching for `aws ce ...`.
 - `docs/finops/known-charges.md` and `docs/finops/accepted-exceptions.md` are Phase 0
   suppression lists. Add a row when a run flags something the team decides is expected; never
   put dollar amounts in `known-charges.md` (that would let any amount pass under a known name).
-- Cost Explorer bills **$0.01/request** — a full run is ~10–20 calls.
+- Cost Explorer bills **$0.01 per _paginated_ request** (a multi-page result bills per page, not per call) — a full run is ~10–20 calls, so ~$0.10–$0.20 when they come back single-page.
 - Full runbook and the AWS-side prerequisites: `docs/finops/README.md`.
 
 > Distinct from `make infracost-breakdown` and the `aws-cost-estimation` plugin, which price a
