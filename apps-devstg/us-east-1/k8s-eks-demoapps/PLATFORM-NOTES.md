@@ -22,14 +22,17 @@ there. That topology is:
 The perimeter is meant to stay recognisable; the data plane is what changes.
 **Reintroducing nginx here is never an option** — replacing it is the point.
 
-**Current state (2026-09-03).** **Up.** Re-spun to bring the two GitOps demo
-apps — **emojivoto** and **google-microservices** — into service alongside
-echo-server, which had been the only workload since the Day 6 trim. That took
-Argo CD, Argo Rollouts and External Secrets back on, and added a seventh layer
-to the spin (`secrets`). Three private hostnames answer 200, both Applications
-are `Synced`/`Healthy`, and all seven layers plan `No changes`. See "The GitOps
-workloads" below for the five defects that surfaced, none of which a plan could
-catch.
+**Current state (2026-09-03).** Torn down, after a re-spin that brought the two
+GitOps demo apps — **emojivoto** and **google-microservices** — into service
+alongside echo-server, which had been the only workload since the Day 6 trim.
+That took Argo CD, Argo Rollouts and External Secrets back on, and added a
+seventh layer to the spin (`secrets`). Three private hostnames answered 200,
+both Applications were `Synced`/`Healthy`, all seven layers planned
+`No changes`, and the teardown was clean first-pass at every layer with **both
+zones empty**. See "The GitOps workloads" below for the five defects that
+surfaced, none of which a plan could catch.
+
+`secrets` is deliberately **left applied** — see "Tearing down".
 
 When up it is EKS 1.34 on AL2023 with spot nodes and both public and private
 paths on Envoy Gateway. The resting state, when torn down, is everything below
@@ -57,7 +60,7 @@ below for what re-attaching costs.
 | 8 | 2026-08-10 | Re-spun from scratch, then torn down again. **AWS WAF attached to the ALB, verified, then detached and destroyed** — backlog item 4 closed. **Managed add-ons caught up to 1.34**, `vpc-cni` stepwise. **nginx-ingress removed from the code.** |
 | 9 | 2026-08-28 | Re-spun to verify the PR #1136 review items. **Component HTTPRoutes moved onto the charts' native keys.** ACME endpoint made switchable; Secret preservation proven. Torn down again, both DNS zones clean. |
 | 10 | 2026-09-01 | **`terraform-aws-eks` v20.37.2 → v21.25.0**, `aws-auth` → access entries, AWS provider → 6.x. Three latent no-op inputs fixed. Re-spun end to end to validate it — both routes 200, zero drift on all six layers — then torn down. Three defects found that no plan could catch. Then the **VPC CNI's IRSA role moved into the `cluster` layer**, so the CNI stops borrowing the node instance role and `AmazonEKS_CNI_Policy` comes off it entirely. |
-| 11 | 2026-09-03 | **emojivoto and google-microservices brought up**, the first workloads here delivered by Argo CD rather than by Terraform. Argo CD, Argo Rollouts and External Secrets back on; the `secrets` layer joins the spin. Five defects found, all apply-only. |
+| 11 | 2026-09-03 | **emojivoto and google-microservices brought up**, the first workloads here delivered by Argo CD rather than by Terraform. Argo CD, Argo Rollouts and External Secrets back on; the `secrets` layer joins the spin. Five defects found, all apply-only. Torn down again — three-stage DNS pause, both zones clean. |
 
 ---
 
@@ -951,6 +954,27 @@ has to fight. Destroy it only when the cluster is being retired for good.
 records cleared on the Ingress destroy, eighteen private ones in a single batch
 after the component releases went, leaving only the known-inert `a-echo-server`
 TXT.
+
+**The 2026-09-03 teardown is the one to copy.** With Argo CD and the two GitOps
+apps in play the private half needs *three* stages, not one, because the
+hostnames are produced by three different owners and they have to go while
+external-dns is still alive:
+
+1. `kubernetes_ingress_v1.envoy_apps`, targeted — the **public** record. Poll the
+   public zone until `echo-server.binbash.com.ar` is gone.
+2. `k8s-workloads` in full — the three **workload** hostnames (`echo-server`,
+   `emojivoto`, `gmd`), nine records. Argo CD must still be up here: the
+   `Application`s carry `resources-finalizer.argocd.argoproj.io`, and it is Argo
+   CD that cascade-deletes what they created. Destroy it first and the finalizer
+   has nobody to run it.
+3. `helm_release.argocd` and `helm_release.argo_rollouts`, targeted — the
+   **component** hostnames (`argocd`, `rollouts`), six records, published by the
+   charts' own `httproute` keys.
+
+Poll the private zone empty after each. Only then the full `k8s-components`
+destroy, which is what takes external-dns with it. Both zones came out clean:
+the private zone back to nothing but the unrelated `vpn` A record, the public
+one back to the known-inert `a-echo-server` TXT.
 
 **The 2026-09-01 teardown got the public half right and the private half wrong**,
 which is worth recording because the failure is asymmetric and easy to repeat.
