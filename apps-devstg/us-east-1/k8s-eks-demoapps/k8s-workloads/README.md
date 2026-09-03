@@ -19,6 +19,59 @@ deployed as baseline, with the `network`, `identities`, `cluster` and `k8s-compo
 orchestrate deployments, applications, pipelines and define some applications in order to test the functionality
 of the cluster and its resources.
 
+## What this layer deploys
+
+Three workloads, in two different shapes. The shape matters more than the count:
+
+| app | shape | hostname | needs |
+| --- | --- | --- | --- |
+| `echo-server` | native `kubernetes_*` resources, straight from Terraform | `echo-server.aws.binbash.com.ar` (private) **and** `echo-server.binbash.com.ar` (public) | the two Envoy gateways |
+| `emojivoto` | **Argo CD `Application`** → kustomize overlay in [`le-demo-apps`](https://github.com/binbashar/le-demo-apps) | `emojivoto.aws.binbash.com.ar` (private) | `argocd.enabled` **and** `argocd.rollouts.enabled` in `k8s-components` |
+| `google-microservices` | **Argo CD `Application`** → kustomize overlay in [`demo-google-microservices`](https://github.com/binbashar/demo-google-microservices) | `gmd.aws.binbash.com.ar` (private) | `argocd.enabled` + `external_secrets.enabled`, **and the `secrets` layer applied** |
+
+Each app is one file, and each file owns everything that app needs — its
+namespace, its `Application` (if it has one) and its `HTTPRoute`. The gateways
+and route conventions those routes share live in `locals.tf`.
+
+Toggle any of them with `demo_apps.<app>.enabled` in `terraform.tfvars`.
+
+### Ordering
+
+`kubernetes_manifest` validates against the live cluster at **plan** time, so
+the two `Application` resources cannot be planned before `k8s-components` has
+installed Argo CD. This layer therefore always runs last, and
+`google-microservices` additionally wants the `secrets` layer applied first, or
+its `paymentservice` never starts.
+
+### The routes are owned here, the manifests are not
+
+Both overlays still describe their exposure as nginx `Ingress` objects on the
+`private-apps` class, which nothing has served since nginx-ingress was retired,
+at hostnames the gateway's wildcard certificate cannot cover. Rather than route
+through them, each `Application` deletes them with a kustomize `$patch: delete`
+and this layer publishes an `HTTPRoute` instead — one label below the private
+base domain, like every other route in the cluster. `emojivoto.tf` carries the
+full reasoning, including the second patch it needs (a `vote-bot` env var the
+upstream repo renders as an integer, which the API rejects).
+
+### Smoke tests that mean something
+
+A 200 on a home page proves the route, and nothing else. The two worth running:
+
+```bash
+# google-microservices: a completed checkout exercises paymentservice, which
+# reads its secret via External Secrets from AWS Secrets Manager.
+kubectl -n demo-google-microservices-dev get externalsecret backend-secrets
+# ... then order something through https://gmd.aws.binbash.com.ar/
+
+# emojivoto: a vote crosses web -> voting-svc over gRPC, and the blue/green
+# promotion is only done when stable == current.
+curl -s "https://emojivoto.aws.binbash.com.ar/api/vote?choice=:doughnut:"
+kubectl argo rollouts get rollout web -n emojivoto
+```
+
+Both hostnames are private: VPN, or run the checks from a pod in the cluster.
+
 ### The "Emojivoto" application
 In [this file](https://github.com/binbashar/le-tf-infra-aws/blob/master/apps-devstg/us-east-1/k8s-eks-demoapps/k8s-workloads/emojivoto.tf)
 we define the kubernetes manifest for the application.

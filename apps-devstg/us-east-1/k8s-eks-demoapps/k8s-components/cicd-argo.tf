@@ -12,12 +12,6 @@ data "aws_secretsmanager_secret_version" "demo_google_microservices_deploy_key" 
   secret_id = "/repositories/demo-google-microservices/deploy_key"
 }
 
-data "aws_secretsmanager_secret_version" "le_demo_deploy_key" {
-  count     = var.argocd.enabled ? 1 : 0
-  provider  = aws.shared
-  secret_id = "/repositories/le-demo-apps/deploy_key"
-}
-
 data "aws_secretsmanager_secret_version" "argocd_slack_notifications_app_oauth" {
   count     = var.argocd.enabled && var.argocd.enableNotifications ? 1 : 0
   provider  = aws.shared
@@ -46,9 +40,10 @@ resource "helm_release" "argocd" {
   #     override interface, so `server.insecure` still applies as written.
   #   - 9.1.0's redis-ha selector breakage does not apply: this runs the
   #     single-replica redis, not redis-ha.
-  #   - 8.0.0 is the Argo CD v2 -> v3 jump. No state to migrate here: no
-  #     Applications exist, and the admin password and both repository
-  #     credentials are re-rendered from Secrets Manager on every apply.
+  #   - 8.0.0 is the Argo CD v2 -> v3 jump. Nothing to migrate: the admin
+  #     password and the repository credential are re-rendered from Secrets
+  #     Manager on every apply, and the Applications live in `k8s-workloads`,
+  #     which is applied after this.
   version = "10.2.3"
   values = [
     templatefile("chart-values/argo-cd.yaml", {
@@ -70,6 +65,15 @@ resource "helm_release" "argocd" {
           # Get argocd admin password from AWS Secrets Manager
           argocdServerAdminPassword = data.aws_secretsmanager_secret_version.argocd_admin_password[0].secret_string
         }
+        # One entry, for the one repository that needs a credential.
+        #
+        # `le-demo-apps` used to be here too, with its own deploy key from
+        # Secrets Manager. That repository is public — it is published as
+        # Leverage reference material — and its deploy key was deleted from
+        # GitHub when it was published, leaving an orphaned key in Secrets
+        # Manager and an Argo CD credential that could only fail. The
+        # emojivoto Application reads it anonymously over HTTPS instead; see
+        # the note on `repoURL` in `k8s-workloads/emojivoto.tf`.
         repositories = {
           demo-google-microservices = {
             name          = "demo-google-microservices"
@@ -77,13 +81,6 @@ resource "helm_release" "argocd" {
             sshPrivateKey = data.aws_secretsmanager_secret_version.demo_google_microservices_deploy_key[0].secret_string
             type          = "git"
             url           = "git@github.com:binbashar/demo-google-microservices.git"
-          }
-          le-demo-apps = {
-            name          = "le-demo-apps"
-            project       = "default"
-            sshPrivateKey = data.aws_secretsmanager_secret_version.le_demo_deploy_key[0].secret_string
-            type          = "git"
-            url           = "git@github.com:binbashar/le-demo-apps.git"
           }
         }
       }

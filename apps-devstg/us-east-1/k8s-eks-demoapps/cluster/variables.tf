@@ -53,19 +53,41 @@ variable "cluster_log_retention_in_days" {
   default     = 7
 }
 
-variable "manage_aws_auth" {
-  description = "Whether to apply the aws-auth configmap file."
-  default     = true
-}
-
-variable "create_aws_auth" {
-  description = "Whether to create the aws-auth configmap."
-  default     = false
-}
-
 # WARNING: make sure you read the note about add-ons in the "locals.tf" file
 variable "use_managed_addons" {
   description = "Whether to use EKS managed add-ons."
   type        = bool
   default     = false
 }
+
+#===========================================#
+# v21 defaults worth knowing about          #
+#===========================================#
+# terraform-aws-eks v21 changed three node-group defaults in ways that are
+# invisible in the diff. None is overridden here -- this block exists so the
+# next reader does not have to rediscover them.
+#
+#   * IMDS `http_put_response_hop_limit` is now 1 (was 2). A hop limit of 1
+#     means pods can no longer reach the instance metadata service, only
+#     processes on the host can. Nothing here is affected: every component,
+#     the VPC CNI included, authenticates via IRSA rather than through the
+#     node's credentials.
+#
+#     Authentication was never the risk, though. **Something that reads IMDS for
+#     *data* is**, and one thing here did: the AWS Load Balancer Controller
+#     discovers its VPC ID from instance metadata, and crash-looped until it was
+#     passed `vpcId`/`region` explicitly (see `k8s-components`). Prefer that fix
+#     -- tell the component what it needs -- over
+#     `metadata_options.http_put_response_hop_limit = 2`, which reopens metadata
+#     to every pod on the node group. If the hop limit must be raised, do it on
+#     the affected group rather than globally.
+#
+#   * `use_latest_ami_release_version` is now true (was false). Node groups
+#     resolve the newest AMI release for their `ami_type` at plan time, so an
+#     apply that follows an AWS AMI release will roll the nodes. That is the
+#     desired behaviour for a short-lived reference cluster; pin
+#     `ami_release_version` per group if a stable substrate is ever needed.
+#
+#   * `enable_monitoring` is now false (was true). EC2 detailed (1-minute)
+#     monitoring is off, which is what this cluster wants -- it costs money and
+#     nothing here reads those metrics.

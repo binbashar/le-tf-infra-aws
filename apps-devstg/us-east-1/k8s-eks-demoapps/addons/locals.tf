@@ -19,6 +19,18 @@ locals {
   # forgetting.
   # The other three have release cycles of their own, so pinning them buys
   # reproducibility rather than costing correctness.
+  # NOTE: `vpc-cni` is deliberately absent. Since terraform-aws-eks v21 hardcodes
+  # `bootstrap_self_managed_addons = false`, EKS no longer installs a CNI when the
+  # cluster is created -- and without one no node reaches `Ready`, so the node
+  # groups in the `cluster` layer fail before this layer ever runs. The CNI is
+  # therefore installed from `cluster` with `before_compute = true`; see
+  # `local.bootstrap_addons` there. Declaring it here as well would fail with
+  # `ResourceInUseException`.
+  #
+  # The CNI keeps its own IRSA identity: its role moved to the `cluster` layer
+  # (`irsa-vpc-cni.tf`) so the bootstrap add-on can reference it in the same
+  # apply, which is something a role in `identities` could never be. There is
+  # correspondingly no `eks_addons_vpc_cni` output in that layer any more.
   addons_available = {
     coredns = {
       addon_version               = "v1.12.4-eksbuild.18"
@@ -28,12 +40,6 @@ locals {
     kube-proxy = {
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
-    }
-    vpc-cni = {
-      addon_version               = "v1.22.4-eksbuild.3"
-      resolve_conflicts_on_create = "OVERWRITE"
-      resolve_conflicts_on_update = "OVERWRITE"
-      service_account_role_arn    = data.terraform_remote_state.cluster-identities.outputs.eks_addons_vpc_cni
     }
     aws-ebs-csi-driver = {
       addon_version               = "v1.63.1-eksbuild.1"

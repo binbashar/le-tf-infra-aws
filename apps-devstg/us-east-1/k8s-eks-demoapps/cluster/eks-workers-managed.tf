@@ -1,24 +1,30 @@
 module "cluster" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v20.37.2"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v21.25.0"
 
-  create          = true
-  cluster_name    = data.terraform_remote_state.cluster-vpc.outputs.cluster_name
-  cluster_version = var.cluster_version
-  enable_irsa     = true
+  create             = true
+  name               = data.terraform_remote_state.cluster-vpc.outputs.cluster_name
+  kubernetes_version = var.cluster_version
+  enable_irsa        = true
 
-  enable_cluster_creator_admin_permissions = true
+  # Configure which roles can access the k8s API.
+  #
+  # Access entries replace the `aws-auth` ConfigMap, whose submodule was removed
+  # in v21. See `locals.tf` for the entries themselves and for why the cluster
+  # creator bootstrap is deliberately off rather than on.
+  enable_cluster_creator_admin_permissions = false
+  access_entries                           = local.access_entries
 
   # Configure networking
   vpc_id     = data.terraform_remote_state.cluster-vpc.outputs.vpc_id
   subnet_ids = data.terraform_remote_state.cluster-vpc.outputs.private_subnets
 
   # Configure public/private cluster endpoints
-  cluster_endpoint_private_access = var.cluster_endpoint_private_access
-  cluster_endpoint_public_access  = var.cluster_endpoint_public_access
+  endpoint_private_access = var.cluster_endpoint_private_access
+  endpoint_public_access  = var.cluster_endpoint_public_access
 
   # Configure cluster inbound/outbound rules
-  create_cluster_security_group = var.create_cluster_security_group
-  cluster_security_group_additional_rules = {
+  create_security_group = var.create_cluster_security_group
+  security_group_additional_rules = {
     ingress_shared_vpc_443 = {
       description = "Shared VPC to Cluster API"
       protocol    = "tcp"
@@ -32,6 +38,11 @@ module "cluster" {
   }
 
   # Configure node inbound/outbound rules
+  #
+  # NOTE: `node_security_group_enable_recommended_rules` is left at its `true`
+  # default, so the module already installs the control-plane -> node webhook
+  # rules (4443, 6443, 8443, 9443), node-to-node ephemeral ingress and
+  # egress_all. Only the rules below are additional.
   node_security_group_additional_rules = {
     #
     # NOTE: these 2 rules below allow all communication between nodes.
@@ -42,7 +53,7 @@ module "cluster" {
     #
     ingress_self_all = {
       description = "Node to Node all ports & protocols"
-      protocol    = -1
+      protocol    = "-1"
       from_port   = 0
       to_port     = 0
       type        = "ingress"
@@ -50,7 +61,7 @@ module "cluster" {
     },
     egress_self_all = {
       description = "Node to Node all ports & protocols"
-      protocol    = -1
+      protocol    = "-1"
       from_port   = 0
       to_port     = 0
       type        = "egress"
@@ -63,84 +74,67 @@ module "cluster" {
   #
   # TODO Revisit this -- is it really needed?
   #
-  cluster_service_ipv4_cidr = "10.100.0.0/16"
+  service_ipv4_cidr = "10.100.0.0/16"
 
   # Encrypt selected k8s resources with this account's KMS CMK
   create_kms_key = false
-  cluster_encryption_config = {
+  encryption_config = {
     provider_key_arn = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
     resources        = ["secrets"]
   }
 
-  # Define Managed Nodes Groups (MNG's) default settings
-  eks_managed_node_group_defaults = {
-    # Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS
-    ami_type  = var.ami_type
-    disk_size = 50
-    # Nitro-only: AL2023 (see var.ami_type) needs ENA + NVMe, so Xen generations
-    # like t2 are excluded — they would be accepted by the spot allocator and
-    # then fail to boot.
-    #
-    # The single source of truth for every node group: the module resolves each
-    # attribute as `try(each.value.X, eks_managed_node_group_defaults.X, ...)`
-    # (node_groups.tf:324 in v20.37.2), so a group only needs its own list to
-    # *differ* from this one.
-    instance_types = ["t3.medium", "t3a.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
-    k8s_labels     = local.tags
-    # IMPORTANT: setting this to true is only necessary during the initial bootstrap
-    # of the cluster, otherwise the built-in VPC CNI won't start. Then, after you get
-    # the VPC CNI add-on installed, you can set this to false.
-    iam_role_attach_cni_policy = true
-  }
-
   # Define all Managed Node Groups (MNG's)
+  #
+  # NOTE: v21 removed `eks_managed_node_group_defaults`, so the shared
+  # attributes come from `local.node_group_defaults` via `merge()` -- see the
+  # comment on that local. Keys set here override the shared value.
   eks_managed_node_groups = {
     # ---------------------------------------------------------------
     # Standard, On-demand, single node group across all AZs
     # ---------------------------------------------------------------
-    # standard_ondemand = {
+    # standard_ondemand = merge(local.node_group_defaults, {
     #   min_size       = 1
     #   max_size       = 6
     #   desired_size   = 1
     #   capacity_type  = "ON_DEMAND"
     #   instance_types = ["t3.medium"]
-    # }
+    # })
 
     # ---------------------------------------------------------------
     # Standard, On-demand, one node group per AZs (HA)
     # ---------------------------------------------------------------
-    # standard_ondemand_a = {
+    # standard_ondemand_a = merge(local.node_group_defaults, {
     #   min_size       = 1
     #   max_size       = 6
     #   desired_size   = 1
     #   capacity_type  = "ON_DEMAND"
     #   instance_types = ["t3.medium"]
-    #   subnet_ids   = [data.terraform_remote_state.eks-vpc.outputs.private_subnets[0]]
-    # }
-    # standard_ondemand_b = {
+    #   subnet_ids     = [data.terraform_remote_state.cluster-vpc.outputs.private_subnets[0]]
+    # })
+    # standard_ondemand_b = merge(local.node_group_defaults, {
     #   min_size       = 1
     #   max_size       = 6
     #   desired_size   = 1
     #   capacity_type  = "ON_DEMAND"
     #   instance_types = ["t3.medium"]
-    #   subnet_ids   = [data.terraform_remote_state.eks-vpc.outputs.private_subnets[1]]
-    # }
+    #   subnet_ids     = [data.terraform_remote_state.cluster-vpc.outputs.private_subnets[1]]
+    # })
 
     # ---------------------------------------------------------------
     # Standard, Spot, single node group across all AZs
     # ---------------------------------------------------------------
-    standard_spot = {
+    standard_spot = merge(local.node_group_defaults, {
       desired_size  = 2
       max_size      = 6
       min_size      = 2
       capacity_type = "SPOT"
       labels        = merge(local.tags, { "stack" = "standard" })
-    }
+    })
 
     # ---------------------------------------------------------------
     # Tools, Spot, single node group across all AZs
     # ---------------------------------------------------------------
-    tools_spot = {
+    tools_spot = merge(local.node_group_defaults, {
       desired_size  = 1
       max_size      = 6
       min_size      = 1
@@ -153,18 +147,11 @@ module "cluster" {
           effect = "NO_SCHEDULE"
         }
       }
-    }
+    })
   }
 
-  # Configure which roles, users and accounts can access the k8s api
-  #create_aws_auth_configmap = var.create_aws_auth
-  #manage_aws_auth_configmap = var.manage_aws_auth
-  #aws_auth_roles            = local.map_roles
-  #aws_auth_users            = local.map_users
-  #aws_auth_accounts         = local.map_accounts
-
   # Configure which log types should be enabled and how long they should be kept for
-  cluster_enabled_log_types = [
+  enabled_log_types = [
     # "api",
     # "audit",
     # "authenticator",
@@ -172,27 +159,18 @@ module "cluster" {
   cloudwatch_log_group_retention_in_days = var.cluster_log_retention_in_days
 
   # EKS Managed Add-ons
-  cluster_addons = local.addons_enabled
+  #
+  # `local.bootstrap_addons` holds only the VPC CNI, which has to exist before
+  # the nodes can join -- see the comment on that local. Everything else lives
+  # in the `addons` layer. `local.addons_enabled` is the (normally empty)
+  # opt-in hook described at the bottom of `locals.tf`.
+  addons = merge(local.bootstrap_addons, local.addons_enabled)
 
   # Define tags (notice we are appending here tags required by the cluster autoscaler)
   tags = merge(local.tags,
     { "k8s.io/cluster-autoscaler/enabled" = "TRUE" },
     { "k8s.io/cluster-autoscaler/${data.terraform_remote_state.cluster-vpc.outputs.cluster_name}" = "owned" }
   )
-}
-
-module "cluster-aws-auth" {
-  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
-  version = "~> 20.0"
-
-  manage_aws_auth_configmap = var.manage_aws_auth
-  create_aws_auth_configmap = var.create_aws_auth
-
-  aws_auth_roles    = local.map_roles
-  aws_auth_users    = local.map_users
-  aws_auth_accounts = local.map_accounts
-
-  depends_on = [module.cluster]
 }
 
 resource "local_file" "metadata" {

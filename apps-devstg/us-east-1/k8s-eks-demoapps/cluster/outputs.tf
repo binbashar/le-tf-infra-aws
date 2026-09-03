@@ -11,6 +11,15 @@ output "cluster_name" {
   value       = data.terraform_remote_state.cluster-vpc.outputs.cluster_name
 }
 
+# Consumers of the cluster need its VPC: the AWS Load Balancer Controller, for
+# one, must be told the VPC ID explicitly. It used to read it from instance
+# metadata, which stopped working when terraform-aws-eks v21 dropped the IMDS
+# hop limit to 1 -- see the note in `variables.tf`.
+output "vpc_id" {
+  description = "ID of the VPC the cluster runs in."
+  value       = data.terraform_remote_state.cluster-vpc.outputs.vpc_id
+}
+
 output "cluster_endpoint" {
   description = "Endpoint for EKS control plane."
   value       = module.cluster.cluster_endpoint

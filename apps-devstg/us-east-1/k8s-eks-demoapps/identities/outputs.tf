@@ -43,10 +43,11 @@ output "argo_cd_image_updater_role_arn" {
   value       = module.role_argo_cd_image_updater.iam_role_arn
 }
 
-output "eks_addons_vpc_cni" {
-  description = "EKS Add-ons VPC CNI Role ARN"
-  value       = module.role_eks_addons_vpc_cni.iam_role_arn
-}
+# NOTE: there is deliberately no `eks_addons_vpc_cni` output here any more. The
+# VPC CNI's IRSA role moved to the `cluster` layer (`irsa-vpc-cni.tf`), because
+# v21 requires the CNI to be installed before the nodes and this layer runs
+# afterwards -- a role here is one the bootstrap add-on could never reference on
+# a fresh cluster. See the comment on that module for the full reasoning.
 
 output "eks_addons_ebs_csi" {
   description = "EKS Add-ons EBS CSI Role ARN"

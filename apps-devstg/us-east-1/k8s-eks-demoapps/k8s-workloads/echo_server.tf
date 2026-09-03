@@ -69,17 +69,9 @@ locals {
   echo_server_namespace = "echo-server"
   echo_server_labels    = { app = "echo-server" }
 
-  # Gateways provisioned by the k8s-components layer. Referenced by name (that
-  # layer exports no outputs); keep in sync with networking-envoygateway.tf.
-  envoy_gateway_namespace = "envoy-gateway-system"
-  private_gateway_name    = "private-gw-eg"
-  public_gateway_name     = "public-gw-eg"
-
-  # `public-gw-eg`'s HTTPS listener only accepts HTTPRoutes from namespaces
-  # carrying this label — see `local.public_gw_eg_exposure_label` in
-  # k8s-components/locals.tf. Without it the HTTPRoute below is created but
-  # never attaches, and the app stays unreachable from the internet.
-  public_exposure_label = { "gateway.binbash.com.ar/public-exposure" = "allowed" }
+  # The gateways this file attaches to, the label the public one demands and the
+  # conventions both routes follow now live in `locals.tf` — they describe the
+  # platform, and three workloads read them.
 
   # Opts this namespace into Goldilocks (k8s-components/scaling.tf). Goldilocks
   # only creates VPA objects for namespaces carrying this label, so without it
@@ -252,10 +244,7 @@ resource "kubernetes_manifest" "echo_server_route_eg" {
       namespace = kubernetes_namespace.echo_server[0].metadata[0].name
     }
     spec = {
-      parentRefs = [{
-        name      = local.private_gateway_name
-        namespace = local.envoy_gateway_namespace
-      }]
+      parentRefs = local.private_gw_parent_refs
       # The `-eg` suffix is gone. It only ever existed because nginx owned the
       # unsuffixed private name; once the cutover moved that name here, the
       # suffixed one was redundant and was dropped. external-dns runs policy
