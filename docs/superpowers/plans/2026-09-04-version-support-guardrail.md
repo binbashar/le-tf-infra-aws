@@ -1588,7 +1588,12 @@ def annotations(findings: list[Finding]) -> list[str]:
             level = "warning"
         else:
             continue
-        file_part = finding.pin.source.split(":")[0]
+        # Strip the " (how)" suffix first, then the trailing ":line" -- splitting on
+        # the first colon would truncate an absolute Windows path at its drive
+        # letter. Not reachable today (_source builds paths with os.path.relpath,
+        # which never emits one) but a wrong file= silently points a reviewer at the
+        # wrong place, so this is cheap insurance.
+        file_part = finding.pin.source.split(" (")[0].rsplit(":", 1)[0]
         lines.append(
             f"::{level} file={file_part}::{_name(finding)} in {finding.pin.layer} "
             f"is {finding.severity} (end of standard support: {finding.end_standard})"
