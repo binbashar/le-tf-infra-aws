@@ -12,7 +12,11 @@ autodiscover:
   ignore_paths:
   - config/*
   # Test fixtures for scripts/version_support - .tf files on purpose, but not layers.
-  - scripts/*
+  # Must be scripts/** not scripts/*: Atlantis matches with doublestar globs where a
+  # single * does not cross a "/", and it checks each discovered directory by its full
+  # path with no parent-matched-so-skip-the-subtree shortcut. The fixture layers are
+  # eight segments deep, so scripts/* would miss every one of them.
+  - scripts/**
 
 # Here we define the projects (or layers) explicitly
 projects:
