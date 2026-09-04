@@ -1755,6 +1755,17 @@ git commit -m "feat(version-support): render findings for humans and CI"
 - Create: `scripts/version_support/__main__.py`
 - Create: `scripts/version_support/tests/test_main.py`
 
+> **Amendment (found during execution).** The original `collect()` built the boto3 clients as
+> *argument expressions* to `evaluate(...)`, so they were constructed **before** `evaluate`'s
+> `try/except` could apply — and `main()` catches only `LookupUnavailable`. A construction-time
+> failure such as `NoRegionError` (raised with no region resolvable, before any network call —
+> exactly what a workflow step missing `aws-region` produces) therefore escaped uncaught and
+> crashed **both** `pr` and `cron` with a traceback and exit 1, breaking the central "never block
+> a merge on an AWS problem" guarantee that `lifecycle.py`'s own docstring states. Every test
+> mocked `collect` wholesale, so none of them executed real client construction and the suite
+> stayed green. The code above is corrected, and Step 1 now includes a test that does not mock
+> `collect`.
+
 - [ ] **Step 1: Write the failing test**
 
 `scripts/version_support/tests/test_main.py`:
@@ -1846,6 +1857,7 @@ import sys
 from datetime import date, timezone, datetime
 
 import boto3
+from botocore.exceptions import BotoCoreError, ClientError
 
 from version_support import discover as discover_module
 from version_support import report as report_module
@@ -1855,10 +1867,21 @@ from version_support.lifecycle import DEFAULT_LEAD_DAYS, LookupUnavailable, eval
 def collect(root: str, today: date, lead_days: int):
     """(findings, parse_errors) for the tree at `root`. Raises LookupUnavailable."""
     pins, errors = discover_module.discover(root)
+    try:
+        # Construction is inside the guard on purpose: boto3 can fail before any
+        # network call -- NoRegionError when no region resolves, for one -- and
+        # evaluate()'s own try/except cannot see that, because these expressions
+        # are evaluated before its body runs. Left outside, a misconfigured
+        # workflow step would crash the gate instead of degrading it.
+        eks_client = boto3.client("eks")
+        rds_client = boto3.client("rds")
+    except (BotoCoreError, ClientError) as exc:
+        raise LookupUnavailable(str(exc)) from exc
+
     findings = evaluate(
         pins,
-        eks_client=boto3.client("eks"),
-        rds_client=boto3.client("rds"),
+        eks_client=eks_client,
+        rds_client=rds_client,
         today=today,
         lead_days=lead_days,
     )
