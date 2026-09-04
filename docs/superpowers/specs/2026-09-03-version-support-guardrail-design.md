@@ -61,7 +61,7 @@ Rejected alternatives, and why:
 ## Placement
 
 ```
-scripts/version_support/          # new; the repo has no scripts/ dir today
+@bin/scripts/version_support/          # new; the repo has no scripts/ dir today
 ├── __main__.py                   # CLI: --mode pr|cron|table, --lead-days
 ├── discover.py                   # tree  → [Pin]      HCL parse, never touches AWS
 ├── lifecycle.py                  # [Pin] → [Finding]  AWS lookup, never touches the filesystem
@@ -81,7 +81,7 @@ docs/version-support/
 
 The three-module split is the testability boundary: `discover` is a pure function of the tree, `lifecycle` is a pure function of `[Pin]` plus AWS, `report` is pure formatting. Each can be tested without standing up the other two.
 
-Invocation is `PYTHONPATH=scripts python -m version_support --mode <mode>`, wrapped in `Makefile` targets so local use matches CI.
+Invocation is `PYTHONPATH=@bin/scripts python -m version_support --mode <mode>`, wrapped in `Makefile` targets so local use matches CI.
 
 ## Architecture
 

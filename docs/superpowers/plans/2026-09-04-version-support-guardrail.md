@@ -38,13 +38,13 @@ These were verified by running code against this repository — do not re-derive
 
 | File | Responsibility |
 | --- | --- |
-| `scripts/version_support/__init__.py` | Package marker (docstring only — consumers import from the submodules directly) |
-| `scripts/version_support/discover.py` | Tree → `[Pin]`. HCL parsing, reference resolution, engine allow-list. No AWS. |
-| `scripts/version_support/lifecycle.py` | `[Pin]` → `[Finding]`. AWS lookups + severity classification. No filesystem. |
-| `scripts/version_support/report.py` | `[Finding]` → terminal table, GH annotations, markdown, Slack text, issue body. Pure. |
-| `scripts/version_support/__main__.py` | CLI, mode dispatch, exit codes. The only place that decides failure. |
-| `scripts/version_support/requirements.txt` | `python-hcl2`, `boto3` |
-| `scripts/version_support/tests/` | pytest suite + fixture `.tf` tree |
+| `@bin/scripts/version_support/__init__.py` | Package marker (docstring only — consumers import from the submodules directly) |
+| `@bin/scripts/version_support/discover.py` | Tree → `[Pin]`. HCL parsing, reference resolution, engine allow-list. No AWS. |
+| `@bin/scripts/version_support/lifecycle.py` | `[Pin]` → `[Finding]`. AWS lookups + severity classification. No filesystem. |
+| `@bin/scripts/version_support/report.py` | `[Finding]` → terminal table, GH annotations, markdown, Slack text, issue body. Pure. |
+| `@bin/scripts/version_support/__main__.py` | CLI, mode dispatch, exit codes. The only place that decides failure. |
+| `@bin/scripts/version_support/requirements.txt` | `python-hcl2`, `boto3` |
+| `@bin/scripts/version_support/tests/` | pytest suite + fixture `.tf` tree |
 | `.github/workflows/version-support.yml` | PR gate + weekly cron; owns Slack and `gh issue` side effects |
 | `docs/version-support/README.md` | Why, upgrade cadence, how to run, IAM |
 | `docs/version-support/status.md` | Generated table |
@@ -55,21 +55,21 @@ These were verified by running code against this repository — do not re-derive
 ## Task 1: Package scaffold and dependencies
 
 **Files:**
-- Create: `scripts/version_support/__init__.py`
-- Create: `scripts/version_support/requirements.txt`
-- Create: `scripts/version_support/tests/__init__.py`
-- Create: `scripts/version_support/tests/test_smoke.py`
+- Create: `@bin/scripts/version_support/__init__.py`
+- Create: `@bin/scripts/version_support/requirements.txt`
+- Create: `@bin/scripts/version_support/tests/__init__.py`
+- Create: `@bin/scripts/version_support/tests/test_smoke.py`
 
 - [ ] **Step 1: Create the package files**
 
-`scripts/version_support/requirements.txt`:
+`@bin/scripts/version_support/requirements.txt`:
 
 ```text
 python-hcl2>=8.1.0,<9
 boto3>=1.43.0
 ```
 
-`scripts/version_support/__init__.py`:
+`@bin/scripts/version_support/__init__.py`:
 
 ```python
 """Version-support guardrail: detect EKS/RDS versions heading into extended support.
@@ -78,11 +78,11 @@ See docs/superpowers/specs/2026-09-03-version-support-guardrail-design.md
 """
 ```
 
-`scripts/version_support/tests/__init__.py`: empty file.
+`@bin/scripts/version_support/tests/__init__.py`: empty file.
 
 - [ ] **Step 2: Write the smoke test**
 
-`scripts/version_support/tests/test_smoke.py`:
+`@bin/scripts/version_support/tests/test_smoke.py`:
 
 ```python
 def test_dependencies_import():
@@ -97,12 +97,12 @@ def test_dependencies_import():
 
 ```bash
 python3 -m venv .venv-version-support
-./.venv-version-support/bin/pip install -q -r scripts/version_support/requirements.txt pytest
+./.venv-version-support/bin/pip install -q -r @bin/scripts/version_support/requirements.txt pytest
 ```
 
 - [ ] **Step 4: Run the test**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_smoke.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_smoke.py -v`
 Expected: PASS
 
 - [ ] **Step 5: Ignore the venv and commit**
@@ -110,7 +110,7 @@ Expected: PASS
 Add `.venv-version-support/` to `.gitignore`, then:
 
 ```bash
-git add .gitignore scripts/version_support/
+git add .gitignore @bin/scripts/version_support/
 git commit -m "feat(version-support): scaffold the guardrail package"
 ```
 
@@ -119,12 +119,12 @@ git commit -m "feat(version-support): scaffold the guardrail package"
 ## Task 2: The disabled-layer rule
 
 **Files:**
-- Create: `scripts/version_support/discover.py`
-- Create: `scripts/version_support/tests/test_discover.py`
+- Create: `@bin/scripts/version_support/discover.py`
+- Create: `@bin/scripts/version_support/tests/test_discover.py`
 
 - [ ] **Step 1: Write the failing test**
 
-`scripts/version_support/tests/test_discover.py`:
+`@bin/scripts/version_support/tests/test_discover.py`:
 
 ```python
 import pytest
@@ -159,12 +159,12 @@ def test_active_layers_are_not_disabled(path):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_discover.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'version_support.discover'`
 
 - [ ] **Step 3: Write minimal implementation**
 
-`scripts/version_support/discover.py`:
+`@bin/scripts/version_support/discover.py`:
 
 ```python
 """Discover Kubernetes and database engine version pins in the OpenTofu tree.
@@ -194,13 +194,13 @@ def is_disabled_layer(path: str) -> bool:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_discover.py -v`
 Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add scripts/version_support/discover.py scripts/version_support/tests/test_discover.py
+git add @bin/scripts/version_support/discover.py @bin/scripts/version_support/tests/test_discover.py
 git commit -m "feat(version-support): detect disabled layers by trailing --"
 ```
 
@@ -209,14 +209,14 @@ git commit -m "feat(version-support): detect disabled layers by trailing --"
 ## Task 3: HCL loading and line lookup
 
 **Files:**
-- Modify: `scripts/version_support/discover.py`
-- Modify: `scripts/version_support/tests/test_discover.py`
-- Create: `scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/k8s-eks-demoapps/cluster/main.tf`
-- Create: `scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/k8s-eks-demoapps/cluster/variables.tf`
+- Modify: `@bin/scripts/version_support/discover.py`
+- Modify: `@bin/scripts/version_support/tests/test_discover.py`
+- Create: `@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/k8s-eks-demoapps/cluster/main.tf`
+- Create: `@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/k8s-eks-demoapps/cluster/variables.tf`
 
 - [ ] **Step 1: Create the fixture layer**
 
-`scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/k8s-eks-demoapps/cluster/main.tf`:
+`@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/k8s-eks-demoapps/cluster/main.tf`:
 
 ```hcl
 module "cluster" {
@@ -227,7 +227,7 @@ module "cluster" {
 }
 ```
 
-`scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/k8s-eks-demoapps/cluster/variables.tf`:
+`@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/k8s-eks-demoapps/cluster/variables.tf`:
 
 ```hcl
 variable "cluster_version" {
@@ -239,7 +239,7 @@ variable "cluster_version" {
 
 - [ ] **Step 2: Write the failing test**
 
-Append to `scripts/version_support/tests/test_discover.py`:
+Append to `@bin/scripts/version_support/tests/test_discover.py`:
 
 ```python
 import os
@@ -270,12 +270,12 @@ def test_line_of_finds_attribute_and_variable_block():
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_discover.py -v`
 Expected: FAIL with `ImportError: cannot import name 'line_of'`
 
 - [ ] **Step 4: Write the implementation**
 
-Add to the imports at the top of `scripts/version_support/discover.py`:
+Add to the imports at the top of `@bin/scripts/version_support/discover.py`:
 
 ```python
 import glob
@@ -335,13 +335,13 @@ def load_layer(layer_dir: str) -> tuple[dict[str, dict], list[str]]:
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_discover.py -v`
 Expected: PASS (all green)
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add scripts/version_support/
+git add @bin/scripts/version_support/
 git commit -m "feat(version-support): load layer HCL with quote-stripping options"
 ```
 
@@ -350,14 +350,14 @@ git commit -m "feat(version-support): load layer HCL with quote-stripping option
 ## Task 4: Reference resolution (literal, var, local, tfvars)
 
 **Files:**
-- Modify: `scripts/version_support/discover.py`
-- Modify: `scripts/version_support/tests/test_discover.py`
-- Create: `scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/databases-aurora-pgsql --/cluster.tf`
-- Create: `scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/databases-aurora-pgsql --/locals.tf`
+- Modify: `@bin/scripts/version_support/discover.py`
+- Modify: `@bin/scripts/version_support/tests/test_discover.py`
+- Create: `@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/databases-aurora-pgsql --/cluster.tf`
+- Create: `@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/databases-aurora-pgsql --/locals.tf`
 
 - [ ] **Step 1: Create the Aurora fixture (the locals case)**
 
-`scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/databases-aurora-pgsql --/locals.tf`:
+`@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/databases-aurora-pgsql --/locals.tf`:
 
 ```hcl
 locals {
@@ -365,7 +365,7 @@ locals {
 }
 ```
 
-`scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/databases-aurora-pgsql --/cluster.tf`:
+`@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/databases-aurora-pgsql --/cluster.tf`:
 
 ```hcl
 module "aurora_postgresql" {
@@ -378,7 +378,7 @@ module "aurora_postgresql" {
 
 - [ ] **Step 2: Write the failing test**
 
-Append to `scripts/version_support/tests/test_discover.py`:
+Append to `@bin/scripts/version_support/tests/test_discover.py`:
 
 ```python
 from version_support.discover import Resolver
@@ -439,12 +439,12 @@ def test_unresolvable_reference_is_never_assumed_safe():
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_discover.py -v`
 Expected: FAIL with `ImportError: cannot import name 'Resolver'`
 
 - [ ] **Step 4: Write the implementation**
 
-Add to the imports of `scripts/version_support/discover.py`:
+Add to the imports of `@bin/scripts/version_support/discover.py`:
 
 ```python
 from dataclasses import dataclass
@@ -512,13 +512,13 @@ class Resolver:
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_discover.py -v`
 Expected: PASS (all green)
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add scripts/version_support/
+git add @bin/scripts/version_support/
 git commit -m "feat(version-support): resolve var, local and tfvars references"
 ```
 
@@ -527,12 +527,12 @@ git commit -m "feat(version-support): resolve var, local and tfvars references"
 ## Task 5: RDS major-version derivation
 
 **Files:**
-- Modify: `scripts/version_support/discover.py`
-- Modify: `scripts/version_support/tests/test_discover.py`
+- Modify: `@bin/scripts/version_support/discover.py`
+- Modify: `@bin/scripts/version_support/tests/test_discover.py`
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `scripts/version_support/tests/test_discover.py`:
+Append to `@bin/scripts/version_support/tests/test_discover.py`:
 
 ```python
 from version_support.discover import major_version
@@ -555,12 +555,12 @@ def test_major_version_is_engine_specific(engine, version, expected):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -k major -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_discover.py -k major -v`
 Expected: FAIL with `ImportError: cannot import name 'major_version'`
 
 - [ ] **Step 3: Write the implementation**
 
-Append to `scripts/version_support/discover.py`:
+Append to `@bin/scripts/version_support/discover.py`:
 
 ```python
 # Only these carry an RDS/Aurora extended-support surcharge. elasticache, OpenSearch
@@ -583,13 +583,13 @@ def major_version(engine: str, version: str) -> str:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -k major -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_discover.py -k major -v`
 Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add scripts/version_support/
+git add @bin/scripts/version_support/
 git commit -m "feat(version-support): derive RDS major versions per engine family"
 ```
 
@@ -598,13 +598,13 @@ git commit -m "feat(version-support): derive RDS major versions per engine famil
 ## Task 6: Pin extraction — EKS, RDS, and the look-alikes
 
 **Files:**
-- Modify: `scripts/version_support/discover.py`
-- Modify: `scripts/version_support/tests/test_discover.py`
-- Create: `scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/databases-mysql --/db.tf`
-- Create: `scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/elasticache-redis/main.tf`
-- Create: `scripts/version_support/tests/fixtures/tree/data-science/us-east-1/datalake--/dms.tf`
-- Create: `scripts/version_support/tests/fixtures/tree/config/common.tfvars`
-- Create: `scripts/version_support/tests/fixtures/tree/apps-devstg/config/account.tfvars`
+- Modify: `@bin/scripts/version_support/discover.py`
+- Modify: `@bin/scripts/version_support/tests/test_discover.py`
+- Create: `@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/databases-mysql --/db.tf`
+- Create: `@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/elasticache-redis/main.tf`
+- Create: `@bin/scripts/version_support/tests/fixtures/tree/data-science/us-east-1/datalake--/dms.tf`
+- Create: `@bin/scripts/version_support/tests/fixtures/tree/config/common.tfvars`
+- Create: `@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/config/account.tfvars`
 
 > **Amendment (found during execution).** Two conflicts in this task's literal instructions were
 > caught by TDD and corrected in the code above and below:
@@ -618,12 +618,12 @@ git commit -m "feat(version-support): derive RDS major versions per engine famil
 > 2. **`.gitignore` swallows the `common.tfvars` fixture.** Line 100 is an unanchored
 >    `*common.tfvars` — the rule that keeps the real `config/common.tfvars` (which holds AWS
 >    account IDs) out of git. It also matches the fixture of the same name, so a plain
->    `git add scripts/version_support/` drops that file silently, with no error. Force-add it
+>    `git add @bin/scripts/version_support/` drops that file silently, with no error. Force-add it
 >    (`git add -f <path>`); once tracked, later edits stage normally.
 
 - [ ] **Step 1: Create the remaining fixtures**
 
-`scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/databases-mysql --/db.tf`:
+`@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/databases-mysql --/db.tf`:
 
 ```hcl
 module "mysql_db" {
@@ -635,7 +635,7 @@ module "mysql_db" {
 }
 ```
 
-`scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/elasticache-redis/main.tf` — a look-alike with `engine_version` but no `engine`:
+`@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/elasticache-redis/main.tf` — a look-alike with `engine_version` but no `engine`:
 
 ```hcl
 module "elasticache_redis" {
@@ -645,7 +645,7 @@ module "elasticache_redis" {
 }
 ```
 
-`scripts/version_support/tests/fixtures/tree/data-science/us-east-1/datalake--/dms.tf` — a look-alike with a similarly-named key:
+`@bin/scripts/version_support/tests/fixtures/tree/data-science/us-east-1/datalake--/dms.tf` — a look-alike with a similarly-named key:
 
 ```hcl
 module "dms" {
@@ -655,13 +655,13 @@ module "dms" {
 }
 ```
 
-`scripts/version_support/tests/fixtures/tree/config/common.tfvars`:
+`@bin/scripts/version_support/tests/fixtures/tree/config/common.tfvars`:
 
 ```hcl
 project = "bb"
 ```
 
-`scripts/version_support/tests/fixtures/tree/apps-devstg/config/account.tfvars`:
+`@bin/scripts/version_support/tests/fixtures/tree/apps-devstg/config/account.tfvars`:
 
 ```hcl
 environment = "apps-devstg"
@@ -669,7 +669,7 @@ environment = "apps-devstg"
 
 - [ ] **Step 2: Write the failing test**
 
-Append to `scripts/version_support/tests/test_discover.py`:
+Append to `@bin/scripts/version_support/tests/test_discover.py`:
 
 ```python
 from version_support.discover import discover
@@ -733,12 +733,12 @@ def test_look_alikes_are_never_matched():
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -k discover -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_discover.py -k discover -v`
 Expected: FAIL with `ImportError: cannot import name 'discover'`
 
 - [ ] **Step 4: Write the implementation**
 
-Append to `scripts/version_support/discover.py`:
+Append to `@bin/scripts/version_support/discover.py`:
 
 ```python
 @dataclass(frozen=True)
@@ -909,7 +909,7 @@ def discover(root: str) -> tuple[list[Pin], list[str]]:
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_discover.py -v`
 Expected: PASS (all green)
 
 - [ ] **Step 6: Verify against the real tree**
@@ -917,7 +917,7 @@ Expected: PASS (all green)
 Run:
 
 ```bash
-PYTHONPATH=scripts ./.venv-version-support/bin/python -c "
+PYTHONPATH=@bin/scripts ./.venv-version-support/bin/python -c "
 from version_support.discover import discover
 pins, errors = discover('.')
 for p in sorted(pins, key=lambda p: p.layer):
@@ -931,7 +931,7 @@ Expected: exactly 6 pins — 1 `eks` (`1.34`, `active=True`) and 5 `rds` (all `a
 - [ ] **Step 7: Commit**
 
 ```bash
-git add scripts/version_support/
+git add @bin/scripts/version_support/
 git commit -m "feat(version-support): extract EKS and RDS pins from the tree"
 ```
 
@@ -940,12 +940,12 @@ git commit -m "feat(version-support): extract EKS and RDS pins from the tree"
 ## Task 7: Severity classification (pure, no AWS)
 
 **Files:**
-- Create: `scripts/version_support/lifecycle.py`
-- Create: `scripts/version_support/tests/test_lifecycle.py`
+- Create: `@bin/scripts/version_support/lifecycle.py`
+- Create: `@bin/scripts/version_support/tests/test_lifecycle.py`
 
 - [ ] **Step 1: Write the failing test**
 
-`scripts/version_support/tests/test_lifecycle.py`:
+`@bin/scripts/version_support/tests/test_lifecycle.py`:
 
 ```python
 from datetime import date
@@ -990,12 +990,12 @@ def test_lead_days_is_configurable():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_lifecycle.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_lifecycle.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'version_support.lifecycle'`
 
 - [ ] **Step 3: Write the implementation**
 
-`scripts/version_support/lifecycle.py`:
+`@bin/scripts/version_support/lifecycle.py`:
 
 ```python
 """Classify version pins against AWS support lifecycles.
@@ -1068,13 +1068,13 @@ def classify(
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_lifecycle.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_lifecycle.py -v`
 Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add scripts/version_support/
+git add @bin/scripts/version_support/
 git commit -m "feat(version-support): classify pins into support severities"
 ```
 
@@ -1083,12 +1083,12 @@ git commit -m "feat(version-support): classify pins into support severities"
 ## Task 8: AWS lifecycle lookups
 
 **Files:**
-- Modify: `scripts/version_support/lifecycle.py`
-- Modify: `scripts/version_support/tests/test_lifecycle.py`
+- Modify: `@bin/scripts/version_support/lifecycle.py`
+- Modify: `@bin/scripts/version_support/tests/test_lifecycle.py`
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `scripts/version_support/tests/test_lifecycle.py`:
+Append to `@bin/scripts/version_support/tests/test_lifecycle.py`:
 
 ```python
 from datetime import datetime
@@ -1183,12 +1183,12 @@ def test_rds_lifecycle_returns_unknown_for_an_unlisted_version():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_lifecycle.py -k "eks_lifecycles or rds_lifecycle" -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_lifecycle.py -k "eks_lifecycles or rds_lifecycle" -v`
 Expected: FAIL with `ImportError: cannot import name 'eks_lifecycles'`
 
 - [ ] **Step 3: Write the implementation**
 
-Append to `scripts/version_support/lifecycle.py`:
+Append to `@bin/scripts/version_support/lifecycle.py`:
 
 ```python
 # Verified against the botocore service model - these are lowercase-hyphenated,
@@ -1251,13 +1251,13 @@ def rds_lifecycle(engine: str, major: str, client, today: date) -> tuple:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_lifecycle.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_lifecycle.py -v`
 Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add scripts/version_support/
+git add @bin/scripts/version_support/
 git commit -m "feat(version-support): look up EKS and RDS support lifecycles"
 ```
 
@@ -1266,12 +1266,12 @@ git commit -m "feat(version-support): look up EKS and RDS support lifecycles"
 ## Task 9: Evaluate pins into findings, and the AWS-failure path
 
 **Files:**
-- Modify: `scripts/version_support/lifecycle.py`
-- Modify: `scripts/version_support/tests/test_lifecycle.py`
+- Modify: `@bin/scripts/version_support/lifecycle.py`
+- Modify: `@bin/scripts/version_support/tests/test_lifecycle.py`
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `scripts/version_support/tests/test_lifecycle.py`:
+Append to `@bin/scripts/version_support/tests/test_lifecycle.py`:
 
 ```python
 from version_support.discover import Pin
@@ -1346,12 +1346,12 @@ def test_an_aws_failure_raises_lookup_unavailable():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_lifecycle.py -k evaluate -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_lifecycle.py -k evaluate -v`
 Expected: FAIL with `ImportError: cannot import name 'LookupUnavailable'`
 
 - [ ] **Step 3: Write the implementation**
 
-Add to the imports of `scripts/version_support/lifecycle.py`:
+Add to the imports of `@bin/scripts/version_support/lifecycle.py`:
 
 ```python
 from botocore.exceptions import BotoCoreError, ClientError
@@ -1409,13 +1409,13 @@ def evaluate(pins, *, eks_client, rds_client, today: date, lead_days: int = DEFA
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_lifecycle.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_lifecycle.py -v`
 Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add scripts/version_support/
+git add @bin/scripts/version_support/
 git commit -m "feat(version-support): evaluate pins and surface AWS lookup failures"
 ```
 
@@ -1424,12 +1424,12 @@ git commit -m "feat(version-support): evaluate pins and surface AWS lookup failu
 ## Task 10: Reporting
 
 **Files:**
-- Create: `scripts/version_support/report.py`
-- Create: `scripts/version_support/tests/test_report.py`
+- Create: `@bin/scripts/version_support/report.py`
+- Create: `@bin/scripts/version_support/tests/test_report.py`
 
 - [ ] **Step 1: Write the failing test**
 
-`scripts/version_support/tests/test_report.py`:
+`@bin/scripts/version_support/tests/test_report.py`:
 
 ```python
 from datetime import date
@@ -1532,12 +1532,12 @@ def test_issue_body_carries_the_dedupe_marker():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_report.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_report.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'version_support.report'`
 
 - [ ] **Step 3: Write the implementation**
 
-`scripts/version_support/report.py`:
+`@bin/scripts/version_support/report.py`:
 
 ```python
 """Render findings. Pure formatting - no I/O, no AWS, no filesystem."""
@@ -1635,7 +1635,7 @@ def terminal_table(findings: list[Finding]) -> str:
 def markdown_table(findings: list[Finding], generated_on: date) -> str:
     """The committed status table."""
     header = [
-        "<!-- GENERATED by scripts/version_support - do not edit by hand -->",
+        "<!-- GENERATED by @bin/scripts/version_support - do not edit by hand -->",
         "",
         "# Version support status",
         "",
@@ -1737,13 +1737,13 @@ def issue_body(findings: list[Finding], generated_on: date) -> str:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_report.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_report.py -v`
 Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add scripts/version_support/
+git add @bin/scripts/version_support/
 git commit -m "feat(version-support): render findings for humans and CI"
 ```
 
@@ -1752,8 +1752,8 @@ git commit -m "feat(version-support): render findings for humans and CI"
 ## Task 11: The CLI
 
 **Files:**
-- Create: `scripts/version_support/__main__.py`
-- Create: `scripts/version_support/tests/test_main.py`
+- Create: `@bin/scripts/version_support/__main__.py`
+- Create: `@bin/scripts/version_support/tests/test_main.py`
 
 > **Second amendment.** The fix above was still too narrow. `AWS_DEFAULT_REGION=""` — an
 > empty-but-present region, which `AWS_REGION: ${{ vars.UNDEFINED }}` produces verbatim in a
@@ -1782,7 +1782,7 @@ git commit -m "feat(version-support): render findings for humans and CI"
 
 - [ ] **Step 1: Write the failing test**
 
-`scripts/version_support/tests/test_main.py`:
+`@bin/scripts/version_support/tests/test_main.py`:
 
 ```python
 import os
@@ -1848,12 +1848,12 @@ def test_table_mode_writes_the_status_file(tmp_path):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_main.py -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/test_main.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'version_support.__main__'`
 
 - [ ] **Step 3: Write the implementation**
 
-`scripts/version_support/__main__.py`:
+`@bin/scripts/version_support/__main__.py`:
 
 ```python
 """CLI for the version-support guardrail.
@@ -1988,13 +1988,13 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/ -v`
+Run: `PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/ -v`
 Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add scripts/version_support/
+git add @bin/scripts/version_support/
 git commit -m "feat(version-support): add the CLI with pr, cron and table modes"
 ```
 
@@ -2021,14 +2021,14 @@ Add to `Makefile`, matching the existing `## description` convention so they app
 # builds the environment on demand; there is no venv to create or activate.
 .PHONY: version-support
 version-support: ## Check EKS/RDS versions against AWS support lifecycles
-	@PYTHONPATH=scripts uv run --quiet \
-		--with-requirements scripts/version_support/requirements.txt \
+	@PYTHONPATH=@bin/scripts uv run --quiet \
+		--with-requirements @bin/scripts/version_support/requirements.txt \
 		python -m version_support --mode pr --root .
 
 .PHONY: version-support-table
 version-support-table: ## Regenerate docs/version-support/status.md
-	@PYTHONPATH=scripts uv run --quiet \
-		--with-requirements scripts/version_support/requirements.txt \
+	@PYTHONPATH=@bin/scripts uv run --quiet \
+		--with-requirements @bin/scripts/version_support/requirements.txt \
 		python -m version_support --mode table --root .
 ```
 
@@ -2062,7 +2062,7 @@ git commit -m "feat(version-support): add make targets for the guardrail"
 > **Amendment (found during execution, after Task 3).** `atlantis.yaml` sets
 > `autodiscover: mode: "enabled"` with `ignore_paths: [config/*]`. Atlantis treats *any*
 > directory containing `.tf` files as a project, so the fixture tree added in Tasks 3, 4 and 6
-> (`scripts/version_support/tests/fixtures/tree/**`) would be autodiscovered as real Terraform
+> (`@bin/scripts/version_support/tests/fixtures/tree/**`) would be autodiscovered as real Terraform
 > projects and planned on every PR — against module sources with no backend. Step 0 below fixes
 > that. It must land before the branch is pushed in Task 15.
 
@@ -2076,8 +2076,8 @@ autodiscover:
   mode: "enabled"
   ignore_paths:
   - config/*
-  # Test fixtures for scripts/version_support - .tf files on purpose, but not layers.
-  - scripts/*
+  # Test fixtures for @bin/scripts/version_support - .tf files on purpose, but not layers.
+  - '@bin/scripts/**'
 ```
 
 Verify the file still parses:
@@ -2101,7 +2101,7 @@ on:
   pull_request:
     paths:
       - '**/*.tf'
-      - 'scripts/version_support/**'
+      - '@bin/scripts/version_support/**'
       - '.github/workflows/version-support.yml'
   # Tuesdays, deliberately off the Monday lint sweep so a red morning has one cause.
   schedule:
@@ -2127,10 +2127,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -q -r scripts/version_support/requirements.txt pytest
+          pip install -q -r @bin/scripts/version_support/requirements.txt pytest
 
       - name: Test the guardrail itself
-        run: PYTHONPATH=scripts pytest scripts/version_support/tests/ -q
+        run: PYTHONPATH=@bin/scripts pytest ./@bin/scripts/version_support/tests/ -q
 
       # This repo is public, so a pull_request from a fork gets no secrets and
       # cannot assume the role. Detect that and skip the AWS phase rather than
@@ -2161,13 +2161,13 @@ jobs:
       - name: Run the PR gate
         id: gate
         if: github.event_name == 'pull_request' && steps.creds.outputs.available == 'true'
-        run: PYTHONPATH=scripts python -m version_support --mode pr --root .
+        run: PYTHONPATH=@bin/scripts python -m version_support --mode pr --root .
 
       - name: Run the weekly sweep
         id: sweep
         if: github.event_name != 'pull_request' && steps.creds.outputs.available == 'true'
         run: |
-          PYTHONPATH=scripts python -m version_support --mode cron --root . \
+          PYTHONPATH=@bin/scripts python -m version_support --mode cron --root . \
             --summary-out /tmp/slack.json --issue-out /tmp/issue-body.md
 
       - name: Open or update the tracking issue
@@ -2282,7 +2282,7 @@ the [EKS release calendar](https://docs.aws.amazon.com/eks/latest/userguide/kube
 
 ```bash
 python3 -m venv .venv-version-support
-./.venv-version-support/bin/pip install -r scripts/version_support/requirements.txt
+./.venv-version-support/bin/pip install -r @bin/scripts/version_support/requirements.txt
 
 # needs credentials for any account - the AWS calls are catalog lookups, not
 # resource queries, so they return the same answer from anywhere
@@ -2361,7 +2361,7 @@ end-of-standard-support date into the extended-support surcharge unnoticed.
 Run:
 
 ```bash
-PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/ -v
+PYTHONPATH=@bin/scripts ./.venv-version-support/bin/pytest ./@bin/scripts/version_support/tests/ -v
 pre-commit run --files $(git diff --name-only master...HEAD | tr '\n' ' ')
 ```
 
@@ -2417,7 +2417,7 @@ tree, and confirm the real-tree scan still reports exactly 6 pins / 0 errors.
 Run:
 
 ```bash
-PYTHONPATH=scripts ./.venv-version-support/bin/python -c "
+PYTHONPATH=@bin/scripts ./.venv-version-support/bin/python -c "
 from version_support.discover import discover
 pins, errors = discover('.')
 print(f'{len(pins)} pins, {len(errors)} parse errors')
@@ -2456,7 +2456,7 @@ git push -u origin feat/version-support-guardrail-1160
 ```
 
 Open the PR with the What / Why / References template, noting: the guardrail's own workflow
-runs on it (the `scripts/version_support/**` path trigger), no IaC changes, and
+runs on it (the `@bin/scripts/version_support/**` path trigger), no IaC changes, and
 `Refs #1160`.
 
 - [ ] **Step 5: Confirm CI is green**

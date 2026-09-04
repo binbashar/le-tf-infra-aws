@@ -7,7 +7,7 @@ on:
   pull_request:
     paths:
       - '**/*.tf'
-      - 'scripts/version_support/**'
+      - '@bin/scripts/version_support/**'
       - '.github/workflows/version-support.yml'
   # Tuesdays, deliberately off the Monday lint sweep so a red morning has one cause.
   schedule:
@@ -33,10 +33,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -q -r scripts/version_support/requirements.txt pytest
+          pip install -q -r @bin/scripts/version_support/requirements.txt pytest
 
       - name: Test the guardrail itself
-        run: PYTHONPATH=scripts pytest scripts/version_support/tests/ -q
+        run: PYTHONPATH=@bin/scripts pytest ./@bin/scripts/version_support/tests/ -q
 
       # This repo is public, so a pull_request from a fork gets no secrets and
       # cannot assume the role. Detect that and skip the AWS phase rather than
@@ -67,13 +67,13 @@ jobs:
       - name: Run the PR gate
         id: gate
         if: github.event_name == 'pull_request' && steps.creds.outputs.available == 'true'
-        run: PYTHONPATH=scripts python -m version_support --mode pr --root .
+        run: PYTHONPATH=@bin/scripts python -m version_support --mode pr --root .
 
       - name: Run the weekly sweep
         id: sweep
         if: github.event_name != 'pull_request' && steps.creds.outputs.available == 'true'
         run: |
-          PYTHONPATH=scripts python -m version_support --mode cron --root . \
+          PYTHONPATH=@bin/scripts python -m version_support --mode cron --root . \
             --summary-out /tmp/slack.json --issue-out /tmp/issue-body.md
 
       - name: Open or update the tracking issue

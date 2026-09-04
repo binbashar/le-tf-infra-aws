@@ -32,12 +32,12 @@ infracost-breakdown: ## Infracost breakdown
 # builds the environment on demand; there is no venv to create or activate.
 .PHONY: version-support
 version-support: ## Check EKS/RDS versions against AWS support lifecycles
-	@PYTHONPATH=scripts uv run --quiet \
-		--with-requirements scripts/version_support/requirements.txt \
+	@PYTHONPATH=@bin/scripts uv run --quiet \
+		--with-requirements @bin/scripts/version_support/requirements.txt \
 		python -m version_support --mode pr --root .
 
 .PHONY: version-support-table
 version-support-table: ## Regenerate docs/version-support/status.md
-	@PYTHONPATH=scripts uv run --quiet \
-		--with-requirements scripts/version_support/requirements.txt \
+	@PYTHONPATH=@bin/scripts uv run --quiet \
+		--with-requirements @bin/scripts/version_support/requirements.txt \
 		python -m version_support --mode table --root .
