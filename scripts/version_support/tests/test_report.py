@@ -1,5 +1,7 @@
 from datetime import date
 
+import pytest
+
 from version_support.discover import Pin
 from version_support.lifecycle import Finding
 from version_support.report import (
@@ -130,3 +132,28 @@ def test_unsupported_still_blocks_and_annotates():
     # The wording fix must not weaken gating.
     assert blocking_findings([ACTIVE_UNSUPPORTED]) == [ACTIVE_UNSUPPORTED]
     assert any(a.startswith("::error ") for a in annotations([ACTIVE_UNSUPPORTED]))
+
+
+@pytest.mark.parametrize(
+    ("source", "expected_file"),
+    [
+        ("apps-devstg/us-east-1/x/db.tf:33", "apps-devstg/us-east-1/x/db.tf"),
+        ("apps-devstg/x/variables.tf:6 (var.cluster_version)", "apps-devstg/x/variables.tf"),
+        ("apps-devstg/x/vars.tf:6 (var.v (tfvars))", "apps-devstg/x/vars.tf"),
+        ("apps-devstg/x/main.tf", "apps-devstg/x/main.tf"),
+        (r"C:\repo\x\main.tf:5", r"C:\repo\x\main.tf"),
+    ],
+)
+def test_annotation_file_path_survives_every_source_shape(source, expected_file):
+    finding = Finding(
+        pin=Pin("eks", None, "1.28", "1.28", "L", True, source),
+        status="EXTENDED_SUPPORT",
+        end_standard=date(2024, 11, 26),
+        end_extended=date(2025, 11, 26),
+        days_left=-647,
+        severity="EXTENDED",
+    )
+
+    line = annotations([finding])[0]
+
+    assert line.startswith(f"::error file={expected_file}::")
