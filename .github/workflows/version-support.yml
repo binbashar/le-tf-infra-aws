@@ -102,3 +102,42 @@ jobs:
           webhook: ${{ secrets.SLACK_DIRECT_WEBHOOK }}
           webhook-type: incoming-webhook
           payload-file-path: /tmp/slack.json
+
+      # The sweep sets ran=false when AWS could not be reached. Without this, a
+      # broken weekly check is invisible: no Slack, no issue, just a warning line
+      # in a scheduled job's log. Silence must never read as all-clear.
+      - name: Notify Slack that the sweep could not run
+        if: steps.sweep.outputs.ran == 'false'
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_DIRECT_WEBHOOK }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "Version support: the check did NOT run :warning:"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Project*: ${{ github.repository }}\nThe weekly EKS/RDS support-lifecycle sweep could not reach AWS, so nothing was checked. This is not an all-clear."
+                  },
+                  "accessory": {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": ":arrow_forward: View run",
+                      "emoji": true
+                    },
+                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                    "action_id": "button-action"
+                  }
+                }
+              ]
+            }
