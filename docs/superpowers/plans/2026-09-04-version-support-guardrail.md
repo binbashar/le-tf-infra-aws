@@ -1943,6 +1943,35 @@ git commit -m "feat(version-support): add make targets for the guardrail"
 
 **Files:**
 - Create: `.github/workflows/version-support.yml`
+- Modify: `atlantis.yaml`
+
+> **Amendment (found during execution, after Task 3).** `atlantis.yaml` sets
+> `autodiscover: mode: "enabled"` with `ignore_paths: [config/*]`. Atlantis treats *any*
+> directory containing `.tf` files as a project, so the fixture tree added in Tasks 3, 4 and 6
+> (`scripts/version_support/tests/fixtures/tree/**`) would be autodiscovered as real Terraform
+> projects and planned on every PR — against module sources with no backend. Step 0 below fixes
+> that. It must land before the branch is pushed in Task 15.
+
+- [ ] **Step 0: Keep Atlantis out of the test fixtures**
+
+In `atlantis.yaml`, extend `ignore_paths` so the scanner's fixture `.tf` files are never
+mistaken for deployable layers:
+
+```yaml
+autodiscover:
+  mode: "enabled"
+  ignore_paths:
+  - config/*
+  # Test fixtures for scripts/version_support - .tf files on purpose, but not layers.
+  - scripts/*
+```
+
+Verify the file still parses:
+
+```bash
+python3 -c "import yaml; yaml.safe_load(open('atlantis.yaml')); print('valid YAML')"
+```
+
 
 - [ ] **Step 1: Write the workflow**
 
