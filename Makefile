@@ -26,10 +26,18 @@ infracost-breakdown: ## Infracost breakdown
 		--config-file=./infracost.yml \
 		--show-skipped
 
+# uv run, not a bare python3: the scanner needs python-hcl2 >= 8.1, while this repo's
+# own .venv pins 7.3.1 for the Leverage CLI -- so resolving the interpreter from PATH
+# breaks precisely for contributors who followed the setup guide. --with-requirements
+# builds the environment on demand; there is no venv to create or activate.
 .PHONY: version-support
 version-support: ## Check EKS/RDS versions against AWS support lifecycles
-	PYTHONPATH=scripts python3 -m version_support --mode pr --root .
+	@PYTHONPATH=scripts uv run --quiet \
+		--with-requirements scripts/version_support/requirements.txt \
+		python -m version_support --mode pr --root .
 
 .PHONY: version-support-table
 version-support-table: ## Regenerate docs/version-support/status.md
-	PYTHONPATH=scripts python3 -m version_support --mode table --root .
+	@PYTHONPATH=scripts uv run --quiet \
+		--with-requirements scripts/version_support/requirements.txt \
+		python -m version_support --mode table --root .
