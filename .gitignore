@@ -76,6 +76,7 @@ Thumbs.db
 .vscode
 /src
 /venv
+.venv-version-support/
 
 # Custom Project tools files #
 ########################
