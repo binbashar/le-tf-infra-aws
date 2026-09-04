@@ -2299,6 +2299,40 @@ git commit -m "docs(version-support): add the runbook, status table and cross-li
 
 ## Task 15: End-to-end verification
 
+- [ ] **Step 0: Cache `load_tfvars` per account**
+
+Carried forward from Task 6's code review. `config/common.tfvars` is consulted for *every*
+layer, not just every account, and this repo has **165 layers across 7 accounts** — so a single
+malformed `common.tfvars` now emits up to 165 byte-identical lines in `errors` (measured, not
+estimated). Caching the result per account inside one `discover()` call fixes the duplicate
+reporting *and* stops re-opening and re-parsing the same two small files 165 times.
+
+In `discover()`, hoist the tfvars lookup into a per-call cache keyed by account:
+
+```python
+def discover(root: str) -> tuple[list[Pin], list[str]]:
+    """Walk `root` and return (pins, parse_errors)."""
+    pins: list[Pin] = []
+    errors: list[str] = []
+    tfvars_cache: dict[str, dict] = {}
+
+    for layer_dir in _layer_dirs(root):
+        ...
+        account = layer.replace("\\", "/").split("/")[0]
+        if account not in tfvars_cache:
+            # First layer in this account: parse once, report once. Without the
+            # cache a broken common.tfvars is reported once per layer -- 165 times
+            # in this repo.
+            merged, tfvars_errors = load_tfvars(root, layer)
+            tfvars_cache[account] = merged
+            errors.extend(tfvars_errors)
+        resolver = Resolver(docs, tfvars=tfvars_cache[account])
+```
+
+Then add a test asserting a broken `common.tfvars` is reported **once** across a multi-layer
+tree, and confirm the real-tree scan still reports exactly 6 pins / 0 errors.
+
+
 - [ ] **Step 1: Confirm the scanner sees the real tree correctly**
 
 Run:
