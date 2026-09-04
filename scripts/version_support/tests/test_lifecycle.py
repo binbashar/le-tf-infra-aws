@@ -50,3 +50,93 @@ def test_a_bad_status_still_classifies_without_a_date():
     # EXTENDED/UNSUPPORTED are status-driven and must not be downgraded to UNKNOWN.
     assert classify("EXTENDED_SUPPORT", None, today=TODAY)[0] == "EXTENDED"
     assert classify("UNSUPPORTED", None, today=TODAY)[0] == "UNSUPPORTED"
+
+
+from datetime import datetime
+
+import boto3
+from botocore.stub import Stubber
+
+from version_support.lifecycle import eks_lifecycles, rds_lifecycle
+
+
+def test_eks_lifecycles_maps_versions_to_support_state():
+    client = boto3.client("eks", region_name="us-east-1")
+    with Stubber(client) as stub:
+        stub.add_response(
+            "describe_cluster_versions",
+            {
+                "clusterVersions": [
+                    {
+                        "clusterVersion": "1.34",
+                        "versionStatus": "STANDARD_SUPPORT",
+                        "endOfStandardSupportDate": datetime(2027, 3, 23),
+                        "endOfExtendedSupportDate": datetime(2028, 3, 23),
+                    },
+                    {
+                        "clusterVersion": "1.28",
+                        "versionStatus": "EXTENDED_SUPPORT",
+                        "endOfStandardSupportDate": datetime(2024, 11, 26),
+                        "endOfExtendedSupportDate": datetime(2025, 11, 26),
+                    },
+                ]
+            },
+            {"clusterVersions": ["1.28", "1.34"], "includeAll": True},
+        )
+
+        result = eks_lifecycles({"1.34", "1.28"}, client)
+
+    assert result["1.34"] == ("STANDARD_SUPPORT", date(2027, 3, 23), date(2028, 3, 23))
+    assert result["1.28"][0] == "EXTENDED_SUPPORT"
+
+
+def test_rds_lifecycle_derives_status_from_lifecycle_entries():
+    client = boto3.client("rds", region_name="us-east-1")
+    with Stubber(client) as stub:
+        stub.add_response(
+            "describe_db_major_engine_versions",
+            {
+                "DBMajorEngineVersions": [
+                    {
+                        "Engine": "aurora-mysql",
+                        "MajorEngineVersion": "5.7",
+                        "SupportedEngineLifecycles": [
+                            {
+                                "LifecycleSupportName": "open-source-rds-standard-support",
+                                "LifecycleSupportStartDate": datetime(2021, 3, 1),
+                                "LifecycleSupportEndDate": datetime(2024, 10, 31),
+                            },
+                            {
+                                "LifecycleSupportName": "open-source-rds-extended-support",
+                                "LifecycleSupportStartDate": datetime(2024, 11, 1),
+                                "LifecycleSupportEndDate": datetime(2027, 10, 31),
+                            },
+                        ],
+                    }
+                ]
+            },
+            {"Engine": "aurora-mysql", "MajorEngineVersion": "5.7"},
+        )
+
+        status, end_standard, end_extended = rds_lifecycle(
+            "aurora-mysql", "5.7", client, today=TODAY
+        )
+
+    assert status == "EXTENDED_SUPPORT"
+    assert end_standard == date(2024, 10, 31)
+    assert end_extended == date(2027, 10, 31)
+
+
+def test_rds_lifecycle_returns_unknown_for_an_unlisted_version():
+    client = boto3.client("rds", region_name="us-east-1")
+    with Stubber(client) as stub:
+        stub.add_response(
+            "describe_db_major_engine_versions",
+            {"DBMajorEngineVersions": []},
+            {"Engine": "mysql", "MajorEngineVersion": "99.9"},
+        )
+
+        status, end_standard, _ = rds_lifecycle("mysql", "99.9", client, today=TODAY)
+
+    assert status == "UNKNOWN"
+    assert end_standard is None
