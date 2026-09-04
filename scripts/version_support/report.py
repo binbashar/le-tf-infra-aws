@@ -75,11 +75,12 @@ def terminal_table(findings: list[Finding]) -> str:
         lines.append("")
         lines.append("Disabled layers (latent - never fails the check):")
         for finding in sorted(disabled, key=lambda f: f.pin.layer):
-            note = (
-                "would be in extended support if enabled"
-                if finding.severity in BLOCKING
-                else f"{finding.severity.lower()}"
-            )
+            if finding.severity == "UNSUPPORTED":
+                note = "past extended support -- unsupported if enabled"
+            elif finding.severity == "EXTENDED":
+                note = "would be in extended support if enabled"
+            else:
+                note = finding.severity.lower()
             lines.append(f"  · {_name(finding):28} {finding.pin.layer} - {note}")
     return "\n".join(lines)
 
@@ -110,15 +111,21 @@ def markdown_table(findings: list[Finding], generated_on: date) -> str:
 
 def slack_summary(findings: list[Finding]) -> str:
     """One-paragraph mrkdwn summary for the weekly notification."""
-    extended = [f for f in findings if f.pin.active and f.severity in BLOCKING]
+    extended = [f for f in findings if f.pin.active and f.severity == "EXTENDED"]
+    unsupported = [f for f in findings if f.pin.active and f.severity == "UNSUPPORTED"]
     soon = [f for f in findings if f.pin.active and f.severity == "SOON"]
-    parts = [
+    parts = []
+    if unsupported:
+        # Worse than extended support: past the paid window entirely. Only shown
+        # when non-empty so the common case stays a two-part summary.
+        parts.append(f"*{len(unsupported)} unsupported*")
+    parts.extend([
         f"*{len(extended)} in extended support*" if extended else "0 in extended support",
         f"*{len(soon)} within the lead time*" if soon else "0 within the lead time",
-    ]
+    ])
     detail = "\n".join(
         f"• {_name(f)} — `{f.pin.layer}` — end of standard support {f.end_standard}"
-        for f in extended + soon
+        for f in unsupported + extended + soon
     )
     return " · ".join(parts) + ("\n" + detail if detail else "")
 

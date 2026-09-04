@@ -39,6 +39,15 @@ DISABLED_EXTENDED = Finding(
     days_left=-673,
     severity="EXTENDED",
 )
+ACTIVE_UNSUPPORTED = Finding(
+    pin=Pin("rds", "aurora-mysql", "5.6", "5.6", "apps-devstg/us-east-1/databases-legacy",
+            True, "apps-devstg/.../db.tf:12"),
+    status="UNSUPPORTED",
+    end_standard=date(2022, 2, 28),
+    end_extended=date(2024, 2, 29),
+    days_left=-1650,
+    severity="UNSUPPORTED",
+)
 
 
 def test_only_active_findings_block():
@@ -94,3 +103,30 @@ def test_issue_body_carries_the_dedupe_marker():
     body = issue_body([ACTIVE_SOON], generated_on=date(2026, 9, 4))
 
     assert "<!-- version-support-guardrail -->" in body
+
+
+def test_unsupported_is_not_described_as_extended_support():
+    # UNSUPPORTED is worse than EXTENDED -- past the paid window entirely. Calling
+    # it "in extended support" understates the single worst state we can detect.
+    summary = slack_summary([ACTIVE_UNSUPPORTED])
+    assert "1 unsupported" in summary
+    assert "1 in extended support" not in summary
+
+    disabled = Finding(
+        pin=Pin("rds", "aurora-mysql", "5.6", "5.6", "databases-legacy --", False,
+                "databases-legacy --/db.tf:12"),
+        status="UNSUPPORTED",
+        end_standard=date(2022, 2, 28),
+        end_extended=date(2024, 2, 29),
+        days_left=-1650,
+        severity="UNSUPPORTED",
+    )
+    text = terminal_table([disabled])
+    assert "unsupported if enabled" in text
+    assert "would be in extended support if enabled" not in text
+
+
+def test_unsupported_still_blocks_and_annotates():
+    # The wording fix must not weaken gating.
+    assert blocking_findings([ACTIVE_UNSUPPORTED]) == [ACTIVE_UNSUPPORTED]
+    assert any(a.startswith("::error ") for a in annotations([ACTIVE_UNSUPPORTED]))
