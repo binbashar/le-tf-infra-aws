@@ -77,6 +77,11 @@ def classify(
     return "OK", days
 
 
+# Neither lookup below paginates. Each request names specific items -- an explicit
+# list of EKS versions, or one RDS engine+major -- so a truncated response is not a
+# realistic outcome. Worth revisiting if either call ever grows to an unbounded
+# listing: a dropped result would surface as UNKNOWN, not as an error.
+
 # Verified against the botocore service model - these are lowercase-hyphenated,
 # not the SCREAMING_CASE the EKS enum uses.
 _RDS_STANDARD = "open-source-rds-standard-support"
@@ -88,6 +93,9 @@ def eks_lifecycles(versions: set[str], client) -> dict[str, tuple]:
 
     ``includeAll=True`` is required: without it AWS omits versions that have
     already left standard support, which are exactly the ones we care about.
+
+    Raises botocore.exceptions.ClientError / BotoCoreError on AWS failure -- callers
+    decide how to handle it; these functions never swallow one.
     """
     if not versions:
         return {}
@@ -109,6 +117,9 @@ def rds_lifecycle(engine: str, major: str, client, today: date) -> tuple:
     """(status, end_standard, end_extended) for one RDS/Aurora major version.
 
     RDS exposes no status field, so it is derived from the lifecycle windows.
+
+    Raises botocore.exceptions.ClientError / BotoCoreError on AWS failure -- callers
+    decide how to handle it; these functions never swallow one.
     """
     response = client.describe_db_major_engine_versions(
         Engine=engine, MajorEngineVersion=major
@@ -117,6 +128,8 @@ def rds_lifecycle(engine: str, major: str, client, today: date) -> tuple:
     if not entries:
         return "UNKNOWN", None, None
 
+    # The request filters on exactly one Engine + MajorEngineVersion, so AWS returns
+    # zero or one entry. Extras, if AWS ever returned any, are deliberately ignored.
     lifecycles = entries[0].get("SupportedEngineLifecycles", [])
     by_name = {item.get("LifecycleSupportName"): item for item in lifecycles}
     end_standard = as_date(
@@ -128,6 +141,8 @@ def rds_lifecycle(engine: str, major: str, client, today: date) -> tuple:
 
     if end_standard is None:
         return "UNKNOWN", None, end_extended
+    # Strict > on purpose: on the exact end date the current window is still open.
+    # Consistent with classify(), where days == 0 is SOON rather than EXTENDED.
     if end_extended is not None and today > end_extended:
         return "UNSUPPORTED", end_standard, end_extended
     if today > end_standard:
