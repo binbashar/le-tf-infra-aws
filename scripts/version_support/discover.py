@@ -262,6 +262,7 @@ def discover(root: str) -> tuple[list[Pin], list[str]]:
     """Walk `root` and return (pins, parse_errors)."""
     pins: list[Pin] = []
     errors: list[str] = []
+    tfvars_cache: dict[str, dict] = {}
 
     for layer_dir in _layer_dirs(root):
         docs, layer_errors = load_layer(layer_dir)
@@ -271,9 +272,15 @@ def discover(root: str) -> tuple[list[Pin], list[str]]:
 
         layer = os.path.relpath(layer_dir, root)
         active = not is_disabled_layer(layer)
-        tfvars, tfvars_errors = load_tfvars(root, layer)
-        errors.extend(tfvars_errors)
-        resolver = Resolver(docs, tfvars=tfvars)
+        account = layer.replace("\\", "/").split("/")[0]
+        if account not in tfvars_cache:
+            # First layer in this account: parse once, report once. Without the
+            # cache a broken common.tfvars is reported once per layer -- 165 times
+            # in this repo.
+            merged, tfvars_errors = load_tfvars(root, layer)
+            tfvars_cache[account] = merged
+            errors.extend(tfvars_errors)
+        resolver = Resolver(docs, tfvars=tfvars_cache[account])
 
         for path, doc in docs.items():
             for body in _blocks(doc):

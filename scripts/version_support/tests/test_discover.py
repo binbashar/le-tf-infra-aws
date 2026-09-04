@@ -218,6 +218,27 @@ def test_malformed_tfvars_is_reported_not_swallowed(tmp_path):
     assert any("common.tfvars" in e for e in errors)
 
 
+def test_malformed_tfvars_is_reported_once_per_account_not_per_layer(tmp_path):
+    # config/common.tfvars is consulted for every LAYER, and a real scan has 165
+    # layers across 7 accounts. Without a per-account cache in discover(), a
+    # single malformed common.tfvars is reported once per layer that shares the
+    # account -- three byte-identical lines here, 165 in the real tree.
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config" / "common.tfvars").write_text('project = "bb"\nbroken = {{{\n')
+    for name in ("layer-one", "layer-two", "layer-three"):
+        layer = tmp_path / "apps-devstg" / "us-east-1" / name
+        layer.mkdir(parents=True)
+        (layer / "main.tf").write_text(
+            'module "x" {\n  engine         = "mysql"\n  engine_version = "8.0.41"\n}\n'
+        )
+
+    pins, errors = discover(str(tmp_path))
+
+    assert len(pins) == 3  # all three layers were still scanned normally
+    tfvars_errors = [e for e in errors if "common.tfvars" in e]
+    assert len(tfvars_errors) == 1
+
+
 @pytest.mark.parametrize(
     "skipped_dir",
     [".terraform", ".infracost", "docs"],
