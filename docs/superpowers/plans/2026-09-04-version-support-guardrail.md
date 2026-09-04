@@ -601,6 +601,21 @@ git commit -m "feat(version-support): derive RDS major versions per engine famil
 - Create: `scripts/version_support/tests/fixtures/tree/config/common.tfvars`
 - Create: `scripts/version_support/tests/fixtures/tree/apps-devstg/config/account.tfvars`
 
+> **Amendment (found during execution).** Two conflicts in this task's literal instructions were
+> caught by TDD and corrected in the code above and below:
+>
+> 1. **`_layer_dirs` skipped its own fixture tree.** The original code matched `_SKIP_PATH_PARTS`
+>    against the raw glob path. The pre-execution prototype only ever called
+>    `discover(<repo root>)`, but the tests below call `discover(FIXTURE_TREE)` — a root that
+>    itself sits inside `.../fixtures/`, so every fixture path contained `/fixtures/` and the whole
+>    tree was skipped. The plan's code and the plan's tests could not both pass. Fixed by
+>    relativizing to `root` before matching.
+> 2. **`.gitignore` swallows the `common.tfvars` fixture.** Line 100 is an unanchored
+>    `*common.tfvars` — the rule that keeps the real `config/common.tfvars` (which holds AWS
+>    account IDs) out of git. It also matches the fixture of the same name, so a plain
+>    `git add scripts/version_support/` drops that file silently, with no error. Force-add it
+>    (`git add -f <path>`); once tracked, later edits stage normally.
+
 - [ ] **Step 1: Create the remaining fixtures**
 
 `scripts/version_support/tests/fixtures/tree/apps-devstg/us-east-1/databases-mysql --/db.tf`:
@@ -749,7 +764,15 @@ def _layer_dirs(root: str) -> list[str]:
     """Every directory under `root` containing at least one .tf file."""
     directories = set()
     for path in glob.iglob(os.path.join(root, "**", "*.tf"), recursive=True):
-        if any(part in path for part in _SKIP_PATH_PARTS):
+        # Skip-check against the path RELATIVE to `root`, not the raw glob match.
+        # discover(FIXTURE_TREE) is called with a root that itself sits inside a
+        # directory named "fixtures" (.../tests/fixtures/tree) -- checking the raw
+        # path would make every fixture file contain "/fixtures/" and skip the
+        # whole tree. Relativizing first means the entry only fires when
+        # "fixtures" appears *within* the scanned tree, e.g. when root is the repo
+        # root and this package's own fixture tree is nested underneath it.
+        relative = os.sep + os.path.relpath(path, root)
+        if any(part in relative for part in _SKIP_PATH_PARTS):
             continue
         directories.add(os.path.dirname(path))
     return sorted(directories)
