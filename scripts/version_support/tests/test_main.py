@@ -59,10 +59,14 @@ def test_table_mode_writes_the_status_file(tmp_path):
     assert "GENERATED" in target.read_text()
 
 
-def test_a_client_construction_failure_degrades_instead_of_crashing(monkeypatch, tmp_path):
+def test_a_client_construction_failure_degrades_instead_of_crashing(monkeypatch):
     # boto3 can fail before any network call (NoRegionError when no region
     # resolves). Every other test mocks collect() wholesale, so none of them
     # exercise real client construction -- which is exactly where this escaped.
+    #
+    # Root MUST resolve at least one pin: collect() short-circuits before ever
+    # building a client when discover() finds nothing, so an empty tmp_path would
+    # make this pass vacuously without exercising the guard at all.
     from botocore.exceptions import NoRegionError
 
     def refuse(*args, **kwargs):
@@ -71,5 +75,31 @@ def test_a_client_construction_failure_degrades_instead_of_crashing(monkeypatch,
     monkeypatch.setattr("version_support.__main__.boto3.client", refuse)
 
     # Neither mode may crash or block: the check did not run, and says so.
-    assert main(["--mode", "pr", "--root", str(tmp_path)]) == 0
-    assert main(["--mode", "cron", "--root", str(tmp_path)]) == 0
+    assert main(["--mode", "pr", "--root", FIXTURE_TREE]) == 0
+    assert main(["--mode", "cron", "--root", FIXTURE_TREE]) == 0
+
+
+@pytest.mark.parametrize(
+    ("env", "label"),
+    [
+        ({"AWS_DEFAULT_REGION": ""}, "empty region"),
+        ({}, "absent region"),
+    ],
+)
+def test_no_aws_configuration_degrades_instead_of_crashing(monkeypatch, tmp_path, env, label):
+    # Driven by real environment variables rather than a mocked exception type:
+    # an empty-but-present region raises a bare ValueError from botocore, which a
+    # test mocking NoRegionError would never have caught.
+    #
+    # Root MUST resolve at least one pin (FIXTURE_TREE, not tmp_path): collect()
+    # short-circuits before ever building a client when discover() finds nothing,
+    # so an empty root would make this pass vacuously without ever reaching boto3.
+    for var in ("AWS_REGION", "AWS_DEFAULT_REGION", "AWS_PROFILE"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("AWS_CONFIG_FILE", str(tmp_path / "nonexistent-config"))
+    monkeypatch.setenv("AWS_SHARED_CREDENTIALS_FILE", str(tmp_path / "nonexistent-creds"))
+    for key, value in env.items():
+        monkeypatch.setenv(key, value)
+
+    assert main(["--mode", "pr", "--root", FIXTURE_TREE]) == 0, label
+    assert main(["--mode", "cron", "--root", FIXTURE_TREE]) == 0, label
