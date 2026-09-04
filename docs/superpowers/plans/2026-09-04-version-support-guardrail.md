@@ -8,6 +8,11 @@
 
 **Tech Stack:** Python 3.12, `python-hcl2` 8.x, `boto3` 1.43+, pytest, `botocore.stub.Stubber`, GitHub Actions.
 
+> **On test counts:** steps say "all green" rather than an absolute total. Most tests here are
+> `@pytest.mark.parametrize`d, so the collected count is larger than the number of `def test_`
+> functions and drifts as cases are added. Assert the suite is green, not that it reports a
+> particular number.
+
 **Spec:** `docs/superpowers/specs/2026-09-03-version-support-guardrail-design.md`
 
 ---
@@ -190,7 +195,7 @@ def is_disabled_layer(path: str) -> bool:
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -v`
-Expected: PASS — 7 passed
+Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
@@ -331,7 +336,7 @@ def load_layer(layer_dir: str) -> tuple[dict[str, dict], list[str]]:
 - [ ] **Step 5: Run test to verify it passes**
 
 Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -v`
-Expected: PASS — 9 passed
+Expected: PASS (all green)
 
 - [ ] **Step 6: Commit**
 
@@ -508,7 +513,7 @@ class Resolver:
 - [ ] **Step 5: Run test to verify it passes**
 
 Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -v`
-Expected: PASS — 14 passed
+Expected: PASS (all green)
 
 - [ ] **Step 6: Commit**
 
@@ -579,7 +584,7 @@ def major_version(engine: str, version: str) -> str:
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -k major -v`
-Expected: PASS — 6 passed
+Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
@@ -896,7 +901,7 @@ def discover(root: str) -> tuple[list[Pin], list[str]]:
 - [ ] **Step 5: Run test to verify it passes**
 
 Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_discover.py -v`
-Expected: PASS — 25 passed
+Expected: PASS (all green)
 
 - [ ] **Step 6: Verify against the real tree**
 
@@ -1048,7 +1053,7 @@ def classify(
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_lifecycle.py -v`
-Expected: PASS — 9 passed
+Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
@@ -1231,7 +1236,7 @@ def rds_lifecycle(engine: str, major: str, client, today: date) -> tuple:
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_lifecycle.py -v`
-Expected: PASS — 12 passed
+Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
@@ -1389,7 +1394,7 @@ def evaluate(pins, *, eks_client, rds_client, today: date, lead_days: int = DEFA
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_lifecycle.py -v`
-Expected: PASS — 15 passed
+Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
@@ -1705,7 +1710,7 @@ def issue_body(findings: list[Finding], generated_on: date) -> str:
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/test_report.py -v`
-Expected: PASS — 6 passed
+Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
@@ -1913,7 +1918,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `PYTHONPATH=scripts ./.venv-version-support/bin/pytest scripts/version_support/tests/ -v`
-Expected: PASS — 31 passed
+Expected: PASS (all green)
 
 - [ ] **Step 5: Commit**
 
