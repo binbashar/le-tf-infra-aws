@@ -11,6 +11,8 @@ autodiscover:
   mode: "enabled"
   ignore_paths:
   - config/*
+  # Test fixtures for scripts/version_support - .tf files on purpose, but not layers.
+  - scripts/*
 
 # Here we define the projects (or layers) explicitly
 projects:

@@ -1,0 +1,104 @@
+name: Version support guardrail
+
+# Prevention side of #1160. Reads the versions pinned in the tree - including
+# disabled layers - and checks them against AWS support lifecycles.
+# Detection from the billing side is the aws-finops plugin's job (#1159).
+on:
+  pull_request:
+    paths:
+      - '**/*.tf'
+      - 'scripts/version_support/**'
+      - '.github/workflows/version-support.yml'
+  # Tuesdays, deliberately off the Monday lint sweep so a red morning has one cause.
+  schedule:
+    - cron: '23 7 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write        # the cron opens or updates the tracking issue
+
+jobs:
+  version-support:
+    name: Version support
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install -q -r scripts/version_support/requirements.txt pytest
+
+      - name: Test the guardrail itself
+        run: PYTHONPATH=scripts pytest scripts/version_support/tests/ -q
+
+      # This repo is public, so a pull_request from a fork gets no secrets and
+      # cannot assume the role. Detect that and skip the AWS phase rather than
+      # failing a contributor's PR.
+      - name: Check for AWS credentials
+        id: creds
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        run: |
+          if [ -z "${AWS_ACCESS_KEY_ID}" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No AWS credentials (fork PR) - version-support did not run."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS credentials
+        if: steps.creds.outputs.available == 'true'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_DEVSTG_ACCOUNT_ID }}:role/DeployMaster
+          role-duration-seconds: 3600
+          role-session-name: version-support
+
+      - name: Run the PR gate
+        id: gate
+        if: github.event_name == 'pull_request' && steps.creds.outputs.available == 'true'
+        run: PYTHONPATH=scripts python -m version_support --mode pr --root .
+
+      - name: Run the weekly sweep
+        id: sweep
+        if: github.event_name != 'pull_request' && steps.creds.outputs.available == 'true'
+        run: |
+          PYTHONPATH=scripts python -m version_support --mode cron --root . \
+            --summary-out /tmp/slack.json --issue-out /tmp/issue-body.md
+
+      - name: Open or update the tracking issue
+        if: steps.sweep.outputs.has_findings == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TITLE="chore(version-support): versions approaching end of standard support"
+          EXISTING=$(gh issue list --state open --search "version-support-guardrail in:body" \
+            --json number --jq '.[0].number // empty')
+          if [ -n "${EXISTING}" ]; then
+            gh issue edit "${EXISTING}" --body-file /tmp/issue-body.md
+            echo "updated issue #${EXISTING}"
+          else
+            gh issue create --title "${TITLE}" --body-file /tmp/issue-body.md \
+              --label cost-optimization --label enhancement
+          fi
+
+      # The scanner writes the whole payload, so the multi-line summary never has
+      # to survive being interpolated into inline YAML as JSON.
+      - name: Notify Slack
+        if: steps.sweep.outputs.has_findings == 'true'
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_DIRECT_WEBHOOK }}
+          webhook-type: incoming-webhook
+          payload-file-path: /tmp/slack.json
