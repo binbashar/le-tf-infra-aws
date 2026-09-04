@@ -196,6 +196,23 @@ connected, stop and fix the setup rather than reaching for `aws ce ...`.
 > Distinct from `make infracost-breakdown` and the `aws-cost-estimation` plugin, which price a
 > *proposed* change. `aws-finops` reads money already spent.
 
+### Version support guardrail
+
+`make version-support` checks every Kubernetes and RDS/Aurora version **pinned in the tree**
+— including disabled layers — against AWS's support lifecycles, so nothing crosses its
+end-of-standard-support date into the extended-support surcharge unnoticed.
+
+- A PR touching `**/*.tf` **fails** if an *active* layer pins a version already in extended
+  support, and warns at ≤ 90 days. Disabled layers (directory ending `--`) are reported but
+  never fail — removing the `--` makes the layer active and the gate applies.
+- A weekly sweep posts to Slack and maintains one tracking issue; it never fails the repo.
+- Needs only `eks:DescribeClusterVersions` + `rds:DescribeDBMajorEngineVersions` — catalog
+  lookups, so any account's credentials work.
+- Runbook and upgrade cadence: `docs/version-support/README.md`.
+
+> Prevention side of the extended-support surcharge. The detection side — spotting it on the
+> bill — is `aws-finops`, above.
+
 ### Advanced Operations
 ```bash
 # Targeted operations for efficiency

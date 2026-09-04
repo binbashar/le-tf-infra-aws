@@ -149,8 +149,9 @@ the maintenance loop.
 - **A rate change is not usage growth.** A service whose usage quantity is flat while
   cost steps up on a specific date has repriced — most often an EKS cluster or
   RDS/Aurora engine that crossed its end-of-standard-support date and now bills the
-  extended-support surcharge (issue #1160 tracks preventing that in the IaC). Report
-  it as a monthly/annualised run-rate step, not a one-off anomaly.
+  extended-support surcharge. Report it as a monthly/annualised run-rate step, not a
+  one-off anomaly. The prevention side — a PR gate and weekly sweep that stop a version
+  reaching that date unnoticed — is [`docs/version-support/`](../version-support/).
 - **Tag coverage bounds attribution.** The investigate skill's tag-hygiene phase
   measures exactly what issue #842 (tagging strategy) is about; untagged spend is
   spend nobody can be asked to own.
