@@ -1051,10 +1051,17 @@ def classify(
 
     days = (end_standard - today).days if end_standard else None
 
-    # A past end date wins over a lagging status field.
+    # A past end date wins over a lagging status field: AWS's status can trail the
+    # transition, but the surcharge is billing either way.
     if status == "EXTENDED_SUPPORT" or (days is not None and days < 0):
         return "EXTENDED", days
-    if days is not None and days <= lead_days:
+
+    # No date and no explicit bad status means we do not know -- and an absence of
+    # information must never read as "fine". UNKNOWN warns without failing a PR.
+    if days is None:
+        return "UNKNOWN", None
+
+    if days <= lead_days:
         return "SOON", days
     return "OK", days
 ```
