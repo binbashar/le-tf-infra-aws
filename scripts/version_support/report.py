@@ -119,6 +119,7 @@ def slack_summary(findings: list[Finding]) -> str:
     extended = [f for f in findings if f.pin.active and f.severity == "EXTENDED"]
     unsupported = [f for f in findings if f.pin.active and f.severity == "UNSUPPORTED"]
     soon = [f for f in findings if f.pin.active and f.severity == "SOON"]
+    unknown = [f for f in findings if f.pin.active and f.severity == "UNKNOWN"]
     parts = []
     if unsupported:
         # Worse than extended support: past the paid window entirely. Only shown
@@ -128,9 +129,14 @@ def slack_summary(findings: list[Finding]) -> str:
         f"*{len(extended)} in extended support*" if extended else "0 in extended support",
         f"*{len(soon)} within the lead time*" if soon else "0 within the lead time",
     ])
+    if unknown:
+        # attention_findings() counts UNKNOWN, so a lone UNKNOWN can be the sole
+        # reason this notification fired. Without this the message would say
+        # "0 in extended support - 0 within the lead time" and list nothing at all.
+        parts.append(f"*{len(unknown)} could not be checked*")
     detail = "\n".join(
         f"• {_name(f)} — `{f.pin.layer}` — end of standard support {f.end_standard}"
-        for f in unsupported + extended + soon
+        for f in unsupported + extended + soon + unknown
     )
     return " · ".join(parts) + ("\n" + detail if detail else "")
 
