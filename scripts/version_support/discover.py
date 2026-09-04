@@ -218,10 +218,17 @@ def _blocks(doc: dict):
                     yield body
 
 
-def load_tfvars(root: str, layer: str) -> dict:
-    """Merge config/common.tfvars and {account}/config/account.tfvars."""
+def load_tfvars(root: str, layer: str) -> tuple[dict, list[str]]:
+    """Merge config/common.tfvars and {account}/config/account.tfvars.
+
+    Returns (merged_vars, parse_errors). Failures are REPORTED, never swallowed:
+    silently degrading to "no overrides" would resolve a pin to its variables.tf
+    default while a tfvars override supplies the real version -- a false negative,
+    which is the one failure mode this tool must not have.
+    """
     account = layer.replace("\\", "/").split("/")[0]
     merged: dict = {}
+    errors: list[str] = []
     candidates = (
         os.path.join(root, "config", "common.tfvars"),
         os.path.join(root, account, "config", "account.tfvars"),
@@ -232,9 +239,9 @@ def load_tfvars(root: str, layer: str) -> dict:
         try:
             with open(path, encoding="utf-8") as handle:
                 merged.update(hcl2.load(handle, serialization_options=OPTS))
-        except Exception:  # noqa: BLE001 - a bad tfvars must not blind the scan
-            continue
-    return merged
+        except Exception as exc:  # noqa: BLE001 - any parse failure is reportable
+            errors.append(f"{path}: {exc}")
+    return merged, errors
 
 
 def _source(reference_path: str, key: str, resolution: Resolution, root: str) -> str:
@@ -264,7 +271,9 @@ def discover(root: str) -> tuple[list[Pin], list[str]]:
 
         layer = os.path.relpath(layer_dir, root)
         active = not is_disabled_layer(layer)
-        resolver = Resolver(docs, tfvars=load_tfvars(root, layer))
+        tfvars, tfvars_errors = load_tfvars(root, layer)
+        errors.extend(tfvars_errors)
+        resolver = Resolver(docs, tfvars=tfvars)
 
         for path, doc in docs.items():
             for body in _blocks(doc):
@@ -286,6 +295,11 @@ def discover(root: str) -> tuple[list[Pin], list[str]]:
                 if "engine" not in body:
                     continue
                 engine = resolver.resolve(body["engine"]).value
+                # An engine that will not resolve drops the block, same as a
+                # non-database module. Deliberate asymmetry with engine_version,
+                # which yields a Pin that surfaces as UNKNOWN: an unrecognised
+                # engine is far more likely to be "not a database" than "a database
+                # we failed to read".
                 if engine not in RDS_ENGINES:
                     continue
 

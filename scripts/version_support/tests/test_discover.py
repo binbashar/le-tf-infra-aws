@@ -199,3 +199,38 @@ def test_look_alikes_are_never_matched():
     # elasticache has engine_version but no engine; dms has a similarly-named key.
     assert "apps-devstg/us-east-1/elasticache-redis" not in layers
     assert "data-science/us-east-1/datalake--" not in layers
+
+
+def test_malformed_tfvars_is_reported_not_swallowed(tmp_path):
+    # A tfvars that hcl2 cannot parse must surface as an error, never degrade
+    # silently to "no overrides" -- that would resolve pins to a stale default.
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config" / "common.tfvars").write_text('project = "bb"\nbroken = {{{\n')
+    layer = tmp_path / "apps-devstg" / "us-east-1" / "some-layer"
+    layer.mkdir(parents=True)
+    (layer / "main.tf").write_text(
+        'module "x" {\n  engine         = "mysql"\n  engine_version = "8.0.41"\n}\n'
+    )
+
+    pins, errors = discover(str(tmp_path))
+
+    assert len(pins) == 1
+    assert any("common.tfvars" in e for e in errors)
+
+
+@pytest.mark.parametrize(
+    "skipped_dir",
+    [".terraform", ".infracost", "docs"],
+)
+def test_vendored_and_docs_trees_are_never_scanned(tmp_path, skipped_dir):
+    # A vendored module under .terraform/ really does carry a cluster_version block
+    # in this repo; without the skip it would surface as an ACTIVE pin on a version
+    # already in extended support, hard-failing every PR over an example file.
+    nested = tmp_path / "apps-prd" / "global" / "x" / skipped_dir / "modules" / "eks"
+    nested.mkdir(parents=True)
+    (nested / "main.tf").write_text('module "eks" {\n  cluster_version = "1.28"\n}\n')
+
+    pins, errors = discover(str(tmp_path))
+
+    assert pins == []
+    assert errors == []
