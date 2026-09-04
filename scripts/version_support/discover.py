@@ -79,6 +79,13 @@ def load_layer(layer_dir: str) -> tuple[dict[str, dict], list[str]]:
     return docs, errors
 
 
+# Strict anchoring on purpose: only a whole-string "${var.x}" / "${local.x}" is a
+# reference. Partial ("${var.x}-suffix"), spaced ("${ var.x }"), attribute access
+# ("${local.x.y}") and module refs fall through as literals. For a *version* that is
+# safe -- AWS returns nothing for the bogus string, so it surfaces as UNKNOWN and is
+# warned rather than passing silently. For an *engine* it means the block is skipped,
+# which is the same treatment a non-database module gets. Widen this only with a test
+# covering the form you are adding.
 _INTERPOLATION = re.compile(r"^\$\{(var|local)\.([A-Za-z0-9_-]+)\}$")
 
 
