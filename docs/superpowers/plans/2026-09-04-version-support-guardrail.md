@@ -1755,6 +1755,20 @@ git commit -m "feat(version-support): render findings for humans and CI"
 - Create: `scripts/version_support/__main__.py`
 - Create: `scripts/version_support/tests/test_main.py`
 
+> **Second amendment.** The fix above was still too narrow. `AWS_DEFAULT_REGION=""` — an
+> empty-but-present region, which `AWS_REGION: ${{ vars.UNDEFINED }}` produces verbatim in a
+> workflow `env:` block — makes botocore raise a bare `ValueError` from endpoint construction,
+> outside `BotoCoreError`/`ClientError`, reproducing the identical crash. The guard now catches
+> broadly, scoped to just the two client constructions. Two further corrections landed with it:
+> the `::warning::` was being written to **stderr**, which GitHub does not parse for workflow
+> commands, so the promised "loud warning annotation" rendered as nothing; and `collect()` now
+> short-circuits when `discover()` finds no pins, since there is nothing to ask AWS about.
+>
+> That short-circuit made the first draft of these tests **vacuous** — they used an empty
+> `tmp_path` as `--root`, so no pins meant no client construction and they passed without ever
+> exercising the path under test. They now point at the fixture tree. A test that passes for the
+> wrong reason is the same false confidence this tool exists to prevent.
+>
 > **Amendment (found during execution).** The original `collect()` built the boto3 clients as
 > *argument expressions* to `evaluate(...)`, so they were constructed **before** `evaluate`'s
 > `try/except` could apply — and `main()` catches only `LookupUnavailable`. A construction-time
@@ -1875,7 +1889,11 @@ def collect(root: str, today: date, lead_days: int):
         # workflow step would crash the gate instead of degrading it.
         eks_client = boto3.client("eks")
         rds_client = boto3.client("rds")
-    except (BotoCoreError, ClientError) as exc:
+    except Exception as exc:  # noqa: BLE001 - boto3 client construction can fail
+        # outside botocore's documented exception hierarchy: an empty-but-present
+        # region raises a bare ValueError from botocore.endpoint, reproduced with
+        # AWS_DEFAULT_REGION="". Anything raised while building these two clients
+        # means "AWS is not usable", never "our code has a bug".
         raise LookupUnavailable(str(exc)) from exc
 
     findings = evaluate(
@@ -1913,8 +1931,10 @@ def main(argv: list[str] | None = None) -> int:
     except LookupUnavailable as exc:
         # A check that silently passes when it could not run is worse than none.
         message = f"version-support: AWS lookup unavailable - the check did NOT run ({exc})"
-        print(f"::warning::{message}", file=sys.stderr)
-        print(message)
+        # stdout, not stderr: GitHub parses workflow commands from stdout only, so a
+        # ::warning:: on stderr renders no annotation -- making this failure quiet,
+        # the one outcome this handler exists to prevent.
+        print(f"::warning::{message}")
         _write_github_output("ran", "false")
         return 0
 
