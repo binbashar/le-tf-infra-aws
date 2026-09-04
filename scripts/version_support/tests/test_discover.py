@@ -140,3 +140,62 @@ from version_support.discover import major_version
 )
 def test_major_version_is_engine_specific(engine, version, expected):
     assert major_version(engine, version) == expected
+
+
+from version_support.discover import discover
+
+
+def _by_layer(pins):
+    return {pin.layer.replace(os.sep, "/"): pin for pin in pins}
+
+
+def test_discover_finds_every_real_pin_shape():
+    pins, errors = discover(FIXTURE_TREE)
+
+    assert errors == []
+    found = _by_layer(pins)
+    assert set(found) == {
+        "apps-devstg/us-east-1/k8s-eks-demoapps/cluster",
+        "apps-devstg/us-east-1/databases-mysql --",
+        "apps-devstg/us-east-1/databases-aurora-pgsql --",
+    }
+
+
+def test_discover_resolves_the_eks_variable_default():
+    pins, _ = discover(FIXTURE_TREE)
+    pin = _by_layer(pins)["apps-devstg/us-east-1/k8s-eks-demoapps/cluster"]
+
+    assert pin.kind == "eks"
+    assert pin.engine is None
+    assert pin.version == "1.31"
+    assert pin.active is True
+    assert "var.cluster_version" in pin.source
+
+
+def test_discover_resolves_the_aurora_engine_from_a_local():
+    pins, _ = discover(FIXTURE_TREE)
+    pin = _by_layer(pins)["apps-devstg/us-east-1/databases-aurora-pgsql --"]
+
+    assert pin.kind == "rds"
+    assert pin.engine == "aurora-postgresql"
+    assert pin.version == "14.8"
+    assert pin.major_version == "14"
+    assert pin.active is False  # disabled layer
+
+
+def test_discover_prefers_an_explicit_major_engine_version():
+    pins, _ = discover(FIXTURE_TREE)
+    pin = _by_layer(pins)["apps-devstg/us-east-1/databases-mysql --"]
+
+    assert pin.engine == "mysql"
+    assert pin.version == "8.0.41"
+    assert pin.major_version == "8.0"
+
+
+def test_look_alikes_are_never_matched():
+    pins, _ = discover(FIXTURE_TREE)
+    layers = {pin.layer.replace(os.sep, "/") for pin in pins}
+
+    # elasticache has engine_version but no engine; dms has a similarly-named key.
+    assert "apps-devstg/us-east-1/elasticache-redis" not in layers
+    assert "data-science/us-east-1/datalake--" not in layers

@@ -159,3 +159,160 @@ def major_version(engine: str, version: str) -> str:
     if engine in _MYSQL_FAMILY:
         return ".".join(parts[:2])
     return parts[0]
+
+
+@dataclass(frozen=True)
+class Pin:
+    """One version pinned in the tree."""
+
+    kind: str  # "eks" | "rds"
+    engine: str | None  # None for EKS
+    version: str | None  # None when unresolvable
+    major_version: str | None  # what the AWS lookup is keyed on
+    layer: str  # repo-relative layer directory
+    active: bool  # False when the layer is disabled
+    source: str  # "path/file.tf:12 (var.cluster_version)"
+
+
+_SKIP_PATH_PARTS = (
+    os.sep + ".terraform",
+    os.sep + ".infracost",
+    os.sep + ".git" + os.sep,
+    os.sep + "docs" + os.sep,
+    # Without this, scanning the repo root would pick up this package's own
+    # fixture tree and report three fabricated pins.
+    os.sep + "fixtures" + os.sep,
+)
+
+
+def _layer_dirs(root: str) -> list[str]:
+    """Every directory under `root` containing at least one .tf file."""
+    directories = set()
+    for path in glob.iglob(os.path.join(root, "**", "*.tf"), recursive=True):
+        # Skip-check against the path RELATIVE to `root`, not the raw glob match.
+        # discover(FIXTURE_TREE) is called with a root that itself sits inside a
+        # directory named "fixtures" (.../tests/fixtures/tree) -- checking the raw
+        # path would make every fixture file contain "/fixtures/" and skip the
+        # whole tree. Relativizing first means the entry only fires when
+        # "fixtures" appears *within* the scanned tree, e.g. when root is the repo
+        # root and this package's own fixture tree is nested underneath it.
+        relative = os.sep + os.path.relpath(path, root)
+        if any(part in relative for part in _SKIP_PATH_PARTS):
+            continue
+        directories.add(os.path.dirname(path))
+    return sorted(directories)
+
+
+def _blocks(doc: dict):
+    """Yield every module and resource block body in a parsed document."""
+    for block in doc.get("module", []):
+        for name, body in block.items():
+            if isinstance(body, dict):
+                yield body
+    for block in doc.get("resource", []):
+        for _type, named in block.items():
+            if not isinstance(named, dict):
+                continue
+            for name, body in named.items():
+                if isinstance(body, dict):
+                    yield body
+
+
+def load_tfvars(root: str, layer: str) -> dict:
+    """Merge config/common.tfvars and {account}/config/account.tfvars."""
+    account = layer.replace("\\", "/").split("/")[0]
+    merged: dict = {}
+    candidates = (
+        os.path.join(root, "config", "common.tfvars"),
+        os.path.join(root, account, "config", "account.tfvars"),
+    )
+    for path in candidates:
+        if not os.path.exists(path):
+            continue
+        try:
+            with open(path, encoding="utf-8") as handle:
+                merged.update(hcl2.load(handle, serialization_options=OPTS))
+        except Exception:  # noqa: BLE001 - a bad tfvars must not blind the scan
+            continue
+    return merged
+
+
+def _source(reference_path: str, key: str, resolution: Resolution, root: str) -> str:
+    """Human-actionable 'file:line (how)' for a pin."""
+    if resolution.how == "literal":
+        target, lookup = reference_path, key
+    else:
+        target = resolution.origin or reference_path
+        lookup = resolution.how.split()[0].split(".")[-1]
+
+    line = line_of(target, lookup) or line_of(target, key)
+    relative = os.path.relpath(target, root)
+    where = f"{relative}:{line}" if line else relative
+    return where if resolution.how == "literal" else f"{where} ({resolution.how})"
+
+
+def discover(root: str) -> tuple[list[Pin], list[str]]:
+    """Walk `root` and return (pins, parse_errors)."""
+    pins: list[Pin] = []
+    errors: list[str] = []
+
+    for layer_dir in _layer_dirs(root):
+        docs, layer_errors = load_layer(layer_dir)
+        errors.extend(layer_errors)
+        if not docs:
+            continue
+
+        layer = os.path.relpath(layer_dir, root)
+        active = not is_disabled_layer(layer)
+        resolver = Resolver(docs, tfvars=load_tfvars(root, layer))
+
+        for path, doc in docs.items():
+            for body in _blocks(doc):
+                if "cluster_version" in body:
+                    resolution = resolver.resolve(body["cluster_version"])
+                    version = resolution.value if isinstance(resolution.value, str) else None
+                    pins.append(
+                        Pin(
+                            kind="eks",
+                            engine=None,
+                            version=version,
+                            major_version=version,
+                            layer=layer,
+                            active=active,
+                            source=_source(path, "cluster_version", resolution, root),
+                        )
+                    )
+
+                if "engine" not in body:
+                    continue
+                engine = resolver.resolve(body["engine"]).value
+                if engine not in RDS_ENGINES:
+                    continue
+
+                version_resolution = resolver.resolve(body.get("engine_version"))
+                version = (
+                    version_resolution.value
+                    if isinstance(version_resolution.value, str)
+                    else None
+                )
+
+                major = None
+                if "major_engine_version" in body:
+                    explicit = resolver.resolve(body["major_engine_version"]).value
+                    major = explicit if isinstance(explicit, str) else None
+                if major is None and version is not None:
+                    major = major_version(engine, version)
+
+                pins.append(
+                    Pin(
+                        kind="rds",
+                        engine=engine,
+                        version=version,
+                        major_version=major,
+                        layer=layer,
+                        active=active,
+                        source=_source(path, "engine_version", version_resolution, root),
+                    )
+                )
+
+    return pins, errors
