@@ -15,6 +15,10 @@ def is_disabled_layer(path: str) -> bool:
     ``databases-mysql --`` (spaced) and ``databases-dynamodb--`` (attached).
     Matching on ``" --"`` would silently treat the attached form as active and
     hard-fail PRs on dormant infrastructure.
+
+    Trailing whitespace in a segment is stripped before the suffix check, so
+    ``databases-mysql -- `` is detected too -- the ``.rstrip()`` is load-bearing,
+    not decorative.
     """
     return any(
         segment.rstrip().endswith("--")
