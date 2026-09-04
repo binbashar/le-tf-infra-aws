@@ -122,3 +122,21 @@ def test_unresolvable_reference_is_never_assumed_safe():
     assert resolver.resolve("${var.missing}").how == "unresolved"
     assert resolver.resolve("${var.missing}").value is None
     assert resolver.resolve(None).how == "unresolved"
+
+
+from version_support.discover import major_version
+
+
+@pytest.mark.parametrize(
+    ("engine", "version", "expected"),
+    [
+        ("mysql", "8.0.41", "8.0"),          # MySQL family keeps major.minor
+        ("aurora-mysql", "5.7", "5.7"),
+        ("aurora-mysql", "8.0.mysql_aurora.3.04.0", "8.0"),
+        ("postgres", "14.18", "14"),         # PostgreSQL family keeps major only
+        ("aurora-postgresql", "14.8", "14"),
+        ("postgres", "16", "16"),
+    ],
+)
+def test_major_version_is_engine_specific(engine, version, expected):
+    assert major_version(engine, version) == expected

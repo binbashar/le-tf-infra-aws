@@ -141,3 +141,21 @@ class Resolver:
             local_value, path = self.locals[name]
             return Resolution(local_value, f"local.{name}", path)
         return Resolution(None, "unresolved")
+
+
+# Only these carry an RDS/Aurora extended-support surcharge. elasticache, OpenSearch
+# and DMS are excluded structurally - their engine value is never in this set.
+RDS_ENGINES = frozenset({"mysql", "postgres", "aurora-mysql", "aurora-postgresql"})
+
+# rds:DescribeDBMajorEngineVersions takes a MAJOR version, and the mapping differs
+# by family: MySQL majors are "major.minor" (8.0, 5.7), PostgreSQL majors are the
+# leading component only (14, 16).
+_MYSQL_FAMILY = frozenset({"mysql", "aurora-mysql"})
+
+
+def major_version(engine: str, version: str) -> str:
+    """Major version string accepted by rds:DescribeDBMajorEngineVersions."""
+    parts = version.split(".")
+    if engine in _MYSQL_FAMILY:
+        return ".".join(parts[:2])
+    return parts[0]
