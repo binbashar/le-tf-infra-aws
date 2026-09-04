@@ -2015,14 +2015,29 @@ Note the existing `help`, `init-makefiles` and `infracost-breakdown` targets and
 Add to `Makefile`, matching the existing `## description` convention so they appear in `make help`:
 
 ```makefile
+# uv run, not a bare python3: the scanner needs python-hcl2 >= 8.1, while this repo's
+# own .venv pins 7.3.1 for the Leverage CLI -- so resolving the interpreter from PATH
+# breaks precisely for contributors who followed the setup guide. --with-requirements
+# builds the environment on demand; there is no venv to create or activate.
 .PHONY: version-support
 version-support: ## Check EKS/RDS versions against AWS support lifecycles
-	PYTHONPATH=scripts python3 -m version_support --mode pr --root .
+	@PYTHONPATH=scripts uv run --quiet \
+		--with-requirements scripts/version_support/requirements.txt \
+		python -m version_support --mode pr --root .
 
 .PHONY: version-support-table
 version-support-table: ## Regenerate docs/version-support/status.md
-	PYTHONPATH=scripts python3 -m version_support --mode table --root .
+	@PYTHONPATH=scripts uv run --quiet \
+		--with-requirements scripts/version_support/requirements.txt \
+		python -m version_support --mode table --root .
 ```
+
+> **Amendment (found during execution).** The original targets called a bare `python3`. This
+> repo's own `.venv` — the one `CLAUDE.md` tells contributors to create for the Leverage CLI —
+> carries `python-hcl2 7.3.1`, which predates `hcl2/utils.py`, so `make version-support` died with
+> `ModuleNotFoundError: No module named 'hcl2.utils'` for exactly the people who followed the
+> setup guide. `uv` is already a documented prerequisite, and `uv run --with-requirements` builds
+> a hermetic environment on demand.
 
 - [ ] **Step 3: Verify the targets are listed**
 
@@ -2196,7 +2211,9 @@ Expected: `valid YAML`
 - [ ] **Step 3: Commit**
 
 ```bash
-git add .github/workflows/version-support.yml
+# atlantis.yaml too -- Step 0 changed it, and leaving it uncommitted would drop the
+# very fix that must land before this branch is pushed.
+git add .github/workflows/version-support.yml atlantis.yaml
 git commit -m "feat(version-support): add the PR gate and weekly sweep workflow"
 ```
 
