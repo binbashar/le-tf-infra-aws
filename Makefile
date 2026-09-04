@@ -25,3 +25,11 @@ infracost-breakdown: ## Infracost breakdown
 	infracost breakdown \
 		--config-file=./infracost.yml \
 		--show-skipped
+
+.PHONY: version-support
+version-support: ## Check EKS/RDS versions against AWS support lifecycles
+	PYTHONPATH=scripts python3 -m version_support --mode pr --root .
+
+.PHONY: version-support-table
+version-support-table: ## Regenerate docs/version-support/status.md
+	PYTHONPATH=scripts python3 -m version_support --mode table --root .
