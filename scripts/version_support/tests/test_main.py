@@ -57,3 +57,19 @@ def test_table_mode_writes_the_status_file(tmp_path):
         assert main(["--mode", "table", "--root", FIXTURE_TREE, "--out", str(target)]) == 0
 
     assert "GENERATED" in target.read_text()
+
+
+def test_a_client_construction_failure_degrades_instead_of_crashing(monkeypatch, tmp_path):
+    # boto3 can fail before any network call (NoRegionError when no region
+    # resolves). Every other test mocks collect() wholesale, so none of them
+    # exercise real client construction -- which is exactly where this escaped.
+    from botocore.exceptions import NoRegionError
+
+    def refuse(*args, **kwargs):
+        raise NoRegionError()
+
+    monkeypatch.setattr("version_support.__main__.boto3.client", refuse)
+
+    # Neither mode may crash or block: the check did not run, and says so.
+    assert main(["--mode", "pr", "--root", str(tmp_path)]) == 0
+    assert main(["--mode", "cron", "--root", str(tmp_path)]) == 0
