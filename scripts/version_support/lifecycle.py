@@ -160,8 +160,25 @@ class LookupUnavailable(RuntimeError):
     """
 
 
-def evaluate(pins, *, eks_client, rds_client, today: date, lead_days: int = DEFAULT_LEAD_DAYS):
-    """Turn pins into findings. Raises LookupUnavailable if AWS cannot be reached."""
+def evaluate(
+    pins: list[Pin],
+    *,
+    eks_client,
+    rds_client,
+    today: date,
+    lead_days: int = DEFAULT_LEAD_DAYS,
+) -> list[Finding]:
+    """Turn pins into findings, one per input pin, in input order.
+
+    Disabled pins are evaluated like any other -- filtering them is report.py's
+    job, and dropping them here would erase the latent debt they represent.
+
+    Raises LookupUnavailable if AWS cannot be reached. The lookup is
+    all-or-nothing on purpose: a partial result would let a PR gate pass on
+    incomplete data, which is the false confidence this tool exists to avoid.
+    The caller decides what to do -- the CLI exits 0 with a loud warning rather
+    than blocking a merge on an AWS outage, but it never reports "all clear".
+    """
     findings: list[Finding] = []
 
     resolvable = [pin for pin in pins if pin.major_version]
@@ -181,9 +198,23 @@ def evaluate(pins, *, eks_client, rds_client, today: date, lead_days: int = DEFA
 
     for pin in pins:
         if not pin.major_version:
-            findings.append(Finding(pin, "UNKNOWN", None, None, None, "UNKNOWN"))
+            findings.append(
+                Finding(
+                    pin=pin,
+                    status="UNKNOWN",
+                    end_standard=None,
+                    end_extended=None,
+                    days_left=None,
+                    severity="UNKNOWN",
+                )
+            )
             continue
 
+        # EKS uses .get with a default because AWS simply omits a version it does
+        # not know, which must degrade to UNKNOWN. rds_map is indexed directly
+        # because it was just built from this same list -- the key cannot be
+        # missing. Do not "make these consistent": the default on the RDS side
+        # would hide a real bug, and indexing on the EKS side would crash.
         if pin.kind == "eks":
             status, end_standard, end_extended = eks_map.get(
                 pin.major_version, ("UNKNOWN", None, None)
