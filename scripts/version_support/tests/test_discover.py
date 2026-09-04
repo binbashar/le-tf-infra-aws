@@ -66,3 +66,59 @@ def test_line_of_finds_attribute_and_variable_block():
     assert line_of(os.path.join(EKS_LAYER, "main.tf"), "cluster_version") == 5
     assert line_of(os.path.join(EKS_LAYER, "variables.tf"), "cluster_version") == 1
     assert line_of(os.path.join(EKS_LAYER, "main.tf"), "nope") is None
+
+
+from version_support.discover import Resolver
+
+AURORA_LAYER = os.path.join(
+    FIXTURE_TREE, "apps-devstg", "us-east-1", "databases-aurora-pgsql --"
+)
+
+
+def test_resolver_returns_literals_unchanged():
+    resolver = Resolver({}, tfvars={})
+    resolution = resolver.resolve("mysql")
+
+    assert resolution.value == "mysql"
+    assert resolution.how == "literal"
+
+
+def test_resolver_dereferences_a_variable_default():
+    docs, _ = load_layer(EKS_LAYER)
+    resolver = Resolver(docs, tfvars={})
+
+    resolution = resolver.resolve("${var.cluster_version}")
+
+    assert resolution.value == "1.31"
+    assert resolution.how == "var.cluster_version"
+    assert resolution.origin.endswith("variables.tf")
+
+
+def test_tfvars_override_beats_the_variable_default():
+    docs, _ = load_layer(EKS_LAYER)
+    resolver = Resolver(docs, tfvars={"cluster_version": "1.29"})
+
+    resolution = resolver.resolve("${var.cluster_version}")
+
+    # Reporting the default while a tfvars override supplies the real value
+    # would be a false negative - the one failure this guardrail must not have.
+    assert resolution.value == "1.29"
+    assert resolution.how == "var.cluster_version (tfvars)"
+
+
+def test_resolver_dereferences_a_local():
+    docs, _ = load_layer(AURORA_LAYER)
+    resolver = Resolver(docs, tfvars={})
+
+    resolution = resolver.resolve("${local.engine}")
+
+    assert resolution.value == "aurora-postgresql"
+    assert resolution.how == "local.engine"
+
+
+def test_unresolvable_reference_is_never_assumed_safe():
+    resolver = Resolver({}, tfvars={})
+
+    assert resolver.resolve("${var.missing}").how == "unresolved"
+    assert resolver.resolve("${var.missing}").value is None
+    assert resolver.resolve(None).how == "unresolved"

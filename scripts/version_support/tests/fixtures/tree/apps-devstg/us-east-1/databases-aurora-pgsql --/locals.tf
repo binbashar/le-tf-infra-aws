@@ -1,0 +1,3 @@
+locals {
+  engine = "aurora-postgresql"
+}

@@ -8,6 +8,7 @@ from __future__ import annotations
 import glob
 import os
 import re
+from dataclasses import dataclass
 
 import hcl2
 from hcl2.utils import SerializationOptions
@@ -76,3 +77,60 @@ def load_layer(layer_dir: str) -> tuple[dict[str, dict], list[str]]:
         except Exception as exc:  # noqa: BLE001 - any parse failure is reportable
             errors.append(f"{path}: {exc}")
     return docs, errors
+
+
+_INTERPOLATION = re.compile(r"^\$\{(var|local)\.([A-Za-z0-9_-]+)\}$")
+
+
+@dataclass(frozen=True)
+class Resolution:
+    """A dereferenced HCL value plus where it came from."""
+
+    value: object | None
+    how: str  # "literal" | "var.<n>" | "var.<n> (tfvars)" | "local.<n>" | "unresolved"
+    origin: str | None = None  # file that defines the value, for var/local
+
+
+class Resolver:
+    """Dereferences ``${var.x}`` and ``${local.x}`` within a single layer.
+
+    Locals are not optional: ``databases-aurora-pgsql --`` declares
+    ``engine = local.engine``, so a var-only resolver would fail the engine
+    allow-list and skip the layer entirely.
+    """
+
+    def __init__(self, docs: dict[str, dict], tfvars: dict | None = None) -> None:
+        self.tfvars = tfvars or {}
+        self.variables: dict[str, tuple[object, str]] = {}
+        self.locals: dict[str, tuple[object, str]] = {}
+        for path, doc in docs.items():
+            for block in doc.get("variable", []):
+                for name, body in block.items():
+                    if isinstance(body, dict) and "default" in body:
+                        self.variables[name] = (body["default"], path)
+            for block in doc.get("locals", []):
+                for name, value in block.items():
+                    self.locals[name] = (value, path)
+
+    def resolve(self, value: object) -> Resolution:
+        if value is None:
+            return Resolution(None, "unresolved")
+        if not isinstance(value, str):
+            return Resolution(value, "literal")
+        match = _INTERPOLATION.match(value.strip())
+        if match is None:
+            return Resolution(value, "literal")
+
+        scope, name = match.group(1), match.group(2)
+        if scope == "var":
+            if name in self.tfvars:
+                return Resolution(self.tfvars[name], f"var.{name} (tfvars)")
+            if name in self.variables:
+                default, path = self.variables[name]
+                return Resolution(default, f"var.{name}", path)
+            return Resolution(None, "unresolved")
+
+        if name in self.locals:
+            local_value, path = self.locals[name]
+            return Resolution(local_value, f"local.{name}", path)
+        return Resolution(None, "unresolved")
