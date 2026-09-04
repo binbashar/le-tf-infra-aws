@@ -8,6 +8,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime
 
+from botocore.exceptions import BotoCoreError, ClientError
+
 from version_support.discover import Pin
 
 DEFAULT_LEAD_DAYS = 90
@@ -148,3 +150,50 @@ def rds_lifecycle(engine: str, major: str, client, today: date) -> tuple:
     if today > end_standard:
         return "EXTENDED_SUPPORT", end_standard, end_extended
     return "STANDARD_SUPPORT", end_standard, end_extended
+
+
+class LookupUnavailable(RuntimeError):
+    """AWS could not be reached or refused the call.
+
+    Raised rather than swallowed so callers must decide explicitly. A guardrail
+    that silently reports 'all clear' when it could not run is worse than none.
+    """
+
+
+def evaluate(pins, *, eks_client, rds_client, today: date, lead_days: int = DEFAULT_LEAD_DAYS):
+    """Turn pins into findings. Raises LookupUnavailable if AWS cannot be reached."""
+    findings: list[Finding] = []
+
+    resolvable = [pin for pin in pins if pin.major_version]
+    eks_versions = {pin.major_version for pin in resolvable if pin.kind == "eks"}
+
+    try:
+        eks_map = eks_lifecycles(eks_versions, eks_client)
+        rds_map = {}
+        for pin in resolvable:
+            if pin.kind != "rds":
+                continue
+            key = (pin.engine, pin.major_version)
+            if key not in rds_map:
+                rds_map[key] = rds_lifecycle(pin.engine, pin.major_version, rds_client, today)
+    except (BotoCoreError, ClientError) as exc:
+        raise LookupUnavailable(str(exc)) from exc
+
+    for pin in pins:
+        if not pin.major_version:
+            findings.append(Finding(pin, "UNKNOWN", None, None, None, "UNKNOWN"))
+            continue
+
+        if pin.kind == "eks":
+            status, end_standard, end_extended = eks_map.get(
+                pin.major_version, ("UNKNOWN", None, None)
+            )
+        else:
+            status, end_standard, end_extended = rds_map[(pin.engine, pin.major_version)]
+
+        severity, days = classify(status, end_standard, today, lead_days)
+        findings.append(
+            Finding(pin, status, end_standard, end_extended, days, severity)
+        )
+
+    return findings

@@ -140,3 +140,73 @@ def test_rds_lifecycle_returns_unknown_for_an_unlisted_version():
 
     assert status == "UNKNOWN"
     assert end_standard is None
+
+
+from version_support.discover import Pin
+from version_support.lifecycle import LookupUnavailable, evaluate
+
+EKS_PIN = Pin(
+    kind="eks",
+    engine=None,
+    version="1.28",
+    major_version="1.28",
+    layer="apps-devstg/us-east-1/k8s-eks-demoapps/cluster",
+    active=True,
+    source="cluster/variables.tf:9 (var.cluster_version)",
+)
+
+
+def test_evaluate_turns_pins_into_findings():
+    eks = boto3.client("eks", region_name="us-east-1")
+    rds = boto3.client("rds", region_name="us-east-1")
+    with Stubber(eks) as stub:
+        stub.add_response(
+            "describe_cluster_versions",
+            {
+                "clusterVersions": [
+                    {
+                        "clusterVersion": "1.28",
+                        "versionStatus": "EXTENDED_SUPPORT",
+                        "endOfStandardSupportDate": datetime(2024, 11, 26),
+                        "endOfExtendedSupportDate": datetime(2025, 11, 26),
+                    }
+                ]
+            },
+            {"clusterVersions": ["1.28"], "includeAll": True},
+        )
+
+        findings = evaluate([EKS_PIN], eks_client=eks, rds_client=rds, today=TODAY)
+
+    assert len(findings) == 1
+    assert findings[0].severity == "EXTENDED"
+    assert findings[0].pin is EKS_PIN
+
+
+def test_an_unresolvable_pin_is_unknown_without_calling_aws():
+    unresolved = Pin(
+        kind="eks",
+        engine=None,
+        version=None,
+        major_version=None,
+        layer="apps-devstg/us-east-1/k8s-eks-demoapps/cluster",
+        active=True,
+        source="cluster/main.tf:5 (unresolved)",
+    )
+    eks = boto3.client("eks", region_name="us-east-1")
+    rds = boto3.client("rds", region_name="us-east-1")
+
+    # No Stubber responses queued: any AWS call would raise.
+    with Stubber(eks), Stubber(rds):
+        findings = evaluate([unresolved], eks_client=eks, rds_client=rds, today=TODAY)
+
+    assert findings[0].severity == "UNKNOWN"
+
+
+def test_an_aws_failure_raises_lookup_unavailable():
+    eks = boto3.client("eks", region_name="us-east-1")
+    rds = boto3.client("rds", region_name="us-east-1")
+    with Stubber(eks) as stub:
+        stub.add_client_error("describe_cluster_versions", service_error_code="AccessDenied")
+
+        with pytest.raises(LookupUnavailable):
+            evaluate([EKS_PIN], eks_client=eks, rds_client=rds, today=TODAY)
