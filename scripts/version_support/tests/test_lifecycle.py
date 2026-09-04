@@ -36,3 +36,17 @@ def test_lead_days_is_configurable():
     severity, _ = classify("STANDARD_SUPPORT", date(2027, 1, 1), today=TODAY, lead_days=180)
 
     assert severity == "SOON"
+
+
+def test_a_healthy_status_with_no_date_is_unknown_not_ok():
+    # An absent or unparseable endOfStandardSupportDate must never read as "fine".
+    severity, days = classify("STANDARD_SUPPORT", None, today=TODAY)
+
+    assert severity == "UNKNOWN"
+    assert days is None
+
+
+def test_a_bad_status_still_classifies_without_a_date():
+    # EXTENDED/UNSUPPORTED are status-driven and must not be downgraded to UNKNOWN.
+    assert classify("EXTENDED_SUPPORT", None, today=TODAY)[0] == "EXTENDED"
+    assert classify("UNSUPPORTED", None, today=TODAY)[0] == "UNSUPPORTED"

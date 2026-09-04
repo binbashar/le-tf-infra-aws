@@ -43,7 +43,18 @@ def classify(
     today: date,
     lead_days: int = DEFAULT_LEAD_DAYS,
 ) -> tuple[str, int | None]:
-    """Return (severity, days_left_to_end_of_standard_support)."""
+    """Classify one version against its support lifecycle.
+
+    Returns ``(severity, days_left)`` where ``days_left`` counts down to the end of
+    standard support and is NEGATIVE once that date has passed.
+
+    Severities, in order of urgency:
+      OK          - in standard support, further out than ``lead_days``
+      SOON        - in standard support, within ``lead_days`` of the cliff
+      EXTENDED    - past end of standard support: the surcharge is billing now
+      UNSUPPORTED - AWS reports the version unsupported outright
+      UNKNOWN     - no usable data; never treated as safe
+    """
     if status == "UNKNOWN":
         return "UNKNOWN", None
     if status == "UNSUPPORTED":
@@ -51,9 +62,16 @@ def classify(
 
     days = (end_standard - today).days if end_standard else None
 
-    # A past end date wins over a lagging status field.
+    # A past end date wins over a lagging status field: AWS's status can trail the
+    # transition, but the surcharge is billing either way.
     if status == "EXTENDED_SUPPORT" or (days is not None and days < 0):
         return "EXTENDED", days
-    if days is not None and days <= lead_days:
+
+    # No date and no explicit bad status means we do not know -- and an absence of
+    # information must never read as "fine". UNKNOWN warns without failing a PR.
+    if days is None:
+        return "UNKNOWN", None
+
+    if days <= lead_days:
         return "SOON", days
     return "OK", days
