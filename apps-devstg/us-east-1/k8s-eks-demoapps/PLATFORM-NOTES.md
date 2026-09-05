@@ -22,8 +22,11 @@ there. That topology is:
 The perimeter is meant to stay recognisable; the data plane is what changes.
 **Reintroducing nginx here is never an option** — replacing it is the point.
 
-**Current state (2026-09-05).** **Up**, re-spun to validate the PR #1157 review
-items against a real cluster. All seven layers plan `No changes`; both demo apps
+**Current state (2026-09-05).** Torn down, after a re-spin that validated the PR
+#1157 review items against a real cluster and then closed the two that needed a
+decision: **`authentication_mode = "API"`** and **`authenticator` control-plane
+logging**, both applied in place to the running cluster and verified before the
+teardown. All seven layers planned `No changes`; both demo apps were
 `Synced`/`Healthy`; checkout, vote and both gateways verified. The 2026-09-03
 entry below describes the run that first brought the apps up.
 
@@ -65,7 +68,7 @@ below for what re-attaching costs.
 | 8 | 2026-08-10 | Re-spun from scratch, then torn down again. **AWS WAF attached to the ALB, verified, then detached and destroyed** — backlog item 4 closed. **Managed add-ons caught up to 1.34**, `vpc-cni` stepwise. **nginx-ingress removed from the code.** |
 | 9 | 2026-08-28 | Re-spun to verify the PR #1136 review items. **Component HTTPRoutes moved onto the charts' native keys.** ACME endpoint made switchable; Secret preservation proven. Torn down again, both DNS zones clean. |
 | 10 | 2026-09-01 | **`terraform-aws-eks` v20.37.2 → v21.25.0**, `aws-auth` → access entries, AWS provider → 6.x. Three latent no-op inputs fixed. Re-spun end to end to validate it — both routes 200, zero drift on all six layers — then torn down. Three defects found that no plan could catch. Then the **VPC CNI's IRSA role moved into the `cluster` layer**, so the CNI stops borrowing the node instance role and `AmazonEKS_CNI_Policy` comes off it entirely. |
-| 12 | 2026-09-05 | Re-spun to validate the PR #1157 review items: CNI version **pinned**, `dataplane_wait_duration` widened, the dead `use_managed_addons` hook removed, the SSO lookup anchored and asserted, IRSA tags restored. Both demo apps `Synced`/`Healthy` **on the first pass** — no hard refresh needed once `controller.diff.server.side` ships from the start. |
+| 12 | 2026-09-05 | **`aws-auth` closed for good** (`authentication_mode = "API"`) and `authenticator` logging turned on, both applied in place. Re-spun to validate the PR #1157 review items: CNI version **pinned**, `dataplane_wait_duration` widened, the dead `use_managed_addons` hook removed, the SSO lookup anchored and asserted, IRSA tags restored. Both demo apps `Synced`/`Healthy` **on the first pass** — no hard refresh needed once `controller.diff.server.side` ships from the start. |
 | 11 | 2026-09-03 | **emojivoto and google-microservices brought up**, the first workloads here delivered by Argo CD rather than by Terraform. Argo CD, Argo Rollouts and External Secrets back on; the `secrets` layer joins the spin. Five defects found, all apply-only. Torn down again — three-stage DNS pause, both zones clean. |
 
 ---
@@ -822,6 +825,59 @@ on ALIAS, so it cannot be pre-lowered to speed up a flip. A *percentage* canary
 would need Route53 weighted records via external-dns `set-identifier` — a
 different mechanism.
 
+### Closing the `aws-auth` path, and giving it an audit trail
+
+Two review items that were held back from the first pass because they were
+decisions rather than defects, and because they turn out to be the same
+question: **how finished is the access-entry migration?**
+
+**The ConfigMap path was still open.** The layer never set
+`authentication_mode`, and the module default is `API_AND_CONFIG_MAP` in
+v20.37.2 and v21.25.0 alike — so the change that migrated `aws-auth` to access
+entries still shipped a cluster that honoured an `aws-auth` ConfigMap. This is
+sharper after the migration than before it: the layer dropped its `kubernetes`
+provider along with `aws-auth`, so a hand-edited ConfigMap now grants
+cluster-admin through a path this code cannot read, plan or correct. Before, it
+was at least Terraform-managed.
+
+`authentication_mode = "API"` closes it. Three things worth recording:
+
+- **The one-way constraint runs the other way.** A cluster created without
+  `CONFIG_MAP` can never have it enabled; `API_AND_CONFIG_MAP` -> `API` on an
+  existing cluster is allowed and is an in-place `UpdateClusterConfig`. So this
+  was never now-or-never, and it was applied to the *running* cluster —
+  `Plan: 0 to add, 2 to change, 0 to destroy`, no replacement.
+- **`aws-auth` is a worse escape hatch than the thing it guards.** Editing that
+  ConfigMap already requires working cluster access; `eks:CreateAccessEntry` +
+  `eks:AssociateAccessPolicy` from the AWS API requires neither cluster access
+  nor the VPN. The lockout recovery in `API` mode is strictly better.
+- **Node join does not go through it.** The module creates an access entry per
+  node group role, visible in `aws eks list-access-entries` next to the two
+  human ones, so closing `CONFIG_MAP` cannot strand the nodes. Worth checking
+  before flipping this on any cluster.
+
+The ConfigMap object itself is still there afterwards — EKS creates it when
+nodes join under the old mode — but it is inert. Do not read its presence as
+the setting having failed to apply; read `accessConfig.authenticationMode`.
+
+**And the log group had nothing in it.** All three `enabled_log_types` were
+commented out, so the control plane emitted nothing, while the log group was
+created anyway: it is gated on `create_cloudwatch_log_group` (default `true`),
+not on the list being non-empty, and `aws_eks_cluster` even takes a `depends_on`
+on it. So `cloudwatch_log_group_retention_in_days = 7` read as "we keep 7 days
+of control-plane logs" when there were none to keep.
+
+`authenticator` is now on, and it is on *because of* the change above:
+it is the log that records who authenticated through an access entry, which
+after `API` is the only way into this cluster's API. Leaving it off would have
+meant changing the authorisation model and keeping no evidence of the new path
+being used. Verified rather than assumed — within a couple of minutes of the
+apply the stream carried the SSO DevOps role's `STS response` lines, i.e. the
+access-entry path being exercised.
+
+`api` and `audit` stay off: they are the expensive two by an order of magnitude
+and nothing here reads them. Turn them on for an incident, not by default.
+
 ### The GitOps workloads, and five things a plan cannot catch
 
 Day 11 added the two demo apps that had been sitting in `k8s-workloads` behind
@@ -1082,6 +1138,14 @@ moving on to the layer that removes external-dns. Which objects those are:
 
 Then the rest, in reverse dependency order: `k8s-components` → `addons` ->
 `identities` → `cluster` → `network`.
+
+**Do not interrupt the `cluster` destroy.** It runs past ten minutes, and a
+SIGTERM leaves OpenTofu shutting down gracefully *and* the DynamoDB lock behind,
+so the next attempt fails with `Error acquiring the state lock`. Recovery is
+`leverage tofu force-unlock <LOCK_ID>` and re-running — note the wrapper takes
+the ID as a positional argument, **not** `-force <ID>`, and it prompts for
+confirmation, so pipe `yes` into it when running unattended. Check no `tofu`
+process is alive first; the lock is only stale if nothing holds it.
 
 **`secrets` is not part of that chain.** It holds one Secrets Manager entry
 costing about USD 0.40/month and nothing else depends on it, so the cheap and

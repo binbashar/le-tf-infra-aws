@@ -14,6 +14,30 @@ module "cluster" {
   enable_cluster_creator_admin_permissions = false
   access_entries                           = local.access_entries
 
+  # Access entries are the only access path this layer manages, so the other one
+  # is closed rather than left at the module default of `API_AND_CONFIG_MAP`.
+  # Without this a layer that no longer even has a `kubernetes` provider would
+  # still ship a cluster honouring an `aws-auth` ConfigMap: anyone editing it by
+  # hand grants cluster-admin through a path this code cannot read, plan or
+  # correct.
+  #
+  # ONE-WAY, but not in the direction that matters here. A cluster created
+  # without `CONFIG_MAP` can never have it enabled; going `API_AND_CONFIG_MAP`
+  # -> `API` on an existing cluster is allowed, and is an in-place
+  # `UpdateClusterConfig`. So this was safe to defer and is safe to apply to a
+  # running cluster -- it was applied to this one in place, not on a re-create.
+  #
+  # The obvious worry, that `aws-auth` is a lockout escape hatch, does not hold:
+  # editing that ConfigMap already requires working cluster access, whereas
+  # `eks:CreateAccessEntry` + `eks:AssociateAccessPolicy` from the AWS API
+  # requires neither cluster access nor the VPN. The recovery route in `API`
+  # mode is strictly the better one.
+  #
+  # Safe here specifically because nothing depends on the ConfigMap: both node
+  # group roles appear as access entries of their own (the module creates them),
+  # so node join does not go through `aws-auth`.
+  authentication_mode = "API"
+
   # Widened from the module default of 30s.
   #
   # This is the *only* thing holding the node groups back until the VPC CNI
@@ -169,11 +193,26 @@ module "cluster" {
     })
   }
 
-  # Configure which log types should be enabled and how long they should be kept for
+  # Configure which log types should be enabled and how long they should be kept for.
+  #
+  # This list used to be empty while the retention below was set, which read as
+  # "we keep 7 days of control-plane logs" when there were none to keep: the log
+  # group is created regardless, gated on `create_cloudwatch_log_group` (default
+  # true) rather than on this list being non-empty.
+  #
+  # `authenticator` is on because it is the log that records **who authenticated
+  # through an access entry**. With `authentication_mode = "API"` above, access
+  # entries are the only way into this cluster's API, and without this log there
+  # is no evidence of that path ever being used -- an odd gap to leave right
+  # after changing the authorisation model.
+  #
+  # `api` and `audit` stay off: they are the expensive two by an order of
+  # magnitude, and nothing here reads them. Turn them on for an incident, not by
+  # default.
   enabled_log_types = [
     # "api",
     # "audit",
-    # "authenticator",
+    "authenticator",
   ]
   cloudwatch_log_group_retention_in_days = var.cluster_log_retention_in_days
 
