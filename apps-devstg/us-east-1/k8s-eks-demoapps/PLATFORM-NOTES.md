@@ -22,7 +22,12 @@ there. That topology is:
 The perimeter is meant to stay recognisable; the data plane is what changes.
 **Reintroducing nginx here is never an option** — replacing it is the point.
 
-**Current state (2026-09-03).** Torn down, after a re-spin that brought the two
+**Current state (2026-09-05).** **Up**, re-spun to validate the PR #1157 review
+items against a real cluster. All seven layers plan `No changes`; both demo apps
+`Synced`/`Healthy`; checkout, vote and both gateways verified. The 2026-09-03
+entry below describes the run that first brought the apps up.
+
+**Previously (2026-09-03).** Torn down, after a re-spin that brought the two
 GitOps demo apps — **emojivoto** and **google-microservices** — into service
 alongside echo-server, which had been the only workload since the Day 6 trim.
 That took Argo CD, Argo Rollouts and External Secrets back on, and added a
@@ -60,6 +65,7 @@ below for what re-attaching costs.
 | 8 | 2026-08-10 | Re-spun from scratch, then torn down again. **AWS WAF attached to the ALB, verified, then detached and destroyed** — backlog item 4 closed. **Managed add-ons caught up to 1.34**, `vpc-cni` stepwise. **nginx-ingress removed from the code.** |
 | 9 | 2026-08-28 | Re-spun to verify the PR #1136 review items. **Component HTTPRoutes moved onto the charts' native keys.** ACME endpoint made switchable; Secret preservation proven. Torn down again, both DNS zones clean. |
 | 10 | 2026-09-01 | **`terraform-aws-eks` v20.37.2 → v21.25.0**, `aws-auth` → access entries, AWS provider → 6.x. Three latent no-op inputs fixed. Re-spun end to end to validate it — both routes 200, zero drift on all six layers — then torn down. Three defects found that no plan could catch. Then the **VPC CNI's IRSA role moved into the `cluster` layer**, so the CNI stops borrowing the node instance role and `AmazonEKS_CNI_Policy` comes off it entirely. |
+| 12 | 2026-09-05 | Re-spun to validate the PR #1157 review items: CNI version **pinned**, `dataplane_wait_duration` widened, the dead `use_managed_addons` hook removed, the SSO lookup anchored and asserted, IRSA tags restored. Both demo apps `Synced`/`Healthy` **on the first pass** — no hard refresh needed once `controller.diff.server.side` ships from the start. |
 | 11 | 2026-09-03 | **emojivoto and google-microservices brought up**, the first workloads here delivered by Argo CD rather than by Terraform. Argo CD, Argo Rollouts and External Secrets back on; the `secrets` layer joins the spin. Five defects found, all apply-only. Torn down again — three-stage DNS pause, both zones clean. |
 
 ---
@@ -515,16 +521,28 @@ self-managed daemonsets into managed add-ons.
 Under v21 that ordering deadlocks. Observed: `aws eks list-addons` returned `[]`,
 three instances came up and sat there, and both node groups blocked at
 `Still creating...` for 16 minutes, because a node cannot reach `Ready` without a
-CNI. They would have burned their full create timeout and failed.
+CNI. **The shape to recognise is a node group still creating past ~5 minutes**:
+the module sets no `timeouts`, so the AWS provider default of **60m** applies and
+nothing fails until an hour in. Check `aws eks list-addons` rather than waiting.
 
 The CNI is now installed from the `cluster` layer via `local.bootstrap_addons`
 with **`before_compute = true`**, which the module routes to
-`aws_eks_addon.before_compute` — created ahead of the node groups.
-`most_recent = false` is set explicitly, because that default flipped to `true`
-in v21 and would otherwise resolve the newest published CNI on every apply
-instead of the default for the cluster's Kubernetes version — unwanted drift on
-the one add-on that has needed stepwise upgrades here before (see "The add-ons
-were left three minors behind").
+`aws_eks_addon.before_compute`.
+
+**It carries an explicit `addon_version`, and `most_recent = false` is not a
+substitute for one.** `most_recent` only chooses *which* version the module
+resolves — `false` picks the default for the cluster's Kubernetes version rather
+than the newest published — it does not stop the resolution. Either way the
+module writes the resolved string into the resource
+(`addon_version = coalesce(each.value.addon_version,
+data.aws_eks_addon_version.this[each.key].version)`, upstream `main.tf:860`) from
+a data source that is re-read on every plan. AWS revises the default for a given
+Kubernetes version over time, so without a pin the next plan after such a
+revision upgrades the CNI in place, riding on whatever unrelated change is being
+applied that day — on the one add-on that has needed stepwise upgrades here
+before (see "The add-ons were left three minors behind"). The pin restores the
+property the `addons` layer already had: *"pinning them buys reproducibility
+rather than costing correctness."*
 
 **And its IRSA role moved into this layer too** (`cluster/irsa-vpc-cni.tf`),
 which is the part worth understanding, because it is not where the convention
@@ -539,17 +557,71 @@ exactly what AWS tells you not to do, and it was a regression against the
 pre-v21 setup, where the `addons` layer *did* give the CNI its own role.
 
 The constraint looked structural and was not. A role in `identities` is a role
-the bootstrap add-on can never reference on a fresh cluster — that circularity is
-what the three-step `use_managed_addons` dance was working around. Putting the
-role in the cluster layer collapses it into one chain OpenTofu orders by itself:
+the bootstrap add-on can never reference on a fresh cluster — the way that was
+worked around before v21 was simply to install the CNI from the `addons` layer,
+which runs after `identities`, and to let the node role carry the policy in the
+meantime. (There *was* a `use_managed_addons` toggle in `cluster/locals.tf`
+described as solving this in three applies; it never worked — its map was empty,
+so the flag did nothing at any value. It has been removed rather than repaired,
+since the problem it described is gone.) Putting the role in the cluster layer
+collapses the IAM half into one chain OpenTofu orders by itself:
 
 ```text
-cluster + OIDC provider  ->  IRSA role  ->  vpc-cni add-on  ->  node groups
+cluster + OIDC provider  ->  IRSA role  ->  vpc-cni add-on
 ```
 
 One apply, no dance, and `aws-node` has scoped credentials from the first second
 the cluster exists — so `iam_role_attach_cni_policy` is now **`false`** and the
 node role never carries CNI permissions at all.
+
+**That chain stops at the add-on. It does not reach the node groups, and
+`before_compute` does not make it.** This is the one thing in this section most
+worth getting right, because the natural reading is that the module orders the
+node groups after the add-on, and it does not:
+
+- `node_groups.tf` contains **no `depends_on`** — zero, for the whole file.
+- The node groups' only upstream reference is
+  `cluster_name = time_sleep.this[0].triggers["name"]`, and that `time_sleep`
+  triggers on `aws_eks_cluster.this[0]` attributes **only**. Nothing in it
+  mentions `aws_eks_addon.before_compute`.
+- Upstream's own comment calls it a *"timed gap … to give addons that need to be
+  configured BEFORE data plane compute resources enough time"*.
+
+So the real graph is two branches racing from the cluster, arbitrated by
+`var.dataplane_wait_duration` — **30s by default**:
+
+```text
+aws_eks_cluster ─┬─> time_sleep (dataplane_wait_duration) ──> CreateNodegroup
+                 └─> tls_certificate -> OIDC provider -> IRSA role -> CreateAddon
+```
+
+It works because creating an add-on is short against a multi-minute node-group
+create. But note what this section just did to the lower branch: it put three
+more round trips in front of `CreateAddon`, one of them an IAM create, while the
+timer still starts ticking at cluster creation. **The fix for defect #1 spent
+some of the margin the default assumed.** Two clean re-spins do not bound that —
+a race that only loses under IAM latency is the kind that surfaces on someone
+else's tenth apply and looks exactly like defect #1 again.
+
+`dataplane_wait_duration = "60s"` is set here for that reason. It widens the
+margin; it cannot make the race impossible, because the module exposes no edge
+that would. **Do not shorten it to speed up a spin.**
+
+Measured on the Day 12 spin, since the margin is the whole argument: the cluster
+went `ACTIVE` at 21:46:31 UTC and `aws_eks_addon.before_compute` reported
+`createdAt` 21:46:45 — **14 seconds** for OIDC provider + IRSA role + CreateAddon,
+against a 60s timer. Under the module's 30s default the same branch would have
+had 16 seconds to spare. That is the number to re-measure if this branch ever
+grows another hop.
+
+A second, narrower gap in the same family: the add-on depends on the IRSA
+*role*, because `module.irsa_vpc_cni.iam_role_arn` is
+`try(aws_iam_role.this[0].arn, "")` — not on the
+`aws_iam_role_policy_attachment` carrying `AmazonEKS_CNI_Policy`, which is its
+sibling. So there is a window where `aws-node` can assume a role that has no ENI
+permissions yet, and with `iam_role_attach_cni_policy = false` the node role no
+longer covers it. Self-healing via the CNI's own retry, and never observed here
+— but it is why the role timing looked suspiciously clean.
 
 One subtlety in `irsa-vpc-cni.tf`, since it looks like a pointless indirection:
 `provider_url` is derived from `module.cluster.oidc_provider_arn` rather than from
@@ -650,12 +722,80 @@ these; the third came out of reading the plan.
 
 #### Also worth knowing
 
-Two other v21 defaults are left alone but written down in `cluster/variables.tf`:
-`use_latest_ami_release_version` is now `true`, so an apply following an AWS AMI
-release will roll the nodes; and `enable_monitoring` is now `false`, which is
-what this cluster wants. `control_plane_egress_mode` — the one-way switch for
+Three other v21 defaults are left alone but written down in
+`cluster/variables.tf`: `use_latest_ami_release_version` is now `true`, so an
+apply following an AWS AMI release will roll the nodes; `enable_monitoring` is
+now `false`, which is what this cluster wants; and
+`enable_security_groups_for_pods` **no longer exists**, so the cluster role is no
+longer granted `AmazonEKSVPCResourceController` and Security Groups for Pods is
+unavailable until that policy is added back through
+`iam_role_additional_policies`. Nothing here sets `ENABLE_POD_ENI`, so the
+capability was never in use. `control_plane_egress_mode` — the one-way switch for
 routing control-plane egress through your own VPC — becomes available in v21 but
 is deliberately not touched here.
+
+#### If your cluster is live: what this section does NOT cover
+
+Everything above was learned on a **greenfield create**, because this stack is
+torn down between runs. A client project hitting v21 on a running cluster is on a
+different path, and the difference inverts defect #1 rather than merely adding to
+it. This is written from the module source, **not** rehearsed here — there is no
+live v20 cluster to try it on — so treat it as a checklist to verify, not as a
+validated runbook.
+
+**Defect #1 does not happen to you.** v21 hardcodes
+`bootstrap_self_managed_addons = false`, but it also lists that attribute in
+`lifecycle.ignore_changes` (upstream `main.tf:240`). An existing cluster keeps
+whatever it was created with, so the self-managed add-ons stay, nodes keep
+joining, and there is no deadlock.
+
+**What breaks you is this section's fix for it.** Four hazards, in the order they
+bite:
+
+1. **The CNI add-on exists twice.** `vpc-cni` is already in the `addons` layer's
+   state as `aws_eks_addon.this["vpc-cni"]`. Apply this diff in place and
+   `cluster` tries to create an add-on that exists (`ResourceInUseException`)
+   while `addons` plans to **destroy the running CNI**. Move it before applying
+   either layer — note the target resource is `before_compute`, not `this`:
+
+   ```bash
+   # in addons/
+   tofu state rm 'aws_eks_addon.this["vpc-cni"]'
+   # in cluster/
+   tofu import 'module.cluster.aws_eks_addon.before_compute["vpc-cni"]' '<cluster-name>:vpc-cni'
+   ```
+
+2. **The IRSA swap has an order.** Deleting `identities/ids_eks_addons_vpc_cni.tf`
+   in the same pass destroys the role `aws-node` is currently annotated with.
+   Apply `cluster` first (creates the new role, repoints the add-on), confirm the
+   `aws-node` service account annotation actually flipped, and only then apply
+   `identities`. `iam_role_attach_cni_policy = false` must not land before that
+   confirmation, or pod networking loses its credentials with nothing to fall
+   back on.
+
+3. **The cluster-creator access entry gets re-keyed.** Under v20 with
+   `enable_cluster_creator_admin_permissions = true`, state holds
+   `module.cluster.aws_eks_access_entry.this["cluster_creator"]` and
+   `...aws_eks_access_policy_association.this["cluster_creator_admin"]`. This
+   change turns that bootstrap off and declares the same principal under
+   `sso_devops` / `sso_devops_admin`. Different `for_each` keys mean independent
+   destroy and create with no ordering between them, and EKS allows one access
+   entry per principal — so the create can be attempted while the old one still
+   exists and fail with `ResourceInUseException`. Either keep the map key as
+   `cluster_creator`, or state-move both addresses first:
+
+   ```bash
+   tofu state mv 'module.cluster.aws_eks_access_entry.this["cluster_creator"]' \
+                 'module.cluster.aws_eks_access_entry.this["sso_devops"]'
+   tofu state mv 'module.cluster.aws_eks_access_policy_association.this["cluster_creator_admin"]' \
+                 'module.cluster.aws_eks_access_policy_association.this["sso_devops_admin"]'
+   ```
+
+4. **Two things roll or detach that a greenfield plan cannot show you.**
+   `block_device_mappings` is a new launch template version, so **both managed
+   node groups roll** — 20 GiB → 50 GiB is the point of it, but it is a node
+   replacement, not a no-op. And the `enable_security_groups_for_pods` removal
+   above plans an `iam:DetachRolePolicy` on the cluster role.
 
 ### DNS cutovers: hide the old backend, do not delete it
 

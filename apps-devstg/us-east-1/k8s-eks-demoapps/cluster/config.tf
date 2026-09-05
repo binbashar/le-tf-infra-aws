@@ -36,9 +36,34 @@ terraform {
 # Resolves the IAM Identity Center DevOps permission set role, whose name suffix
 # is generated and changes whenever the permission set is recreated. See
 # `local.sso_devops_role_arn`.
+#
+# The regex is anchored, and the count is asserted, because `local.sso_devops_role_arn`
+# reduces this with `one()` and both of its failure modes are illegible:
+#
+#   - **No match** -> `one()` returns `null`, `principal_arn = null` reaches
+#     `aws_eks_access_entry`, and the apply fails with a provider-level
+#     invalid-argument error naming neither this data source nor the permission
+#     set. That is a live possibility, not a hypothetical: the DevOps assignment
+#     for this account is made in `management/global/sso` -- a different layer,
+#     in a different account, applied by someone else. Remove or re-scope it and
+#     this apply breaks with no clue as to why.
+#   - **Two or more matches** -> a bare cardinality error. Unanchored,
+#     `AWSReservedSSO_DevOps_.*` would also match a future `DevOps_ReadOnly`
+#     permission set. There is exactly one `DevOps` set today, so the anchor is
+#     a guard against a name that does not exist yet.
+#
+# The anchored form also documents the shape the comment above describes: the
+# suffix IAM Identity Center generates is hex.
 data "aws_iam_roles" "sso_devops" {
-  name_regex  = "AWSReservedSSO_DevOps_.*"
+  name_regex  = "^AWSReservedSSO_DevOps_[0-9a-f]+$"
   path_prefix = "/aws-reserved/sso.amazonaws.com/"
+
+  lifecycle {
+    postcondition {
+      condition     = length(self.arns) == 1
+      error_message = "Expected exactly one AWSReservedSSO_DevOps_* role in this account, found ${length(self.arns)}. Check that the DevOps permission set is still assigned to apps-devstg in management/global/sso."
+    }
+  }
 }
 
 data "terraform_remote_state" "cluster-vpc" {

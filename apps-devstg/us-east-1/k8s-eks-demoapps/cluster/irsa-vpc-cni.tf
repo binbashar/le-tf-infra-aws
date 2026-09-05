@@ -8,18 +8,31 @@
 # The CNI has to be installed *before* the nodes (see `local.bootstrap_addons`),
 # because a node cannot reach `Ready` without it. `identities` runs *after* the
 # cluster. So a CNI role in `identities` is a role the bootstrap add-on can never
-# reference on a fresh cluster — that circularity is what the three-step
-# `use_managed_addons` dance at the bottom of `locals.tf` was working around, and
-# it is why the CNI ran on the node instance role at all.
+# reference on a fresh cluster — the way that was worked around before was to
+# install the CNI from the `addons` layer, which runs after `identities`, and to
+# let the node instance role carry `AmazonEKS_CNI_Policy` in the meantime. v21
+# closed that route: the CNI now has to come up with the cluster.
 #
-# Keeping it in this layer collapses the whole thing into one dependency chain
-# that OpenTofu can order by itself:
+# Keeping the role in this layer gives `aws-node` its own scoped credentials
+# from the very first second the cluster exists, and lets the node instance role
+# drop `AmazonEKS_CNI_Policy` entirely (see `iam_role_attach_cni_policy` in
+# `locals.tf`).
 #
-#   cluster + OIDC provider -> this role -> vpc-cni add-on -> node groups
+# WHAT IS AND IS NOT ORDERED. There is a real dependency chain from the cluster
+# to the add-on, because each link passes a value to the next:
 #
-# so `aws-node` has its own scoped credentials from the very first second the
-# cluster exists, and the node instance role never needs `AmazonEKS_CNI_Policy`
-# (see `iam_role_attach_cni_policy` in `locals.tf`).
+#   cluster -> OIDC provider -> this role -> vpc-cni add-on
+#
+# There is **no** edge from the add-on to the node groups. `before_compute` does
+# not create one: the module gives the node groups
+# `cluster_name = time_sleep.this[0].triggers["name"]`, and that `time_sleep`
+# triggers on the *cluster's* attributes only — nothing in it references
+# `aws_eks_addon.before_compute`, and `node_groups.tf` contains no `depends_on`
+# at all. `before_compute` is a **timed gap**, `var.dataplane_wait_duration`,
+# and upstream says so in the comment above that resource. The two branches race
+# from the cluster; it works because creating an add-on is short against a
+# multi-minute node-group create. See `dataplane_wait_duration` in
+# `eks-workers-managed.tf` for why that margin is widened here.
 #
 # NOTE the `provider_url` derivation. IAM rejects a trust policy naming an OIDC
 # provider that does not exist yet, and `cluster_oidc_issuer_url` is read off the
@@ -43,5 +56,19 @@ module "irsa_vpc_cni" {
     "system:serviceaccount:kube-system:aws-node"
   ]
 
-  tags = local.tags
+  # `local.tags` in this layer is not the same set as in `identities`, where the
+  # other eleven IRSA roles live: it carries `Project` but not `Purpose`,
+  # `Cluster` or `Subject`. Restored here so this role stays greppable and
+  # cost-attributable alongside its siblings rather than becoming the odd one
+  # out for having moved layers.
+  #
+  # The role NAME does diverge from the `${environment}-${prefix}-*` shape those
+  # siblings use, and that is deliberate: it is built from the real cluster name,
+  # which is the thing this role is actually scoped to, and the `${prefix}`
+  # convention belongs to the layer it no longer lives in.
+  tags = merge(local.tags, {
+    Purpose = "eks-oidc"
+    Cluster = data.terraform_remote_state.cluster-vpc.outputs.cluster_name
+    Subject = "vpc-cni"
+  })
 }

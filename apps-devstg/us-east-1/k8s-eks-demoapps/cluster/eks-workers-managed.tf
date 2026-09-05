@@ -14,6 +14,25 @@ module "cluster" {
   enable_cluster_creator_admin_permissions = false
   access_entries                           = local.access_entries
 
+  # Widened from the module default of 30s.
+  #
+  # This is the *only* thing holding the node groups back until the VPC CNI
+  # exists, and it is a timer rather than an edge: the module hands the node
+  # groups `cluster_name = time_sleep.this[0].triggers["name"]`, and that
+  # `time_sleep` triggers on the cluster's own attributes -- it never references
+  # `aws_eks_addon.before_compute`, and `node_groups.tf` carries no `depends_on`.
+  # So two branches race from the cluster, and the add-on branch has to finish
+  # first or the nodes come up with no CNI and sit `NotReady` (the v20 -> v21
+  # defect this layer exists to avoid).
+  #
+  # 30s was sized for `cluster -> CreateAddon`. This layer's add-on branch is
+  # longer than that: `tls_certificate` -> OIDC provider -> the IRSA role in
+  # `irsa-vpc-cni.tf` -> the add-on, three extra round trips including an IAM
+  # create. Widening the gap does not make the race impossible -- only a real
+  # edge would, and the module does not expose one -- but it restores the margin
+  # the default assumed. Do NOT shorten this to speed up a spin.
+  dataplane_wait_duration = "60s"
+
   # Configure networking
   vpc_id     = data.terraform_remote_state.cluster-vpc.outputs.vpc_id
   subnet_ids = data.terraform_remote_state.cluster-vpc.outputs.private_subnets
@@ -160,11 +179,10 @@ module "cluster" {
 
   # EKS Managed Add-ons
   #
-  # `local.bootstrap_addons` holds only the VPC CNI, which has to exist before
-  # the nodes can join -- see the comment on that local. Everything else lives
-  # in the `addons` layer. `local.addons_enabled` is the (normally empty)
-  # opt-in hook described at the bottom of `locals.tf`.
-  addons = merge(local.bootstrap_addons, local.addons_enabled)
+  # Only the VPC CNI, which has to exist before the nodes can join -- see the
+  # comment on that local. Everything else lives in the `addons` layer, which
+  # runs after `identities` and so can reference the IRSA roles it creates.
+  addons = local.bootstrap_addons
 
   # Define tags (notice we are appending here tags required by the cluster autoscaler)
   tags = merge(local.tags,

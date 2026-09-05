@@ -159,7 +159,21 @@ resource "kubernetes_manifest" "demo-emojivoto" {
         # A public repo needs no credential at all, so this drops one rather
         # than reissuing it. The deploy-key path is still exercised — by
         # `demo_google_microservices.tf`, whose repository really is private.
-        "repoURL"        = "https://github.com/binbashar/le-demo-apps.git"
+        "repoURL" = "https://github.com/binbashar/le-demo-apps.git"
+        # Tracks the branch rather than pinning a revision, and that is the
+        # point of the app being here: this cluster exists to rehearse the
+        # GitOps loop, where a merge to the app repo is what reaches the
+        # cluster. Pinning a SHA would make every demo of that loop a two-repo
+        # change. `demo_google_microservices.tf` names `master` for the same
+        # reason; `HEAD` is the same thing spelled generically.
+        #
+        # This is safe *here* and would not be in a client's production app.
+        # What makes it safe is not that the repository is public — public means
+        # readable, not writable — but that it is a first-party binbash
+        # repository whose write access is the same set of people who review
+        # this layer, deploying a demo workload with no data behind it. Copy
+        # this file into a production stack and the revision should be pinned to
+        # a reviewed tag, with `selfHeal` reconsidered alongside it.
         "targetRevision" = "HEAD"
         "path"           = "emojivoto/kustomize/overlays/devstg"
 

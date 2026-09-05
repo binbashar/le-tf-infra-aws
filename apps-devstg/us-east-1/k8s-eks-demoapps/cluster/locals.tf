@@ -83,7 +83,12 @@ locals {
   # Under v21 that ordering deadlocks: a node cannot reach `Ready` without a
   # CNI, so the node groups block for their full create timeout and fail. So the
   # CNI is installed from here, with `before_compute = true`, which the module
-  # routes to `aws_eks_addon.before_compute` -- created ahead of the node groups.
+  # routes to `aws_eks_addon.before_compute`.
+  #
+  # `before_compute` buys a *head start*, not an ordering guarantee -- it is a
+  # timed gap (`dataplane_wait_duration`) rather than a dependency edge. See the
+  # "WHAT IS AND IS NOT ORDERED" note in `irsa-vpc-cni.tf`, and the
+  # `dataplane_wait_duration` argument in `eks-workers-managed.tf`.
   #
   # Only the CNI lives here; kube-proxy, CoreDNS and the EBS CSI driver do not
   # gate node readiness and stay in the `addons` layer, where they get pinned
@@ -93,16 +98,32 @@ locals {
   # `service_account_role_arn` points at a role created in THIS layer
   # (`irsa-vpc-cni.tf`), not in `identities` — read the comment there, it is the
   # whole reason the CNI gets its own identity instead of borrowing the node
-  # role's. No version pin -- the add-on resolves the default for the cluster's
-  # Kubernetes version, and the `addons` layer is where versions are chosen
-  # deliberately.
+  # role's. It is pinned, like the add-ons in the `addons` layer -- see the note
+  # on `addon_version` below for why `most_recent = false` is not a pin.
   bootstrap_addons = {
     vpc-cni = {
       before_compute = true
-      # `most_recent` defaults to TRUE in v21 (it was false in v20), which would
-      # resolve the newest published CNI on every apply rather than the default
-      # for this cluster's Kubernetes version -- unwanted drift on the one add-on
-      # that has needed stepwise upgrades here in the past.
+
+      # Pinned, for the same reason the `addons` layer pins its own two, and it
+      # has to be an explicit `addon_version` rather than `most_recent = false`.
+      #
+      # `most_recent` only chooses *which* version the module resolves: false
+      # picks the default for this cluster's Kubernetes version instead of the
+      # newest published one. It does not stop the resolution. The module writes
+      # the resolved string into the resource either way --
+      # `addon_version = coalesce(each.value.addon_version,
+      # data.aws_eks_addon_version.this[each.key].version)` (upstream
+      # `main.tf:860`) -- and that data source is re-read on every plan. AWS
+      # revises the default version for a given Kubernetes version over time, so
+      # without a pin the next plan after such a revision shows an add-on version
+      # change and the apply upgrades the CNI in place, on whatever unrelated
+      # change happens to be applied that day.
+      #
+      # `v1.22.4-eksbuild.3` is the current default for 1.34, so this pin is a
+      # no-op today -- it only removes the ambient upgrade. Keep `most_recent`
+      # false alongside it: it is what the resolution falls back to should the
+      # pin ever be removed.
+      addon_version               = "v1.22.4-eksbuild.3"
       most_recent                 = false
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
@@ -146,8 +167,19 @@ locals {
       xvda = {
         device_name = "/dev/xvda"
         ebs = {
-          volume_size           = 50
-          volume_type           = "gp3"
+          volume_size = 50
+          volume_type = "gp3"
+          # Belt-and-braces rather than the thing doing the work:
+          # `apps-devstg/us-east-1/security-base` sets
+          # `aws_ebs_encryption_by_default`, so these volumes are encrypted with
+          # or without this line. Kept explicit because it documents the intent
+          # and does not depend on another layer staying applied.
+          #
+          # No `kms_key_id`, so they land on the account default, which is
+          # `alias/aws/ebs` -- there is no `aws_ebs_default_kms_key` in the
+          # account. That differs from the control plane two blocks up, which is
+          # on the account CMK, and the asymmetry is deliberate at the account
+          # baseline rather than something to re-litigate here.
           encrypted             = true
           delete_on_termination = true
         }
@@ -174,20 +206,14 @@ locals {
     iam_role_attach_cni_policy = false
   }
 
-  # ---------------------------------------------------------------------------
-  # IMPORTANT
-  # ---------------------------------------------------------------------------
-  # If you plan to use EKS managed add-ons keep in mind that some add-ons rely
-  # on IAM roles which need to be created/updated for them to work. Said roles
-  # are defined in the "identities" layer which needs to be applied only after
-  # the cluster is up and running. You can orchestrate that execution in that
-  # order by toggling the "use_managed_addons" variable in "variables.tf".
-  # Said execution order should go as follows:
-  #   1. Apply this layer
-  #   2. Apply the identities layers
-  #   3. Enable the "use_managed_addons" variable and apply this layer again
-  # ---------------------------------------------------------------------------
-  addons_available = {
-  }
-  addons_enabled = var.use_managed_addons ? local.addons_available : {}
+  # `addons_available` / `addons_enabled` / `var.use_managed_addons` used to sit
+  # here, described as a three-step dance for add-ons that need an IRSA role
+  # from the `identities` layer: apply this layer, apply `identities`, then flip
+  # the variable and apply again. It was never implemented -- `addons_available`
+  # was an empty map, so `addons_enabled` was `{}` under both branches of the
+  # conditional and the variable had no effect at any value. Removed rather than
+  # completed, because the problem it described is gone: the one add-on that
+  # needed a role before the nodes exist now gets it from `irsa-vpc-cni.tf` in
+  # this layer, and everything else is declared in `addons`, which runs after
+  # `identities` and can just reference it.
 }

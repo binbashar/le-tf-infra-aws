@@ -20,6 +20,12 @@
 apps-devstg/us-east-1/k8s-eks-demoapps/cluster/metadata.yaml
 !.mcp.json
 !.claude
+# ...but never the runtime state a tool drops inside one. `!.claude` un-ignores
+# the whole directory at any depth, so a scheduler lock carrying a PID and a
+# session id became committable and rode along on an unrelated branch. Two stars
+# because a pattern containing `/` is anchored to this file's directory, and
+# these directories are per-layer.
+**/.claude/*.lock
 
 # SSH keys #
 ############
