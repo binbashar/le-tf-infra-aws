@@ -68,8 +68,8 @@ below for what re-attaching costs.
 | 8 | 2026-08-10 | Re-spun from scratch, then torn down again. **AWS WAF attached to the ALB, verified, then detached and destroyed** — backlog item 4 closed. **Managed add-ons caught up to 1.34**, `vpc-cni` stepwise. **nginx-ingress removed from the code.** |
 | 9 | 2026-08-28 | Re-spun to verify the PR #1136 review items. **Component HTTPRoutes moved onto the charts' native keys.** ACME endpoint made switchable; Secret preservation proven. Torn down again, both DNS zones clean. |
 | 10 | 2026-09-01 | **`terraform-aws-eks` v20.37.2 → v21.25.0**, `aws-auth` → access entries, AWS provider → 6.x. Three latent no-op inputs fixed. Re-spun end to end to validate it — both routes 200, zero drift on all six layers — then torn down. Three defects found that no plan could catch. Then the **VPC CNI's IRSA role moved into the `cluster` layer**, so the CNI stops borrowing the node instance role and `AmazonEKS_CNI_Policy` comes off it entirely. |
-| 12 | 2026-09-05 | **`aws-auth` closed for good** (`authentication_mode = "API"`) and `authenticator` logging turned on, both applied in place. Re-spun to validate the PR #1157 review items: CNI version **pinned**, `dataplane_wait_duration` widened, the dead `use_managed_addons` hook removed, the SSO lookup anchored and asserted, IRSA tags restored. Both demo apps `Synced`/`Healthy` **on the first pass** — no hard refresh needed once `controller.diff.server.side` ships from the start. |
 | 11 | 2026-09-03 | **emojivoto and google-microservices brought up**, the first workloads here delivered by Argo CD rather than by Terraform. Argo CD, Argo Rollouts and External Secrets back on; the `secrets` layer joins the spin. Five defects found, all apply-only. Torn down again — three-stage DNS pause, both zones clean. |
+| 12 | 2026-09-05 | **`aws-auth` closed for good** (`authentication_mode = "API"`) and `authenticator` logging turned on, both applied in place. Re-spun to validate the PR #1157 review items: CNI version **pinned**, `dataplane_wait_duration` widened, the dead `use_managed_addons` hook removed, the SSO lookup anchored and asserted, IRSA tags restored. Both demo apps `Synced`/`Healthy` **on the first pass** — no hard refresh needed once `controller.diff.server.side` ships from the start. |
 
 ---
 
@@ -746,11 +746,17 @@ it. This is written from the module source, **not** rehearsed here — there is 
 live v20 cluster to try it on — so treat it as a checklist to verify, not as a
 validated runbook.
 
-**Defect #1 does not happen to you.** v21 hardcodes
+**Defect #1 most likely does not happen to you.** v21 hardcodes
 `bootstrap_self_managed_addons = false`, but it also lists that attribute in
-`lifecycle.ignore_changes` (upstream `main.tf:240`). An existing cluster keeps
-whatever it was created with, so the self-managed add-ons stay, nodes keep
-joining, and there is no deadlock.
+`lifecycle.ignore_changes` (upstream `main.tf:240`), so the bump does not change
+what an existing cluster was created with. If that cluster was created with the
+AWS default — which is what a v20 layer omitting the argument gets — its
+self-managed add-ons are still there, nodes keep joining, and there is no
+deadlock. `ignore_changes` preserves the setting; it does not conjure add-ons.
+A v20 cluster created with the bootstrap explicitly disabled has none, and that
+one *is* exposed to the deadlock if its CNI comes from a layer applied after the
+node groups — check `aws eks list-addons` and how yours gets its CNI before
+assuming which case you are in.
 
 **What breaks you is this section's fix for it.** Four hazards, in the order they
 bite:
@@ -1175,7 +1181,9 @@ external-dns is still alive:
    **component** hostnames (`argocd`, `rollouts`), six records, published by the
    charts' own `httproute` keys.
 
-Poll the private zone empty after each. Only then the full `k8s-components`
+After each stage, poll until **that stage's** records are gone — not until the
+zone is empty. The private zone permanently holds an unrelated `vpn` A record,
+so a literal "wait for empty" never returns. Only then the full `k8s-components`
 destroy, which is what takes external-dns with it. Both zones came out clean:
 the private zone back to nothing but the unrelated `vpn` A record, the public
 one back to the known-inert `a-echo-server` TXT.
