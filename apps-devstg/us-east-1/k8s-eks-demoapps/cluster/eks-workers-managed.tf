@@ -1,24 +1,73 @@
 module "cluster" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v20.37.2"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v21.25.0"
 
-  create          = true
-  cluster_name    = data.terraform_remote_state.cluster-vpc.outputs.cluster_name
-  cluster_version = var.cluster_version
-  enable_irsa     = true
+  create             = true
+  name               = data.terraform_remote_state.cluster-vpc.outputs.cluster_name
+  kubernetes_version = var.cluster_version
+  enable_irsa        = true
 
-  enable_cluster_creator_admin_permissions = true
+  # Configure which roles can access the k8s API.
+  #
+  # Access entries replace the `aws-auth` ConfigMap, whose submodule was removed
+  # in v21. See `locals.tf` for the entries themselves and for why the cluster
+  # creator bootstrap is deliberately off rather than on.
+  enable_cluster_creator_admin_permissions = false
+  access_entries                           = local.access_entries
+
+  # Access entries are the only access path this layer manages, so the other one
+  # is closed rather than left at the module default of `API_AND_CONFIG_MAP`.
+  # Without this a layer that no longer even has a `kubernetes` provider would
+  # still ship a cluster honouring an `aws-auth` ConfigMap: anyone editing it by
+  # hand grants cluster-admin through a path this code cannot read, plan or
+  # correct.
+  #
+  # ONE-WAY, but not in the direction that matters here. A cluster created
+  # without `CONFIG_MAP` can never have it enabled; going `API_AND_CONFIG_MAP`
+  # -> `API` on an existing cluster is allowed, and is an in-place
+  # `UpdateClusterConfig`. So this was safe to defer and is safe to apply to a
+  # running cluster -- it was applied to this one in place, not on a re-create.
+  #
+  # The obvious worry, that `aws-auth` is a lockout escape hatch, does not hold:
+  # editing that ConfigMap already requires working cluster access, whereas
+  # `eks:CreateAccessEntry` + `eks:AssociateAccessPolicy` from the AWS API
+  # requires neither cluster access nor the VPN. The recovery route in `API`
+  # mode is strictly the better one.
+  #
+  # Safe here specifically because nothing depends on the ConfigMap: both node
+  # group roles appear as access entries of their own (the module creates them),
+  # so node join does not go through `aws-auth`.
+  authentication_mode = "API"
+
+  # Widened from the module default of 30s.
+  #
+  # This is the *only* thing holding the node groups back until the VPC CNI
+  # exists, and it is a timer rather than an edge: the module hands the node
+  # groups `cluster_name = time_sleep.this[0].triggers["name"]`, and that
+  # `time_sleep` triggers on the cluster's own attributes -- it never references
+  # `aws_eks_addon.before_compute`, and `node_groups.tf` carries no `depends_on`.
+  # So two branches race from the cluster, and the add-on branch has to finish
+  # first or the nodes come up with no CNI and sit `NotReady` (the v20 -> v21
+  # defect this layer exists to avoid).
+  #
+  # 30s was sized for `cluster -> CreateAddon`. This layer's add-on branch is
+  # longer than that: `tls_certificate` -> OIDC provider -> the IRSA role in
+  # `irsa-vpc-cni.tf` -> the add-on, three extra round trips including an IAM
+  # create. Widening the gap does not make the race impossible -- only a real
+  # edge would, and the module does not expose one -- but it restores the margin
+  # the default assumed. Do NOT shorten this to speed up a spin.
+  dataplane_wait_duration = "60s"
 
   # Configure networking
   vpc_id     = data.terraform_remote_state.cluster-vpc.outputs.vpc_id
   subnet_ids = data.terraform_remote_state.cluster-vpc.outputs.private_subnets
 
   # Configure public/private cluster endpoints
-  cluster_endpoint_private_access = var.cluster_endpoint_private_access
-  cluster_endpoint_public_access  = var.cluster_endpoint_public_access
+  endpoint_private_access = var.cluster_endpoint_private_access
+  endpoint_public_access  = var.cluster_endpoint_public_access
 
   # Configure cluster inbound/outbound rules
-  create_cluster_security_group = var.create_cluster_security_group
-  cluster_security_group_additional_rules = {
+  create_security_group = var.create_cluster_security_group
+  security_group_additional_rules = {
     ingress_shared_vpc_443 = {
       description = "Shared VPC to Cluster API"
       protocol    = "tcp"
@@ -32,6 +81,11 @@ module "cluster" {
   }
 
   # Configure node inbound/outbound rules
+  #
+  # NOTE: `node_security_group_enable_recommended_rules` is left at its `true`
+  # default, so the module already installs the control-plane -> node webhook
+  # rules (4443, 6443, 8443, 9443), node-to-node ephemeral ingress and
+  # egress_all. Only the rules below are additional.
   node_security_group_additional_rules = {
     #
     # NOTE: these 2 rules below allow all communication between nodes.
@@ -42,7 +96,7 @@ module "cluster" {
     #
     ingress_self_all = {
       description = "Node to Node all ports & protocols"
-      protocol    = -1
+      protocol    = "-1"
       from_port   = 0
       to_port     = 0
       type        = "ingress"
@@ -50,7 +104,7 @@ module "cluster" {
     },
     egress_self_all = {
       description = "Node to Node all ports & protocols"
-      protocol    = -1
+      protocol    = "-1"
       from_port   = 0
       to_port     = 0
       type        = "egress"
@@ -63,84 +117,67 @@ module "cluster" {
   #
   # TODO Revisit this -- is it really needed?
   #
-  cluster_service_ipv4_cidr = "10.100.0.0/16"
+  service_ipv4_cidr = "10.100.0.0/16"
 
   # Encrypt selected k8s resources with this account's KMS CMK
   create_kms_key = false
-  cluster_encryption_config = {
+  encryption_config = {
     provider_key_arn = data.terraform_remote_state.keys.outputs.aws_kms_key_arn
     resources        = ["secrets"]
   }
 
-  # Define Managed Nodes Groups (MNG's) default settings
-  eks_managed_node_group_defaults = {
-    # Managed Nodes cannot specify custom AMIs, only use the ones allowed by EKS
-    ami_type  = var.ami_type
-    disk_size = 50
-    # Nitro-only: AL2023 (see var.ami_type) needs ENA + NVMe, so Xen generations
-    # like t2 are excluded — they would be accepted by the spot allocator and
-    # then fail to boot.
-    #
-    # The single source of truth for every node group: the module resolves each
-    # attribute as `try(each.value.X, eks_managed_node_group_defaults.X, ...)`
-    # (node_groups.tf:324 in v20.37.2), so a group only needs its own list to
-    # *differ* from this one.
-    instance_types = ["t3.medium", "t3a.medium", "m5.large", "m5a.large", "m6a.large", "m6i.large"]
-    k8s_labels     = local.tags
-    # IMPORTANT: setting this to true is only necessary during the initial bootstrap
-    # of the cluster, otherwise the built-in VPC CNI won't start. Then, after you get
-    # the VPC CNI add-on installed, you can set this to false.
-    iam_role_attach_cni_policy = true
-  }
-
   # Define all Managed Node Groups (MNG's)
+  #
+  # NOTE: v21 removed `eks_managed_node_group_defaults`, so the shared
+  # attributes come from `local.node_group_defaults` via `merge()` -- see the
+  # comment on that local. Keys set here override the shared value.
   eks_managed_node_groups = {
     # ---------------------------------------------------------------
     # Standard, On-demand, single node group across all AZs
     # ---------------------------------------------------------------
-    # standard_ondemand = {
+    # standard_ondemand = merge(local.node_group_defaults, {
     #   min_size       = 1
     #   max_size       = 6
     #   desired_size   = 1
     #   capacity_type  = "ON_DEMAND"
     #   instance_types = ["t3.medium"]
-    # }
+    # })
 
     # ---------------------------------------------------------------
     # Standard, On-demand, one node group per AZs (HA)
     # ---------------------------------------------------------------
-    # standard_ondemand_a = {
+    # standard_ondemand_a = merge(local.node_group_defaults, {
     #   min_size       = 1
     #   max_size       = 6
     #   desired_size   = 1
     #   capacity_type  = "ON_DEMAND"
     #   instance_types = ["t3.medium"]
-    #   subnet_ids   = [data.terraform_remote_state.eks-vpc.outputs.private_subnets[0]]
-    # }
-    # standard_ondemand_b = {
+    #   subnet_ids     = [data.terraform_remote_state.cluster-vpc.outputs.private_subnets[0]]
+    # })
+    # standard_ondemand_b = merge(local.node_group_defaults, {
     #   min_size       = 1
     #   max_size       = 6
     #   desired_size   = 1
     #   capacity_type  = "ON_DEMAND"
     #   instance_types = ["t3.medium"]
-    #   subnet_ids   = [data.terraform_remote_state.eks-vpc.outputs.private_subnets[1]]
-    # }
+    #   subnet_ids     = [data.terraform_remote_state.cluster-vpc.outputs.private_subnets[1]]
+    # })
 
     # ---------------------------------------------------------------
     # Standard, Spot, single node group across all AZs
     # ---------------------------------------------------------------
-    standard_spot = {
+    standard_spot = merge(local.node_group_defaults, {
       desired_size  = 2
       max_size      = 6
       min_size      = 2
       capacity_type = "SPOT"
       labels        = merge(local.tags, { "stack" = "standard" })
-    }
+    })
 
     # ---------------------------------------------------------------
     # Tools, Spot, single node group across all AZs
     # ---------------------------------------------------------------
-    tools_spot = {
+    tools_spot = merge(local.node_group_defaults, {
       desired_size  = 1
       max_size      = 6
       min_size      = 1
@@ -153,46 +190,44 @@ module "cluster" {
           effect = "NO_SCHEDULE"
         }
       }
-    }
+    })
   }
 
-  # Configure which roles, users and accounts can access the k8s api
-  #create_aws_auth_configmap = var.create_aws_auth
-  #manage_aws_auth_configmap = var.manage_aws_auth
-  #aws_auth_roles            = local.map_roles
-  #aws_auth_users            = local.map_users
-  #aws_auth_accounts         = local.map_accounts
-
-  # Configure which log types should be enabled and how long they should be kept for
-  cluster_enabled_log_types = [
+  # Configure which log types should be enabled and how long they should be kept for.
+  #
+  # This list used to be empty while the retention below was set, which read as
+  # "we keep 7 days of control-plane logs" when there were none to keep: the log
+  # group is created regardless, gated on `create_cloudwatch_log_group` (default
+  # true) rather than on this list being non-empty.
+  #
+  # `authenticator` is on because it is the log that records **who authenticated
+  # through an access entry**. With `authentication_mode = "API"` above, access
+  # entries are the only way into this cluster's API, and without this log there
+  # is no evidence of that path ever being used -- an odd gap to leave right
+  # after changing the authorisation model.
+  #
+  # `api` and `audit` stay off: they are the expensive two by an order of
+  # magnitude, and nothing here reads them. Turn them on for an incident, not by
+  # default.
+  enabled_log_types = [
     # "api",
     # "audit",
-    # "authenticator",
+    "authenticator",
   ]
   cloudwatch_log_group_retention_in_days = var.cluster_log_retention_in_days
 
   # EKS Managed Add-ons
-  cluster_addons = local.addons_enabled
+  #
+  # Only the VPC CNI, which has to exist before the nodes can join -- see the
+  # comment on that local. Everything else lives in the `addons` layer, which
+  # runs after `identities` and so can reference the IRSA roles it creates.
+  addons = local.bootstrap_addons
 
   # Define tags (notice we are appending here tags required by the cluster autoscaler)
   tags = merge(local.tags,
     { "k8s.io/cluster-autoscaler/enabled" = "TRUE" },
     { "k8s.io/cluster-autoscaler/${data.terraform_remote_state.cluster-vpc.outputs.cluster_name}" = "owned" }
   )
-}
-
-module "cluster-aws-auth" {
-  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
-  version = "~> 20.0"
-
-  manage_aws_auth_configmap = var.manage_aws_auth
-  create_aws_auth_configmap = var.create_aws_auth
-
-  aws_auth_roles    = local.map_roles
-  aws_auth_users    = local.map_users
-  aws_auth_accounts = local.map_accounts
-
-  depends_on = [module.cluster]
 }
 
 resource "local_file" "metadata" {

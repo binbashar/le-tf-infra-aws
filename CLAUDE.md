@@ -207,8 +207,11 @@ leverage tofu apply -target=resource.name
 tofu state list
 tofu state show resource.name
 
-# Force unlock state (use with caution; supported by the leverage wrapper)
-leverage tofu force-unlock -force <LOCK_ID>
+# Force unlock state (use with caution; supported by the leverage wrapper).
+# NOTE the wrapper takes LOCK_ID as a positional argument -- there is no -force
+# flag -- and it prompts for confirmation, so pipe `yes` when unattended.
+leverage tofu force-unlock <LOCK_ID>
+yes yes | leverage tofu force-unlock <LOCK_ID>
 ```
 
 ## Architecture Overview
@@ -326,7 +329,7 @@ Profile naming: `{project}-{account}-devops` (e.g., `bb-shared-devops`, `bb-netw
 - Each account has its own S3 backend with DynamoDB locking
 - State files stored per layer: `{account}/{layer-path}/terraform.tfstate`
 - Remote state references enable cross-layer data sharing
-- Force unlock only when necessary: `leverage tofu force-unlock -force <LOCK_ID>`
+- Force unlock only when necessary: `leverage tofu force-unlock <LOCK_ID>` (positional; no `-force` flag, and it prompts)
 
 ### Module Sources
 Modules are sourced from GitHub repositories:
@@ -434,8 +437,10 @@ When working with AWS Cloud Control API resources (awscc_*):
 ### State Lock Issues
 If encountering state lock errors:
 ```bash
-# Force unlock (use with caution; supported by the leverage wrapper)
-leverage tofu force-unlock -force <LOCK_ID>
+# Force unlock (use with caution; supported by the leverage wrapper).
+# LOCK_ID is positional; there is no -force flag. Confirm no tofu process is
+# still running before unlocking.
+yes yes | leverage tofu force-unlock <LOCK_ID>
 ```
 
 ### Debugging
