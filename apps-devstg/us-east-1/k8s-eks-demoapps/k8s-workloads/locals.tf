@@ -21,6 +21,18 @@ locals {
   # gateway has no such gate: reaching it already requires the VPN.
   public_exposure_label = { "gateway.binbash.com.ar/public-exposure" = "allowed" }
 
+  # The ECR registry both GitOps apps pull from. It lives in the *shared*
+  # account, not this one — the demo images are built once and consumed from
+  # every environment.
+  #
+  # Built from `var.accounts` rather than written out, because the literal
+  # carries the shared account ID and this repository is public. `common.tfvars`
+  # holds the real value and is gitignored (`*common.tfvars`), which is the only
+  # reason account IDs are not already published here; hardcoding one in a layer
+  # quietly undoes that. Same reason `config.tf` builds cross-account profiles
+  # and bucket names from `var.project` instead of spelling them out.
+  ecr_registry = "${var.accounts.shared.id}.dkr.ecr.${var.region}.amazonaws.com"
+
   #----------------------------------------------------------------------------
   # Conventions every private route in this layer follows, all load-bearing.
   # The same list governs the component routes in `k8s-components/locals.tf`;

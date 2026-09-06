@@ -54,6 +54,29 @@ terraform {
 #
 # The anchored form also documents the shape the comment above describes: the
 # suffix IAM Identity Center generates is hex.
+#
+# **Not sourced from `management/global/sso`, and that is not an oversight.**
+# The obvious-looking alternative -- read it from the layer that creates the
+# permission set, via `terraform_remote_state` -- cannot work, for three reasons
+# that compound:
+#
+#   1. That layer exports nothing; it has no `outputs.tf` at all.
+#   2. Even with one, there is nothing to export. Checked against the provider
+#      this layer actually uses (aws 6.47.0): `aws_ssoadmin_permission_set`
+#      carries only `arn`, `name`, `description`, `relay_state`,
+#      `session_duration`, `created_date`, `instance_arn` and `tags`. No
+#      `aws_ssoadmin_*` data source exposes the provisioned role name or its
+#      suffix, because no AWS API returns the mapping -- Identity Center
+#      materialises the role in each target account and does not publish the
+#      correspondence back through the SSO admin API.
+#   3. The permission set lives in the management account against the SSO
+#      instance; the role it materialises lives *here*, in apps-devstg. They are
+#      different objects in different accounts, and only the second one is an
+#      EKS access-entry principal.
+#
+# So `iam:ListRoles` filtered by the reserved prefix is the mapping, and this
+# data source is it. It is already the "resolve, don't pin" fix -- the thing it
+# replaced was a hardcoded ARN that had silently gone stale.
 data "aws_iam_roles" "sso_devops" {
   name_regex  = "^AWSReservedSSO_DevOps_[0-9a-f]+$"
   path_prefix = "/aws-reserved/sso.amazonaws.com/"

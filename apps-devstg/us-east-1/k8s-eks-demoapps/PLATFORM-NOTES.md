@@ -47,9 +47,11 @@ re-apply with a `precondition` rather than the entry being left standing. See
 
 When up it is EKS 1.34 on AL2023 with spot nodes and both public and private
 paths on Envoy Gateway. The resting state, when torn down, is everything below
-the VPC gone: `vpc-0c2dd28735d0250c3` is kept for a fast re-spin, with the
-`network` layer *applied without a NAT* (`vpc_enable_nat_gateway = false`) and
-never destroyed — see "Tearing down".
+the VPC gone: `vpc-0c2dd287…` is kept for a fast re-spin, with the `network`
+layer *applied without a NAT* (`vpc_enable_nat_gateway = false`) and never
+destroyed — see "Tearing down". (The ID is abbreviated deliberately: this
+repository is public. Read the full one with `leverage tofu output vpc_id` in
+`apps-devstg/us-east-1/base-network`.)
 
 **No WAF is deployed.** It was built, attached, verified and taken back down the
 same day; the code is all in place behind the ` --` exclusion. See "AWS WAF"

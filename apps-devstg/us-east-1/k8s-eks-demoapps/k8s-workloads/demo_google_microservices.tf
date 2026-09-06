@@ -51,16 +51,16 @@ locals {
   gmd_secret_name = "/k8s-eks-demoapps/test-secrets"
 
   gmd_image_list = [
-    "emailservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-emailservice",
-    "productcatalogservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-productcatalogservice",
-    "recommendationservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-recommendationservice",
-    "shippingservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-shippingservice",
-    "checkoutservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-checkoutservice",
-    "paymentservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-paymentservice",
-    "currencyservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-currencyservice",
-    "cartservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-cartservice",
-    "frontend=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-frontend",
-    "adservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-adservice",
+    "emailservice=${local.ecr_registry}/demo-google-microservices-emailservice",
+    "productcatalogservice=${local.ecr_registry}/demo-google-microservices-productcatalogservice",
+    "recommendationservice=${local.ecr_registry}/demo-google-microservices-recommendationservice",
+    "shippingservice=${local.ecr_registry}/demo-google-microservices-shippingservice",
+    "checkoutservice=${local.ecr_registry}/demo-google-microservices-checkoutservice",
+    "paymentservice=${local.ecr_registry}/demo-google-microservices-paymentservice",
+    "currencyservice=${local.ecr_registry}/demo-google-microservices-currencyservice",
+    "cartservice=${local.ecr_registry}/demo-google-microservices-cartservice",
+    "frontend=${local.ecr_registry}/demo-google-microservices-frontend",
+    "adservice=${local.ecr_registry}/demo-google-microservices-adservice",
   ]
 }
 

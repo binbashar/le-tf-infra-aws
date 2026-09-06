@@ -68,9 +68,9 @@ locals {
   emojivoto_host      = "emojivoto.aws.binbash.com.ar"
 
   emojivoto_image_list = [
-    "emojivoto-emoji-svc=763606934258.dkr.ecr.us-east-1.amazonaws.com/emojivoto-emoji-svc",
-    "emojivoto-voting-svc=763606934258.dkr.ecr.us-east-1.amazonaws.com/emojivoto-voting-svc",
-    "emojivoto-web=763606934258.dkr.ecr.us-east-1.amazonaws.com/emojivoto-web"
+    "emojivoto-emoji-svc=${local.ecr_registry}/emojivoto-emoji-svc",
+    "emojivoto-voting-svc=${local.ecr_registry}/emojivoto-voting-svc",
+    "emojivoto-web=${local.ecr_registry}/emojivoto-web"
   ]
 
   # Deleting a resource a base contributes, in kustomize's strategic-merge
