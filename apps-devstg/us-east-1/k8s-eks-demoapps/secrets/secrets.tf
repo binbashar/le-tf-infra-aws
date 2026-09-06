@@ -30,8 +30,22 @@ module "secrets" {
     # here is a placeholder by design: what is being demonstrated is the path
     # Secrets Manager -> IRSA -> ESO -> pod, not the secrecy of the payload.
     "/k8s-eks-demoapps/test-secrets" = {
-      description             = "DemoApps SecretManager Test Secret"
-      recovery_window_in_days = 7
+      description = "DemoApps SecretManager Test Secret"
+
+      # Deleted immediately, with no recovery window, because this layer is torn
+      # down and re-applied with the rest of the stack rather than left standing.
+      #
+      # The default 7 days reserves the *name* for a week after a destroy, and a
+      # re-spin inside that week fails with `You can't create this secret because
+      # a secret with this name is already scheduled for deletion` -- for a
+      # cluster rebuilt several times a week that is a guaranteed trip hazard,
+      # not a theoretical one.
+      #
+      # Safe only because there is nothing here to recover: the payload is the
+      # literal string "placeholder", and its purpose is to demonstrate the
+      # Secrets Manager -> IRSA -> ESO -> pod path rather than to be secret. Do
+      # NOT copy this line onto a secret with real content.
+      recovery_window_in_days = 0
       secret_string           = jsonencode({ TEST_SECRET = "placeholder" })
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
     },

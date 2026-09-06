@@ -45,6 +45,11 @@ locals {
   gmd_namespace = "demo-google-microservices-dev"
   gmd_host      = "gmd.aws.binbash.com.ar"
 
+  # The Secrets Manager entry this app's `ExternalSecret` reads, owned by the
+  # `secrets` layer. Named here so the guard below and the error message stay in
+  # step with each other.
+  gmd_secret_name = "/k8s-eks-demoapps/test-secrets"
+
   gmd_image_list = [
     "emailservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-emailservice",
     "productcatalogservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-productcatalogservice",
@@ -57,6 +62,34 @@ locals {
     "frontend=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-frontend",
     "adservice=763606934258.dkr.ecr.us-east-1.amazonaws.com/demo-google-microservices-adservice",
   ]
+}
+
+#------------------------------------------------------------------------------
+# Fails the plan if the `secrets` layer has not been applied.
+#
+# Without this the omission is invisible until well after the apply succeeds:
+# Argo CD syncs, ESO cannot read the source, `backend-secrets` goes to
+# `SecretSyncedError`, `app-secrets` is never created, and `paymentservice` sits
+# in `CreateContainerConfigError` while every checkout fails. Three hops from
+# the cause, in a different layer, minutes later.
+#
+# The `secrets` layer is destroyed and re-applied with the rest of the stack
+# rather than left standing between runs, so "it was there last time" is not
+# evidence — which is exactly why this guard exists.
+#
+# Uses the *plural* data source deliberately: `aws_secretsmanager_secret`
+# (singular) raises its own error when the secret is missing, naming the data
+# source and nothing else. The plural one returns an empty set instead, which
+# lets the precondition below say what is wrong and which layer fixes it. The
+# `name` filter is a prefix match, hence the exact `contains` check.
+#------------------------------------------------------------------------------
+data "aws_secretsmanager_secrets" "gmd_backend" {
+  count = var.demo_apps.google_microservices_dev.enabled ? 1 : 0
+
+  filter {
+    name   = "name"
+    values = [local.gmd_secret_name]
+  }
 }
 
 # Owned here rather than left to `CreateNamespace=true`, so the HTTPRoute below
@@ -150,6 +183,13 @@ resource "kubernetes_manifest" "google_microservices_dev" {
           "ServerSideApply=true",
         ]
       }
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = contains(data.aws_secretsmanager_secrets.gmd_backend[0].names, local.gmd_secret_name)
+      error_message = "${local.gmd_secret_name} does not exist in this account, so this app's ExternalSecret cannot resolve and paymentservice will never start. Apply the `secrets` layer first (it is the sixth of the seven, between k8s-components and this one), or set demo_apps.google_microservices_dev.enabled = false."
     }
   }
 

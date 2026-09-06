@@ -74,7 +74,8 @@ These are the steps to orchestrate the demoapps cluster. They can be used for sp
 
 ### Step 6
 - Go to the `secrets` sublayer and apply it.
-- Only `google-microservices` needs it, through an `ExternalSecret` that reads `/k8s-eks-demoapps/test-secrets`. Skip it and that app's `paymentservice` never starts.
+- Only `google-microservices` needs it, through an `ExternalSecret` that reads `/k8s-eks-demoapps/test-secrets`. Skip it and the next layer's plan fails with a precondition naming this one, so the ordering is enforced rather than merely documented.
+- It is torn down with the rest of the stack; its single entry is a placeholder and is deleted without a recovery window, so a re-spin can recreate it immediately.
 
 ### Step 7
 - Go to the `k8s-workloads` sublayer.

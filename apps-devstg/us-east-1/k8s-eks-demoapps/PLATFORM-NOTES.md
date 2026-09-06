@@ -40,7 +40,10 @@ both Applications were `Synced`/`Healthy`, all seven layers planned
 zones empty**. See "The GitOps workloads" below for the five defects that
 surfaced, none of which a plan could catch.
 
-`secrets` is deliberately **left applied** — see "Tearing down".
+All seven layers come down, `secrets` included — its single entry is a
+placeholder deleted without a recovery window, and `k8s-workloads` guards the
+re-apply with a `precondition` rather than the entry being left standing. See
+"Tearing down".
 
 When up it is EKS 1.34 on AL2023 with spot nodes and both public and private
 paths on Envoy Gateway. The resting state, when torn down, is everything below
@@ -1051,10 +1054,14 @@ follows is only what goes wrong.
 **`secrets` is the seventh layer and is easy to forget**, because it was never
 part of the spin until Day 11 and its state had been empty since 2025. It owns
 `/k8s-eks-demoapps/test-secrets`, which google-microservices' `ExternalSecret`
-reads; skip it and that app's `paymentservice` sits in
-`CreateContainerConfigError` and every checkout fails, two layers away from the
-cause. It goes after `k8s-components` (which installs ESO) and before
+reads. It goes after `k8s-components` (which installs ESO) and before
 `k8s-workloads`, though in truth only "before the app syncs" matters.
+
+Forgetting it no longer costs an investigation: `k8s-workloads` guards it with a
+`precondition` and the plan fails naming the secret and the layer. Before that
+guard the omission surfaced three hops away — `SecretSyncedError`, no
+`app-secrets`, `paymentservice` in `CreateContainerConfigError`, checkout
+failing — in a different layer, minutes later.
 
 **`k8s-components` needs a two-stage apply on a fresh cluster.**
 `kubernetes_manifest` validates against the live API at *plan* time, so
@@ -1153,11 +1160,20 @@ the ID as a positional argument, **not** `-force <ID>`, and it prompts for
 confirmation, so pipe `yes` into it when running unattended. Check no `tofu`
 process is alive first; the lock is only stale if nothing holds it.
 
-**`secrets` is not part of that chain.** It holds one Secrets Manager entry
-costing about USD 0.40/month and nothing else depends on it, so the cheap and
-correct thing is to leave it applied across teardowns — destroying it starts a
-7-day recovery window on the secret name, which a re-spin inside that window then
-has to fight. Destroy it only when the cluster is being retired for good.
+**`secrets` comes down with everything else**, and its one entry is deleted
+immediately rather than into the default 7-day recovery window — see
+`recovery_window_in_days` there. It was briefly left standing on the reasoning
+that a 7-day window would block a re-spin inside that week; that is true, but it
+solves the wrong problem. This cluster's whole shape is that nothing survives a
+teardown except the VPC, and an entry holding the literal string "placeholder"
+is a poor first exception to it.
+
+What the standing entry *did* buy was safety against forgetting the layer, since
+skipping it surfaces three hops away: `SecretSyncedError` → no `app-secrets` →
+`paymentservice` in `CreateContainerConfigError` → every checkout fails. That is
+now bought properly instead — `k8s-workloads` reads the secret through
+`data.aws_secretsmanager_secrets` and a `precondition` fails the plan by name if
+it is missing. Cheaper than USD 0.40/month, and it fails earlier.
 
 **Skipping the DNS step is fatal, not untidy** — see the next section. The
 2026-08-28 teardown followed it and both zones came out clean: three public
