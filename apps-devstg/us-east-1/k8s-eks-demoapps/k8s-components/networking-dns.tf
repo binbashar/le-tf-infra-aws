@@ -8,9 +8,9 @@ resource "helm_release" "externaldns_private" {
 
   name       = "externaldns-private"
   namespace  = kubernetes_namespace.externaldns[0].id
-  repository = "https://charts.bitnami.com/bitnami"
+  repository = "https://kubernetes-sigs.github.io/external-dns/"
   chart      = "external-dns"
-  version    = "6.38.0"
+  version    = "1.21.1"
   values = [
     templatefile("chart-values/externaldns.yaml", {
       filteredDomain = local.private_base_domain
@@ -66,9 +66,9 @@ resource "helm_release" "externaldns_public" {
 
   name       = "externaldns-public"
   namespace  = kubernetes_namespace.externaldns[0].id
-  repository = "https://charts.bitnami.com/bitnami"
+  repository = "https://kubernetes-sigs.github.io/external-dns/"
   chart      = "external-dns"
-  version    = "6.38.0"
+  version    = "1.21.1"
   values = [
     templatefile("chart-values/externaldns.yaml", {
       filteredDomain = local.public_base_domain

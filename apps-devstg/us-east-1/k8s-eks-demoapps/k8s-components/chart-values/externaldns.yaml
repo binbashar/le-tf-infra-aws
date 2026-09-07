@@ -1,17 +1,19 @@
-# Image override: Bitnami's free public images were retracted from Docker Hub
-# in 2025. Pinning to the upstream image at registry.k8s.io (same binary, just
-# a different registry). The chart's wrapper logic only needs the binary's
-# CLI surface, which is identical between Bitnami's and upstream's builds.
-image:
-  registry: registry.k8s.io
-  repository: external-dns/external-dns
-  tag: v0.14.0
+# Upstream kubernetes-sigs chart, not Bitnami. Bitnami retracted its free
+# public images from Docker Hub in 2025 (`docker.io/bitnami/external-dns` is
+# gone entirely, including `:latest`) and moved the maintained ones behind a
+# subscription, so the wrapper chart installs an image that does not exist.
+# This is the chart the external-dns maintainers publish, which is the
+# canonical source anyway — the image now defaults to registry.k8s.io and
+# needs no override.
+#
+# Schema notes vs the Bitnami values this replaces: `zoneIdFilters` and
+# `aws.zoneType` have no top-level equivalent upstream and move into
+# `extraArgs` (rendered as `--<key>=<value>`); `dryRun: false` is the default
+# and is gone. Everything else keeps the same key and meaning.
 
-# When enabled, prints DNS record changes rather than actually performing them
-dryRun: false
 # K8s resources type to be observed for new DNS entries by ExternalDNS
 # (e.g. ingress, service, gateway-httproute — Gateway API support requires
-#  external-dns >= 0.13 / chart >= 6.20)
+#  external-dns >= 0.13)
 sources:
 %{ for src in sources ~}
   - ${src}
@@ -32,15 +34,14 @@ excludeDomains:
   - ${domain}
 %{ endfor ~}
 %{ endif ~}
-# Limit possible target zones by zone id (optional)
-zoneIdFilters:
-  - ${filteredZoneId}
 # Modify how DNS records are synchronized between sources and providers (options: sync, upsert-only)
 policy: sync
 # Registry Type. Available types are: txt, noop
 ## ref: https://github.com/kubernetes-sigs/external-dns/blob/master/docs/proposal/registry.md
 registry: txt
-# TXT Registry Identifier
+# TXT Registry Identifier. Keep this stable across chart migrations: the
+# ownership TXT records already in the zone are keyed on it, and changing it
+# makes every existing record look like another controller's.
 txtOwnerId: ${txtOwnerId}
 %{ if annotationFilter != "" ~}
 # Filter sources managed by external-dns via annotation using label selector semantics (optional).
@@ -53,11 +54,16 @@ annotationFilter: ${annotationFilter}
 # Adjust the interval for DNS updates
 interval: 3m
 
-# AWS settings
-aws:
-  zoneType: ${zoneType}
+# Flags with no top-level value upstream. `zone-id-filter` limits the target
+# zones by id and `aws-zone-type` by public/private, the same two knobs the
+# Bitnami chart exposed as `zoneIdFilters` and `aws.zoneType`.
+extraArgs:
+  zone-id-filter: ${filteredZoneId}
+  aws-zone-type: ${zoneType}
 
-# Create a service account and tie it to the external-dns role
+# Create a service account and tie it to the external-dns role. The name is
+# pinned because the IRSA trust policy in the `identities` layer conditions on
+# `system:serviceaccount:externaldns:<name>`.
 serviceAccount:
   create: true
   name: ${serviceAccountName}

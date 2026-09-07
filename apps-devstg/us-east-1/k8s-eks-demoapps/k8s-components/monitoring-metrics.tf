@@ -1,47 +1,15 @@
 #------------------------------------------------------------------------------
-# Kube State Metrics: Expose cluster metrics.
-#------------------------------------------------------------------------------
-resource "helm_release" "kube_state_metrics" {
-  count      = var.prometheus.external.dependencies.enabled ? 1 : 0
-  name       = "kube-state-metrics"
-  namespace  = kubernetes_namespace.monitoring_metrics[0].id
-  repository = "https://charts.bitnami.com/bitnami"
-  chart      = "kube-state-metrics"
-  version    = "2.2.24"
-  values     = [file("chart-values/kube-state-metrics.yaml")]
-}
-
-# ------------------------------------------------------------------------------
-# Node Exporter: Expose cluster node metrics.
-# ------------------------------------------------------------------------------
-resource "helm_release" "node_exporter" {
-  count      = var.prometheus.external.dependencies.enabled ? 1 : 0
-  name       = "node-exporter"
-  namespace  = kubernetes_namespace.monitoring_metrics[0].id
-  repository = "https://charts.bitnami.com/bitnami"
-  chart      = "node-exporter"
-  version    = "2.2.4"
-  values     = [file("chart-values/node-exporter.yaml")]
-}
-
-#------------------------------------------------------------------------------
 # Metrics Server: Expose cluster metrics.
 #------------------------------------------------------------------------------
 #
-# Moved off Bitnami onto the upstream kubernetes-sigs chart. The pinned
-# Bitnami 5.8.4 no longer resolves — Bitnami's 2025 catalog change purged old
-# versions from the public repo (they survive only under `bitnamilegacy`) and
-# moved the images behind a subscription. Rather than chase a newer Bitnami
-# pin into that licensing question, this uses the chart the metrics-server
-# maintainers publish, which is the canonical source anyway.
+# Upstream kubernetes-sigs chart, not Bitnami. The old Bitnami pin (5.8.4) no
+# longer resolves: Bitnami's 2025 catalog change trimmed old versions out of
+# the repo index and moved the images behind a subscription. This uses the
+# chart the metrics-server maintainers publish, which is the canonical source
+# anyway.
 #
-# The values schema differs: Bitnami took `extraArgs` as a map, upstream takes
-# `args` as a list appended to `defaultArgs`.
-#
-# NOTE: `kube_state_metrics` and `node_exporter` above have the same dead
-# Bitnami pins. They are gated off (`prometheus.external.dependencies.enabled`)
-# and kube-prometheus-stack ships both anyway, so they were left alone rather
-# than fixed blind — see the backlog.
+# The values schema differs from Bitnami's: `extraArgs` was a map, upstream
+# takes `args` as a list appended to `defaultArgs`.
 #
 resource "helm_release" "metrics_server" {
   count      = (var.scaling.hpa.enabled || var.scaling.vpa.enabled) ? 1 : 0

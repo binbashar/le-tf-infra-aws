@@ -1023,7 +1023,8 @@ None were caused by the HTTPRoute conversion; they were sitting in config that
 had never been executed. **Bitnami's 2025 catalog purge** removed
 `metrics-server` 5.8.4 from the public repo (moved to the kubernetes-sigs chart;
 `extraArgs` map → `args` list), and `kube_state_metrics` and `node_exporter`
-still carry the same dead pins. **Gatus's config could never have worked** -
+carried the same dead pins until they were deleted outright — see "Off Bitnami
+entirely" below. **Gatus's config could never have worked** -
 `config.services` was renamed to `config.endpoints`. **Alertmanager was
 hardcoded `enabled: true`** while its variable was false, so it would have
 rendered with an empty `slack_api_url`, which it refuses to start on.
@@ -1467,11 +1468,74 @@ only 301/302 redirects, rejecting nginx's default 308.
 
 ---
 
+### Off Bitnami entirely
+
+Bitnami's 2025 catalog change is now closed out here rather than mitigated, and
+the layer has **no Bitnami chart references left at all**. Three facts, all
+verified against the live registries rather than inferred from the
+announcement:
+
+- The repo index at `charts.bitnami.com/bitnami` is **still published and still
+  updated**, but truncated per chart. `external-dns` starts at 6.5.2, so the
+  pinned 6.38.0 still resolved; `kube-state-metrics` starts at 3.0.2 and
+  `node-exporter` at 3.0.1, so *those* pins were already dead. A direct
+  `.tgz` URL answers 200 for all of them — but `helm_release` resolves through
+  the index, so the tarball surviving buys nothing.
+- `docker.io/bitnami/external-dns` is **gone entirely**, `:latest` included.
+  The maintained images are `bitnamisecure/*` (401, subscription) and the
+  frozen `bitnamilegacy/*` (200, no CVE patches).
+- **Bumping the Bitnami chart is not a fix, it is a regression.** The current
+  charts still default to `docker.io/bitnami/*`, which 404s, and their bundled
+  `common` ≥ 2.27 hard-fails the template render when the registry is
+  overridden unless `global.security.allowInsecureImages: true`. The 6.38.0
+  here bundled `common` 2.18.0, which has no such gate — which is the only
+  reason the old image override worked at all. Renovate's dashboard offers
+  exactly these bumps; they must not be taken.
+
+`kube_state_metrics` and `node_exporter` were **deleted, not repointed** —
+gated off, unconsumed, and fixing a dead pin blind on something nobody runs is
+the worst of the options. Their `chart-values/` went with them, and the now-dead
+`var.prometheus.external.dependencies.enabled` term came out of the
+`monitoring_metrics` namespace gate. The flag itself stays: the external
+Prometheus RBAC in `identity-external-prometheus.tf` still reads it, and that
+lives in `kube-system`.
+
+Both `external-dns` releases moved to the `kubernetes-sigs` chart 1.21.1
+(app 0.21.0). The values schema is almost a straight copy — `sources`,
+`policy`, `registry`, `txtOwnerId`, `domainFilters`, `excludeDomains`,
+`annotationFilter`, `interval` and `serviceAccount.*` keep their names and
+meaning. Only three things move: `zoneIdFilters` and `aws.zoneType` have no
+top-level equivalent and become `extraArgs.zone-id-filter` /
+`extraArgs.aws-zone-type` (a map there renders as `--<key>=<value>`), and
+`dryRun: false` is the default and is gone. The `image` override is gone too —
+upstream already defaults to `registry.k8s.io`.
+
+**Validate this class of change with a `helm template` diff before the cluster
+exists.** Rendering both charts against the real values showed the container
+args identical but for three flags Bitnami passed explicitly —
+`--aws-api-retries=3`, `--aws-batch-change-size=1000`, `--metrics-address=:7979`
+— each of which is the binary's own default, confirmed in `types.go` at
+v0.21.0. Deployment, Service and ServiceAccount keep the *same names*, so the
+IRSA trust condition on `system:serviceaccount:externaldns:externaldns-<zone>`
+needed no change. Upstream's ClusterRole is also source-aware: 4 rules against
+Bitnami's 11, dropping RBAC for Istio, Contour, Kong, Gloo, F5 and OpenShift
+that was never used.
+
+**v0.21.0 publishes AAAA records; v0.14.0 did not.** Every hostname now gets
+four records, not three: `A`, `AAAA`, the `cname-<host>` registry TXT and a new
+`aaaa-<host>` one. The AAAA is an alias to the same IPv4-only load balancer, so
+it answers `NOERROR` with an empty body and clients fall back to A — verified
+with `dig`, and the public hostname returned 200 end to end throughout.
+
+Do **not** reach for `managedRecordTypes` to suppress the AAAA on a running
+cluster. external-dns only cleans up what it manages, so narrowing the list
+strands the records it already created — exactly the orphan problem described
+under "Orphaned registry records are a landmine, not litter", and the `aaaa-`
+TXT is the same collision class as `cname-`. Left under management, the
+teardown cleared all four record types on its own at every stage.
+
 ## Open follow-ups
 
-- **`kube_state_metrics` and `node_exporter` carry dead Bitnami pins.** Largely
-  moot: they are gated off, and kube-prometheus-stack — the argument for
-  deleting rather than repointing them — is back but does not consume them.
 - **A readiness gate for the LBC webhook race** would codify in the config what
   is currently an ordering convention. That order prevents the failure (verified
   Day 8 and again Day 9), so this is about not having to remember it rather than

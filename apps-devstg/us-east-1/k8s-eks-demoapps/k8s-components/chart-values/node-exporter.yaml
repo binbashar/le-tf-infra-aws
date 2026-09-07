@@ -1,5 +1,0 @@
-# Annotate pods so they are scraped by Prometheus
-podAnnotations:
-  prometheus.io/scrape: "true"
-  prometheus.io/port: "9100"
-  prometheus.io/path: "/metrics"
