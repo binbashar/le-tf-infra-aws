@@ -146,12 +146,12 @@ def test_every_failing_field_is_reported_not_just_the_first():
 
 def test_honeypot_empty_or_absent_is_not_filled():
     assert is_honeypot_filled(valid_payload()) is False
-    assert is_honeypot_filled(valid_payload(company="")) is False
-    assert is_honeypot_filled(valid_payload(company="   ")) is False
+    assert is_honeypot_filled(valid_payload(referralSource="")) is False
+    assert is_honeypot_filled(valid_payload(referralSource="   ")) is False
 
 
 def test_honeypot_with_content_is_filled():
-    assert is_honeypot_filled(valid_payload(company="Acme Corp")) is True
+    assert is_honeypot_filled(valid_payload(referralSource="Acme Corp")) is True
 
 
 from lambda_function import render
@@ -373,14 +373,14 @@ def test_an_unhashable_closed_set_value_returns_400_not_500(field, sent):
 
 def test_a_filled_honeypot_returns_200_and_sends_nothing(sent):
     # A 400 tells a bot which field caught it. A 200 teaches it nothing.
-    response = invoke(valid_payload(company="Acme Corp"))
+    response = invoke(valid_payload(referralSource="Acme Corp"))
     assert response["statusCode"] == 200
     assert body_of(response) == {"ok": True}
     assert sent == []
 
 
 def test_a_filled_honeypot_wins_even_when_the_rest_is_invalid(sent):
-    response = invoke(valid_payload(company="Acme", email="nope"))
+    response = invoke(valid_payload(referralSource="Acme", email="nope"))
     assert response["statusCode"] == 200
     assert sent == []
 

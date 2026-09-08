@@ -136,13 +136,23 @@ def _in_closed_set(value, allowed):
     return isinstance(value, str) and value in allowed
 
 
+# Named `referralSource`, not `company`: on the actual form this hidden field
+# sits in a section that also collects a person's name and address, and Chrome
+# (plus 1Password and LastPass) autofills anything that looks like an
+# organization field — name="company", id="careers-company", label "Company" —
+# regardless of autocomplete="off". This function cannot tell a real applicant
+# whose browser autofilled the honeypot from a bot that fills every field, so a
+# name that triggers autofill silently loses real applications (a 200 with
+# nothing sent, and no signal to anyone that it happened). `referralSource`
+# carries no such autofill signal — do not rename it back to something more
+# natural-sounding.
 def is_honeypot_filled(payload):
-    """True when the hidden `company` field carries content.
+    """True when the hidden `referralSource` field carries content.
 
     A human never sees this field. A bot that fills every input does. The caller
     answers 200 anyway — see lambda_handler.
     """
-    return bool(_text(payload, "company"))
+    return bool(_text(payload, "referralSource"))
 
 
 def _email_looks_valid(value):
