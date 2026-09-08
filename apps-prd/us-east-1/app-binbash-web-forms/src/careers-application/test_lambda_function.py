@@ -253,6 +253,32 @@ def test_control_characters_cannot_inject_into_the_subject():
     assert "Bcc" in subject  # stripped of control chars, not silently dropped
 
 
+def test_a_multiline_message_renders_with_br_between_lines_in_the_html_body():
+    # Round-1's control-character strip was applied inside the shared _text()
+    # helper, so it deleted newlines from every field, `message` included — a
+    # regression this test would have caught: it fused "...team." and "Before..."
+    # with no space or break at all.
+    _, html, _ = render(
+        valid_payload(message="I led the platform team.\nBefore that, SRE at Acme.")
+    )
+    assert "I led the platform team.<br>Before that, SRE at Acme." in html
+
+
+def test_a_multiline_message_keeps_its_line_break_in_the_text_body():
+    _, _, text = render(
+        valid_payload(message="I led the platform team.\nBefore that, SRE at Acme.")
+    )
+    assert "I led the platform team.\nBefore that, SRE at Acme." in text
+
+
+def test_crlf_in_a_message_does_not_produce_a_doubled_break():
+    # \r\n must collapse to one line break, not two — a naive "keep \r and \n
+    # both" fix would render a blank line between every paragraph.
+    _, html, _ = render(valid_payload(message="Line one.\r\nLine two."))
+    assert "Line one.<br>Line two." in html
+    assert "<br><br>" not in html
+
+
 import lambda_function
 
 

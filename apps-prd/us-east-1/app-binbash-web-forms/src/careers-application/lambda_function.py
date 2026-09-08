@@ -91,22 +91,35 @@ MAX_LENGTHS = {
 _REQUIRED_TEXT = ("name", "email", "country", "linkedin")
 _URL_FIELDS = ("linkedin", "github", "awsCerts")
 
-# C0 controls (0x00-0x1F) plus DEL (0x7F). Removed rather than merely trimmed off
+# C0 controls (0x00-0x1F) plus DEL (0x7F), removed rather than merely trimmed off
 # the ends: a literal CR/LF in `name` would otherwise ride straight into the
 # Subject header (`[careers] {role} — {name}`), and SES's structured SendEmail
-# call is not proven to sanitise that on its own. This also means `message` can
-# no longer carry author-formatted line breaks — an acceptable trade against
-# header injection.
-_STRIP_CONTROL = str.maketrans("", "", "".join(chr(c) for c in list(range(0x20)) + [0x7F]))
+# call is not proven to sanitise that on its own.
+#
+# `message` is the one exception (see keep_newlines below): it's a textarea,
+# where a line break is meaningful content rather than a header-injection
+# vector, so a second table removes every control character EXCEPT LF (0x0A).
+# CR (0x0D) is still removed either way, so a Windows-style \r\n collapses to a
+# single \n instead of becoming a doubled break.
+_STRIP_ALL_CONTROL = str.maketrans("", "", "".join(chr(c) for c in list(range(0x20)) + [0x7F]))
+_STRIP_CONTROL_KEEP_LF = str.maketrans(
+    "", "", "".join(chr(c) for c in list(range(0x20)) if c != 0x0A) + chr(0x7F)
+)
 
 
-def _text(payload, field):
+def _text(payload, field, keep_newlines=False):
     """The field as a trimmed string with control characters removed, or '' for
-    anything that is not a string."""
+    anything that is not a string.
+
+    keep_newlines=True preserves internal `\\n` (but not `\\r`) and is passed only
+    for `message` — every other field, `name` in particular, keeps the strict
+    default so nothing can smuggle a line break into the Subject header.
+    """
     value = payload.get(field)
     if not isinstance(value, str):
         return ""
-    return value.translate(_STRIP_CONTROL).strip()
+    table = _STRIP_CONTROL_KEEP_LF if keep_newlines else _STRIP_ALL_CONTROL
+    return value.translate(table).strip()
 
 
 def _in_closed_set(value, allowed):
@@ -185,7 +198,7 @@ def validate(payload):
     if payload.get("consent") is not True:
         failed.append("consent")
 
-    message = _text(payload, "message")
+    message = _text(payload, "message", keep_newlines=True)
     if len(message) > MAX_LENGTHS["message"]:
         failed.append("message")
 
@@ -229,7 +242,7 @@ def render(payload):
     values = {key: _text(payload, key) for key, _ in _FIELD_LABELS}
     values["experience"] = payload["experience"]
     values["seniority"] = payload["seniority"]
-    message = _text(payload, "message")
+    message = _text(payload, "message", keep_newlines=True)
 
     rows = []
     text_lines = [f"{role_label} — {name}", ""]
@@ -243,10 +256,12 @@ def render(payload):
         )
         text_lines.append(f"{label}: {raw}")
 
-    # message has already been through _text(), which strips control characters
-    # (see its docstring) — it can no longer contain a literal newline, so there
-    # is nothing here to turn into <br> tags.
-    escaped_message = html_module.escape(message or "—", quote=True)
+    # message is the one field _text() lets keep internal newlines (keep_newlines
+    # above) — escape first, then turn each surviving \n into a <br> so multi-
+    # paragraph messages don't fuse into one line in the HTML body. The plain
+    # text body needs no such conversion: a literal \n already reads as a line
+    # break there.
+    escaped_message = html_module.escape(message or "—", quote=True).replace("\n", "<br>")
     text_lines += ["", "Message:", message or "—"]
 
     html_body = (
