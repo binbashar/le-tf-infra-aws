@@ -7,7 +7,7 @@ posts here instead. Design spec: `bb-sales-tools/docs/superpowers/specs/2026-09-
 
 ```
 POST https://forms.binbash.co/careers-application
-  → API Gateway HTTP API (CORS: www.binbash.co, binbash.co · throttle 5 rps / burst 10)
+  → API Gateway HTTP API (CORS: www.binbash.co, binbash.co · throttle 1 rps / burst 10)
   → Lambda careers-application (python3.13)
   → SES  From careers@binbash.co  To people@binbash.com.ar  Reply-To: the applicant
 ```
@@ -31,18 +31,31 @@ This layer's custom domain needs a validated certificate, which lives elsewhere:
 2. this layer
 3. the `bb-sales-tools` frontend PR — dead until `forms.binbash.co` resolves
 
-## Known apply-time risk: API Gateway access logs
+## API Gateway access logs
 
-The stage sets `access_log_settings`, and API Gateway needs a CloudWatch Logs **resource
-policy** allowing `apigateway.amazonaws.com` to write. Those policies are account-wide and
-capped at 10 per account/region, so this layer deliberately does not create one — a second
-policy would risk a conflict or exhausting the cap.
+This is an HTTP API (v2), not a REST API (v1) — the account-wide CloudWatch Logs role ARN
+and resource-policy setup that v1 requires (`aws_api_gateway_account`, a policy for
+`apigateway.amazonaws.com` capped at 10 per account/region) does not apply here. HTTP API
+delivers access logs as CloudWatch vended logs: AWS grants `delivery.logs.amazonaws.com`
+write access to the destination log group itself, scoped to that one log group, the first
+time a stage's `access_log_settings` targets it — no resource policy of ours to write or
+collide with. `apps-devstg/us-east-1/tools-apigw-apps-proxy` does the same
+(`default_stage_access_log_destination_arn` pointed at a plain `aws_cloudwatch_log_group`,
+no resource policy) and is a working precedent for this pattern.
 
-If the first `terraform apply` fails with `InvalidParameterException: CloudWatch Logs role
-ARN must be set` or an access-log permission error, either point the stage at an existing
-policy or drop the `access_log_settings` block. It is not load-bearing.
+The `format` map is still worth double-checking on a first apply: a misspelled `$context`
+variable does not error, it just delivers an empty field for that key. If access logging
+still blocks the apply for some other reason, dropping the `access_log_settings` block is
+a safe escape hatch — it is not load-bearing for the route itself.
 
 ## What is deliberately not here
 
-No datastore. An application that fails to send is lost; the CloudWatch alarm on the Lambda error
-metric is the only signal. See spec §8.4 — this was a decision, not an omission.
+No datastore, and no metric alarm. An application that fails to send is lost, with only the
+Lambda's own CloudWatch logs as evidence after the fact — nothing pages anyone when it happens.
+See spec §8.4 — the absence of a datastore was a decision, not an omission.
+
+A CloudWatch metric alarm on the function's `Errors` metric, wired to SNS following the pattern in
+`apps-prd/us-east-1/app-binbash-web/monitoring.tf`, is the obvious next step for closing that gap.
+It is not implemented here: Tasks 7-10 did not ask for one, and adding production monitoring is a
+scope call for the repo owner, who has been asked and has not yet answered. Treat this as an open
+decision, not a planned or committed piece of work.
