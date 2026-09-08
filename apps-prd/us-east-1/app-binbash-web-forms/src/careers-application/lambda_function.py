@@ -12,6 +12,10 @@ AWS credentials. send() is the only part that touches AWS.
 import base64
 import html as html_module
 import json
+import logging
+import os
+
+import boto3
 
 MAX_BODY_BYTES = 32 * 1024
 
@@ -224,3 +228,82 @@ def render(payload):
     )
 
     return subject, html_body, "\n".join(text_lines)
+
+
+LOGGER = logging.getLogger()
+LOGGER.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
+
+_ses = None
+
+
+def _client():
+    """Lazily built so importing this module needs no credentials — which is what
+    lets the test suite run anywhere."""
+    global _ses
+    if _ses is None:
+        _ses = boto3.client("ses")
+    return _ses
+
+
+def send(subject, html_body, text_body, reply_to):
+    """One SES SendEmail. Raises whatever boto3 raises; the handler maps it."""
+    _client().send_email(
+        Source=os.environ["SES_FROM_EMAIL"],
+        Destination={"ToAddresses": [os.environ["CAREERS_RECIPIENT"]]},
+        ReplyToAddresses=[reply_to],
+        Message={
+            "Subject": {"Data": subject, "Charset": "UTF-8"},
+            "Body": {
+                "Html": {"Data": html_body, "Charset": "UTF-8"},
+                "Text": {"Data": text_body, "Charset": "UTF-8"},
+            },
+        },
+    )
+
+
+def _response(status, payload):
+    return {
+        "statusCode": status,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps(payload),
+    }
+
+
+def lambda_handler(event, _context):
+    """Validate, then send. See the spec's §4 for the response table.
+
+    CORS headers are NOT set here — the HTTP API's own `cors_configuration` adds
+    them to every response, including the ones this function returns. Setting them
+    in both places produces a duplicated Access-Control-Allow-Origin header, which
+    browsers reject outright.
+    """
+    try:
+        payload = parse_body(event)
+    except TooLarge:
+        return _response(413, {"ok": False, "error": "too_large"})
+    except BadJson:
+        return _response(400, {"ok": False, "error": "validation", "fields": []})
+
+    # Before validation on purpose: a bot that fills every field would otherwise
+    # get a 400 listing what it got wrong.
+    if is_honeypot_filled(payload):
+        LOGGER.info("honeypot filled; dropping submission")
+        return _response(200, {"ok": True})
+
+    failed = validate(payload)
+    if failed:
+        LOGGER.info("validation failed for fields: %s", ",".join(failed))
+        return _response(400, {"ok": False, "error": "validation", "fields": failed})
+
+    subject, html_body, text_body = render(payload)
+
+    try:
+        send(subject, html_body, text_body, _text(payload, "email"))
+    except Exception:
+        # exception() logs the traceback to CloudWatch; the body says nothing, so
+        # an IAM or SES error never reaches a browser.
+        LOGGER.exception("SES send failed")
+        return _response(500, {"ok": False, "error": "server"})
+
+    LOGGER.info("application sent for role=%s", payload["role"])
+    return _response(200, {"ok": True})

@@ -221,3 +221,97 @@ def test_quotes_are_escaped_so_an_attribute_cannot_be_broken_out_of():
     _, html, _ = render(valid_payload(name='Ada" onload="alert(1)'))
     assert 'onload="alert(1)"' not in html
     assert "&quot;" in html
+
+
+import lambda_function
+
+
+@pytest.fixture(autouse=True)
+def _env(monkeypatch):
+    monkeypatch.setenv("SES_FROM_EMAIL", "careers@binbash.co")
+    monkeypatch.setenv("CAREERS_RECIPIENT", "people@binbash.com.ar")
+
+
+@pytest.fixture
+def sent(monkeypatch):
+    """Capture send() calls instead of reaching SES."""
+    calls = []
+    monkeypatch.setattr(lambda_function, "send", lambda *args: calls.append(args))
+    return calls
+
+
+def invoke(payload):
+    return lambda_function.lambda_handler(
+        {"body": json.dumps(payload), "isBase64Encoded": False}, None
+    )
+
+
+def body_of(response):
+    return json.loads(response["body"])
+
+
+def test_a_valid_application_returns_200_and_sends(sent):
+    response = invoke(valid_payload())
+    assert response["statusCode"] == 200
+    assert body_of(response) == {"ok": True}
+    assert len(sent) == 1
+
+
+def test_reply_to_is_the_applicant(sent):
+    invoke(valid_payload(email="ada@example.com"))
+    _, _, _, reply_to = sent[0]
+    assert reply_to == "ada@example.com"
+
+
+def test_validation_failure_returns_400_and_names_the_fields(sent):
+    response = invoke(valid_payload(email="nope", consent=False))
+    assert response["statusCode"] == 400
+    payload = body_of(response)
+    assert payload["ok"] is False
+    assert payload["error"] == "validation"
+    assert sorted(payload["fields"]) == ["consent", "email"]
+    assert sent == []
+
+
+def test_a_filled_honeypot_returns_200_and_sends_nothing(sent):
+    # A 400 tells a bot which field caught it. A 200 teaches it nothing.
+    response = invoke(valid_payload(company="Acme Corp"))
+    assert response["statusCode"] == 200
+    assert body_of(response) == {"ok": True}
+    assert sent == []
+
+
+def test_a_filled_honeypot_wins_even_when_the_rest_is_invalid(sent):
+    response = invoke(valid_payload(company="Acme", email="nope"))
+    assert response["statusCode"] == 200
+    assert sent == []
+
+
+def test_an_oversized_body_returns_413(sent):
+    response = lambda_function.lambda_handler(
+        {"body": "x" * (32 * 1024 + 1), "isBase64Encoded": False}, None
+    )
+    assert response["statusCode"] == 413
+    assert body_of(response)["error"] == "too_large"
+    assert sent == []
+
+
+def test_malformed_json_returns_400(sent):
+    response = lambda_function.lambda_handler({"body": "{nope", "isBase64Encoded": False}, None)
+    assert response["statusCode"] == 400
+    assert sent == []
+
+
+def test_an_ses_failure_returns_500_with_no_internals_in_the_body(monkeypatch):
+    def explode(*_args):
+        raise RuntimeError("AccessDenied: ses:SendEmail on arn:aws:ses:...")
+
+    monkeypatch.setattr(lambda_function, "send", explode)
+    response = invoke(valid_payload())
+    assert response["statusCode"] == 500
+    assert body_of(response) == {"ok": False, "error": "server"}
+    assert "AccessDenied" not in response["body"]
+
+
+def test_every_response_carries_json_content_type(sent):
+    assert invoke(valid_payload())["headers"]["Content-Type"] == "application/json"
