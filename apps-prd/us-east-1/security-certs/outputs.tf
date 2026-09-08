@@ -13,3 +13,11 @@ output "binbash_web_certificate_arn" {
   description = "The binbash.co / www.binbash.co certificate ARN"
   value       = aws_acm_certificate.binbash_web.arn
 }
+
+#
+# Certificate: forms.binbash.co (careers application form API)
+#
+output "forms_binbash_co_certificate_arn" {
+  description = "The forms.binbash.co certificate ARN"
+  value       = aws_acm_certificate.forms_binbash_co.arn
+}
