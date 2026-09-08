@@ -112,6 +112,14 @@ locals {
         "devops",
       ]
     }
+    "federico.bello" = {
+      first_name = "Federico"
+      last_name  = "Bello"
+      email      = "federico.bello@binbash.com.ar"
+      groups = [
+        "datascientists",
+      ]
+    }
     "francisco.rivera" = {
       first_name = "Francisco"
       last_name  = "Rivera"
