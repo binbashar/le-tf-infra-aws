@@ -219,7 +219,7 @@ def test_script_tags_are_escaped_in_the_html_body(field):
     assert "&lt;script&gt;" in html
 
 
-def test_the_escaping_covers_the_subject_too():
+def test_the_subject_carries_raw_unescaped_text():
     subject, _, _ = render(valid_payload(name=XSS))
     # The subject is a header, not markup — it must carry the raw, UNescaped text.
     # `"alert" in subject` would pass whether or not the subject was escaped
@@ -321,9 +321,9 @@ def test_reply_to_is_the_applicant(sent):
 
 def test_send_calls_ses_with_the_right_kwargs(monkeypatch):
     # Every other test in this file patches send() itself out, which means the
-    # body of send() has never actually run under test — a wrong env-var name, a
-    # swapped Html/Text part, or a dropped Charset would still ship 60/60 green.
-    # Patch _client() instead, one level lower, so send() itself executes.
+    # body of send() would otherwise never run under test — a wrong env-var name,
+    # a swapped Html/Text part, or a dropped Charset would still ship a fully
+    # green suite. Patch _client() instead, one level lower, so send() executes.
     calls = []
 
     class FakeSesClient:
