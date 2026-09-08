@@ -91,11 +91,36 @@ MAX_LENGTHS = {
 _REQUIRED_TEXT = ("name", "email", "country", "linkedin")
 _URL_FIELDS = ("linkedin", "github", "awsCerts")
 
+# C0 controls (0x00-0x1F) plus DEL (0x7F). Removed rather than merely trimmed off
+# the ends: a literal CR/LF in `name` would otherwise ride straight into the
+# Subject header (`[careers] {role} — {name}`), and SES's structured SendEmail
+# call is not proven to sanitise that on its own. This also means `message` can
+# no longer carry author-formatted line breaks — an acceptable trade against
+# header injection.
+_STRIP_CONTROL = str.maketrans("", "", "".join(chr(c) for c in list(range(0x20)) + [0x7F]))
+
 
 def _text(payload, field):
-    """The field as a trimmed string, or '' for anything that is not a string."""
+    """The field as a trimmed string with control characters removed, or '' for
+    anything that is not a string."""
     value = payload.get(field)
-    return value.strip() if isinstance(value, str) else ""
+    if not isinstance(value, str):
+        return ""
+    return value.translate(_STRIP_CONTROL).strip()
+
+
+def _in_closed_set(value, allowed):
+    """Membership check that treats an unhashable value (a list or dict sent
+    where a string was expected) as simply "not a member" instead of raising.
+
+    `value in allowed` — allowed being a dict or frozenset — hashes value first.
+    A client posting `{"role": []}` would otherwise raise TypeError here, which
+    lambda_handler's try/except doesn't catch (it only wraps send()), so it would
+    escape as an unhandled Lambda error: API Gateway's own 500
+    {"message": "Internal Server Error"} instead of this module's §4 contract of
+    a 400 naming the field.
+    """
+    return isinstance(value, str) and value in allowed
 
 
 def is_honeypot_filled(payload):
@@ -146,13 +171,13 @@ def validate(payload):
             if field not in failed:
                 failed.append(field)
 
-    if payload.get("role") not in ROLES:
+    if not _in_closed_set(payload.get("role"), ROLES):
         failed.append("role")
-    if payload.get("experience") not in EXPERIENCE:
+    if not _in_closed_set(payload.get("experience"), EXPERIENCE):
         failed.append("experience")
-    if payload.get("seniority") not in SENIORITY:
+    if not _in_closed_set(payload.get("seniority"), SENIORITY):
         failed.append("seniority")
-    if payload.get("locale") not in LOCALES:
+    if not _in_closed_set(payload.get("locale"), LOCALES):
         failed.append("locale")
 
     # `is True`, not truthy: the string "true" and the integer 1 are both a client
@@ -187,7 +212,12 @@ def render(payload):
     html.escape(quote=True) before it reaches the HTML body — quote=True because
     a bare `"` in a name is enough to break out of an attribute. This app's own
     monorepo shipped exactly this bug once (AI Use Case Lab SES notification,
-    fixed in PR #173), which is why it has a test per field rather than one test.
+    fixed in PR #173), which is why every free-text field has its own escaping
+    test (name, email, country, linkedin, github, awsCerts, message). The
+    closed-set fields — role, experience, seniority, locale — are excluded from
+    that set of tests because validate() constrains them to a fixed handful of
+    safe literals before render() ever runs; they still pass through
+    html.escape() here, just without a dedicated adversarial test.
 
     The subject is a header, not markup, so it carries the raw value: escaping it
     would put `&lt;` in a recruiter's inbox.
@@ -213,7 +243,10 @@ def render(payload):
         )
         text_lines.append(f"{label}: {raw}")
 
-    escaped_message = html_module.escape(message or "—", quote=True).replace("\n", "<br>")
+    # message has already been through _text(), which strips control characters
+    # (see its docstring) — it can no longer contain a literal newline, so there
+    # is nothing here to turn into <br> tags.
+    escaped_message = html_module.escape(message or "—", quote=True)
     text_lines += ["", "Message:", message or "—"]
 
     html_body = (
@@ -230,8 +263,29 @@ def render(payload):
     return subject, html_body, "\n".join(text_lines)
 
 
-LOGGER = logging.getLogger()
-LOGGER.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
+_LOG_LEVELS = {
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "CRITICAL": logging.CRITICAL,
+}
+
+
+def _log_level():
+    """LOG_LEVEL from the environment, validated against a fixed table.
+
+    A malformed value (or logging.getLogger().setLevel's own behaviour of
+    raising ValueError on one) must not crash a cold start; it falls back to
+    INFO instead.
+    """
+    return _LOG_LEVELS.get(os.environ.get("LOG_LEVEL", "INFO").upper(), logging.INFO)
+
+
+# getLogger(__name__), not getLogger() — the latter is the ROOT logger, so
+# LOG_LEVEL=DEBUG would also pull botocore's own request logging into CloudWatch.
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(_log_level())
 
 _ses = None
 
@@ -276,34 +330,45 @@ def lambda_handler(event, _context):
     them to every response, including the ones this function returns. Setting them
     in both places produces a duplicated Access-Control-Allow-Origin header, which
     browsers reject outright.
+
+    The whole body runs under one outer try/except Exception. validate() already
+    guards every closed-set membership check against unhashable input (see
+    _in_closed_set), so this is a backstop rather than a fix for a known bug: it
+    exists so that a *future* bug here trades API Gateway's own unhandled-error
+    500 (a bare {"message": "Internal Server Error"}) for this module's §4
+    contract of {"ok": false, "error": "server"} instead.
     """
     try:
-        payload = parse_body(event)
-    except TooLarge:
-        return _response(413, {"ok": False, "error": "too_large"})
-    except BadJson:
-        return _response(400, {"ok": False, "error": "validation", "fields": []})
+        try:
+            payload = parse_body(event)
+        except TooLarge:
+            return _response(413, {"ok": False, "error": "too_large"})
+        except BadJson:
+            return _response(400, {"ok": False, "error": "validation", "fields": []})
 
-    # Before validation on purpose: a bot that fills every field would otherwise
-    # get a 400 listing what it got wrong.
-    if is_honeypot_filled(payload):
-        LOGGER.info("honeypot filled; dropping submission")
+        # Before validation on purpose: a bot that fills every field would otherwise
+        # get a 400 listing what it got wrong.
+        if is_honeypot_filled(payload):
+            LOGGER.info("honeypot filled; dropping submission")
+            return _response(200, {"ok": True})
+
+        failed = validate(payload)
+        if failed:
+            LOGGER.info("validation failed for fields: %s", ",".join(failed))
+            return _response(400, {"ok": False, "error": "validation", "fields": failed})
+
+        subject, html_body, text_body = render(payload)
+
+        try:
+            send(subject, html_body, text_body, _text(payload, "email"))
+        except Exception:
+            # exception() logs the traceback to CloudWatch; the body says nothing, so
+            # an IAM or SES error never reaches a browser.
+            LOGGER.exception("SES send failed")
+            return _response(500, {"ok": False, "error": "server"})
+
+        LOGGER.info("application sent for role=%s", payload["role"])
         return _response(200, {"ok": True})
-
-    failed = validate(payload)
-    if failed:
-        LOGGER.info("validation failed for fields: %s", ",".join(failed))
-        return _response(400, {"ok": False, "error": "validation", "fields": failed})
-
-    subject, html_body, text_body = render(payload)
-
-    try:
-        send(subject, html_body, text_body, _text(payload, "email"))
     except Exception:
-        # exception() logs the traceback to CloudWatch; the body says nothing, so
-        # an IAM or SES error never reaches a browser.
-        LOGGER.exception("SES send failed")
+        LOGGER.exception("unhandled error in lambda_handler")
         return _response(500, {"ok": False, "error": "server"})
-
-    LOGGER.info("application sent for role=%s", payload["role"])
-    return _response(200, {"ok": True})

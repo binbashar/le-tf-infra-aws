@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 
 import pytest
 
@@ -203,8 +204,16 @@ def test_absent_optional_fields_render_a_dash_not_the_word_none():
     assert "None" not in text
 
 
-@pytest.mark.parametrize("field", ["name", "country", "message"])
+@pytest.mark.parametrize(
+    "field", ["name", "email", "country", "linkedin", "github", "awsCerts", "message"]
+)
 def test_script_tags_are_escaped_in_the_html_body(field):
+    # Every free-text field goes through this test — the closed-set fields (role,
+    # experience, seniority, locale) are excluded because validate() constrains
+    # them to a fixed set of safe literals before render() ever sees them, so they
+    # cannot carry arbitrary markup in the first place. linkedin/github/awsCerts
+    # matter here precisely because the URL check (https:// prefix + length cap)
+    # does not forbid a payload like https://x.com/"><script>alert(1)</script>.
     _, html, _ = render(valid_payload(**{field: XSS}))
     assert "<script>" not in html
     assert "&lt;script&gt;" in html
@@ -212,15 +221,36 @@ def test_script_tags_are_escaped_in_the_html_body(field):
 
 def test_the_escaping_covers_the_subject_too():
     subject, _, _ = render(valid_payload(name=XSS))
-    # The subject is a header, not markup — it must carry the raw text, and it
-    # must not have been silently dropped.
-    assert "alert" in subject
+    # The subject is a header, not markup — it must carry the raw, UNescaped text.
+    # `"alert" in subject` would pass whether or not the subject was escaped
+    # (html.escape leaves the word "alert" untouched), so it cannot catch a
+    # regression. Pin the literal angle brackets instead: a future "harden
+    # render()" pass that starts escaping the subject would redden this test
+    # rather than silently shipping &lt;script&gt; into a recruiter's inbox.
+    assert "<script>" in subject
 
 
 def test_quotes_are_escaped_so_an_attribute_cannot_be_broken_out_of():
-    _, html, _ = render(valid_payload(name='Ada" onload="alert(1)'))
+    # The closing quote after "alert(1)" matters: without it, the raw string never
+    # contains `onload="alert(1)"` even when nothing is escaped, so the first
+    # assertion could never fail. With it, escaping is the only thing standing
+    # between this and a literal onload handler landing in the HTML body.
+    _, html, _ = render(valid_payload(name='Ada" onload="alert(1)"'))
     assert 'onload="alert(1)"' not in html
     assert "&quot;" in html
+
+
+def test_control_characters_cannot_inject_into_the_subject():
+    # A literal CR/LF in `name` would ride straight into the Subject header
+    # (`[careers] {role} — {name}`) if _text() only trimmed the ends. This is the
+    # classic web-form header-injection shape ("Bcc: attacker@evil.com" smuggled
+    # in on a second line) — SES's structured SendEmail is not proven to sanitise
+    # it on its own, so _text() strips control characters rather than relying on
+    # that.
+    subject, _, _ = render(valid_payload(name="Ada\r\nBcc: attacker@evil.com"))
+    assert "\r" not in subject
+    assert "\n" not in subject
+    assert "Bcc" in subject  # stripped of control chars, not silently dropped
 
 
 import lambda_function
@@ -263,6 +293,32 @@ def test_reply_to_is_the_applicant(sent):
     assert reply_to == "ada@example.com"
 
 
+def test_send_calls_ses_with_the_right_kwargs(monkeypatch):
+    # Every other test in this file patches send() itself out, which means the
+    # body of send() has never actually run under test — a wrong env-var name, a
+    # swapped Html/Text part, or a dropped Charset would still ship 60/60 green.
+    # Patch _client() instead, one level lower, so send() itself executes.
+    calls = []
+
+    class FakeSesClient:
+        def send_email(self, **kwargs):
+            calls.append(kwargs)
+
+    monkeypatch.setattr(lambda_function, "_client", lambda: FakeSesClient())
+
+    lambda_function.send("Subject line", "<p>html</p>", "text", "ada@example.com")
+
+    assert len(calls) == 1
+    kwargs = calls[0]
+    assert kwargs["Source"] == "careers@binbash.co"
+    assert kwargs["Destination"] == {"ToAddresses": ["people@binbash.com.ar"]}
+    assert kwargs["ReplyToAddresses"] == ["ada@example.com"]
+    message = kwargs["Message"]
+    assert message["Subject"] == {"Data": "Subject line", "Charset": "UTF-8"}
+    assert message["Body"]["Html"] == {"Data": "<p>html</p>", "Charset": "UTF-8"}
+    assert message["Body"]["Text"] == {"Data": "text", "Charset": "UTF-8"}
+
+
 def test_validation_failure_returns_400_and_names_the_fields(sent):
     response = invoke(valid_payload(email="nope", consent=False))
     assert response["statusCode"] == 400
@@ -270,6 +326,21 @@ def test_validation_failure_returns_400_and_names_the_fields(sent):
     assert payload["ok"] is False
     assert payload["error"] == "validation"
     assert sorted(payload["fields"]) == ["consent", "email"]
+    assert sent == []
+
+
+@pytest.mark.parametrize("field", ["role", "experience", "seniority", "locale"])
+def test_an_unhashable_closed_set_value_returns_400_not_500(field, sent):
+    # payload.get(field) not in ROLES/EXPERIENCE/SENIORITY/LOCALES hashes the
+    # value; a list is unhashable, so a naive membership check raises TypeError
+    # inside validate() before lambda_handler's only try/except (around send())
+    # ever sees it. That escapes as an unhandled Lambda error — API Gateway
+    # returns its own 500 {"message": "Internal Server Error"}, which violates
+    # the §4 contract of a 400 naming the field. Any anonymous caller can trigger
+    # this with a two-character body change.
+    response = invoke(valid_payload(**{field: []}))
+    assert response["statusCode"] == 400
+    assert body_of(response)["fields"] == [field]
     assert sent == []
 
 
@@ -315,3 +386,42 @@ def test_an_ses_failure_returns_500_with_no_internals_in_the_body(monkeypatch):
 
 def test_every_response_carries_json_content_type(sent):
     assert invoke(valid_payload())["headers"]["Content-Type"] == "application/json"
+
+
+def test_an_unhandled_exception_still_returns_the_500_contract(sent, monkeypatch):
+    # A backstop, not a substitute for fixing specific bugs: if some future code
+    # path raises anywhere between parsing and sending, the handler must still
+    # answer with the §4 shape rather than letting API Gateway's own unhandled-
+    # error 500 (a bare {"message": "Internal Server Error"}) leak through.
+    def explode(_payload):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(lambda_function, "validate", explode)
+    response = invoke(valid_payload())
+    assert response["statusCode"] == 500
+    assert body_of(response) == {"ok": False, "error": "server"}
+    assert sent == []
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("DEBUG", logging.DEBUG),
+        ("warning", logging.WARNING),
+        ("nonsense", logging.INFO),
+        (None, logging.INFO),
+    ],
+)
+def test_log_level_falls_back_to_info_for_garbage(monkeypatch, value, expected):
+    # logging.getLogger() with no name is the ROOT logger — setting its level from
+    # an unvalidated LOG_LEVEL would also gate botocore's own logging, and an
+    # unrecognised value must not raise at import time (a cold-start failure).
+    if value is None:
+        monkeypatch.delenv("LOG_LEVEL", raising=False)
+    else:
+        monkeypatch.setenv("LOG_LEVEL", value)
+    assert lambda_function._log_level() == expected
+
+
+def test_logger_is_not_the_root_logger():
+    assert lambda_function.LOGGER.name != "root"
