@@ -18,7 +18,10 @@ Attempted 2026-09-08 with `aws ses get-send-quota --region us-east-1`:
 
 Not yet verified: `aws ses get-send-quota` needs an interactive SSO login this session could not perform. Assumed **production access**, because `apps-prd/us-east-1/app-ai-lab` already sends production notifications from this account. **Confirm before applying** — if `Max24HourSend` turns out to be `200.0`, the account is sandboxed, `people@binbash.com.ar` must be added as an `aws_ses_email_identity` and verified by hand, and `var.ses_sandbox` must be flipped to `true`.
 
-No `ses.tf` in this layer — Task 10 decides whether to add one based on the verified quota.
+`ses.tf` exists but is gated on `var.ses_sandbox`, which defaults to `false` on the assumption of
+production access above. If the quota check later shows the account is sandboxed, flipping that
+variable to `true` creates an `aws_ses_email_identity` for `var.careers_recipient` — a human must
+then verify it by clicking the link AWS emails, or mail to that address is rejected outright.
 
 ## Apply order
 
