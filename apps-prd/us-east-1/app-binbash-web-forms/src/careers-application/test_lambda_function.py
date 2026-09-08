@@ -151,3 +151,73 @@ def test_honeypot_empty_or_absent_is_not_filled():
 
 def test_honeypot_with_content_is_filled():
     assert is_honeypot_filled(valid_payload(company="Acme Corp")) is True
+
+
+from lambda_function import render
+
+XSS = '<script>alert("x")</script>'
+
+
+def test_subject_names_the_role_and_the_applicant():
+    subject, _, _ = render(valid_payload())
+    assert subject == "[careers] AWS Cloud Engineer — Ada Lovelace"
+
+
+def test_general_applications_say_so_in_the_subject():
+    subject, _, _ = render(valid_payload(role="general"))
+    assert subject == "[careers] General application — Ada Lovelace"
+
+
+def test_html_body_carries_every_submitted_value():
+    _, html, _ = render(
+        valid_payload(
+            github="https://github.com/ada",
+            awsCerts="https://skillsprofile.skillbuilder.aws/user/ada/certification-badges",
+            message="Platform engineering, please.",
+        )
+    )
+    for expected in [
+        "Ada Lovelace",
+        "ada@example.com",
+        "AWS Cloud Engineer",
+        "Argentina",
+        "https://www.linkedin.com/in/ada",
+        "https://github.com/ada",
+        "https://skillsprofile.skillbuilder.aws/user/ada/certification-badges",
+        "6-9",
+        "senior",
+        "Platform engineering, please.",
+    ]:
+        assert expected in html
+
+
+def test_text_body_carries_every_submitted_value():
+    _, _, text = render(valid_payload(message="Platform engineering, please."))
+    for expected in ["Ada Lovelace", "ada@example.com", "AWS Cloud Engineer", "Argentina"]:
+        assert expected in text
+
+
+def test_absent_optional_fields_render_a_dash_not_the_word_none():
+    _, html, text = render(valid_payload())
+    assert "None" not in html
+    assert "None" not in text
+
+
+@pytest.mark.parametrize("field", ["name", "country", "message"])
+def test_script_tags_are_escaped_in_the_html_body(field):
+    _, html, _ = render(valid_payload(**{field: XSS}))
+    assert "<script>" not in html
+    assert "&lt;script&gt;" in html
+
+
+def test_the_escaping_covers_the_subject_too():
+    subject, _, _ = render(valid_payload(name=XSS))
+    # The subject is a header, not markup — it must carry the raw text, and it
+    # must not have been silently dropped.
+    assert "alert" in subject
+
+
+def test_quotes_are_escaped_so_an_attribute_cannot_be_broken_out_of():
+    _, html, _ = render(valid_payload(name='Ada" onload="alert(1)'))
+    assert 'onload="alert(1)"' not in html
+    assert "&quot;" in html

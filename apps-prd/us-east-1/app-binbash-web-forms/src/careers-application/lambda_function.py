@@ -10,6 +10,7 @@ AWS credentials. send() is the only part that touches AWS.
 """
 
 import base64
+import html as html_module
 import json
 
 MAX_BODY_BYTES = 32 * 1024
@@ -160,3 +161,66 @@ def validate(payload):
         failed.append("message")
 
     return failed
+
+
+# Order matters: this is the order a recruiter reads them in.
+_FIELD_LABELS = (
+    ("name", "Name"),
+    ("email", "Email"),
+    ("country", "Country"),
+    ("experience", "Years of experience"),
+    ("seniority", "Seniority"),
+    ("linkedin", "LinkedIn"),
+    ("github", "GitHub / portfolio"),
+    ("awsCerts", "AWS certifications"),
+)
+
+
+def render(payload):
+    """Build (subject, html_body, text_body) from a validated payload.
+
+    THE ONLY PLACE ESCAPING HAPPENS. Every value below goes through
+    html.escape(quote=True) before it reaches the HTML body — quote=True because
+    a bare `"` in a name is enough to break out of an attribute. This app's own
+    monorepo shipped exactly this bug once (AI Use Case Lab SES notification,
+    fixed in PR #173), which is why it has a test per field rather than one test.
+
+    The subject is a header, not markup, so it carries the raw value: escaping it
+    would put `&lt;` in a recruiter's inbox.
+    """
+    role_label = ROLES[payload["role"]]
+    name = _text(payload, "name")
+    subject = f"[careers] {role_label} — {name}"
+
+    values = {key: _text(payload, key) for key, _ in _FIELD_LABELS}
+    values["experience"] = payload["experience"]
+    values["seniority"] = payload["seniority"]
+    message = _text(payload, "message")
+
+    rows = []
+    text_lines = [f"{role_label} — {name}", ""]
+    for key, label in _FIELD_LABELS:
+        raw = values.get(key) or "—"
+        rows.append(
+            "<tr>"
+            f'<td style="padding:6px 16px 6px 0;color:#6b6b60;vertical-align:top;">{html_module.escape(label, quote=True)}</td>'
+            f'<td style="padding:6px 0;">{html_module.escape(raw, quote=True)}</td>'
+            "</tr>"
+        )
+        text_lines.append(f"{label}: {raw}")
+
+    escaped_message = html_module.escape(message or "—", quote=True).replace("\n", "<br>")
+    text_lines += ["", "Message:", message or "—"]
+
+    html_body = (
+        '<html><body style="font-family:system-ui,-apple-system,sans-serif;color:#181917;">'
+        f"<h2 style=\"margin:0 0 4px;\">{html_module.escape(role_label, quote=True)}</h2>"
+        f'<p style="margin:0 0 16px;color:#6b6b60;">Application received from binbash.co '
+        f'({html_module.escape(payload["locale"], quote=True)})</p>'
+        f'<table style="border-collapse:collapse;font-size:14px;">{"".join(rows)}</table>'
+        f'<h3 style="margin:24px 0 4px;">Message</h3>'
+        f'<p style="margin:0;font-size:14px;">{escaped_message}</p>'
+        "</body></html>"
+    )
+
+    return subject, html_body, "\n".join(text_lines)
