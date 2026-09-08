@@ -38,8 +38,6 @@ terraform {
 # Data sources                #
 #=============================#
 
-data "aws_caller_identity" "current" {}
-
 #
 # The public binbash.co zone, for the forms.binbash.co alias record
 #

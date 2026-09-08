@@ -38,8 +38,13 @@ resource "aws_apigatewayv2_route" "careers_application" {
 #
 # Auto-deployed default stage. The throttle is the anti-abuse layer the design
 # chose in place of a WAF: it is stage-wide, so it bounds total spend rather than
-# per-IP behaviour. Combined with the Lambda's reserved concurrency of 5, a flood
-# costs a bounded amount and cannot reach SES faster than 5 rps.
+# per-IP behaviour. CORS is a browser mechanism only — curl and any non-browser
+# client ignore it — so this throttle is the only real bound on an anonymous
+# flood. binbash.co's SES sending quota and domain identity are SHARED with
+# apps-prd/us-east-1/app-ai-lab, which sends production notifications, so a
+# flood here would also eat into that system's mail. 1 rps / burst 10 is ample
+# for a careers form while keeping worst-case volume small against that shared
+# quota.
 #
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.forms.id
