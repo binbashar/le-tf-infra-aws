@@ -60,9 +60,49 @@ variable "throttle_burst_limit" {
 }
 
 variable "log_retention_days" {
-  description = "CloudWatch Logs retention for the Lambda's log group"
+  description = <<-EOT
+    CloudWatch Logs retention for BOTH log groups this layer creates: the
+    Lambda's (lambda.tf) and the API's access log (api-gateway.tf). One knob on
+    purpose — the two are only useful read together when tracing a submission.
+
+    Must be one of the values aws_cloudwatch_log_group accepts (1, 3, 5, 7, 14,
+    30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922,
+    3288, 3653, or 0 to never expire); anything else fails at apply with an
+    opaque API error rather than at plan time.
+  EOT
   type        = number
   default     = 90
+}
+
+#
+# CloudWatch alarms (monitoring.tf)
+#
+
+variable "alarm_send_failure_threshold" {
+  description = <<-EOT
+    Number of lost applications in a 5-minute period that pages Slack. Defaults
+    to 1: this layer has no datastore, so a single unsent application is
+    unrecoverable and there is no volume here that would make a higher floor
+    worth the missed submission.
+  EOT
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.alarm_send_failure_threshold >= 1
+    error_message = "alarm_send_failure_threshold must be at least 1."
+  }
+}
+
+variable "alarm_function_error_threshold" {
+  description = "Lambda invocation failures (timeout, OOM, cold-start import error) in a 5-minute period that page Slack"
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.alarm_function_error_threshold >= 1
+    error_message = "alarm_function_error_threshold must be at least 1."
+  }
 }
 
 variable "ses_sandbox" {

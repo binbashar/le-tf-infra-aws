@@ -82,3 +82,18 @@ data "terraform_remote_state" "ai-lab" {
     key     = "apps-prd/app-ai-lab/terraform.tfstate"
   }
 }
+
+#
+# The SNS -> Lambda -> Slack pipeline the alarms in monitoring.tf notify. Same
+# topic app-binbash-web's CloudFront alarms use, read the same way.
+#
+data "terraform_remote_state" "notifications" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/notifications/terraform.tfstate"
+  }
+}

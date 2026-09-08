@@ -14,25 +14,48 @@ POST https://forms.binbash.co/careers-application
 
 ## SES account status
 
-Attempted 2026-09-08 with `aws ses get-send-quota --region us-east-1`:
+Verified 2026-09-08 against apps-prd/us-east-1:
 
-Not yet verified: `aws ses get-send-quota` needs an interactive SSO login this session could not perform. Assumed **production access**, because `apps-prd/us-east-1/app-ai-lab` already sends production notifications from this account. **Confirm before applying** — if `Max24HourSend` turns out to be `200.0`, the account is sandboxed, `people@binbash.com.ar` must be added as an `aws_ses_email_identity` and verified by hand, and `var.ses_sandbox` must be flipped to `true`.
+```
+aws sesv2 get-account
+  ProductionAccessEnabled  true        <- authoritative; not the sandbox
+  SendingEnabled           true
+  EnforcementStatus        HEALTHY
 
-`ses.tf` exists but is gated on `var.ses_sandbox`, which defaults to `false` on the assumption of
-production access above. If the quota check later shows the account is sandboxed, flipping that
-variable to `true` creates an `aws_ses_email_identity` for `var.careers_recipient` — a human must
-then verify it by clicking the link AWS emails, or mail to that address is rejected outright.
+aws ses get-send-quota
+  Max24HourSend            50000.0     the sandbox cap is 200.0
+  MaxSendRate              14.0 /sec
+
+aws ses get-identity-dkim-attributes --identities binbash.co
+  DkimEnabled              true
+  DkimVerificationStatus   Success
+```
+
+The account has **SES production access**, so `var.ses_sandbox` correctly defaults to `false` and
+recipients need no verification of their own. The `binbash.co` domain identity is verified with DKIM
+(by `apps-prd/us-east-1/app-ai-lab`), which is what lets `ses_from_email` be any `@binbash.co`
+address without further setup. `people@binbash.com.ar` is deliberately *not* a verified identity —
+outside the sandbox it does not need to be.
+
+`ses.tf` is therefore inert as configured: gated on `var.ses_sandbox`, it creates nothing. It stays in
+the tree because SES production access is an account-level grant AWS can revoke, and if that ever
+happens flipping the variable to `true` creates an `aws_ses_email_identity` for
+`var.careers_recipient` — which a human must then verify by clicking the link AWS emails, or mail to
+that address is rejected outright.
+
+`MaxSendRate` of 14/sec also puts the stage throttle in context: at 1 rps this layer can consume at
+most ~7% of the account's per-second send rate, leaving headroom for `app-ai-lab`'s notifications,
+which share the quota.
 
 ## Apply order
 
 This layer's custom domain needs a validated certificate, which lives elsewhere:
 
-1. Confirm the SES send quota (see [SES account status](#ses-account-status) above) — if the
-   account turns out to be sandboxed, `var.ses_sandbox` must be flipped to `true` before
-   applying, or the recipient identity will not exist and mail will be rejected outright.
-2. `apps-prd/us-east-1/security-certs` — creates and validates `forms.binbash.co`
-3. this layer
-4. the `bb-sales-tools` frontend PR — dead until `forms.binbash.co` resolves
+1. `apps-prd/us-east-1/security-certs` — creates and validates `forms.binbash.co`
+2. this layer
+3. the `bb-sales-tools` frontend PR — dead until `forms.binbash.co` resolves
+
+The SES send quota no longer gates step 1 — it is confirmed as production access above.
 
 ## API Gateway access logs
 
@@ -53,14 +76,28 @@ variable does not error, it just delivers an empty field for that key. If access
 still blocks the apply for some other reason, dropping the `access_log_settings` block is
 a safe escape hatch — it is not load-bearing for the route itself.
 
+## Alarms
+
+`monitoring.tf` defines two alarms, both notifying the `notifications` layer's SNS -> Lambda ->
+Slack topic (`sns_topic_arn_monitoring`) — the same pipeline `app-binbash-web/monitoring.tf` uses.
+
+| Alarm | Fires when | Source |
+|---|---|---|
+| `…-send-failures` | An application was accepted but never emailed — the submission is **lost** | Log metric filter on the Lambda's log group |
+| `…-function-errors` | The invocation never completed: timeout, OOM, cold-start import failure | `AWS/Lambda` `Errors` |
+
+**Why the first one reads the log group instead of the `Errors` metric.** `lambda_handler` catches
+every exception and *returns* a 500 payload rather than letting it escape, so to Lambda a failed SES
+send is a **successful invocation** — `Errors` stays at 0 through exactly the failure this layer most
+needs to know about. An `Errors >= 1` alarm alone would have been decorative. The two alarms cover
+disjoint halves: one for "the function answered 500", one for "the function never answered".
+
+The metric filter matches the literal strings `SES send failed` and `unhandled error in
+lambda_handler`. **Those are a contract with `lambda_function.py`** — renaming either
+`LOGGER.exception()` message silently disarms the alarm, and no test or compiler will catch it.
+
 ## What is deliberately not here
 
-No datastore, and no metric alarm. An application that fails to send is lost, with only the
-Lambda's own CloudWatch logs as evidence after the fact — nothing pages anyone when it happens.
-See spec §8.4 — the absence of a datastore was a decision, not an omission.
-
-A CloudWatch metric alarm on the function's `Errors` metric, wired to SNS following the pattern in
-`apps-prd/us-east-1/app-binbash-web/monitoring.tf`, is the obvious next step for closing that gap.
-It is not implemented here: Tasks 7-10 did not ask for one, and adding production monitoring is a
-scope call for the repo owner, who has been asked and has not yet answered. Treat this as an open
-decision, not a planned or committed piece of work.
+No datastore. An application that fails to send is not recoverable from anywhere — the alarms above
+tell you it happened and the Lambda's log group has the traceback, but the submission itself is gone.
+See spec §8.4: that was a decision, not an omission.

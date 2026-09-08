@@ -10,6 +10,10 @@ locals {
   # The one route this API serves.
   careers_route = "POST /careers-application"
 
+  # Namespace for this layer's own CloudWatch metrics (monitoring.tf). Must not
+  # start with "AWS/" — that prefix is reserved for AWS's own metrics.
+  metric_namespace = "${var.project}-${var.environment}/${local.app_name}"
+
   tags = {
     Terraform   = "true"
     Environment = var.environment
