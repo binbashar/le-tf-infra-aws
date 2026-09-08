@@ -54,3 +54,109 @@ def parse_body(event):
         raise BadJson("body is not a JSON object")
 
     return payload
+
+
+# Slug → display name. The slugs are the six /people/careers/<slug> routes plus a
+# general application; they are also what reaches the email subject, which is why
+# this is an allow-list and not a free-text field.
+ROLES = {
+    "presales-solutions-architect": "Presales Solutions Architect",
+    "tech-delivery-manager": "Tech Delivery Manager",
+    "aws-cloud-engineer": "AWS Cloud Engineer",
+    "ai-ml-engineer": "AI/ML Engineer",
+    "data-engineer": "Data Engineer",
+    "partner-account-manager": "Partner Account Manager",
+    "general": "General application",
+}
+
+EXPERIENCE = frozenset({"0-2", "3-5", "6-9", "10+"})
+SENIORITY = frozenset({"junior", "semi-senior", "senior", "lead"})
+LOCALES = frozenset({"en", "es", "pt"})
+
+MAX_LENGTHS = {
+    "name": 120,
+    "email": 254,
+    "country": 80,
+    "linkedin": 500,
+    "github": 500,
+    "awsCerts": 500,
+    "message": 4000,
+}
+
+_REQUIRED_TEXT = ("name", "email", "country", "linkedin")
+_URL_FIELDS = ("linkedin", "github", "awsCerts")
+
+
+def _text(payload, field):
+    """The field as a trimmed string, or '' for anything that is not a string."""
+    value = payload.get(field)
+    return value.strip() if isinstance(value, str) else ""
+
+
+def is_honeypot_filled(payload):
+    """True when the hidden `company` field carries content.
+
+    A human never sees this field. A bot that fills every input does. The caller
+    answers 200 anyway — see lambda_handler.
+    """
+    return bool(_text(payload, "company"))
+
+
+def _email_looks_valid(value):
+    """One @, something on each side of it, no whitespace.
+
+    Deliberately not a full RFC 5322 parse: the only thing riding on this is
+    whether Reply-To will work, and a stricter regex rejects valid addresses far
+    more often than it catches invalid ones.
+    """
+    if value.count("@") != 1:
+        return False
+    local, _, domain = value.partition("@")
+    if not local or not domain or "." not in domain:
+        return False
+    return not any(c.isspace() for c in value)
+
+
+def validate(payload):
+    """Return the names of every failing field. Empty list means valid.
+
+    Every field is checked; the function does not bail on the first failure,
+    because the client renders one message per field.
+    """
+    failed = []
+
+    for field in _REQUIRED_TEXT:
+        value = _text(payload, field)
+        if not value or len(value) > MAX_LENGTHS[field]:
+            failed.append(field)
+
+    if "email" not in failed and not _email_looks_valid(_text(payload, "email")):
+        failed.append("email")
+
+    for field in _URL_FIELDS:
+        value = _text(payload, field)
+        if not value:
+            continue  # required-ness for linkedin is already covered above
+        if not value.startswith("https://") or len(value) > MAX_LENGTHS[field]:
+            if field not in failed:
+                failed.append(field)
+
+    if payload.get("role") not in ROLES:
+        failed.append("role")
+    if payload.get("experience") not in EXPERIENCE:
+        failed.append("experience")
+    if payload.get("seniority") not in SENIORITY:
+        failed.append("seniority")
+    if payload.get("locale") not in LOCALES:
+        failed.append("locale")
+
+    # `is True`, not truthy: the string "true" and the integer 1 are both a client
+    # bug, and a consent checkbox that accepts a coerced value is not consent.
+    if payload.get("consent") is not True:
+        failed.append("consent")
+
+    message = _text(payload, "message")
+    if len(message) > MAX_LENGTHS["message"]:
+        failed.append("message")
+
+    return failed
