@@ -3,9 +3,11 @@
 # public by design; a job applicant has no credentials.
 #
 # CORS IS CONFIGURED HERE AND NOWHERE ELSE. The Lambda deliberately returns no
-# Access-Control-* headers: API Gateway adds them to every response including the
-# function's own, and two Access-Control-Allow-Origin headers make a browser
-# reject the response outright.
+# Access-Control-* headers: an HTTP API's `cors_configuration` generates those
+# headers itself for every response on the route and IGNORES whatever
+# Access-Control-* headers the integration (this Lambda) returns — its copy is
+# dropped, not merged, so shipping them from the Lambda would be inert, not a
+# duplicated header.
 #
 resource "aws_apigatewayv2_api" "forms" {
   name          = local.api_name
@@ -26,7 +28,13 @@ resource "aws_apigatewayv2_integration" "careers_application" {
   integration_type       = "AWS_PROXY"
   integration_uri        = aws_lambda_function.careers_application.invoke_arn
   payload_format_version = "2.0"
-  timeout_milliseconds   = 10000
+
+  # Kept above the function's own 10s timeout (lambda.tf) on purpose: if they were
+  # equal, a full-duration invocation could hit API Gateway's own timeout first
+  # and surface its bare 504, racing the Lambda's own §4-compliant 500. Integration
+  # timeout > function timeout so the Lambda always gets to finish and answer with
+  # its own contract first.
+  timeout_milliseconds = 15000
 }
 
 resource "aws_apigatewayv2_route" "careers_application" {

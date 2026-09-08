@@ -127,11 +127,11 @@ def _in_closed_set(value, allowed):
     where a string was expected) as simply "not a member" instead of raising.
 
     `value in allowed` — allowed being a dict or frozenset — hashes value first.
-    A client posting `{"role": []}` would otherwise raise TypeError here, which
-    lambda_handler's try/except doesn't catch (it only wraps send()), so it would
-    escape as an unhandled Lambda error: API Gateway's own 500
-    {"message": "Internal Server Error"} instead of this module's §4 contract of
-    a 400 naming the field.
+    A client posting `{"role": []}` would otherwise raise TypeError here. That
+    would still be caught by lambda_handler's outer try/except Exception (see
+    its docstring), so it would not escape as an unhandled Lambda error — but it
+    would surface as this module's generic 500 {"ok": false, "error": "server"}
+    instead of the more useful §4 contract of a 400 naming the offending field.
     """
     return isinstance(value, str) and value in allowed
 
@@ -342,9 +342,10 @@ def lambda_handler(event, _context):
     """Validate, then send. See the spec's §4 for the response table.
 
     CORS headers are NOT set here — the HTTP API's own `cors_configuration` adds
-    them to every response, including the ones this function returns. Setting them
-    in both places produces a duplicated Access-Control-Allow-Origin header, which
-    browsers reject outright.
+    them to every response, including the ones this function returns, and IGNORES
+    whatever Access-Control-* headers the integration (this Lambda) sends back —
+    its copy is dropped, not merged. Setting them here too would be inert, not a
+    duplicated header.
 
     The whole body runs under one outer try/except Exception. validate() already
     guards every closed-set membership check against unhashable input (see

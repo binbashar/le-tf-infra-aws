@@ -27,9 +27,12 @@ then verify it by clicking the link AWS emails, or mail to that address is rejec
 
 This layer's custom domain needs a validated certificate, which lives elsewhere:
 
-1. `apps-prd/us-east-1/security-certs` — creates and validates `forms.binbash.co`
-2. this layer
-3. the `bb-sales-tools` frontend PR — dead until `forms.binbash.co` resolves
+1. Confirm the SES send quota (see [SES account status](#ses-account-status) above) — if the
+   account turns out to be sandboxed, `var.ses_sandbox` must be flipped to `true` before
+   applying, or the recipient identity will not exist and mail will be rejected outright.
+2. `apps-prd/us-east-1/security-certs` — creates and validates `forms.binbash.co`
+3. this layer
+4. the `bb-sales-tools` frontend PR — dead until `forms.binbash.co` resolves
 
 ## API Gateway access logs
 
@@ -39,9 +42,11 @@ and resource-policy setup that v1 requires (`aws_api_gateway_account`, a policy 
 delivers access logs as CloudWatch vended logs: AWS grants `delivery.logs.amazonaws.com`
 write access to the destination log group itself, scoped to that one log group, the first
 time a stage's `access_log_settings` targets it — no resource policy of ours to write or
-collide with. `apps-devstg/us-east-1/tools-apigw-apps-proxy` does the same
+collide with. `apps-devstg/us-east-1/tools-apigw-apps-proxy --` uses the same shape
 (`default_stage_access_log_destination_arn` pointed at a plain `aws_cloudwatch_log_group`,
-no resource policy) and is a working precedent for this pattern.
+no resource policy), but that layer's trailing ` --` marks it disabled and excluded from
+deployment and Atlantis autodiscover, so it has never actually been applied. It is a code
+reference for the mechanism, not a working precedent.
 
 The `format` map is still worth double-checking on a first apply: a misspelled `$context`
 variable does not error, it just delivers an empty field for that key. If access logging

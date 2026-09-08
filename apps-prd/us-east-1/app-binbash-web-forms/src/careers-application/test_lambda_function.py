@@ -358,12 +358,13 @@ def test_validation_failure_returns_400_and_names_the_fields(sent):
 @pytest.mark.parametrize("field", ["role", "experience", "seniority", "locale"])
 def test_an_unhashable_closed_set_value_returns_400_not_500(field, sent):
     # payload.get(field) not in ROLES/EXPERIENCE/SENIORITY/LOCALES hashes the
-    # value; a list is unhashable, so a naive membership check raises TypeError
-    # inside validate() before lambda_handler's only try/except (around send())
-    # ever sees it. That escapes as an unhandled Lambda error — API Gateway
-    # returns its own 500 {"message": "Internal Server Error"}, which violates
-    # the §4 contract of a 400 naming the field. Any anonymous caller can trigger
-    # this with a two-character body change.
+    # value; a list is unhashable, so a naive membership check would raise
+    # TypeError inside validate(). lambda_handler's outer try/except Exception
+    # would still catch that — it would not escape as an unhandled Lambda error
+    # — but it would surface as this module's generic 500 {"ok": false, "error":
+    # "server"} instead of the §4 contract of a 400 naming the field.
+    # _in_closed_set() guards against that here so any anonymous caller sending
+    # a two-character body change (e.g. `"role": []`) still gets the useful 400.
     response = invoke(valid_payload(**{field: []}))
     assert response["statusCode"] == 400
     assert body_of(response)["fields"] == [field]
