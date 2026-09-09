@@ -38,7 +38,6 @@ module "iam_group_aws_iq" {
   name   = "aws_iq_root_org"
 
   group_users = [
-    module.user["emiliano.brest"].iam_user_name,
     module.user["marcos.pagnucco"].iam_user_name
   ]
 

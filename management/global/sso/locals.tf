@@ -75,14 +75,6 @@ locals {
         "devops"
       ]
     }
-    "emiliano.brest" = {
-      first_name = "Emiliano"
-      last_name  = "Brest"
-      email      = "emiliano.brest@binbash.com.ar"
-      groups = [
-        "marketplaceandpartnercentral",
-      ]
-    }
     "exequiel.barrirero" = {
       first_name = "Exequiel"
       last_name  = "Barrirero"
@@ -118,15 +110,6 @@ locals {
       email      = "federico.bello@binbash.com.ar"
       groups = [
         "datascientists",
-      ]
-    }
-    "francisco.rivera" = {
-      first_name = "Francisco"
-      last_name  = "Rivera"
-      email      = "francisco.rivera@binbash.com.ar"
-      groups = [
-        "administrators",
-        "devops",
       ]
     }
     "franco.gauchat" = {
@@ -217,14 +200,6 @@ locals {
       groups = [
         "datascientists",
         "devops"
-      ]
-    }
-    "lucas.langwagen" = {
-      first_name = "Lucas"
-      last_name  = "Langwagen"
-      email      = "lucas.langwagen@binbash.com.ar"
-      groups = [
-        "datascientists",
       ]
     }
     "luis.gallardo" = {
