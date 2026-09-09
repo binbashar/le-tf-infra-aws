@@ -102,17 +102,32 @@ def eks_lifecycles(versions: set[str], client) -> dict[str, tuple]:
     if not versions:
         return {}
 
-    response = client.describe_cluster_versions(
-        clusterVersions=sorted(versions), includeAll=True
-    )
-    return {
-        item["clusterVersion"]: (
-            item.get("versionStatus", "UNKNOWN"),
-            as_date(item.get("endOfStandardSupportDate")),
-            as_date(item.get("endOfExtendedSupportDate")),
-        )
-        for item in response.get("clusterVersions", [])
-    }
+    # AWS rejects clusterVersions and includeAll together: "Only one of the
+    # defaultOnly, clusterVersions, includeAll or status request parameters is
+    # accepted at a time." So fetch the whole catalog with includeAll and filter
+    # locally, rather than naming versions and risking AWS omitting the ones
+    # already out of standard support -- which are precisely the ones we want.
+    # Found by the first real CI run; Stubber validates request shape, not AWS's
+    # parameter-exclusivity rules, so no stub test could have caught it.
+    wanted = set(versions)
+    found: dict[str, tuple] = {}
+    kwargs: dict = {"includeAll": True}
+    while True:
+        response = client.describe_cluster_versions(**kwargs)
+        for item in response.get("clusterVersions", []):
+            version = item.get("clusterVersion")
+            if version in wanted:
+                found[version] = (
+                    item.get("versionStatus", "UNKNOWN"),
+                    as_date(item.get("endOfStandardSupportDate")),
+                    as_date(item.get("endOfExtendedSupportDate")),
+                )
+        # Now that this fetches the full catalog rather than named versions,
+        # pagination is a real possibility and must be followed.
+        token = response.get("nextToken")
+        if not token:
+            return found
+        kwargs["nextToken"] = token
 
 
 def rds_lifecycle(engine: str, major: str, client, today: date) -> tuple:

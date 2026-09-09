@@ -81,13 +81,74 @@ def test_eks_lifecycles_maps_versions_to_support_state():
                     },
                 ]
             },
-            {"clusterVersions": ["1.28", "1.34"], "includeAll": True},
+            {"includeAll": True},
         )
 
         result = eks_lifecycles({"1.34", "1.28"}, client)
 
     assert result["1.34"] == ("STANDARD_SUPPORT", date(2027, 3, 23), date(2028, 3, 23))
     assert result["1.28"][0] == "EXTENDED_SUPPORT"
+
+
+def test_eks_lifecycles_follows_pagination():
+    # Now that this fetches the whole catalog instead of naming versions, a
+    # truncated response is a real possibility -- and a dropped version would
+    # surface as UNKNOWN rather than as an error.
+    client = boto3.client("eks", region_name="us-east-1")
+    with Stubber(client) as stub:
+        stub.add_response(
+            "describe_cluster_versions",
+            {
+                "clusterVersions": [
+                    {
+                        "clusterVersion": "1.34",
+                        "versionStatus": "STANDARD_SUPPORT",
+                        "endOfStandardSupportDate": datetime(2027, 3, 23),
+                    }
+                ],
+                "nextToken": "page2",
+            },
+            {"includeAll": True},
+        )
+        stub.add_response(
+            "describe_cluster_versions",
+            {
+                "clusterVersions": [
+                    {
+                        "clusterVersion": "1.28",
+                        "versionStatus": "EXTENDED_SUPPORT",
+                        "endOfStandardSupportDate": datetime(2024, 11, 26),
+                    }
+                ]
+            },
+            {"includeAll": True, "nextToken": "page2"},
+        )
+
+        result = eks_lifecycles({"1.34", "1.28"}, client)
+
+    # Both pages contributed; the version on page 2 is not lost.
+    assert set(result) == {"1.34", "1.28"}
+    assert result["1.28"][0] == "EXTENDED_SUPPORT"
+
+
+def test_eks_lifecycles_ignores_versions_it_was_not_asked_about():
+    # The catalog returns every version; only the pinned ones belong in the map.
+    client = boto3.client("eks", region_name="us-east-1")
+    with Stubber(client) as stub:
+        stub.add_response(
+            "describe_cluster_versions",
+            {
+                "clusterVersions": [
+                    {"clusterVersion": "1.34", "versionStatus": "STANDARD_SUPPORT"},
+                    {"clusterVersion": "1.21", "versionStatus": "UNSUPPORTED"},
+                ]
+            },
+            {"includeAll": True},
+        )
+
+        result = eks_lifecycles({"1.34"}, client)
+
+    assert set(result) == {"1.34"}
 
 
 def test_rds_lifecycle_derives_status_from_lifecycle_entries():
@@ -172,7 +233,7 @@ def test_evaluate_turns_pins_into_findings():
                     }
                 ]
             },
-            {"clusterVersions": ["1.28"], "includeAll": True},
+            {"includeAll": True},
         )
 
         findings = evaluate([EKS_PIN], eks_client=eks, rds_client=rds, today=TODAY)
