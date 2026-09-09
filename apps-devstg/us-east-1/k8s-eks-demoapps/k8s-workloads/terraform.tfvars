@@ -5,11 +5,18 @@
 # tear down an app on the next apply. The Envoy Gateway HTTPRoute attached to
 # echo-server comes and goes with `echo_server.enabled`.
 #
-# google_microservices_dev and emojivoto are ArgoCD Applications and depend on
-# the argocd CRDs, which the k8s-components layer ships only when its
-# `argocd.enabled = true`. They default to `false` here so this layer plans
-# cleanly without argocd; flip them to `true` once you've enabled argocd in
-# k8s-components.
+# google_microservices_dev and emojivoto are ArgoCD Applications: the resources
+# are `kubernetes_manifest`, which validates against the live API at *plan*
+# time, so they cannot even be planned before `k8s-components` has installed
+# argocd. Setting either to `true` here therefore commits the whole layer to
+# running after that one — which is the documented order anyway.
+#
+# What each needs on top of `argocd.enabled` in k8s-components:
+#   - emojivoto                → `argocd.rollouts.enabled` (its workloads are
+#                                `kind: Rollout`).
+#   - google_microservices_dev → `external_secrets.enabled`, plus the `secrets`
+#                                layer applied, or `paymentservice` never
+#                                starts.
 demo_apps = {
   echo_server = {
     enabled = true
@@ -23,9 +30,9 @@ demo_apps = {
     restrict_public_access = true
   }
   google_microservices_dev = {
-    enabled = false
+    enabled = true
   }
   emojivoto = {
-    enabled = false
+    enabled = true
   }
 }

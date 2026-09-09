@@ -22,12 +22,36 @@ there. That topology is:
 The perimeter is meant to stay recognisable; the data plane is what changes.
 **Reintroducing nginx here is never an option** — replacing it is the point.
 
-**Current state (2026-08-28).** Torn down. Everything below the VPC is gone;
-`vpc-0c2dd28735d0250c3` is kept for a fast re-spin, with the `network` layer
-applied and `vpc_enable_nat_gateway = false`. Note that resting state: `network`
-is *applied without a NAT*, never destroyed — see "Tearing down". When up it is
-EKS 1.34 on AL2023 with spot nodes and both public and private paths on Envoy
-Gateway.
+**Current state (2026-09-05).** Torn down, after a re-spin that validated the PR
+#1157 review items against a real cluster and then closed the two that needed a
+decision: **`authentication_mode = "API"`** and **`authenticator` control-plane
+logging**, both applied in place to the running cluster and verified before the
+teardown. All seven layers planned `No changes`; both demo apps were
+`Synced`/`Healthy`; checkout, vote and both gateways verified. The 2026-09-03
+entry below describes the run that first brought the apps up.
+
+**Previously (2026-09-03).** Torn down, after a re-spin that brought the two
+GitOps demo apps — **emojivoto** and **google-microservices** — into service
+alongside echo-server, which had been the only workload since the Day 6 trim.
+That took Argo CD, Argo Rollouts and External Secrets back on, and added a
+seventh layer to the spin (`secrets`). Three private hostnames answered 200,
+both Applications were `Synced`/`Healthy`, all seven layers planned
+`No changes`, and the teardown was clean first-pass at every layer with **both
+zones empty**. See "The GitOps workloads" below for the five defects that
+surfaced, none of which a plan could catch.
+
+All seven layers come down, `secrets` included — its single entry is a
+placeholder deleted without a recovery window, and `k8s-workloads` guards the
+re-apply with a `precondition` rather than the entry being left standing. See
+"Tearing down".
+
+When up it is EKS 1.34 on AL2023 with spot nodes and both public and private
+paths on Envoy Gateway. The resting state, when torn down, is everything below
+the VPC gone: `vpc-0c2dd287…` is kept for a fast re-spin, with the `network`
+layer *applied without a NAT* (`vpc_enable_nat_gateway = false`) and never
+destroyed — see "Tearing down". (The ID is abbreviated deliberately: this
+repository is public. Read the full one with `leverage tofu output vpc_id` in
+`apps-devstg/us-east-1/base-network`.)
 
 **No WAF is deployed.** It was built, attached, verified and taken back down the
 same day; the code is all in place behind the ` --` exclusion. See "AWS WAF"
@@ -47,9 +71,10 @@ below for what re-attaching costs.
 | 6 | 2026-08-05 | Teardown verified the drain gate. Re-spin, then **component set trimmed** to echo-server. CRD bundles **vendored**. |
 | 7 | 2026-08-06 | **ALB in front of the public Envoy Gateway**, replacing its NLB. Per-route IP filtering moved into Envoy; perimeter opened. |
 | 8 | 2026-08-10 | Re-spun from scratch, then torn down again. **AWS WAF attached to the ALB, verified, then detached and destroyed** — backlog item 4 closed. **Managed add-ons caught up to 1.34**, `vpc-cni` stepwise. **nginx-ingress removed from the code.** |
-
----
 | 9 | 2026-08-28 | Re-spun to verify the PR #1136 review items. **Component HTTPRoutes moved onto the charts' native keys.** ACME endpoint made switchable; Secret preservation proven. Torn down again, both DNS zones clean. |
+| 10 | 2026-09-01 | **`terraform-aws-eks` v20.37.2 → v21.25.0**, `aws-auth` → access entries, AWS provider → 6.x. Three latent no-op inputs fixed. Re-spun end to end to validate it — both routes 200, zero drift on all six layers — then torn down. Three defects found that no plan could catch. Then the **VPC CNI's IRSA role moved into the `cluster` layer**, so the CNI stops borrowing the node instance role and `AmazonEKS_CNI_Policy` comes off it entirely. |
+| 11 | 2026-09-03 | **emojivoto and google-microservices brought up**, the first workloads here delivered by Argo CD rather than by Terraform. Argo CD, Argo Rollouts and External Secrets back on; the `secrets` layer joins the spin. Five defects found, all apply-only. Torn down again — three-stage DNS pause, both zones clean. |
+| 12 | 2026-09-05 | **`aws-auth` closed for good** (`authentication_mode = "API"`) and `authenticator` logging turned on, both applied in place. Re-spun to validate the PR #1157 review items: CNI version **pinned**, `dataplane_wait_duration` widened, the dead `use_managed_addons` hook removed, the SSO lookup anchored and asserted, IRSA tags restored. Both demo apps `Synced`/`Healthy` **on the first pass** — no hard refresh needed once `controller.diff.server.side` ships from the start. |
 
 ---
 
@@ -412,6 +437,12 @@ or telling argocd-server to stop doing TLS. Took the second
 (`configs.params.server.insecure: true`); without it the gateway's cleartext hop
 gets a 307 and the browser sees an infinite redirect.
 
+**Verified live on Day 11**, which it had not been: the chart was bumped 7.9.1 →
+10.2.3 (Argo CD v2.14.11 → v3.5.0) while the component was switched off, so
+until then the whole configuration — including the NetworkPolicies 10.0.0 turns
+on, which have to admit the Envoy pods — had only ever been templated. It came
+up clean on the first apply, route included.
+
 Consequence: argocd-server multiplexes gRPC and HTTP over h2c while Envoy speaks
 HTTP/1.1 upstream, so plain `argocd login` cannot negotiate gRPC. Use
 `--grpc-web`. The clean fix, if it ever matters, is `appProtocol:
@@ -459,6 +490,327 @@ installed versions against the reported floors rather than waiting.
 
 ---
 
+### The v20 → v21 module bump, and three things a plan cannot catch
+
+`terraform-aws-eks` went from `v20.37.2` to **`v21.25.0`** on 2026-09-01, which
+also forced the AWS provider from `~> 5.74` to `~> 6.59` (v21's floor). The
+timing was deliberate: the stack was torn down, so the bump landed as a
+greenfield create — `Plan: 49 to add, 0 to change, 0 to destroy` — with no state
+moves and no node-group replacements.
+
+The mechanical part was the easy part: the `cluster_*` prefix is stripped from
+most inputs, `eks_managed_node_group_defaults` is gone (as is every other
+`*_defaults` variable — the module iterates `eks_managed_node_groups` directly
+with no merge step, so `local.node_group_defaults` + `merge()` restores the
+single-source-of-truth property by hand), and the `aws-auth` submodule is gone.
+
+**The upgrade guide's scariest line is wrong for this layer.** It warns that the
+IRSA OIDC issuer URL moves to the dual-stack `oidc-eks` endpoint. It does not:
+v21.25.0 still sets `aws_iam_openid_connect_provider.url` from the cluster's own
+issuer, and the `oidc-eks` form is only a *new output*
+(`cluster_dualstack_oidc_issuer_url`). The issuer came out as
+`oidc.eks.us-east-1.amazonaws.com` as always, so the 12 IRSA roles in
+`identities` and the cross-account provider in `shared` were never at risk.
+
+What the guide does *not* warn about is the three defects below. All three were
+found by applying — every one of them plans clean.
+
+#### 1. A fresh v21 cluster has no CNI, so no node ever joins
+
+v21 hardcodes `bootstrap_self_managed_addons = false` and no longer exposes it as
+a variable. v20 defaulted it to `null`, so the argument was omitted and the AWS
+API default of `true` applied: **EKS installed self-managed kube-proxy, CoreDNS
+and VPC CNI when the cluster came up.** That is what let nodes join on Days 1–9,
+and why the `addons` layer — two layers later, after `identities` — could behave
+as an upgrade rather than a first install. Its
+`resolve_conflicts_on_create = "OVERWRITE"` exists precisely to convert those
+self-managed daemonsets into managed add-ons.
+
+Under v21 that ordering deadlocks. Observed: `aws eks list-addons` returned `[]`,
+three instances came up and sat there, and both node groups blocked at
+`Still creating...` for 16 minutes, because a node cannot reach `Ready` without a
+CNI. **The shape to recognise is a node group still creating past ~5 minutes**:
+the module sets no `timeouts`, so the AWS provider default of **60m** applies and
+nothing fails until an hour in. Check `aws eks list-addons` rather than waiting.
+
+The CNI is now installed from the `cluster` layer via `local.bootstrap_addons`
+with **`before_compute = true`**, which the module routes to
+`aws_eks_addon.before_compute`.
+
+**It carries an explicit `addon_version`, and `most_recent = false` is not a
+substitute for one.** `most_recent` only chooses *which* version the module
+resolves — `false` picks the default for the cluster's Kubernetes version rather
+than the newest published — it does not stop the resolution. Either way the
+module writes the resolved string into the resource
+(`addon_version = coalesce(each.value.addon_version,
+data.aws_eks_addon_version.this[each.key].version)`, upstream `main.tf:860`) from
+a data source that is re-read on every plan. AWS revises the default for a given
+Kubernetes version over time, so without a pin the next plan after such a
+revision upgrades the CNI in place, riding on whatever unrelated change is being
+applied that day — on the one add-on that has needed stepwise upgrades here
+before (see "The add-ons were left three minors behind"). The pin restores the
+property the `addons` layer already had: *"pinning them buys reproducibility
+rather than costing correctness."*
+
+**And its IRSA role moved into this layer too** (`cluster/irsa-vpc-cni.tf`),
+which is the part worth understanding, because it is not where the convention
+would put it.
+
+The first cut of this fix left the add-on without a `service_account_role_arn`,
+on the reasoning that the CNI's role lived in `identities` and `identities` runs
+*after* the cluster. `aws-node` therefore borrowed the **node instance role**,
+which had to keep `AmazonEKS_CNI_Policy` attached — so every pod that could reach
+the node's credentials inherited ENI and subnet write permissions. That is
+exactly what AWS tells you not to do, and it was a regression against the
+pre-v21 setup, where the `addons` layer *did* give the CNI its own role.
+
+The constraint looked structural and was not. A role in `identities` is a role
+the bootstrap add-on can never reference on a fresh cluster — the way that was
+worked around before v21 was simply to install the CNI from the `addons` layer,
+which runs after `identities`, and to let the node role carry the policy in the
+meantime. (There *was* a `use_managed_addons` toggle in `cluster/locals.tf`
+described as solving this in three applies; it never worked — its map was empty,
+so the flag did nothing at any value. It has been removed rather than repaired,
+since the problem it described is gone.) Putting the role in the cluster layer
+collapses the IAM half into one chain OpenTofu orders by itself:
+
+```text
+cluster + OIDC provider  ->  IRSA role  ->  vpc-cni add-on
+```
+
+One apply, no dance, and `aws-node` has scoped credentials from the first second
+the cluster exists — so `iam_role_attach_cni_policy` is now **`false`** and the
+node role never carries CNI permissions at all.
+
+**That chain stops at the add-on. It does not reach the node groups, and
+`before_compute` does not make it.** This is the one thing in this section most
+worth getting right, because the natural reading is that the module orders the
+node groups after the add-on, and it does not:
+
+- `node_groups.tf` contains **no `depends_on`** — zero, for the whole file.
+- The node groups' only upstream reference is
+  `cluster_name = time_sleep.this[0].triggers["name"]`, and that `time_sleep`
+  triggers on `aws_eks_cluster.this[0]` attributes **only**. Nothing in it
+  mentions `aws_eks_addon.before_compute`.
+- Upstream's own comment calls it a *"timed gap … to give addons that need to be
+  configured BEFORE data plane compute resources enough time"*.
+
+So the real graph is two branches racing from the cluster, arbitrated by
+`var.dataplane_wait_duration` — **30s by default**:
+
+```text
+aws_eks_cluster ─┬─> time_sleep (dataplane_wait_duration) ──> CreateNodegroup
+                 └─> tls_certificate -> OIDC provider -> IRSA role -> CreateAddon
+```
+
+It works because creating an add-on is short against a multi-minute node-group
+create. But note what this section just did to the lower branch: it put three
+more round trips in front of `CreateAddon`, one of them an IAM create, while the
+timer still starts ticking at cluster creation. **The fix for defect #1 spent
+some of the margin the default assumed.** Two clean re-spins do not bound that —
+a race that only loses under IAM latency is the kind that surfaces on someone
+else's tenth apply and looks exactly like defect #1 again.
+
+`dataplane_wait_duration = "60s"` is set here for that reason. It widens the
+margin; it cannot make the race impossible, because the module exposes no edge
+that would. **Do not shorten it to speed up a spin.**
+
+Measured on the Day 12 spin, since the margin is the whole argument: the cluster
+went `ACTIVE` at 21:46:31 UTC and `aws_eks_addon.before_compute` reported
+`createdAt` 21:46:45 — **14 seconds** for OIDC provider + IRSA role + CreateAddon,
+against a 60s timer. Under the module's 30s default the same branch would have
+had 16 seconds to spare. That is the number to re-measure if this branch ever
+grows another hop.
+
+A second, narrower gap in the same family: the add-on depends on the IRSA
+*role*, because `module.irsa_vpc_cni.iam_role_arn` is
+`try(aws_iam_role.this[0].arn, "")` — not on the
+`aws_iam_role_policy_attachment` carrying `AmazonEKS_CNI_Policy`, which is its
+sibling. So there is a window where `aws-node` can assume a role that has no ENI
+permissions yet, and with `iam_role_attach_cni_policy = false` the node role no
+longer covers it. Self-healing via the CNI's own retry, and never observed here
+— but it is why the role timing looked suspiciously clean.
+
+One subtlety in `irsa-vpc-cni.tf`, since it looks like a pointless indirection:
+`provider_url` is derived from `module.cluster.oidc_provider_arn` rather than from
+`cluster_oidc_issuer_url`. IAM rejects a trust policy naming an OIDC provider
+that does not exist yet, and the issuer URL is read off the *cluster* resource,
+not off the provider — using it would let the role be created first and fail with
+`MalformedPolicyDocument: Invalid principal in policy`. Deriving the same string
+from the provider's own ARN makes the dependency real. Note this does **not**
+create a cycle, despite the role sitting between two things inside
+`module.cluster`: OpenTofu's graph is per-resource, not per-module.
+
+**`vpc-cni` is correspondingly absent from the `addons` layer.** Declaring it in
+both places fails with `ResourceInUseException`. And `identities` no longer
+defines a CNI role or exports `eks_addons_vpc_cni` — that role *is* the one in
+`cluster/irsa-vpc-cni.tf` now, moved rather than deleted.
+
+#### 2. Access entries reject SSO role ARNs with the IAM path stripped
+
+The `aws-auth` ConfigMap wanted IAM Identity Center role ARNs with the
+`/aws-reserved/sso.amazonaws.com/` path removed, and the old `map_roles`
+followed that convention. **It does not carry over.** Access entries validate
+that the principal exists, so the path-less form is rejected:
+
+```text
+InvalidParameterException: The specified principalArn is invalid: invalid principal.
+```
+
+Use the ARN verbatim, path included. EKS stores it as given — the service-linked
+`AWSServiceRoleForAmazonEKS` entry it creates for itself is path-ful too — so
+there is no normalisation diff to chase.
+
+Two more things about that migration. `enable_cluster_creator_admin_permissions`
+is now **`false`** on purpose: the module merges the flag's bootstrap entry into
+`access_entries` by *map key*, not by principal, so with the SSO DevOps role
+listed explicitly the flag would produce two `aws_eks_access_entry` resources for
+one principal and fail with `ResourceInUseException`. And EKS access policies are
+**not** IAM policies — they live under `arn:aws:eks::aws:cluster-access-policy/`,
+and the IAM form fails with `The policyArn parameter format is not valid`.
+
+Fixed on the way: the pinned SSO role ARN had gone stale. The permission-set
+suffix is generated by Identity Center and changes when the permission set is
+recreated, so that aws-auth entry had been granting nothing. It is resolved via
+`data.aws_iam_roles` now rather than pinned.
+
+#### 3. IMDS hop limit 1 breaks the Load Balancer Controller
+
+v21 drops the node groups' IMDS `http_put_response_hop_limit` from 2 to **1**,
+which puts instance metadata out of reach of anything inside a pod. Verified
+directly: a throwaway pod cannot get an IMDS token, while IRSA keeps working.
+
+That is a *hardening* win, and nothing here is affected: every component,
+the VPC CNI included, authenticates via IRSA rather than through the node's
+credentials (see defect 1 — the CNI's own role is what made that true).
+
+Authentication was never the exposure anyway. **Reading IMDS for *data* is**, and the
+AWS Load Balancer Controller does exactly that: it discovers its **VPC ID** from
+instance metadata, which IRSA has nothing to do with. Both replicas crash-looped
+and the Helm release timed out with `context deadline exceeded`:
+
+```text
+unable to initialize AWS cloud: failed to get VPC ID: failed to fetch VPC ID
+from instance metadata
+```
+
+The fix is to pass `vpcId` and `region` to the chart explicitly, which is what
+AWS documents, and which is better than raising the hop limit back to 2: it
+removes the IMDS dependency instead of reopening metadata to every pod on the
+node. The VPC ID reaches `k8s-components` as a new `vpc_id` output on the
+`cluster` layer, rather than a sixth `terraform_remote_state` block.
+
+**Note the shape of this failure**, because it generalises: the symptom named
+neither IMDS, nor hop limits, nor the module bump. Anything else in a cluster
+that reads instance metadata from a pod will fail the same opaque way after this
+upgrade.
+
+#### Three inputs that were silently doing nothing
+
+v20 typed the node-group defaults as `any`, which discarded unknown keys without
+complaint. v21's typed object turns them into hard errors, which surfaced two of
+these; the third came out of reading the plan.
+
+- **`k8s_labels = local.tags`** was never a real input — the submodule's key is
+  `labels`. Those tags never landed as Kubernetes labels. The per-group `labels`
+  are the ones that always worked.
+- **`disk_size = 50`** had been a no-op since 2023. The module sets
+  `disk_size = use_custom_launch_template ? null : disk_size`, and
+  `use_custom_launch_template` defaults to `true`, so the size has to come from
+  the launch template. Every node on Days 1–9 ran on the AL2023 AMI default of
+  20 GiB. Now delivered for real via `block_device_mappings` (50 GiB gp3,
+  encrypted). Identical logic in v20.37.2 and v21.25.0 — a latent bug, not a v21
+  regression.
+- **`data.terraform_remote_state.cluster-identities`** in `cluster/config.tf` was
+  dead code declaring a false *reverse* dependency on `identities`, which
+  actually depends on `cluster`. Removed, along with `data.aws_eks_cluster` and
+  the whole `kubernetes` provider — which existed only to feed the aws-auth
+  ConfigMap. **The `cluster` layer no longer touches the Kubernetes API at all,
+  so it no longer needs VPN access.**
+
+#### Also worth knowing
+
+Three other v21 defaults are left alone but written down in
+`cluster/variables.tf`: `use_latest_ami_release_version` is now `true`, so an
+apply following an AWS AMI release will roll the nodes; `enable_monitoring` is
+now `false`, which is what this cluster wants; and
+`enable_security_groups_for_pods` **no longer exists**, so the cluster role is no
+longer granted `AmazonEKSVPCResourceController` and Security Groups for Pods is
+unavailable until that policy is added back through
+`iam_role_additional_policies`. Nothing here sets `ENABLE_POD_ENI`, so the
+capability was never in use. `control_plane_egress_mode` — the one-way switch for
+routing control-plane egress through your own VPC — becomes available in v21 but
+is deliberately not touched here.
+
+#### If your cluster is live: what this section does NOT cover
+
+Everything above was learned on a **greenfield create**, because this stack is
+torn down between runs. A client project hitting v21 on a running cluster is on a
+different path, and the difference inverts defect #1 rather than merely adding to
+it. This is written from the module source, **not** rehearsed here — there is no
+live v20 cluster to try it on — so treat it as a checklist to verify, not as a
+validated runbook.
+
+**Defect #1 most likely does not happen to you.** v21 hardcodes
+`bootstrap_self_managed_addons = false`, but it also lists that attribute in
+`lifecycle.ignore_changes` (upstream `main.tf:240`), so the bump does not change
+what an existing cluster was created with. If that cluster was created with the
+AWS default — which is what a v20 layer omitting the argument gets — its
+self-managed add-ons are still there, nodes keep joining, and there is no
+deadlock. `ignore_changes` preserves the setting; it does not conjure add-ons.
+A v20 cluster created with the bootstrap explicitly disabled has none, and that
+one *is* exposed to the deadlock if its CNI comes from a layer applied after the
+node groups — check `aws eks list-addons` and how yours gets its CNI before
+assuming which case you are in.
+
+**What breaks you is this section's fix for it.** Four hazards, in the order they
+bite:
+
+1. **The CNI add-on exists twice.** `vpc-cni` is already in the `addons` layer's
+   state as `aws_eks_addon.this["vpc-cni"]`. Apply this diff in place and
+   `cluster` tries to create an add-on that exists (`ResourceInUseException`)
+   while `addons` plans to **destroy the running CNI**. Move it before applying
+   either layer — note the target resource is `before_compute`, not `this`:
+
+   ```bash
+   # in addons/
+   tofu state rm 'aws_eks_addon.this["vpc-cni"]'
+   # in cluster/
+   tofu import 'module.cluster.aws_eks_addon.before_compute["vpc-cni"]' '<cluster-name>:vpc-cni'
+   ```
+
+2. **The IRSA swap has an order.** Deleting `identities/ids_eks_addons_vpc_cni.tf`
+   in the same pass destroys the role `aws-node` is currently annotated with.
+   Apply `cluster` first (creates the new role, repoints the add-on), confirm the
+   `aws-node` service account annotation actually flipped, and only then apply
+   `identities`. `iam_role_attach_cni_policy = false` must not land before that
+   confirmation, or pod networking loses its credentials with nothing to fall
+   back on.
+
+3. **The cluster-creator access entry gets re-keyed.** Under v20 with
+   `enable_cluster_creator_admin_permissions = true`, state holds
+   `module.cluster.aws_eks_access_entry.this["cluster_creator"]` and
+   `...aws_eks_access_policy_association.this["cluster_creator_admin"]`. This
+   change turns that bootstrap off and declares the same principal under
+   `sso_devops` / `sso_devops_admin`. Different `for_each` keys mean independent
+   destroy and create with no ordering between them, and EKS allows one access
+   entry per principal — so the create can be attempted while the old one still
+   exists and fail with `ResourceInUseException`. Either keep the map key as
+   `cluster_creator`, or state-move both addresses first:
+
+   ```bash
+   tofu state mv 'module.cluster.aws_eks_access_entry.this["cluster_creator"]' \
+                 'module.cluster.aws_eks_access_entry.this["sso_devops"]'
+   tofu state mv 'module.cluster.aws_eks_access_policy_association.this["cluster_creator_admin"]' \
+                 'module.cluster.aws_eks_access_policy_association.this["sso_devops_admin"]'
+   ```
+
+4. **Two things roll or detach that a greenfield plan cannot show you.**
+   `block_device_mappings` is a new launch template version, so **both managed
+   node groups roll** — 20 GiB → 50 GiB is the point of it, but it is a node
+   replacement, not a no-op. And the `enable_security_groups_for_pods` removal
+   above plans an `iam:DetachRolePolicy` on the cluster role.
+
 ### DNS cutovers: hide the old backend, do not delete it
 
 The nginx → Envoy cutover bundled "stop serving the old path" into the same
@@ -484,13 +836,195 @@ on ALIAS, so it cannot be pre-lowered to speed up a flip. A *percentage* canary
 would need Route53 weighted records via external-dns `set-identifier` — a
 different mechanism.
 
+### Closing the `aws-auth` path, and giving it an audit trail
+
+Two review items that were held back from the first pass because they were
+decisions rather than defects, and because they turn out to be the same
+question: **how finished is the access-entry migration?**
+
+**The ConfigMap path was still open.** The layer never set
+`authentication_mode`, and the module default is `API_AND_CONFIG_MAP` in
+v20.37.2 and v21.25.0 alike — so the change that migrated `aws-auth` to access
+entries still shipped a cluster that honoured an `aws-auth` ConfigMap. This is
+sharper after the migration than before it: the layer dropped its `kubernetes`
+provider along with `aws-auth`, so a hand-edited ConfigMap now grants
+cluster-admin through a path this code cannot read, plan or correct. Before, it
+was at least Terraform-managed.
+
+`authentication_mode = "API"` closes it. Three things worth recording:
+
+- **The one-way constraint runs the other way.** A cluster created without
+  `CONFIG_MAP` can never have it enabled; `API_AND_CONFIG_MAP` -> `API` on an
+  existing cluster is allowed and is an in-place `UpdateClusterConfig`. So this
+  was never now-or-never, and it was applied to the *running* cluster —
+  `Plan: 0 to add, 2 to change, 0 to destroy`, no replacement.
+- **`aws-auth` is a worse escape hatch than the thing it guards.** Editing that
+  ConfigMap already requires working cluster access; `eks:CreateAccessEntry` +
+  `eks:AssociateAccessPolicy` from the AWS API requires neither cluster access
+  nor the VPN. The lockout recovery in `API` mode is strictly better.
+- **Node join does not go through it.** The module creates an access entry per
+  node group role, visible in `aws eks list-access-entries` next to the two
+  human ones, so closing `CONFIG_MAP` cannot strand the nodes. Worth checking
+  before flipping this on any cluster.
+
+The ConfigMap object itself is still there afterwards — EKS creates it when
+nodes join under the old mode — but it is inert. Do not read its presence as
+the setting having failed to apply; read `accessConfig.authenticationMode`.
+
+**And the log group had nothing in it.** All three `enabled_log_types` were
+commented out, so the control plane emitted nothing, while the log group was
+created anyway: it is gated on `create_cloudwatch_log_group` (default `true`),
+not on the list being non-empty, and `aws_eks_cluster` even takes a `depends_on`
+on it. So `cloudwatch_log_group_retention_in_days = 7` read as "we keep 7 days
+of control-plane logs" when there were none to keep.
+
+`authenticator` is now on, and it is on *because of* the change above:
+it is the log that records who authenticated through an access entry, which
+after `API` is the only way into this cluster's API. Leaving it off would have
+meant changing the authorisation model and keeping no evidence of the new path
+being used. Verified rather than assumed — within a couple of minutes of the
+apply the stream carried the SSO DevOps role's `STS response` lines, i.e. the
+access-entry path being exercised.
+
+`api` and `audit` stay off: they are the expensive two by an order of magnitude
+and nothing here reads them. Turn them on for an incident, not by default.
+
+### The GitOps workloads, and five things a plan cannot catch
+
+Day 11 added the two demo apps that had been sitting in `k8s-workloads` behind
+`enabled = false` since before the Day 6 trim: **emojivoto** and
+**google-microservices** (Online Boutique). They are a different kind of thing
+from echo-server, which Terraform deploys as native `kubernetes_*` resources.
+These are **Argo CD `Application`s** — Terraform writes one object each and Argo
+CD produces the workloads from kustomize overlays in other repositories. Turning
+them on is therefore turning on the layer's whole GitOps path, which is the
+point of them being here at all.
+
+What that dragged back in, all in `k8s-components`:
+
+| flag | why it is not optional |
+|---|---|
+| `argocd.enabled` | the `Application` CRD. `kubernetes_manifest` validates against the live API at *plan* time, so `k8s-workloads` cannot even plan before this is applied |
+| `argocd.rollouts.enabled` | emojivoto's workloads are `kind: Rollout` (blue/green), not Deployments. Evaluated independently of `argocd.enabled`, so both flags move together |
+| `external_secrets.enabled` | google-microservices' base ships an `ExternalSecret`, and `paymentservice` reads the Secret it produces with a `secretKeyRef` carrying no `optional` |
+
+Plus the **`secrets` layer**, applied for the first time, which owns
+`/k8s-eks-demoapps/test-secrets` — the source of that Secret. Spin order is now
+`network → cluster → identities → addons → k8s-components → secrets →
+k8s-workloads`.
+
+Everything below was found by applying. Every one of them planned clean.
+
+**1. The `ClusterSecretStore` was written against a version the API no longer
+serves.** `security.tf` declared it `external-secrets.io/v1beta1`. ESO 0.20.4
+still *ships* `v1beta1` in the CRD — which is why reading the CRD bundle and
+counting version names says it is there — but it ships it with **`served:
+false`**, kept only so objects already stored under it can be converted on read.
+Helm resolves kinds against discovery, so the release fails outright:
+
+```
+resource mapping not found for name: "cluster-secrets-manager"
+no matches for kind "ClusterSecretStore" in version "external-secrets.io/v1beta1"
+```
+
+Fixed by moving the manifest to `v1`. Check `served`, not just presence:
+`kubectl get crd clustersecretstores.external-secrets.io -o jsonpath=...`.
+
+**2. Argo CD held a credential for a repository that no longer takes one.**
+`cicd-argo.tf` configured deploy keys for both app repositories from Secrets
+Manager. `le-demo-apps` was made **public** in April 2025 and its deploy key was
+deleted from GitHub at the same time — `gh api repos/binbashar/le-demo-apps/keys`
+returns an empty list — while the orphaned private key stayed in Secrets Manager
+and stayed wired into the chart. The Application failed with
+`ComparisonError: ssh: handshake failed … no supported methods remain` while its
+health still read **`Healthy`**, because nothing had been deployed to be
+unhealthy: sync status and health status fail independently, and only one of
+them was telling the truth.
+
+Fixed by reading that repository anonymously over HTTPS and deleting the
+credential — a public repo needs none. The deploy-key path is still exercised by
+google-microservices, whose repository really is private.
+
+**3. `vote-bot` could never have applied.** Its `TTL` env var is written
+`value: 600` in `le-demo-apps` — a YAML integer where the API demands a string.
+Confirmed *before* applying by rendering the overlay locally with
+`kubectl kustomize`, which is the cheap way to inspect what Argo CD will send.
+Corrected from here with a strategic-merge patch on the Application rather than
+in the repository, so the fix ships with the consumer; it belongs upstream
+eventually.
+
+**4. Both overlays still carried nginx Ingresses**, at
+`<app>.demo.devstg.aws.binbash.com.ar` on the `private-apps` class. That class
+has served nothing since nginx-ingress was retired, and the hostname sits three
+labels below the private base domain, which the gateway's wildcard cannot cover
+— so they route nothing. They are **not** inert, though: each carries
+`cert-manager.io/cluster-issuer`, so ingress-shim would request a real ACME
+certificate per hostname, against the rate limit, for names nothing can reach.
+Deleted from the Application with kustomize's `$patch: delete`, and the routing
+replaced by an `HTTPRoute` per app in `k8s-workloads`, one label deep like every
+other route here.
+
+**5. Argo CD reported both apps permanently `OutOfSync` while `argocd app diff`
+printed nothing.** The worst kind of false signal — it trains you to stop
+reading the sync status. The cause is defaulted fields on **custom** resources:
+the API server writes `ports[].protocol: TCP` into emojivoto's `Rollout`s and
+ESO writes its policy defaults into the `ExternalSecret`, and Argo CD cannot
+tell a server default from real drift on a CRD-typed object the way it can for
+built-in kinds.
+
+The fix is **server-side diff** — `controller.diff.server.side: "true"` in
+`configs.params`, which asks the API server what the manifest *would* produce so
+defaults appear on both sides and cancel. Global rather than the per-Application
+`argocd.argoproj.io/compare-options` annotation, because the problem is
+structural and every workload arriving with a CRD hits it.
+
+Two things about enabling it, in the order they bite. It is **not** implied by
+`ServerSideApply=true` in an Application's `syncOptions` — that governs how a
+sync writes, this governs how a comparison reads. And restarting the
+application-controller, which the Argo CD docs do tell you to do, is **not
+enough**: the controller keeps its cached comparison across the restart, so both
+apps still read `OutOfSync` afterwards. What clears it is a hard refresh:
+
+```
+kubectl -n argocd annotate application <app> argocd.argoproj.io/refresh=hard --overwrite
+```
+
+Both went `Synced` within a sync cycle of that.
+
+**A sixth, caught at `validate` rather than at apply**, worth recording because
+it blocks the `secrets` layer entirely: `terraform-aws-secrets-manager` 0.13.0
+validates `version_stages` with
+`var.version_stages == null || alltrue([for stage in var.version_stages : …])`.
+HCL evaluates both operands of `||` rather than short-circuiting, so the `for`
+runs against the `null` default and validation fails before anything can be
+planned. Upstream fixed it with `coalesce()` in a later tag, which also raises
+the floor to OpenTofu >= 1.11 and AWS provider >= 5.0 — neither of which that
+layer meets. Passing `version_stages = ["AWSCURRENT"]` explicitly is the
+documented usage and changes nothing about the secret, since it is the
+provider's own default.
+
+**What the two apps actually verify, beyond "the pods are Running".**
+`loadgenerator` and `vote-bot` are left on: they are the only sustained traffic
+this cluster has ever had, which is what makes the autoscaler and any metric
+worth looking at. Past that, the tests that mean something are the ones that
+traverse a whole chain:
+
+- **A completed checkout on google-microservices.** `paymentservice` reads
+  `TEST_SECRET` from the `app-secrets` Secret with no `optional`, so an order
+  that returns a confirmation number proves Secrets Manager → IRSA → ESO →
+  Kubernetes Secret → pod end to end. A 200 on the home page proves none of it.
+- **A vote on emojivoto**, which crosses `web` → `voting-svc` over gRPC, and the
+  Rollouts reporting `stable == current` — the blue/green promotion actually
+  completed rather than the app merely being up.
+
 ### Latent bugs surfaced by turning components on, and the Day 6 trim
 
 None were caused by the HTTPRoute conversion; they were sitting in config that
 had never been executed. **Bitnami's 2025 catalog purge** removed
 `metrics-server` 5.8.4 from the public repo (moved to the kubernetes-sigs chart;
 `extraArgs` map → `args` list), and `kube_state_metrics` and `node_exporter`
-still carry the same dead pins. **Gatus's config could never have worked** -
+carried the same dead pins until they were deleted outright — see "Off Bitnami
+entirely" below. **Gatus's config could never have worked** -
 `config.services` was renamed to `config.endpoints`. **Alertmanager was
 hardcoded `enabled: true`** while its variable was false, so it would have
 rendered with an empty `slack_api_url`, which it refuses to start on.
@@ -505,17 +1039,32 @@ both flags have to move together or Rollouts installs with no Argo CD beside it.
 Deliberately still off: **Alertmanager**, which needs
 `/notifications/alertmanager` in the shared account — enabling it fails the plan
 at the data source, which is also why its route is the one piece of the chart
-migration never exercised live — and **argocd-image-updater**, since a chart
-that cannot be deployed cannot be verified.
+migration never exercised live — and **argocd-image-updater**. Argo CD, Argo
+Rollouts and External Secrets came back on Day 11 with the two GitOps workloads;
+the image updater did not, because it writes back to the app repositories over
+git and, with the tags those repositories pin today, the update would be a no-op
+— it would be able to commit while being verified by nothing.
 
 ---
 
 ## Spinning up
 
-Order is `network → cluster → identities → addons → k8s-components ->
+Order is `network → cluster → identities → addons → k8s-components → secrets →
 k8s-workloads`, with `vpc_enable_nat_gateway = true` in `network` first -
 without a NAT the nodes never join. `README.md` has the per-layer detail; what
 follows is only what goes wrong.
+
+**`secrets` is the seventh layer and is easy to forget**, because it was never
+part of the spin until Day 11 and its state had been empty since 2025. It owns
+`/k8s-eks-demoapps/test-secrets`, which google-microservices' `ExternalSecret`
+reads. It goes after `k8s-components` (which installs ESO) and before
+`k8s-workloads`, though in truth only "before the app syncs" matters.
+
+Forgetting it no longer costs an investigation: `k8s-workloads` guards it with a
+`precondition` and the plan fails naming the secret and the layer. Before that
+guard the omission surfaced three hops away — `SecretSyncedError`, no
+`app-secrets`, `paymentservice` in `CreateContainerConfigError`, checkout
+failing — in a different layer, minutes later.
 
 **`k8s-components` needs a two-stage apply on a fresh cluster.**
 `kubernetes_manifest` validates against the live API at *plan* time, so
@@ -546,6 +1095,12 @@ If it does fire: wait for the LBC pods, then retry. **A helm release that failed
 is not in Terraform state but still owns its name**, so recovery needs
 `helm uninstall <name> -n <ns>` first. Same family as the drain gate: Terraform
 waits for a release to finish, not for its controller to be *ready*.
+
+**`k8s-workloads` cannot plan before Argo CD exists.** Its two `Application`
+resources are `kubernetes_manifest`, which validates against the live API at
+plan time, so the layer fails on a missing CRD rather than on anything of its
+own. Same shape as the CRD problem in `k8s-components`, one layer further out;
+the documented order already handles it.
 
 **The kubeconfig goes stale on every re-spin.** `~/.kube/bb/apps-devstg` and
 `~/.kube/bb/config` pin the previous cluster's API endpoint, so `kubectl` fails
@@ -591,16 +1146,87 @@ moving on to the layer that removes external-dns. Which objects those are:
   what publishes the record. The public HTTPRoutes are hidden from external-dns
   and produce nothing.
 - **private** — the component helm releases that carry a hostname, plus
-  `k8s-workloads` for echo-server's.
+  `k8s-workloads` for the three workload hostnames. **Since Day 11 that is three
+  records, not one**: `echo-server`, `emojivoto` and `gmd`, each with its A, its
+  TXT and its `cname-` TXT. The two new ones come from HTTPRoutes owned by
+  Terraform, so destroying `k8s-workloads` removes them the same way — but there
+  is three times as much to check before moving on.
 
 Then the rest, in reverse dependency order: `k8s-components` → `addons` ->
 `identities` → `cluster` → `network`.
+
+**Do not interrupt the `cluster` destroy.** It runs past ten minutes, and a
+SIGTERM leaves OpenTofu shutting down gracefully *and* the DynamoDB lock behind,
+so the next attempt fails with `Error acquiring the state lock`. Recovery is
+`leverage tofu force-unlock <LOCK_ID>` and re-running — note the wrapper takes
+the ID as a positional argument, **not** `-force <ID>`, and it prompts for
+confirmation, so pipe `yes` into it when running unattended. Check no `tofu`
+process is alive first; the lock is only stale if nothing holds it.
+
+**`secrets` comes down with everything else**, and its one entry is deleted
+immediately rather than into the default 7-day recovery window — see
+`recovery_window_in_days` there. It was briefly left standing on the reasoning
+that a 7-day window would block a re-spin inside that week; that is true, but it
+solves the wrong problem. This cluster's whole shape is that nothing survives a
+teardown except the VPC, and an entry holding the literal string "placeholder"
+is a poor first exception to it.
+
+What the standing entry *did* buy was safety against forgetting the layer, since
+skipping it surfaces three hops away: `SecretSyncedError` → no `app-secrets` →
+`paymentservice` in `CreateContainerConfigError` → every checkout fails. That is
+now bought properly instead — `k8s-workloads` reads the secret through
+`data.aws_secretsmanager_secrets` and a `precondition` fails the plan by name if
+it is missing. Cheaper than USD 0.40/month, and it fails earlier.
 
 **Skipping the DNS step is fatal, not untidy** — see the next section. The
 2026-08-28 teardown followed it and both zones came out clean: three public
 records cleared on the Ingress destroy, eighteen private ones in a single batch
 after the component releases went, leaving only the known-inert `a-echo-server`
 TXT.
+
+**The 2026-09-03 teardown is the one to copy.** With Argo CD and the two GitOps
+apps in play the private half needs *three* stages, not one, because the
+hostnames are produced by three different owners and they have to go while
+external-dns is still alive:
+
+1. `kubernetes_ingress_v1.envoy_apps`, targeted — the **public** record. Poll the
+   public zone until `echo-server.binbash.com.ar` is gone.
+2. `k8s-workloads` in full — the three **workload** hostnames (`echo-server`,
+   `emojivoto`, `gmd`), nine records. Argo CD must still be up here: the
+   `Application`s carry `resources-finalizer.argocd.argoproj.io`, and it is Argo
+   CD that cascade-deletes what they created. Destroy it first and the finalizer
+   has nobody to run it.
+3. `helm_release.argocd` and `helm_release.argo_rollouts`, targeted — the
+   **component** hostnames (`argocd`, `rollouts`), six records, published by the
+   charts' own `httproute` keys.
+
+After each stage, poll until **that stage's** records are gone — not until the
+zone is empty. The private zone permanently holds an unrelated `vpn` A record,
+so a literal "wait for empty" never returns. Only then the full `k8s-components`
+destroy, which is what takes external-dns with it. Both zones came out clean:
+the private zone back to nothing but the unrelated `vpn` A record, the public
+one back to the known-inert `a-echo-server` TXT.
+
+**The 2026-09-01 teardown got the public half right and the private half wrong**,
+which is worth recording because the failure is asymmetric and easy to repeat.
+`kubernetes_ingress_v1.envoy_apps` was destroyed on its own and the public record
+was *polled until it disappeared* before anything else moved — clean. But
+`k8s-workloads` was then chained straight into the `k8s-components` destroy
+without the same wait-and-check on the private zone, so external-dns-private went
+down inside its own sync window and left three records behind:
+`echo-server.aws.binbash.com.ar` A and TXT, and `cname-echo-server.aws...` TXT.
+
+Note that the rule above already says to do this — "wait a full external-dns
+cycle (3 minutes) and check both zones before moving on to the layer that removes
+external-dns". The trap is that the public step *feels* like the DNS step,
+because it is the one that gets its own targeted destroy. It is only half of it.
+The private records have no dedicated destroy of their own, so the pause has to
+be deliberate.
+
+Cleaned up with a single `change-resource-record-sets` DELETE batch. That
+`cname-` TXT in particular cannot be left: unlike the inert `a-echo-server` one
+in the public zone, a stale `cname-<host>` registry record collides on the next
+spin and crash-loops the external-dns controller.
 
 **Destroy ordering is a drain gate, not `depends_on`.**
 
@@ -842,11 +1468,74 @@ only 301/302 redirects, rejecting nginx's default 308.
 
 ---
 
+### Off Bitnami entirely
+
+Bitnami's 2025 catalog change is now closed out here rather than mitigated, and
+the layer has **no Bitnami chart references left at all**. Three facts, all
+verified against the live registries rather than inferred from the
+announcement:
+
+- The repo index at `charts.bitnami.com/bitnami` is **still published and still
+  updated**, but truncated per chart. `external-dns` starts at 6.5.2, so the
+  pinned 6.38.0 still resolved; `kube-state-metrics` starts at 3.0.2 and
+  `node-exporter` at 3.0.1, so *those* pins were already dead. A direct
+  `.tgz` URL answers 200 for all of them — but `helm_release` resolves through
+  the index, so the tarball surviving buys nothing.
+- `docker.io/bitnami/external-dns` is **gone entirely**, `:latest` included.
+  The maintained images are `bitnamisecure/*` (401, subscription) and the
+  frozen `bitnamilegacy/*` (200, no CVE patches).
+- **Bumping the Bitnami chart is not a fix, it is a regression.** The current
+  charts still default to `docker.io/bitnami/*`, which 404s, and their bundled
+  `common` ≥ 2.27 hard-fails the template render when the registry is
+  overridden unless `global.security.allowInsecureImages: true`. The 6.38.0
+  here bundled `common` 2.18.0, which has no such gate — which is the only
+  reason the old image override worked at all. Renovate's dashboard offers
+  exactly these bumps; they must not be taken.
+
+`kube_state_metrics` and `node_exporter` were **deleted, not repointed** —
+gated off, unconsumed, and fixing a dead pin blind on something nobody runs is
+the worst of the options. Their `chart-values/` went with them, and the now-dead
+`var.prometheus.external.dependencies.enabled` term came out of the
+`monitoring_metrics` namespace gate. The flag itself stays: the external
+Prometheus RBAC in `identity-external-prometheus.tf` still reads it, and that
+lives in `kube-system`.
+
+Both `external-dns` releases moved to the `kubernetes-sigs` chart 1.21.1
+(app 0.21.0). The values schema is almost a straight copy — `sources`,
+`policy`, `registry`, `txtOwnerId`, `domainFilters`, `excludeDomains`,
+`annotationFilter`, `interval` and `serviceAccount.*` keep their names and
+meaning. Only three things move: `zoneIdFilters` and `aws.zoneType` have no
+top-level equivalent and become `extraArgs.zone-id-filter` /
+`extraArgs.aws-zone-type` (a map there renders as `--<key>=<value>`), and
+`dryRun: false` is the default and is gone. The `image` override is gone too —
+upstream already defaults to `registry.k8s.io`.
+
+**Validate this class of change with a `helm template` diff before the cluster
+exists.** Rendering both charts against the real values showed the container
+args identical but for three flags Bitnami passed explicitly —
+`--aws-api-retries=3`, `--aws-batch-change-size=1000`, `--metrics-address=:7979`
+— each of which is the binary's own default, confirmed in `types.go` at
+v0.21.0. Deployment, Service and ServiceAccount keep the *same names*, so the
+IRSA trust condition on `system:serviceaccount:externaldns:externaldns-<zone>`
+needed no change. Upstream's ClusterRole is also source-aware: 4 rules against
+Bitnami's 11, dropping RBAC for Istio, Contour, Kong, Gloo, F5 and OpenShift
+that was never used.
+
+**v0.21.0 publishes AAAA records; v0.14.0 did not.** Every hostname now gets
+four records, not three: `A`, `AAAA`, the `cname-<host>` registry TXT and a new
+`aaaa-<host>` one. The AAAA is an alias to the same IPv4-only load balancer, so
+it answers `NOERROR` with an empty body and clients fall back to A — verified
+with `dig`, and the public hostname returned 200 end to end throughout.
+
+Do **not** reach for `managedRecordTypes` to suppress the AAAA on a running
+cluster. external-dns only cleans up what it manages, so narrowing the list
+strands the records it already created — exactly the orphan problem described
+under "Orphaned registry records are a landmine, not litter", and the `aaaa-`
+TXT is the same collision class as `cname-`. Left under management, the
+teardown cleared all four record types on its own at every stage.
+
 ## Open follow-ups
 
-- **`kube_state_metrics` and `node_exporter` carry dead Bitnami pins.** Largely
-  moot: they are gated off, and kube-prometheus-stack — the argument for
-  deleting rather than repointing them — is back but does not consume them.
 - **A readiness gate for the LBC webhook race** would codify in the config what
   is currently an ordering convention. That order prevents the failure (verified
   Day 8 and again Day 9), so this is about not having to remember it rather than
@@ -862,6 +1551,23 @@ only 301/302 redirects, rejecting nginx's default 308.
 - **Alertmanager's chart-rendered route has never run.** The workload stays off
   for want of a secret, so that one route of the seven is verified by templating
   only.
+- **Two fixes belong upstream, not in this repo.** Both app overlays are
+  corrected from the consumer side with `spec.source.kustomize.patches`, which
+  is the right place for the *deployment* to disagree with the manifests but the
+  wrong place for the manifests to be wrong: `binbashar/le-demo-apps` renders
+  `vote-bot`'s `TTL` as a YAML integer, which the API rejects outright, and both
+  repositories still carry nginx `Ingress` objects on the dead `private-apps`
+  class with `cert-manager.io/cluster-issuer` annotations. Fixing them there
+  makes four of the five patches here redundant.
+- **The `le-demo-apps` deploy key is orphaned in Secrets Manager.**
+  `/repositories/le-demo-apps/deploy_key` in the shared account no longer
+  matches any key on the (now public) repository, and nothing reads it since
+  Day 11. Deleting it is someone's call, not this layer's.
+- **`argocd-image-updater` is still unverified**, and is now the only Argo
+  component that is. The obstacle is no longer that it cannot be deployed — Argo
+  CD is up — but that verifying it means letting it commit to the app
+  repositories, and the tags they pin make the update a no-op anyway. Doing it
+  properly means pushing a new image tag first.
 
 ---
 

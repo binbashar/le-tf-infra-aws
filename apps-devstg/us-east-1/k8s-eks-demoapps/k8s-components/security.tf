@@ -63,10 +63,18 @@ resource "helm_release" "cluster_secrets_manager" {
   repository = "https://binbashar.github.io/helm-charts/"
   chart      = "raw"
   version    = "0.1.0"
+  # `v1`, not `v1beta1`. ESO ships both versions in the CRD, but from 0.17 on
+  # `v1beta1` is declared with `served: false` — it exists only so objects
+  # stored under it can be read back after conversion. Helm resolves the kind
+  # against the API server's discovery, so the release fails outright with
+  # `no matches for kind "ClusterSecretStore" in version
+  # "external-secrets.io/v1beta1"`, and it fails *at apply*: nothing in a plan
+  # looks at the chart's rendered manifest. Found on the first live apply of
+  # this component since the chart was pinned to 0.20.4.
   values = [
     <<-EOF
     resources:
-      - apiVersion: external-secrets.io/v1beta1
+      - apiVersion: external-secrets.io/v1
         kind: ClusterSecretStore
         metadata:
           name: cluster-secrets-manager

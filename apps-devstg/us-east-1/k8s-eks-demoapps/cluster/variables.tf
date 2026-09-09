@@ -53,19 +53,47 @@ variable "cluster_log_retention_in_days" {
   default     = 7
 }
 
-variable "manage_aws_auth" {
-  description = "Whether to apply the aws-auth configmap file."
-  default     = true
-}
-
-variable "create_aws_auth" {
-  description = "Whether to create the aws-auth configmap."
-  default     = false
-}
-
 # WARNING: make sure you read the note about add-ons in the "locals.tf" file
-variable "use_managed_addons" {
-  description = "Whether to use EKS managed add-ons."
-  type        = bool
-  default     = false
-}
+#===========================================#
+# v21 defaults worth knowing about          #
+#===========================================#
+# terraform-aws-eks v21 changed four defaults in ways that are invisible in the
+# diff -- three node-group ones and one cluster-scoped. None is overridden here
+# except where noted -- this block exists so the next reader does not have to
+# rediscover them.
+#
+#   * IMDS `http_put_response_hop_limit` is now 1 (was 2). A hop limit of 1
+#     means pods can no longer reach the instance metadata service, only
+#     processes on the host can. Nothing here is affected: every component,
+#     the VPC CNI included, authenticates via IRSA rather than through the
+#     node's credentials.
+#
+#     Authentication was never the risk, though. **Something that reads IMDS for
+#     *data* is**, and one thing here did: the AWS Load Balancer Controller
+#     discovers its VPC ID from instance metadata, and crash-looped until it was
+#     passed `vpcId`/`region` explicitly (see `k8s-components`). Prefer that fix
+#     -- tell the component what it needs -- over
+#     `metadata_options.http_put_response_hop_limit = 2`, which reopens metadata
+#     to every pod on the node group. If the hop limit must be raised, do it on
+#     the affected group rather than globally.
+#
+#   * `use_latest_ami_release_version` is now true (was false). Node groups
+#     resolve the newest AMI release for their `ami_type` at plan time, so an
+#     apply that follows an AWS AMI release will roll the nodes. That is the
+#     desired behaviour for a short-lived reference cluster; pin
+#     `ami_release_version` per group if a stable substrate is ever needed.
+#
+#   * `enable_monitoring` is now false (was true). EC2 detailed (1-minute)
+#     monitoring is off, which is what this cluster wants -- it costs money and
+#     nothing here reads those metrics.
+#
+#   * `enable_security_groups_for_pods` no longer exists. In v20 it defaulted to
+#     `true` and merged `AmazonEKSVPCResourceController` onto the **cluster**
+#     role; v21 removed the variable and the policy along with it, so that role
+#     now carries `AmazonEKSClusterPolicy` alone. This is the only one of the
+#     four that changes what the cluster can do rather than how nodes are
+#     shaped: Security Groups for Pods is unavailable until the policy is added
+#     back through `iam_role_additional_policies`. Nothing here sets
+#     `ENABLE_POD_ENI`, so the capability was never in use -- on this greenfield
+#     create it lands as "never granted", but an in-place v20 -> v21 upgrade
+#     plans an `iam:DetachRolePolicy` on the cluster role.
