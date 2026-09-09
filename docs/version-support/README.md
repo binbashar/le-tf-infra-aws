@@ -15,7 +15,8 @@ on the bill via `USAGE_TYPE` — is the `aws-finops` plugin, see [`docs/finops/`
 
 | Trigger | Behavior |
 | --- | --- |
-| PR touching `**/*.tf` | **Fails** if an *active* layer pins a version already in extended support; warns at ≤ 90 days |
+| PR touching `**/*.tf` or the resolved `*.tfvars` | **Fails** if an *active* layer pins a version already in extended support; warns at ≤ 90 days |
+| PR **from a fork** | Not gated at all. A fork gets no secrets, so the scanner is skipped entirely and the job still reports success — its green check means "did not run", not "passed" |
 | Weekly (Tuesdays 07:23 UTC) | Never fails. Posts to Slack and opens/updates one tracking issue |
 | `workflow_dispatch` | Same as the weekly sweep |
 
@@ -60,3 +61,9 @@ Two read-only actions, and nothing else: `eks:DescribeClusterVersions` and
 `rds:DescribeDBMajorEngineVersions`. Both describe AWS's *version catalog* rather than the
 caller's resources, so any account works. CI assumes `DeployMaster` in `apps-devstg`, which
 already grants `eks:*` and `rds:*` — **no IaC change was needed** for this guardrail.
+
+That reuse is a deliberate trade-off, not a clean win: `DeployMaster` is far broader than the two
+actions the scanner uses, so a compromised CI job could reach well beyond version lookups. A
+dedicated least-privilege role scoped to exactly those two actions is the better end state and is
+tracked as a follow-up; it was kept out of this change so the guardrail could land without
+requiring an `apply` first.

@@ -246,7 +246,7 @@ The failure mode that matters most is a check that silently passes when it could
 | AWS call fails (expired creds, throttling, outage) | Exit **0** with a loud warning annotation — never block merges on an AWS outage | Post *"check could not run"* to Slack, so silence is never mistaken for all-clear |
 | HCL parse error in a file | That layer yields `UNKNOWN`; the scan continues | Same |
 | Pin will not resolve (see *Version resolution*) | `UNKNOWN`, warned — never silently skipped | Same |
-| **Fork PR** — this repo is public, so `pull_request` from a fork receives no secrets and cannot assume the role | Detect the missing credentials, skip the AWS phase, and exit **0** with a notice saying the check did not run. `discover.py` still runs, so parse errors and unresolvable pins are still reported | n/a — the cron only runs on `master` |
+| **Fork PR** — this repo is public, so `pull_request` from a fork receives no secrets and cannot assume the role | Detect the missing credentials and skip the scanner entirely, with a notice saying the check did not run. **Nothing is evaluated — not even discovery** — so a fork PR is never gated. Reviewers must not read its green check as a pass | n/a — the cron only runs on `master` |
 
 ## Testing
 

@@ -7,12 +7,23 @@ on:
   pull_request:
     paths:
       - '**/*.tf'
+      # The scanner resolves versions through these too, and a .tfvars override
+      # beats a variables.tf default -- so a pin can change here with no .tf edit.
+      # Note '**/*.tf' does NOT match '*.tfvars'.
+      - 'config/common.tfvars'
+      - '*/config/account.tfvars'
       - '@bin/scripts/version_support/**'
       - '.github/workflows/version-support.yml'
   # Tuesdays, deliberately off the Monday lint sweep so a red morning has one cause.
   schedule:
     - cron: '23 7 * * 2'
   workflow_dispatch:
+
+# One sweep at a time: two concurrent runs could both find no tracking issue and
+# each create one, after which later runs only ever update the first.
+concurrency:
+  group: version-support-${{ github.event_name == 'pull_request' && github.ref || 'sweep' }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -25,6 +36,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # This job runs pytest on pull-request code and holds issues: write.
+          # actions/checkout leaves GITHUB_TOKEN in .git/config by default; the
+          # issue step supplies GH_TOKEN explicitly, so nothing needs it persisted.
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -83,7 +99,10 @@ jobs:
         run: |
           set -euo pipefail
           TITLE="chore(version-support): versions approaching end of standard support"
-          EXISTING=$(gh issue list --state open --search "version-support-guardrail in:body" \
+          # Match the marker AND the exact title: the marker alone would also hit an
+          # issue that merely quotes it.
+          EXISTING=$(gh issue list --state open \
+            --search "version-support-guardrail in:body \"${TITLE}\" in:title" \
             --json number --jq '.[0].number // empty')
           if [ -n "${EXISTING}" ]; then
             gh issue edit "${EXISTING}" --body-file /tmp/issue-body.md
@@ -103,11 +122,13 @@ jobs:
           webhook-type: incoming-webhook
           payload-file-path: /tmp/slack.json
 
-      # The sweep sets ran=false when AWS could not be reached. Without this, a
-      # broken weekly check is invisible: no Slack, no issue, just a warning line
-      # in a scheduled job's log. Silence must never read as all-clear.
+      # Fires whenever a non-PR run did not come back with ran=true: the sweep
+      # reported a failed AWS lookup (ran=false), was skipped because credentials
+      # were unavailable, or failed outright before writing any output. Checking
+      # only ran == 'false' would miss the latter two and leave a broken weekly
+      # check completely silent -- which is the all-clear this must never imply.
       - name: Notify Slack that the sweep could not run
-        if: steps.sweep.outputs.ran == 'false'
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.sweep.outputs.ran != 'true' }}
         uses: slackapi/slack-github-action@v2.0.0
         with:
           webhook: ${{ secrets.SLACK_DIRECT_WEBHOOK }}
