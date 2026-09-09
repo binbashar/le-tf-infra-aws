@@ -18,6 +18,8 @@ autodiscover:
   # nine segments deep, so a single-star glob would miss every one of them.
   # Quoted because '@' is a reserved YAML indicator: unquoted, this line fails to parse.
   - '@bin/scripts/**'
+  # TEMPORARY self-test layer - reverted right after the CI run that proves the gate fails.
+  - '_version-support-selftest/**'
 
 # Here we define the projects (or layers) explicitly
 projects:
