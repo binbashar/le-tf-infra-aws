@@ -6,4 +6,4 @@
 environment = "apps-prd"
 
 # SSO
-sso_role = "DevOps"
+sso_role = "DevOpsPrd"

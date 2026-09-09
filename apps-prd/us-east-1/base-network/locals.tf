@@ -170,7 +170,7 @@ locals {
   apps-prd-vpcs = {
     apps-prd-base = {
       region  = var.region
-      profile = "${var.project}-apps-prd-devops"
+      profile = "${var.project}-apps-prd-devopsprd"
       bucket  = "${var.project}-apps-prd-terraform-backend"
       key     = "apps-prd/network/terraform.tfstate"
     }

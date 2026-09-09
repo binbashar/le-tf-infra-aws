@@ -107,7 +107,7 @@ repo's CI (`RPO` 0 — the source of truth is git; `RTO` is one workflow run).
    ACM certificate ARN (`binbash_web_certificate_arn`) via `terraform_remote_state`.
    Note that layer currently fails on an unrelated expired certificate — issue #1143.
 2. From this directory: `leverage tofu init && leverage tofu plan && leverage tofu apply`
-   (requires valid `bb-apps-prd-devops` and `bb-shared-devops` credentials).
+   (requires valid `bb-apps-prd-devopsprd` and `bb-shared-devops` credentials).
 
 ## Handoff to the app repository
 

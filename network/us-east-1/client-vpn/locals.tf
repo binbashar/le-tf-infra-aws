@@ -41,13 +41,13 @@ locals {
   apps_prd_vpcs = {
     apps-prd-base = {
       region  = var.region
-      profile = "${var.project}-apps-prd-devops"
+      profile = "${var.project}-apps-prd-devopsprd"
       bucket  = "${var.project}-apps-prd-terraform-backend"
       key     = "apps-prd/network/terraform.tfstate"
     }
     #apps-prd-k8s-eks = {
     #  region  = var.region
-    # profile = "${var.project}-apps-prd-devops"
+    # profile = "${var.project}-apps-prd-devopsprd"
     #  bucket  = "${var.project}-apps-prd-terraform-backend"
     # key     = "apps-prd/k8s-eks/network/terraform.tfstate"
     #}

@@ -61,7 +61,7 @@ As an example, we will set up the `apps-prd` account by using the `apps-devstg` 
     3. Do the same with `apps-prd/config/account.tfvars`
     4. Open up `apps-prd/config/backend.tfvars` again and replace this:
         ```
-        profile = "bb-apps-prd-devops"
+        profile = "bb-apps-prd-devopsprd"
         ```
         with this:
         ```
@@ -103,7 +103,7 @@ As an example, we will set up the `apps-prd` account by using the `apps-devstg` 
         ```
         with this:
         ```
-        profile = "bb-apps-prd-devops"
+        profile = "bb-apps-prd-devopsprd"
         ```
     2. This is needed because we only want to use the OAAR role for exceptional cases, not on daily basis.
     3. Now, let's configure your DevOps credentials (if you haven't already done so).

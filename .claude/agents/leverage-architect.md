@@ -91,9 +91,9 @@ provider "aws" {
   profile = var.profile                           # current account
 }
 provider "aws" {
-  alias   = "apps-prd"
+  alias   = "apps-devstg"
   region  = var.region
-  profile = "${var.project}-apps-prd-devops"      # cross-account
+  profile = "${var.project}-apps-devstg-devops"   # cross-account
 }
 ```
 
