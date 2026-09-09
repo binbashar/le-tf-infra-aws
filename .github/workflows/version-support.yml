@@ -102,11 +102,18 @@ jobs:
         run: |
           set -euo pipefail
           TITLE="chore(version-support): versions approaching end of standard support"
-          # Match the marker AND the exact title: the marker alone would also hit an
-          # issue that merely quotes it.
-          EXISTING=$(gh issue list --state open \
-            --search "version-support-guardrail in:body \"${TITLE}\" in:title" \
-            --json number --jq '.[0].number // empty')
+          MARKER="<!-- version-support-guardrail -->"
+          # Deliberately NOT `gh issue list --search`. Two ways that fails, both
+          # observed live: a quoted title containing ':' and '()' mangles the query
+          # so it matches nothing and every run opens a new issue; and a bare
+          # marker search also matches issues that merely QUOTE the marker -- the
+          # feature issue #1160 does, and updating it would overwrite its body with
+          # a status table. The issues API filters exactly and, unlike search, is
+          # immediately consistent, so a run seconds after the previous one still
+          # finds it. Lowest number wins so repeats converge on one issue.
+          EXISTING=$(gh issue list --state open --label cost-optimization --limit 100 \
+            --json number,title,body \
+            --jq "[.[] | select(.title == \"${TITLE}\") | select(.body | contains(\"${MARKER}\"))] | sort_by(.number) | .[0].number // empty")
           if [ -n "${EXISTING}" ]; then
             gh issue edit "${EXISTING}" --body-file /tmp/issue-body.md
             echo "updated issue #${EXISTING}"
