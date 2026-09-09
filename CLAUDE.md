@@ -91,10 +91,13 @@ PR with this exact, repeatable procedure so no sensitive data leaks:
    editing in place — `sed -i` is non-portable (BSD/macOS requires `-i ''`, GNU/Linux requires
    bare `-i`), and this procedure must run on both macOS and Linux (CI). The scan must print nothing:
    ```bash
-   sed -E 's/[0-9]{12}/<ACCOUNT_NAME_ACCOUNT_ID>/g; s/(AKIA|ASIA)[A-Z0-9]{16}/***/g' /tmp/plan-clean.txt > /tmp/plan-redacted.txt
-   grep -nE '[0-9]{12}|arn:aws:iam::[0-9]|AKIA|ASIA|-----BEGIN' /tmp/plan-redacted.txt   # expect no output
+   sed -E 's/\b[0-9]{12}\b/<ACCOUNT_NAME_ACCOUNT_ID>/g; s/(AKIA|ASIA)[A-Z0-9]{16}/***/g' /tmp/plan-clean.txt > /tmp/plan-redacted.txt
+   grep -nE '\b[0-9]{12}\b|arn:aws:iam::[0-9]|AKIA|ASIA|-----BEGIN' /tmp/plan-redacted.txt   # expect no output
    ```
    Use the named placeholder form, e.g. `<MANAGEMENT_ACCOUNT_ID>` (see the bullets above).
+   The `\b` word boundaries matter: unanchored, `[0-9]{12}` also eats any longer digit run —
+   epoch-nanosecond timestamps and numeric resource IDs get rewritten into fake account-ID
+   placeholders, and the scan still passes on the mangled result.
 4. **Embed** the redacted excerpt (`/tmp/plan-redacted.txt`) in the PR body inside a collapsible `<details>` block with a
    ```` ```text ```` fence (keep the What / Why / References sections intact). Never paste the
    raw refresh log.
