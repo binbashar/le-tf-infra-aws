@@ -126,9 +126,18 @@ def main(argv: list[str] | None = None) -> int:
             print(line)
         blocking = report_module.blocking_findings(findings)
         if blocking:
-            print(
-                f"\n{len(blocking)} active layer(s) pin a version in extended support."
-            )
+            # blocking_findings covers EXTENDED and UNSUPPORTED, and UNSUPPORTED is
+            # the worse of the two -- past the paid window entirely. Calling both
+            # "extended support" understates the worst state we can detect, which a
+            # live run against a genuinely unsupported version made obvious.
+            unsupported = [f for f in blocking if f.severity == "UNSUPPORTED"]
+            extended = [f for f in blocking if f.severity == "EXTENDED"]
+            parts = []
+            if unsupported:
+                parts.append(f"{len(unsupported)} past extended support (unsupported)")
+            if extended:
+                parts.append(f"{len(extended)} in extended support")
+            print(f"\n{len(blocking)} active layer(s): " + ", ".join(parts) + ".")
             return 1
         return 0
 

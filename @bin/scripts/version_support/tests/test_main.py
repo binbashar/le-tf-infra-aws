@@ -35,6 +35,25 @@ def test_pr_mode_fails_on_an_active_blocking_finding():
         assert main(["--mode", "pr", "--root", FIXTURE_TREE]) == 1
 
 
+def test_pr_mode_summary_distinguishes_unsupported_from_extended(capsys):
+    # A live CI run showed an UNSUPPORTED finding described as "in extended
+    # support" -- understating the worst state the tool can detect.
+    unsupported = Finding(
+        pin=Pin("eks", None, "1.28", "1.28", "L", True, "L/x.tf:5"),
+        status="UNSUPPORTED",
+        end_standard=date(2024, 11, 26),
+        end_extended=date(2025, 11, 26),
+        days_left=None,
+        severity="UNSUPPORTED",
+    )
+    with mock.patch("version_support.__main__.collect", return_value=([unsupported], [])):
+        assert main(["--mode", "pr", "--root", FIXTURE_TREE]) == 1
+
+    out = capsys.readouterr().out
+    assert "past extended support (unsupported)" in out
+    assert "1 active layer(s) pin a version in extended support" not in out
+
+
 def test_pr_mode_passes_when_only_disabled_layers_are_blocking():
     with mock.patch("version_support.__main__.collect", return_value=([DISABLED_FINDING], [])):
         assert main(["--mode", "pr", "--root", FIXTURE_TREE]) == 0
