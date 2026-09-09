@@ -37,9 +37,31 @@ This layer manages the AWS IAM Identity Center organization instance that lives 
 1. Edit the local `groups` map in `locals.tf`.
 2. If the new group is meant to grant AWS access, add its account assignments in
    `account_assignments.tf`.
-3. **Two-step apply**: the `account-assignments` module looks the principal up by name, so the
-   group must exist *before* the permission set that references it. Apply the group first, then
-   the assignment (same when renaming or removing a referenced group).
+3. **Two-step apply**: the `account-assignments` module looks the principal up by name (a
+   `data "aws_identitystore_group"` on `DisplayName`), so the group must exist *before* the
+   assignment that references it — otherwise `plan` itself fails to resolve the data source.
+   Apply the group first, then the assignment (same when renaming or removing a referenced
+   group):
+   ```bash
+   leverage tofu apply -target='aws_identitystore_group.default["<group_key>"]'
+   leverage tofu apply
+   ```
+
+### Production (`apps-prd`) access
+
+Production is **not** reachable through the `devops` group. The `DevOps` permission set is
+assigned to every account *except* `apps-prd`; `apps-prd` is assigned only to the `devopsprd`
+group (display name `DevOpsPrd`), so production access is an explicit membership rather than a
+side effect of being on the DevOps team.
+
+`DevOpsPrd` carries the **same inline policy** as `DevOps` (`data.aws_iam_policy_document.devops`)
+and the same `PT2H` session — it gates *who* reaches production, not *what* they can do there.
+If prod ever needs different permissions, give it its own policy document rather than editing the
+shared one.
+
+To grant or revoke production access, add or remove `"devopsprd"` in the user's `groups` list in
+`locals.tf` and run the Terraform workflow. Note that `readonly` and `securityauditor` still carry
+their own `apps-prd` assignments, so those groups retain view-only access independently of this.
 
 ### Kiro subscriptions (Pro — USD 20 / user / month)
 
