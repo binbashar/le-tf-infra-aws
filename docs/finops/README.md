@@ -52,8 +52,9 @@ the Cost Explorer `LINKED_ACCOUNT` dimension.
 | Prerequisite | Where it is managed |
 | --- | --- |
 | Cost Explorer | Enabled account-wide (no OpenTofu resource exists; activated once in the console) |
-| Cost Anomaly Detection | A default AWS-services monitor is auto-configured when Cost Explorer is enabled; an explicit `aws_ce_anomaly_monitor` comes with **[PR #1115](https://github.com/binbashar/le-tf-infra-aws/pull/1115)** (`management/global/aws-finops-agent/cost-anomaly.tf`) |
-| Compute Optimizer opt-in | `management/global/aws-finops-agent/compute-optimizer.tf` — `aws_computeoptimizer_enrollment_status` — **pending [PR #1115](https://github.com/binbashar/le-tf-infra-aws/pull/1115)** |
+| Cost Anomaly Detection | [`management/global/cost-mgmt/cost_anomaly.tf`](../../management/global/cost-mgmt/cost_anomaly.tf) — `aws_ce_anomaly_monitor` (`DIMENSIONAL`/`SERVICE`). A payer-account monitor evaluates the consolidated bill, so it covers every linked account with no org plumbing |
+| Compute Optimizer — org trusted access | [`management/global/organizations/organization.tf`](../../management/global/organizations/organization.tf) — `compute-optimizer.amazonaws.com` in `aws_service_access_principals` |
+| Compute Optimizer — org-wide enrollment | [`management/global/organizations/compute_optimizer_enabling.tf`](../../management/global/organizations/compute_optimizer_enabling.tf) — `aws_computeoptimizer_enrollment_status` with `include_member_accounts` |
 | Cost Optimization Hub — org trusted access | [`management/global/organizations/organization.tf`](../../management/global/organizations/organization.tf) — `cost-optimization-hub.bcm.amazonaws.com` in `aws_service_access_principals` |
 | Cost Optimization Hub — org-wide enrollment | [`management/global/organizations/cost_optimization_hub_enabling.tf`](../../management/global/organizations/cost_optimization_hub_enabling.tf) — `aws_costoptimizationhub_enrollment_status` |
 | Read-only IAM for the plugin | [`management/global/base-identities/role_policies.tf`](../../management/global/base-identities/role_policies.tf) — `aws_iam_policy.aws_finops_readonly_access`, attached to `DeployMaster` |
@@ -64,12 +65,14 @@ legitimately come back thin:
 | Service | When data appears |
 | --- | --- |
 | Cost Explorer | Current month in **~24 h**; the previous 13 months take a **few days longer**. Refreshed at least daily thereafter ([docs](https://docs.aws.amazon.com/cost-management/latest/userguide/ce-enable.html)) |
-| Cost Anomaly Detection | Enabling Cost Explorer **auto-configures** a default AWS-services monitor and a daily summary subscription, so some anomaly data exists already; PR #1115 adds an explicit `DIMENSIONAL`/`SERVICE` monitor alongside it |
+| Cost Anomaly Detection | Anomalies appear only **after** a monitor exists — enabling Cost Explorer does **not** create one (verified: `ce:GetAnomalyMonitors` returned zero on this payer account). AWS needs ~10 days of history to learn a service's pattern before it will call something anomalous |
 | Compute Optimizer | Up to **24 h** after opt-in, and only for resources with **≥ 30 h** of CloudWatch metric history |
 | Cost Optimization Hub | Imports from Compute Optimizer and Savings Plans; recommendations **refresh daily**, so it is only as fresh as its upstreams |
 
-Until PR #1115 merges and applies, `/aws-finops-optimize`'s right-sizing phase has
-no Compute Optimizer source data — the rest of both reports still works.
+Compute Optimizer is also the Cost Optimization Hub's upstream, so enrolling it
+org-wide is what makes both the Hub *and* `/aws-finops-optimize`'s right-sizing
+phase return anything. Enrolling the payer account alone would aggregate almost
+nothing — the workloads live in the member accounts.
 
 > The `Administrator` SSO permission set already covers every call the plugin
 > makes. `aws_finops_readonly_access` exists so the plugin can also run under
@@ -88,8 +91,11 @@ it from inside one.
 ```bash
 leverage aws sso login                                    # ~8 h token
 
-# refresh per-profile creds (any management layer will do)
-cd management/global/organizations && leverage tofu refresh-credentials && cd -
+# refresh per-profile creds -- use a SINGLE-PROFILE layer. refresh-credentials scans
+# the layer's .tf files for profiles and hard-exits on the first role it cannot assume,
+# writing nothing at all; base-identities references only var.profile, organizations
+# references four member accounts and dies on the first one that has drifted.
+cd management/global/base-identities && leverage tofu refresh-credentials && cd -
 
 export AWS_CONFIG_FILE="$HOME/.aws/bb/config"
 export AWS_SHARED_CREDENTIALS_FILE="$HOME/.aws/bb/credentials"
