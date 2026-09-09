@@ -143,6 +143,14 @@ class Resolver:
         return Resolution(None, "unresolved")
 
 
+# terraform-aws-eks renamed this argument in v21: a v20 module block says
+# cluster_version, a v21 one says kubernetes_version. Both spellings are live in this
+# repo's history, and matching only the old one made the EKS pin vanish silently when
+# the module was bumped -- no error, just a report with no clusters in it. The identically
+# named argument on `data "aws_eks_addon_version"` is not a risk: _blocks() yields only
+# module and resource bodies, never data blocks.
+_EKS_VERSION_KEYS = ("cluster_version", "kubernetes_version")
+
 # Only these carry an RDS/Aurora extended-support surcharge. elasticache, OpenSearch
 # and DMS are excluded structurally - their engine value is never in this set.
 RDS_ENGINES = frozenset({"mysql", "postgres", "aurora-mysql", "aurora-postgresql"})
@@ -284,8 +292,9 @@ def discover(root: str) -> tuple[list[Pin], list[str]]:
 
         for path, doc in docs.items():
             for body in _blocks(doc):
-                if "cluster_version" in body:
-                    resolution = resolver.resolve(body["cluster_version"])
+                eks_key = next((k for k in _EKS_VERSION_KEYS if k in body), None)
+                if eks_key:
+                    resolution = resolver.resolve(body[eks_key])
                     version = resolution.value if isinstance(resolution.value, str) else None
                     pins.append(
                         Pin(
@@ -295,7 +304,7 @@ def discover(root: str) -> tuple[list[Pin], list[str]]:
                             major_version=version,
                             layer=layer,
                             active=active,
-                            source=_source(path, "cluster_version", resolution, root),
+                            source=_source(path, eks_key, resolution, root),
                         )
                     )
 

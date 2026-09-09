@@ -158,6 +158,7 @@ def test_discover_finds_every_real_pin_shape():
         "apps-devstg/us-east-1/k8s-eks-demoapps/cluster",
         "apps-devstg/us-east-1/databases-mysql --",
         "apps-devstg/us-east-1/databases-aurora-pgsql --",
+        "shared/us-east-1/k8s-eks-v21/cluster",
     }
 
 
@@ -190,6 +191,41 @@ def test_discover_prefers_an_explicit_major_engine_version():
     assert pin.engine == "mysql"
     assert pin.version == "8.0.41"
     assert pin.major_version == "8.0"
+
+
+V21_LAYER = os.path.join(
+    FIXTURE_TREE, "shared", "us-east-1", "k8s-eks-v21", "cluster"
+)
+
+
+def test_the_v21_kubernetes_version_argument_is_found():
+    # terraform-aws-eks v21 renamed cluster_version -> kubernetes_version. Matching
+    # only the old spelling made the EKS pin vanish silently when the module was
+    # bumped: no error, just a report with no clusters in it.
+    pins, _ = discover(FIXTURE_TREE)
+    pin = _by_layer(pins)["shared/us-east-1/k8s-eks-v21/cluster"]
+
+    assert pin.kind == "eks"
+    assert pin.version == "1.33"
+    assert "var.cluster_version" in pin.source
+
+
+def test_a_data_block_named_kubernetes_version_is_not_a_pin(tmp_path):
+    # data "aws_eks_addon_version" carries an identically named argument derived from
+    # remote state. It is not a declaration and must not become a second pin -- the
+    # real one lives in the cluster layer, which is scanned separately.
+    layer = tmp_path / "apps-devstg" / "us-east-1" / "addons"
+    layer.mkdir(parents=True)
+    (layer / "addons.tf").write_text(
+        'data "aws_eks_addon_version" "this" {\n'
+        "  kubernetes_version = data.terraform_remote_state.cluster.outputs.cluster_version\n"
+        "}\n"
+    )
+
+    pins, errors = discover(str(tmp_path))
+
+    assert pins == []
+    assert errors == []
 
 
 def test_look_alikes_are_never_matched():

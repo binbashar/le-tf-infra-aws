@@ -28,6 +28,7 @@ These were verified by running code against this repository — do not re-derive
 | `with_meta=True` | Yields **no** line numbers under our options; lines come from a text scan |
 | Aurora pgsql engine | `"${local.engine}"` — **locals resolution is mandatory** |
 | `elasticache-redis` | Has `engine_version` but **no `engine`** key → excluded structurally |
+| EKS version argument | `cluster_version` (terraform-aws-eks v20) **and** `kubernetes_version` (v21) — both must match |
 | EKS `versionStatus` enum | `UNSUPPORTED` \| `STANDARD_SUPPORT` \| `EXTENDED_SUPPORT` |
 | RDS `LifecycleSupportName` enum | `open-source-rds-standard-support` \| `open-source-rds-extended-support` (**lowercase-hyphenated**) |
 | Disabled-layer suffix | Both ` --` (spaced) and `--` (attached) occur — match trailing `--` |
