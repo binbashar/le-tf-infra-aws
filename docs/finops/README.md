@@ -150,7 +150,7 @@ the maintenance loop.
   cost steps up on a specific date has repriced — most often an EKS cluster or
   RDS/Aurora engine that crossed its end-of-standard-support date and now bills the
   extended-support surcharge. Report it as a monthly/annualised run-rate step, not a
-  one-off anomaly. The prevention side — a PR gate and weekly sweep that stop a version
+  one-off anomaly. The prevention side — a PR gate and monthly sweep that stop a version
   reaching that date unnoticed — is [`docs/version-support/`](../version-support/).
 - **Tag coverage bounds attribution.** The investigate skill's tag-hygiene phase
   measures exactly what issue #842 (tagging strategy) is about; untagged spend is

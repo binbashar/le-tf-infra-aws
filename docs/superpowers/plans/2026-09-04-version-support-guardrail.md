@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a scanner that reads Kubernetes and database engine versions pinned in this repo's `.tf` files, asks AWS for each version's support lifecycle, fails PRs that pin an active layer into extended support, and sweeps weekly for versions approaching the cliff.
+**Goal:** Build a scanner that reads Kubernetes and database engine versions pinned in this repo's `.tf` files, asks AWS for each version's support lifecycle, fails PRs that pin an active layer into extended support, and sweeps monthly for versions approaching the cliff.
 
-**Architecture:** Three pure-boundary Python modules — `discover.py` (tree → `[Pin]`, never calls AWS), `lifecycle.py` (`[Pin]` → `[Finding]`, never reads the filesystem), `report.py` (pure formatting) — behind a `__main__.py` CLI with three modes. One GitHub Actions workflow runs it on PRs and weekly. Side effects (Slack, GitHub issue) live in the workflow, not the scanner, so `report.py` stays pure.
+**Architecture:** Three pure-boundary Python modules — `discover.py` (tree → `[Pin]`, never calls AWS), `lifecycle.py` (`[Pin]` → `[Finding]`, never reads the filesystem), `report.py` (pure formatting) — behind a `__main__.py` CLI with three modes. One GitHub Actions workflow runs it on PRs and monthly. Side effects (Slack, GitHub issue) live in the workflow, not the scanner, so `report.py` stays pure.
 
 **Tech Stack:** Python 3.12, `python-hcl2` 8.x, `boto3` 1.43+, pytest, `botocore.stub.Stubber`, GitHub Actions.
 
@@ -47,7 +47,7 @@ These were verified by running code against this repository — do not re-derive
 | `@bin/scripts/version_support/__main__.py` | CLI, mode dispatch, exit codes. The only place that decides failure. |
 | `@bin/scripts/version_support/requirements.txt` | `python-hcl2`, `boto3` |
 | `@bin/scripts/version_support/tests/` | pytest suite + fixture `.tf` tree |
-| `.github/workflows/version-support.yml` | PR gate + weekly cron; owns Slack and `gh issue` side effects |
+| `.github/workflows/version-support.yml` | PR gate + monthly cron; owns Slack and `gh issue` side effects |
 | `docs/version-support/README.md` | Why, upgrade cadence, how to run, IAM |
 | `docs/version-support/status.md` | Generated table |
 | `Makefile` | `version-support`, `version-support-table` targets |
@@ -1659,7 +1659,7 @@ def markdown_table(findings: list[Finding], generated_on: date) -> str:
 
 
 def slack_summary(findings: list[Finding]) -> str:
-    """One-paragraph mrkdwn summary for the weekly notification."""
+    """One-paragraph mrkdwn summary for the scheduled notification."""
     extended = [f for f in findings if f.pin.active and f.severity == "EXTENDED"]
     unsupported = [f for f in findings if f.pin.active and f.severity == "UNSUPPORTED"]
     soon = [f for f in findings if f.pin.active and f.severity == "SOON"]
@@ -2105,9 +2105,9 @@ on:
       - '**/*.tf'
       - '@bin/scripts/version_support/**'
       - '.github/workflows/version-support.yml'
-  # Tuesdays, deliberately off the Monday lint sweep so a red morning has one cause.
+  # Monthly on the 1st, deliberately off the Monday lint sweep so a red morning has one cause.
   schedule:
-    - cron: '23 7 * * 2'
+    - cron: '23 7 1 * *'
   workflow_dispatch:
 
 permissions:
@@ -2165,7 +2165,7 @@ jobs:
         if: github.event_name == 'pull_request' && steps.creds.outputs.available == 'true'
         run: PYTHONPATH=@bin/scripts python -m version_support --mode pr --root .
 
-      - name: Run the weekly sweep
+      - name: Run the monthly sweep
         id: sweep
         if: github.event_name != 'pull_request' && steps.creds.outputs.available == 'true'
         run: |
@@ -2216,7 +2216,7 @@ Expected: `valid YAML`
 # atlantis.yaml too -- Step 0 changed it, and leaving it uncommitted would drop the
 # very fix that must land before this branch is pushed.
 git add .github/workflows/version-support.yml atlantis.yaml
-git commit -m "feat(version-support): add the PR gate and weekly sweep workflow"
+git commit -m "feat(version-support): add the PR gate and monthly sweep workflow"
 ```
 
 ---
@@ -2252,8 +2252,8 @@ on the bill via `USAGE_TYPE` — is the `aws-finops` plugin, see [`docs/finops/`
 | Trigger | Behavior |
 | --- | --- |
 | PR touching `**/*.tf` | **Fails** if an *active* layer pins a version already in extended support; warns at ≤ 90 days |
-| Weekly (Tuesdays 07:23 UTC) | Never fails. Posts to Slack and opens/updates one tracking issue |
-| `workflow_dispatch` | Same as the weekly sweep |
+| Monthly (1st, 07:23 UTC) | Never fails. Posts to Slack and opens/updates one tracking issue |
+| `workflow_dispatch` | Same as the monthly sweep |
 
 Disabled layers (those whose directory ends in `--`) are scanned and reported as latent
 debt but **never** fail the check — gating on five dormant database layers would land the
@@ -2330,7 +2330,7 @@ and replace it with:
 
 ```markdown
   extended-support surcharge. Report it as a monthly/annualised run-rate step, not a
-  one-off anomaly. The prevention side — a PR gate and weekly sweep that stop a version
+  one-off anomaly. The prevention side — a PR gate and monthly sweep that stop a version
   reaching that date unnoticed — is [`docs/version-support/`](../version-support/).
 ```
 
@@ -2349,7 +2349,7 @@ end-of-standard-support date into the extended-support surcharge unnoticed.
 - A PR touching `**/*.tf` **fails** if an *active* layer pins a version already in extended
   support, and warns at ≤ 90 days. Disabled layers (directory ending `--`) are reported but
   never fail — removing the `--` makes the layer active and the gate applies.
-- A weekly sweep posts to Slack and maintains one tracking issue; it never fails the repo.
+- A monthly sweep posts to Slack and maintains one tracking issue; it never fails the repo.
 - Needs only `eks:DescribeClusterVersions` + `rds:DescribeDBMajorEngineVersions` — catalog
   lookups, so any account's credentials work.
 - Runbook and upgrade cadence: `docs/version-support/README.md`.

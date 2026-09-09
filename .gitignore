@@ -83,6 +83,8 @@ Thumbs.db
 /src
 /venv
 .venv-version-support/
+# Claude Code creates git worktrees here; they are local scratch, never repo content.
+.claude/worktrees/
 
 # Custom Project tools files #
 ########################

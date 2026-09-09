@@ -14,9 +14,12 @@ on:
       - '*/config/account.tfvars'
       - '@bin/scripts/version_support/**'
       - '.github/workflows/version-support.yml'
-  # Tuesdays, deliberately off the Monday lint sweep so a red morning has one cause.
+  # Monthly, on the 1st. Deliberately off the Monday lint sweep so a red morning has
+  # one cause. With a 90-day lead time a monthly cadence still leaves ~60 days of
+  # warning in the worst case -- enough for an EKS upgrade, which must be taken one
+  # minor version at a time.
   schedule:
-    - cron: '23 7 * * 2'
+    - cron: '23 7 1 * *'
   workflow_dispatch:
 
 # One sweep at a time: two concurrent runs could both find no tracking issue and
@@ -85,7 +88,7 @@ jobs:
         if: github.event_name == 'pull_request' && steps.creds.outputs.available == 'true'
         run: PYTHONPATH=@bin/scripts python -m version_support --mode pr --root .
 
-      - name: Run the weekly sweep
+      - name: Run the monthly sweep
         id: sweep
         if: github.event_name != 'pull_request' && steps.creds.outputs.available == 'true'
         run: |
@@ -125,7 +128,7 @@ jobs:
       # Fires whenever a non-PR run did not come back with ran=true: the sweep
       # reported a failed AWS lookup (ran=false), was skipped because credentials
       # were unavailable, or failed outright before writing any output. Checking
-      # only ran == 'false' would miss the latter two and leave a broken weekly
+      # only ran == 'false' would miss the latter two and leave a broken monthly
       # check completely silent -- which is the all-clear this must never imply.
       - name: Notify Slack that the sweep could not run
         if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.sweep.outputs.ran != 'true' }}
@@ -147,7 +150,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Project*: ${{ github.repository }}\nThe weekly EKS/RDS support-lifecycle sweep could not reach AWS, so nothing was checked. This is not an all-clear."
+                    "text": "*Project*: ${{ github.repository }}\nThe monthly EKS/RDS support-lifecycle sweep could not reach AWS, so nothing was checked. This is not an all-clear."
                   },
                   "accessory": {
                     "type": "button",

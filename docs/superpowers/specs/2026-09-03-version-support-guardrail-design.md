@@ -2,7 +2,7 @@
 
 - **Date:** 2026-09-03
 - **Issue:** [binbashar/le-tf-infra-aws#1160](https://github.com/binbashar/le-tf-infra-aws/issues/1160) — Guardrail against EKS/RDS extended-support cost surcharges
-- **Scope of this spec:** the repository-side guardrail — a version-pin scanner, a PR gate, a weekly sweep, and the docs they produce. The billing-side detection is already delivered by the `aws-finops` plugin adopted in #1159 and is explicitly out of scope here.
+- **Scope of this spec:** the repository-side guardrail — a version-pin scanner, a PR gate, a monthly sweep, and the docs they produce. The billing-side detection is already delivered by the `aws-finops` plugin adopted in #1159 and is explicitly out of scope here.
 - **Status:** approved for planning
 
 ## Problem
@@ -47,7 +47,7 @@ The live cluster is not the near-term risk. **Re-enabling a dormant database lay
 A Python scanner plus one GitHub Actions workflow:
 
 - **PR gate** on changes to `**/*.tf` — hard-fail when an **active** layer pins a version already in extended support, warn at ≤ 90 days. This is what blocks the re-enable-a-stale-layer case at merge time.
-- **Weekly sweep** (cron + `workflow_dispatch`) — never fails the repo; reports to Slack and opens or updates a single GitHub issue when anything crosses the lead-time line.
+- **Monthly sweep** (cron + `workflow_dispatch`) — never fails the repo; reports to Slack and opens or updates a single GitHub issue when anything crosses the lead-time line.
 
 Rejected alternatives, and why:
 
@@ -55,8 +55,8 @@ Rejected alternatives, and why:
 | --- | --- |
 | Cost Anomaly Detection / CloudWatch alarm on `USAGE_TYPE ~ ExtendedSupport` | Detection, not prevention — it fires the month the surcharge already started. The `aws-finops` plugin from #1159 already reports this from the bill. |
 | Generated doc plus a recurring review item, no automated gate | Relies on someone reading it on the right week. The deadline is the whole problem. |
-| Weekly cron only, no PR gate | A stale pin can merge and go unnoticed for up to a week. |
-| Hard-fail on the weekly cron too | A permanently red scheduled run normalises being ignored. |
+| Scheduled cron only, no PR gate | A stale pin can merge and go unnoticed until the next sweep. |
+| Hard-fail on the monthly cron too | A permanently red scheduled run normalises being ignored. |
 
 ## Placement
 
@@ -235,7 +235,7 @@ All five `databases-*` layers are disabled and carry stale pins, so gating on th
 
 ### One issue, not fifty-two
 
-The weekly job embeds a marker comment (`<!-- version-support-guardrail -->`) in the issue body and searches for an open issue carrying it. Found means update; not found means create. Labels: `cost-optimization`, `enhancement`.
+The scheduled job embeds a marker comment (`<!-- version-support-guardrail -->`) in the issue body and searches for an open issue carrying it. Found means update; not found means create. Labels: `cost-optimization`, `enhancement`.
 
 ## Error handling
 
@@ -261,7 +261,7 @@ Fixtures are tiny `.tf` trees under `tests/fixtures/`, mirroring the shapes actu
 
 `.github/workflows/version-support.yml`:
 
-- **Triggers:** `pull_request` (paths `**/*.tf`), `schedule` at `23 7 * * 2` (Tuesdays 07:23 UTC — deliberately off the existing lint sweep's Monday `17 6 * * 1` so a red morning has one cause, not two), and `workflow_dispatch`.
+- **Triggers:** `pull_request` (paths `**/*.tf`), `schedule` at `23 7 1 * *` (the 1st of each month at 07:23 UTC — deliberately off the existing lint sweep's Monday `17 6 * * 1` so a red morning has one cause, not two), and `workflow_dispatch`.
 - **Permissions:** `contents: read` plus `issues: write` — the cron opens or updates an issue, which the default read-only `GITHUB_TOKEN` cannot do.
 - **Steps:** checkout → set up Python → install `requirements.txt` → run pytest → configure AWS credentials by assuming `DeployMaster` in `apps-devstg` (the pattern already in `leverage-cli-test.yml`) → run the scanner in the mode matching the trigger.
 
@@ -271,7 +271,7 @@ Fixtures are tiny `.tf` trees under `tests/fixtures/`, mirroring the shapes actu
 - `docs/version-support/status.md` — the generated table, marked generated and carrying the date it was produced so staleness is visible on sight.
 - Cross-links: `docs/finops/README.md` (detection ↔ prevention) and the `CLAUDE.md` FinOps section.
 
-The committed table is refreshed on demand via its `Makefile` target — which happens naturally in any PR that bumps a version. The weekly job regenerates it in memory and embeds the fresh table in the issue body, so the report is never stale even when the committed copy is.
+The committed table is refreshed on demand via its `Makefile` target — which happens naturally in any PR that bumps a version. The scheduled job regenerates it in memory and embeds the fresh table in the issue body, so the report is never stale even when the committed copy is.
 
 ## Out of scope
 

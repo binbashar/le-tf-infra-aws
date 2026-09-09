@@ -208,7 +208,7 @@ end-of-standard-support date into the extended-support surcharge unnoticed.
   active and the gate applies.
 - **A fork PR is not gated.** Forks receive no secrets, so the scanner is skipped entirely and
   the job still reports success. Treat its green check as "did not run", not "passed".
-- A weekly sweep posts to Slack and maintains one tracking issue; it never fails the repo.
+- A monthly sweep (1st of the month) posts to Slack and maintains one tracking issue; it never fails the repo.
 - Needs only `eks:DescribeClusterVersions` + `rds:DescribeDBMajorEngineVersions` — catalog
   lookups, so any account's credentials work.
 - Runbook and upgrade cadence: `docs/version-support/README.md`.

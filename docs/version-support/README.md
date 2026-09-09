@@ -17,8 +17,8 @@ on the bill via `USAGE_TYPE` — is the `aws-finops` plugin, see [`docs/finops/`
 | --- | --- |
 | PR touching `**/*.tf` or the resolved `*.tfvars` | **Fails** if an *active* layer pins a version already in extended support; warns at ≤ 90 days |
 | PR **from a fork** | Not gated at all. A fork gets no secrets, so the scanner is skipped entirely and the job still reports success — its green check means "did not run", not "passed" |
-| Weekly (Tuesdays 07:23 UTC) | Never fails. Posts to Slack and opens/updates one tracking issue |
-| `workflow_dispatch` | Same as the weekly sweep |
+| Monthly (1st, 07:23 UTC) | Never fails. Posts to Slack and opens/updates one tracking issue |
+| `workflow_dispatch` | Same as the monthly sweep |
 
 Disabled layers (those whose directory ends in `--`) are scanned and reported as latent
 debt but **never** fail the check — gating on five dormant database layers would land the

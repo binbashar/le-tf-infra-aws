@@ -115,7 +115,7 @@ def markdown_table(findings: list[Finding], generated_on: date) -> str:
 
 
 def slack_summary(findings: list[Finding]) -> str:
-    """One-paragraph mrkdwn summary for the weekly notification."""
+    """One-paragraph mrkdwn summary for the scheduled notification."""
     extended = [f for f in findings if f.pin.active and f.severity == "EXTENDED"]
     unsupported = [f for f in findings if f.pin.active and f.severity == "UNSUPPORTED"]
     soon = [f for f in findings if f.pin.active and f.severity == "SOON"]

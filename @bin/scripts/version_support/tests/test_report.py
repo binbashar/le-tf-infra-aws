@@ -92,7 +92,7 @@ def test_slack_summary_counts_active_findings_only():
 
 def test_a_lone_unknown_finding_does_not_produce_a_contentless_alert():
     # attention_findings() counts UNKNOWN, so an UNKNOWN alone can be the whole
-    # reason the weekly Slack message fires. It must then say so, not read as
+    # reason the scheduled Slack message fires. It must then say so, not read as
     # "nothing is wrong".
     unknown = Finding(
         pin=Pin("eks", None, None, None, "active-unknown", True, "active-unknown/x.tf:5"),
