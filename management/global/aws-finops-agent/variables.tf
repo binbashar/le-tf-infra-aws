@@ -9,15 +9,3 @@ variable "operator_role_name" {
   type        = string
   default     = "FinOpsAgentOperatorRole"
 }
-
-variable "anomaly_monitor_name" {
-  description = "Name of the Cost Anomaly Detection monitor the agent investigates."
-  type        = string
-  default     = "finops-agent-service-monitor"
-}
-
-variable "enable_compute_optimizer" {
-  description = "Opt the management account in to AWS Compute Optimizer (management account only; does not enroll member accounts)."
-  type        = bool
-  default     = true
-}

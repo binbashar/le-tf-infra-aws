@@ -18,10 +18,24 @@ This layer therefore manages everything that *is* IaC-able, and the agentspace i
 │     + operator policy           │            → agent_role_arn           │
 │   (trust: finops-agent.         └────────► Step 3: use existing role    │
 │    amazonaws.com)                            → operator_role_arn        │
-│   aws_ce_anomaly_monitor            ← anomaly-investigation feature     │
-│   aws_computeoptimizer_enrollment_status  ← rightsizing recs (mgmt)     │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+## Cost telemetry lives elsewhere
+
+The Cost Anomaly Detection monitor and the Compute Optimizer opt-in the agent reads
+are **not** in this layer — they are account-level FinOps telemetry that the
+`aws-finops` Claude Code plugin, the console and this agent all consume, so they are
+owned by the layers that already own that concern:
+
+| Prerequisite | Layer |
+| --- | --- |
+| `aws_ce_anomaly_monitor` | `management/global/cost-mgmt/cost_anomaly.tf` |
+| `aws_computeoptimizer_enrollment_status` (org-wide) | `management/global/organizations/compute_optimizer_enabling.tf` |
+
+They were in this layer originally, which coupled org-wide cost telemetry to a
+preview service whose agentspace can only be created by hand. Both now apply
+independently of this layer.
 
 ## Deploy
 
