@@ -3,7 +3,7 @@
 #
 
 # AWS Profile (required by the backend but also used for other resources)
-profile = "bb-apps-prd-devops"
+profile = "bb-apps-prd-devopsprd"
 
 # S3 bucket
 bucket = "bb-apps-prd-terraform-backend"

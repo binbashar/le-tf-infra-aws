@@ -15,7 +15,7 @@ provider "aws" {
 provider "aws" {
   alias   = "apps-prd"
   region  = var.region
-  profile = "${var.project}-apps-prd-devops"
+  profile = "${var.project}-apps-prd-devopsprd"
 }
 
 #=============================#
@@ -135,7 +135,7 @@ data "terraform_remote_state" "vpc-apps-prd" {
 
   config = {
     region  = var.region
-    profile = "${var.project}-apps-prd-devops"
+    profile = "${var.project}-apps-prd-devopsprd"
     bucket  = "${var.project}-apps-prd-terraform-backend"
     key     = "apps-prd/network/terraform.tfstate"
   }

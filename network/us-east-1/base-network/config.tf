@@ -27,7 +27,7 @@ provider "aws" {
 provider "aws" {
   alias   = "apps-prd"
   region  = var.region
-  profile = "${var.project}-apps-prd-devops"
+  profile = "${var.project}-apps-prd-devopsprd"
 }
 
 #=============================#

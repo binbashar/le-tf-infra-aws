@@ -21,7 +21,7 @@ deployed by the app repository's CI through a least-privilege GitHub OIDC role
    ACM certificate ARN via `terraform_remote_state` and cannot plan until the
    certificate exists.
 2. From this directory: `leverage tofu init && leverage tofu plan && leverage tofu apply`
-   (requires valid `bb-apps-prd-devops` and `bb-shared-devops` credentials).
+   (requires valid `bb-apps-prd-devopsprd` and `bb-shared-devops` credentials).
 
 Outputs consumed by the app repository CI: `deploy_role_arn`, `s3_bucket`,
 `cf_distribution_id` (`leverage tofu output`).

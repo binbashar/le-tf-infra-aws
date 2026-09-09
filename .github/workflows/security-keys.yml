@@ -30,7 +30,7 @@ jobs:
             aws_region: us-east-2
             required_state_file: false
           - layer: apps-prd/us-east-1/security-keys
-            aws_profile: bb-apps-prd-devops
+            aws_profile: bb-apps-prd-devopsprd
             aws_region: us-east-1
             required_state_file: false
           - layer: security/us-east-1/security-keys

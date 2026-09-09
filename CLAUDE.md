@@ -116,12 +116,28 @@ The `leverage` CLI is installed in a local venv managed by [uv](https://docs.ast
 # Authenticate with AWS SSO (interactive — requires browser, user must run manually)
 leverage aws sso login
 
+# ...and mint every account's credentials in the same step (leverage >= 3.1.0)
+leverage aws sso login --refresh-all
+
+# Re-mint all account credentials without logging in again (needs a live SSO token).
+# Smart: skips profiles with >30 min left, warns and continues past accounts whose
+# permission set you no longer hold, and prints an "N refreshed, N skipped, N failed"
+# summary. Runs from anywhere in the repo — no layer directory needed.
+leverage aws sso refresh
+leverage aws sso refresh --force    # re-mint even the still-valid ones
+
 # Initialize makefiles (first time setup)
 make init-makefiles
 
 # Initialize OpenTofu for a specific layer (run from layer directory)
 leverage tofu init
 ```
+
+> `leverage aws sso refresh` supersedes running `leverage tofu refresh-credentials` from a
+> layer for the common "everything expired" case. The layer-scoped command still exists and
+> is still what runs automatically before every `leverage tofu` command, but it **hard-exits
+> on the first account whose permission set you lack** (`raise_on_permission_error=True`),
+> writing nothing — so prefer `aws sso refresh` when several accounts are stale.
 
 ### Development Workflow
 ```bash
@@ -360,7 +376,17 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 ### Naming Conventions
 - AWS resources: `{project}-{environment}-{resource}` (e.g., `bb-shared-devops`)
 - Project prefix: `${var.project}-${var.environment}-{resource}`
-- AWS profiles: `{project}-{account}-devops` (e.g., `bb-shared-devops`, `bb-network-devops`)
+- AWS profiles: `{project}-{account}-{sso-permission-set-lowercased}` (e.g., `bb-shared-devops`,
+  `bb-network-devops`, and `bb-apps-prd-devopsprd` for the prod-only `DevOpsPrd` permission set)
+- **The profile name is not a free choice — it is derived from the SSO permission set.** Leverage
+  builds it as `f"{project}-{account_name}-{sso_role.lower()}"` (`leverage/modules/auth.py`), for
+  both `leverage aws sso refresh` and the auto-refresh that precedes every `leverage tofu` command.
+  It ignores the `profile` value in `{account}/config/backend.tfvars` when deriving the name, so a
+  permission set renamed in `management/global/sso` **must** be followed by renaming the profile
+  everywhere it appears in this repo. Skip that and the layer silently keeps reading a profile
+  leverage can no longer mint, and every command fails with `ExpiredToken`. Grep for the old name
+  before merging: cross-account references live in `network/`, `shared/`, `management/global/organizations`
+  and `.github/workflows/security-keys.yml`, not just in the account's own `backend.tfvars`.
 - Tags: Consistent tagging with `Terraform`, `Environment`, `Layer` via `local.tags`
 - **PRM compliance tag (`aws-apn-id`)**: Present in `data-science/us-east-1/bedrock-agent-kyb`, `bedrock-agentcore`, and `bedrock-kyb-bda` for AWS Partner Revenue Measurement attribution. Value `pc:b6t445987ttlzwgcll8zdt8nv` maps to AWS Marketplace product `prod-zw4ehbg5ayh2m`. **Do NOT add this tag to other layers without explicit Partner Development Manager approval** — the product code attributes consumption to a specific Marketplace listing. For Bedrock model invocations specifically, Resource Tagging only works for Amazon/OSS models via an Application Inference Profile; Anthropic Claude invocations need the User Agent String method instead. See [AWS PRM Bedrock docs](https://docs.aws.amazon.com/PRM/latest/aws-prm-onboarding-guide/bedrock-best-practices.html).
 

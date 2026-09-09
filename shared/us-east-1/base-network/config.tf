@@ -21,13 +21,13 @@ provider "aws" {
 provider "aws" {
   alias   = "apps-prd"
   region  = var.region
-  profile = "${var.project}-apps-prd-devops"
+  profile = "${var.project}-apps-prd-devopsprd"
 }
 
 provider "aws" {
   alias   = "apps-prd-dr"
   region  = var.region_secondary
-  profile = "${var.project}-apps-prd-devops"
+  profile = "${var.project}-apps-prd-devopsprd"
 }
 
 provider "aws" {
