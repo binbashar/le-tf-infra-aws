@@ -63,6 +63,7 @@ locals {
       groups = [
         "administrators",
         "devops",
+        "devopsprd",
         "kiropro",
       ]
     }
@@ -82,6 +83,7 @@ locals {
       groups = [
         "administrators",
         "devops",
+        "devopsprd",
         "datascientists",
         "marketplaceandpartnercentral",
         "kiropro",
@@ -337,6 +339,17 @@ locals {
     devops = {
       name        = "DevOps"
       description = "Provides full access to many AWS services and resources except billing."
+    }
+    #
+    # NOTE Production access is deliberately NOT granted through the `devops`
+    # group. The DevOps permission set is assigned to every account except
+    # apps-prd; apps-prd is reached only through this group, so prod access is
+    # an explicit, separately reviewed membership rather than a side effect of
+    # being a DevOps team member.
+    #
+    devopsprd = {
+      name        = "DevOpsPrd"
+      description = "Provides the DevOps permission set in the apps-prd (production) account."
     }
     finops = {
       name        = "FinOps"

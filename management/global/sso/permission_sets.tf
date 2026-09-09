@@ -22,6 +22,20 @@ module "permission_sets" {
       policy_attachments                  = []
       customer_managed_policy_attachments = []
     },
+    #
+    # Same inline policy as DevOps -- this set exists to gate *who* reaches
+    # production, not to grant different permissions there.
+    #
+    {
+      name                                = "DevOpsPrd"
+      description                         = "Provides full access to many AWS services and resources except billing, in the apps-prd (production) account."
+      relay_state                         = local.default_relay_state
+      session_duration                    = "PT2H"
+      tags                                = local.tags
+      inline_policy                       = data.aws_iam_policy_document.devops.json
+      policy_attachments                  = []
+      customer_managed_policy_attachments = []
+    },
     {
       name                                = "FinOps"
       description                         = "Provides access to billing and cost management."

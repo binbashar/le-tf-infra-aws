@@ -90,13 +90,6 @@ module "account_assignments" {
       permission_set_name = "DevOps"
       principal_type      = local.principal_type_group
       principal_name      = local.groups["devops"].name
-      account             = var.accounts.apps-prd.id
-    },
-    {
-      permission_set_arn  = module.permission_sets.permission_sets["DevOps"].arn
-      permission_set_name = "DevOps"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["devops"].name
       account             = var.accounts.network.id
     },
     {
@@ -105,6 +98,21 @@ module "account_assignments" {
       principal_type      = local.principal_type_group
       principal_name      = local.groups["devops"].name
       account             = var.accounts.data-science.id
+    },
+
+    # -------------------------------------------------------------------------
+    # DevOpsPrd Permissions
+    #
+    # apps-prd is intentionally absent from the DevOps block above: production
+    # is reached only through the DevOpsPrd group, so being a DevOps team
+    # member does not by itself grant production access.
+    # -------------------------------------------------------------------------
+    {
+      permission_set_arn  = module.permission_sets.permission_sets["DevOpsPrd"].arn
+      permission_set_name = "DevOpsPrd"
+      principal_type      = local.principal_type_group
+      principal_name      = local.groups["devopsprd"].name
+      account             = var.accounts.apps-prd.id
     },
 
     # -------------------------------------------------------------------------
