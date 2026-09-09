@@ -341,6 +341,14 @@ locals {
         "devops",
       ]
     }
+    "tomas.gauchat" = {
+      first_name = "Tomas"
+      last_name  = "Gauchat"
+      email      = "tomas.gauchat@binbash.com.ar"
+      groups = [
+        "devops",
+      ]
+    }
   }
 
   #----------------------------------------------------------------------------
