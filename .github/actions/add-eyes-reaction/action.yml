@@ -1,0 +1,32 @@
+name: "Add Eyes Reaction"
+description: "Add eyes reaction to a GitHub comment to indicate processing"
+
+inputs:
+  github_token:
+    description: "GitHub token for API calls"
+    required: true
+  comment_id:
+    description: "Comment ID to react to"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Add eyes reaction
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: |
+        set -euo pipefail
+
+        COMMENT_ID="${{ inputs.comment_id }}"
+        echo "Adding eyes reaction to comment ID: $COMMENT_ID"
+
+        gh api repos/${{ github.repository }}/issues/comments/$COMMENT_ID/reactions \
+          --method POST \
+          --field content='eyes' || {
+          echo "Failed to add reaction"
+          exit 0
+        }
+
+        echo "Eyes reaction added successfully"
