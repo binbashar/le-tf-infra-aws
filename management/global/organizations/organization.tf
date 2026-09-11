@@ -15,7 +15,12 @@ resource "aws_organizations_organization" "main" {
     "sso.amazonaws.com",
     "fms.amazonaws.com",
     "inspector2.amazonaws.com",
+    "compute-optimizer.amazonaws.com",
     "cost-optimization-hub.bcm.amazonaws.com",
+    # Enabled out of band (AWS Private Marketplace) and adopted here so an apply of
+    # this layer stops planning its removal. Do not drop it without disabling Private
+    # Marketplace on purpose.
+    "private-marketplace.marketplace.amazonaws.com",
     "securityhub.amazonaws.com",
   ]
 

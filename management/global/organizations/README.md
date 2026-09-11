@@ -25,6 +25,60 @@ AWS Organizations Multi-Account baseline layout.
 3. Or edit the `policies_scp.tf` file to add/remove/update Service Control Policies.
 4. Finally, run the Terraform workflow to actually apply the changes
 
+### Org-wide cost telemetry (Compute Optimizer + Cost Optimization Hub)
+
+Two org-wide enrollments live here rather than in a cost layer, because each needs its
+trusted-access principal in `organization.tf`'s `aws_service_access_principals` **and** an
+enrollment resource, and the two must land together.
+
+| File | Resource | Feeds |
+| --- | --- | --- |
+| `compute_optimizer_enabling.tf` | `aws_computeoptimizer_enrollment_status` | Right-sizing and idle-resource findings |
+| `cost_optimization_hub_enabling.tf` | `aws_costoptimizationhub_enrollment_status` | Priced savings recommendations |
+
+Three things to know before touching either:
+
+1. **Trusted access alone enrols nothing.** Granting the service principal only *permits* the
+   service org-wide; without the enrollment resource it aggregates nothing. That gap went
+   unnoticed for the Cost Optimization Hub until it was found returning an empty result set.
+2. **`include_member_accounts` is the whole point.** The payer account holds no workloads, so
+   a management-only opt-in aggregates almost nothing. Both resources set it to `true`.
+3. **Compute Optimizer is the Hub's upstream.** The Hub imports from Compute Optimizer and
+   Savings Plans, so enrolling the Hub while Compute Optimizer is `Inactive` produces an empty
+   Hub. Disabling Compute Optimizer silently degrades the Hub.
+
+Data is not immediate. Compute Optimizer takes up to **24 h** after opt-in to finish its first
+analysis, and each resource type then has its own minimum before it is eligible at all:
+
+| Resource | Minimum before a recommendation appears |
+| --- | --- |
+| EC2 instances, EC2 Auto Scaling groups | >= 30 h of CloudWatch metrics in the past 14 days |
+| EBS volumes | >= 30 *consecutive* hours attached to a running instance |
+| Aurora / RDS DB instances | >= 30 h of CloudWatch metrics in the past 14 days (Performance Insights required for over-provisioned findings) |
+| ECS services on Fargate | >= 24 h of CloudWatch and ECS utilization metrics in the past 14 days |
+| Lambda functions | **No CloudWatch data required** — instead >= 50 invocations in 14 days, and memory <= 1792 MB |
+
+See [Resource requirements](https://docs.aws.amazon.com/compute-optimizer/latest/ug/requirements.html) for the full list. Hub recommendations refresh
+daily and are only ever as fresh as those upstreams.
+
+> The *account-level* half of cost governance — billing alarms, budgets and the Cost Anomaly
+> Detection monitor — lives in [`management/global/cost-mgmt`](../cost-mgmt). Consumers of all
+> of it are documented in [`docs/finops/README.md`](../../../docs/finops/README.md).
+
+#### Editing `aws_service_access_principals`
+
+Check the live list before you apply:
+
+```bash
+aws organizations list-aws-service-access-for-organization \
+  --query 'EnabledServicePrincipals[].ServicePrincipal' --output text
+```
+
+Anything enabled out of band but missing from `organization.tf` will be **removed** on the next
+apply — read the plan, not just the diff. `private-marketplace.marketplace.amazonaws.com` was
+found exactly this way and adopted into the list; do not drop it without intending to turn off
+AWS Private Marketplace.
+
 ### Add/remove AWS accounts
 1. Go to `management/global/organizations`.
 2. Edit `locals.tf` to add/remove accounts from the local `accounts` variable.
