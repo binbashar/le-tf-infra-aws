@@ -66,7 +66,7 @@ legitimately come back thin:
 | --- | --- |
 | Cost Explorer | Current month in **~24 h**; the previous 13 months take a **few days longer**. Refreshed at least daily thereafter ([docs](https://docs.aws.amazon.com/cost-management/latest/userguide/ce-enable.html)) |
 | Cost Anomaly Detection | Anomalies appear only **after** a monitor exists — enabling Cost Explorer does **not** create one (verified: `ce:GetAnomalyMonitors` returned zero on this payer account). AWS needs ~10 days of history to learn a service's pattern before it will call something anomalous |
-| Compute Optimizer | Up to **24 h** after opt-in, and only for resources with **≥ 30 h** of CloudWatch metric history |
+| Compute Optimizer | Up to **24 h** after opt-in to finish analysing. Per-resource minimums then differ: EC2 and EC2 Auto Scaling **≥ 30 h** of CloudWatch metrics in 14 days, EBS **≥ 30 consecutive h** attached to a running instance, Aurora/RDS instances **≥ 30 h**, ECS on Fargate **≥ 24 h**. Lambda needs **no CloudWatch data** — instead ≥ 50 invocations in 14 days and memory ≤ 1792 MB ([docs](https://docs.aws.amazon.com/compute-optimizer/latest/ug/requirements.html)) |
 | Cost Optimization Hub | Imports from Compute Optimizer and Savings Plans; recommendations **refresh daily**, so it is only as fresh as its upstreams |
 
 Compute Optimizer is also the Cost Optimization Hub's upstream, so enrolling it

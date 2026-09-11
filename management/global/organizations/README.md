@@ -47,9 +47,19 @@ Three things to know before touching either:
    Savings Plans, so enrolling the Hub while Compute Optimizer is `Inactive` produces an empty
    Hub. Disabling Compute Optimizer silently degrades the Hub.
 
-Data is not immediate: Compute Optimizer needs up to **24 h** after opt-in and only reports on
-resources with **>= 30 h** of CloudWatch metric history; Hub recommendations refresh daily and
-are only ever as fresh as those upstreams.
+Data is not immediate. Compute Optimizer takes up to **24 h** after opt-in to finish its first
+analysis, and each resource type then has its own minimum before it is eligible at all:
+
+| Resource | Minimum before a recommendation appears |
+| --- | --- |
+| EC2 instances, EC2 Auto Scaling groups | >= 30 h of CloudWatch metrics in the past 14 days |
+| EBS volumes | >= 30 *consecutive* hours attached to a running instance |
+| Aurora / RDS DB instances | >= 30 h of CloudWatch metrics in the past 14 days (Performance Insights required for over-provisioned findings) |
+| ECS services on Fargate | >= 24 h of CloudWatch and ECS utilization metrics in the past 14 days |
+| Lambda functions | **No CloudWatch data required** — instead >= 50 invocations in 14 days, and memory <= 1792 MB |
+
+See [Resource requirements](https://docs.aws.amazon.com/compute-optimizer/latest/ug/requirements.html) for the full list. Hub recommendations refresh
+daily and are only ever as fresh as those upstreams.
 
 > The *account-level* half of cost governance — billing alarms, budgets and the Cost Anomaly
 > Detection monitor — lives in [`management/global/cost-mgmt`](../cost-mgmt). Consumers of all
