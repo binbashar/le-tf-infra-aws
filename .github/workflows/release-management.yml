@@ -19,6 +19,14 @@ permissions:
   contents: write
   pull-requests: write
 
+# Two runs that start together each fail to see the other's draft and create one,
+# leaving duplicate drafts for the same version. Observed on 2026-09-13: relabelling
+# several merged PRs produced two byte-identical `v3.1.1` drafts in the same second.
+# Serialise instead of cancelling — a cancelled run just skips a merge.
+concurrency:
+  group: release-drafter-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   update_release_draft:
     runs-on: ubuntu-latest
