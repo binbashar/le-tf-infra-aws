@@ -19,6 +19,9 @@ Please note we have a code of conduct, please follow it in all your interactions
 
 ### AI agent contributions
 
+For Codex, start with [`AGENTS.md`](AGENTS.md) and the
+[Codex runbook](docs/ai-sdlc/codex.md) for layer-scoped development and validation.
+
 If you are configuring an AI agent to open PRs against this repo — Claude Code, the
 `@claude` PR assistant, or the `release-management` plugin — it needs a GitHub token
 with the right scopes. `Contents: RW` is required for anything that pushes a branch,
