@@ -4,6 +4,9 @@ How a change reaches `master` in this repo: who reviews it, which AI/automation
 runs at each step, and how the on-demand `@claude` assistant routes through
 **AWS Bedrock** instead of the public Anthropic API.
 
+For local Codex sessions, see [Working with Codex](codex.md): repository instruction
+discovery, setup, validation commands, and infrastructure execution boundaries.
+
 > **Local sessions too:** developers can route their own Claude Code sessions
 > through Bedrock (data-science account) on demand — see
 > [`claude-code-bedrock.md`](claude-code-bedrock.md), whose §0 diagrams the

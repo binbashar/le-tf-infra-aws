@@ -94,8 +94,16 @@ For more details, see the [configuration files documentation](https://leverage.b
 
 This repository includes pre-configured settings for AI-powered development to enhance
 productivity and maintain consistency across the codebase. **[Claude Code](CLAUDE.md) is the
-team's standard AI development tool** — it is the only AI tooling configuration maintained
-here.
+team's standard AI development tool**. Repository instructions are also available for Codex.
+
+### Codex
+
+- [`AGENTS.md`](AGENTS.md) - Repository context, layer conventions, validation, and review rules
+- [`docs/ai-sdlc/codex.md`](docs/ai-sdlc/codex.md) - Local setup, validation recipes, and troubleshooting
+- [`@bin/scripts/version_support/AGENTS.md`](@bin/scripts/version_support/AGENTS.md) - Scoped Python scanner guidance
+
+Start Codex in this repository to load the root instructions. Read the runbook for
+subdirectory guidance and tool prerequisites; AWS access is configured separately.
 
 ### Claude Code
 
@@ -105,7 +113,7 @@ here.
   - [`.claude/settings.json`](.claude/settings.json) - Enabled plugins and the `bb-ai-marketplace` tag pin
   - [`.mcp.json`](.mcp.json) - Root-level MCP server configurations (AWS API, AWS Documentation)
 
-### Usage
+### Claude Code usage
 
 These configurations are discovered when you open the project in Claude Code. `CLAUDE.md` and
 `.claude/agents/` load automatically, but the **project-scoped MCP servers in `.mcp.json`
