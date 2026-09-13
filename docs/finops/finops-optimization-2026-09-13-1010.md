@@ -10,7 +10,7 @@
 
 Firmly quantified savings total **$75.32/month ($903.84/year)** — about **13% of the
 $586.79 baseline usage bill** — spread across 10 findings, none individually large
-because the estimate is deliberately conservative. A further **$103.46/month** sits in
+because the estimate is deliberately conservative. A further **$103.35/month** sits in
 two runaway request-volume patterns (S3 and the Cost Explorer API) whose fixable share
 cannot be determined from billing data alone and which need one diagnostic session each.
 
@@ -47,7 +47,7 @@ discount at this scale.
 | 1 | **Do NOT buy the recommended DynamoDB reserved capacity.** Cost Optimization Hub proposes 100 write + 100 read capacity units on a 3-year PartialUpfront term. Its 30-day lookback ended 2026-09-11 and still sees August usage — but the table billed **44,640 WCU-hours and 44,640 RCU-hours (60 WCU + 60 RCU provisioned continuously)** while serving **16 write and 7 read requests in the entire month**, and DynamoDB spend has been **$0.00 since 1 September**. | Amazon DynamoDB — management account, us-east-1 | **+$19.91/mo of new cost avoided** (~$717 over the 3-year term) | Reject recommendations `c981e2ec535b0465` and `cd302718abfbcbf3`. Confirm with the data-science team that the table is intentionally gone; if any DynamoDB table returns, provision it **on-demand**, not provisioned capacity. |
 | 2 | **Delete the idle API Gateway cache in us-west-2.** `USW2-ApiGatewayCacheUsage:0.5GB` billed **743.93 hours — continuous 24/7 operation — at $14.88** in August, and is still running in September. Meanwhile all actual API traffic is 11,336 requests in us-east-1 costing **$0.011**. The cache is serving essentially nothing, in a region this reference architecture does not use (standard regions are us-east-1 and us-east-2). | Amazon API Gateway — us-west-2 | **$14.88/mo** ($178.56/yr) | Ask the platform/DevOps team to disable cluster caching on the us-west-2 API stage, then remove the stage if it is a leftover. While there, clear the **6 orphaned Secrets Manager secrets in us-west-2 ($2.40/mo)** — together the region carries ~$17.32/mo with no workload. |
 | 3 | **Diagnose 68.1 million S3 requests against 16 GB of stored data.** S3 cost $54.84 in August, of which **storage is only $0.46 (0.8%)** and **requests are $54.35 (99.2%)**: 5,892,460 Tier-1 (PUT/COPY/POST/LIST) and 62,231,019 Tier-2 (GET) requests. That is ~4.25 million requests per GB stored — a polling loop or misconfigured client, not normal access. Lifecycle/tiering policies would save nothing here; the storage is already negligible. | Amazon S3 — primarily us-east-1 | **up to $54.35/mo** (fixable share unknown until diagnosed — see note) | Ask the platform/DevOps team to enable S3 server access logging or query CloudTrail data events on the top buckets for one day to identify the caller, then fix the polling interval. |
-| 4 | **Diagnose 5,411 Cost Explorer API requests/month.** `USE1-APIRequest` billed **$54.11 for exactly 5,411 requests** at $0.01 each — roughly **175 requests/day**, far beyond human dashboard use. This was the **single largest AWS-service line in September** (21% of usage). Something automated is polling it. | AWS Cost Explorer — management account | **up to ~$49/mo** (see note) | Ask the platform/DevOps team to identify the scheduled caller (a cost dashboard, Infracost, or a CI job) and cache its results or drop it to daily. For scale: generating **both** of today's FinOps reports cost about **$0.30**. |
+| 4 | **Diagnose ~5,400 Cost Explorer API requests/month.** In the **August baseline**, `USE1-APIRequest` billed **$54.11 for exactly 5,411 requests** at $0.01 each — roughly **175 requests/day**, far beyond human dashboard use. The pattern is unchanged in the **September 1–12 run-rate**: **$21.85 across 12 days (~182 requests/day)**, which makes Cost Explorer the **largest single AWS-service line so far this month**, at 20% of September usage. Something automated is polling it. | AWS Cost Explorer — management account | **up to ~$49/mo** (see note) | Ask the platform/DevOps team to identify the scheduled caller (a cost dashboard, Infracost, or a CI job) and cache its results or drop it to daily. For scale: generating **both** of today's FinOps reports cost about **$0.17**. |
 
 > **Note on items 3 and 4.** Billing data proves the cost and the volume but cannot
 > identify the caller, so no savings figure is claimed in the totals below. The
@@ -295,9 +295,12 @@ roughly **30% of the baseline usage bill**.
     coverage means nothing is owned to under-use.
 13. **Account IDs deliberately omitted** — this repository is public; accounts are named
     only, per `CLAUDE.md`.
-14. **Cost of this run:** ~9 Cost Explorer API requests ≈ **$0.09** (Compute Optimizer, Cost
-    Optimization Hub, Savings Plans coverage and credits calls are not billed). Combined with
-    the companion investigation report, ~**$0.30** total.
+14. **Cost of this run: 5 billed Cost Explorer API requests ≈ $0.05** — four `cost-explorer`
+    `USAGE_TYPE` queries plus one `GetSavingsPlansCoverage`, which *is* a Cost Explorer
+    operation and *is* billed. Not billed, being separate APIs: Compute Optimizer, Cost
+    Optimization Hub, Budgets, `ListCostAllocationTags`, `get_credits`, and `session-sql`
+    (local SQLite). Combined with the companion investigation report's 12 billed requests,
+    **17 requests ≈ $0.17** for both reports.
 15. **MCP-only data path honoured.** Every figure in this report came from the
     `awslabs.billing-cost-management-mcp-server` tools. No AWS CLI, SDK, or shell fallback
     was used for any cost data.

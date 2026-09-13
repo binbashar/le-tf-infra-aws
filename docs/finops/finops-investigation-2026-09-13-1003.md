@@ -28,7 +28,7 @@ it.
 ## Executive Summary
 
 - **Act this week:** 2 items — almost no spend can be traced to a team or project (99.3% unattributable), and your $750 monthly spending alert is set up so it will trip every month for a reason nobody can act on.
-- **Keep an eye on:** 3 items — ~$2,700 of expiring credit likely to be wasted by March 2027; the Cost Explorer reporting API costing ~$55/month (21% of all usage); AI model spend that stopped dead on 1 September and should be confirmed as intentional.
+- **Keep an eye on:** 3 items — ~$2,700 of expiring credit likely to be wasted by March 2027; the Cost Explorer reporting API costing ~$55/month (20% of all usage); AI model spend that stopped dead on 1 September and should be confirmed as intentional.
 - **Biggest change since last month:** Amazon Bedrock (AI models) fell from **$269.55 to $0.00** (−100%), which was 45.9% of August's entire usage bill.
 - **Unusual spikes:** none detected — but see the caveat: automatic spike detection was only switched on 2 days ago and cannot yet detect anything.
 - **Cost visibility:** **No** — 99.3% of spend has no project label. Risk level: **HIGH**.
@@ -50,7 +50,7 @@ it.
 | # | What's happening | Service / Account | $ Impact | What to do (and who) |
 |---|------------------|-------------------|----------|----------------------|
 | 1 | **About $2,700 of free AWS credit is on track to be thrown away.** A $5,000 credit ("APN Fee Reconciliation 3/10/26") has **$4,623.66 left** and **expires 2027-03-31**. You are currently consuming credit at about **$9.68/day**, which over the 199 days remaining uses only ~$1,926 of it. Unused credit is simply lost on the expiry date. This is not hypothetical: an earlier $5,000 credit ("APN Fee Reconciliation 3/17/25") shows **$3,082.76 still unspent against an end date of 2026-03-31 that has already passed**, plus ~$592 across five smaller expired promotions. | Management account | ~$2,700 at risk; ~$3,083 apparently already lost | Whoever owns the AWS partner relationship should confirm with your AWS account team whether the March-2026 balance was genuinely forfeited, and ask what the credit may be spent on. Then decide deliberately whether to pull planned work forward into the credit window rather than letting it lapse. |
-| 2 | **The reporting API you use to analyse costs is now your single biggest usage line.** AWS charges **$0.01 per Cost Explorer request**. That came to **$21.85 in 12 days (~$55/month)** — **21% of all September usage** — and $55.92 in August. That implies roughly **180 requests per day**, which is far more than a human checking dashboards; something automated is polling it. | AWS Cost Explorer — management account | ~$55/month | Ask your platform/DevOps team to find what is calling Cost Explorer on a schedule (a dashboard, a cost tool, or a CI job) and cache or reduce its polling. For reference, generating *this* report cost about $0.13. |
+| 2 | **The reporting API you use to analyse costs is now your single biggest usage line.** AWS charges **$0.01 per Cost Explorer request**. That came to **$21.85 in 12 days (~$55/month)** — **20% of all September usage** — and $55.92 in August. That implies roughly **180 requests per day**, which is far more than a human checking dashboards; something automated is polling it. | AWS Cost Explorer — management account | ~$55/month | Ask your platform/DevOps team to find what is calling Cost Explorer on a schedule (a dashboard, a cost tool, or a CI job) and cache or reduce its polling. For reference, generating *this* report cost about $0.12. |
 | 3 | **AI model spending stopped completely on 1 September and nobody has confirmed that was intended.** Amazon Bedrock (AWS's hosted AI models) billed **$269.55 in August** — 45.9% of the whole usage bill, mostly Claude Opus 5 at $206.44 — and **exactly $0.00 so far in September**. Two other services went to zero the same way: Amazon DynamoDB (a database) $20.31 → $0.00, and Amazon SageMaker (machine-learning platform) $10.45 → $0.00. This is verified as real, not missing data: every single day of September has complete billing records. | Bedrock / DynamoDB / SageMaker | −$300/month (a saving) | Ask the data-science and platform teams to confirm this was a deliberate migration off Bedrock rather than a workload that silently broke. A cost drop is only good news if someone meant to cause it. |
 
 ---
@@ -172,7 +172,7 @@ substitute (September month-to-date, usage only):
 Run **`/aws-finops-optimize`** for the savings side of the picture. It looks for things
 this report deliberately does not: oversized or idle resources, Savings Plans and
 Reserved Instance coverage, and per-service waste (unattached disks, idle load
-balancers, old snapshots). A first pass has already shown **$13.72/month** of identified
+balancers, old snapshots). A first pass has already shown **$13.75/month** of identified
 savings waiting in AWS Cost Optimization Hub.
 
 ---
@@ -258,7 +258,9 @@ service-level and account-level figures in this report are therefore filtered to
   `Client`. `CostCenter` does not exist.
 - **Account IDs deliberately omitted.** This repository is public; accounts are referred
   to by name only, per the rules in `CLAUDE.md`.
-- **Cost of this run:** ~13 Cost Explorer API requests ≈ **$0.13**.
+- **Cost of this run: 12 billed Cost Explorer API requests ≈ $0.12.** Cost Optimization Hub,
+  Compute Optimizer, Budgets, `ListCostAllocationTags` and `get_credits` are separate APIs and
+  are not billed. Both reports together: **17 requests ≈ $0.17**.
 - **MCP-only data path honoured** for all cost data. No AWS CLI fallback was used for any
   figure in this report. (The AWS CLI appears in this session's history only for the
   credential preflight, which is what the `leverage-aws-creds-check` skill is specified
