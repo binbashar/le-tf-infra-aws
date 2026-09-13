@@ -1,14 +1,23 @@
 name: Release Management
 
 on:
-  # push:
-  #   # branches to consider in the event; optional, defaults to all
-  #   branches:
-  #     - master
+  # Without this, the draft only refreshed when some *other* PR happened to fire an
+  # event, so PRs merged after the last one were silently missing from it. v3.1.0 was
+  # stale by four PRs at publish time for exactly this reason.
+  push:
+    branches:
+      - master
   # pull_request event is required only for autolabeler
   pull_request:
     # Only following types are handled by the action, but one can default to all as well
     types: [opened, reopened, synchronize, labeled, unlabeled]
+
+# The autolabeler writes labels, so the read-only default token is not enough.
+# Fork PRs still get a read-only token — autolabeling is skipped there by design,
+# rather than moving to pull_request_target, which would expose secrets to forks.
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   update_release_draft:
@@ -20,6 +29,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: act10ns/slack@v1
+        if: failure()
         with:
           status: ${{ job.status }}
           channel: $SLACK_CI_CHANNEL
