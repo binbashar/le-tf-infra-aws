@@ -61,16 +61,35 @@ def parse_body(event):
     return payload
 
 
-# Slug → display name. The slugs are the six /people/careers/<slug> routes plus a
+# Slug -> display name. The slugs are the /people/careers/<slug> routes plus a
 # general application; they are also what reaches the email subject, which is why
 # this is an allow-list and not a free-text field.
+#
+# THIS IS ONE HALF OF A CROSS-REPO PAIR. The other half is ROLE_SLUGS in
+# apps/binbash-web/lib/content/people/careers-form.ts (bb-ai-sales-tools), which
+# renders the <select>. validate() checks the posted role against this dict with no
+# fallback, so a slug the form offers and this dict lacks is a 400 on submit, in
+# production, with the applicant's message lost. Add here FIRST, then there.
+#
+# No count is written above on purpose: that sentence said "the six" and the
+# 2026-09-13 territory split made it wrong.
+#
+# "partner-account-manager" is RETIRED as a route -- binbash-web split it into the
+# two territory slugs below (PRD F-CAREERS-17 / F-JOBS-13 / F-JOBS-15) and no longer
+# offers it. The key stays here anyway: a browser holding a cached copy of the old
+# page still posts it, and dropping the key would reject that applicant rather than
+# mail their application. It is the one key with no posting behind it, which is why
+# its display name says so -- the label reaches the email subject, and "Partner
+# Account Manager" alone would not tell the reader which territory to reply about.
 ROLES = {
     "presales-solutions-architect": "Presales Solutions Architect",
     "tech-delivery-manager": "Tech Delivery Manager",
     "aws-cloud-engineer": "AWS Cloud Engineer",
     "ai-ml-engineer": "AI/ML Engineer",
     "data-engineer": "Data Engineer",
-    "partner-account-manager": "Partner Account Manager",
+    "partner-account-manager-latam": "Partner Account Manager (LATAM)",
+    "partner-account-manager-namer": "Partner Account Manager (US & Canada)",
+    "partner-account-manager": "Partner Account Manager (territory unstated - cached form)",
     "general": "General application",
 }
 

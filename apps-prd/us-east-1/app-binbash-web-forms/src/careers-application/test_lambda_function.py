@@ -110,6 +110,39 @@ def test_a_role_outside_the_allow_list_is_rejected():
     assert validate(valid_payload(role="ceo")) == ["role"]
 
 
+# Written out as literals, NOT derived from ROLES. The test above parametrizes over
+# list(ROLES), so it asserts that whatever this dict contains is accepted -- it cannot
+# fail when a slug is MISSING, which is the only failure mode that matters here.
+#
+# These are the values apps/binbash-web/lib/content/people/careers-form.ts renders in
+# its <select> and locks on each job page. A slug offered there and absent here is a
+# 400 on submit with the applicant's message lost, and nothing in either repo holds
+# the two sides together automatically -- this list is the pin.
+FORM_SLUGS = [
+    "presales-solutions-architect",
+    "tech-delivery-manager",
+    "aws-cloud-engineer",
+    "ai-ml-engineer",
+    "data-engineer",
+    "partner-account-manager-latam",
+    "partner-account-manager-namer",
+    "general",
+]
+
+
+@pytest.mark.parametrize("slug", FORM_SLUGS)
+def test_every_slug_the_form_offers_is_accepted(slug):
+    assert validate(valid_payload(role=slug)) == []
+
+
+def test_the_retired_partner_account_manager_slug_still_posts():
+    # binbash-web split this route into the two territory slugs above on 2026-09-13
+    # and stopped offering it. A browser holding a cached copy of the old page still
+    # posts it; rejecting that would lose a real application over a stale tab.
+    assert validate(valid_payload(role="partner-account-manager")) == []
+    assert "territory unstated" in ROLES["partner-account-manager"]
+
+
 @pytest.mark.parametrize("field", ["linkedin", "github", "awsCerts"])
 def test_urls_must_be_https(field):
     assert validate(valid_payload(**{field: "http://example.com"})) == [field]
