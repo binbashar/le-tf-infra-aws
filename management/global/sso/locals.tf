@@ -112,6 +112,7 @@ locals {
       email      = "federico.bello@binbash.com.ar"
       groups = [
         "datascientists",
+        "kiropro",
       ]
     }
     "franco.gauchat" = {
