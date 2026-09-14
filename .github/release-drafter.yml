@@ -1,34 +1,56 @@
 name-template: 'v$RESOLVED_VERSION 🌈'
 tag-template: 'v$RESOLVED_VERSION'
+
+# Never reaches the notes.
+exclude-labels:
+  - 'duplicate'
+  - 'invalid'
+  - 'wontfix'
+  - 'WIP'
+
+# A PR lands in EVERY category whose labels it carries. That is deliberate for
+# `breaking` (called out up top, still indexed below) but accidental everywhere
+# else, so keep the rest disjoint: `security` is the access model, `fix` is a
+# defect. In v3.1.0, stacking `fix`+`security` listed the same PR twice.
 categories:
+  - title: '💣 Breaking Changes'
+    labels:
+      - 'breaking'
   - title: '🚀 Features'
     labels:
       - 'feature'
   - title: '✨ Enhancements'
     labels:
       - 'enhancement'
-  - title: '💣 Breaking Change'
-    label:
-      - 'breakingchange'
-      - 'breaking'
   - title: '🐛 Bug Fixes'
     labels:
       - 'fix'
       - 'bugfix'
       - 'bug'
-  - title: '📝 Documentation'
-    label:
-      - 'doc'
-      - 'documentation'
-  - title: '🔨 Maintenance'
-    label:
-      - 'chore'
-      - 'maintenance'
-  - title: '🔒 Security'
+  - title: '🔒 Security & SSO'
     labels:
       - 'security'
+  - title: '📝 Documentation'
+    labels:
+      - 'documentation'
+      - 'doc'
+  - title: '🔨 Maintenance'
+    labels:
+      - 'chore'
+      - 'maintenance'
+      - 'cleanup'
+      - 'technical-debt'
+  - title: '⚙️ Dependency Updates'
+    collapse-after: 5
+    labels:
+      - 'dependencies'
+
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
+
+# `breaking` is descriptive and only routes a PR to the 💣 section; it deliberately
+# does NOT bump the major. Only the `major` label does that, so declaring a breaking
+# change never silently decides the next version number on its own.
 version-resolver:
   major:
     labels:
@@ -40,7 +62,40 @@ version-resolver:
     labels:
       - 'patch'
   default: patch
+
+# Safety net for PRs merged without labels — they used to vanish into the
+# uncategorized dump. Conventional-commit prefix wins; a human label still overrides.
+# Fork PRs get a read-only token, so autolabeling is skipped there by design.
+autolabeler:
+  - label: 'breaking'
+    title:
+      - '/^\w+(\([^)]*\))?!:/'
+  - label: 'feature'
+    title:
+      - '/^feat(\([^)]*\))?!?:/'
+  - label: 'fix'
+    title:
+      - '/^fix(\([^)]*\))?!?:/'
+  - label: 'documentation'
+    title:
+      - '/^docs(\([^)]*\))?!?:/'
+  - label: 'enhancement'
+    title:
+      - '/^(ci|perf|refactor)(\([^)]*\))?!?:/'
+  - label: 'chore'
+    title:
+      - '/^chore(?!\(deps\))(\([^)]*\))?!?:/'
+  - label: 'dependencies'
+    title:
+      - '/^chore\(deps\)/'
+
 template: |
   ## Changes
 
   $CHANGES
+
+  ## Contributors
+
+  $CONTRIBUTORS
+
+  **Full Changelog**: https://github.com/binbashar/le-tf-infra-aws/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
