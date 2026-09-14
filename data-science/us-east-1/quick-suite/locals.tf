@@ -23,9 +23,19 @@ locals {
   #
   quick_admin_group = "QuickAdmin"
 
+  # NOTE A role membership only persists if its group already has a member.
+  # Verified on this account at signup: QuickAdmin and QuickAuthor (one member
+  # each) stuck, while QuickReader (empty) was accepted by CreateRoleMembership
+  # -- tofu reported "Creation complete" -- and then silently dropped by
+  # QuickSight. That leaves the resource in state, absent in AWS, and re-planning
+  # `1 to add` on every run. So map a group here only once somebody is in it.
+  #
+  # Granting the *first* reader is therefore two edits rather than one: add the
+  # user to `quickreader` in management/global/sso, then add
+  # `READER = "QuickReader"` below. Subsequent readers are the usual one-liner.
+  #
   quick_role_memberships = {
     AUTHOR = "QuickAuthor"
-    READER = "QuickReader"
   }
 
   # Every group this layer depends on, for the existence guard in sso-groups.tf.

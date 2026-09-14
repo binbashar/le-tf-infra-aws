@@ -39,11 +39,11 @@ through the `aws.management` provider alias — the same pattern
 Quick reads IAM Identity Center group membership directly — there is no SAML federation and no
 permission set involved. Each group maps to exactly one Quick role:
 
-| Identity Center group | Quick role | Price |
-|---|---|---|
-| `QuickAdmin` | `ADMIN` | USD 24 / user / month |
-| `QuickAuthor` | `AUTHOR` | USD 24 / user / month |
-| `QuickReader` | `READER` | USD 3 / user / month |
+| Identity Center group | Quick role | Price | Status |
+|---|---|---|---|
+| `QuickAdmin` | `ADMIN` | USD 24 / user / month | mapped |
+| `QuickAuthor` | `AUTHOR` | USD 24 / user / month | mapped |
+| `QuickReader` | `READER` | USD 3 / user / month | *(group exists; mapping deferred — see below)* |
 
 The groups are declared in `management/global/sso/locals.tf` next to `kiropro`, and like it
 they are **absent from `account_assignments.tf`** — they carry no permission set and grant no
@@ -58,8 +58,17 @@ A code change only, in **one** file:
 2. Apply the `sso` layer. Nothing in *this* layer changes.
 3. Each member is billed at the rate above.
 
-`QuickReader` is intentionally created empty. An empty group costs nothing and is already bound
-to its role, so the first reader is a one-line edit rather than a layer change.
+`QuickReader` exists but is **not currently mapped to the `READER` role**, because a Quick role
+membership only persists if its group already has a member. Verified at signup on this account:
+`QuickAdmin` and `QuickAuthor` (one member each) stuck, while `QuickReader` (empty) was accepted
+by `CreateRoleMembership` — OpenTofu reported `Creation complete` — and was then silently dropped
+by QuickSight, leaving the resource in state, absent in AWS, and re-planning `1 to add` on every
+run.
+
+So granting the **first** reader is two edits rather than one: add the user to `quickreader` in
+`management/global/sso`, then add `READER = "QuickReader"` to `quick_role_memberships` in
+`locals.tf`. Every reader after that is the usual one-liner. The same applies to any future role
+whose group starts empty.
 
 ## Why the subscription and the mappings are split
 
@@ -99,11 +108,15 @@ aws quicksight delete-account-subscription \
   --aws-account-id <DATA_SCIENCE_ACCOUNT_ID> --profile bb-data-science-devops --region us-east-1
 ```
 
-Also clean up the abandoned half-signup in the management account — an Identity Center
-application named `binbash` with provider `quicksight`, left behind by a console sign-up that
-authorized the identity provider but never created a subscription
-(`aws sso-admin delete-application --application-arn <ARN>`). No subscription was ever created
-there, so the `binbash` account name is free.
+A console sign-up abandoned in the management account also left an Identity Center application
+named `binbash` with provider `quicksight` behind, having authorized the identity provider
+without ever creating a subscription. **It cannot be deleted**: `sso-admin delete-application`
+returns `ValidationException: Application provider arn:aws:sso::aws:applicationProvider/quicksight
+is supported through integration with its associated AWS service` — AWS-managed Identity Center
+applications are removable only through the owning service, and that account has no Quick
+subscription to remove it from. It was set to **DISABLED** instead, which is inert and
+reversible, and it did not interfere with this account's sign-up. Because no subscription was
+ever created there, the `binbash` account name was free to reuse.
 
 ### Execution role permissions
 
@@ -116,10 +129,14 @@ set this layer runs under carried only `sso:ListInstances` and `sso:DescribeRegi
 so the apply would have failed after the group lookups succeeded.
 
 The missing actions are added to `data.aws_iam_policy_document.devops` in
-`management/global/sso/policies.tf` as part of the same change. That is a second reason the SSO
-layer has to be applied first, and it means the operator's session must be **re-issued** after
-that apply — an Identity Center session minted before the permission set changed still carries
-the old policy.
+`management/global/sso/policies.tf`, which is a second reason the SSO layer has to be applied
+first.
+
+No re-login is needed afterwards. Identity Center materialises a permission set as an IAM role
+plus an `AwsSSOInlinePolicy` in each assigned account and re-provisions it on update, and policy
+is evaluated per request against the role's current policy — session credentials are not a
+permissions snapshot. Verified here: a session minted *before* the apply picked up the new
+actions. Provisioning is asynchronous, so allow a moment for it to land.
 
 ### Apply
 
