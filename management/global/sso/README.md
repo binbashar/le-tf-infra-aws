@@ -122,7 +122,11 @@ set, granting no AWS access. Membership buys a Quick seat and nothing else. One 
 add a sibling group rather than mixing tiers.
 
 **Granting or revoking a seat**: add or remove the group key in the user's `groups` list above
-and run the Terraform workflow. That is the whole procedure.
+and run the Terraform workflow. That is the whole procedure — with one exception. A Quick role
+mapping only persists if its group already has a member, so a group that is currently empty is
+deliberately left unmapped in the quick-suite layer. `QuickReader` is in that state today:
+granting the *first* reader also needs `READER = "QuickReader"` added to `quick_role_memberships`
+there. Readers after the first are the usual one-liner.
 
 The subscription itself and the group → role mappings live in
 [`data-science/us-east-1/quick-suite`](../../../data-science/us-east-1/quick-suite/README.md) —
