@@ -110,8 +110,29 @@ data "aws_iam_policy_document" "devops" {
       "sqlworkbench:*",
       "sqs:*",
       "ssm:*",
-      "sso:ListInstances",
+      #
+      # NOTE The sso:* application actions below are what Amazon Quick's
+      # Enterprise + IAM Identity Center signup calls on the caller's behalf
+      # (aws_quicksight_account_subscription in
+      # data-science/us-east-1/quick-suite). quicksight:* alone is not enough:
+      # CreateAccountSubscription registers an Identity Center application, so
+      # without these the apply fails. They are the exact set AWS documents,
+      # and they do not widen this policy's blast radius -- it already grants
+      # iam:*.
+      # Ref: https://docs.aws.amazon.com/quick/latest/userguide/iam-policy-examples.html
+      #
+      "sso:CreateApplication",
+      "sso:CreateApplicationAssignment",
+      "sso:DeleteApplication",
+      "sso:DeleteApplicationAssignment",
+      "sso:DescribeApplication",
+      "sso:DescribeInstance",
       "sso:DescribeRegisteredRegions",
+      "sso:GetProfile",
+      "sso:ListInstances",
+      "sso:PutApplicationAuthenticationMethod",
+      "sso:PutApplicationGrant",
+      "sso:SearchGroups",
       "states:*",
       "sts:*",
       "support:*",

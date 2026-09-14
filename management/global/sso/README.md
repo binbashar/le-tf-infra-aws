@@ -105,6 +105,39 @@ Re-check whether a first-class resource has shipped before assuming this is stil
 [Subscribe your team](https://kiro.dev/docs/enterprise/subscribe/) ·
 [Kiro enterprise IAM](https://kiro.dev/docs/enterprise/iam/)
 
+### Amazon Quick seats (Admin / Author / Reader)
+
+Amazon Quick (formerly QuickSight) reads IAM Identity Center group membership directly, so the
+same roster-as-code idea as `kiropro` applies — with one difference: **Quick needs no console
+step at all.** Both halves are managed as code, so a seat is granted here and nowhere else.
+
+| Group (key) | Display name | Quick role | Price |
+|---|---|---|---|
+| `quickadmin` | `QuickAdmin` | `ADMIN` | USD 24 / user / month |
+| `quickauthor` | `QuickAuthor` | `AUTHOR` | USD 24 / user / month |
+| `quickreader` | `QuickReader` | `READER` | USD 3 / user / month |
+
+Like `kiropro`, all three are **absent from `account_assignments.tf`** — bound to no permission
+set, granting no AWS access. Membership buys a Quick seat and nothing else. One group per role;
+add a sibling group rather than mixing tiers.
+
+**Granting or revoking a seat**: add or remove the group key in the user's `groups` list above
+and run the Terraform workflow. That is the whole procedure.
+
+The subscription itself and the group → role mappings live in
+[`data-science/us-east-1/quick-suite`](../../../data-science/us-east-1/quick-suite/README.md) —
+Quick is hosted in the **data-science** account while authenticating against this organization
+instance, which AWS supports as long as both sit in the same organization and the same region.
+That layer must be applied **after** these groups exist. Read that README before changing anything there: every
+argument on `aws_quicksight_account_subscription` is `ForceNew` with no `Update`, so an
+in-place edit plans a destroy/create of the entire paid subscription.
+
+The Pro tiers (`Admin Pro` / `Author Pro` / `Reader Pro`) are deliberately not set up — they add
+a USD 250 per-account monthly infrastructure fee on top of the per-seat price.
+
+[Managing user access with IAM Identity Center](https://docs.aws.amazon.com/quick/latest/userguide/managing-user-access-idc.html) ·
+[Amazon Quick user types](https://docs.aws.amazon.com/quick/latest/userguide/user-types.html)
+
 ### AWS Client VPN application
 The custom SAML application used by AWS Client VPN is created here and assigned to the groups
 listed in the local `client_vpn_groups`. Set `enable_sso_client_vpn = false` in `locals.tf` to
