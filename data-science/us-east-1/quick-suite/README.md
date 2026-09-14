@@ -105,6 +105,22 @@ authorized the identity provider but never created a subscription
 (`aws sso-admin delete-application --application-arn <ARN>`). No subscription was ever created
 there, so the `binbash` account name is free.
 
+### Execution role permissions
+
+Signing up with Identity Center needs more than `quicksight:*`. `CreateAccountSubscription`
+registers an Identity Center application on the caller's behalf, so AWS's documented policy for
+[Enterprise edition with IAM Identity Center](https://docs.aws.amazon.com/quick/latest/userguide/iam-policy-examples.html)
+also requires ten `sso:` application actions — `CreateApplication`, `DescribeInstance`,
+`PutApplicationAuthenticationMethod`, `PutApplicationGrant` among them. The `DevOps` permission
+set this layer runs under carried only `sso:ListInstances` and `sso:DescribeRegisteredRegions`,
+so the apply would have failed after the group lookups succeeded.
+
+The missing actions are added to `data.aws_iam_policy_document.devops` in
+`management/global/sso/policies.tf` as part of the same change. That is a second reason the SSO
+layer has to be applied first, and it means the operator's session must be **re-issued** after
+that apply — an Identity Center session minted before the permission set changed still carries
+the old policy.
+
 ### Apply
 
 The groups must exist in Identity Center **before** this layer is applied, so this is a
@@ -135,8 +151,32 @@ lookup with `GROUP not found`. That is the guard doing its job, not a misconfigu
   Q&A features are switched on — more than the whole roster costs at current headcount. Adding
   one later means a new group in the SSO layer plus a line in `quick_role_memberships`, and an
   AWS provider bump to 6.x (`admin_pro_group` and siblings do not exist in 5.x).
-- **Retiring this layer** means removing the `prevent_destroy` block and disabling termination
-  protection first, then applying. That calls `DeleteAccountSubscription` and is not reversible.
+
+## Retiring this layer
+
+`prevent_destroy` and QuickSight's own termination protection are two separate guards, and
+removing them deletes nothing on its own. While these resources stay declared, `leverage tofu
+apply` keeps the subscription and **billing continues** — retiring it takes an explicit destroy.
+
+1. Export, or accept losing, every dashboard, analysis and dataset in the account.
+   `DeleteAccountSubscription` is irreversible.
+2. Turn off QuickSight termination protection, or the delete call is refused:
+   ```bash
+   aws quicksight update-account-settings \
+     --aws-account-id <DATA_SCIENCE_ACCOUNT_ID> --default-namespace default \
+     --no-termination-protection-enabled --profile bb-data-science-devops --region us-east-1
+   ```
+3. Remove the `lifecycle { prevent_destroy = true }` block from `quick-suite.tf`; while it is
+   present the destroy plan fails rather than running.
+4. Produce a destroy plan, get it reviewed like any other change, and only then destroy:
+   ```bash
+   leverage tofu plan -destroy      # attach this to the PR for review
+   leverage tofu destroy            # human-run, after approval
+   ```
+
+Deleting the resource blocks from the configuration and applying achieves the same result.
+Either way the deletion has to be an explicit, reviewed act — never a side effect of dropping a
+guard.
 
 ## References
 

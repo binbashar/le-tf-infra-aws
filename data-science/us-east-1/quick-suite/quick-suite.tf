@@ -28,7 +28,11 @@ resource "aws_quicksight_account_subscription" "this" {
   lifecycle {
     # A paid subscription that cannot be replaced without losing every asset it
     # holds. This turns the ForceNew hazard above into a hard plan failure.
-    # Retiring the layer is a deliberate act: drop this block, then apply.
+    #
+    # It does NOT keep the subscription alive, and dropping it does not retire
+    # anything: while this resource stays declared, `apply` leaves the
+    # subscription in place and it keeps billing. Retiring the layer takes an
+    # explicit, reviewed `destroy` -- see the README.
     prevent_destroy = true
   }
 }
