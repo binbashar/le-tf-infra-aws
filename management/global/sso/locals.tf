@@ -87,6 +87,7 @@ locals {
         "datascientists",
         "marketplaceandpartnercentral",
         "kiropro",
+        "quickadmin",
       ]
     }
     "ezequiel.godoy" = {
@@ -113,6 +114,7 @@ locals {
       groups = [
         "datascientists",
         "kiropro",
+        "quickauthor",
       ]
     }
     "franco.gauchat" = {
@@ -399,6 +401,34 @@ locals {
     kiropro = {
       name        = "KiroPro"
       description = "Members hold a Kiro Pro (USD 20/user/month) subscription, assigned to this group in the Kiro console."
+    }
+    #
+    # NOTE Subscription-only groups: like `kiropro` above, they are intentionally
+    # NOT referenced by any permission set in account_assignments.tf, so they
+    # grant no AWS access. Amazon Quick maps one Identity Center group to one
+    # Quick role, so membership here is what provisions -- and bills -- a seat.
+    #
+    # Unlike Kiro, the group -> role mapping is managed as code as well, in
+    # data-science/us-east-1/quick-suite, so adding a member below is the only
+    # step needed to grant a seat. There is no console step.
+    #
+    # One group per role. The Pro tiers (Admin Pro / Author Pro / Reader Pro)
+    # are deliberately absent: they unlock generative BI but add a USD 250
+    # per-account monthly infrastructure fee. Add sibling groups if those are
+    # ever wanted, rather than mixing tiers in one group.
+    # Ref: https://docs.aws.amazon.com/quick/latest/userguide/managing-user-access-idc.html
+    #
+    quickadmin = {
+      name        = "QuickAdmin"
+      description = "Members hold an Amazon Quick Admin role (USD 24/user/month)."
+    }
+    quickauthor = {
+      name        = "QuickAuthor"
+      description = "Members hold an Amazon Quick Author role (USD 24/user/month)."
+    }
+    quickreader = {
+      name        = "QuickReader"
+      description = "Members hold an Amazon Quick Reader role (USD 3/user/month)."
     }
   }
 

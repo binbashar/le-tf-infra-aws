@@ -782,6 +782,11 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
+  - path: "data-science/us-east-1/quick-suite"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
   - path: "data-science/us-east-1/secrets-manager"
     terraform_var_files:
       - "../../../config/common.tfvars"
