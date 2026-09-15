@@ -50,34 +50,63 @@ the [EKS release calendar](https://docs.aws.amazon.com/eks/latest/userguide/kube
 ```bash
 # uv is already a prerequisite for this repo; the targets build their own
 # environment on demand, so there is no venv to create or activate.
-export AWS_PROFILE=bb-apps-devstg-devops   # any account works: these are catalog lookups
-export AWS_DEFAULT_REGION=us-east-1        # NOT AWS_REGION -- see below
+leverage aws sso login          # `leverage aws sso refresh` if the SSO token is still live
 make version-support            # the PR gate
 make version-support-table      # regenerate status.md
 ```
 
-Two traps here, and both of them look like success:
+No AWS exports needed: the targets resolve them out of the repo, because nothing else
+does. `leverage` exports `AWS_CONFIG_FILE` and `AWS_SHARED_CREDENTIALS_FILE` into every
+command it runs, and `~/.aws/<project>/` is the only place this repo's SSO profiles
+exist — but the scanner deliberately runs *outside* that wrapper, on its own `uv`
+environment. The targets therefore supply those two paths, plus `AWS_PROFILE` and
+`AWS_DEFAULT_REGION` read from `apps-devstg/config/backend.tfvars`. Any of the four
+yields to a value you export yourself, so `AWS_PROFILE=bb-shared-devops make
+version-support` scans as another account — any account works, these are catalog lookups.
 
-- **`AWS_DEFAULT_REGION`, not `AWS_REGION`.** boto3 reads the region from `AWS_DEFAULT_REGION`
-  only — its variable chain is still `('region', 'AWS_DEFAULT_REGION', None, None)` as of
-  botocore 1.43 — whereas the AWS CLI honours both. A shell that exports just `AWS_REGION`
-  therefore runs `aws` fine and this scanner not at all. Leverage writes each profile block
-  with only `expiration = ...` and no `region`, so there is no config-file fallback to catch
-  it: naming a profile without also setting the region is *worse* than naming no profile.
-- **Stale credentials.** Leverage's per-profile credentials expire well before the SSO token
-  does, and `credential_process` indirection reports that as `Unable to locate credentials`.
-  Re-mint with `leverage aws sso refresh` — no browser, as long as the SSO token is still
-  live — rather than reaching for `leverage aws sso login`.
+Invoking the module directly — as CI and the test suite do — supplies none of that, so
+locally it needs all four. CI gets its credentials and region from
+`aws-actions/configure-aws-credentials` instead, which is why it never met any of this:
 
-Neither case fails the run: the scanner degrades instead, by design, so that an AWS outage
-never blocks a merge. A local run that checked nothing still exits 0, printing only:
+```bash
+export AWS_CONFIG_FILE=~/.aws/bb/config                    # NOT ~/.aws/config
+export AWS_SHARED_CREDENTIALS_FILE=~/.aws/bb/credentials   # NOT ~/.aws/credentials
+export AWS_DEFAULT_REGION=us-east-1                        # NOT AWS_REGION
+export AWS_PROFILE=bb-apps-devstg-devops
+PYTHONPATH=@bin/scripts uv run --quiet \
+  --with-requirements @bin/scripts/version_support/requirements.txt \
+  python -m version_support --mode pr --root .
+```
+
+The region is the subtle one there, and it looks like success. boto3 reads it from
+`AWS_DEFAULT_REGION` **only** — its variable chain is still
+`('region', 'AWS_DEFAULT_REGION', None, None)` as of botocore 1.43 — whereas the AWS CLI
+honours `AWS_REGION` too, so a shell exporting just that one runs `aws` fine and this
+scanner not at all. Leverage writes each profile block with only `expiration = ...` and
+no `region`, so there is no config-file fallback to catch it: naming a profile without
+also setting the region is *worse* than naming no profile.
+
+### Reading the warning
+
+**Nothing below fails the run.** The scanner degrades instead, by design, so an AWS
+outage never blocks a merge — a local run that checked nothing still exits 0, printing
+only:
 
 ```text
 ::warning::version-support: AWS lookup unavailable - the check did NOT run (...)
 ```
 
 **That line is the only difference between "all clear" and "never ran"** — the same
-"green means did not run" trap as a fork PR, one shell away. Read it before trusting a pass.
+"green means did not run" trap as a fork PR, one shell away. Read it before trusting a
+pass, and read *which* message it carries: they have different fixes, and the first two
+are not credential expiry however much the wording suggests it.
+
+| Message in the parentheses | What actually happened | Fix |
+| --- | --- | --- |
+| `Unable to locate credentials` | No credentials found **at all**: usually the default `~/.aws/credentials` was read instead of Leverage's, or the named profile exists in `config` but was never minted into `credentials` | Use the make targets, or export the two file paths above |
+| `The config profile (X) could not be found` | `AWS_PROFILE` names a profile absent from that config file — including a permission set renamed out from under it | `leverage aws sso refresh`, or export a profile you actually hold |
+| `An error occurred (ExpiredTokenException) ... security token ... is expired` | The credentials are genuinely stale. Leverage's per-profile credentials expire well before the SSO token does — and faster for short-session permission sets: `Administrator` mints 1h where `DevOps` mints 2h | `leverage aws sso refresh` — no browser, as long as the SSO token is live |
+| `You must specify a region.` | No region resolved (see the `AWS_REGION` trap above) | `export AWS_DEFAULT_REGION=us-east-1` |
 
 ## IAM
 
