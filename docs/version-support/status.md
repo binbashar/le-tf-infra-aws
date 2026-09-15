@@ -2,8 +2,13 @@
 
 # Version support status
 
-Not yet generated. Run `make version-support-table` with AWS credentials for an account
-that can call `eks:DescribeClusterVersions` and `rds:DescribeDBMajorEngineVersions`.
+Generated **2026-09-15**. Regenerate with `make version-support-table`.
 
-Until then the live status is whatever the most recent workflow run reported; see
-[`README.md`](README.md) for how the check runs.
+| Layer | Kind | Engine | Version | Status | End of standard support | Days left |
+| --- | --- | --- | --- | --- | --- | --- |
+| apps-devstg/us-east-1/k8s-eks-demoapps/cluster | eks | kubernetes | 1.34 | 🟡 SOON | 2026-12-01 | 77 |
+| apps-devstg/us-east-1/databases-aurora -- _(disabled)_ | rds | aurora-mysql | 5.7 | 🔴 EXTENDED | 2024-10-31 | -684 |
+| apps-devstg/us-east-1/databases-aurora-pgsql -- _(disabled)_ | rds | aurora-postgresql | 14.8 | 🟢 OK | 2027-02-28 | 166 |
+| apps-devstg/us-east-1/databases-mysql -- _(disabled)_ | rds | mysql | 8.0.41 | 🔴 EXTENDED | 2026-07-31 | -46 |
+| apps-devstg/us-east-1/databases-pgsql -- _(disabled)_ | rds | postgres | 14.18 | 🟢 OK | 2027-02-28 | 166 |
+| data-science/us-east-1/databases-aurora-mysql-- _(disabled)_ | rds | aurora-mysql | 5.7 | 🔴 EXTENDED | 2024-10-31 | -684 |
