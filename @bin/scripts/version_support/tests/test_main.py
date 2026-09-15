@@ -105,7 +105,9 @@ def test_a_client_construction_failure_degrades_instead_of_crashing(monkeypatch)
         ({}, "absent region"),
     ],
 )
-def test_no_aws_configuration_degrades_instead_of_crashing(monkeypatch, tmp_path, env, label):
+def test_no_aws_configuration_degrades_instead_of_crashing(
+    monkeypatch, tmp_path, capsys, env, label
+):
     # Driven by real environment variables rather than a mocked exception type:
     # an empty-but-present region raises a bare ValueError from botocore, which a
     # test mocking NoRegionError would never have caught.
@@ -113,6 +115,10 @@ def test_no_aws_configuration_degrades_instead_of_crashing(monkeypatch, tmp_path
     # Root MUST resolve at least one pin (FIXTURE_TREE, not tmp_path): collect()
     # short-circuits before ever building a client when discover() finds nothing,
     # so an empty root would make this pass vacuously without ever reaching boto3.
+    #
+    # Isolation from the ambient environment takes BOTH the scrubbing below and
+    # conftest's no_cached_boto3_session: without the latter a session cached by
+    # an earlier test carries real credentials straight past these env vars.
     for var in ("AWS_REGION", "AWS_DEFAULT_REGION", "AWS_PROFILE"):
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setenv("AWS_CONFIG_FILE", str(tmp_path / "nonexistent-config"))
@@ -120,5 +126,9 @@ def test_no_aws_configuration_degrades_instead_of_crashing(monkeypatch, tmp_path
     for key, value in env.items():
         monkeypatch.setenv(key, value)
 
-    assert main(["--mode", "pr", "--root", FIXTURE_TREE]) == 0, label
-    assert main(["--mode", "cron", "--root", FIXTURE_TREE]) == 0, label
+    # Assert on the warning, not just the exit code: cron mode returns 0 whether or
+    # not AWS was reached, and pr mode returns 0 for a clean tree too -- so exit
+    # codes alone would let a run that quietly SUCCEEDED pass as a degraded one.
+    for mode in ("pr", "cron"):
+        assert main(["--mode", mode, "--root", FIXTURE_TREE]) == 0, f"{label}/{mode}"
+        assert "the check did NOT run" in capsys.readouterr().out, f"{label}/{mode}"

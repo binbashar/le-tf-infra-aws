@@ -6,7 +6,7 @@ Pure logic plus AWS lookups. This module never reads the filesystem.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from botocore.exceptions import BotoCoreError, ClientError
 
@@ -29,10 +29,31 @@ class Finding:
 
 
 def as_date(value) -> date | None:
-    """Normalise a boto3 timestamp to a date."""
+    """Normalise a boto3 timestamp to a UTC date.
+
+    Converting to UTC before dropping the time is the whole point. botocore parses
+    an epoch timestamp into a tz-aware datetime in the *local* zone (``tzlocal()``),
+    so the same AWS response yields a different calendar day depending on where it
+    is parsed: EKS 1.34 came back as ``2026-12-01 21:00-03:00`` on a workstation in
+    UTC-03 and as ``2026-12-02`` on the UTC CI runner -- one day apart, from one API
+    call. Everything downstream compares against ``datetime.now(timezone.utc).date()``,
+    so without this the two sides of that subtraction sit in different timezones.
+
+    Three consequences, all observed or reasoned from the same skew: ``days_left``
+    is off by one, a generated ``status.md`` churns between contributors in different
+    zones, and -- the one that matters -- east of UTC a version reads as still
+    supported for a day after its cliff, so the guardrail says "ok" while AWS has
+    already started billing extended support.
+
+    A naive datetime is left alone: there is no zone to convert from, and guessing
+    one would be worse than the caller's own assumption.
+    """
     if value is None:
         return None
     if isinstance(value, datetime):
+        # datetime is a subclass of date, so this branch must stay first.
+        if value.tzinfo is not None:
+            value = value.astimezone(timezone.utc)
         return value.date()
     if isinstance(value, date):
         return value

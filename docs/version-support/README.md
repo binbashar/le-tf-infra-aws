@@ -51,9 +51,33 @@ the [EKS release calendar](https://docs.aws.amazon.com/eks/latest/userguide/kube
 # uv is already a prerequisite for this repo; the targets build their own
 # environment on demand, so there is no venv to create or activate.
 export AWS_PROFILE=bb-apps-devstg-devops   # any account works: these are catalog lookups
+export AWS_DEFAULT_REGION=us-east-1        # NOT AWS_REGION -- see below
 make version-support            # the PR gate
 make version-support-table      # regenerate status.md
 ```
+
+Two traps here, and both of them look like success:
+
+- **`AWS_DEFAULT_REGION`, not `AWS_REGION`.** boto3 reads the region from `AWS_DEFAULT_REGION`
+  only — its variable chain is still `('region', 'AWS_DEFAULT_REGION', None, None)` as of
+  botocore 1.43 — whereas the AWS CLI honours both. A shell that exports just `AWS_REGION`
+  therefore runs `aws` fine and this scanner not at all. Leverage writes each profile block
+  with only `expiration = ...` and no `region`, so there is no config-file fallback to catch
+  it: naming a profile without also setting the region is *worse* than naming no profile.
+- **Stale credentials.** Leverage's per-profile credentials expire well before the SSO token
+  does, and `credential_process` indirection reports that as `Unable to locate credentials`.
+  Re-mint with `leverage aws sso refresh` — no browser, as long as the SSO token is still
+  live — rather than reaching for `leverage aws sso login`.
+
+Neither case fails the run: the scanner degrades instead, by design, so that an AWS outage
+never blocks a merge. A local run that checked nothing still exits 0, printing only:
+
+```text
+::warning::version-support: AWS lookup unavailable - the check did NOT run (...)
+```
+
+**That line is the only difference between "all clear" and "never ran"** — the same
+"green means did not run" trap as a fork PR, one shell away. Read it before trusting a pass.
 
 ## IAM
 
