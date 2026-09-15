@@ -52,6 +52,47 @@ def test_a_bad_status_still_classifies_without_a_date():
     assert classify("UNSUPPORTED", None, today=TODAY)[0] == "UNSUPPORTED"
 
 
+from datetime import datetime, timedelta, timezone
+
+from version_support.lifecycle import as_date
+
+EAST = timezone(timedelta(hours=9))
+WEST = timezone(timedelta(hours=-3))
+
+
+@pytest.mark.parametrize(
+    ("value", "expected", "label"),
+    [
+        (datetime(2026, 12, 1, 21, 0, tzinfo=WEST), date(2026, 12, 2), "west: naive reads a day EARLY"),
+        (datetime(2026, 12, 2, 6, 0, tzinfo=EAST), date(2026, 12, 1), "east: naive reads a day LATE"),
+        (datetime(2026, 12, 2, 0, 0, tzinfo=timezone.utc), date(2026, 12, 2), "already UTC"),
+        (datetime(2026, 12, 2, 9, 0), date(2026, 12, 2), "naive: no zone to convert from"),
+        (date(2026, 12, 2), date(2026, 12, 2), "plain date"),
+        (None, None, "absent"),
+        ("2026-12-02", None, "unparseable"),
+    ],
+)
+def test_as_date_normalises_to_utc(value, expected, label):
+    # botocore parses an AWS timestamp into tzlocal(), NOT UTC, so one API response
+    # yields a different calendar day per machine: EKS 1.34's end of standard support
+    # arrived as 2026-12-01 21:00-03:00 on a UTC-03 workstation and as 2026-12-02 on
+    # the UTC CI runner, which is how this was found.
+    assert as_date(value) == expected, label
+
+
+def test_the_timezone_skew_cannot_downgrade_extended_to_soon():
+    # Why the conversion is load-bearing rather than cosmetic. `today` is UTC (see
+    # __main__), so an end date parsed east of UTC must be converted before the
+    # subtraction: 2026-09-15 06:00+09:00 is 2026-09-14 in UTC, one day PAST the
+    # cliff. Reading it as 2026-09-15 instead returns SOON with days_left 0 -- a
+    # supported-looking verdict on a version already accruing the surcharge, which
+    # is the exact failure this guardrail exists to prevent.
+    end = as_date(datetime(2026, 9, 15, 6, 0, tzinfo=EAST))
+
+    assert end == date(2026, 9, 14)
+    assert classify("STANDARD_SUPPORT", end, today=date(2026, 9, 15)) == ("EXTENDED", -1)
+
+
 from datetime import datetime
 
 import boto3
