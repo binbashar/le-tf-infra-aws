@@ -29,3 +29,14 @@ repos:
     rev: 37.419.1
     hooks:
       - id: renovate-config-validator
+
+  - repo: local
+    hooks:
+      # Whole-tree check (pass_filenames: false): a new layer is missing the
+      # PRM tag regardless of which file the commit happens to touch.
+      - id: prm-apn-id-tag
+        name: PRM aws-apn-id tag present in every layer
+        entry: python3 @bin/scripts/prm_tags/check.py --root .
+        language: system
+        pass_filenames: false
+        files: \.tf$
