@@ -1,0 +1,9 @@
+# Layers exempt from the PRM `aws-apn-id` tag check.
+#
+# A layer belongs here only when it creates nothing taggable -- IAM,
+# Organizations and Identity Center resources take no tags, and none of those
+# services is in the PRM Resource Tagging Included Services list anyway.
+# Kubernetes and Helm objects are not AWS resources at all.
+#
+# One layer path per line, relative to the repository root, each with a reason.
+# Populated in Task 4; keep it empty until then.
