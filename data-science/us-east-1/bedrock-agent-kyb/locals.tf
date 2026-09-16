@@ -5,7 +5,7 @@ locals {
     Purpose      = "bedrock-kyb-agent"
     Layer        = "bedrock-kyb-agent"
     Service      = "bedrock-data-automation-agent"
-    "aws-apn-id" = "pc:b6t445987ttlzwgcll8zdt8nv"
+    "aws-apn-id" = local.prm_apn_id
   }
 
   name_prefix = lower(replace("${var.project}-${var.environment}-kyb-agent", "_", "-")) # e.g. bb-prod-kyb-agent

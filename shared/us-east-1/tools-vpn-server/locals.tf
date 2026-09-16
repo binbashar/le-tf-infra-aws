@@ -7,6 +7,7 @@ locals {
     ScheduleStartDaily = true
     Backup             = "True"
     Layer              = local.layer_name
+    "aws-apn-id"       = local.prm_apn_id
   }
 
   user_data = <<-EOF

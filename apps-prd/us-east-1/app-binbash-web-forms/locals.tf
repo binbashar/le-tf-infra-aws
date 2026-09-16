@@ -15,8 +15,9 @@ locals {
   metric_namespace = "${var.project}-${var.environment}/${local.app_name}"
 
   tags = {
-    Terraform   = "true"
-    Environment = var.environment
-    Layer       = local.layer_name
+    Terraform    = "true"
+    Environment  = var.environment
+    Layer        = local.layer_name
+    "aws-apn-id" = local.prm_apn_id
   }
 }

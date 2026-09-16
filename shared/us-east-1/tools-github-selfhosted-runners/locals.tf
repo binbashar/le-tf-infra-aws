@@ -1,9 +1,10 @@
 locals {
   tags = {
-    Name        = "infra-github-selfhosted-runners"
-    Terraform   = "true"
-    Environment = var.environment
-    Layer       = local.layer_name
+    Name         = "infra-github-selfhosted-runners"
+    Terraform    = "true"
+    Environment  = var.environment
+    Layer        = local.layer_name
+    "aws-apn-id" = local.prm_apn_id
   }
 }
 

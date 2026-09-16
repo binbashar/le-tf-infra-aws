@@ -5,5 +5,6 @@ locals {
     Environment       = var.environment
     ScheduleStopDaily = true
     Layer             = local.layer_name
+    "aws-apn-id"      = local.prm_apn_id
   }
 }

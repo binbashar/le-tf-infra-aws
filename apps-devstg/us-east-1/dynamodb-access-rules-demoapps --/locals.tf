@@ -9,11 +9,12 @@ locals {
 
 
   tags = {
-    Name        = local.name
-    Terraform   = "true"
-    Environment = var.environment
-    Layer       = local.layer_name
-    CreatedBy   = "Kungfoo"
-    Project     = "Research on DynamoDB access rules"
+    Name         = local.name
+    Terraform    = "true"
+    Environment  = var.environment
+    Layer        = local.layer_name
+    CreatedBy    = "Kungfoo"
+    Project      = "Research on DynamoDB access rules"
+    "aws-apn-id" = local.prm_apn_id
   }
 }

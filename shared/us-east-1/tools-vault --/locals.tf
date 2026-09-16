@@ -12,5 +12,6 @@ locals {
     ScheduleStartDaily = false
     Backup             = "True"
     Layer              = local.layer_name
+    "aws-apn-id"       = local.prm_apn_id
   }
 }

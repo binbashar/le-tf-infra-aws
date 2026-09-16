@@ -4,6 +4,7 @@ locals {
     Environment         = var.environment
     ProtectFromDeletion = "true"
     Layer               = local.layer_name
+    "aws-apn-id"        = local.prm_apn_id
   }
 
   # Data source definitions

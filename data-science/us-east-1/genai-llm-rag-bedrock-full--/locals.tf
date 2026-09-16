@@ -2,8 +2,9 @@ locals {
 
   name = "${var.project}-${var.environment}-genai-llm-rag-bedrock"
   tags = {
-    Terraform   = "true"
-    Environment = var.environment
+    Terraform    = "true"
+    Environment  = var.environment
+    "aws-apn-id" = local.prm_apn_id
   }
 
   container_definitions = {
