@@ -281,7 +281,11 @@ Within each region, resources are organized into functional layers:
 - **k8s-*** - Kubernetes infrastructure
 - **tools-*** - Operational tools
 
-Directories ending with a space followed by `--` suffix (e.g., `databases-mysql --`) are **disabled/optional layers** excluded from active deployment and Atlantis autodiscover.
+Directories whose name ends in `--` are **disabled/optional layers**, excluded from active
+deployment and Atlantis autodiscover. Both forms occur in the tree — spaced (`databases-mysql --`)
+and attached (`databases-dynamodb--`) — and one carries a trailing space, so tooling must match
+`segment.rstrip().endswith("--")`, as `@bin/scripts/version_support/discover.py` does. Matching only
+`" --"` silently treats 11 dormant layers as active.
 
 ### File Structure per Layer
 Each layer follows this standardized pattern:
@@ -391,7 +395,31 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
   before merging: cross-account references live in `network/`, `shared/`, `management/global/organizations`
   and `.github/workflows/security-keys.yml`, not just in the account's own `backend.tfvars`.
 - Tags: Consistent tagging with `Terraform`, `Environment`, `Layer` via `local.tags`
-- **PRM compliance tag (`aws-apn-id`)**: Present in `data-science/us-east-1/bedrock-agent-kyb`, `bedrock-agentcore`, and `bedrock-kyb-bda` for AWS Partner Revenue Measurement attribution. Value `pc:b6t445987ttlzwgcll8zdt8nv` maps to AWS Marketplace product `prod-zw4ehbg5ayh2m`. **Do NOT add this tag to other layers without explicit Partner Development Manager approval** — the product code attributes consumption to a specific Marketplace listing. For Bedrock model invocations specifically, Resource Tagging only works for Amazon/OSS models via an Application Inference Profile; Anthropic Claude invocations need the User Agent String method instead. See [AWS PRM Bedrock docs](https://docs.aws.amazon.com/PRM/latest/aws-prm-onboarding-guide/bedrock-best-practices.html).
+- **PRM compliance tag (`aws-apn-id`)**: Every layer carries it. The value comes from
+  `local.prm_apn_id`, defined once in `config/common-variables.tf` and keyed on the account
+  (`var.environment`): `data-science` maps to `pc:b6t445987ttlzwgcll8zdt8nv` (*GenAI Assessment for
+  Startups*, `prod-zw4ehbg5ayh2m`), every other account to `pc:5k5o9j3cjaqzpbiwt7ww6e65o` (*Leverage
+  | AWS Modernization (Containers / Serverless)*, `prod-pkadanxklqjdc`). **Never hardcode a `pc:`
+  literal in a layer** — write `"aws-apn-id" = local.prm_apn_id` and let the map decide. `make
+  prm-tags` enforces this across all 163 layers; the handful that create nothing taggable live in
+  `@bin/scripts/prm_tags/allowlist.txt`, each with its reason.
+  - **Only Public, Active listings are valid targets.** Several binbash listings are `Restricted`,
+    which is de-listed and does not satisfy AWS's "at least one public listing" requirement. Check
+    before adopting a new code — no console needed:
+    ```bash
+    aws marketplace-catalog describe-entity --catalog AWSMarketplace --entity-id prod-xxxxxxxxxxxxx \
+      --query 'DetailsDocument.[Description.ProductCode,Description.Visibility]' --output text
+    ```
+  - **A layer is allowlisted only when it cannot be tagged** — no AWS resources (Kubernetes/Helm
+    only), every resource untaggable, or the upstream module exposes no `tags` variable. "This
+    service is not in the PRM list" is not a reason: AWS recommends instrumenting everything so
+    coverage expansions need no code change, and a tag on an unsupported service is ignored.
+  - **Bedrock model invocations are not covered by resource tagging.** Attribution needs an
+    Application Inference Profile tagged with `aws-apn-id`, and works only for Amazon/OSS models —
+    Anthropic Claude invocations require the User Agent String method instead. See
+    [AWS PRM Bedrock docs](https://docs.aws.amazon.com/PRM/latest/aws-prm-onboarding-guide/bedrock-best-practices.html).
+  - PRM covers 90 services, not only AI ones. IAM, Organizations, Identity Center, GuardDuty,
+    Config, CloudTrail, Inspector and Macie are **not** among them.
 
 ### Version Constraints
 - **OpenTofu**: >= 1.0.9 to ~> 1.6 (varies by layer; primary IaC tool)
