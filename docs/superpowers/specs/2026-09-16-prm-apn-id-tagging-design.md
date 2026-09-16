@@ -60,7 +60,16 @@ authoritative list is the *Resource Tagging Included Services* CSV in the PRM on
 Notably **out of scope**: IAM, Organizations, Identity Center, GuardDuty, Config, CloudTrail,
 Inspector and Macie — which is most of `base-identities`, `sso`, `organizations` and `security-base`.
 
-### 5. PRM scope cannot be decided by static analysis
+### 5. The disabled-layer suffix has two forms
+
+CLAUDE.md documents disabled layers as ending in a space followed by `--`. In practice **11 of the
+67** disabled directories use the attached form (`databases-dynamodb--`, `bedrock-agent--`), and one
+carries a trailing space (`airflow-- `). `@bin/scripts/version_support/discover.py` already handles
+all three via `segment.rstrip().endswith("--")`; only the CLAUDE.md prose is incomplete. Counting
+layers with the documented rule alone misclassifies 11 dormant layers as active, so any tooling added
+here must reuse the `discover.py` rule rather than matching `" --"`.
+
+### 6. PRM scope cannot be decided by static analysis
 
 Scanning layers for PRM-billable services produces false negatives: `base-tf-backend` creates S3 and
 DynamoDB (both billable) but scans clean, because its module is named `tfstate-backend`. AWS's own
@@ -79,7 +88,7 @@ maintain and better aligned with AWS guidance than a curated subset.
 |---|---|
 | Horizontal (non-AI) product | *Leverage \| AWS Modernization (Containers / Serverless)* — Public, Active |
 | AI product | *GenAI Assessment for Startups* — Public, Active (unchanged from #1071) |
-| Scope | All **109 active** layers, plus the **54 disabled** (`--`) layers for consistency |
+| Scope | All **98 active** layers, plus the **65 disabled** (`--`) layers for consistency |
 | Split rule | By account, not by layer semantics |
 | Mechanism | Central derived local + one line per layer's `local.tags` |
 
@@ -135,13 +144,13 @@ Coverage breakdown:
 
 | Group | Count | Work |
 |---|---|---|
-| Active, has a `local.tags` map | 92 | scripted one-line insert |
-| Active, no tags map | 17 | manual — inspect what the layer passes to its modules first |
-| Disabled, has a `local.tags` map | 36 | scripted one-line insert |
-| Disabled, no tags map | 18 | manual, same as above |
+| Active, has a `local.tags` map | 80 | scripted one-line insert |
+| Active, no tags map | 18 | manual — inspect what the layer passes to its modules first |
+| Disabled, has a `local.tags` map | 45 | scripted one-line insert |
+| Disabled, no tags map | 20 | manual, same as above |
 | Already wire `default_tags { tags = local.tags }` | 19 | inherit automatically, no extra change |
 
-For the 35 layers with no tags map, adding a `local.tags` that nothing consumes achieves nothing.
+For the 38 layers with no tags map, adding a `local.tags` that nothing consumes achieves nothing.
 Each needs its module/resource `tags` arguments inspected and wired, or an explicit note in the PR
 saying why the layer is genuinely untaggable (e.g. it creates only IAM and Organizations resources).
 
