@@ -87,17 +87,22 @@ PR with this exact, repeatable procedure so no sensitive data leaks:
    ```bash
    awk '/will perform the following actions/{f=1} f' /tmp/plan.txt > /tmp/plan-clean.txt
    ```
-3. **Redact + scan** the excerpt as belt-and-suspenders. Write to a new file rather than
-   editing in place — `sed -i` is non-portable (BSD/macOS requires `-i ''`, GNU/Linux requires
-   bare `-i`), and this procedure must run on both macOS and Linux (CI). The scan must print nothing:
+3. **Redact + scan** the excerpt with `@bin/scripts/redact_plan.py`, which does both and
+   exits non-zero if anything survives:
    ```bash
-   sed -E 's/\b[0-9]{12}\b/<ACCOUNT_NAME_ACCOUNT_ID>/g; s/(AKIA|ASIA)[A-Z0-9]{16}/***/g' /tmp/plan-clean.txt > /tmp/plan-redacted.txt
-   grep -nE '\b[0-9]{12}\b|arn:aws:iam::[0-9]|AKIA|ASIA|-----BEGIN' /tmp/plan-redacted.txt   # expect no output
+   python3 @bin/scripts/redact_plan.py /tmp/plan-clean.txt > /tmp/plan-redacted.txt
+   python3 @bin/scripts/redact_plan.py --scan /tmp/plan-redacted.txt   # prints "clean", exit 0
    ```
-   Use the named placeholder form, e.g. `<MANAGEMENT_ACCOUNT_ID>` (see the bullets above).
-   The `\b` word boundaries matter: unanchored, `[0-9]{12}` also eats any longer digit run —
-   epoch-nanosecond timestamps and numeric resource IDs get rewritten into fake account-ID
-   placeholders, and the scan still passes on the mangled result.
+   **Do not hand-roll this with `sed`.** BSD/macOS `sed -E` silently ignores `\b`, so the
+   obvious `sed -E 's/\b[0-9]{12}\b/.../'` is a **no-op on a Mac** and leaves every account ID
+   in place; BSD wants `[[:<:]]`/`[[:>:]]` while GNU wants `\b`, so no single sed expression is
+   portable, and this procedure must run on both macOS and Linux (CI). The script also gets two
+   things right that a quick regex does not: it redacts **UUIDs before bare digit runs** (else
+   `\d{12}` chews through a UUID's digit groups and the scan passes on the mangled result), and
+   it redacts **by attribute name** as well as by pattern, because Route53 zone IDs, ACM
+   validation tokens and `pgp_key`/password blobs have no distinctive shape and a pattern-only
+   pass reports clean while leaking them.
+   Placeholders use the named form, e.g. `<MANAGEMENT_ACCOUNT_ID>` (see the bullets above).
 4. **Embed** the redacted excerpt (`/tmp/plan-redacted.txt`) in the PR body inside a collapsible `<details>` block with a
    ```` ```text ```` fence (keep the What / Why / References sections intact). Never paste the
    raw refresh log.
