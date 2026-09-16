@@ -1,4 +1,11 @@
 locals {
+  tags = {
+    Terraform    = "true"
+    Environment  = var.environment
+    Layer        = local.layer_name
+    "aws-apn-id" = local.prm_apn_id
+  }
+
   default_lifecycle_policy_rules = [
     module.ecr_lifecycle_rule_default_policy_bycount.policy_rule,
   ]

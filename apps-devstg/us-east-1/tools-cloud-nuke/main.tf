@@ -1,6 +1,7 @@
 module "nuke_everything_daily_midnight" {
   source = "github.com/binbashar/terraform-aws-lambda-nuke.git?ref=2.12.1"
 
+  tags = local.tags
   # Define name to use for lambda function, cloudwatch event and iam role"
   name        = "${var.project}-${var.environment}-cloud-nuke-everything"
   kms_key_arn = data.terraform_remote_state.keys.outputs.aws_kms_key_arn

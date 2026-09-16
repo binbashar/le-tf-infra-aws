@@ -8,6 +8,7 @@
 module "config_logs" {
   source = "github.com/binbashar/terraform-aws-logs.git?ref=v16.3.1"
 
+  tags                    = local.tags
   s3_bucket_name          = "${var.project}-${var.environment}-awsconfig"
   default_allow           = true # Whether all services included in this module should be allowed to write to the bucket by default.
   allow_config            = true # Allow Config service to log to bucket.
@@ -30,6 +31,7 @@ module "config_logs" {
 #
 module "terraform-aws-config" {
   source                         = "github.com/binbashar/terraform-aws-config.git?ref=v8.1.0"
+  tags                           = local.tags
   config_logs_bucket             = module.config_logs.aws_logs_bucket
   config_name                    = "${var.project}-${var.environment}-awsconfig"
   config_logs_prefix             = ""

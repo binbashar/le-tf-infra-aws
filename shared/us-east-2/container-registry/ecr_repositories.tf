@@ -6,6 +6,8 @@ module "ecr_repositories" {
 
   source = "github.com/binbashar/terraform-aws-ecr-cross-account.git?ref=1.1.0"
 
+
+  tags = local.tags
   #
   # Repository name
   #

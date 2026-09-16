@@ -7,6 +7,7 @@
 #
 module "terraform-aws-config" {
   source                         = "github.com/binbashar/terraform-aws-config.git?ref=v8.1.0"
+  tags                           = local.tags
   config_logs_bucket             = data.terraform_remote_state.security-security-compliance.outputs.aws_logs_bucket
   config_name                    = "${var.project}-${var.environment}-awsconfig"
   config_logs_prefix             = ""
