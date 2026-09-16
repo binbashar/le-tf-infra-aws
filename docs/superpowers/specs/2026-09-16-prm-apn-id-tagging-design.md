@@ -144,13 +144,16 @@ Coverage breakdown:
 
 | Group | Count | Work |
 |---|---|---|
-| Active, has a `local.tags` map | 80 | scripted one-line insert |
-| Active, no tags map | 18 | manual — inspect what the layer passes to its modules first |
+| Active, has a `local.tags` map | 82 | scripted one-line insert |
+| Active, no tags map | 16 | manual — inspect what the layer passes to its modules first |
 | Disabled, has a `local.tags` map | 45 | scripted one-line insert |
 | Disabled, no tags map | 20 | manual, same as above |
-| Already wire `default_tags { tags = local.tags }` | 19 | inherit automatically, no extra change |
 
-For the 38 layers with no tags map, adding a `local.tags` that nothing consumes achieves nothing.
+The four rows above partition all 163 layers. Cutting across them, **19** layers already wire
+`default_tags { tags = local.tags }` into their provider and so inherit the new tag with no extra
+change — they are counted in the rows above, not in addition to them.
+
+For the 36 layers with no tags map, adding a `local.tags` that nothing consumes achieves nothing.
 Each needs its module/resource `tags` arguments inspected and wired, or an explicit note in the PR
 saying why the layer is genuinely untaggable (e.g. it creates only IAM and Organizations resources).
 
