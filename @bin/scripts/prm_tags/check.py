@@ -58,12 +58,17 @@ def has_prm_tag(layer_path: str) -> bool:
     forgotten-line case, which is the only one that happens in practice, while
     staying dependency-free. Whether the tag actually reaches resources is
     settled by `leverage tofu plan`, not by this check.
+
+    Symlinks are skipped. Every layer symlinks common-variables.tf to the
+    shared config/common-variables.tf, which documents the tag key in a
+    comment -- following it would make all 161 linked layers pass regardless
+    of their own contents. A layer has to carry the tag in its own files.
     """
     for name in sorted(os.listdir(layer_path)):
         if not name.endswith(".tf"):
             continue
         full = os.path.join(layer_path, name)
-        if not os.path.isfile(full):
+        if os.path.islink(full) or not os.path.isfile(full):
             continue
         with open(full, encoding="utf-8", errors="ignore") as handle:
             if TAG_KEY in handle.read():

@@ -77,3 +77,19 @@ def test_load_allowlist_strips_comments_and_blanks(tmp_path):
 def test_clean_tree_exits_zero(tmp_path):
     _layer(tmp_path, "shared/us-east-1/a", {"config.tf": "", "locals.tf": TAGGED})
     assert check.main(["--root", str(tmp_path), "--allowlist", str(tmp_path / "none.txt")]) == 0
+
+
+def test_symlinked_shared_file_does_not_count(tmp_path):
+    # config/common-variables.tf is symlinked into 161 layers and mentions the
+    # tag key in a comment, so following symlinks would make every layer pass.
+    # A layer has to carry the tag in its own files.
+    shared = tmp_path / "config"
+    shared.mkdir()
+    (shared / "common-variables.tf").write_text(
+        "# `aws-apn-id = pc:<marketplace-product-code>` attributes consumption\n"
+        "locals {}\n",
+        encoding="utf-8",
+    )
+    directory = _layer(tmp_path, "shared/us-east-1/a", {"config.tf": "", "locals.tf": UNTAGGED})
+    (directory / "common-variables.tf").symlink_to(shared / "common-variables.tf")
+    assert check.has_prm_tag(str(directory)) is False
