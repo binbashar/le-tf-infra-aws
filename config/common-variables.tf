@@ -154,5 +154,26 @@ locals {
 
   #Split the full path of the layer using the region, in order to get the layer path (after the region)
   layer_name = replace(trimprefix(split(local.current_region, "${path.cwd}")[1], "/"), "/", "_")
+
+  #===========================================#
+  # PRM -- AWS Partner Revenue Measurement    #
+  #===========================================#
+  # `aws-apn-id = pc:<marketplace-product-code>` attributes AWS consumption to
+  # an AWS Marketplace listing. Keyed by account: var.environment equals the
+  # account directory name in every {account}/config/account.tfvars.
+  #
+  # Only Public, Active listings belong here -- a Restricted listing is
+  # de-listed and does not satisfy the "at least one public listing"
+  # requirement. Retrieve and check a code with:
+  #
+  #   aws marketplace-catalog describe-entity --catalog AWSMarketplace \
+  #     --entity-id prod-xxxxxxxxxxxxx \
+  #     --query 'DetailsDocument.[Description.ProductCode,Description.Visibility]' --output text
+  prm_product_codes = {
+    default        = "pc:5k5o9j3cjaqzpbiwt7ww6e65o" # Leverage | AWS Modernization (Containers / Serverless) -- prod-pkadanxklqjdc
+    "data-science" = "pc:b6t445987ttlzwgcll8zdt8nv" # GenAI Assessment for Startups | AI/ML Readiness & Roadmap -- prod-zw4ehbg5ayh2m
+  }
+
+  prm_apn_id = lookup(local.prm_product_codes, var.environment, local.prm_product_codes["default"])
 }
 
