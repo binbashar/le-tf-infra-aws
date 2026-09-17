@@ -73,3 +73,14 @@ version-support-table: ## Regenerate docs/version-support/status.md
 		PYTHONPATH=@bin/scripts uv run --quiet \
 		--with-requirements @bin/scripts/version_support/requirements.txt \
 		python -m version_support --mode table --root .
+
+# Stdlib only -- no requirements file and no AWS, deliberately unlike
+# version-support, which needs python-hcl2 and live AWS lifecycle data.
+# The test target uses uv because pytest is not a repo dependency.
+.PHONY: prm-tags
+prm-tags: ## Check every layer carries the PRM aws-apn-id tag
+	@python3 @bin/scripts/prm_tags/check.py --root .
+
+.PHONY: prm-tags-test
+prm-tags-test: ## Run the PRM tag guardrail's own tests
+	@uv run --quiet --with pytest pytest ./@bin/scripts/prm_tags/tests/ -q

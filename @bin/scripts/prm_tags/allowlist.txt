@@ -1,0 +1,44 @@
+# Layers exempt from the PRM `aws-apn-id` tag check.
+#
+# A layer belongs here only when one of these is true:
+#   (a) it creates no AWS resources at all (Kubernetes/Helm providers only), or
+#   (b) every AWS resource it creates is untaggable, or
+#   (c) the upstream module it depends on exposes no `tags` variable, so the
+#       layer cannot pass tags through without a module change.
+#
+# "This service is not in the PRM Included Services list" is NOT a reason --
+# AWS recommends instrumenting every service so that coverage expansions need
+# no further code changes. Tagging an unsupported service is simply ignored.
+#
+# One layer path per line, relative to the repository root, with the reason.
+
+#-- (a) Kubernetes / Helm only: no AWS resources ------------------------------
+apps-devstg/us-east-1/k8s-eks-demoapps/k8s-components   # helm_release + kubernetes_* only
+apps-devstg/us-east-1/k8s-eks-demoapps/k8s-workloads    # kubernetes_* only
+apps-devstg/us-east-1/k8s-kind --/k8s-resources         # helm_release + kubernetes_* only
+apps-devstg/us-east-1/k8s-kops --/2-kops                # declares no resources
+apps-devstg/us-east-1/k8s-kops --/3-extras              # helm + kubernetes; its only AWS resource is aws_route53_record, which takes no tags
+shared/us-east-1/k8s-eks-demoapps/identities            # declares no resources
+
+#-- (b) every AWS resource it creates is untaggable ---------------------------
+management/global/organizations                         # aws_organizations_*, service-linked roles and enrollment-status resources; an Organizations account is not consumption to attribute
+management/us-east-1/security-hub --                    # aws_securityhub_organization_admin_account takes no tags
+security/us-east-1/security-hub --                      # securityhub configuration policy, association, aggregator and org configuration all take no tags
+
+#-- (c) upstream module exposes no `tags` variable ----------------------------
+# terraform-aws-root-login-notifications v2.3.0 has no tags variable; the two
+# direct resources (aws_ebs_encryption_by_default, aws_s3_account_public_access_block)
+# are account settings and take no tags either. Revisit once the module adds tags.
+apps-devstg/us-east-1/security-base
+apps-prd/us-east-1/security-base
+data-science/us-east-1/security-base
+management/us-east-1/security-base
+network/us-east-1/security-base
+shared/us-east-1/security-base
+
+# terraform-aws-guardduty-multiaccount v0.2.1 (delegated-admin, multiaccount-setup)
+# and terraform-aws-guardduty-monitor v1.2.1 have no tags variable.
+management/us-east-1/security-monitoring --
+management/us-east-2/security-monitoring --
+security/us-east-1/security-monitoring --
+security/us-east-2/security-monitoring --

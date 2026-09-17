@@ -5,9 +5,10 @@ locals {
   domain_name = trimsuffix(local.domain, ".")
 
   tags = {
-    Terraform   = "true"
-    Environment = var.environment
-    Name        = local.domain_name
-    Layer       = local.layer_name
+    Terraform    = "true"
+    Environment  = var.environment
+    Name         = local.domain_name
+    Layer        = local.layer_name
+    "aws-apn-id" = local.prm_apn_id
   }
 }

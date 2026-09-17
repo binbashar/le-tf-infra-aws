@@ -16,7 +16,8 @@ locals {
   expiration_days                    = 180
 
   tags = {
-    Terraform   = "true"
-    Environment = var.environment
+    Terraform    = "true"
+    Environment  = var.environment
+    "aws-apn-id" = local.prm_apn_id
   }
 }

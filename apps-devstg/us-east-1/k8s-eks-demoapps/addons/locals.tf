@@ -1,10 +1,11 @@
 locals {
   tags = {
-    Terraform   = "true"
-    Environment = var.environment
-    Project     = var.project
-    Cluster     = data.terraform_remote_state.cluster.outputs.cluster_name
-    Layer       = local.layer_name
+    Terraform    = "true"
+    Environment  = var.environment
+    Project      = var.project
+    Cluster      = data.terraform_remote_state.cluster.outputs.cluster_name
+    Layer        = local.layer_name
+    "aws-apn-id" = local.prm_apn_id
   }
   # Add-on versions are pinned explicitly, with one deliberate exception.
   #

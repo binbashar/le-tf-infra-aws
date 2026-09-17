@@ -1,10 +1,11 @@
 locals {
   tags = {
-    Terraform   = "true"
-    Environment = var.environment
-    Purpose     = "bedrock-agent"
-    Layer       = "bedrock-agent"
-    Service     = "bedrock-agent"
+    Terraform    = "true"
+    Environment  = var.environment
+    Purpose      = "bedrock-agent"
+    Layer        = "bedrock-agent"
+    Service      = "bedrock-agent"
+    "aws-apn-id" = local.prm_apn_id
   }
 
   # Sanitized name prefix

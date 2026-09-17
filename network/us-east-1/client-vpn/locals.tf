@@ -1,4 +1,11 @@
 locals {
+  tags = {
+    Terraform    = "true"
+    Environment  = var.environment
+    Layer        = local.layer_name
+    "aws-apn-id" = local.prm_apn_id
+  }
+
   vpn_name = "${var.project}-${var.environment}-sso"
 
   cidr         = "172.16.0.0/16"

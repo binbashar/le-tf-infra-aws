@@ -5,7 +5,7 @@ locals {
     Purpose      = "bedrock-kyb-bda"
     Layer        = "bedrock-kyb-bda"
     Service      = "bedrock-data-automation"
-    "aws-apn-id" = "pc:b6t445987ttlzwgcll8zdt8nv"
+    "aws-apn-id" = local.prm_apn_id
   }
 
   # Sanitized name prefix

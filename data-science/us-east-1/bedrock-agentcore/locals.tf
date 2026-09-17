@@ -5,7 +5,7 @@ locals {
     Purpose      = "bedrock-agentcore"
     Layer        = "bedrock-agentcore"
     Service      = "bedrock-agentcore"
-    "aws-apn-id" = "pc:b6t445987ttlzwgcll8zdt8nv"
+    "aws-apn-id" = local.prm_apn_id
   }
 
   name_prefix = lower(replace("${var.project}-${var.environment}-agentcore", "_", "-"))

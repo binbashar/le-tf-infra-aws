@@ -87,17 +87,22 @@ PR with this exact, repeatable procedure so no sensitive data leaks:
    ```bash
    awk '/will perform the following actions/{f=1} f' /tmp/plan.txt > /tmp/plan-clean.txt
    ```
-3. **Redact + scan** the excerpt as belt-and-suspenders. Write to a new file rather than
-   editing in place — `sed -i` is non-portable (BSD/macOS requires `-i ''`, GNU/Linux requires
-   bare `-i`), and this procedure must run on both macOS and Linux (CI). The scan must print nothing:
+3. **Redact + scan** the excerpt with `@bin/scripts/redact_plan.py`, which does both and
+   exits non-zero if anything survives:
    ```bash
-   sed -E 's/\b[0-9]{12}\b/<ACCOUNT_NAME_ACCOUNT_ID>/g; s/(AKIA|ASIA)[A-Z0-9]{16}/***/g' /tmp/plan-clean.txt > /tmp/plan-redacted.txt
-   grep -nE '\b[0-9]{12}\b|arn:aws:iam::[0-9]|AKIA|ASIA|-----BEGIN' /tmp/plan-redacted.txt   # expect no output
+   python3 @bin/scripts/redact_plan.py /tmp/plan-clean.txt > /tmp/plan-redacted.txt
+   python3 @bin/scripts/redact_plan.py --scan /tmp/plan-redacted.txt   # prints "clean", exit 0
    ```
-   Use the named placeholder form, e.g. `<MANAGEMENT_ACCOUNT_ID>` (see the bullets above).
-   The `\b` word boundaries matter: unanchored, `[0-9]{12}` also eats any longer digit run —
-   epoch-nanosecond timestamps and numeric resource IDs get rewritten into fake account-ID
-   placeholders, and the scan still passes on the mangled result.
+   **Do not hand-roll this with `sed`.** BSD/macOS `sed -E` silently ignores `\b`, so the
+   obvious `sed -E 's/\b[0-9]{12}\b/.../'` is a **no-op on a Mac** and leaves every account ID
+   in place; BSD wants `[[:<:]]`/`[[:>:]]` while GNU wants `\b`, so no single sed expression is
+   portable, and this procedure must run on both macOS and Linux (CI). The script also gets two
+   things right that a quick regex does not: it redacts **UUIDs before bare digit runs** (else
+   `\d{12}` chews through a UUID's digit groups and the scan passes on the mangled result), and
+   it redacts **by attribute name** as well as by pattern, because Route53 zone IDs, ACM
+   validation tokens and `pgp_key`/password blobs have no distinctive shape and a pattern-only
+   pass reports clean while leaking them.
+   Placeholders use the named form, e.g. `<MANAGEMENT_ACCOUNT_ID>` (see the bullets above).
 4. **Embed** the redacted excerpt (`/tmp/plan-redacted.txt`) in the PR body inside a collapsible `<details>` block with a
    ```` ```text ```` fence (keep the What / Why / References sections intact). Never paste the
    raw refresh log.
@@ -281,7 +286,11 @@ Within each region, resources are organized into functional layers:
 - **k8s-*** - Kubernetes infrastructure
 - **tools-*** - Operational tools
 
-Directories ending with a space followed by `--` suffix (e.g., `databases-mysql --`) are **disabled/optional layers** excluded from active deployment and Atlantis autodiscover.
+Directories whose name ends in `--` are **disabled/optional layers**, excluded from active
+deployment and Atlantis autodiscover. Both forms occur in the tree — spaced (`databases-mysql --`)
+and attached (`databases-dynamodb--`) — and one carries a trailing space, so tooling must match
+`segment.rstrip().endswith("--")`, as `@bin/scripts/version_support/discover.py` does. Matching only
+`" --"` silently treats 11 dormant layers as active.
 
 ### File Structure per Layer
 Each layer follows this standardized pattern:
@@ -391,7 +400,31 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
   before merging: cross-account references live in `network/`, `shared/`, `management/global/organizations`
   and `.github/workflows/security-keys.yml`, not just in the account's own `backend.tfvars`.
 - Tags: Consistent tagging with `Terraform`, `Environment`, `Layer` via `local.tags`
-- **PRM compliance tag (`aws-apn-id`)**: Present in `data-science/us-east-1/bedrock-agent-kyb`, `bedrock-agentcore`, and `bedrock-kyb-bda` for AWS Partner Revenue Measurement attribution. Value `pc:b6t445987ttlzwgcll8zdt8nv` maps to AWS Marketplace product `prod-zw4ehbg5ayh2m`. **Do NOT add this tag to other layers without explicit Partner Development Manager approval** — the product code attributes consumption to a specific Marketplace listing. For Bedrock model invocations specifically, Resource Tagging only works for Amazon/OSS models via an Application Inference Profile; Anthropic Claude invocations need the User Agent String method instead. See [AWS PRM Bedrock docs](https://docs.aws.amazon.com/PRM/latest/aws-prm-onboarding-guide/bedrock-best-practices.html).
+- **PRM compliance tag (`aws-apn-id`)**: Every layer carries it. The value comes from
+  `local.prm_apn_id`, defined once in `config/common-variables.tf` and keyed on the account
+  (`var.environment`): `data-science` maps to `pc:b6t445987ttlzwgcll8zdt8nv` (*GenAI Assessment for
+  Startups*, `prod-zw4ehbg5ayh2m`), every other account to `pc:5k5o9j3cjaqzpbiwt7ww6e65o` (*Leverage
+  | AWS Modernization (Containers / Serverless)*, `prod-pkadanxklqjdc`). **Never hardcode a `pc:`
+  literal in a layer** — write `"aws-apn-id" = local.prm_apn_id` and let the map decide. `make
+  prm-tags` enforces this across all 163 layers; the handful that create nothing taggable live in
+  `@bin/scripts/prm_tags/allowlist.txt`, each with its reason.
+  - **Only Public, Active listings are valid targets.** Several binbash listings are `Restricted`,
+    which is de-listed and does not satisfy AWS's "at least one public listing" requirement. Check
+    before adopting a new code — no console needed:
+    ```bash
+    aws marketplace-catalog describe-entity --catalog AWSMarketplace --entity-id prod-xxxxxxxxxxxxx \
+      --query 'DetailsDocument.[Description.ProductCode,Description.Visibility]' --output text
+    ```
+  - **A layer is allowlisted only when it cannot be tagged** — no AWS resources (Kubernetes/Helm
+    only), every resource untaggable, or the upstream module exposes no `tags` variable. "This
+    service is not in the PRM list" is not a reason: AWS recommends instrumenting everything so
+    coverage expansions need no code change, and a tag on an unsupported service is ignored.
+  - **Bedrock model invocations are not covered by resource tagging.** Attribution needs an
+    Application Inference Profile tagged with `aws-apn-id`, and works only for Amazon/OSS models —
+    Anthropic Claude invocations require the User Agent String method instead. See
+    [AWS PRM Bedrock docs](https://docs.aws.amazon.com/PRM/latest/aws-prm-onboarding-guide/bedrock-best-practices.html).
+  - PRM covers 90 services, not only AI ones. IAM, Organizations, Identity Center, GuardDuty,
+    Config, CloudTrail, Inspector and Macie are **not** among them.
 
 ### Version Constraints
 - **OpenTofu**: >= 1.0.9 to ~> 1.6 (varies by layer; primary IaC tool)

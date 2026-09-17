@@ -1,10 +1,11 @@
 locals {
   bucket_name = "${var.project}-${var.environment}-rds-exported-snapshots"
   tags = {
-    Name        = "rds-export-to-s3"
-    Terraform   = "true"
-    Environment = var.environment
-    Layer       = local.layer_name
+    Name         = "rds-export-to-s3"
+    Terraform    = "true"
+    Environment  = var.environment
+    Layer        = local.layer_name
+    "aws-apn-id" = local.prm_apn_id
   }
 }
 
