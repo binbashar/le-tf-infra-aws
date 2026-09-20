@@ -1,6 +1,6 @@
-data "aws_iam_policy_document" "github_actions_plan" {
+data "aws_iam_policy_document" "github_actions_opentofu_plan" {
   statement {
-    sid     = "ReadBackendBucketMetadata"
+    sid     = "ReadStateBackendMetadata"
     effect  = "Allow"
     actions = ["s3:GetBucketLocation"]
     resources = [
@@ -9,7 +9,7 @@ data "aws_iam_policy_document" "github_actions_plan" {
   }
 
   statement {
-    sid     = "ListPilotState"
+    sid     = "ListTargetState"
     effect  = "Allow"
     actions = ["s3:ListBucket"]
     resources = [
@@ -19,25 +19,25 @@ data "aws_iam_policy_document" "github_actions_plan" {
     condition {
       test     = "StringEquals"
       variable = "s3:prefix"
-      values   = [local.pilot_state_key]
+      values   = [local.target_state_key]
     }
   }
 
   statement {
-    sid    = "ReadPilotState"
+    sid    = "ReadTargetState"
     effect = "Allow"
     actions = [
       "s3:GetObject",
     ]
     resources = [
-      "arn:${data.aws_partition.current.partition}:s3:::${var.bucket}/${local.pilot_state_key}",
+      "arn:${data.aws_partition.current.partition}:s3:::${var.bucket}/${local.target_state_key}",
     ]
   }
 
   # A speculative plan must never persist refreshed state. This explicit deny
   # remains effective if an allow is accidentally attached to the role later.
   statement {
-    sid    = "DenyPilotStateMutation"
+    sid    = "DenyTargetStateMutation"
     effect = "Deny"
     actions = [
       "s3:DeleteObject",
@@ -45,12 +45,12 @@ data "aws_iam_policy_document" "github_actions_plan" {
       "s3:PutObject",
     ]
     resources = [
-      "arn:${data.aws_partition.current.partition}:s3:::${var.bucket}/${local.pilot_state_key}",
+      "arn:${data.aws_partition.current.partition}:s3:::${var.bucket}/${local.target_state_key}",
     ]
   }
 
   statement {
-    sid     = "DescribePilotStateLockTable"
+    sid     = "DescribeStateLockTable"
     effect  = "Allow"
     actions = ["dynamodb:DescribeTable"]
     resources = [
@@ -59,7 +59,7 @@ data "aws_iam_policy_document" "github_actions_plan" {
   }
 
   statement {
-    sid    = "ManagePilotStateLockItems"
+    sid    = "ManageTargetStateLockItems"
     effect = "Allow"
     actions = [
       "dynamodb:DeleteItem",
@@ -74,14 +74,14 @@ data "aws_iam_policy_document" "github_actions_plan" {
       test     = "ForAllValues:StringEquals"
       variable = "dynamodb:LeadingKeys"
       values = [
-        "${var.bucket}/${local.pilot_state_key}",
-        "${var.bucket}/${local.pilot_state_key}-md5",
+        "${var.bucket}/${local.target_state_key}",
+        "${var.bucket}/${local.target_state_key}-md5",
       ]
     }
   }
 
   statement {
-    sid    = "ReadPilotRole"
+    sid    = "ReadTargetRole"
     effect = "Allow"
     actions = [
       "iam:GetRole",
@@ -89,12 +89,12 @@ data "aws_iam_policy_document" "github_actions_plan" {
       "iam:ListRoleTags",
     ]
     resources = [
-      "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/${local.pilot_role_name}",
+      "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/${local.target_role_name}",
     ]
   }
 
   statement {
-    sid    = "ReadPilotPolicy"
+    sid    = "ReadTargetPolicy"
     effect = "Allow"
     actions = [
       "iam:GetPolicy",
@@ -103,18 +103,18 @@ data "aws_iam_policy_document" "github_actions_plan" {
       "iam:ListPolicyVersions",
     ]
     resources = [
-      "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${local.pilot_policy_name}",
+      "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${local.target_policy_name}",
     ]
   }
 }
 
-resource "aws_iam_policy" "github_actions_plan" {
-  name        = local.github_actions_plan_policy_name
-  description = "Least-privilege backend and IAM reads for the OpenTofu plan POC"
-  policy      = data.aws_iam_policy_document.github_actions_plan.json
+resource "aws_iam_policy" "github_actions_opentofu_plan" {
+  name        = local.github_actions_opentofu_plan_policy_name
+  description = "Least-privilege backend and IAM reads for GitHub Actions OpenTofu plans"
+  policy      = data.aws_iam_policy_document.github_actions_opentofu_plan.json
 }
 
-resource "aws_iam_role_policy_attachment" "github_actions_plan" {
-  role       = aws_iam_role.github_actions_plan.name
-  policy_arn = aws_iam_policy.github_actions_plan.arn
+resource "aws_iam_role_policy_attachment" "github_actions_opentofu_plan" {
+  role       = aws_iam_role.github_actions_opentofu_plan.name
+  policy_arn = aws_iam_policy.github_actions_opentofu_plan.arn
 }

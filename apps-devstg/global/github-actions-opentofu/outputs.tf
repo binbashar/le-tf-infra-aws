@@ -1,6 +1,6 @@
-output "github_actions_tofu_plan_role_arn" {
+output "github_actions_opentofu_plan_role_arn" {
   description = "Role ARN to configure as the AWS_TOFU_PLAN_ROLE_ARN GitHub variable"
-  value       = aws_iam_role.github_actions_plan.arn
+  value       = aws_iam_role.github_actions_opentofu_plan.arn
 }
 
 output "github_oidc_provider_arn" {

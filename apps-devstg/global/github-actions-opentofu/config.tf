@@ -24,7 +24,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "apps-devstg/github-actions-tofu-plan/terraform.tfstate"
+    key = "apps-devstg/github-actions-opentofu/terraform.tfstate"
   }
 }
 

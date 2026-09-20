@@ -24,7 +24,7 @@ resource "aws_iam_openid_connect_provider" "github" {
   }
 }
 
-data "aws_iam_policy_document" "github_actions_plan_trust" {
+data "aws_iam_policy_document" "github_actions_opentofu_plan_trust" {
   statement {
     sid     = "GitHubActionsAssumeRoleWithWebIdentity"
     effect  = "Allow"
@@ -73,9 +73,9 @@ data "aws_iam_policy_document" "github_actions_plan_trust" {
   }
 }
 
-resource "aws_iam_role" "github_actions_plan" {
-  name                 = local.github_actions_plan_role_name
-  description          = "Read-only OpenTofu plans for the protected GitHub Actions environment"
-  assume_role_policy   = data.aws_iam_policy_document.github_actions_plan_trust.json
+resource "aws_iam_role" "github_actions_opentofu_plan" {
+  name                 = local.github_actions_opentofu_plan_role_name
+  description          = "Read-only OpenTofu plan role for GitHub Actions"
+  assume_role_policy   = data.aws_iam_policy_document.github_actions_opentofu_plan_trust.json
   max_session_duration = 3600
 }
