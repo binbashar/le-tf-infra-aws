@@ -12,8 +12,9 @@ tested before enabling the next one.
 - Maximum selected layers: one.
 - No apply, destroy, import, state mutation, PR comments, or automatic permission expansion.
 - The stable PR check is `POC | OpenTofu Plan`.
-- PR automation is internal-only: same-repository, non-draft, human-authored PRs from repository
-  owners, organization members, or collaborators. Fork and bot PRs are intentionally skipped.
+- PR automation is internal-only: same-repository, non-draft, human-authored PRs. Creating a head
+  branch in the repository is the write-access boundary; the event-time `author_association` field
+  is not reliable enough to enforce it. Fork and bot PRs are intentionally skipped.
 - Live planning and LLM analysis remain disabled except during an explicitly supervised test
   window.
 
@@ -58,8 +59,9 @@ credential request.
 The repository-side hardening is implemented, but do not enable `TOFU_PLAN_POC_LIVE` or configure
 a usable role ARN until it has been reviewed and its external controls are configured. Verify that:
 
-- fork, draft, bot, and non-member PRs skip all jobs, and a protected-environment reviewer makes a
-  fresh decision for the exact internal commit that will receive a live plan;
+- fork, draft, and bot PRs skip all jobs; only branches pushed to the original repository are in
+  scope, and a protected-environment reviewer makes a fresh decision for the exact internal commit
+  that will receive a live plan;
 - refuse credentialed execution when the PR changes this workflow, its reporting/analyzer code,
   action definitions, provider selections, dependency locks, or other execution-control files;
 - run sanitization and LLM rendering from a trusted revision rather than importing those programs

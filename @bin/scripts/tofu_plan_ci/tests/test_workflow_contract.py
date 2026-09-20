@@ -18,11 +18,11 @@ class WorkflowSecurityContractTests(unittest.TestCase):
     def test_internal_pr_boundary_is_visible(self):
         for expected in (
             "head.repo.full_name == github.repository",
-            "author_association",
             "github.event.pull_request.user.type == 'User'",
             "github.event.pull_request.draft == false",
         ):
             self.assertIn(expected, self.workflow)
+        self.assertNotIn("author_association", self.workflow)
 
     def test_credential_jobs_use_account_and_session_guards(self):
         self.assertIn("allowed-account-ids:", self.workflow)

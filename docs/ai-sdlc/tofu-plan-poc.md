@@ -12,8 +12,10 @@ Staged activation and rollback checklist:
 ## Current scope
 
 - Runs on PR open, reopen, ready-for-review, and every new PR commit (`synchronize`), but only for
-  non-draft same-repository PRs authored by an `OWNER`, `MEMBER`, or `COLLABORATOR`. Fork PRs and
-  bot-authored PRs register no runner work; supporting external contributors is outside this POC.
+  non-draft, human-authored PRs whose head branch lives in this repository. Creating that branch
+  requires repository write access. GitHub's event-time `author_association` is deliberately not
+  used because it can remain `CONTRIBUTOR` for an internal member. Fork PRs and bot-authored PRs
+  register no runner work; supporting external contributors is outside this POC.
 - A newer commit cancels an in-progress stale run; the cancelled run remains in Actions history.
 - Detects root modules by the nearest `config.tf`, including nested layers. It does not assume an
   `account/region/layer` depth.
