@@ -1,4 +1,9 @@
 name: POC | OpenTofu plan
+run-name: >-
+  POC debug | head=${{ github.event.pull_request.head.repo.full_name }} |
+  repo=${{ github.repository }} | draft=${{ github.event.pull_request.draft }} |
+  association=${{ github.event.pull_request.author_association }} |
+  author-type=${{ github.event.pull_request.user.type }}
 
 on:
   pull_request:
