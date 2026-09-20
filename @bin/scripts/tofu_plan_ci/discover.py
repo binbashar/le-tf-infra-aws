@@ -78,7 +78,7 @@ def revision_roots(
 
 def git_changed_paths(root: Path, base: str, head: str) -> list[str]:
     proc = subprocess.run(
-        ["git", "diff", "--name-only", "-z", base, head, "--"],
+        ["git", "diff", "--name-only", "-z", f"{base}...{head}", "--"],
         cwd=root,
         check=True,
         stdout=subprocess.PIPE,

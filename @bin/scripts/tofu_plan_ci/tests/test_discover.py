@@ -1,9 +1,11 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from tofu_plan_ci.discover import (
     discover_from_paths,
+    git_changed_paths,
     manual_discovery,
     working_tree_roots,
 )
@@ -129,6 +131,15 @@ class DiscoverTests(unittest.TestCase):
             (cached / "config.tf").touch()
             active, _ = working_tree_roots(root, {"apps-devstg"})
             self.assertEqual(active, {"apps-devstg/us-east-1/real"})
+
+    def test_git_diff_uses_the_merge_base_for_a_branch_behind_base(self):
+        with patch("tofu_plan_ci.discover.subprocess.run") as run:
+            run.return_value.stdout = b"main.tf\0"
+            self.assertEqual(
+                git_changed_paths(Path("/repo"), "base-sha", "head-sha"),
+                ["main.tf"],
+            )
+        self.assertIn("base-sha...head-sha", run.call_args.args[0])
 
 
 if __name__ == "__main__":

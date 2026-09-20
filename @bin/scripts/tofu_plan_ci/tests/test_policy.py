@@ -1,8 +1,9 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from tofu_plan_ci.policy import changed_hcl_documents, live_plan_blockers
+from tofu_plan_ci.policy import changed_hcl_documents, git_hcl_patch, live_plan_blockers
 
 
 class LivePlanPolicyTests(unittest.TestCase):
@@ -66,6 +67,12 @@ class LivePlanPolicyTests(unittest.TestCase):
                 ["main.tf"], hcl_documents=documents
             )
             self.assertTrue(any("symlink" in reason for reason in blockers))
+
+    def test_hcl_patch_uses_the_merge_base_for_a_branch_behind_base(self):
+        with patch("tofu_plan_ci.policy.subprocess.run") as run:
+            run.return_value.stdout = ""
+            self.assertEqual(git_hcl_patch(Path("/repo"), "base", "head"), "")
+        self.assertIn("base...head", run.call_args.args[0])
 
 
 if __name__ == "__main__":
