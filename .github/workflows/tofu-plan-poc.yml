@@ -33,7 +33,7 @@ jobs:
            (github.event.pull_request.author_association == 'OWNER' ||
             github.event.pull_request.author_association == 'MEMBER' ||
             github.event.pull_request.author_association == 'COLLABORATOR') &&
-           github.event.sender.type != 'Bot') }}
+           github.event.pull_request.user.type == 'User') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -286,7 +286,7 @@ jobs:
             (github.event.pull_request.author_association == 'OWNER' ||
              github.event.pull_request.author_association == 'MEMBER' ||
              github.event.pull_request.author_association == 'COLLABORATOR') &&
-            github.event.sender.type != 'Bot')) }}
+            github.event.pull_request.user.type == 'User')) }}
     needs: [discover, validation, live_plan, analysis]
     runs-on: ubuntu-24.04
     timeout-minutes: 5

@@ -19,7 +19,7 @@ class WorkflowSecurityContractTests(unittest.TestCase):
         for expected in (
             "head.repo.full_name == github.repository",
             "author_association",
-            "github.event.sender.type != 'Bot'",
+            "github.event.pull_request.user.type == 'User'",
             "github.event.pull_request.draft == false",
         ):
             self.assertIn(expected, self.workflow)
