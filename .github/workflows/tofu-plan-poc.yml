@@ -30,8 +30,9 @@ jobs:
           (github.event_name == 'pull_request' &&
            github.event.pull_request.draft == false &&
            github.event.pull_request.head.repo.full_name == github.repository &&
-           contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
-                    github.event.pull_request.author_association) &&
+           (github.event.pull_request.author_association == 'OWNER' ||
+            github.event.pull_request.author_association == 'MEMBER' ||
+            github.event.pull_request.author_association == 'COLLABORATOR') &&
            github.event.sender.type != 'Bot') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -282,8 +283,9 @@ jobs:
            (github.event_name == 'pull_request' &&
             github.event.pull_request.draft == false &&
             github.event.pull_request.head.repo.full_name == github.repository &&
-            contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
-                     github.event.pull_request.author_association) &&
+            (github.event.pull_request.author_association == 'OWNER' ||
+             github.event.pull_request.author_association == 'MEMBER' ||
+             github.event.pull_request.author_association == 'COLLABORATOR') &&
             github.event.sender.type != 'Bot')) }}
     needs: [discover, validation, live_plan, analysis]
     runs-on: ubuntu-24.04
