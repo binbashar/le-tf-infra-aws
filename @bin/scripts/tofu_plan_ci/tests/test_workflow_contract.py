@@ -30,6 +30,13 @@ class WorkflowSecurityContractTests(unittest.TestCase):
         self.assertEqual(self.workflow.count("mask-aws-account-id: true"), 2)
         self.assertIn("needs.discover.outputs.live_eligible == 'true'", self.workflow)
 
+    def test_report_receives_head_sha_for_artifact_provenance(self):
+        report = self.workflow.split("\n  report:\n", maxsplit=1)[1]
+        self.assertIn(
+            "HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}",
+            report,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

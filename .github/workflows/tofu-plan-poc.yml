@@ -292,6 +292,7 @@ jobs:
         ${{ vars.TOFU_PLAN_POC_LIVE == 'true' &&
             needs.discover.outputs.live_eligible == 'true' }}
       ANALYSIS_STATUS: ${{ needs.analysis.outputs.status || needs.analysis.result }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PYTHONPATH: trusted/@bin/scripts
     steps:
       - name: Checkout reporting tooling
