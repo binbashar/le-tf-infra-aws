@@ -1,8 +1,8 @@
-# GitHub Actions OpenTofu plan identity
+# GitHub Actions OpenTofu identity
 
-This layer owns the account-wide GitHub Actions OIDC provider in `apps-devstg` and the dedicated
-role used by the OpenTofu plan POC. It does not configure Bedrock access and it is not a deployment
-role.
+This layer owns the account-wide GitHub Actions OIDC provider in `apps-devstg` and dedicated
+OpenTofu automation identities. The initial role is restricted to plans; it does not configure
+Bedrock access and is not a deployment role.
 
 ## Trust boundary
 
@@ -19,10 +19,10 @@ administrator bypass. Keep those controls in place while this role exists.
 
 ## Permission boundary
 
-The role can read only the pilot layer's S3 state object, acquire and release its exact DynamoDB
-lock, and inspect the `LeverageTest` role and `leverage_test` managed policy. It has no IAM mutation,
-secret-read, KMS-decrypt, `iam:PassRole`, or general resource-read permission. State object writes
-and deletes are explicitly denied.
+The initial plan role can read only its configured target layer's S3 state object, acquire and
+release its exact DynamoDB lock, and inspect the target role and managed policy. It has no IAM
+mutation, secret-read, KMS-decrypt, `iam:PassRole`, or general resource-read permission. State
+object writes and deletes are explicitly denied.
 
 The DynamoDB write operations are only for the state lock. If a plan requires any other write,
 state access, or broad read, stop and review the provider operation rather than broadening the
