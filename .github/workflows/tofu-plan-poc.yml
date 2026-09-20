@@ -1,0 +1,349 @@
+name: POC | OpenTofu plan
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      layer:
+        description: Active layer to inspect (must match the POC allowlist)
+        required: false
+        type: string
+        default: apps-devstg/global/cli-test-layer
+
+concurrency:
+  group: tofu-plan-poc-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: '@bin/scripts'
+  POC_LAYER: ${{ vars.TOFU_PLAN_POC_LAYER || 'apps-devstg/global/cli-test-layer' }}
+
+jobs:
+  discover:
+    name: Test tooling and discover layers
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (github.event_name == 'pull_request' &&
+           github.event.pull_request.draft == false &&
+           github.event.pull_request.head.repo.full_name == github.repository &&
+           contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
+                    github.event.pull_request.author_association) &&
+           github.event.sender.type != 'Bot') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      layers: ${{ steps.run.outputs.layers }}
+      has_layers: ${{ steps.run.outputs.has_layers }}
+      blocked: ${{ steps.run.outputs.blocked }}
+      live_eligible: ${{ steps.run.outputs.live_eligible }}
+    steps:
+      - name: Checkout code and history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+
+      - name: Test workflow tooling
+        run: python -m unittest discover -s @bin/scripts/tofu_plan_ci/tests -v
+
+      - name: Discover affected layers
+        id: run
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          MANUAL_LAYER: ${{ inputs.layer }}
+          MAX_LAYERS: ${{ vars.TOFU_PLAN_POC_MAX_LAYERS || '1' }}
+        run: python -m tofu_plan_ci.workflow discover
+
+      - name: Upload discovery evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tofu-plan-poc-discovery
+          path: ${{ runner.temp }}/tofu-plan-poc-discovery/
+          retention-days: 7
+          if-no-files-found: error
+
+  validation:
+    name: OpenTofu validation · ${{ matrix.layer }}
+    if: ${{ needs.discover.outputs.has_layers == 'true' }}
+    needs: discover
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        layer: ${{ fromJSON(needs.discover.outputs.layers) }}
+    env:
+      LAYER: ${{ matrix.layer }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f # v1
+        with:
+          tofu_version: ${{ vars.OPENTOFU_VERSION || '1.9.1' }}
+          tofu_wrapper: false
+
+      - name: Initialize without backend, validate, and report
+        id: run
+        run: python -m tofu_plan_ci.workflow static
+
+      - name: Upload sanitized validation evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tofu-plan-poc-validation-${{ steps.run.outputs.slug }}
+          path: ${{ steps.run.outputs.report_dir }}/
+          retention-days: 7
+          if-no-files-found: error
+
+  live_plan:
+    name: Live plan · ${{ matrix.layer }}
+    if: >-
+      ${{ needs.discover.outputs.has_layers == 'true' &&
+          needs.discover.outputs.live_eligible == 'true' &&
+          vars.TOFU_PLAN_POC_LIVE == 'true' &&
+          vars.AWS_TOFU_PLAN_ROLE_ARN != '' &&
+          vars.AWS_TOFU_PLAN_ACCOUNT_ID != '' }}
+    needs: [discover, validation]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: tofu-plan-poc
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        layer: ${{ fromJSON(needs.discover.outputs.layers) }}
+    env:
+      LAYER: ${{ matrix.layer }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      CANDIDATE_ROOT: ${{ github.workspace }}/candidate
+      PYTHONPATH: trusted/@bin/scripts
+    steps:
+      - name: Checkout candidate infrastructure
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: candidate
+          persist-credentials: false
+
+      - name: Checkout trusted tooling from the base revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          path: trusted
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f # v1
+        with:
+          tofu_version: ${{ vars.OPENTOFU_VERSION || '1.9.1' }}
+          tofu_wrapper: false
+
+      - name: Configure short-lived AWS plan credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
+        with:
+          role-to-assume: ${{ vars.AWS_TOFU_PLAN_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          role-session-name: tofu-plan-poc-${{ github.run_id }}
+          role-duration-seconds: 900
+          allowed-account-ids: ${{ vars.AWS_TOFU_PLAN_ACCOUNT_ID }}
+          mask-aws-account-id: true
+          unset-current-credentials: true
+
+      - name: Initialize backend, plan, sanitize, and report
+        id: run
+        env:
+          COMMON_TFVARS: ${{ secrets.TOFU_PLAN_COMMON_TFVARS }}
+        run: python -m tofu_plan_ci.workflow live
+
+      - name: Upload sanitized plan evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tofu-plan-poc-layer-${{ steps.run.outputs.slug }}
+          path: ${{ steps.run.outputs.report_dir }}/
+          retention-days: 7
+          if-no-files-found: error
+
+  analysis:
+    name: Explain plan with Bedrock
+    if: >-
+      ${{ always() &&
+          needs.discover.outputs.has_layers == 'true' &&
+          needs.discover.outputs.live_eligible == 'true' &&
+          needs.live_plan.result == 'success' &&
+          vars.TOFU_PLAN_POC_LIVE == 'true' &&
+          vars.TOFU_PLAN_POC_LLM == 'true' &&
+          vars.AWS_TOFU_PLAN_BEDROCK_ROLE_ARN != '' &&
+          vars.AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID != '' }}
+    needs: [discover, live_plan]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: tofu-plan-poc
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    outputs:
+      status: ${{ steps.analyze.outcome || 'not-run' }}
+    env:
+      PYTHONPATH: trusted/@bin/scripts
+    steps:
+      - name: Checkout trusted tooling from the base revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          path: trusted
+          persist-credentials: false
+
+      - name: Download sanitized plan projections
+        id: plans
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: tofu-plan-poc-layer-*
+          path: ${{ runner.temp }}/tofu-plan-poc-reports
+
+      - name: Set up Python
+        if: ${{ steps.plans.outcome == 'success' }}
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Bedrock client
+        if: ${{ steps.plans.outcome == 'success' }}
+        run: >-
+          python -m pip install -q --require-hashes
+          -r trusted/@bin/scripts/tofu_plan_ci/requirements.txt
+
+      - name: Configure short-lived Bedrock credentials
+        if: ${{ steps.plans.outcome == 'success' }}
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
+        with:
+          role-to-assume: ${{ vars.AWS_TOFU_PLAN_BEDROCK_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          role-session-name: tofu-plan-review-${{ github.run_id }}
+          role-duration-seconds: 900
+          allowed-account-ids: ${{ vars.AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID }}
+          mask-aws-account-id: true
+          unset-current-credentials: true
+
+      - name: Analyze sanitized projections
+        id: analyze
+        if: ${{ steps.plans.outcome == 'success' }}
+        continue-on-error: true
+        env:
+          MODEL_ID: ${{ vars.BEDROCK_MODEL_ID || 'us.anthropic.claude-sonnet-4-6' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -m tofu_plan_ci.workflow analyze
+
+      - name: Upload LLM explanation
+        if: ${{ steps.analyze.outcome == 'success' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tofu-plan-poc-llm
+          path: ${{ runner.temp }}/tofu-plan-poc-analysis/
+          retention-days: 7
+          if-no-files-found: error
+
+  report:
+    name: POC | OpenTofu Plan
+    if: >-
+      ${{ always() &&
+          (github.event_name == 'workflow_dispatch' ||
+           (github.event_name == 'pull_request' &&
+            github.event.pull_request.draft == false &&
+            github.event.pull_request.head.repo.full_name == github.repository &&
+            contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
+                     github.event.pull_request.author_association) &&
+            github.event.sender.type != 'Bot')) }}
+    needs: [discover, validation, live_plan, analysis]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    env:
+      REQUIRE_LIVE: >-
+        ${{ vars.TOFU_PLAN_POC_LIVE == 'true' &&
+            needs.discover.outputs.live_eligible == 'true' }}
+      ANALYSIS_STATUS: ${{ needs.analysis.outputs.status || needs.analysis.result }}
+      PYTHONPATH: trusted/@bin/scripts
+    steps:
+      - name: Checkout reporting tooling
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # Static-only POC changes use their candidate reporter for bootstrap/testing;
+          # credential-eligible runs always use the trusted base revision.
+          ref: >-
+            ${{ needs.discover.outputs.live_eligible == 'true' &&
+                (github.event.pull_request.base.sha || github.sha) ||
+                (github.event.pull_request.head.sha || github.sha) }}
+          path: trusted
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+
+      - name: Download discovery evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: tofu-plan-poc-discovery
+          path: ${{ runner.temp }}/tofu-plan-poc-discovery
+
+      - name: Download live plan evidence
+        if: ${{ needs.discover.outputs.has_layers == 'true' && env.REQUIRE_LIVE == 'true' }}
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: tofu-plan-poc-layer-*
+          path: ${{ runner.temp }}/tofu-plan-poc-reports
+
+      - name: Download credential-free validation evidence
+        if: ${{ needs.discover.outputs.has_layers == 'true' && env.REQUIRE_LIVE != 'true' }}
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: tofu-plan-poc-validation-*
+          path: ${{ runner.temp }}/tofu-plan-poc-reports
+
+      - name: Download LLM explanation
+        if: ${{ needs.analysis.outputs.status == 'success' }}
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: tofu-plan-poc-llm
+          path: ${{ runner.temp }}/tofu-plan-poc-analysis
+
+      - name: Build and enforce native GitHub summary
+        run: python -m tofu_plan_ci.workflow aggregate

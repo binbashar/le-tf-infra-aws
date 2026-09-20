@@ -3,3 +3,9 @@
 
 * @binbashar/leverage-ref-architecture-aws-admin
 * @binbashar/leverage-ref-architecture-aws-dev
+
+# Credential-bearing plan automation must be explicitly reviewed by administrators.
+/.github/CODEOWNERS @binbashar/leverage-ref-architecture-aws-admin
+/.github/workflows/tofu-plan-poc.yml @binbashar/leverage-ref-architecture-aws-admin
+/@bin/scripts/tofu_plan_ci/ @binbashar/leverage-ref-architecture-aws-admin
+/docs/ai-sdlc/tofu-plan-poc*.md @binbashar/leverage-ref-architecture-aws-admin
