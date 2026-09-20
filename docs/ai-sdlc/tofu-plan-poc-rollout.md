@@ -18,6 +18,32 @@ tested before enabling the next one.
 - Live planning and LLM analysis remain disabled except during an explicitly supervised test
   window.
 
+## POC execution record
+
+Status observed on 2026-09-20:
+
+- Gate 1 passed in [GitHub run 35480457604](https://github.com/binbashar/le-tf-infra-aws/actions/runs/35480457604):
+  discovery, credential-free initialization, validation, artifact transfer, provenance checks, and
+  the aggregate check completed successfully for the pilot layer.
+- Gate 2 is configured with the `tofu-plan-poc` environment. The
+  `leverage-ref-architecture-aws-admin` team is its required reviewer, prevent-self-review is
+  enabled, administrator bypass is disabled, and the environment-scoped
+  `TOFU_PLAN_COMMON_TFVARS` secret exists. Its value is not inspectable through GitHub after it is
+  set.
+- Repository variables explicitly keep `TOFU_PLAN_POC_LIVE=false` and
+  `TOFU_PLAN_POC_LLM=false`; the pilot layer, one-layer limit, OpenTofu version, and AWS region are
+  also fixed rather than relying on workflow defaults.
+- No AWS role, role ARN variable, account ID variable, OIDC trust, or live plan has been created or
+  enabled.
+
+The credentialed gates remain stopped because the current `master` branch protection does not
+require code-owner review or approval of the last push. Repository Actions are also currently
+allowed without organization-level SHA-pin enforcement, although this workflow pins every action
+it uses. Enable or explicitly accept those repository-wide controls before Gate 4. The local
+operator setup also lacks the configured `apps-devstg` profile, so the existing AWS GitHub OIDC
+provider and backend encryption could not yet be inspected; do not create a duplicate provider or
+guess its ownership.
+
 ## Gate 1: credential-free pull request
 
 1. Put only the POC implementation and documentation on a dedicated branch, open a PR, and mark it
