@@ -150,7 +150,7 @@ class PlanReportTests(unittest.TestCase):
             out = Path(directory)
             main(["live", "--layer", "apps-devstg/global/cli-test-layer", "--init-exit", "0", "--validate-exit", "0", "--plan-exit", "1", "--failure-stage", "plan", "--denied-action", "dynamodb:PutItem", "--failure-diagnostic", "Error acquiring the state lock", "--out-dir", str(out)])
             result = json.loads((out / "result.json").read_text())
-            self.assertEqual(result["failure"], {"stage": "plan", "denied_action": "dynamodb:PutItem", "diagnostic": "Error acquiring the state lock"})
+            self.assertEqual(result["failure"], {"stage": "plan", "denied_action": "dynamodb:PutItem", "diagnostic": "Error acquiring the state lock", "common_tfvars_shape": None})
             self.assertIn("Denied AWS action", (out / "summary.md").read_text())
 
 

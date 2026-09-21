@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from tofu_plan_ci.workflow import (
+    common_tfvars_shape,
     layer_slug,
     read_backend_profile,
     run_aggregate,
@@ -44,6 +45,11 @@ class WorkflowTests(unittest.TestCase):
             backend.write_text('profile = "bad/profile"\n')
             with self.assertRaises(ValueError):
                 read_backend_profile(backend)
+
+    def test_common_tfvars_shape_excludes_values(self):
+        shape = common_tfvars_shape('accounts = {\n  security = { id = "secret" }\n}\n')
+        self.assertEqual(shape, "accounts=present;accounts.security=present")
+        self.assertNotIn("secret", shape)
 
     def test_static_run_writes_outputs_summary_and_result(self):
         with tempfile.TemporaryDirectory() as directory:

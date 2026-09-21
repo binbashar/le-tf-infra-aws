@@ -21,6 +21,8 @@ DENIED_ACTION = re.compile(
     r"not authorized to perform:\s*([a-z0-9-]+:[A-Za-z][A-Za-z0-9]*)",
     re.IGNORECASE,
 )
+TOP_LEVEL_ACCOUNTS = re.compile(r"(?m)^accounts\s*=")
+SECURITY_ACCOUNT = re.compile(r"(?m)^\s+security\s*=")
 
 
 def _required_env(name: str) -> str:
@@ -132,6 +134,14 @@ def diagnostic_summary_from_logs(paths: Sequence[Path]) -> str | None:
                 if safe and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9 .,:;_/-]{0,159}", safe):
                     return safe
     return None
+
+
+def common_tfvars_shape(value: str) -> str:
+    """Expose only the non-sensitive structure needed by the pilot layer."""
+
+    accounts = "present" if TOP_LEVEL_ACCOUNTS.search(value) else "absent"
+    security = "present" if SECURITY_ACCOUNT.search(value) else "absent"
+    return f"accounts={accounts};accounts.security={security}"
 
 
 def _metadata_args() -> list[str]:
@@ -277,12 +287,14 @@ def run_live(layer: str) -> int:
     failure_stage = None
     denied_action = None
     failure_diagnostic = None
+    common_tfvars_shape_value = None
 
     try:
         allowed_layer = _required_env("POC_LAYER")
         if layer != allowed_layer:
             raise ValueError(f"live plan layer is not the configured POC layer: {layer}")
         common = _required_env("COMMON_TFVARS")
+        common_tfvars_shape_value = common_tfvars_shape(common)
         common_tfvars.write_text(common.rstrip("\n") + "\n", encoding="utf-8")
         common_tfvars.chmod(0o600)
 
@@ -383,6 +395,7 @@ def run_live(layer: str) -> int:
                     *(["--failure-stage", failure_stage] if failure_stage else []),
                     *(["--denied-action", denied_action] if denied_action else []),
                     *(["--failure-diagnostic", failure_diagnostic] if failure_diagnostic else []),
+                    *(["--common-tfvars-shape", common_tfvars_shape_value] if common_tfvars_shape_value else []),
                     *_metadata_args(),
                 ]
             )
