@@ -136,6 +136,25 @@ def diagnostic_summary_from_logs(paths: Sequence[Path]) -> str | None:
     return None
 
 
+def diagnostic_location_from_logs(paths: Sequence[Path]) -> str | None:
+    """Keep only a Terraform basename and line from structured diagnostics."""
+
+    for path in paths:
+        if not path.is_file():
+            continue
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                source_range = json.loads(line).get("diagnostic", {}).get("range") or {}
+                filename = Path(str(source_range.get("filename", ""))).name
+                number = source_range.get("start", {}).get("line")
+            except (json.JSONDecodeError, AttributeError):
+                continue
+            location = f"{filename}:{number}"
+            if re.fullmatch(r"[A-Za-z0-9_.-]+\.tf:[1-9][0-9]*", location):
+                return location
+    return None
+
+
 def common_tfvars_shape(value: str) -> str:
     """Expose only the non-sensitive structure needed by the pilot layer."""
 
@@ -288,6 +307,7 @@ def run_live(layer: str) -> int:
     denied_action = None
     failure_diagnostic = None
     common_tfvars_shape_value = None
+    failure_location = None
 
     try:
         allowed_layer = _required_env("POC_LAYER")
@@ -376,6 +396,9 @@ def run_live(layer: str) -> int:
             failure_diagnostic = diagnostic_summary_from_logs(
                 [runner_temp / "tofu-plan-ui.jsonl"]
             )
+            failure_location = diagnostic_location_from_logs(
+                [runner_temp / "tofu-plan-ui.jsonl"]
+            )
         try:
             plan_report.main(
                 [
@@ -396,6 +419,7 @@ def run_live(layer: str) -> int:
                     *(["--denied-action", denied_action] if denied_action else []),
                     *(["--failure-diagnostic", failure_diagnostic] if failure_diagnostic else []),
                     *(["--common-tfvars-shape", common_tfvars_shape_value] if common_tfvars_shape_value else []),
+                    *(["--failure-location", failure_location] if failure_location else []),
                     *_metadata_args(),
                 ]
             )

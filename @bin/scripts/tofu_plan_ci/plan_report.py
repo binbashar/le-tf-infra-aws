@@ -20,6 +20,7 @@ EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?![\w.-])
 INSTANCE_KEY = re.compile(r"\[[^\]]*\]")
 AWS_ACTION = re.compile(r"[a-z0-9-]+:[A-Za-z][A-Za-z0-9]*\Z")
 FAILURE_DIAGNOSTIC = re.compile(r"[A-Za-z0-9][A-Za-z0-9 .,:;_/-]{0,159}\Z")
+FAILURE_LOCATION = re.compile(r"[A-Za-z0-9_.-]+\.tf:[1-9][0-9]*\Z")
 MISSING = object()
 
 SECURITY_SENSITIVE_TYPES = (
@@ -251,6 +252,7 @@ def _write_result(
     denied_action: str | None = None,
     failure_diagnostic: str | None = None,
     common_tfvars_shape: str | None = None,
+    failure_location: str | None = None,
 ) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     result = {
@@ -265,7 +267,7 @@ def _write_result(
         "review_signals": review["review_signals"] if review else [],
         "metadata": metadata or {},
         "failure": (
-            {"stage": failure_stage, "denied_action": denied_action, "diagnostic": failure_diagnostic, "common_tfvars_shape": common_tfvars_shape}
+            {"stage": failure_stage, "denied_action": denied_action, "diagnostic": failure_diagnostic, "common_tfvars_shape": common_tfvars_shape, "location": failure_location}
             if failure_stage
             else None
         ),
@@ -295,6 +297,8 @@ def _write_result(
             summary += f"- Diagnostic: `{failure_diagnostic}`\n"
         if common_tfvars_shape:
             summary += f"- Common input shape: `{common_tfvars_shape}`\n"
+        if failure_location:
+            summary += f"- Diagnostic location: `{failure_location}`\n"
         summary += (
             "\n> No raw logs, state, variables, or binary plan are included.\n"
             if mode == "live"
@@ -323,6 +327,7 @@ def _parser() -> argparse.ArgumentParser:
     live.add_argument("--denied-action")
     live.add_argument("--failure-diagnostic")
     live.add_argument("--common-tfvars-shape", choices=("accounts=present;accounts.security=present", "accounts=present;accounts.security=absent", "accounts=absent;accounts.security=present", "accounts=absent;accounts.security=absent"))
+    live.add_argument("--failure-location")
     live.add_argument("--out-dir", type=Path, required=True)
     for command in (static, live):
         command.add_argument("--repository", default="unknown")
@@ -361,6 +366,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         raise SystemExit("denied action has an unsafe format")
     if args.failure_diagnostic and not FAILURE_DIAGNOSTIC.fullmatch(args.failure_diagnostic):
         raise SystemExit("failure diagnostic has an unsafe format")
+    if args.failure_location and not FAILURE_LOCATION.fullmatch(args.failure_location):
+        raise SystemExit("failure location has an unsafe format")
     if args.plan_exit in (0, 2) and args.plan_json and args.plan_json.is_file():
         review = build_review(
             json.loads(args.plan_json.read_text(encoding="utf-8")),
@@ -382,6 +389,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         denied_action=args.denied_action,
         failure_diagnostic=args.failure_diagnostic,
         common_tfvars_shape=args.common_tfvars_shape,
+        failure_location=args.failure_location,
     )
     return 0
 
