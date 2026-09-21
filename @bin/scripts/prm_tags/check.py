@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 
 TAG_KEY = "aws-apn-id"
@@ -76,6 +77,31 @@ def has_prm_tag(layer_path: str) -> bool:
     return False
 
 
+# `tags = local.tags`, `tags = merge(local.tags, ...)`, or a provider
+# `default_tags` block. default_tags is the only one that reaches resources
+# inside modules that expose no `tags` variable of their own.
+_CONSUMED = re.compile(r'tags\s*=\s*(local\.tags|merge\s*\(\s*local\.tags)|default_tags')
+
+
+def tags_are_consumed(layer_path: str) -> bool:
+    """True when the layer actually attaches local.tags to something.
+
+    A layer can define local.tags with the PRM key and never pass it to any
+    resource, module or provider. It then satisfies has_prm_tag() while
+    attributing nothing -- the failure mode this catches.
+    """
+    for name in sorted(os.listdir(layer_path)):
+        if not name.endswith(".tf"):
+            continue
+        full = os.path.join(layer_path, name)
+        if os.path.islink(full) or not os.path.isfile(full):
+            continue
+        with open(full, encoding="utf-8", errors="ignore") as handle:
+            if _CONSUMED.search(handle.read()):
+                return True
+    return False
+
+
 def load_allowlist(path: str) -> set[str]:
     """Read allowlist.txt: one layer path per line, `#` starts a comment."""
     if not os.path.exists(path):
@@ -97,11 +123,23 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     allowed = load_allowlist(args.allowlist)
-    missing = [
-        rel
-        for rel in sorted(layer_dirs(args.root))
-        if rel not in allowed and not has_prm_tag(os.path.join(args.root, rel))
-    ]
+    missing, inert = [], []
+    for rel in sorted(layer_dirs(args.root)):
+        if rel in allowed:
+            continue
+        path = os.path.join(args.root, rel)
+        if not has_prm_tag(path):
+            missing.append(rel)
+        elif not tags_are_consumed(path):
+            inert.append(rel)
+
+    if inert:
+        print(f"{len(inert)} layer(s) define the '{TAG_KEY}' tag but never attach it:\n")
+        for rel in inert:
+            print(f"  {rel}")
+        print("\nPass `tags = local.tags` to the layer's resources/modules, or add")
+        print("`default_tags { tags = local.tags }` to its provider. If the layer creates")
+        print("nothing taggable, drop the tag line and allowlist it with that reason.\n")
 
     if missing:
         print(f"{len(missing)} layer(s) missing the PRM '{TAG_KEY}' tag:\n")
@@ -109,9 +147,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {rel}")
         print(f'\nAdd `"{TAG_KEY}" = local.prm_apn_id` to the layer\'s local.tags map,')
         print("or add the layer to @bin/scripts/prm_tags/allowlist.txt with a reason.")
+
+    if missing or inert:
         return 1
 
-    print(f"OK - every layer carries the PRM '{TAG_KEY}' tag.")
+    print(f"OK - every layer carries the PRM '{TAG_KEY}' tag and attaches it.")
     return 0
 
 

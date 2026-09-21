@@ -42,3 +42,9 @@ management/us-east-1/security-monitoring --
 management/us-east-2/security-monitoring --
 security/us-east-1/security-monitoring --
 security/us-east-2/security-monitoring --
+
+#-- (b) nothing taggable: local.tags would attach to no resource ---------------
+management/us-east-1/backups                           # aws_backup_global_settings is an account-level setting and takes no tags
+management/us-east-1/firewall-manager                  # aws_fms_admin_account is a delegation and takes no tags
+network/us-east-1/security-certs                       # declares no resources
+apps-prd/us-east-1/app-ai-lab                          # SES identities/DKIM and Route53 records take no tags (only zones do)
