@@ -40,6 +40,54 @@ SKIP_DIRS = {
 }
 
 
+def _strip_comments(text: str) -> str:
+    """Remove HCL comments (#, //, /* */) while respecting quoted strings.
+
+    Needed because both checks below match raw text: a commented-out
+    `# tags = local.tags` would otherwise satisfy the guardrail, and commenting
+    that line out is exactly how a layer stops attaching the tag.
+
+    Heredoc bodies are not tracked, so a `#` inside one truncates that line.
+    That can only remove a match, never invent one, so the check fails closed.
+    """
+    out, i, n, in_string = [], 0, len(text), False
+    while i < n:
+        ch = text[i]
+        if in_string:
+            if ch == "\\" and i + 1 < n:
+                out.append(text[i:i + 2]); i += 2; continue
+            if ch == '"':
+                in_string = False
+            out.append(ch); i += 1; continue
+        if ch == '"':
+            in_string = True; out.append(ch); i += 1; continue
+        if ch == "#" or (ch == "/" and i + 1 < n and text[i + 1] == "/"):
+            nl = text.find("\n", i)
+            i = n if nl < 0 else nl          # keep the newline itself
+            continue
+        if ch == "/" and i + 1 < n and text[i + 1] == "*":
+            end = text.find("*/", i + 2)
+            i = n if end < 0 else end + 2
+            out.append(" ")                  # keep surrounding tokens apart
+            continue
+        out.append(ch); i += 1
+    return "".join(out)
+
+
+def _layer_code(layer_path: str) -> str:
+    """Concatenated, comment-stripped HCL of a layer's own (non-symlinked) files."""
+    chunks = []
+    for name in sorted(os.listdir(layer_path)):
+        if not name.endswith(".tf"):
+            continue
+        full = os.path.join(layer_path, name)
+        if os.path.islink(full) or not os.path.isfile(full):
+            continue
+        with open(full, encoding="utf-8", errors="ignore") as handle:
+            chunks.append(_strip_comments(handle.read()))
+    return "\n".join(chunks)
+
+
 def layer_dirs(root: str):
     """Yield every layer path relative to root. A layer is a dir with config.tf."""
     for dirpath, dirnames, filenames in os.walk(root):
@@ -53,28 +101,19 @@ def layer_dirs(root: str):
 
 
 def has_prm_tag(layer_path: str) -> bool:
-    """True when any .tf file in the layer references the tag key.
+    """True when the layer's own .tf files reference the tag key in real code.
 
-    Deliberately a substring check rather than an HCL parse: this catches the
+    Symlinks are skipped: every layer symlinks common-variables.tf to the shared
+    config/common-variables.tf, which documents the tag key in a comment --
+    following it would make all linked layers pass regardless of their contents.
+    Comments are stripped for the same reason.
+
+    Deliberately a substring check rather than an HCL parse: it catches the
     forgotten-line case, which is the only one that happens in practice, while
     staying dependency-free. Whether the tag actually reaches resources is
     settled by `leverage tofu plan`, not by this check.
-
-    Symlinks are skipped. Every layer symlinks common-variables.tf to the
-    shared config/common-variables.tf, which documents the tag key in a
-    comment -- following it would make all 161 linked layers pass regardless
-    of their own contents. A layer has to carry the tag in its own files.
     """
-    for name in sorted(os.listdir(layer_path)):
-        if not name.endswith(".tf"):
-            continue
-        full = os.path.join(layer_path, name)
-        if os.path.islink(full) or not os.path.isfile(full):
-            continue
-        with open(full, encoding="utf-8", errors="ignore") as handle:
-            if TAG_KEY in handle.read():
-                return True
-    return False
+    return TAG_KEY in _layer_code(layer_path)
 
 
 # `tags = local.tags`, `tags = merge(local.tags, ...)`, or a provider
@@ -90,16 +129,7 @@ def tags_are_consumed(layer_path: str) -> bool:
     resource, module or provider. It then satisfies has_prm_tag() while
     attributing nothing -- the failure mode this catches.
     """
-    for name in sorted(os.listdir(layer_path)):
-        if not name.endswith(".tf"):
-            continue
-        full = os.path.join(layer_path, name)
-        if os.path.islink(full) or not os.path.isfile(full):
-            continue
-        with open(full, encoding="utf-8", errors="ignore") as handle:
-            if _CONSUMED.search(handle.read()):
-                return True
-    return False
+    return bool(_CONSUMED.search(_layer_code(layer_path)))
 
 
 def load_allowlist(path: str) -> set[str]:
