@@ -18,6 +18,7 @@ GITHUB_TOKEN = re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-
 JWT = re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b")
 EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?![\w.-])")
 INSTANCE_KEY = re.compile(r"\[[^\]]*\]")
+AWS_ACTION = re.compile(r"[a-z0-9-]+:[A-Za-z][A-Za-z0-9]*\Z")
 MISSING = object()
 
 SECURITY_SENSITIVE_TYPES = (
@@ -245,6 +246,8 @@ def _write_result(
     plan_exit: int | None,
     review: dict | None = None,
     metadata: dict[str, str] | None = None,
+    failure_stage: str | None = None,
+    denied_action: str | None = None,
 ) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     result = {
@@ -258,6 +261,11 @@ def _write_result(
         "summary": review["summary"] if review else None,
         "review_signals": review["review_signals"] if review else [],
         "metadata": metadata or {},
+        "failure": (
+            {"stage": failure_stage, "denied_action": denied_action}
+            if failure_stage
+            else None
+        ),
     }
     (out_dir / "result.json").write_text(
         json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -269,12 +277,21 @@ def _write_result(
         summary = render_review(review)
     else:
         safe_layer = _markdown_code(layer)
-        summary = (
-            f"## OpenTofu static validation: {safe_layer}\n\n"
-            f"- Init (`-backend=false`): `{init_exit}`\n"
-            f"- Validate: `{validate_exit}`\n"
-            f"- Result: **{status}**\n\n"
-            "> No AWS credentials were used and no live plan was produced.\n"
+        heading = "OpenTofu live plan" if mode == "live" else "OpenTofu static validation"
+        summary = f"## {heading}: {safe_layer}\n\n"
+        summary += f"- Init (`-backend=false`): `{init_exit}`\n"
+        summary += f"- Validate: `{validate_exit}`\n"
+        if mode == "live":
+            summary += f"- Plan: `{plan_exit}`\n"
+        summary += f"- Result: **{status}**\n\n"
+        if failure_stage:
+            summary += f"- Failed stage: `{failure_stage}`\n"
+        if denied_action:
+            summary += f"- Denied AWS action: `{denied_action}`\n"
+        summary += (
+            "\n> No raw logs, state, variables, or binary plan are included.\n"
+            if mode == "live"
+            else "\n> No AWS credentials were used and no live plan was produced.\n"
         )
     (out_dir / "summary.md").write_text(summary, encoding="utf-8")
 
@@ -295,6 +312,8 @@ def _parser() -> argparse.ArgumentParser:
     live.add_argument("--validate-exit", type=int, required=True)
     live.add_argument("--plan-exit", type=int, required=True)
     live.add_argument("--plan-json", type=Path)
+    live.add_argument("--failure-stage", choices=("init", "validate", "plan"))
+    live.add_argument("--denied-action")
     live.add_argument("--out-dir", type=Path, required=True)
     for command in (static, live):
         command.add_argument("--repository", default="unknown")
@@ -329,6 +348,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     review = None
+    if args.denied_action and not AWS_ACTION.fullmatch(args.denied_action):
+        raise SystemExit("denied action has an unsafe format")
     if args.plan_exit in (0, 2) and args.plan_json and args.plan_json.is_file():
         review = build_review(
             json.loads(args.plan_json.read_text(encoding="utf-8")),
@@ -346,6 +367,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         plan_exit=args.plan_exit,
         review=review,
         metadata=metadata,
+        failure_stage=args.failure_stage,
+        denied_action=args.denied_action,
     )
     return 0
 

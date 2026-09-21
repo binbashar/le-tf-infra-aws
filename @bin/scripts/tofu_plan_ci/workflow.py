@@ -17,6 +17,10 @@ from . import bedrock_analysis, discover, plan_report
 PROFILE = re.compile(
     r'^\s*profile\s*=\s*"(?P<profile>[A-Za-z0-9_-]+)"\s*(?:#.*)?$'
 )
+DENIED_ACTION = re.compile(
+    r"not authorized to perform:\s*([a-z0-9-]+:[A-Za-z][A-Za-z0-9]*)",
+    re.IGNORECASE,
+)
 
 
 def _required_env(name: str) -> str:
@@ -98,6 +102,17 @@ def run_logged(
     finally:
         if stderr_stream:
             stderr_stream.close()
+
+
+def denied_action_from_logs(paths: Sequence[Path]) -> str | None:
+    """Extract only a denied IAM action; never retain arbitrary error text."""
+
+    for path in paths:
+        if not path.is_file():
+            continue
+        if match := DENIED_ACTION.search(path.read_text(encoding="utf-8", errors="replace")):
+            return match.group(1)
+    return None
 
 
 def _metadata_args() -> list[str]:
@@ -240,6 +255,8 @@ def run_live(layer: str) -> int:
     plan_file = runner_temp / f"tofu-plan-{slug}"
     plan_json = runner_temp / f"tofu-plan-{slug}.json"
     init_exit = validate_exit = plan_exit = 99
+    failure_stage = None
+    denied_action = None
 
     try:
         allowed_layer = _required_env("POC_LAYER")
@@ -309,6 +326,21 @@ def run_live(layer: str) -> int:
     except (OSError, ValueError) as error:
         print(f"::error::{error}")
     finally:
+        if init_exit != 0:
+            failure_stage = "init"
+        elif validate_exit != 0:
+            failure_stage = "validate"
+        elif plan_exit not in (0, 2):
+            failure_stage = "plan"
+        if failure_stage:
+            denied_action = denied_action_from_logs(
+                [
+                    runner_temp / "tofu-live-init.log",
+                    runner_temp / "tofu-live-validate.log",
+                    runner_temp / "tofu-plan-ui.jsonl",
+                    runner_temp / "tofu-show.log",
+                ]
+            )
         try:
             plan_report.main(
                 [
@@ -325,6 +357,8 @@ def run_live(layer: str) -> int:
                     str(plan_json),
                     "--out-dir",
                     str(report_dir),
+                    *(["--failure-stage", failure_stage] if failure_stage else []),
+                    *(["--denied-action", denied_action] if denied_action else []),
                     *_metadata_args(),
                 ]
             )

@@ -145,6 +145,14 @@ class PlanReportTests(unittest.TestCase):
             self.assertEqual(result["status"], "failed")
             self.assertIsNone(result["plan_exit_code"])
 
+    def test_live_failure_exposes_only_stage_and_action(self):
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory)
+            main(["live", "--layer", "apps-devstg/global/cli-test-layer", "--init-exit", "0", "--validate-exit", "0", "--plan-exit", "1", "--failure-stage", "plan", "--denied-action", "dynamodb:PutItem", "--out-dir", str(out)])
+            result = json.loads((out / "result.json").read_text())
+            self.assertEqual(result["failure"], {"stage": "plan", "denied_action": "dynamodb:PutItem"})
+            self.assertIn("Denied AWS action", (out / "summary.md").read_text())
+
 
 if __name__ == "__main__":
     unittest.main()
