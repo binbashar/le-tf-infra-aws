@@ -115,6 +115,25 @@ def denied_action_from_logs(paths: Sequence[Path]) -> str | None:
     return None
 
 
+def diagnostic_summary_from_logs(paths: Sequence[Path]) -> str | None:
+    """Keep only OpenTofu's structured error summary, never its detail text."""
+
+    for path in paths:
+        if not path.is_file():
+            continue
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                summary = json.loads(line).get("diagnostic", {}).get("summary")
+            except json.JSONDecodeError:
+                continue
+            if isinstance(summary, str) and summary:
+                safe = plan_report.redact_text(summary)
+                safe = re.sub(r"[^A-Za-z0-9 .,:;_/-]", "?", safe)[:160].strip()
+                if safe and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9 .,:;_/-]{0,159}", safe):
+                    return safe
+    return None
+
+
 def _metadata_args() -> list[str]:
     return [
         "--repository",
@@ -257,6 +276,7 @@ def run_live(layer: str) -> int:
     init_exit = validate_exit = plan_exit = 99
     failure_stage = None
     denied_action = None
+    failure_diagnostic = None
 
     try:
         allowed_layer = _required_env("POC_LAYER")
@@ -341,6 +361,9 @@ def run_live(layer: str) -> int:
                     runner_temp / "tofu-show.log",
                 ]
             )
+            failure_diagnostic = diagnostic_summary_from_logs(
+                [runner_temp / "tofu-plan-ui.jsonl"]
+            )
         try:
             plan_report.main(
                 [
@@ -359,6 +382,7 @@ def run_live(layer: str) -> int:
                     str(report_dir),
                     *(["--failure-stage", failure_stage] if failure_stage else []),
                     *(["--denied-action", denied_action] if denied_action else []),
+                    *(["--failure-diagnostic", failure_diagnostic] if failure_diagnostic else []),
                     *_metadata_args(),
                 ]
             )
