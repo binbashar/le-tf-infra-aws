@@ -77,6 +77,7 @@ def run_logged(
     stdout_path: Path,
     stderr_path: Path | None = None,
     env: Mapping[str, str] | None = None,
+    cwd: Path | None = None,
 ) -> int:
     """Run a command while keeping its potentially sensitive output off the console."""
 
@@ -95,6 +96,7 @@ def run_logged(
                     list(command),
                     check=False,
                     env=dict(env) if env else None,
+                    cwd=cwd,
                     stdout=stdout,
                     stderr=stderr,
                 ).returncode
@@ -220,10 +222,10 @@ def run_discovery() -> int:
 def run_static(layer: str) -> int:
     _, report_dir = _layer_paths(layer)
     runner_temp = Path(_required_env("RUNNER_TEMP"))
+    layer_dir = Path(_required_env("GITHUB_WORKSPACE")) / layer
     init_exit = run_logged(
         [
             "tofu",
-            f"-chdir={layer}",
             "init",
             "-backend=false",
             "-input=false",
@@ -231,12 +233,14 @@ def run_static(layer: str) -> int:
             "-no-color",
         ],
         stdout_path=runner_temp / "tofu-init.log",
+        cwd=layer_dir,
     )
     validate_exit = 99
     if init_exit == 0:
         validate_exit = run_logged(
-            ["tofu", f"-chdir={layer}", "validate", "-no-color"],
+            ["tofu", "validate", "-no-color"],
             stdout_path=runner_temp / "tofu-validate.log",
+            cwd=layer_dir,
         )
 
     plan_report.main(
@@ -331,7 +335,6 @@ def run_live(layer: str) -> int:
         init_exit = run_logged(
             [
                 "tofu",
-                f"-chdir={layer_dir}",
                 "init",
                 "-reconfigure",
                 "-input=false",
@@ -341,18 +344,19 @@ def run_live(layer: str) -> int:
             ],
             stdout_path=runner_temp / "tofu-live-init.log",
             env=process_env,
+            cwd=layer_dir,
         )
         if init_exit == 0:
             validate_exit = run_logged(
-                ["tofu", f"-chdir={layer_dir}", "validate", "-no-color"],
+                ["tofu", "validate", "-no-color"],
                 stdout_path=runner_temp / "tofu-live-validate.log",
                 env=process_env,
+                cwd=layer_dir,
             )
         if validate_exit == 0:
             plan_exit = run_logged(
                 [
                     "tofu",
-                    f"-chdir={layer_dir}",
                     "plan",
                     "-input=false",
                     "-lock-timeout=5m",
@@ -365,13 +369,15 @@ def run_live(layer: str) -> int:
                 ],
                 stdout_path=runner_temp / "tofu-plan-ui.jsonl",
                 env=process_env,
+                cwd=layer_dir,
             )
         if plan_exit in (0, 2):
             show_exit = run_logged(
-                ["tofu", f"-chdir={layer_dir}", "show", "-json", str(plan_file)],
+                ["tofu", "show", "-json", str(plan_file)],
                 stdout_path=plan_json,
                 stderr_path=runner_temp / "tofu-show.log",
                 env=process_env,
+                cwd=layer_dir,
             )
             if show_exit != 0:
                 plan_exit = 1

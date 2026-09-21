@@ -62,6 +62,12 @@ class WorkflowTests(unittest.TestCase):
                 self.assertEqual(run_static("apps-devstg/global/cli-test-layer"), 0)
 
             self.assertEqual(run.call_count, 2)
+            for call in run.call_args_list:
+                self.assertEqual(
+                    call.kwargs["cwd"].resolve(),
+                    (root / "workspace/apps-devstg/global/cli-test-layer").resolve(),
+                )
+                self.assertFalse(any(argument.startswith("-chdir=") for argument in call.args[0]))
             result = json.loads(
                 next((root / "runner/tofu-plan-poc-report").rglob("result.json")).read_text()
             )
@@ -92,7 +98,11 @@ class WorkflowTests(unittest.TestCase):
                 "POC_LAYER": "apps-devstg/global/cli-test-layer",
             }
 
-            def fake_run(command, *, stdout_path, stderr_path=None, env=None):
+            def fake_run(command, *, stdout_path, stderr_path=None, env=None, cwd=None):
+                self.assertEqual(
+                    cwd.resolve(),
+                    (workspace / "apps-devstg/global/cli-test-layer").resolve(),
+                )
                 if "plan" in command:
                     return 2
                 if "show" in command:
