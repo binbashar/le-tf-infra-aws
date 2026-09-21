@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 
 TAG_KEY = "aws-apn-id"
@@ -39,6 +40,54 @@ SKIP_DIRS = {
 }
 
 
+def _strip_comments(text: str) -> str:
+    """Remove HCL comments (#, //, /* */) while respecting quoted strings.
+
+    Needed because both checks below match raw text: a commented-out
+    `# tags = local.tags` would otherwise satisfy the guardrail, and commenting
+    that line out is exactly how a layer stops attaching the tag.
+
+    Heredoc bodies are not tracked, so a `#` inside one truncates that line.
+    That can only remove a match, never invent one, so the check fails closed.
+    """
+    out, i, n, in_string = [], 0, len(text), False
+    while i < n:
+        ch = text[i]
+        if in_string:
+            if ch == "\\" and i + 1 < n:
+                out.append(text[i:i + 2]); i += 2; continue
+            if ch == '"':
+                in_string = False
+            out.append(ch); i += 1; continue
+        if ch == '"':
+            in_string = True; out.append(ch); i += 1; continue
+        if ch == "#" or (ch == "/" and i + 1 < n and text[i + 1] == "/"):
+            nl = text.find("\n", i)
+            i = n if nl < 0 else nl          # keep the newline itself
+            continue
+        if ch == "/" and i + 1 < n and text[i + 1] == "*":
+            end = text.find("*/", i + 2)
+            i = n if end < 0 else end + 2
+            out.append(" ")                  # keep surrounding tokens apart
+            continue
+        out.append(ch); i += 1
+    return "".join(out)
+
+
+def _layer_code(layer_path: str) -> str:
+    """Concatenated, comment-stripped HCL of a layer's own (non-symlinked) files."""
+    chunks = []
+    for name in sorted(os.listdir(layer_path)):
+        if not name.endswith(".tf"):
+            continue
+        full = os.path.join(layer_path, name)
+        if os.path.islink(full) or not os.path.isfile(full):
+            continue
+        with open(full, encoding="utf-8", errors="ignore") as handle:
+            chunks.append(_strip_comments(handle.read()))
+    return "\n".join(chunks)
+
+
 def layer_dirs(root: str):
     """Yield every layer path relative to root. A layer is a dir with config.tf."""
     for dirpath, dirnames, filenames in os.walk(root):
@@ -52,28 +101,35 @@ def layer_dirs(root: str):
 
 
 def has_prm_tag(layer_path: str) -> bool:
-    """True when any .tf file in the layer references the tag key.
+    """True when the layer's own .tf files reference the tag key in real code.
 
-    Deliberately a substring check rather than an HCL parse: this catches the
+    Symlinks are skipped: every layer symlinks common-variables.tf to the shared
+    config/common-variables.tf, which documents the tag key in a comment --
+    following it would make all linked layers pass regardless of their contents.
+    Comments are stripped for the same reason.
+
+    Deliberately a substring check rather than an HCL parse: it catches the
     forgotten-line case, which is the only one that happens in practice, while
     staying dependency-free. Whether the tag actually reaches resources is
     settled by `leverage tofu plan`, not by this check.
-
-    Symlinks are skipped. Every layer symlinks common-variables.tf to the
-    shared config/common-variables.tf, which documents the tag key in a
-    comment -- following it would make all 161 linked layers pass regardless
-    of their own contents. A layer has to carry the tag in its own files.
     """
-    for name in sorted(os.listdir(layer_path)):
-        if not name.endswith(".tf"):
-            continue
-        full = os.path.join(layer_path, name)
-        if os.path.islink(full) or not os.path.isfile(full):
-            continue
-        with open(full, encoding="utf-8", errors="ignore") as handle:
-            if TAG_KEY in handle.read():
-                return True
-    return False
+    return TAG_KEY in _layer_code(layer_path)
+
+
+# `tags = local.tags`, `tags = merge(local.tags, ...)`, or a provider
+# `default_tags` block. default_tags is the only one that reaches resources
+# inside modules that expose no `tags` variable of their own.
+_CONSUMED = re.compile(r'tags\s*=\s*(local\.tags|merge\s*\(\s*local\.tags)|default_tags')
+
+
+def tags_are_consumed(layer_path: str) -> bool:
+    """True when the layer actually attaches local.tags to something.
+
+    A layer can define local.tags with the PRM key and never pass it to any
+    resource, module or provider. It then satisfies has_prm_tag() while
+    attributing nothing -- the failure mode this catches.
+    """
+    return bool(_CONSUMED.search(_layer_code(layer_path)))
 
 
 def load_allowlist(path: str) -> set[str]:
@@ -97,11 +153,23 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     allowed = load_allowlist(args.allowlist)
-    missing = [
-        rel
-        for rel in sorted(layer_dirs(args.root))
-        if rel not in allowed and not has_prm_tag(os.path.join(args.root, rel))
-    ]
+    missing, inert = [], []
+    for rel in sorted(layer_dirs(args.root)):
+        if rel in allowed:
+            continue
+        path = os.path.join(args.root, rel)
+        if not has_prm_tag(path):
+            missing.append(rel)
+        elif not tags_are_consumed(path):
+            inert.append(rel)
+
+    if inert:
+        print(f"{len(inert)} layer(s) define the '{TAG_KEY}' tag but never attach it:\n")
+        for rel in inert:
+            print(f"  {rel}")
+        print("\nPass `tags = local.tags` to the layer's resources/modules, or add")
+        print("`default_tags { tags = local.tags }` to its provider. If the layer creates")
+        print("nothing taggable, drop the tag line and allowlist it with that reason.\n")
 
     if missing:
         print(f"{len(missing)} layer(s) missing the PRM '{TAG_KEY}' tag:\n")
@@ -109,9 +177,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {rel}")
         print(f'\nAdd `"{TAG_KEY}" = local.prm_apn_id` to the layer\'s local.tags map,')
         print("or add the layer to @bin/scripts/prm_tags/allowlist.txt with a reason.")
+
+    if missing or inert:
         return 1
 
-    print(f"OK - every layer carries the PRM '{TAG_KEY}' tag.")
+    print(f"OK - every layer carries the PRM '{TAG_KEY}' tag and attaches it.")
     return 0
 
 

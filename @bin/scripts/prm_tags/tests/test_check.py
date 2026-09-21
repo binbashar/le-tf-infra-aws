@@ -75,7 +75,11 @@ def test_load_allowlist_strips_comments_and_blanks(tmp_path):
 
 
 def test_clean_tree_exits_zero(tmp_path):
-    _layer(tmp_path, "shared/us-east-1/a", {"config.tf": "", "locals.tf": TAGGED})
+    # must both carry the tag AND attach it -- a layer that only defines it is inert
+    _layer(tmp_path, "shared/us-east-1/a", {
+        "config.tf": "",
+        "locals.tf": TAGGED + 'resource "aws_sns_topic" "t" {\n  tags = local.tags\n}\n',
+    })
     assert check.main(["--root", str(tmp_path), "--allowlist", str(tmp_path / "none.txt")]) == 0
 
 
@@ -93,3 +97,85 @@ def test_symlinked_shared_file_does_not_count(tmp_path):
     directory = _layer(tmp_path, "shared/us-east-1/a", {"config.tf": "", "locals.tf": UNTAGGED})
     (directory / "common-variables.tf").symlink_to(shared / "common-variables.tf")
     assert check.has_prm_tag(str(directory)) is False
+
+
+# --- local.tags defined but never consumed -----------------------------------
+# A layer can carry the tag key in its locals and still attach it to nothing,
+# which passes a substring check while contributing no attribution at all.
+
+CONSUMED_RESOURCE = TAGGED + 'resource "aws_sns_topic" "t" {\n  tags = local.tags\n}\n'
+CONSUMED_MERGE = TAGGED + 'resource "aws_sns_topic" "t" {\n  tags = merge(local.tags, {A = "b"})\n}\n'
+CONSUMED_DEFAULT = TAGGED + 'provider "aws" {\n  default_tags {\n    tags = local.tags\n  }\n}\n'
+
+
+def test_tags_consumed_via_resource_is_not_inert(tmp_path):
+    d = _layer(tmp_path, "a/us-east-1/x", {"config.tf": "", "locals.tf": CONSUMED_RESOURCE})
+    assert check.tags_are_consumed(str(d)) is True
+
+
+def test_tags_consumed_via_merge_is_not_inert(tmp_path):
+    d = _layer(tmp_path, "a/us-east-1/x", {"config.tf": "", "locals.tf": CONSUMED_MERGE})
+    assert check.tags_are_consumed(str(d)) is True
+
+
+def test_tags_consumed_via_default_tags_is_not_inert(tmp_path):
+    d = _layer(tmp_path, "a/us-east-1/x", {"config.tf": CONSUMED_DEFAULT, "locals.tf": TAGGED})
+    assert check.tags_are_consumed(str(d)) is True
+
+
+def test_tag_defined_but_never_consumed_is_inert(tmp_path):
+    d = _layer(tmp_path, "a/us-east-1/x", {"config.tf": "", "locals.tf": TAGGED})
+    assert check.tags_are_consumed(str(d)) is False
+
+
+def test_inert_layer_fails_the_check(tmp_path):
+    _layer(tmp_path, "a/us-east-1/x", {"config.tf": "", "locals.tf": TAGGED})
+    assert check.main(["--root", str(tmp_path), "--allowlist", str(tmp_path / "none.txt")]) == 1
+
+
+def test_allowlisted_inert_layer_passes(tmp_path):
+    _layer(tmp_path, "a/us-east-1/x", {"config.tf": "", "locals.tf": TAGGED})
+    al = tmp_path / "allow.txt"
+    al.write_text("a/us-east-1/x  # nothing taggable\n", encoding="utf-8")
+    assert check.main(["--root", str(tmp_path), "--allowlist", str(al)]) == 0
+
+
+# --- comments must not count as attachment -----------------------------------
+# A guardrail that a commented-out line satisfies is no guardrail: commenting
+# out `tags = local.tags` is exactly how a layer stops attaching the tag.
+
+def test_commented_line_tags_is_not_consumed(tmp_path):
+    d = _layer(tmp_path, "a/us-east-1/x",
+               {"config.tf": "", "locals.tf": TAGGED + "# tags = local.tags\n"})
+    assert check.tags_are_consumed(str(d)) is False
+
+
+def test_commented_slash_tags_is_not_consumed(tmp_path):
+    d = _layer(tmp_path, "a/us-east-1/x",
+               {"config.tf": "", "locals.tf": TAGGED + "// default_tags { tags = local.tags }\n"})
+    assert check.tags_are_consumed(str(d)) is False
+
+
+def test_block_commented_tags_is_not_consumed(tmp_path):
+    d = _layer(tmp_path, "a/us-east-1/x",
+               {"config.tf": "", "locals.tf": TAGGED + "/*\n  tags = local.tags\n*/\n"})
+    assert check.tags_are_consumed(str(d)) is False
+
+
+def test_tag_key_only_in_a_comment_is_not_detected(tmp_path):
+    d = _layer(tmp_path, "a/us-east-1/y",
+               {"config.tf": "", "locals.tf": '# "aws-apn-id" = local.prm_apn_id (disabled)\n'})
+    assert check.has_prm_tag(str(d)) is False
+
+
+def test_hash_inside_a_string_does_not_start_a_comment(tmp_path):
+    # a '#' in a string literal must not blind the parser to real code after it
+    body = 'locals {\n  name = "bucket#1"\n}\nresource "aws_sns_topic" "t" {\n  tags = local.tags\n}\n'
+    d = _layer(tmp_path, "a/us-east-1/z", {"config.tf": "", "locals.tf": TAGGED + body})
+    assert check.tags_are_consumed(str(d)) is True
+
+
+def test_inline_trailing_comment_does_not_hide_real_code(tmp_path):
+    body = 'resource "aws_sns_topic" "t" {\n  tags = local.tags  # PRM\n}\n'
+    d = _layer(tmp_path, "a/us-east-1/w", {"config.tf": "", "locals.tf": TAGGED + body})
+    assert check.tags_are_consumed(str(d)) is True
