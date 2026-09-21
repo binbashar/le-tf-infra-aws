@@ -3,7 +3,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tofu_plan_ci.plan_report import build_review, classify_actions, main, render_review
+from tofu_plan_ci.plan_report import (
+    build_review,
+    classify_actions,
+    main,
+    provenance_value,
+    render_review,
+)
 
 
 class PlanReportTests(unittest.TestCase):
@@ -60,6 +66,14 @@ class PlanReportTests(unittest.TestCase):
     def test_classifies_both_replacement_orders(self):
         self.assertEqual(classify_actions(["delete", "create"]), "replace")
         self.assertEqual(classify_actions(["create", "delete"]), "replace")
+
+    def test_provenance_preserves_sha_with_twelve_consecutive_digits(self):
+        sha = "cf27bfb08cd8efde60ead255584243583c72d63d"
+        self.assertEqual(provenance_value(sha), sha)
+
+    def test_provenance_rejects_non_identifier_content(self):
+        with self.assertRaises(ValueError):
+            provenance_value("value with whitespace")
 
     def test_projection_contains_paths_but_no_values_or_state(self):
         review = build_review(self.sample_plan(), layer="apps-devstg/global/cli-test-layer")

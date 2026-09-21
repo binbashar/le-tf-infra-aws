@@ -21,6 +21,7 @@ INSTANCE_KEY = re.compile(r"\[[^\]]*\]")
 AWS_ACTION = re.compile(r"[a-z0-9-]+:[A-Za-z][A-Za-z0-9]*\Z")
 FAILURE_DIAGNOSTIC = re.compile(r"[A-Za-z0-9][A-Za-z0-9 .,:;_/-]{0,159}\Z")
 FAILURE_LOCATION = re.compile(r"[A-Za-z0-9_.-]+\.tf:[1-9][0-9]*\Z")
+PROVENANCE_VALUE = re.compile(r"[A-Za-z0-9._/-]{1,256}\Z")
 MISSING = object()
 
 SECURITY_SENSITIVE_TYPES = (
@@ -43,6 +44,21 @@ def redact_text(value: Any) -> str:
     text = GITHUB_TOKEN.sub("<github-token>", text)
     text = JWT.sub("<jwt>", text)
     return EMAIL.sub("<email>", text)
+
+
+def provenance_value(value: Any) -> str:
+    """Preserve GitHub-generated artifact provenance without treating a SHA as data.
+
+    Commit SHAs may contain twelve consecutive digits, which look like an AWS
+    account ID to ``redact_text``.  These values are not plan content: they are
+    compared verbatim by the aggregate job to bind an artifact to its workflow
+    run.  Accept only a narrow, value-free identifier alphabet instead.
+    """
+
+    text = str(value)
+    if not PROVENANCE_VALUE.fullmatch(text):
+        raise ValueError("artifact provenance has an unsafe format")
+    return text
 
 
 def safe_identifier(value: Any) -> str:
@@ -341,11 +357,11 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     metadata = {
-        "repository": redact_text(args.repository),
-        "head_sha": redact_text(args.head_sha),
-        "merge_sha": redact_text(args.merge_sha),
-        "run_id": redact_text(args.run_id),
-        "run_attempt": redact_text(args.run_attempt),
+        "repository": provenance_value(args.repository),
+        "head_sha": provenance_value(args.head_sha),
+        "merge_sha": provenance_value(args.merge_sha),
+        "run_id": provenance_value(args.run_id),
+        "run_attempt": provenance_value(args.run_attempt),
     }
     if args.command == "static":
         passed = args.init_exit == 0 and args.validate_exit == 0
