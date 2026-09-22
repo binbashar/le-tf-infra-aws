@@ -92,6 +92,7 @@ data "aws_iam_policy_document" "github_actions_opentofu_noop" {
     actions = [
       "iam:GetRole",
       "iam:ListAttachedRolePolicies",
+      "iam:ListRolePolicies",
       "iam:ListRoleTags",
     ]
     resources = [
