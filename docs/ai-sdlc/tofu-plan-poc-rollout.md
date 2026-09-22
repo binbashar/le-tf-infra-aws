@@ -96,8 +96,9 @@ credential request.
 
 ## Security checkpoint before credentialed gates
 
-The repository-side hardening is implemented, but do not enable `TOFU_PLAN_POC_LIVE` or configure
-a usable role ARN until it has been reviewed and its external controls are configured. Verify that:
+The repository-side hardening is implemented and Gate 3 is applied, but do not enable
+`TOFU_PLAN_POC_LIVE` until the external controls below are configured or their residual risk is
+explicitly accepted. Verify that:
 
 - fork, draft, and bot PRs skip all jobs; only branches pushed to the original repository are in
   scope, and a protected-environment reviewer makes a fresh decision for the exact internal commit
