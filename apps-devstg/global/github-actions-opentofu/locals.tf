@@ -1,4 +1,5 @@
 locals {
+  # This layer also serves as the supervised, state-preserving CI plan probe.
   github_oidc_issuer_url = "https://token.actions.githubusercontent.com"
   github_repository      = "binbashar/le-tf-infra-aws"
   github_environment     = "tofu-plan-poc"
