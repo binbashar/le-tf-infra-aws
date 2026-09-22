@@ -20,29 +20,37 @@ tested before enabling the next one.
 
 ## POC execution record
 
-Status observed on 2026-09-20:
+Status observed on 2026-09-22:
 
-- Gate 1 passed in [GitHub run 35480457604](https://github.com/binbashar/le-tf-infra-aws/actions/runs/35480457604):
-  discovery, credential-free initialization, validation, artifact transfer, provenance checks, and
-  the aggregate check completed successfully for the pilot layer.
+- Gate 1 passed: discovery, credential-free initialization, validation, artifact transfer,
+  provenance checks, and the aggregate check completed successfully for the pilot layer.
 - Gate 2 is configured with the `tofu-plan-poc` environment. The
   `leverage-ref-architecture-aws-admin` team is its required reviewer, prevent-self-review is
   enabled, administrator bypass is disabled, and the environment-scoped
   `TOFU_PLAN_COMMON_TFVARS` secret exists. Its value is not inspectable through GitHub after it is
   set.
+- The `master` branch requires code-owner review and approval of the last push. The workflow also
+  pins every Action it references.
+- Gate 3 is applied: the dedicated GitHub OIDC provider and read-only plan role exist in the pilot
+  account, and the workflow's account/session guards accepted the protected-environment session.
+- Gate 4 passed in [GitHub run 35652085092](https://github.com/binbashar/le-tf-infra-aws/actions/runs/35652085092):
+  a separate environment reviewer approved the job; backend initialization, validation, and the
+  speculative plan succeeded; the aggregate check passed; and only the sanitized report contract
+  was retained. The plan proposed three IAM creations in the intentionally unprovisioned pilot
+  layer; no apply was performed.
+- Gate 5 passed for proposed change, failure, recovery, and cancellation behavior on PR #1194:
+  the successful change run is the Gate 4 run above; an intentional undefined-local validation
+  error failed in [run 35676588534](https://github.com/binbashar/le-tf-infra-aws/actions/runs/35676588534)
+  and skipped both live planning and Bedrock; the following recovery run passed; and the
+  first of two immediate commits was cancelled while its successor completed successfully.
+- A no-change plan remains unobserved. The pilot layer is intentionally not converged, so applying
+  it merely to produce a zero-change plan is out of scope. Observe that case later on a reviewed,
+  already-converged layer or natural PR.
 - Repository variables explicitly keep `TOFU_PLAN_POC_LIVE=false` and
   `TOFU_PLAN_POC_LLM=false`; the pilot layer, one-layer limit, OpenTofu version, and AWS region are
   also fixed rather than relying on workflow defaults.
-- No AWS role, role ARN variable, account ID variable, OIDC trust, or live plan has been created or
-  enabled.
-
-The credentialed gates remain stopped because the current `master` branch protection does not
-require code-owner review or approval of the last push. Repository Actions are also currently
-allowed without organization-level SHA-pin enforcement, although this workflow pins every action
-it uses. Enable or explicitly accept those repository-wide controls before Gate 4. The local
-operator setup also lacks the configured `apps-devstg` profile, so the existing AWS GitHub OIDC
-provider and backend encryption could not yet be inspected; do not create a duplicate provider or
-guess its ownership.
+- Bedrock remains unconfigured and disabled. It requires its own narrowly scoped OIDC role and a
+  separate supervised test.
 
 ## Gate 1: credential-free pull request
 
