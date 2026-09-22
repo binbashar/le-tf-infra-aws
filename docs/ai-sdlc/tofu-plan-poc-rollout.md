@@ -31,8 +31,9 @@ Status observed on 2026-09-22:
   set.
 - The `master` branch requires code-owner review and approval of the last push. The workflow also
   pins every Action it references.
-- Gate 3 is applied: the dedicated GitHub OIDC provider and read-only plan role exist in the pilot
-  account, and the workflow's account/session guards accepted the protected-environment session.
+- Gate 3 is applied: the dedicated GitHub OIDC provider, pilot plan role, isolated no-change plan
+  role, and isolated Bedrock explanation role exist in the pilot account. The workflow's
+  account/session guards accepted their protected-environment sessions.
 - Gate 4 passed in [GitHub run 35652085092](https://github.com/binbashar/le-tf-infra-aws/actions/runs/35652085092):
   a separate environment reviewer approved the job; backend initialization, validation, and the
   speculative plan succeeded; the aggregate check passed; and only the sanitized report contract
@@ -43,14 +44,19 @@ Status observed on 2026-09-22:
   error failed in [run 35676588534](https://github.com/binbashar/le-tf-infra-aws/actions/runs/35676588534)
   and skipped both live planning and Bedrock; the following recovery run passed; and the
   first of two immediate commits was cancelled while its successor completed successfully.
-- A no-change plan remains unobserved. The pilot layer is intentionally not converged, so applying
-  it merely to produce a zero-change plan is out of scope. Observe that case later on a reviewed,
-  already-converged layer or natural PR.
+- The no-change path passed in [GitHub run 35680389438](https://github.com/binbashar/le-tf-infra-aws/actions/runs/35680389438)
+  on PR #1198. A separate, state-preserving role planned the already-converged identity layer;
+  environment approval, OIDC, backend initialization, validation, sanitization, artifact transfer,
+  provenance, and aggregation all succeeded with zero creates, updates, deletes, or replacements.
 - Repository variables explicitly keep `TOFU_PLAN_POC_LIVE=false` and
   `TOFU_PLAN_POC_LLM=false`; the pilot layer, one-layer limit, OpenTofu version, and AWS region are
   also fixed rather than relying on workflow defaults.
-- Bedrock remains unconfigured and disabled. It requires its own narrowly scoped OIDC role and a
-  separate supervised test.
+- Optional Gate 6 passed in [GitHub run 35682901228](https://github.com/binbashar/le-tf-infra-aws/actions/runs/35682901228)
+  on PR #1194. The live plan and the separately protected Bedrock job were each approved; the
+  Bedrock-only role received only the sanitized projection and produced an advisory explanation.
+  It accurately described the three IAM creates and explicitly retained uncertainty about redacted
+  policy and trust values. The explanation was marked medium risk, asked useful review questions,
+  did not control the aggregate result, and contained no account IDs, ARNs, or credential patterns.
 
 ## Gate 1: credential-free pull request
 
@@ -121,17 +127,19 @@ forks remain completely unsupported and skipped.
 1. Check the `apps-devstg` account for an existing IAM OIDC provider for
    `https://token.actions.githubusercontent.com`; reference or import an owned provider rather than
    creating a duplicate.
-2. Prefer a dedicated `apps-devstg/global/github-actions-tofu-plan` root module over adding the POC
+2. Prefer a dedicated `apps-devstg/global/github-actions-opentofu` root module over adding the POC
    identities to the broad `base-identities` lifecycle.
-3. Create separate plan and Bedrock roles. Their trust must require both:
+3. Create separate pilot-plan, no-change-plan, and Bedrock-explanation roles. Their trust must
+   require both:
 
    ```text
    aud = sts.amazonaws.com
    sub = repo:binbashar/le-tf-infra-aws:environment:tofu-plan-poc
    ```
 
-4. Limit the plan role to the pilot state object's S3 reads, its exact DynamoDB lock keys, caller
-   identity, and the IAM reads required to refresh `LeverageTest` and `leverage_test`.
+4. Limit each plan role to its own state object's S3 reads, exact DynamoDB lock keys, caller
+   identity, and only the IAM reads required to refresh its layer. Keep the no-change role separate
+   so a supervised state-preserving test cannot access the pilot layer's state.
 5. Do not grant state-object writes, resource mutation, `iam:PassRole`, secret reads, or unrelated
    KMS permissions. Stop rather than expanding into one of these classes on the first failure.
 6. Plan, review, and apply this bootstrap through the repository's normal maintainer-operated
@@ -155,7 +163,7 @@ no infrastructure mutation path.
    not grant state writes or broad managed policies to make the test pass.
 
 Exit condition: one no-op or current-state plan completes and persists only the reviewed sanitized
-contract.
+contract. This was satisfied by run 35680389438.
 
 ## Gate 5: commit-by-commit behavior
 
@@ -187,7 +195,8 @@ been observed without applying infrastructure.
 6. Disable LLM mode after the test window.
 
 Exit condition: the explanation is useful, remains advisory, and does not expand the data or
-permission boundary.
+permission boundary. This was satisfied by run 35682901228; retain its stated limitations when
+evaluating future explanations.
 
 ## Promotion decision
 

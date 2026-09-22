@@ -130,6 +130,10 @@ review.json       # live plans only
 summary.md
 ```
 
+When Bedrock analysis is enabled for a supervised window, it additionally retains a 7-day
+`tofu-plan-poc-llm` artifact containing only `analysis.json` and `analysis.md`. It is derived from
+the same sanitized projection and remains advisory.
+
 The stable `POC | OpenTofu Plan` job is the future branch-protection candidate. During the POC it
 should remain non-required until at least one real plan and one intentional failure have been
 observed in GitHub.
