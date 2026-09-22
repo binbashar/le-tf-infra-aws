@@ -183,7 +183,7 @@ jobs:
         run: python -m tofu_plan_ci.workflow live
 
       - name: Upload sanitized plan evidence
-        if: ${{ always() }}
+        if: ${{ always() && steps.run.outputs.report_dir != '' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: tofu-plan-poc-layer-${{ steps.run.outputs.slug }}

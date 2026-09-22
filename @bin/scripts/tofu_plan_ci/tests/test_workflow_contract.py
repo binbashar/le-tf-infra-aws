@@ -37,6 +37,12 @@ class WorkflowSecurityContractTests(unittest.TestCase):
             report,
         )
 
+    def test_live_evidence_upload_requires_a_report_directory(self):
+        self.assertIn(
+            "steps.run.outputs.report_dir != ''",
+            self.workflow,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
