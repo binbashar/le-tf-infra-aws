@@ -1,5 +1,5 @@
 locals {
-  # This intentionally minimal layer is the selected target for the read-only CI plan probe.
+  # This intentionally minimal layer is the selected target for the read-only CI plan probe (concurrency probe 1).
   tags = {
     Terraform    = "true"
     Environment  = var.environment
