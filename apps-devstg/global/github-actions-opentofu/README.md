@@ -1,8 +1,9 @@
 # GitHub Actions OpenTofu identity
 
 This layer owns the account-wide GitHub Actions OIDC provider in `apps-devstg` and dedicated
-OpenTofu automation identities. The initial role is restricted to plans; it does not configure
-Bedrock access and is not a deployment role.
+OpenTofu automation identities. It creates three independent roles: the pilot-layer plan role, a
+separate role for the supervised no-change verification, and an invoke-only Bedrock explanation
+role. None is a deployment role.
 
 ## Trust boundary
 
@@ -19,10 +20,16 @@ administrator bypass. Keep those controls in place while this role exists.
 
 ## Permission boundary
 
-The initial plan role can read only its configured target layer's S3 state object, acquire and
-release its exact DynamoDB lock, and inspect the target role and managed policy. It has no IAM
-mutation, secret-read, KMS-decrypt, `iam:PassRole`, or general resource-read permission. State
-object writes and deletes are explicitly denied.
+The pilot plan role can read only its configured target layer's S3 state object, acquire and
+release its exact DynamoDB lock, and inspect the target role and managed policy. The no-change role
+has a separate, similarly bounded policy for this identity layer. Neither role has IAM mutation,
+secret-read, KMS-decrypt, `iam:PassRole`, or general resource-read permission. State object writes
+and deletes are explicitly denied.
+
+The Bedrock role can invoke only the configured system inference profile and its verified
+destination foundation models. A condition prevents direct model invocation outside that profile;
+it has no state, IAM-read, or infrastructure permission. The workflow sends it only the sanitized
+plan projection.
 
 The DynamoDB write operations are only for the state lock. If a plan requires any other write,
 state access, or broad read, stop and review the provider operation rather than broadening the
@@ -61,6 +68,11 @@ leverage tofu plan -no-color -detailed-exitcode
 Review the provider, trust conditions, role policy, backend, and absence of unrelated changes.
 Applying this bootstrap is a maintainer decision; the POC workflow has no apply path.
 
-After a reviewed apply, configure the role ARN and account ID as `AWS_TOFU_PLAN_ROLE_ARN` and
-`AWS_TOFU_PLAN_ACCOUNT_ID` repository variables. Keep `TOFU_PLAN_POC_LIVE=false` until the
-supervised run window described in `docs/ai-sdlc/tofu-plan-poc-rollout.md`.
+After a reviewed apply, configure the pilot plan role ARN and account ID as
+`AWS_TOFU_PLAN_ROLE_ARN` and `AWS_TOFU_PLAN_ACCOUNT_ID` repository variables. For the no-change
+verification only, temporarily point those variables at the no-change role and set
+`TOFU_PLAN_POC_LAYER=apps-devstg/global/github-actions-opentofu`; restore both afterward. Configure
+the Bedrock role as `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN` and
+`AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID`. Keep `TOFU_PLAN_POC_LIVE=false` and
+`TOFU_PLAN_POC_LLM=false` until their respective supervised windows described in
+`docs/ai-sdlc/tofu-plan-poc-rollout.md`.
