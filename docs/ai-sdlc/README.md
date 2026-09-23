@@ -7,6 +7,10 @@ runs at each step, and how the on-demand `@claude` assistant routes through
 For local Codex sessions, see [Working with Codex](codex.md): repository instruction
 discovery, setup, validation commands, and infrastructure execution boundaries.
 
+The plan-only GitHub Actions experiment is documented in the
+[OpenTofu pull-request plan POC](tofu-plan-poc.md). It uses native checks, sanitized artifacts, and
+an optional Bedrock explanation; it has no apply path.
+
 > **Local sessions too:** developers can route their own Claude Code sessions
 > through Bedrock (data-science account) on demand — see
 > [`claude-code-bedrock.md`](claude-code-bedrock.md), whose §0 diagrams the
