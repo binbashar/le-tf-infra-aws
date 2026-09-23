@@ -1,7 +1,7 @@
 # FinOps — AWS cost analysis for the Reference Architecture
 
 How we analyse **actual** AWS spend for the binbash Organization: the
-[`aws-finops`](https://github.com/binbashar/bb-ai-marketplace/tree/v1.6.0/plugins/aws-finops)
+[`aws-finops`](https://github.com/binbashar/bb-ai-marketplace/tree/v1.7.0/plugins/aws-finops)
 Claude Code plugin, the AWS-side prerequisites this repo provisions for it, and
 the reports it drops in this directory.
 
@@ -17,7 +17,8 @@ the reports it drops in this directory.
 | --- | --- | --- |
 | **`/aws-finops-investigate`** | *What is happening with the bill?* — baseline + month-over-month deltas, anomaly triage, tag hygiene, end-of-month forecast vs budget | `finops-investigation-<ts>.md` (here) |
 | **`/aws-finops-optimize`** | *How do we reduce it?* — right-sizing & idle resources, Savings Plans coverage/utilisation, per-service waste (incl. EKS/RDS extended-support surcharges) | `finops-optimization-<ts>.md` (here) |
-| **`/leverage-aws-creds-check --management-only`** | Read-only SSO/credentials preflight; gates the two above | terminal table |
+| **`/aws-finops-maturity`** | *How mature is our FinOps practice?* — a 5-stage capability scorecard (visibility, tactical, strategic, governance, culture) naming the single signal that gates the next stage. Grades capability, never dollars | `finops-maturity-<ts>.md` (here) |
+| **`/leverage-aws-creds-check --management-only`** | Read-only SSO/credentials preflight; gates the three above | terminal table |
 
 Every figure comes from the bundled **`awslabs.billing-cost-management-mcp-server`**
 MCP server. The skills are **MCP-only by design and never fall back to the AWS
@@ -110,10 +111,18 @@ Then, in the session:
 /leverage-aws-creds-check --management-only   # must pass first
 /aws-finops-investigate
 /aws-finops-optimize
+/aws-finops-maturity
 ```
 
 Each skill writes its report into this directory. **Commit them** — the point of
 keeping them in-tree is diffing this month's run against the last one.
+
+> **Redact the account id.** `/aws-finops-maturity` writes the payer account id into
+> its report — the `**Account:**` line and the scorecard block's `account:` field.
+> This repository is public: replace it with `<MANAGEMENT_ACCOUNT_ID>` before
+> committing. The next run's trend comparison matches on that field, so it will
+> report an account mismatch and skip the comparison until the skill keys its trend
+> on something publishable.
 
 > **Cost note.** The Cost Explorer API charges **$0.01 per _paginated_ request** —
 > a query whose result spans several pages bills once per page, not once per call
@@ -161,3 +170,9 @@ the maintenance loop.
 - **Tag coverage bounds attribution.** The investigate skill's tag-hygiene phase
   measures exactly what issue #842 (tagging strategy) is about; untagged spend is
   spend nobody can be asked to own.
+- **Check a maturity grade against its evidence before acting on it.** As of v1.7.0
+  the scorecard queries Compute Optimizer for the payer account only, so its
+  right-sizing, Lambda and Auto Scaling signals can pass on an empty result; its cost
+  scope drops Bedrock third-party model usage, which bills under AWS Marketplace; and
+  it grades signals that have no material spend behind them. Each report's
+  *Investigation Notes* list the probes behind every grade.

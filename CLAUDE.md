@@ -205,9 +205,13 @@ connected, stop and fix the setup rather than reaching for `aws ce ...`.
 /leverage-aws-creds-check --management-only   # preflight; must pass first
 /aws-finops-investigate                       # what is happening with the bill
 /aws-finops-optimize                          # how to reduce it
+/aws-finops-maturity                          # which FinOps capability stage we are at
 ```
 
 - Reports are written to `docs/finops/` and **committed** — each run is diffed against the last.
+- `/aws-finops-maturity` writes the raw payer account id into its report (the `**Account:**` line
+  and the scorecard block's `account:` field). Replace it with `<MANAGEMENT_ACCOUNT_ID>` before
+  committing — this repository is public.
 - The MCP inherits `AWS_PROFILE` from the shell that launched Claude Code, so a management
   profile (`bb-management-administrator`) must be exported **before** the session starts; it
   cannot be fixed from inside one.

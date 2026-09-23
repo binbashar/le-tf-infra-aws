@@ -141,9 +141,10 @@ restart plus a one-time per-server trust prompt before first use.
 
 The **`aws-finops`** plugin analyses *actual* AWS spend from the Organizations management (payer)
 account: `/aws-finops-investigate` (baseline + month-over-month deltas, anomaly triage, tag
-hygiene, forecast vs budget) and `/aws-finops-optimize` (right-sizing, Savings Plans coverage,
-per-service waste). Reports land in [`docs/finops/`](docs/finops/) and are committed, so each run
-can be diffed against the last.
+hygiene, forecast vs budget), `/aws-finops-optimize` (right-sizing, Savings Plans coverage,
+per-service waste) and `/aws-finops-maturity` (a 5-stage FinOps capability scorecard naming the
+one signal that gates the next stage). Reports land in [`docs/finops/`](docs/finops/) and are
+committed, so each run can be diffed against the last.
 
 Setup, the AWS-side prerequisites this repo provisions, and how to launch a session against the
 management profile: [`docs/finops/README.md`](docs/finops/README.md).
