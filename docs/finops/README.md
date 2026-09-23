@@ -122,7 +122,10 @@ keeping them in-tree is diffing this month's run against the last one.
 > This repository is public: replace it with `<MANAGEMENT_ACCOUNT_ID>` before
 > committing. The next run's trend comparison matches on that field, so it will
 > report an account mismatch and skip the comparison until the skill keys its trend
-> on something publishable.
+> on something publishable
+> ([bb-ai-marketplace#43](https://github.com/binbashar/bb-ai-marketplace/issues/43)).
+> Until then, tell the run that `<MANAGEMENT_ACCOUNT_ID>` in the prior report is
+> this payer account.
 
 > **Cost note.** The Cost Explorer API charges **$0.01 per _paginated_ request** —
 > a query whose result spans several pages bills once per page, not once per call
@@ -175,4 +178,6 @@ the maintenance loop.
   right-sizing, Lambda and Auto Scaling signals can pass on an empty result; its cost
   scope drops Bedrock third-party model usage, which bills under AWS Marketplace; and
   it grades signals that have no material spend behind them. Each report's
-  *Investigation Notes* list the probes behind every grade.
+  *Investigation Notes* list the probes behind every grade. All of these are tracked
+  upstream in [bb-ai-marketplace#43](https://github.com/binbashar/bb-ai-marketplace/issues/43);
+  drop this caveat once the pin moves to a release that fixes them.
