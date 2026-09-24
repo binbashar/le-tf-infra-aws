@@ -1,0 +1,100 @@
+name: "Setup Layer Context"
+description: >-
+  Consolidated per-layer setup: install OpenTofu + Leverage CLI, resolve the AWS
+  account/profile for the layer, write Leverage AWS credentials, and render the
+  reference-architecture config. Replaces the repeated 5-step setup block in the
+  plan (and apply) jobs. Requires the repository to be checked out first.
+
+inputs:
+  layer_path:
+    description: "Terraform layer path (e.g. apps-devstg/us-east-1/base-network)"
+    required: true
+  aws_access_key_id:
+    description: "AWS Access Key ID"
+    required: true
+  aws_secret_access_key:
+    description: "AWS Secret Access Key"
+    required: true
+  aws_management_account_id:
+    description: "AWS Management Account ID"
+    required: true
+  aws_security_account_id:
+    description: "AWS Security Account ID"
+    required: true
+  aws_shared_account_id:
+    description: "AWS Shared Account ID"
+    required: true
+  aws_network_account_id:
+    description: "AWS Network Account ID"
+    required: true
+  aws_devstg_account_id:
+    description: "AWS DevStg Account ID"
+    required: true
+  aws_prd_account_id:
+    description: "AWS Prd Account ID"
+    required: false
+    default: "000000000000"
+  aws_data_science_account_id:
+    description: "AWS Data Science Account ID"
+    required: false
+    default: "000000000000"
+  tf_binary:
+    description: "Terraform binary to use (terraform or tofu)"
+    required: false
+    default: "tofu"
+
+outputs:
+  account:
+    description: "Resolved AWS account name (first segment of layer_path)"
+    value: ${{ steps.account.outputs.account }}
+  profile:
+    description: "Resolved AWS CLI profile name"
+    value: ${{ steps.account.outputs.profile }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup OpenTofu and Leverage CLI
+      uses: ./.github/actions/setup-tofu-leverage
+
+    - name: Determine AWS Account
+      id: account
+      uses: ./.github/actions/determine-account
+      with:
+        layer_path: ${{ inputs.layer_path }}
+
+    - name: Configure AWS Credentials
+      uses: ./.github/actions/leverage-aws-credentials
+      with:
+        aws_access_key_id: ${{ inputs.aws_access_key_id }}
+        aws_secret_access_key: ${{ inputs.aws_secret_access_key }}
+        aws_management_account_id: ${{ inputs.aws_management_account_id }}
+        aws_security_account_id: ${{ inputs.aws_security_account_id }}
+        aws_shared_account_id: ${{ inputs.aws_shared_account_id }}
+        aws_network_account_id: ${{ inputs.aws_network_account_id }}
+        aws_devstg_account_id: ${{ inputs.aws_devstg_account_id }}
+        aws_prd_account_id: ${{ inputs.aws_prd_account_id }}
+        aws_data_science_account_id: ${{ inputs.aws_data_science_account_id }}
+
+    - name: Set AWS Profile for Layer
+      shell: bash
+      env:
+        AWS_PROFILE_NAME: ${{ steps.account.outputs.profile }}
+      run: |
+        set -euo pipefail
+        echo "AWS_CONFIG_FILE=$HOME/.aws/bb/config" >> "$GITHUB_ENV"
+        echo "AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/bb/credentials" >> "$GITHUB_ENV"
+        echo "AWS_PROFILE=$AWS_PROFILE_NAME" >> "$GITHUB_ENV"
+        echo "Using AWS profile: $AWS_PROFILE_NAME"
+
+    - name: Configure Reference Architecture
+      uses: ./.github/actions/leverage-configure-ref-arch
+      with:
+        aws_management_account_id: ${{ inputs.aws_management_account_id }}
+        aws_security_account_id: ${{ inputs.aws_security_account_id }}
+        aws_shared_account_id: ${{ inputs.aws_shared_account_id }}
+        aws_network_account_id: ${{ inputs.aws_network_account_id }}
+        aws_devstg_account_id: ${{ inputs.aws_devstg_account_id }}
+        aws_prd_account_id: ${{ inputs.aws_prd_account_id }}
+        aws_data_science_account_id: ${{ inputs.aws_data_science_account_id }}
+        tf_binary: ${{ inputs.tf_binary }}
