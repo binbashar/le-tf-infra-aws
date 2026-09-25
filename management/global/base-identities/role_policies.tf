@@ -46,13 +46,20 @@ EOF
 #
 # Read-only AWS Billing & Cost Management permissions consumed by the `aws-finops`
 # Claude Code plugin (skills: aws-finops-investigate, aws-finops-optimize,
-# leverage-aws-creds-check) through the awslabs.billing-cost-management-mcp-server
-# MCP server. Attached to the DeployMaster role so any management profile that
-# assumes DeployMaster can run the plugin without static keys.
+# aws-finops-maturity, leverage-aws-creds-check) through the
+# awslabs.billing-cost-management-mcp-server MCP server. Attached to the DeployMaster
+# role so any management profile that assumes DeployMaster can run the plugin without
+# static keys.
+#
+# The billing and billingconductor reads serve aws-finops-maturity: billing
+# preferences (billing alerts, RI/SP sharing), the linked-account list its Compute
+# Optimizer loop walks, and the billing groups, custom line items and pricing plans
+# its showback signal reads. Denied, each of those signals grades Unverified.
 #
 # NOTE: intentionally NO `aws:RequestedRegion` condition — Cost Explorer, Budgets,
-# Cost Optimization Hub, Savings Plans, Pricing and Free Tier are global / us-east-1
-# endpoints and a region condition can silently break them. Read verbs only.
+# Billing, Billing Conductor, Cost Optimization Hub, Savings Plans, Pricing and Free
+# Tier are global / us-east-1 endpoints and a region condition can silently break
+# them. Read verbs only.
 #
 resource "aws_iam_policy" "aws_finops_readonly_access" {
   name        = "aws_finops_readonly_access"
@@ -66,6 +73,11 @@ resource "aws_iam_policy" "aws_finops_readonly_access" {
             "Sid": "AwsFinOpsReadOnly",
             "Effect": "Allow",
             "Action": [
+                "billing:GetBillingPreferences",
+                "billingconductor:ListAccountAssociations",
+                "billingconductor:ListBillingGroups",
+                "billingconductor:ListCustomLineItems",
+                "billingconductor:ListPricingPlans",
                 "budgets:Describe*",
                 "budgets:ViewBudget",
                 "ce:Describe*",
