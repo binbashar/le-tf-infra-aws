@@ -1,7 +1,7 @@
 # AWS FinOps Maturity Scorecard
 **Date:** 2026-09-23
 **Account:** `<MANAGEMENT_ACCOUNT_ID>` (binbash-management) — id withheld: this report is committed to a public repository
-**Period:** baseline 2026-08-01 → 2026-08-31 (previous full calendar month) · anomaly window 2026-06-25 → 2026-09-23 (trailing 90 days)
+**Period:** baseline 2026-08-01 → 2026-08-31 (previous full calendar month) · anomaly window 2026-06-25 → 2026-09-23 (91 calendar days, both ends inclusive)
 
 ---
 
@@ -111,6 +111,15 @@ Stage 0's roadmap is Stage 1 alone. Gating signal first, then ascending by signa
 | 1 | S1.4 Core tag coverage | Not met | M | FinOps / Platform | |
 | 2 | S1.5 No stale active tags | Partial | S | FinOps | |
 
+> **Review note (added after the run).** Tagging alone cannot clear S1.4 under this report's
+> denominator. At least $76.98 (24.3%) of August usage bills at account level, with no resource
+> to tag (Investigation Note 6), which caps coverage near 76%, below T1's 80% `Partial` band.
+> Measured over taggable spend only ($240.26 at most), `Project` coverage is still about 4.6%, so
+> the Stage 0 placement holds either way. The first S1.4 action is activating `Environment` and
+> `Layer` as cost-allocation tags, since the IaC already applies both. From aws-finops 1.3.0 the
+> skill measures T1 over taggable spend and names that action itself, so the next run grades it
+> that way.
+
 ---
 
 ## Handoffs
@@ -124,8 +133,8 @@ Stage 0's roadmap is Stage 1 alone. Gating signal first, then ascending by signa
 ## Investigation Notes
 
 1. **Periods.** `baseline_period` 2026-08-01..2026-09-01 (end exclusive; previous full calendar
-   month). `anomaly_window` 2026-06-25..2026-09-23 (trailing 90 days, both ends inclusive per
-   `cost-anomaly`, local-date end).
+   month). `anomaly_window` 2026-06-25..2026-09-23 (start = run date − 90 days; both ends inclusive
+   per `cost-anomaly`, so 91 calendar days; local-date end).
 2. **Cost basis.** `UnblendedCost` with the skill's cost-scope filter (`RECORD_TYPE` ∈ {`Usage`,
    `DiscountedUsage`, `SavingsPlanCoveredUsage`} AND `BILLING_ENTITY` = `AWS`) gives **$317.24** for
    August 2026. The full August mix (`RECORD_TYPE` × `BILLING_ENTITY`) is:
