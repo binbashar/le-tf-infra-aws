@@ -209,9 +209,9 @@ connected, stop and fix the setup rather than reaching for `aws ce ...`.
 ```
 
 - Reports are written to `docs/finops/` and **committed** — each run is diffed against the last.
-- `/aws-finops-maturity` writes the raw payer account id into its report (the `**Account:**` line
-  and the scorecard block's `account:` field). Replace it with `<MANAGEMENT_ACCOUNT_ID>` before
-  committing — this repository is public.
+- `/aws-finops-maturity` (marketplace v1.9.0+) never writes a full account id: accounts read
+  `name (…NNNN)`, last four digits only. Still run `python3 @bin/scripts/redact_plan.py --scan`
+  on a report before committing it — this repository is public.
 - The MCP inherits `AWS_PROFILE` from the shell that launched Claude Code, so a management
   profile (`bb-management-administrator`) must be exported **before** the session starts; it
   cannot be fixed from inside one.

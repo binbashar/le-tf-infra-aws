@@ -1,7 +1,7 @@
 # FinOps — AWS cost analysis for the Reference Architecture
 
 How we analyse **actual** AWS spend for the binbash Organization: the
-[`aws-finops`](https://github.com/binbashar/bb-ai-marketplace/tree/v1.7.0/plugins/aws-finops)
+[`aws-finops`](https://github.com/binbashar/bb-ai-marketplace/tree/v1.9.0/plugins/aws-finops)
 Claude Code plugin, the AWS-side prerequisites this repo provisions for it, and
 the reports it drops in this directory.
 
@@ -90,13 +90,9 @@ management profile has to be exported *before* the session starts — you cannot
 it from inside one.
 
 ```bash
-leverage aws sso login                                    # ~8 h token
-
-# refresh per-profile creds -- use a SINGLE-PROFILE layer. refresh-credentials scans
-# the layer's .tf files for profiles and hard-exits on the first role it cannot assume,
-# writing nothing at all; base-identities references only var.profile, organizations
-# references four member accounts and dies on the first one that has drifted.
-cd management/global/base-identities && leverage tofu refresh-credentials && cd -
+# ~8 h SSO token, plus fresh credentials for every account profile (Leverage CLI >= 3.1.0).
+# To re-mint them later without logging in again: leverage aws sso refresh
+leverage aws sso login --refresh-all
 
 export AWS_CONFIG_FILE="$HOME/.aws/bb/config"
 export AWS_SHARED_CREDENTIALS_FILE="$HOME/.aws/bb/credentials"
@@ -117,15 +113,12 @@ Then, in the session:
 Each skill writes its report into this directory. **Commit them** — the point of
 keeping them in-tree is diffing this month's run against the last one.
 
-> **Redact the account id.** `/aws-finops-maturity` writes the payer account id into
-> its report — the `**Account:**` line and the scorecard block's `account:` field.
-> This repository is public: replace it with `<MANAGEMENT_ACCOUNT_ID>` before
-> committing. The next run's trend comparison matches on that field, so it will
-> report an account mismatch and skip the comparison until the skill keys its trend
-> on something publishable
-> ([bb-ai-marketplace#43](https://github.com/binbashar/bb-ai-marketplace/issues/43)).
-> Until then, tell the run that `<MANAGEMENT_ACCOUNT_ID>` in the prior report is
-> this payer account.
+> **Account ids.** From marketplace v1.9.0 (`aws-finops` 1.3.0), `/aws-finops-maturity`
+> never writes a full account id: accounts read `name (…NNNN)`, last four digits only,
+> and the trend comparison matches on those digits. Still scan a report with
+> `python3 @bin/scripts/redact_plan.py --scan` before committing it — this repository
+> is public. Earlier reports carry `<MANAGEMENT_ACCOUNT_ID>`; the skill treats that as
+> this account and notes that the match is assumed.
 
 > **Cost note.** The Cost Explorer API charges **$0.01 per _paginated_ request** —
 > a query whose result spans several pages bills once per page, not once per call
@@ -173,11 +166,7 @@ the maintenance loop.
 - **Tag coverage bounds attribution.** The investigate skill's tag-hygiene phase
   measures exactly what issue #842 (tagging strategy) is about; untagged spend is
   spend nobody can be asked to own.
-- **Check a maturity grade against its evidence before acting on it.** As of v1.7.0
-  the scorecard queries Compute Optimizer for the payer account only, so its
-  right-sizing, Lambda and Auto Scaling signals can pass on an empty result; its cost
-  scope drops Bedrock third-party model usage, which bills under AWS Marketplace; and
-  it grades signals that have no material spend behind them. Each report's
-  *Investigation Notes* list the probes behind every grade. All of these are tracked
-  upstream in [bb-ai-marketplace#43](https://github.com/binbashar/bb-ai-marketplace/issues/43);
-  drop this caveat once the pin moves to a release that fixes them.
+- **`N/A` and `Unverified` are not passes.** From v1.9.0 a maturity signal whose own
+  spend is under $50/month grades `N/A — immaterial` and is left out of stage
+  placement, and one whose probe had nothing to analyse grades `Unverified`. Each
+  report's *Investigation Notes* list the probes behind every grade.
