@@ -1,7 +1,7 @@
 # FinOps — AWS cost analysis for the Reference Architecture
 
 How we analyse **actual** AWS spend for the binbash Organization: the
-[`aws-finops`](https://github.com/binbashar/bb-ai-marketplace/tree/v1.9.0/plugins/aws-finops)
+[`aws-finops`](https://github.com/binbashar/bb-ai-marketplace/tree/v1.10.1/plugins/aws-finops)
 Claude Code plugin, the AWS-side prerequisites this repo provisions for it, and
 the reports it drops in this directory.
 
