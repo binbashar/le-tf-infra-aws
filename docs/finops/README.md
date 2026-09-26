@@ -1,7 +1,7 @@
 # FinOps — AWS cost analysis for the Reference Architecture
 
 How we analyse **actual** AWS spend for the binbash Organization: the
-[`aws-finops`](https://github.com/binbashar/bb-ai-marketplace/tree/v1.9.0/plugins/aws-finops)
+[`aws-finops`](https://github.com/binbashar/bb-ai-marketplace/tree/v1.10.1/plugins/aws-finops)
 Claude Code plugin, the AWS-side prerequisites this repo provisions for it, and
 the reports it drops in this directory.
 
@@ -43,6 +43,15 @@ CLI**, so a report is reproducible rather than improvised.
 The marketplace is pinned to a released tag in the same file
 (`extraKnownMarketplaces.bb-ai-marketplace.source.ref`). Bump that pin to adopt a
 newer plugin version; don't track a branch.
+
+The pin alone doesn't update a machine that already has the plugin: auto-update is
+off for this marketplace, so the cached version stays. After a new pin lands, start
+Claude Code in the repo. It re-fetches the marketplace at the new tag and prints
+`Plugins changed`. Then update the plugin (`/plugin` → **Installed** → `aws-finops`
+→ **Update now**, or `claude plugin update aws-finops@bb-ai-marketplace`) and run
+`/reload-plugins`. From a shell alone, `claude plugin marketplace update` stays on
+the old tag, and `claude plugin marketplace add` also writes a pin into
+`~/.claude/settings.json`.
 
 ### 2.2 AWS side — what this repo provisions
 
