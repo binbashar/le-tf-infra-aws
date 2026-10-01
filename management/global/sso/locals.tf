@@ -131,6 +131,7 @@ locals {
       email      = "hecber.cordova@binbash.com.ar"
       groups = [
         "devops",
+        "devopsprd",
       ]
     }
     "hernan.rezilo" = {
