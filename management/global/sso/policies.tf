@@ -149,7 +149,8 @@ data "aws_iam_policy_document" "devops" {
       "wellarchitected:*",
       "workspaces-web:*",
       "workspaces:*",
-      "pricing:*"
+      "pricing:*",
+      "transform:*"
     ]
     resources = ["*"]
     condition {
