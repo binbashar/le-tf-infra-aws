@@ -31,8 +31,14 @@ jobs:
   update_release_draft:
     runs-on: ubuntu-latest
     steps:
-      # Drafts your next Release notes
+      # Drafts your next Release notes. Each event does one job only: on a PR the
+      # draft's target_commitish would be refs/pull/N/merge, which GitHub rejects
+      # ("Validation Failed ... target_commitish"), so PRs only autolabel and pushes
+      # to master only draft.
       - uses: release-drafter/release-drafter@v5
+        with:
+          disable-releaser: ${{ github.event_name == 'pull_request' }}
+          disable-autolabeler: ${{ github.event_name == 'push' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
