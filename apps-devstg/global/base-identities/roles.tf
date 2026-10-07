@@ -185,6 +185,9 @@ module "iam_assumable_role_service_organizations" {
   trusted_role_services = [
     "organizations.amazonaws.com"
   ]
+  # Service-linked role: AWS owns its trust policy and rejects any change to it
+  # (UnmodifiableEntity), so keep the module from adding sts:TagSession.
+  trusted_role_actions = ["sts:AssumeRole"]
 
   create_role      = true
   role_name        = "AWSServiceRoleForOrganizations"
@@ -208,6 +211,9 @@ module "iam_assumable_role_service_support" {
   trusted_role_services = [
     "support.amazonaws.com"
   ]
+  # Service-linked role: AWS owns its trust policy and rejects any change to it
+  # (UnmodifiableEntity), so keep the module from adding sts:TagSession.
+  trusted_role_actions = ["sts:AssumeRole"]
 
   create_role      = true
   role_name        = "AWSServiceRoleForSupport"
@@ -231,6 +237,9 @@ module "iam_assumable_role_service_trustedadvisor" {
   trusted_role_services = [
     "trustedadvisor.amazonaws.com"
   ]
+  # Service-linked role: AWS owns its trust policy and rejects any change to it
+  # (UnmodifiableEntity), so keep the module from adding sts:TagSession.
+  trusted_role_actions = ["sts:AssumeRole"]
 
   create_role      = true
   role_name        = "AWSServiceRoleForTrustedAdvisor"
