@@ -37,10 +37,10 @@ class WorkflowSecurityContractTests(unittest.TestCase):
             report,
         )
 
-    def test_live_evidence_upload_requires_a_report_directory(self):
-        self.assertIn(
-            "steps.run.outputs.report_dir != ''",
-            self.workflow,
+    def test_evidence_uploads_require_a_report_directory(self):
+        self.assertEqual(
+            self.workflow.count("steps.run.outputs.report_dir != ''"),
+            2,
         )
 
 
