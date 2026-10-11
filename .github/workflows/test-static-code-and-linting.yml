@@ -28,7 +28,7 @@ jobs:
 
       - name: Context Info
         run: |
-          cd $GITHUB_WORKSPACE
+          cd "$GITHUB_WORKSPACE"
           pwd
           ls -la
 
@@ -41,19 +41,22 @@ jobs:
         env:
           TERRAFORM_VER_REF_ARCH: ${{ vars.TERRAFORM_VER_REF_ARCH }}
         run: |
-          # Install pre-commit
-          sudo -H pip3 install pre-commit
+          # Keep pre-commit isolated from Ubuntu-managed Python packages. Version 3.7.1 remains
+          # compatible with the Renovate hook on the runner's bundled npm.
+          python3 -m venv "${RUNNER_TEMP}/pre-commit-venv"
+          "${RUNNER_TEMP}/pre-commit-venv/bin/pip" install --disable-pip-version-check "pre-commit==3.7.1"
+          echo "${RUNNER_TEMP}/pre-commit-venv/bin" >> "${GITHUB_PATH}"
           #
           # Install terraform
           sudo apt-get install unzip curl
           curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-          wget https://releases.hashicorp.com/terraform/${TERRAFORM_VER_REF_ARCH}/terraform_${TERRAFORM_VER_REF_ARCH}_linux_amd64.zip
-          unzip terraform_${TERRAFORM_VER_REF_ARCH}_linux_amd64.zip
+          wget "https://releases.hashicorp.com/terraform/${TERRAFORM_VER_REF_ARCH}/terraform_${TERRAFORM_VER_REF_ARCH}_linux_amd64.zip"
+          unzip "terraform_${TERRAFORM_VER_REF_ARCH}_linux_amd64.zip"
           sudo mv terraform /usr/local/bin/
           terraform --version
           #
           # Install terraform-docs
-          curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.16.0/terraform-docs-v0.16.0-$(uname)-amd64.tar.gz
+          curl -sSLo ./terraform-docs.tar.gz "https://terraform-docs.io/dl/v0.16.0/terraform-docs-v0.16.0-$(uname)-amd64.tar.gz"
           tar -xzf terraform-docs.tar.gz
           chmod +x terraform-docs
           sudo mv ./terraform-docs /usr/local/bin/terraform-docs
