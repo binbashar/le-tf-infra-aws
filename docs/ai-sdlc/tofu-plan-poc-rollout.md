@@ -20,7 +20,7 @@ tested before enabling the next one.
 
 ## POC execution record
 
-Status observed on 2026-09-22:
+Status observed through 2026-10-11:
 
 - Gate 1 passed: discovery, credential-free initialization, validation, artifact transfer,
   provenance checks, and the aggregate check completed successfully for the pilot layer.
@@ -59,6 +59,38 @@ Status observed on 2026-09-22:
   It accurately described the three IAM creates and explicitly retained uncertainty about redacted
   policy and trust values. The explanation was marked medium risk, asked useful review questions,
   did not control the aggregate result, and contained no account IDs, ARNs, or credential patterns.
+- Gate 6 was revalidated with Amazon Nova Lite in
+  [GitHub run 38160922117](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38160922117)
+  after [PR #1219](https://github.com/binbashar/le-tf-infra-aws/pull/1219) added an exact,
+  invoke-only fallback permission and the maintainer applied its in-place policy update. The plan
+  and Bedrock environments were approved independently. The deterministic projection reported the
+  expected three IAM creates with no updates, deletes, or replacements; Nova Lite assigned medium
+  risk, highlighted the IAM review questions, retained the redaction limitations, and did not
+  determine the check result. Inspection of the retained, sanitized artifacts found no account-ID,
+  ARN, or credential patterns.
+- The supervised window is closed: `TOFU_PLAN_POC_LIVE=false` and
+  `TOFU_PLAN_POC_LLM=false`. `BEDROCK_MODEL_ID` was removed, so the workflow returns to its
+  documented Claude default. The exact Nova Lite permission remains as a reviewed fallback, but it
+  cannot be used again without an explicit variable change, both protected-environment approvals,
+  and a new supervised dispatch.
+
+## Paused state and next resumption
+
+The POC is intentionally paused after the successful Nova Lite revalidation. It is not a required
+check and no live or LLM job should be dispatched while the two POC flags remain `false`.
+
+When work resumes:
+
+1. Recheck the Anthropic foundation-model agreement status. If it is available, set the Claude
+   model explicitly for one supervised Gate 6 comparison; otherwise, explicitly reopen the
+   documented Nova Lite fallback window.
+2. Compare the new explanation with the deterministic projection and this Nova Lite record. Record
+   usefulness, hallucinations, latency, cost, and any prompt-injection behavior before changing
+   the selected model or permission set.
+3. Decide whether to retain or remove the Nova Lite fallback permission in a separate reviewed
+   identity-layer change. Do not broaden it to a model family or wildcard.
+4. Keep the aggregate check non-required until the separate promotion decision resolves the
+   destructive-change policy, state confidentiality, and incident/credential-revocation process.
 
 ## Gate 1: credential-free pull request
 
