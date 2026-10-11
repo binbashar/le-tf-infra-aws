@@ -82,13 +82,6 @@ resource "aws_iam_role" "github_actions_opentofu_plan" {
   max_session_duration = 3600
 }
 
-resource "aws_iam_role" "github_actions_opentofu_noop" {
-  name                 = local.github_actions_opentofu_noop_role_name
-  description          = "Read-only no-change OpenTofu plan role for GitHub Actions"
-  assume_role_policy   = data.aws_iam_policy_document.github_actions_opentofu_trust["noop"].json
-  max_session_duration = 3600
-}
-
 resource "aws_iam_role" "github_actions_opentofu_bedrock" {
   name                 = local.github_actions_opentofu_bedrock_role_name
   description          = "Bedrock-only OpenTofu plan explanation role for GitHub Actions"

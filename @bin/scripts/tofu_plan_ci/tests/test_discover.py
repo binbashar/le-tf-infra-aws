@@ -65,10 +65,10 @@ class DiscoverTests(unittest.TestCase):
     def test_project_config_expansion_never_truncates_silently(self):
         result = self.discover(["config/common-variables.tf"], max_layers=2)
         self.assertEqual(result["layers"], [])
-        self.assertIn("above the POC safety limit", result["blocked_reason"])
+        self.assertIn("above the safety limit", result["blocked_reason"])
         self.assertEqual(len(result["candidate_layers"]), 3)
 
-    def test_allowlist_keeps_poc_scope_explicit(self):
+    def test_allowlist_keeps_scope_explicit(self):
         result = self.discover(
             [
                 "apps-devstg/global/cli-test-layer/roles.tf",
@@ -79,13 +79,13 @@ class DiscoverTests(unittest.TestCase):
         self.assertEqual(result["layers"], ["apps-devstg/global/cli-test-layer"])
         self.assertEqual(result["skipped"][0]["path"], "security/us-east-1/security-audit")
 
-    def test_poc_implementation_change_self_tests_the_allowlisted_layer(self):
+    def test_workflow_implementation_change_self_tests_the_allowlisted_layer(self):
         result = self.discover(
-            [".github/workflows/tofu-plan-poc.yml"],
+            [".github/workflows/tofu-plan.yml"],
             allow_layers={"apps-devstg/global/cli-test-layer"},
         )
         self.assertEqual(result["layers"], ["apps-devstg/global/cli-test-layer"])
-        self.assertIn("POC implementation changed", result["scope_reasons"][0])
+        self.assertIn("plan workflow implementation changed", result["scope_reasons"][0])
 
     def test_deleted_layer_is_not_mistaken_for_a_parent(self):
         result = discover_from_paths(
@@ -108,7 +108,7 @@ class DiscoverTests(unittest.TestCase):
             allow_layers={"apps-devstg/global/cli-test-layer"},
         )
         self.assertEqual(result["layers"], [])
-        self.assertIn("outside the POC allowlist", result["blocked_reason"])
+        self.assertIn("outside the TOFU_PLAN_LAYERS allowlist", result["blocked_reason"])
 
     def test_manual_dispatch_rejects_path_traversal(self):
         with self.assertRaises(ValueError):

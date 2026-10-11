@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from tofu_plan_ci.workflow import (
+    allowed_layers,
     common_tfvars_shape,
     layer_slug,
     read_backend_profile,
@@ -36,6 +37,19 @@ class WorkflowTests(unittest.TestCase):
             layer_slug("apps-devstg/global/layer with spaces"),
             "apps-devstg-global-layer-with-spaces",
         )
+
+    def test_allowed_layers_accepts_comma_and_newline_separators(self):
+        value = " apps-devstg/global/cli-test-layer,\nmanagement/global/sso\n\n"
+        with patch.dict(os.environ, {"PLAN_LAYERS": value}, clear=True):
+            self.assertEqual(
+                allowed_layers(),
+                ["apps-devstg/global/cli-test-layer", "management/global/sso"],
+            )
+
+    def test_allowed_layers_rejects_an_empty_list(self):
+        with patch.dict(os.environ, {"PLAN_LAYERS": " , \n"}, clear=True):
+            with self.assertRaises(ValueError):
+                allowed_layers()
 
     def test_backend_profile_accepts_only_the_expected_shape(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -69,7 +83,7 @@ class WorkflowTests(unittest.TestCase):
                 )
                 self.assertFalse(any(argument.startswith("-chdir=") for argument in call.args[0]))
             result = json.loads(
-                next((root / "runner/tofu-plan-poc-report").rglob("result.json")).read_text()
+                next((root / "runner/tofu-plan-report").rglob("result.json")).read_text()
             )
             self.assertEqual(result["status"], "passed")
             self.assertIn("report_dir=", (root / "github-output").read_text())
@@ -95,7 +109,7 @@ class WorkflowTests(unittest.TestCase):
                 "AWS_SECRET_ACCESS_KEY": "temporary-secret-key",
                 "AWS_SESSION_TOKEN": "temporary-session-token",
                 "AWS_REGION": "us-east-1",
-                "POC_LAYER": "apps-devstg/global/cli-test-layer",
+                "PLAN_LAYERS": "apps-devstg/global/cli-test-layer",
             }
 
             def fake_run(command, *, stdout_path, stderr_path=None, env=None, cwd=None):
@@ -123,7 +137,7 @@ class WorkflowTests(unittest.TestCase):
             ):
                 self.assertEqual(run_live("apps-devstg/global/cli-test-layer"), 0)
 
-            report = next((runner / "tofu-plan-poc-report").rglob("result.json"))
+            report = next((runner / "tofu-plan-report").rglob("result.json"))
             self.assertEqual(json.loads(report.read_text())["mode"], "live")
             self.assertTrue((report.parent / "review.json").is_file())
             self.assertFalse((workspace / "config/common.tfvars").exists())
@@ -131,12 +145,12 @@ class WorkflowTests(unittest.TestCase):
             self.assertFalse((runner / "aws").exists())
             self.assertFalse((runner / "tofu-plan-ui.jsonl").exists())
 
-    def test_live_run_rejects_a_layer_outside_the_poc_allowlist(self):
+    def test_live_run_rejects_a_layer_outside_the_allowlist(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             env = {
                 **self.github_env(root),
-                "POC_LAYER": "apps-devstg/global/cli-test-layer",
+                "PLAN_LAYERS": "apps-devstg/global/cli-test-layer",
             }
             (root / "runner").mkdir()
             with patch.dict(os.environ, env, clear=True), redirect_stdout(io.StringIO()):
@@ -146,7 +160,7 @@ class WorkflowTests(unittest.TestCase):
     def test_aggregate_fails_when_an_expected_result_is_missing(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            discovery = root / "runner/tofu-plan-poc-discovery"
+            discovery = root / "runner/tofu-plan-discovery"
             discovery.mkdir(parents=True)
             (discovery / "discovery.json").write_text(
                 json.dumps(

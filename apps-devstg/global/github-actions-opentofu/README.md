@@ -1,9 +1,8 @@
 # GitHub Actions OpenTofu identity
 
 This layer owns the account-wide GitHub Actions OIDC provider in `apps-devstg` and dedicated
-OpenTofu automation identities. It creates three independent roles: the pilot-layer plan role, a
-separate role for the supervised no-change verification, and an invoke-only Bedrock explanation
-role. None is a deployment role.
+OpenTofu automation identities. It creates two independent roles: the plan role and an invoke-only
+Bedrock explanation role. Neither is a deployment role.
 
 ## Trust boundary
 
@@ -12,29 +11,23 @@ environment:
 
 | Role | Environment |
 | --- | --- |
-| Pilot plan | `tofu-plan-poc` |
-| No-change verification | `tofu-plan-poc-noop` |
-| Bedrock explanation | `tofu-plan-poc-bedrock` |
+| Plan | `tofu-plan` |
+| Bedrock explanation | `tofu-plan-bedrock` |
 
 Every trust policy also requires the repository's immutable ID, the `binbashar`
 organization ID, a pull-request merge ref or the `master` branch, and the
 `sts.amazonaws.com` audience. Configure each environment with a reviewer other
 than the run initiator, **Prevent self-review**, and no administrator bypass.
 
-Do not point the normal plan job at the no-change role. It is intentionally a
-separate supervised verification identity and its trust policy rejects the plan
-environment's token.
-
 ## Permission boundary
 
-The pilot plan role can read only its configured target layer's S3 state object, acquire and
-release its exact DynamoDB lock, and inspect the target role and managed policy. The no-change role
-has a separate, similarly bounded policy for this identity layer. Neither role has IAM mutation,
+The plan role can read only its configured target layer's S3 state object, acquire and release its
+exact DynamoDB lock, and inspect the target role and managed policy. It has no IAM mutation,
 secret-read, KMS-decrypt, `iam:PassRole`, or general resource-read permission. State object writes
 and deletes are explicitly denied.
 
 The Bedrock role can invoke only the configured system inference profile and its verified
-destination foundation models, plus the exact regional Amazon Nova Lite POC fallback. A condition
+destination foundation models, plus the exact regional Amazon Nova Lite fallback. A condition
 prevents direct model invocation outside that profile or the one explicitly named fallback; it has
 no state, IAM-read, or infrastructure permission. The workflow sends it only the sanitized plan
 projection.
@@ -79,12 +72,11 @@ leverage tofu plan -no-color -detailed-exitcode
 ```
 
 Review the provider, trust conditions, role policy, backend, and absence of unrelated changes.
-Applying this bootstrap is a maintainer decision; the POC workflow has no apply path.
+Applying this bootstrap is a maintainer decision; the plan workflow has no apply path.
 
-After a reviewed apply, configure the pilot plan role ARN and account ID as
+After a reviewed apply, configure the plan role ARN and account ID as
 `AWS_TOFU_PLAN_ROLE_ARN` and `AWS_TOFU_PLAN_ACCOUNT_ID` repository variables.
 Configure the Bedrock role as `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN` and
-`AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID`. Keep `TOFU_PLAN_POC_LIVE=false` and
-`TOFU_PLAN_POC_LLM=false` until their respective supervised windows described in
-`docs/ai-sdlc/tofu-plan-poc-rollout.md`. A future no-change verification job must
-use the no-change environment; it must never borrow the normal plan environment.
+`AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID`. Keep `TOFU_PLAN_LIVE=false` and
+`TOFU_PLAN_LLM=false` outside the supervised windows described in
+[`docs/ai-sdlc/tofu-plan-rollout.md`](../../../docs/ai-sdlc/tofu-plan-rollout.md).

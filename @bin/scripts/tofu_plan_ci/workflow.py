@@ -32,6 +32,19 @@ def _required_env(name: str) -> str:
     return value
 
 
+def allowed_layers() -> list[str]:
+    """Parse the comma- or newline-separated PLAN_LAYERS allowlist."""
+
+    layers = [
+        layer.strip()
+        for layer in re.split(r"[,\n]", _required_env("PLAN_LAYERS"))
+        if layer.strip()
+    ]
+    if not layers:
+        raise ValueError("required environment variable has no layers: PLAN_LAYERS")
+    return layers
+
+
 def _append(path: str | None, content: str) -> None:
     if not path:
         return
@@ -64,7 +77,7 @@ def read_backend_profile(path: Path) -> str:
 
 def _layer_paths(layer: str) -> tuple[str, Path]:
     slug = layer_slug(layer)
-    report_dir = Path(_required_env("RUNNER_TEMP")) / "tofu-plan-poc-report" / slug
+    report_dir = Path(_required_env("RUNNER_TEMP")) / "tofu-plan-report" / slug
     report_dir.mkdir(parents=True, exist_ok=True)
     _output("slug", slug)
     _output("report_dir", str(report_dir))
@@ -182,14 +195,14 @@ def _metadata_args() -> list[str]:
 
 def run_discovery() -> int:
     root = Path(_required_env("GITHUB_WORKSPACE"))
-    out_dir = Path(_required_env("RUNNER_TEMP")) / "tofu-plan-poc-discovery"
+    out_dir = Path(_required_env("RUNNER_TEMP")) / "tofu-plan-discovery"
     output = out_dir / "discovery.json"
     markdown = out_dir / "discovery.md"
+    allowlist = allowed_layers()
     args = [
         "--root",
         str(root),
-        "--allow-layer",
-        _required_env("POC_LAYER"),
+        *(arg for layer in allowlist for arg in ("--allow-layer", layer)),
         "--max-layers",
         os.environ.get("MAX_LAYERS", "1"),
         "--out",
@@ -198,7 +211,12 @@ def run_discovery() -> int:
         str(markdown),
     ]
     if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
-        args.extend(["--layer", os.environ.get("MANUAL_LAYER") or _required_env("POC_LAYER")])
+        manual_layer = os.environ.get("MANUAL_LAYER", "")
+        if not manual_layer and len(allowlist) == 1:
+            manual_layer = allowlist[0]
+        if not manual_layer:
+            raise ValueError("MANUAL_LAYER is required when PLAN_LAYERS lists several layers")
+        args.extend(["--layer", manual_layer])
     else:
         args.extend(
             [
@@ -314,9 +332,8 @@ def run_live(layer: str) -> int:
     failure_location = None
 
     try:
-        allowed_layer = _required_env("POC_LAYER")
-        if layer != allowed_layer:
-            raise ValueError(f"live plan layer is not the configured POC layer: {layer}")
+        if layer not in allowed_layers():
+            raise ValueError(f"live plan layer is not in the PLAN_LAYERS allowlist: {layer}")
         common = _required_env("COMMON_TFVARS")
         common_tfvars_shape_value = common_tfvars_shape(common)
         common_tfvars.write_text(common.rstrip("\n") + "\n", encoding="utf-8")
@@ -458,7 +475,7 @@ def run_analysis() -> int:
         return bedrock_analysis.main(
             [
                 "--reviews-dir",
-                str(runner_temp / "tofu-plan-poc-reports"),
+                str(runner_temp / "tofu-plan-reports"),
                 "--model-id",
                 os.environ.get("MODEL_ID", "us.anthropic.claude-sonnet-4-6"),
                 "--region",
@@ -470,9 +487,9 @@ def run_analysis() -> int:
                 "--head-sha",
                 os.environ.get("HEAD_SHA", "unknown"),
                 "--out-json",
-                str(runner_temp / "tofu-plan-poc-analysis" / "analysis.json"),
+                str(runner_temp / "tofu-plan-analysis" / "analysis.json"),
                 "--out-markdown",
-                str(runner_temp / "tofu-plan-poc-analysis" / "analysis.md"),
+                str(runner_temp / "tofu-plan-analysis" / "analysis.md"),
             ]
         )
     finally:
@@ -484,9 +501,9 @@ def run_analysis() -> int:
 
 def run_aggregate() -> int:
     runner_temp = Path(_required_env("RUNNER_TEMP"))
-    discovery_path = runner_temp / "tofu-plan-poc-discovery" / "discovery.json"
-    reports_dir = runner_temp / "tofu-plan-poc-reports"
-    analysis_path = runner_temp / "tofu-plan-poc-analysis" / "analysis.md"
+    discovery_path = runner_temp / "tofu-plan-discovery" / "discovery.json"
+    reports_dir = runner_temp / "tofu-plan-reports"
+    analysis_path = runner_temp / "tofu-plan-analysis" / "analysis.md"
     require_live = os.environ.get("REQUIRE_LIVE") == "true"
     discovery_result = json.loads(discovery_path.read_text(encoding="utf-8"))
     results = aggregate_report.load_results(reports_dir)
@@ -511,7 +528,7 @@ def run_aggregate() -> int:
         ),
         analysis_status=os.environ.get("ANALYSIS_STATUS", "disabled"),
     )
-    summary_path = runner_temp / "tofu-plan-poc-summary.md"
+    summary_path = runner_temp / "tofu-plan-summary.md"
     summary_path.write_text(markdown, encoding="utf-8")
     _summary(summary_path)
     _output("gate", gate)

@@ -7,7 +7,7 @@ class WorkflowSecurityContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         root = Path(__file__).resolve().parents[4]
-        cls.workflow = (root / ".github/workflows/tofu-plan-poc.yml").read_text()
+        cls.workflow = (root / ".github/workflows/tofu-plan.yml").read_text()
 
     def test_actions_are_pinned_to_full_commit_shas(self):
         references = re.findall(r"^\s*uses:\s+([^\s#]+)", self.workflow, re.MULTILINE)
@@ -37,8 +37,8 @@ class WorkflowSecurityContractTests(unittest.TestCase):
         analysis = self.workflow.split("\n  analysis:\n", maxsplit=1)[1].split(
             "\n  report:\n", maxsplit=1
         )[0]
-        self.assertIn("environment: tofu-plan-poc", live_plan)
-        self.assertIn("environment: tofu-plan-poc-bedrock", analysis)
+        self.assertIn("environment: tofu-plan", live_plan)
+        self.assertIn("environment: tofu-plan-bedrock", analysis)
 
     def test_report_receives_head_sha_for_artifact_provenance(self):
         report = self.workflow.split("\n  report:\n", maxsplit=1)[1]

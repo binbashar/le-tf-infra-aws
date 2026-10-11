@@ -3,11 +3,6 @@ output "github_actions_opentofu_plan_role_arn" {
   value       = aws_iam_role.github_actions_opentofu_plan.arn
 }
 
-output "github_actions_opentofu_noop_role_arn" {
-  description = "Role ARN for the supervised no-change plan verification only"
-  value       = aws_iam_role.github_actions_opentofu_noop.arn
-}
-
 output "github_actions_opentofu_bedrock_role_arn" {
   description = "Role ARN to configure as the AWS_TOFU_PLAN_BEDROCK_ROLE_ARN GitHub variable"
   value       = aws_iam_role.github_actions_opentofu_bedrock.arn

@@ -2,9 +2,8 @@ locals {
   github_oidc_issuer_url = "https://token.actions.githubusercontent.com"
   github_repository      = "binbashar/le-tf-infra-aws"
   github_environments = {
-    plan    = "tofu-plan-poc"
-    noop    = "tofu-plan-poc-noop"
-    bedrock = "tofu-plan-poc-bedrock"
+    plan    = "tofu-plan"
+    bedrock = "tofu-plan-bedrock"
   }
 
   # The repository currently uses GitHub's classic default OIDC subject format.
@@ -18,15 +17,12 @@ locals {
   github_oidc_allowed_refs                    = ["refs/heads/master", "refs/pull/*/merge"]
   github_actions_opentofu_plan_role_name      = "GitHubActionsOpenTofuPlan"
   github_actions_opentofu_plan_policy_name    = "GitHubActionsOpenTofuPlan"
-  github_actions_opentofu_noop_role_name      = "GitHubActionsOpenTofuNoopPlan"
-  github_actions_opentofu_noop_policy_name    = "GitHubActionsOpenTofuNoopPlan"
   github_actions_opentofu_bedrock_role_name   = "GitHubActionsOpenTofuBedrock"
   github_actions_opentofu_bedrock_policy_name = "GitHubActionsOpenTofuBedrock"
 
-  target_state_key      = "apps-devstg/cli-test-layer/terraform.tfstate"
-  target_role_name      = "LeverageTest"
-  target_policy_name    = "leverage_test"
-  noop_target_state_key = "apps-devstg/github-actions-opentofu/terraform.tfstate"
+  target_state_key   = "apps-devstg/cli-test-layer/terraform.tfstate"
+  target_role_name   = "LeverageTest"
+  target_policy_name = "leverage_test"
 
   # Verified with a read-only GetInferenceProfile call before this policy was
   # authored. InvokeModel evaluates both this system inference profile and its

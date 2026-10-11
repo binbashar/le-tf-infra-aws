@@ -1,13 +1,14 @@
-# OpenTofu pull-request plan POC
+# OpenTofu pull-request plan
 
-This proof of concept adds a native GitHub Actions check for OpenTofu changes without
-introducing Atlantis, a custom GitHub App, automated apply, or PR comments. It is intentionally
-limited to one allowlisted layer while the AWS role and report redaction are validated.
+A native GitHub Actions check for OpenTofu changes, without Atlantis, a custom GitHub App,
+automated apply, or PR comments. It started as a proof of concept (see the execution record in the
+rollout runbook) and was promoted on 2026-10-11. Its scope is deliberately limited to an explicit
+layer allowlist; the AWS role and report redaction are reviewed before each layer is added.
 
-Workflow: [`.github/workflows/tofu-plan-poc.yml`](../../.github/workflows/tofu-plan-poc.yml).
+Workflow: [`.github/workflows/tofu-plan.yml`](../../.github/workflows/tofu-plan.yml).
 
 Staged activation and rollback checklist:
-[`tofu-plan-poc-rollout.md`](tofu-plan-poc-rollout.md).
+[`tofu-plan-rollout.md`](tofu-plan-rollout.md).
 
 ## Current scope
 
@@ -15,22 +16,23 @@ Staged activation and rollback checklist:
   non-draft, human-authored PRs whose head branch lives in this repository. Creating that branch
   requires repository write access. GitHub's event-time `author_association` is deliberately not
   used because it can remain `CONTRIBUTOR` for an internal member. Fork PRs and bot-authored PRs
-  register no runner work; supporting external contributors is outside this POC.
+  register no runner work; supporting external contributors is out of scope.
 - A newer commit cancels an in-progress stale run; the cancelled run remains in Actions history.
 - Detects root modules by the nearest `config.tf`, including nested layers. It does not assume an
   `account/region/layer` depth.
 - Expands changes under `config/` or `<account>/config/`, but never silently truncates a scope that
-  exceeds the configured POC limit.
+  exceeds the configured `TOFU_PLAN_MAX_LAYERS` limit.
 - Excludes any path with a segment ending in `--` and records why it was skipped.
-- Defaults to the existing `apps-devstg/global/cli-test-layer` integration layer. Override it with
-  the `TOFU_PLAN_POC_LAYER` repository variable only after validating the new layer's providers,
-  data sources, backend, remote states, profiles, and README/deployment notes.
-- Changes to the POC workflow or its Python package self-test that allowlisted layer, so the POC's
-  own PR exercises more than a no-op discovery path. Those and other execution-control changes are
+- Plans only layers listed in the `TOFU_PLAN_LAYERS` repository variable (comma- or
+  newline-separated; defaults to the `apps-devstg/global/cli-test-layer` integration layer, which
+  stays allowlisted for testing). Add a layer only after validating its providers, data sources,
+  backend, remote states, profiles, README/deployment notes, and the plan role's permissions.
+- Changes to the workflow or its Python package self-test the allowlisted layers, so the
+  workflow's own PR exercises more than a no-op discovery path. Those and other execution-control changes are
   always static-only and cannot reach a credentialed job.
 - Runs credential-free `tofu init -backend=false -lockfile=readonly` and `tofu validate` by default.
 - Runs a live backend init and speculative plan only when explicitly enabled with an OIDC role and
-  approved through the protected `tofu-plan-poc` GitHub environment.
+  approved through the protected `tofu-plan` GitHub environment.
 - Uploads only sanitized JSON/Markdown reports. It never uploads the binary plan, prior state,
   variables, full UI stream, or before/after values.
 - Can ask Bedrock to explain the sanitized projection. The model is advisory and cannot change the
@@ -40,19 +42,20 @@ There is no apply path in this workflow.
 
 ## Current operating state: paused
 
-As of 2026-10-11, the POC has completed credential-free validation, protected live planning,
-no-change verification, failure/recovery/cancellation behavior, and supervised Bedrock analysis.
+As of 2026-10-11, the proof of concept has completed credential-free validation, protected live
+planning, no-change verification, failure/recovery/cancellation behavior, and supervised Bedrock
+analysis.
 The latest end-to-end Nova Lite fallback run is
 [38160922117](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38160922117): its
 deterministic report showed three planned IAM creations, while the advisory explanation assigned
 medium risk and preserved the report's redaction limitations.
 
-The repository is deliberately returned to its safe default: `TOFU_PLAN_POC_LIVE=false`,
-`TOFU_PLAN_POC_LLM=false`, and no explicit `BEDROCK_MODEL_ID`. The workflow therefore defaults to
-the configured Claude inference profile, while the reviewed exact Nova Lite permission remains
-available only for a future explicitly supervised fallback test. Resume only through the checklist
-in [`tofu-plan-poc-rollout.md`](tofu-plan-poc-rollout.md); do not make this check required or
-expand its layer allowlist during the pause.
+The repository is deliberately returned to its safe default: `TOFU_PLAN_LIVE=false`,
+`TOFU_PLAN_LLM=false`, and no explicit `BEDROCK_MODEL_ID`. The workflow therefore defaults to the
+configured Claude inference profile, while the reviewed exact Nova Lite permission remains
+available only for an explicitly supervised fallback window. Resume only through the checklist in
+[`tofu-plan-rollout.md`](tofu-plan-rollout.md); the check stays non-required, and each new layer
+goes through the onboarding steps there.
 
 ## Workflow layout
 
@@ -73,9 +76,9 @@ Live planning requires:
 
 | Kind | Name | Purpose |
 | --- | --- | --- |
-| Variable | `TOFU_PLAN_POC_LIVE` | Must equal `true` to request live planning. |
-| Variable | `TOFU_PLAN_POC_LAYER` | The single layer allowed by the POC. Defaults to `apps-devstg/global/cli-test-layer`. |
-| Variable | `TOFU_PLAN_POC_MAX_LAYERS` | Safety cap. Defaults to `1`. No subset is chosen when exceeded. |
+| Variable | `TOFU_PLAN_LIVE` | Must equal `true` to request live planning. |
+| Variable | `TOFU_PLAN_LAYERS` | Comma- or newline-separated layer allowlist. Defaults to `apps-devstg/global/cli-test-layer`. A manual dispatch must name its layer when several are listed. |
+| Variable | `TOFU_PLAN_MAX_LAYERS` | Safety cap. Defaults to `1`. No subset is chosen when exceeded. |
 | Variable | `AWS_TOFU_PLAN_ROLE_ARN` | OIDC role assumed by the plan job. This must not be `DeployMaster`. |
 | Variable | `AWS_TOFU_PLAN_ACCOUNT_ID` | Exact AWS account allowed for the plan-role session. |
 | Variable | `OPENTOFU_VERSION` | OpenTofu runner version. Defaults to `1.9.1`. |
@@ -86,7 +89,7 @@ Optional LLM explanation requires:
 
 | Kind | Name | Purpose |
 | --- | --- | --- |
-| Variable | `TOFU_PLAN_POC_LLM` | Must equal `true` to invoke Bedrock. |
+| Variable | `TOFU_PLAN_LLM` | Must equal `true` to invoke Bedrock. |
 | Variable | `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN` | Separate OIDC role with only model invocation permission. |
 | Variable | `AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID` | Exact AWS account allowed for the Bedrock-role session. |
 | Variable | `BEDROCK_MODEL_ID` | Model or inference profile. Defaults to `us.anthropic.claude-sonnet-4-6`; the temporary reviewed fallback is `amazon.nova-lite-v1:0`. |
@@ -100,9 +103,8 @@ reviewers, **Prevent self-review**, and administrator bypass disabled:
 
 | Environment | Credentialed purpose | Extra configuration |
 | --- | --- | --- |
-| `tofu-plan-poc` | Pilot OpenTofu plan | `TOFU_PLAN_COMMON_TFVARS` environment secret |
-| `tofu-plan-poc-noop` | Future no-change verification | Do not substitute it into the pilot job |
-| `tofu-plan-poc-bedrock` | Bedrock explanation | No OpenTofu tfvars secret |
+| `tofu-plan` | OpenTofu plan | `TOFU_PLAN_COMMON_TFVARS` environment secret |
+| `tofu-plan-bedrock` | Bedrock explanation | No OpenTofu tfvars secret |
 
 The automatic credential-free validation job references none of these environments, so it never
 gets `id-token: write` or waits for approval.
@@ -113,16 +115,15 @@ Each role must use GitHub OIDC and short-lived credentials. Its trust policy mus
 matching environment subject (using the actual owner/repository names):
 
 ```text
-plan    = repo:OWNER/REPOSITORY:environment:tofu-plan-poc
-noop    = repo:OWNER/REPOSITORY:environment:tofu-plan-poc-noop
-bedrock = repo:OWNER/REPOSITORY:environment:tofu-plan-poc-bedrock
+plan    = repo:OWNER/REPOSITORY:environment:tofu-plan
+bedrock = repo:OWNER/REPOSITORY:environment:tofu-plan-bedrock
 ```
 
-Do not trust the broader `repo:OWNER/REPOSITORY:pull_request` subject for this POC. A PR can change
+Do not trust the broader `repo:OWNER/REPOSITORY:pull_request` subject. A PR can change
 workflow code; binding AWS trust to the protected environment prevents that change from bypassing
 the approval boundary. Do not reuse the repository's static AWS keys or any `DeployMaster` role.
 
-For the default pilot layer, grant only:
+For each allowlisted layer, grant only:
 
 - read access to its S3 state object and the minimum bucket listing needed by the backend;
 - the DynamoDB operations required to acquire and release its state lock;
@@ -145,7 +146,7 @@ Actions are pinned to full commits; the optional Bedrock client is installed fro
 requirements file.
 
 The Bedrock role needs only the relevant `bedrock:InvokeModel` permission for the configured model
-or inference profile. The POC policy permits the configured Claude system profile and its verified
+or inference profile. The policy permits the configured Claude system profile and its verified
 destination models, plus the exact regional `amazon.nova-lite-v1:0` fallback while its use is
 being evaluated. A different variable value fails closed at IAM.
 
@@ -160,12 +161,11 @@ summary.md
 ```
 
 When Bedrock analysis is enabled for a supervised window, it additionally retains a 7-day
-`tofu-plan-poc-llm` artifact containing only `analysis.json` and `analysis.md`. It is derived from
+`tofu-plan-llm` artifact containing only `analysis.json` and `analysis.md`. It is derived from
 the same sanitized projection and remains advisory.
 
-The stable `POC | OpenTofu Plan` job is the future branch-protection candidate. During the POC it
-should remain non-required until at least one real plan and one intentional failure have been
-observed in GitHub.
+The stable `OpenTofu Plan` job is the future branch-protection candidate. It remains
+non-required until the promotion decisions in the rollout runbook are made.
 
 The aggregate check fails when:
 
@@ -178,7 +178,7 @@ The aggregate check fails when:
   or workflow run.
 
 OpenTofu exit code `2` is treated as a successful plan with changes. Delete/replace actions are
-reported as high-severity review signals but do not yet fail the POC by policy.
+reported as high-severity review signals but do not yet fail the check by policy.
 
 ## Sanitized plan contract
 
@@ -202,7 +202,7 @@ The core mechanics have no third-party Python dependencies:
 PYTHONPATH=@bin/scripts python3 -m unittest discover \
   -s @bin/scripts/tofu_plan_ci/tests -v
 
-actionlint .github/workflows/tofu-plan-poc.yml
+actionlint .github/workflows/tofu-plan.yml
 ```
 
 The Bedrock runtime dependency is isolated in a human-edited
@@ -220,18 +220,19 @@ code-owner review and last-push approval in branch protection, restrict allowed 
 environment approval boundary, and create least-privilege roles. None of those external settings or
 AWS resources are changed by this repository patch.
 
-## POC exit criteria
+## Proof-of-concept exit criteria (met)
 
-Before broadening or making the aggregate check required:
+The proof of concept met these criteria before promotion; the evidence is in the rollout runbook:
 
-1. Observe a credential-free PR run and verify the native summary/artifact navigation.
-2. Create the protected `tofu-plan-poc` environment, provision the dedicated OIDC roles, and verify
-   that both trust policies accept only its environment subject.
-3. Enable one manual live plan for the pilot layer and verify that the uploaded artifact contains
-   no values, account IDs, ARNs, variables, state, or plan binary.
-4. Exercise a harmless plan diff and confirm OpenTofu exit code `2` remains green.
-5. Exercise an intentional init/plan failure and confirm the aggregate check cannot report green.
-6. Enable Bedrock, compare its explanation with the deterministic projection, and record model and
-   prompt limitations.
-7. Decide separately whether delete/replace signals should warn or block; the POC does not make
-   that policy decision implicitly.
+1. A credential-free PR run with working native summary/artifact navigation.
+2. Protected environments and dedicated OIDC roles whose trust policies accept only their own
+   environment subject.
+3. A manual live plan whose uploaded artifact contains no values, account IDs, ARNs, variables,
+   state, or plan binary.
+4. A harmless plan diff with OpenTofu exit code `2` staying green.
+5. An intentional init/plan failure that the aggregate check cannot report green.
+6. A Bedrock explanation compared with the deterministic projection, with model and prompt
+   limitations recorded.
+
+Still open before making the check required: whether delete/replace signals warn or block. The
+workflow does not make that policy decision implicitly.
