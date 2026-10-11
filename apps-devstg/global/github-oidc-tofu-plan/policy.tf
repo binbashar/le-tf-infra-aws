@@ -1,4 +1,19 @@
-data "aws_iam_policy_document" "github_actions_opentofu_plan" {
+locals {
+  plan_state_object_arns = [
+    for target in values(local.plan_targets) :
+    "arn:${data.aws_partition.current.partition}:s3:::${var.bucket}/${target.state_key}"
+  ]
+  plan_state_lock_keys = flatten([
+    for target in values(local.plan_targets) : [
+      "${var.bucket}/${target.state_key}",
+      "${var.bucket}/${target.state_key}-md5",
+    ]
+  ])
+}
+
+# Backend access shared by every plan target. The workflow narrows each job to
+# its own layer's state object and lock keys with an inline session policy.
+data "aws_iam_policy_document" "github_actions_opentofu_plan_state" {
   statement {
     sid     = "ReadStateBackendMetadata"
     effect  = "Allow"
@@ -19,19 +34,15 @@ data "aws_iam_policy_document" "github_actions_opentofu_plan" {
     condition {
       test     = "StringEquals"
       variable = "s3:prefix"
-      values   = [local.target_state_key]
+      values   = [for target in values(local.plan_targets) : target.state_key]
     }
   }
 
   statement {
-    sid    = "ReadTargetState"
-    effect = "Allow"
-    actions = [
-      "s3:GetObject",
-    ]
-    resources = [
-      "arn:${data.aws_partition.current.partition}:s3:::${var.bucket}/${local.target_state_key}",
-    ]
+    sid       = "ReadTargetState"
+    effect    = "Allow"
+    actions   = ["s3:GetObject"]
+    resources = local.plan_state_object_arns
   }
 
   # A speculative plan must never persist refreshed state. This explicit deny
@@ -44,9 +55,7 @@ data "aws_iam_policy_document" "github_actions_opentofu_plan" {
       "s3:DeleteObjectVersion",
       "s3:PutObject",
     ]
-    resources = [
-      "arn:${data.aws_partition.current.partition}:s3:::${var.bucket}/${local.target_state_key}",
-    ]
+    resources = local.plan_state_object_arns
   }
 
   statement {
@@ -73,39 +82,16 @@ data "aws_iam_policy_document" "github_actions_opentofu_plan" {
     condition {
       test     = "ForAllValues:StringEquals"
       variable = "dynamodb:LeadingKeys"
-      values = [
-        "${var.bucket}/${local.target_state_key}",
-        "${var.bucket}/${local.target_state_key}-md5",
-      ]
+      values   = local.plan_state_lock_keys
     }
   }
+}
 
-  statement {
-    sid    = "ReadTargetRole"
-    effect = "Allow"
-    actions = [
-      "iam:GetRole",
-      "iam:ListAttachedRolePolicies",
-      "iam:ListRoleTags",
-    ]
-    resources = [
-      "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/${local.target_role_name}",
-    ]
-  }
-
-  statement {
-    sid    = "ReadTargetPolicy"
-    effect = "Allow"
-    actions = [
-      "iam:GetPolicy",
-      "iam:GetPolicyVersion",
-      "iam:ListPolicyTags",
-      "iam:ListPolicyVersions",
-    ]
-    resources = [
-      "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${local.target_policy_name}",
-    ]
-  }
+data "aws_iam_policy_document" "github_actions_opentofu_plan" {
+  source_policy_documents = [
+    data.aws_iam_policy_document.github_actions_opentofu_plan_state.json,
+    data.aws_iam_policy_document.github_actions_opentofu_plan_cli_test_layer.json,
+  ]
 }
 
 resource "aws_iam_policy" "github_actions_opentofu_plan" {

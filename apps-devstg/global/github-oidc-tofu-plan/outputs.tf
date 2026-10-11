@@ -1,5 +1,5 @@
 output "github_actions_opentofu_plan_role_arn" {
-  description = "Role ARN to configure as the AWS_TOFU_PLAN_ROLE_ARN GitHub variable"
+  description = "Role ARN to configure for apps-devstg in the TOFU_PLAN_ROLES GitHub variable"
   value       = aws_iam_role.github_actions_opentofu_plan.arn
 }
 

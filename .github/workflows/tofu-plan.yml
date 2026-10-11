@@ -35,6 +35,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       layers: ${{ steps.run.outputs.layers }}
+      targets: ${{ steps.run.outputs.targets }}
       has_layers: ${{ steps.run.outputs.has_layers }}
       blocked: ${{ steps.run.outputs.blocked }}
       live_eligible: ${{ steps.run.outputs.live_eligible }}
@@ -120,8 +121,7 @@ jobs:
       ${{ needs.discover.outputs.has_layers == 'true' &&
           needs.discover.outputs.live_eligible == 'true' &&
           vars.TOFU_PLAN_LIVE == 'true' &&
-          vars.AWS_TOFU_PLAN_ROLE_ARN != '' &&
-          vars.AWS_TOFU_PLAN_ACCOUNT_ID != '' }}
+          vars.TOFU_PLAN_ROLES != '' }}
     needs: [discover, validation]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -133,7 +133,7 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        layer: ${{ fromJSON(needs.discover.outputs.layers) }}
+        include: ${{ fromJSON(needs.discover.outputs.targets) }}
     env:
       LAYER: ${{ matrix.layer }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -165,14 +165,23 @@ jobs:
           tofu_version: ${{ vars.OPENTOFU_VERSION || '1.9.1' }}
           tofu_wrapper: false
 
+      # The account's plan role holds every allowlisted layer's reads; the trusted
+      # base revision narrows this job's session to its own layer's state and lock.
+      - name: Resolve plan role and layer session policy
+        id: identity
+        env:
+          TOFU_PLAN_ROLES: ${{ vars.TOFU_PLAN_ROLES }}
+        run: python -m tofu_plan_ci.workflow credentials
+
       - name: Configure short-lived AWS plan credentials
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
         with:
-          role-to-assume: ${{ vars.AWS_TOFU_PLAN_ROLE_ARN }}
+          role-to-assume: ${{ steps.identity.outputs.role_arn }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
           role-session-name: tofu-plan-${{ github.run_id }}
           role-duration-seconds: 900
-          allowed-account-ids: ${{ vars.AWS_TOFU_PLAN_ACCOUNT_ID }}
+          allowed-account-ids: ${{ steps.identity.outputs.account_id }}
+          inline-session-policy: ${{ steps.identity.outputs.session_policy }}
           mask-aws-account-id: true
           unset-current-credentials: true
 

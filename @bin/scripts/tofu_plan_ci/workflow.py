@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Mapping, Sequence
 
 from . import aggregate as aggregate_report
-from . import bedrock_analysis, discover, plan_report
+from . import bedrock_analysis, discover, plan_identity, plan_report
 
 PROFILE = re.compile(
     r'^\s*profile\s*=\s*"(?P<profile>[A-Za-z0-9_-]+)"\s*(?:#.*)?$'
@@ -230,6 +230,10 @@ def run_discovery() -> int:
     discover.main(args)
     result = json.loads(output.read_text(encoding="utf-8"))
     _output("layers", json.dumps(result["layers"], separators=(",", ":")))
+    targets = [
+        {"layer": layer, "account": layer.split("/", 1)[0]} for layer in result["layers"]
+    ]
+    _output("targets", json.dumps(targets, separators=(",", ":")))
     _output("has_layers", str(bool(result["layers"])).lower())
     _output("blocked", str(bool(result.get("blocked_reason"))).lower())
     _output("live_eligible", str(bool(result.get("live_eligible", True))).lower())
@@ -312,6 +316,25 @@ def _write_aws_profile(directory: Path, *, profile: str, region: str) -> dict[st
         }
     )
     return process_env
+
+
+def run_credentials(layer: str) -> int:
+    """Resolve the plan role and session policy before any credential request."""
+
+    try:
+        if layer not in allowed_layers():
+            raise ValueError(f"layer is not in the PLAN_LAYERS allowlist: {layer}")
+        workspace = Path(
+            os.environ.get("CANDIDATE_ROOT") or _required_env("GITHUB_WORKSPACE")
+        ).resolve()
+        resolved = plan_identity.resolve(workspace, layer, _required_env("TOFU_PLAN_ROLES"))
+    except (OSError, ValueError) as error:
+        print(f"::error::{error}")
+        return 1
+    print(f"::add-mask::{resolved['account_id']}")
+    for name, value in resolved.items():
+        _output(name, value)
+    return 0
 
 
 def run_live(layer: str) -> int:
@@ -544,7 +567,7 @@ def _parser() -> argparse.ArgumentParser:
     commands.add_parser("discover")
     commands.add_parser("analyze")
     commands.add_parser("aggregate")
-    for name in ("static", "live"):
+    for name in ("static", "credentials", "live"):
         command = commands.add_parser(name)
         command.add_argument("--layer", default="")
     return parser
@@ -556,6 +579,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_discovery()
     if args.command == "static":
         return run_static(args.layer or _required_env("LAYER"))
+    if args.command == "credentials":
+        return run_credentials(args.layer or _required_env("LAYER"))
     if args.command == "live":
         return run_live(args.layer or _required_env("LAYER"))
     if args.command == "analyze":

@@ -30,6 +30,20 @@ class WorkflowSecurityContractTests(unittest.TestCase):
         self.assertEqual(self.workflow.count("mask-aws-account-id: true"), 2)
         self.assertIn("needs.discover.outputs.live_eligible == 'true'", self.workflow)
 
+    def test_plan_role_comes_from_trusted_resolution_with_session_policy(self):
+        live_plan = self.workflow.split("\n  live_plan:\n", maxsplit=1)[1].split(
+            "\n  analysis:\n", maxsplit=1
+        )[0]
+        self.assertIn("python -m tofu_plan_ci.workflow credentials", live_plan)
+        self.assertIn("role-to-assume: ${{ steps.identity.outputs.role_arn }}", live_plan)
+        self.assertIn(
+            "inline-session-policy: ${{ steps.identity.outputs.session_policy }}", live_plan
+        )
+        self.assertIn("PYTHONPATH: trusted/@bin/scripts", live_plan)
+        self.assertLess(
+            live_plan.index("workflow credentials"), live_plan.index("configure-aws-credentials")
+        )
+
     def test_credential_jobs_use_distinct_protected_environments(self):
         live_plan = self.workflow.split("\n  live_plan:\n", maxsplit=1)[1].split(
             "\n  analysis:\n", maxsplit=1

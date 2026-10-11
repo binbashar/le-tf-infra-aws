@@ -32,6 +32,19 @@ class LivePlanPolicyTests(unittest.TestCase):
         self.assertTrue(any("execution configuration" in reason for reason in blockers))
         self.assertTrue(any("source changed" in reason for reason in blockers))
 
+    def test_project_and_account_configuration_changes_are_suppressed(self):
+        for path in (
+            "config/common.tfvars",
+            "management/config/backend.tfvars",
+            "apps-devstg/config/account.tfvars",
+        ):
+            blockers = live_plan_blockers([path])
+            self.assertTrue(
+                any("project or account configuration" in reason for reason in blockers),
+                path,
+            )
+        self.assertEqual(live_plan_blockers(["management/global/sso/locals.tf"]), [])
+
     def test_external_program_and_provisioner_are_suppressed(self):
         blockers = live_plan_blockers(
             ["apps-devstg/global/cli-test-layer/main.tf"],

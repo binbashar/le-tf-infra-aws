@@ -79,8 +79,7 @@ Live planning requires:
 | Variable | `TOFU_PLAN_LIVE` | Must equal `true` to request live planning. |
 | Variable | `TOFU_PLAN_LAYERS` | Comma- or newline-separated layer allowlist. Defaults to `apps-devstg/global/cli-test-layer`. A manual dispatch must name its layer when several are listed. |
 | Variable | `TOFU_PLAN_MAX_LAYERS` | Safety cap. Defaults to `1`. No subset is chosen when exceeded. |
-| Variable | `AWS_TOFU_PLAN_ROLE_ARN` | OIDC role assumed by the plan job. This must not be `DeployMaster`. |
-| Variable | `AWS_TOFU_PLAN_ACCOUNT_ID` | Exact AWS account allowed for the plan-role session. |
+| Variable | `TOFU_PLAN_ROLES` | JSON map from account directory to its plan role, e.g. `{"management": {"role_arn": "arn:aws:iam::<ID>:role/GitHubActionsOpenTofuPlan", "account_id": "<ID>"}}`. The role must be in `account_id` and must not be `DeployMaster`. A layer whose account is missing fails closed. |
 | Variable | `OPENTOFU_VERSION` | OpenTofu runner version. Defaults to `1.9.1`. |
 | Variable | `AWS_REGION` | AWS/Bedrock region. Defaults to `us-east-1`. |
 | Environment secret | `TOFU_PLAN_COMMON_TFVARS` | Exact CI copy of the ignored root `config/common.tfvars`. It is written with mode `0600` and removed after planning. |
@@ -123,18 +122,29 @@ Do not trust the broader `repo:OWNER/REPOSITORY:pull_request` subject. A PR can 
 workflow code; binding AWS trust to the protected environment prevents that change from bypassing
 the approval boundary. Do not reuse the repository's static AWS keys or any `DeployMaster` role.
 
-For each allowlisted layer, grant only:
+Each account that hosts an allowlisted layer has one plan role, created by that account's
+`<account>/global/github-oidc-tofu-plan` layer. The role's policy is the union of its layers'
+needs, generated from a `plan_targets` map plus one `plan-target-<layer>.tf` file per layer. For
+each allowlisted layer, grant only:
 
 - read access to its S3 state object and the minimum bucket listing needed by the backend;
 - the DynamoDB operations required to acquire and release its state lock;
-- read-only IAM calls needed to refresh the resources already in that layer;
+- the read-only provider calls needed to refresh the resources already in that layer, derived from
+  a converged local plan's CloudTrail events rather than from a managed read-only policy;
 - no create, update, delete, pass-role, state-write, secret-value, or KMS-decrypt permissions unless
   a reviewed provider/data-source requirement proves one is unavoidable.
+
+Every live job assumes its account's role with an **inline session policy** built by the trusted
+base revision from the layer's backend key (`config.tf`) and the account's `backend.tfvars`. It
+narrows `s3:GetObject`/`s3:ListBucket` on the state bucket and the lock-item operations on the lock
+table to that one layer, and leaves every other permission to the role. An approved plan of one
+layer therefore cannot read another layer's state, even though the role could.
 
 Read-only planning is still privileged: provider code and data sources execute from the PR and can
 read whatever the role can read. Therefore every job is skipped for forks, while credentialed jobs
 also require protected-environment approval. A live plan is suppressed when a PR changes CI
-control files, provider locks, `config.tf`, any OpenTofu JSON configuration, provider/backend
+control files, provider locks, `config.tf`, project or account configuration (`config/`,
+`<account>/config/`), any OpenTofu JSON configuration, provider/backend
 declarations, module/provider sources, external data sources, or provisioners. The policy scans both
 native `.tf` and `.tofu` configuration before allowing a credentialed plan. Live sanitization and
 LLM analysis import their code from the PR base revision, not from the candidate checkout. Expanding

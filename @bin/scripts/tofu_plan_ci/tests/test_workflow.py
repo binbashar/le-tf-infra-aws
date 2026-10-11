@@ -13,6 +13,7 @@ from tofu_plan_ci.workflow import (
     layer_slug,
     read_backend_profile,
     run_aggregate,
+    run_credentials,
     run_live,
     run_static,
 )
@@ -156,6 +157,38 @@ class WorkflowTests(unittest.TestCase):
             with patch.dict(os.environ, env, clear=True), redirect_stdout(io.StringIO()):
                 self.assertEqual(run_live("security/us-east-1/security-audit"), 1)
             self.assertFalse((root / "runner/aws").exists())
+
+    def test_credentials_emit_role_and_session_policy_for_an_allowlisted_layer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            (workspace / "management/config").mkdir(parents=True)
+            (workspace / "management/global/sso").mkdir(parents=True)
+            (workspace / "management/config/backend.tfvars").write_text(
+                'bucket = "mgmt-state"\nregion = "us-east-1"\ndynamodb_table = "mgmt-lock"\n'
+            )
+            (workspace / "management/global/sso/config.tf").write_text(
+                'terraform {\n  backend "s3" {\n    key = "management/sso/terraform.tfstate"\n  }\n}\n'
+            )
+            env = {
+                **self.github_env(root),
+                "PLAN_LAYERS": "apps-devstg/global/cli-test-layer,management/global/sso",
+                "TOFU_PLAN_ROLES": json.dumps(
+                    {
+                        "management": {
+                            "role_arn": "arn:aws:iam::111111111111:role/GitHubActionsOpenTofuPlan",
+                            "account_id": "111111111111",
+                        }
+                    }
+                ),
+            }
+            with patch.dict(os.environ, env, clear=True), redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(run_credentials("management/global/sso"), 0)
+                self.assertEqual(run_credentials("security/global/base-identities"), 1)
+            self.assertIn("::add-mask::111111111111", out.getvalue())
+            outputs = (root / "github-output").read_text()
+            self.assertIn("role_arn=arn:aws:iam::111111111111:role/GitHubActionsOpenTofuPlan", outputs)
+            self.assertIn("session_policy={", outputs)
 
     def test_aggregate_fails_when_an_expected_result_is_missing(self):
         with tempfile.TemporaryDirectory() as directory:

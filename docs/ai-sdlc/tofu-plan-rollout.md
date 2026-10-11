@@ -9,7 +9,8 @@ tested before enabling the next one.
 
 - Repository: `binbashar/le-tf-infra-aws`.
 - Layer allowlist (`TOFU_PLAN_LAYERS`): `apps-devstg/global/cli-test-layer`, kept as the test
-  layer.
+  layer, and `management/global/sso` (Identity Center users, groups, permission sets, and
+  assignments), onboarded through [Layer onboarding](#layer-onboarding).
 - Maximum selected layers (`TOFU_PLAN_MAX_LAYERS`): one.
 - No apply, destroy, import, state mutation, PR comments, or automatic permission expansion.
 - The stable PR check is `OpenTofu Plan`.
@@ -193,7 +194,7 @@ forks remain completely unsupported and skipped.
 1. Check the `apps-devstg` account for an existing IAM OIDC provider for
    `https://token.actions.githubusercontent.com`; reference or import an owned provider rather than
    creating a duplicate.
-2. Prefer a dedicated `apps-devstg/global/github-actions-opentofu` root module over adding the plan
+2. Prefer a dedicated `<account>/global/github-oidc-tofu-plan` root module over adding the plan
    identities to the broad `base-identities` lifecycle.
 3. Create separate plan and Bedrock-explanation roles. Each trust must
    require the audience and its matching environment subject:
@@ -216,7 +217,7 @@ has no infrastructure mutation path.
 
 ## Gate 4: one supervised live plan
 
-1. Set `AWS_TOFU_PLAN_ROLE_ARN` and `AWS_TOFU_PLAN_ACCOUNT_ID`, leave
+1. Add the layer's account to `TOFU_PLAN_ROLES`, leave
    `TOFU_PLAN_LLM=false`, and temporarily set `TOFU_PLAN_LIVE=true`.
 2. Dispatch the workflow manually on `master` and have a different reviewer approve the protected
    job.
@@ -278,6 +279,36 @@ If an Anthropic account agreement delays the selected Claude profile, use
 Exit condition: the explanation is useful, remains advisory, and does not expand the data or
 permission boundary. This was satisfied by run 35682901228; retain its stated limitations when
 evaluating future explanations.
+
+## Layer onboarding
+
+Adding a layer to `TOFU_PLAN_LAYERS` grants approved PR code read access to that layer's state
+and resources. Each addition is its own reviewed change:
+
+1. **Confirm fit.** Single `aws` provider for the layer's own account (no aliased or cross-account
+   providers), no `terraform_remote_state` into accounts the plan role cannot read, no external
+   data sources, and a lock file with `linux_amd64` hashes.
+2. **Derive the reads.** Run a local `leverage tofu plan` of the converged layer, then list the
+   CloudTrail management events its session produced (`lookup-events` by event source, about
+   15 minutes later). State and lock access are data events and do not appear; the shared
+   `policy.tf` already grants them per `plan_targets` entry.
+3. **Extend the account's identity layer.** Add a `plan_targets` entry with the layer's backend
+   key and a `plan-target-<layer>.tf` with only those reads, scoped to the narrowest resource
+   ARNs the actions support. If the account has no `github-oidc-tofu-plan` layer yet, create one
+   from an existing account's copy; an account can hold only one GitHub OIDC provider, so check
+   for an existing one first.
+4. **Check before apply.** `iam simulate-custom-policy` the rendered policy against real resource
+   ARNs (allowed) and against writes and other layers' state (denied); split it into documents of
+   at most 2,000 characters. Pass the job's session policy as the permissions-boundary input to
+   check the intersection.
+5. **Apply, then configure.** A maintainer applies the identity layer. Add the account to
+   `TOFU_PLAN_ROLES` and the layer to `TOFU_PLAN_LAYERS`.
+6. **Supervised plan.** Run one manual live dispatch of the layer, approve it from the
+   `tofu-plan` environment, and inspect the artifacts as in Gate 4. On `AccessDenied`, add only the
+   demonstrated read.
+7. **Review data exposure.** Record what the role can read that the sanitized report never shows
+   (for example, Identity Center user names and emails for `management/global/sso`) and confirm
+   that the risk is accepted.
 
 ## Promotion decision
 
