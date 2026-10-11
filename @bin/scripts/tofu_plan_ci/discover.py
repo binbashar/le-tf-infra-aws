@@ -12,8 +12,8 @@ from typing import Iterable, Sequence
 from . import SCHEMA_VERSION
 from .policy import changed_hcl_documents, git_hcl_patch, live_plan_blockers
 
-POC_SELF_TEST_PATHS = (
-    ".github/workflows/tofu-plan-poc.yml",
+SELF_TEST_PATHS = (
+    ".github/workflows/tofu-plan.yml",
     "@bin/scripts/tofu_plan_ci/",
 )
 
@@ -128,9 +128,9 @@ def discover_from_paths(
         if not parts:
             continue
 
-        if path == POC_SELF_TEST_PATHS[0] or path.startswith(POC_SELF_TEST_PATHS[1]):
+        if path == SELF_TEST_PATHS[0] or path.startswith(SELF_TEST_PATHS[1]):
             self_test_requested = True
-            scope_reasons.add(f"POC implementation changed: {path}")
+            scope_reasons.add(f"plan workflow implementation changed: {path}")
             continue
 
         if parts[0] == "config":
@@ -172,7 +172,7 @@ def discover_from_paths(
         candidate_layers = sorted(set(candidate_layers) | selected)
     if allowed:
         for layer in sorted(selected - allowed):
-            skip(layer, "outside the POC layer allowlist")
+            skip(layer, "outside the TOFU_PLAN_LAYERS allowlist")
         selected.intersection_update(allowed)
 
     blocked_reason = None
@@ -182,7 +182,7 @@ def discover_from_paths(
         )
     if len(selected) > max_layers:
         limit_reason = (
-            f"{len(selected)} layers are in scope, above the POC safety limit of "
+            f"{len(selected)} layers are in scope, above the safety limit of "
             f"{max_layers}; no subset was selected"
         )
         blocked_reason = (
@@ -225,7 +225,7 @@ def manual_discovery(
     elif layer not in active_roots:
         result["blocked_reason"] = f"requested layer is not an active root module: {layer}"
     elif allow_layers and layer not in allow_layers:
-        result["blocked_reason"] = f"requested layer is outside the POC allowlist: {layer}"
+        result["blocked_reason"] = f"requested layer is outside the TOFU_PLAN_LAYERS allowlist: {layer}"
     else:
         result["layers"] = [layer]
     return result
@@ -245,7 +245,7 @@ def render_markdown(result: dict, *, base: str = "", head: str = "") -> str:
         )
     lines.append(f"- Selected layers: **{len(result['layers'])}**")
     lines.append(
-        "- Candidate layers before POC scoping: "
+        "- Candidate layers before allowlist scoping: "
         f"**{len(result['candidate_layers'])}**"
     )
     lines.append(
@@ -264,7 +264,7 @@ def render_markdown(result: dict, *, base: str = "", head: str = "") -> str:
         lines.extend(["", "### Live-plan policy", ""])
         lines.extend(f"- {safe(reason)}" for reason in result["live_blockers"])
     if result.get("skipped"):
-        lines.extend(["", "### Not planned by this POC", ""])
+        lines.extend(["", "### Not planned by this run", ""])
         lines.extend(
             f"- `{safe(item['path'])}` — {safe(item['reason'])}"
             for item in result["skipped"]

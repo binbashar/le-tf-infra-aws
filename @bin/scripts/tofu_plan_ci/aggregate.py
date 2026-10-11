@@ -88,7 +88,7 @@ def render_markdown(
         return html.escape(str(value), quote=False).replace("`", "\\`")
 
     lines = [
-        "# OpenTofu plan POC",
+        "# OpenTofu plan",
         "",
         f"**Outcome:** {'PASS' if gate == 'pass' else 'FAIL'}",
         "",
@@ -104,13 +104,13 @@ def render_markdown(
             f"{counts.get('delete', '—')} | {counts.get('replace', '—')} |"
         )
     if not results:
-        lines.append("| _No POC layer affected_ | — | skipped | — | — | — | — |")
+        lines.append("| _No allowlisted layer affected_ | — | skipped | — | — | — | — |")
 
     if reasons:
         lines.extend(["", "## Blocking reasons", ""])
         lines.extend(f"- {safe(reason)}" for reason in reasons)
     if discovery.get("skipped"):
-        lines.extend(["", "## Outside this POC run", ""])
+        lines.extend(["", "## Outside this run", ""])
         lines.extend(
             f"- `{safe(item['path'])}` — {safe(item['reason'])}"
             for item in discovery["skipped"]

@@ -17,7 +17,7 @@ class LivePlanPolicyTests(unittest.TestCase):
     def test_control_plane_and_lock_changes_are_suppressed(self):
         blockers = live_plan_blockers(
             [
-                ".github/workflows/tofu-plan-poc.yml",
+                ".github/workflows/tofu-plan.yml",
                 "apps-devstg/global/cli-test-layer/.terraform.lock.hcl",
             ]
         )
