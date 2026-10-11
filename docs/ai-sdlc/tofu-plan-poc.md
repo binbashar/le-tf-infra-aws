@@ -73,7 +73,7 @@ Optional LLM explanation requires:
 | Variable | `TOFU_PLAN_POC_LLM` | Must equal `true` to invoke Bedrock. |
 | Variable | `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN` | Separate OIDC role with only model invocation permission. |
 | Variable | `AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID` | Exact AWS account allowed for the Bedrock-role session. |
-| Variable | `BEDROCK_MODEL_ID` | Model or inference profile. Defaults to `us.anthropic.claude-sonnet-4-6`. |
+| Variable | `BEDROCK_MODEL_ID` | Model or inference profile. Defaults to `us.anthropic.claude-sonnet-4-6`; the temporary reviewed fallback is `amazon.nova-lite-v1:0`. |
 
 The two roles are deliberately separate. A Bedrock failure does not turn a successful OpenTofu
 plan into a failure, and the Bedrock job never receives plan-role credentials or a token accepted by
@@ -129,7 +129,9 @@ Actions are pinned to full commits; the optional Bedrock client is installed fro
 requirements file.
 
 The Bedrock role needs only the relevant `bedrock:InvokeModel` permission for the configured model
-or inference profile.
+or inference profile. The POC policy permits the configured Claude system profile and its verified
+destination models, plus the exact regional `amazon.nova-lite-v1:0` fallback while its use is
+being evaluated. A different variable value fails closed at IAM.
 
 ## Evidence and check behavior
 
@@ -172,7 +174,9 @@ before/after values, variables, configuration bodies, and prior state. AWS accou
 common credential/token shapes in persisted identifiers are redacted.
 
 The Bedrock prompt receives only this projection. Structured output is validated and rendered as
-escaped Markdown. Plan content is treated as untrusted data, and the model receives no tools.
+escaped Markdown. Plan content is treated as untrusted data. Claude uses Bedrock JSON-schema
+output; the exact Nova Lite fallback is forced to return the same schema as a tool input, without
+any tool execution capability.
 
 ## Local verification
 

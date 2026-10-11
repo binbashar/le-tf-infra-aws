@@ -1,13 +1,19 @@
 import json
+import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 from tofu_plan_ci.bedrock_analysis import (
+    invoke_bedrock,
     llm_payload,
     load_reviews,
     parse_model_text,
+    parse_model_tool_use,
     render_markdown,
+    uses_nova_tool_calling,
     validate_analysis_layers,
 )
 
@@ -35,6 +41,60 @@ class BedrockAnalysisTests(unittest.TestCase):
             }
         }
         self.assertEqual(parse_model_text(response)["overall_risk"], "high")
+
+    def test_parses_forced_nova_tool_response(self):
+        response = {
+            "output": {
+                "message": {
+                    "content": [
+                        {
+                            "toolUse": {
+                                "name": "review_sanitized_tofu_plan",
+                                "input": self.analysis(),
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+        self.assertEqual(parse_model_tool_use(response)["overall_risk"], "high")
+
+    def test_nova_tool_path_is_limited_to_the_reviewed_model_id(self):
+        self.assertTrue(uses_nova_tool_calling("amazon.nova-lite-v1:0"))
+        self.assertFalse(uses_nova_tool_calling("amazon.nova-pro-v1:0"))
+
+    def test_nova_invocation_forces_the_review_tool(self):
+        client = Mock()
+        client.converse.return_value = {
+            "output": {
+                "message": {
+                    "content": [
+                        {
+                            "toolUse": {
+                                "name": "review_sanitized_tofu_plan",
+                                "input": self.analysis(),
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+        boto3 = types.ModuleType("boto3")
+        boto3.client = Mock(return_value=client)
+        with patch.dict(sys.modules, {"boto3": boto3}):
+            result = invoke_bedrock(
+                payload={"layers": []},
+                model_id="amazon.nova-lite-v1:0",
+                region="us-east-1",
+                request_metadata={"run-id": "test"},
+            )
+        request = client.converse.call_args.kwargs
+        self.assertEqual(result["overall_risk"], "high")
+        self.assertNotIn("outputConfig", request)
+        self.assertEqual(
+            request["toolConfig"]["toolChoice"]["tool"]["name"],
+            "review_sanitized_tofu_plan",
+        )
 
     def test_markdown_escapes_model_html(self):
         analysis = self.analysis()

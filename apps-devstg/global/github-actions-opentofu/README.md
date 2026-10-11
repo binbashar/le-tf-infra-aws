@@ -34,9 +34,15 @@ secret-read, KMS-decrypt, `iam:PassRole`, or general resource-read permission. S
 and deletes are explicitly denied.
 
 The Bedrock role can invoke only the configured system inference profile and its verified
-destination foundation models. A condition prevents direct model invocation outside that profile;
-it has no state, IAM-read, or infrastructure permission. The workflow sends it only the sanitized
-plan projection.
+destination foundation models, plus the exact regional Amazon Nova Lite POC fallback. A condition
+prevents direct model invocation outside that profile or the one explicitly named fallback; it has
+no state, IAM-read, or infrastructure permission. The workflow sends it only the sanitized plan
+projection.
+
+The workflow still defaults to the system inference profile. While the Anthropic account agreement
+is pending, a maintainer may set `BEDROCK_MODEL_ID=amazon.nova-lite-v1:0` only after applying this
+layer's reviewed policy update. The analyzer recognizes only that exact Nova model ID and uses a
+forced, schema-bound tool call for its output. Any other unpermitted model ID fails closed.
 
 The DynamoDB write operations are only for the state lock. If a plan requires any other write,
 state access, or broad read, stop and review the provider operation rather than broadening the

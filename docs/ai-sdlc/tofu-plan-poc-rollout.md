@@ -200,6 +200,21 @@ been observed without applying infrastructure.
    check result.
 6. Disable LLM mode after the test window.
 
+### Temporary Nova Lite fallback
+
+If an Anthropic account agreement delays the selected Claude profile, use
+`amazon.nova-lite-v1:0` only as a reviewed, reversible fallback:
+
+1. Apply the identity-layer policy update that permits precisely that regional foundation-model
+   ARN; do not generalize the policy to a model family or wildcard.
+2. Set `BEDROCK_MODEL_ID=amazon.nova-lite-v1:0` after the policy is applied. The analyzer selects
+   Nova's forced tool-call structured-output path only for that exact ID.
+3. Run one supervised Gate 6 window, compare its explanation with the deterministic projection,
+   and return `TOFU_PLAN_POC_LLM=false` afterward.
+4. Once the Anthropic agreement is available, either restore the profile variable and remove the
+   Nova permission in a reviewed change, or explicitly retain it with documented evaluation
+   evidence.
+
 Exit condition: the explanation is useful, remains advisory, and does not expand the data or
 permission boundary. This was satisfied by run 35682901228; retain its stated limitations when
 evaluating future explanations.
