@@ -23,6 +23,21 @@ jobs:
       TF_ROOT: . #/home/runner/work/le-tf-infra-aws/le-tf-infra-aws
 
     steps:
+      # Dependabot-triggered runs get no Actions secrets (this repo keeps no Dependabot
+      # secrets), and neither does a pull request from a fork, so the API key is empty
+      # there and `infracost breakdown` exits 1. Skip the estimate rather than fail the PR.
+      - name: Check for Infracost API key
+        id: api-key
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+        run: |
+          if [ -z "${INFRACOST_API_KEY}" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Infracost API key (Dependabot or fork PR) - Infracost did not run."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
       # If you use private modules, add an environment variable or secret
       # called GIT_SSH_KEY with your private key, so Infracost can access
       # private repositories (similar to how Terraform/Terragrunt does).
@@ -34,6 +49,7 @@ jobs:
       #     ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Setup Infracost
+        if: steps.api-key.outputs.available == 'true'
         uses: infracost/actions/setup@v2
         # See https://github.com/infracost/actions/tree/master/setup for other inputs
         # If you can't use this action, see Docker images in https://infracost.io/cicd
@@ -42,12 +58,14 @@ jobs:
 
       # Checkout the base branch of the pull request (e.g. main/master).
       - name: Checkout base branch
+        if: steps.api-key.outputs.available == 'true'
         uses: actions/checkout@v2
         with:
           ref: '${{ github.event.pull_request.base.ref }}'
 
       # Generate Infracost JSON file as the baseline.
       - name: Generate Infracost cost estimate baseline
+        if: steps.api-key.outputs.available == 'true'
         run: |
           pwd
           mv ${TF_ROOT}/config/common.tfvars.example ${TF_ROOT}/config/common.tfvars
@@ -57,10 +75,12 @@ jobs:
 
       # Checkout the current PR branch so we can create a diff.
       - name: Checkout PR branch
+        if: steps.api-key.outputs.available == 'true'
         uses: actions/checkout@v2
 
       # Generate an Infracost diff and save it to a JSON file.
       - name: Generate Infracost diff
+        if: steps.api-key.outputs.available == 'true'
         run: |
           mv ${TF_ROOT}/config/common.tfvars.example ${TF_ROOT}/config/common.tfvars
           infracost diff --config-file=${TF_ROOT}/infracost.yml \
@@ -76,6 +96,7 @@ jobs:
       #   new - Create a new cost estimate comment on every push.
       # See https://www.infracost.io/docs/features/cli_commands/#comment-on-pull-requests for other options.
       - name: Post Infracost comment
+        if: steps.api-key.outputs.available == 'true'
         run: |
           infracost comment github --path=/tmp/infracost.json \
                                    --repo=$GITHUB_REPOSITORY \
@@ -85,13 +106,14 @@ jobs:
 
       - name: Generate Slack message
         id: infracost-slack
+        if: steps.api-key.outputs.available == 'true'
         run: |
           echo "::set-output name=slack-message::$(infracost output --path=/tmp/infracost.json --format=slack-message --show-skipped)"
           echo "::set-output name=diffTotalMonthlyCost::$(jq '(.diffTotalMonthlyCost // 0) | tonumber' /tmp/infracost.json)"
 
       - name: Send cost estimate to Slack
         uses: slackapi/slack-github-action@v1
-        if: ${{ steps.infracost-slack.outputs.diffTotalMonthlyCost > 0 }} # Only post to Slack if there is a cost diff
+        if: ${{ steps.api-key.outputs.available == 'true' && steps.infracost-slack.outputs.diffTotalMonthlyCost > 0 }} # Only post to Slack if there is a cost diff
         with:
           payload: ${{ steps.infracost-slack.outputs.slack-message }}
         env:
