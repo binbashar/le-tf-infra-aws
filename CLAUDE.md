@@ -470,6 +470,9 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - `pretty-format-json` hook sorts keys alphabetically and autofixes — ensure JSON files have sorted keys before pushing
 - **Infracost** workflow for cost impact analysis on PRs
 - Slack notifications on pipeline success/failure
+- **Dependabot and fork PRs get no Actions secrets** (the repo keeps no Dependabot secrets), so
+  Infracost, `test_leverage` and the Slack notifications skip with a `::notice::` instead of
+  failing. On such a PR a green Infracost or `test_leverage` means "did not run", not "passed".
 - PR template at `.github/PULL_REQUEST_TEMPLATE.md` uses What? / Why? / References format
 
 ### @claude on PRs

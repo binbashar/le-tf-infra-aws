@@ -95,9 +95,26 @@ jobs:
           git diff --name-only "${BASE}" HEAD | sed 's/^/  /'
           pre-commit run --from-ref "${BASE}" --to-ref HEAD --show-diff-on-failure
 
+      # Dependabot-triggered runs get no Actions secrets (this repo keeps no Dependabot
+      # secrets), so the webhook is empty there and the Slack action throws. Skip the
+      # notification rather than let it fail a job whose checks passed. Runs after a
+      # failed lint too, so the failure notification below still fires.
+      - name: Check for Slack webhook
+        id: slack
+        if: ${{ !cancelled() }}
+        env:
+          SLACK_DIRECT_WEBHOOK: ${{ secrets.SLACK_DIRECT_WEBHOOK }}
+        run: |
+          if [ -z "${SLACK_DIRECT_WEBHOOK}" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Slack webhook (Dependabot-triggered run) - notification skipped."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Notify slack failure workflow run
         uses: slackapi/slack-github-action@v2.0.0
-        if: failure()
+        if: failure() && steps.slack.outputs.available == 'true'
         with:
           webhook: ${{ secrets.SLACK_DIRECT_WEBHOOK }}
           webhook-type: incoming-webhook
@@ -134,7 +151,7 @@ jobs:
 
       - name: Notify slack succeed workflow run
         uses: slackapi/slack-github-action@v2.0.0
-        if: success()
+        if: success() && steps.slack.outputs.available == 'true'
         with:
           webhook: ${{ secrets.SLACK_DIRECT_WEBHOOK }}
           webhook-type: incoming-webhook

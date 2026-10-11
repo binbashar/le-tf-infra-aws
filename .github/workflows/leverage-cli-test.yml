@@ -28,25 +28,47 @@ jobs:
       LEVERAGE_REPO: pypi.org
       LEVERAGE_TOOLBOX_VERSION: 1.6.0-0.2.1
     steps:
+      # This job applies and destroys a real layer, so it needs the AWS credentials and
+      # account IDs held in Actions secrets. Dependabot-triggered runs get none (this repo
+      # keeps no Dependabot secrets), and neither does a pull request from a fork; without
+      # them the generated common.tfvars has an empty account id and fails to parse.
+      # Skip the test rather than fail the PR.
+      - name: Check for AWS credentials
+        id: creds
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        run: |
+          if [ -z "${AWS_ACCESS_KEY_ID}" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No AWS credentials (Dependabot or fork PR) - the Leverage CLI test did not run."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout base branch
+        if: steps.creds.outputs.available == 'true'
         uses: actions/checkout@v3
 
       - uses: actions/setup-python@v5
+        if: steps.creds.outputs.available == 'true'
         with:
           python-version: '3.13'
 
       - name: install_dependencies
+        if: steps.creds.outputs.available == 'true'
         run: |
           pip3 install --user --upgrade pipenv
         shell: bash
 
       - id: cache-pipenv
+        if: steps.creds.outputs.available == 'true'
         uses: actions/cache@v3
         with:
           path: /home/runner/.local/share/virtualenvs
           key: ${{ runner.os }}-pipenv-${{ github.run_id }}
 
       - name: Installing Leverage CLI
+        if: steps.creds.outputs.available == 'true'
         run: |
           printf "[INFO] Installing Leverage CLI\n"
           if [[  "${{ inputs.leverage_version }}" == "" ]] || [[  "${{ inputs.leverage_repo }}" == "" ]];
@@ -65,6 +87,7 @@ jobs:
 #        working-directory: ./apps-devstg/global/cli-test-layer
 
       - name: Set Leverage Toolbox version
+        if: steps.creds.outputs.available == 'true'
         run: |
           printf "[INFO] Setting Leverage Toolbox version\n"
           if [[  "${{ inputs.leverage_toolbox_version }}" == "" ]];
@@ -77,6 +100,7 @@ jobs:
           fi
 
       - name: Set up credentials
+        if: steps.creds.outputs.available == 'true'
         run: |
           printf "[INFO] Setting up credentials\n"
           mkdir -p  ~/.aws/bb
@@ -93,6 +117,7 @@ jobs:
           cp ~/.aws/config ~/.aws/bb/
 
       - name: Configure Reference Architecture
+        if: steps.creds.outputs.available == 'true'
         run: |
           echo "[INFO] Configure Reference Architecture\n"
           cat << EOF > ./config/common.tfvars
@@ -116,6 +141,7 @@ jobs:
           sed -i "s/^\(MFA_ENABLED=\)true/\1false/" build.env
 
       - name: Test Reference Architecture
+        if: steps.creds.outputs.available == 'true'
         run: |
           # These are later mounted in the container
           mkdir ~/.ssh && touch ~/.gitconfig
