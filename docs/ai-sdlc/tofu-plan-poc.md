@@ -38,6 +38,22 @@ Staged activation and rollback checklist:
 
 There is no apply path in this workflow.
 
+## Current operating state: paused
+
+As of 2026-10-11, the POC has completed credential-free validation, protected live planning,
+no-change verification, failure/recovery/cancellation behavior, and supervised Bedrock analysis.
+The latest end-to-end Nova Lite fallback run is
+[38160922117](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38160922117): its
+deterministic report showed three planned IAM creations, while the advisory explanation assigned
+medium risk and preserved the report's redaction limitations.
+
+The repository is deliberately returned to its safe default: `TOFU_PLAN_POC_LIVE=false`,
+`TOFU_PLAN_POC_LLM=false`, and no explicit `BEDROCK_MODEL_ID`. The workflow therefore defaults to
+the configured Claude inference profile, while the reviewed exact Nova Lite permission remains
+available only for a future explicitly supervised fallback test. Resume only through the checklist
+in [`tofu-plan-poc-rollout.md`](tofu-plan-poc-rollout.md); do not make this check required or
+expand its layer allowlist during the pause.
+
 ## Workflow layout
 
 The workflow intentionally keeps five visible orchestration jobs: discovery, credential-free
