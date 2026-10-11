@@ -11,6 +11,8 @@ from typing import Any, Sequence
 from . import SCHEMA_VERSION
 
 MAX_CHANGES_PER_LAYER = 150
+NOVA_LITE_MODEL_ID = "amazon.nova-lite-v1:0"
+NOVA_TOOL_NAME = "review_sanitized_tofu_plan"
 
 ANALYSIS_SCHEMA = {
     "type": "object",
@@ -108,6 +110,45 @@ def parse_model_text(response: dict) -> dict:
     return result
 
 
+def parse_model_tool_use(response: dict) -> dict:
+    """Read the single, forced Nova tool call used as structured output."""
+
+    content = response.get("output", {}).get("message", {}).get("content", [])
+    tool_inputs = [
+        item["toolUse"].get("input")
+        for item in content
+        if isinstance(item, dict)
+        and isinstance(item.get("toolUse"), dict)
+        and item["toolUse"].get("name") == NOVA_TOOL_NAME
+    ]
+    if len(tool_inputs) != 1 or not isinstance(tool_inputs[0], dict):
+        raise ValueError("Bedrock returned no usable structured tool response")
+    result = tool_inputs[0]
+    validate_analysis(result)
+    return result
+
+
+def uses_nova_tool_calling(model_id: str) -> bool:
+    """Keep the model-specific structured-output path deliberately narrow."""
+
+    return model_id == NOVA_LITE_MODEL_ID
+
+
+def nova_tool_config() -> dict:
+    return {
+        "toolChoice": {"tool": {"name": NOVA_TOOL_NAME}},
+        "tools": [
+            {
+                "toolSpec": {
+                    "name": NOVA_TOOL_NAME,
+                    "description": "Return the requested OpenTofu plan review structure.",
+                    "inputSchema": {"json": ANALYSIS_SCHEMA},
+                }
+            }
+        ],
+    }
+
+
 def validate_analysis(result: dict) -> None:
     required = {"overall_risk", "executive_summary", "layers", "limitations"}
     if not isinstance(result, dict) or not required.issubset(result):
@@ -185,10 +226,10 @@ def invoke_bedrock(
     import boto3  # Imported lazily so unit tests need no AWS dependency.
 
     client = boto3.client("bedrock-runtime", region_name=region)
-    response = client.converse(
-        modelId=model_id,
-        system=[{"text": SYSTEM_PROMPT}],
-        messages=[
+    request = {
+        "modelId": model_id,
+        "system": [{"text": SYSTEM_PROMPT}],
+        "messages": [
             {
                 "role": "user",
                 "content": [
@@ -202,7 +243,18 @@ def invoke_bedrock(
                 ],
             }
         ],
-        inferenceConfig={"maxTokens": 2400, "temperature": 0},
+        "inferenceConfig": {"maxTokens": 2400, "temperature": 0},
+        "requestMetadata": request_metadata,
+    }
+    if uses_nova_tool_calling(model_id):
+        response = client.converse(
+            **request,
+            toolConfig=nova_tool_config(),
+        )
+        return parse_model_tool_use(response)
+
+    response = client.converse(
+        **request,
         outputConfig={
             "textFormat": {
                 "type": "json_schema",
@@ -215,7 +267,6 @@ def invoke_bedrock(
                 },
             }
         },
-        requestMetadata=request_metadata,
     )
     return parse_model_text(response)
 

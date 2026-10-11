@@ -40,6 +40,11 @@ locals {
     "arn:${data.aws_partition.current.partition}:bedrock:${region}::foundation-model/${local.bedrock_foundation_model}"
   ]
 
+  # Temporary direct-model fallback while the Anthropic account agreement is pending.
+  # The workflow selects it only when BEDROCK_MODEL_ID is explicitly configured.
+  bedrock_nova_lite_model_id  = "amazon.nova-lite-v1:0"
+  bedrock_nova_lite_model_arn = "arn:${data.aws_partition.current.partition}:bedrock:${var.region}::foundation-model/${local.bedrock_nova_lite_model_id}"
+
   tags = {
     Terraform    = "true"
     Environment  = var.environment

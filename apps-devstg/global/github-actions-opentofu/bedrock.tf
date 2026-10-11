@@ -25,6 +25,13 @@ data "aws_iam_policy_document" "github_actions_opentofu_bedrock" {
       values   = [local.bedrock_inference_profile_arn]
     }
   }
+
+  statement {
+    sid       = "InvokeNovaLiteFallbackForPoc"
+    effect    = "Allow"
+    actions   = ["bedrock:InvokeModel"]
+    resources = [local.bedrock_nova_lite_model_arn]
+  }
 }
 
 resource "aws_iam_policy" "github_actions_opentofu_bedrock" {
