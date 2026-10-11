@@ -14,6 +14,8 @@ CONTROL_PATH_PREFIXES = (
     "@bin/scripts/tofu_plan_ci/",
 )
 CONTROL_PATHS = {".github/CODEOWNERS"}
+HCL_SUFFIXES = (".tf", ".tofu")
+JSON_CONFIG_SUFFIXES = (".tf.json", ".tofu.json")
 
 # These constructs can change what code runs during init/plan or where state and
 # credentials are sent. A maintainer can still review them through static CI; the
@@ -52,6 +54,7 @@ def git_hcl_patch(root: Path, base: str, head: str) -> str:
             f"{base}...{head}",
             "--",
             "*.tf",
+            "*.tofu",
         ],
         cwd=root,
         check=True,
@@ -70,7 +73,7 @@ def changed_hcl_documents(root: Path, changed_paths: Sequence[str]) -> dict[str,
         if path.is_absolute() or ".." in path.parts:
             raise ValueError(f"changed path must be repository-relative: {raw_path!r}")
         candidate = root.joinpath(*path.parts)
-        if path.suffix == ".tf" and candidate.is_file() and not candidate.is_symlink():
+        if path.as_posix().endswith(HCL_SUFFIXES) and candidate.is_file() and not candidate.is_symlink():
             documents[path.as_posix()] = candidate.read_text(
                 encoding="utf-8", errors="replace"
             )
@@ -93,12 +96,14 @@ def live_plan_blockers(
             blockers.add(f"provider lock file changed: {path}")
         if PurePosixPath(path).name == "config.tf":
             blockers.add(f"layer execution configuration changed: {path}")
+        if path.endswith(JSON_CONFIG_SUFFIXES):
+            blockers.add(f"JSON OpenTofu configuration changed: {path}")
 
     if hcl_documents is not None:
         documented = set(hcl_documents)
         for raw_path in changed_paths:
             path = PurePosixPath(raw_path).as_posix().removeprefix("./")
-            if path.endswith(".tf") and path not in documented:
+            if path.endswith(HCL_SUFFIXES) and path not in documented:
                 blockers.add(f"changed HCL file is absent, unreadable, or a symlink: {path}")
 
     for line in hcl_patch.splitlines():

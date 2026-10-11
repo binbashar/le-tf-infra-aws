@@ -107,10 +107,11 @@ For the default pilot layer, grant only:
 Read-only planning is still privileged: provider code and data sources execute from the PR and can
 read whatever the role can read. Therefore every job is skipped for forks, while credentialed jobs
 also require protected-environment approval. A live plan is suppressed when a PR changes CI
-control files, provider locks, `config.tf`, provider/backend declarations, module/provider sources,
-external data sources, or provisioners. Live sanitization and LLM analysis import their code from
-the PR base revision, not from the candidate checkout. Expanding the allowlist requires a fresh
-permission and data-exposure review.
+control files, provider locks, `config.tf`, any OpenTofu JSON configuration, provider/backend
+declarations, module/provider sources, external data sources, or provisioners. The policy scans both
+native `.tf` and `.tofu` configuration before allowing a credentialed plan. Live sanitization and
+LLM analysis import their code from the PR base revision, not from the candidate checkout. Expanding
+the allowlist requires a fresh permission and data-exposure review.
 
 The workflow requests 15-minute sessions, verifies the returned AWS account, masks account IDs,
 and removes its temporary profile and raw plan logs after creating the sanitized report. GitHub

@@ -40,6 +40,39 @@ class LivePlanPolicyTests(unittest.TestCase):
         self.assertTrue(any("external data" in reason for reason in blockers))
         self.assertTrue(any("provisioner" in reason for reason in blockers))
 
+    def test_tofu_configuration_is_scanned_like_tf(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = root / "main.tofu"
+            config.write_text('data "external" "unsafe" {}')
+            documents = changed_hcl_documents(root, ["main.tofu"])
+            blockers = live_plan_blockers(
+                ["main.tofu"], hcl_documents=documents
+            )
+        self.assertTrue(any("external data" in reason for reason in blockers))
+
+    def test_json_opentofu_configuration_is_suppressed_without_parsing(self):
+        blockers = live_plan_blockers(
+            [
+                "apps-devstg/global/cli-test-layer/main.tf.json",
+                "apps-devstg/global/cli-test-layer/extra.tofu.json",
+            ]
+        )
+        self.assertEqual(
+            blockers,
+            [
+                "JSON OpenTofu configuration changed: apps-devstg/global/cli-test-layer/extra.tofu.json",
+                "JSON OpenTofu configuration changed: apps-devstg/global/cli-test-layer/main.tf.json",
+            ],
+        )
+
+    def test_missing_tofu_configuration_is_suppressed(self):
+        blockers = live_plan_blockers(["deleted.tofu"], hcl_documents={})
+        self.assertEqual(
+            blockers,
+            ["changed HCL file is absent, unreadable, or a symlink: deleted.tofu"],
+        )
+
     def test_edit_inside_an_existing_provisioner_is_suppressed(self):
         blockers = live_plan_blockers(
             ["apps-devstg/global/layer/main.tf"],
@@ -73,6 +106,8 @@ class LivePlanPolicyTests(unittest.TestCase):
             run.return_value.stdout = ""
             self.assertEqual(git_hcl_patch(Path("/repo"), "base", "head"), "")
         self.assertIn("base...head", run.call_args.args[0])
+        self.assertIn("*.tf", run.call_args.args[0])
+        self.assertIn("*.tofu", run.call_args.args[0])
 
 
 if __name__ == "__main__":
