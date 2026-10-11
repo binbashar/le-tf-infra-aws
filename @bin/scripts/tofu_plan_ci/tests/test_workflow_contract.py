@@ -30,6 +30,16 @@ class WorkflowSecurityContractTests(unittest.TestCase):
         self.assertEqual(self.workflow.count("mask-aws-account-id: true"), 2)
         self.assertIn("needs.discover.outputs.live_eligible == 'true'", self.workflow)
 
+    def test_credential_jobs_use_distinct_protected_environments(self):
+        live_plan = self.workflow.split("\n  live_plan:\n", maxsplit=1)[1].split(
+            "\n  analysis:\n", maxsplit=1
+        )[0]
+        analysis = self.workflow.split("\n  analysis:\n", maxsplit=1)[1].split(
+            "\n  report:\n", maxsplit=1
+        )[0]
+        self.assertIn("environment: tofu-plan-poc", live_plan)
+        self.assertIn("environment: tofu-plan-poc-bedrock", analysis)
+
     def test_report_receives_head_sha_for_artifact_provenance(self):
         report = self.workflow.split("\n  report:\n", maxsplit=1)[1]
         self.assertIn(

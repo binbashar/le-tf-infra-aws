@@ -76,20 +76,30 @@ Optional LLM explanation requires:
 | Variable | `BEDROCK_MODEL_ID` | Model or inference profile. Defaults to `us.anthropic.claude-sonnet-4-6`. |
 
 The two roles are deliberately separate. A Bedrock failure does not turn a successful OpenTofu
-plan into a failure, and the Bedrock job never receives plan-role credentials.
+plan into a failure, and the Bedrock job never receives plan-role credentials or a token accepted by
+the plan role.
 
-Create a GitHub environment named `tofu-plan-poc` before enabling either role. During the POC it
-must have required reviewers and **Prevent self-review** enabled. Both credentialed jobs reference
-this environment; the automatic credential-free validation job does not and therefore never gets
-`id-token: write` or waits for approval.
+Before enabling a credentialed role, configure each of these GitHub environments with required
+reviewers, **Prevent self-review**, and administrator bypass disabled:
+
+| Environment | Credentialed purpose | Extra configuration |
+| --- | --- | --- |
+| `tofu-plan-poc` | Pilot OpenTofu plan | `TOFU_PLAN_COMMON_TFVARS` environment secret |
+| `tofu-plan-poc-noop` | Future no-change verification | Do not substitute it into the pilot job |
+| `tofu-plan-poc-bedrock` | Bedrock explanation | No OpenTofu tfvars secret |
+
+The automatic credential-free validation job references none of these environments, so it never
+gets `id-token: write` or waits for approval.
 
 ## AWS role boundary
 
-The plan role must use GitHub OIDC and short-lived credentials. Its trust policy must require the
-environment subject (using the actual owner/repository names):
+Each role must use GitHub OIDC and short-lived credentials. Its trust policy must require the
+matching environment subject (using the actual owner/repository names):
 
 ```text
-repo:OWNER/REPOSITORY:environment:tofu-plan-poc
+plan    = repo:OWNER/REPOSITORY:environment:tofu-plan-poc
+noop    = repo:OWNER/REPOSITORY:environment:tofu-plan-poc-noop
+bedrock = repo:OWNER/REPOSITORY:environment:tofu-plan-poc-bedrock
 ```
 
 Do not trust the broader `repo:OWNER/REPOSITORY:pull_request` subject for this POC. A PR can change

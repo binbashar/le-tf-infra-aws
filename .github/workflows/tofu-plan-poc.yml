@@ -205,7 +205,7 @@ jobs:
     needs: [discover, live_plan]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    environment: tofu-plan-poc
+    environment: tofu-plan-poc-bedrock
     permissions:
       contents: read
       actions: read

@@ -7,16 +7,23 @@ role. None is a deployment role.
 
 ## Trust boundary
 
-The role can be assumed only when GitHub issues a token for:
+Each role can be assumed only when GitHub issues a token for its own protected
+environment:
 
-- repository `binbashar/le-tf-infra-aws`;
-- protected environment `tofu-plan-poc`;
-- the repository's immutable ID and the `binbashar` organization ID;
-- a pull-request merge ref or the `master` branch; and
-- audience `sts.amazonaws.com`.
+| Role | Environment |
+| --- | --- |
+| Pilot plan | `tofu-plan-poc` |
+| No-change verification | `tofu-plan-poc-noop` |
+| Bedrock explanation | `tofu-plan-poc-bedrock` |
 
-The GitHub environment requires a reviewer other than the run initiator and disallows
-administrator bypass. Keep those controls in place while this role exists.
+Every trust policy also requires the repository's immutable ID, the `binbashar`
+organization ID, a pull-request merge ref or the `master` branch, and the
+`sts.amazonaws.com` audience. Configure each environment with a reviewer other
+than the run initiator, **Prevent self-review**, and no administrator bypass.
+
+Do not point the normal plan job at the no-change role. It is intentionally a
+separate supervised verification identity and its trust policy rejects the plan
+environment's token.
 
 ## Permission boundary
 
@@ -69,10 +76,9 @@ Review the provider, trust conditions, role policy, backend, and absence of unre
 Applying this bootstrap is a maintainer decision; the POC workflow has no apply path.
 
 After a reviewed apply, configure the pilot plan role ARN and account ID as
-`AWS_TOFU_PLAN_ROLE_ARN` and `AWS_TOFU_PLAN_ACCOUNT_ID` repository variables. For the no-change
-verification only, temporarily point those variables at the no-change role and set
-`TOFU_PLAN_POC_LAYER=apps-devstg/global/github-actions-opentofu`; restore both afterward. Configure
-the Bedrock role as `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN` and
+`AWS_TOFU_PLAN_ROLE_ARN` and `AWS_TOFU_PLAN_ACCOUNT_ID` repository variables.
+Configure the Bedrock role as `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN` and
 `AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID`. Keep `TOFU_PLAN_POC_LIVE=false` and
 `TOFU_PLAN_POC_LLM=false` until their respective supervised windows described in
-`docs/ai-sdlc/tofu-plan-poc-rollout.md`.
+`docs/ai-sdlc/tofu-plan-poc-rollout.md`. A future no-change verification job must
+use the no-change environment; it must never borrow the normal plan environment.

@@ -24,16 +24,18 @@ Status observed on 2026-09-22:
 
 - Gate 1 passed: discovery, credential-free initialization, validation, artifact transfer,
   provenance checks, and the aggregate check completed successfully for the pilot layer.
-- Gate 2 is configured with the `tofu-plan-poc` environment. The
+- Gate 2 initially configured the `tofu-plan-poc` environment. The
   `leverage-ref-architecture-aws-admin` team is its required reviewer, prevent-self-review is
   enabled, administrator bypass is disabled, and the environment-scoped
   `TOFU_PLAN_COMMON_TFVARS` secret exists. Its value is not inspectable through GitHub after it is
-  set.
+  set. Before reopening credentialed mode after the role-boundary update, configure matching
+  `tofu-plan-poc-noop` and `tofu-plan-poc-bedrock` environments with the same approval controls.
 - The `master` branch requires code-owner review and approval of the last push. The workflow also
   pins every Action it references.
 - Gate 3 is applied: the dedicated GitHub OIDC provider, pilot plan role, isolated no-change plan
   role, and isolated Bedrock explanation role exist in the pilot account. The workflow's
-  account/session guards accepted their protected-environment sessions.
+  account/session guards accepted their protected-environment sessions. Before reopening
+  credentialed mode, apply the per-role environment trust-policy update and re-exercise each path.
 - Gate 4 passed in [GitHub run 35652085092](https://github.com/binbashar/le-tf-infra-aws/actions/runs/35652085092):
   a separate environment reviewer approved the job; backend initialization, validation, and the
   speculative plan succeeded; the aggregate check passed; and only the sanitized report contract
@@ -83,11 +85,12 @@ credentials, secrets, or an OIDC token.
 
 ## Gate 2: protected GitHub environment
 
-1. Create the `tofu-plan-poc` environment before configuring an AWS role ARN or enabling live
-   mode.
-2. Require at least one reviewer other than the run initiator and enable **Prevent self-review**.
-3. Do not allow protection-rule bypass during the POC.
-4. Add `TOFU_PLAN_COMMON_TFVARS` as an environment secret using the exact ignored local
+1. Create `tofu-plan-poc`, `tofu-plan-poc-noop`, and `tofu-plan-poc-bedrock` before configuring an
+   AWS role ARN or enabling live mode.
+2. Require at least one reviewer other than the run initiator and enable **Prevent self-review** on
+   each environment.
+3. Do not allow protection-rule bypass during the POC on any credentialed environment.
+4. Add `TOFU_PLAN_COMMON_TFVARS` to `tofu-plan-poc` as an environment secret using the exact ignored local
    `config/common.tfvars`; do not copy it into the repository or logs.
 5. Do not reuse the repository's legacy static AWS credential secrets.
 
@@ -130,12 +133,14 @@ forks remain completely unsupported and skipped.
    creating a duplicate.
 2. Prefer a dedicated `apps-devstg/global/github-actions-opentofu` root module over adding the POC
    identities to the broad `base-identities` lifecycle.
-3. Create separate pilot-plan, no-change-plan, and Bedrock-explanation roles. Their trust must
-   require both:
+3. Create separate pilot-plan, no-change-plan, and Bedrock-explanation roles. Each trust must
+   require the audience and its matching environment subject:
 
    ```text
    aud = sts.amazonaws.com
-   sub = repo:binbashar/le-tf-infra-aws:environment:tofu-plan-poc
+   plan sub    = repo:binbashar/le-tf-infra-aws:environment:tofu-plan-poc
+   noop sub    = repo:binbashar/le-tf-infra-aws:environment:tofu-plan-poc-noop
+   bedrock sub = repo:binbashar/le-tf-infra-aws:environment:tofu-plan-poc-bedrock
    ```
 
 4. Limit each plan role to its own state object's S3 reads, exact DynamoDB lock keys, caller
@@ -146,8 +151,8 @@ forks remain completely unsupported and skipped.
 6. Plan, review, and apply this bootstrap through the repository's normal maintainer-operated
    process. The POC must not bootstrap its own identity.
 
-Exit condition: the dedicated role can be assumed only through the protected environment and has
-no infrastructure mutation path.
+Exit condition: each dedicated role can be assumed only through its own protected environment and
+has no infrastructure mutation path.
 
 ## Gate 4: one supervised live plan
 
