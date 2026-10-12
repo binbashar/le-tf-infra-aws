@@ -27,7 +27,7 @@ data "aws_iam_policy_document" "github_actions_opentofu_bedrock" {
   }
 
   statement {
-    sid       = "InvokeNovaLiteFallback"
+    sid       = "InvokeNovaLite"
     effect    = "Allow"
     actions   = ["bedrock:InvokeModel"]
     resources = [local.bedrock_nova_lite_model_arn]

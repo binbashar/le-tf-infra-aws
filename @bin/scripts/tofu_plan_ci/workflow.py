@@ -500,7 +500,7 @@ def run_analysis() -> int:
                 "--reviews-dir",
                 str(runner_temp / "tofu-plan-reports"),
                 "--model-id",
-                os.environ.get("MODEL_ID", "us.anthropic.claude-sonnet-4-6"),
+                os.environ.get("MODEL_ID", "us.anthropic.claude-haiku-5-5"),
                 "--region",
                 os.environ.get("AWS_REGION", "us-east-1"),
                 "--repository",

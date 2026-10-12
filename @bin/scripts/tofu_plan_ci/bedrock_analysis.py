@@ -11,8 +11,18 @@ from typing import Any, Sequence
 from . import SCHEMA_VERSION
 
 MAX_CHANGES_PER_LAYER = 150
+HAIKU_MODEL_ID = "us.anthropic.claude-haiku-5-5"
 NOVA_LITE_MODEL_ID = "amazon.nova-lite-v1:0"
 NOVA_TOOL_NAME = "review_sanitized_tofu_plan"
+DEFAULT_MODEL_ID = HAIKU_MODEL_ID
+
+# Reviewed models and how each returns structured output. The Bedrock role
+# allows exactly these IDs, so any other value is rejected before invocation.
+# Claude 5 models reject the `temperature` parameter.
+MODELS = {
+    HAIKU_MODEL_ID: {"structured_output": "json_schema", "temperature": False},
+    NOVA_LITE_MODEL_ID: {"structured_output": "tool", "temperature": True},
+}
 
 ANALYSIS_SCHEMA = {
     "type": "object",
@@ -128,10 +138,27 @@ def parse_model_tool_use(response: dict) -> dict:
     return result
 
 
+def model_settings(model_id: str) -> dict:
+    """Return the reviewed settings for a model, rejecting unreviewed IDs."""
+
+    if model_id not in MODELS:
+        raise ValueError(
+            f"unsupported Bedrock model {model_id!r}; expected one of {sorted(MODELS)}"
+        )
+    return MODELS[model_id]
+
+
 def uses_nova_tool_calling(model_id: str) -> bool:
     """Keep the model-specific structured-output path deliberately narrow."""
 
-    return model_id == NOVA_LITE_MODEL_ID
+    return model_settings(model_id)["structured_output"] == "tool"
+
+
+def inference_config(model_id: str) -> dict:
+    config: dict[str, Any] = {"maxTokens": 2400}
+    if model_settings(model_id)["temperature"]:
+        config["temperature"] = 0
+    return config
 
 
 def nova_tool_config() -> dict:
@@ -223,6 +250,7 @@ def invoke_bedrock(
     region: str,
     request_metadata: dict[str, str],
 ) -> dict:
+    model_settings(model_id)  # Fail before importing or calling AWS.
     import boto3  # Imported lazily so unit tests need no AWS dependency.
 
     client = boto3.client("bedrock-runtime", region_name=region)
@@ -243,7 +271,7 @@ def invoke_bedrock(
                 ],
             }
         ],
-        "inferenceConfig": {"maxTokens": 2400, "temperature": 0},
+        "inferenceConfig": inference_config(model_id),
         "requestMetadata": request_metadata,
     }
     if uses_nova_tool_calling(model_id):

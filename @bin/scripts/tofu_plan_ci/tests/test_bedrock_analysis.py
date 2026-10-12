@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from tofu_plan_ci.bedrock_analysis import (
+    inference_config,
     invoke_bedrock,
     llm_payload,
     load_reviews,
@@ -61,7 +62,42 @@ class BedrockAnalysisTests(unittest.TestCase):
 
     def test_nova_tool_path_is_limited_to_the_reviewed_model_id(self):
         self.assertTrue(uses_nova_tool_calling("amazon.nova-lite-v1:0"))
-        self.assertFalse(uses_nova_tool_calling("amazon.nova-pro-v1:0"))
+        self.assertFalse(uses_nova_tool_calling("us.anthropic.claude-haiku-5-5"))
+
+    def test_unreviewed_models_are_rejected_before_invocation(self):
+        for model_id in ("amazon.nova-pro-v1:0", "us.anthropic.claude-sonnet-4-6"):
+            with self.subTest(model_id=model_id), self.assertRaises(ValueError):
+                invoke_bedrock(
+                    payload={"layers": []},
+                    model_id=model_id,
+                    region="us-east-1",
+                    request_metadata={"run-id": "test"},
+                )
+
+    def test_claude_5_requests_omit_temperature(self):
+        self.assertEqual(inference_config("us.anthropic.claude-haiku-5-5"), {"maxTokens": 2400})
+        self.assertEqual(
+            inference_config("amazon.nova-lite-v1:0"), {"maxTokens": 2400, "temperature": 0}
+        )
+
+    def test_haiku_invocation_uses_json_schema_output(self):
+        client = Mock()
+        client.converse.return_value = {
+            "output": {"message": {"content": [{"text": json.dumps(self.analysis())}]}}
+        }
+        boto3 = types.ModuleType("boto3")
+        boto3.client = Mock(return_value=client)
+        with patch.dict(sys.modules, {"boto3": boto3}):
+            invoke_bedrock(
+                payload={"layers": []},
+                model_id="us.anthropic.claude-haiku-5-5",
+                region="us-east-1",
+                request_metadata={"run-id": "test"},
+            )
+        request = client.converse.call_args.kwargs
+        self.assertEqual(request["outputConfig"]["textFormat"]["type"], "json_schema")
+        self.assertNotIn("toolConfig", request)
+        self.assertNotIn("temperature", request["inferenceConfig"])
 
     def test_nova_invocation_forces_the_review_tool(self):
         client = Mock()
