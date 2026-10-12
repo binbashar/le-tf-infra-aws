@@ -61,6 +61,7 @@ data "aws_iam_policy_document" "devops" {
       "es:*",
       "events:*",
       "execute-api:*",
+      "finops-agent:*",
       "firehose:*",
       "fms:*",
       "freetier:*",
