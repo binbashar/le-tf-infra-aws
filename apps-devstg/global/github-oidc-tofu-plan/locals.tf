@@ -20,9 +20,14 @@ locals {
   github_actions_opentofu_bedrock_role_name   = "GitHubActionsOpenTofuBedrock"
   github_actions_opentofu_bedrock_policy_name = "GitHubActionsOpenTofuBedrock"
 
-  target_state_key   = "apps-devstg/cli-test-layer/terraform.tfstate"
-  target_role_name   = "LeverageTest"
-  target_policy_name = "leverage_test"
+  # Layers the plan role may plan in this account, keyed by repository path,
+  # with the backend key from each layer's config.tf. Each entry also needs the
+  # provider reads its refresh requires, in a plan-target-<layer>.tf file.
+  plan_targets = {
+    "apps-devstg/global/cli-test-layer" = {
+      state_key = "apps-devstg/cli-test-layer/terraform.tfstate"
+    }
+  }
 
   # Verified with a read-only GetInferenceProfile call before this policy was
   # authored. InvokeModel evaluates both this system inference profile and its
@@ -45,7 +50,7 @@ locals {
     Terraform    = "true"
     Environment  = var.environment
     Layer        = local.layer_name
-    Name         = "github-actions-opentofu"
+    Name         = "github-oidc-tofu-plan"
     "aws-apn-id" = local.prm_apn_id
   }
 }

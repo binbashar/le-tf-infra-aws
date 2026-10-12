@@ -9,4 +9,5 @@
 /.github/workflows/tofu-plan.yml @binbashar/leverage-ref-architecture-aws-admin
 /@bin/scripts/tofu_plan_ci/ @binbashar/leverage-ref-architecture-aws-admin
 /docs/ai-sdlc/tofu-plan*.md @binbashar/leverage-ref-architecture-aws-admin
-/apps-devstg/global/github-actions-opentofu/ @binbashar/leverage-ref-architecture-aws-admin
+/apps-devstg/global/github-oidc-tofu-plan/ @binbashar/leverage-ref-architecture-aws-admin
+/management/global/github-oidc-tofu-plan/ @binbashar/leverage-ref-architecture-aws-admin

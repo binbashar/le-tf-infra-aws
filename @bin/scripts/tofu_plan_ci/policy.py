@@ -98,6 +98,11 @@ def live_plan_blockers(
             blockers.add(f"layer execution configuration changed: {path}")
         if path.endswith(JSON_CONFIG_SUFFIXES):
             blockers.add(f"JSON OpenTofu configuration changed: {path}")
+        parts = PurePosixPath(path).parts
+        # Project and account configuration choose the backend bucket, lock table,
+        # and profile that the credentialed job's session policy is built from.
+        if parts[:1] == ("config",) or (len(parts) > 2 and parts[1] == "config"):
+            blockers.add(f"project or account configuration changed: {path}")
 
     if hcl_documents is not None:
         documented = set(hcl_documents)
