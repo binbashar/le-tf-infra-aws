@@ -86,6 +86,6 @@ Applying this bootstrap is a maintainer decision; the plan workflow has no apply
 After a reviewed apply, add the plan role ARN and account ID under `apps-devstg` in the
 `TOFU_PLAN_ROLES` repository variable.
 Configure the Bedrock role as `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN` and
-`AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID`. Keep `TOFU_PLAN_LIVE=false` and
-`TOFU_PLAN_LLM=false` outside the supervised windows described in
-[`docs/ai-sdlc/tofu-plan-rollout.md`](../../../docs/ai-sdlc/tofu-plan-rollout.md).
+`AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID`. `TOFU_PLAN_LIVE` and `TOFU_PLAN_LLM` stay `true`; environment
+approval gates every run, and the variables are kill switches (see
+[`docs/ai-sdlc/tofu-plan.md`](../../../docs/ai-sdlc/tofu-plan.md#current-operating-state-active)).

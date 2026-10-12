@@ -40,22 +40,33 @@ Staged activation and rollback checklist:
 
 There is no apply path in this workflow.
 
-## Current operating state: paused
+## Current operating state: active
 
-As of 2026-10-11, the proof of concept has completed credential-free validation, protected live
-planning, no-change verification, failure/recovery/cancellation behavior, and supervised Bedrock
-analysis.
-The latest end-to-end Nova Lite fallback run is
-[38160922117](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38160922117): its
-deterministic report showed three planned IAM creations, while the advisory explanation assigned
-medium risk and preserved the report's redaction limitations.
+Since 2026-10-12, `TOFU_PLAN_LIVE=true` and `TOFU_PLAN_LLM=true` are the normal state. The
+security boundary is environment approval, not these variables: a live plan receives AWS
+credentials only after a reviewer approves the `tofu-plan` environment, and the Bedrock
+explanation runs only after a separate approval of `tofu-plan-bedrock`. Both environments
+require a reviewer other than the run initiator, with **Prevent self-review** and no
+administrator bypass.
 
-The repository is deliberately returned to its safe default: `TOFU_PLAN_LIVE=false`,
-`TOFU_PLAN_LLM=false`, and no explicit `BEDROCK_MODEL_ID`. The workflow therefore defaults to the
-configured Claude inference profile, while the reviewed exact Nova Lite permission remains
-available only for an explicitly supervised fallback window. Resume only through the checklist in
-[`tofu-plan-rollout.md`](tofu-plan-rollout.md); the check stays non-required, and each new layer
-goes through the onboarding steps there.
+The two variables are kill switches. Set either to `false` to stop that stage for every PR at
+once, without a workflow change, for example during an incident, a suspected credential or role
+problem, or unexpected model behavior. A run reads them when it starts, so a change affects only
+runs started afterwards.
+
+What this means for each PR that touches an allowlisted layer:
+
+- It waits for approval of `tofu-plan`, and then of `tofu-plan-bedrock`. An unapproved run keeps
+  the `OpenTofu Plan` check pending; the check is not required, so it never blocks a merge. A
+  waiting job uses no runner minutes, and GitHub cancels it after 30 days.
+- Approving `tofu-plan-bedrock` sends the sanitized plan projection to the model. Reject it when
+  the explanation is not wanted.
+
+The model is Nova Lite (`amazon.nova-lite-v1:0`), set as `BEDROCK_MODEL_ID` on the
+`tofu-plan-bedrock` environment so that it does not change the repository-wide value that
+`claude.yml` reads. The Anthropic agreement was still `NOT_AVAILABLE` in the pilot account on
+2026-10-11. The check stays non-required, and each new layer goes through the onboarding steps in
+[`tofu-plan-rollout.md`](tofu-plan-rollout.md).
 
 ## Workflow layout
 
@@ -76,7 +87,7 @@ Live planning requires:
 
 | Kind | Name | Purpose |
 | --- | --- | --- |
-| Variable | `TOFU_PLAN_LIVE` | Must equal `true` to request live planning. |
+| Variable | `TOFU_PLAN_LIVE` | Must equal `true` to request live planning. Normally `true`; set `false` as a kill switch. |
 | Variable | `TOFU_PLAN_LAYERS` | Comma- or newline-separated layer allowlist. Defaults to `apps-devstg/global/cli-test-layer`. A manual dispatch must name its layer when several are listed. |
 | Variable | `TOFU_PLAN_MAX_LAYERS` | Safety cap. Defaults to `1`. No subset is chosen when exceeded. |
 | Variable | `TOFU_PLAN_ROLES` | JSON map from account directory to its plan role, e.g. `{"management": {"role_arn": "arn:aws:iam::<ID>:role/GitHubActionsOpenTofuPlan", "account_id": "<ID>"}}`. The role must be in `account_id` and must not be `DeployMaster`. A layer whose account is missing fails closed. |
@@ -88,10 +99,10 @@ Optional LLM explanation requires:
 
 | Kind | Name | Purpose |
 | --- | --- | --- |
-| Variable | `TOFU_PLAN_LLM` | Must equal `true` to invoke Bedrock. |
+| Variable | `TOFU_PLAN_LLM` | Must equal `true` to invoke Bedrock. Normally `true`; set `false` as a kill switch. |
 | Variable | `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN` | Separate OIDC role with only model invocation permission. |
 | Variable | `AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID` | Exact AWS account allowed for the Bedrock-role session. |
-| Variable | `BEDROCK_MODEL_ID` | Model or inference profile. Defaults to `us.anthropic.claude-sonnet-4-6`; the temporary reviewed fallback is `amazon.nova-lite-v1:0`. |
+| Environment variable (`tofu-plan-bedrock`) | `BEDROCK_MODEL_ID` | Model or inference profile. Set to `amazon.nova-lite-v1:0`. Without it the job falls back to the repository variable of the same name, and then to `us.anthropic.claude-sonnet-4-6`, which is not enabled in the pilot account. Keep it on the environment: `claude.yml` reads the repository variable. |
 
 The two roles are deliberately separate. A Bedrock failure does not turn a successful OpenTofu
 plan into a failure, and the Bedrock job never receives plan-role credentials or a token accepted by
