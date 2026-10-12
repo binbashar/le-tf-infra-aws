@@ -1,16 +1,22 @@
 locals {
   github_oidc_issuer_url = "https://token.actions.githubusercontent.com"
   github_repository      = "binbashar/le-tf-infra-aws"
+  # GitHub environments each role trusts. The Bedrock steps run inside the plan
+  # job, so the Bedrock role trusts tofu-plan. tofu-plan-bedrock belongs to the
+  # retired separate analysis job; remove it once that job is gone from master.
   github_environments = {
-    plan    = "tofu-plan"
-    bedrock = "tofu-plan-bedrock"
+    plan    = ["tofu-plan"]
+    bedrock = ["tofu-plan", "tofu-plan-bedrock"]
   }
 
   # The repository currently uses GitHub's classic default OIDC subject format.
   # Immutable repository and owner IDs add rename-resistant checks alongside it.
   github_oidc_subjects = {
-    for purpose, environment in local.github_environments :
-    purpose => "repo:${local.github_repository}:environment:${environment}"
+    for purpose, environments in local.github_environments :
+    purpose => [
+      for environment in environments :
+      "repo:${local.github_repository}:environment:${environment}"
+    ]
   }
   github_repository_id                        = "175842832"
   github_repository_owner_id                  = "31255874"

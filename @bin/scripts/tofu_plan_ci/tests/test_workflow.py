@@ -7,6 +7,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
+from tofu_plan_ci import workflow
 from tofu_plan_ci.workflow import (
     allowed_layers,
     common_tfvars_shape,
@@ -214,3 +215,31 @@ class WorkflowTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LlmStepTests(unittest.TestCase):
+    def test_a_bedrock_failure_warns_without_details_and_never_fails(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+            os.environ, {"RUNNER_TEMP": directory}
+        ), patch.object(
+            workflow.plan_llm, "run", side_effect=RuntimeError("secret detail someone@example.com")
+        ), patch("builtins.print") as printed:
+            (Path(directory) / "tofu-plan-llm-input-apps-devstg-global-x.txt").write_text("plan")
+            self.assertEqual(workflow.run_llm("apps-devstg/global/x", "security"), 0)
+            status = json.loads(
+                (Path(directory) / "tofu-plan-llm" / "apps-devstg-global-x" / "security.json").read_text()
+            )
+        self.assertEqual(status["status"], "failed")
+        output = " ".join(str(call.args) for call in printed.call_args_list)
+        self.assertIn("RuntimeError", output)
+        self.assertNotIn("secret detail", output)
+
+    def test_cleanup_removes_the_plan_text(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+            os.environ, {"RUNNER_TEMP": directory, "GITHUB_ENV": str(Path(directory) / "env")}
+        ):
+            plan_text = Path(directory) / "tofu-plan-llm-input-apps-devstg-global-x.txt"
+            plan_text.write_text("plan")
+            workflow.run_llm_cleanup("apps-devstg/global/x")
+            self.assertFalse(plan_text.exists())
+            self.assertIn("AWS_SESSION_TOKEN=", (Path(directory) / "env").read_text())

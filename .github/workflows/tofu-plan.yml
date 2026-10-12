@@ -189,7 +189,57 @@ jobs:
         id: run
         env:
           COMMON_TFVARS: ${{ secrets.TOFU_PLAN_COMMON_TFVARS }}
+          LLM_ENABLED: >-
+            ${{ (vars.TOFU_PLAN_LLM_EXPLAINER == 'true' ||
+                 vars.TOFU_PLAN_LLM_SECURITY == 'true') &&
+                vars.AWS_TOFU_PLAN_BEDROCK_ROLE_ARN != '' }}
         run: python -m tofu_plan_ci.workflow live
+
+      # The plan step leaves only the redacted action section of `tofu show` on the
+      # runner, and clears the plan role's credentials. The Bedrock steps below run
+      # trusted base-revision code with a separate, invoke-only role.
+      - name: Install Bedrock client
+        if: ${{ steps.run.outputs.llm_input == 'ready' }}
+        run: >-
+          python -m pip install -q --require-hashes
+          -r trusted/@bin/scripts/tofu_plan_ci/requirements.txt
+
+      - name: Configure short-lived Bedrock credentials
+        if: ${{ steps.run.outputs.llm_input == 'ready' }}
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
+        with:
+          role-to-assume: ${{ vars.AWS_TOFU_PLAN_BEDROCK_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          role-session-name: tofu-plan-llm-${{ github.run_id }}
+          role-duration-seconds: 900
+          allowed-account-ids: ${{ vars.AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID }}
+          mask-aws-account-id: true
+          unset-current-credentials: true
+
+      - name: Explain the plan with Bedrock
+        if: ${{ steps.run.outputs.llm_input == 'ready' && vars.TOFU_PLAN_LLM_EXPLAINER == 'true' }}
+        env:
+          MODEL_ID: ${{ vars.BEDROCK_MODEL_ID }}
+        run: python -m tofu_plan_ci.workflow llm --kind explainer
+
+      - name: Review plan security with Bedrock
+        if: ${{ steps.run.outputs.llm_input == 'ready' && vars.TOFU_PLAN_LLM_SECURITY == 'true' }}
+        env:
+          MODEL_ID: ${{ vars.BEDROCK_MODEL_ID }}
+        run: python -m tofu_plan_ci.workflow llm --kind security
+
+      - name: Remove plan text and Bedrock credentials
+        if: ${{ always() }}
+        run: python -m tofu_plan_ci.workflow llm-cleanup
+
+      - name: Upload LLM analyses
+        if: ${{ always() && steps.run.outputs.llm_input == 'ready' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: tofu-plan-llm-${{ steps.run.outputs.slug }}
+          path: ${{ runner.temp }}/tofu-plan-llm/${{ steps.run.outputs.slug }}/
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: Upload sanitized plan evidence
         if: ${{ always() && steps.run.outputs.report_dir != '' }}
@@ -197,87 +247,6 @@ jobs:
         with:
           name: tofu-plan-layer-${{ steps.run.outputs.slug }}
           path: ${{ steps.run.outputs.report_dir }}/
-          retention-days: 7
-          if-no-files-found: error
-
-  analysis:
-    name: Explain plan with Bedrock
-    if: >-
-      ${{ always() &&
-          needs.discover.outputs.has_layers == 'true' &&
-          needs.discover.outputs.live_eligible == 'true' &&
-          needs.live_plan.result == 'success' &&
-          vars.TOFU_PLAN_LIVE == 'true' &&
-          vars.TOFU_PLAN_LLM == 'true' &&
-          vars.AWS_TOFU_PLAN_BEDROCK_ROLE_ARN != '' &&
-          vars.AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID != '' }}
-    needs: [discover, live_plan]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    environment: tofu-plan-bedrock
-    permissions:
-      contents: read
-      actions: read
-      id-token: write
-    outputs:
-      status: ${{ steps.analyze.outcome || 'not-run' }}
-    env:
-      PYTHONPATH: trusted/@bin/scripts
-    steps:
-      - name: Checkout trusted tooling from the base revision
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          ref: ${{ github.event.pull_request.base.sha || github.sha }}
-          path: trusted
-          persist-credentials: false
-
-      - name: Download sanitized plan projections
-        id: plans
-        continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          pattern: tofu-plan-layer-*
-          path: ${{ runner.temp }}/tofu-plan-reports
-
-      - name: Set up Python
-        if: ${{ steps.plans.outcome == 'success' }}
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: '3.12'
-
-      - name: Install Bedrock client
-        if: ${{ steps.plans.outcome == 'success' }}
-        run: >-
-          python -m pip install -q --require-hashes
-          -r trusted/@bin/scripts/tofu_plan_ci/requirements.txt
-
-      - name: Configure short-lived Bedrock credentials
-        if: ${{ steps.plans.outcome == 'success' }}
-        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
-        with:
-          role-to-assume: ${{ vars.AWS_TOFU_PLAN_BEDROCK_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
-          role-session-name: tofu-plan-review-${{ github.run_id }}
-          role-duration-seconds: 900
-          allowed-account-ids: ${{ vars.AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID }}
-          mask-aws-account-id: true
-          unset-current-credentials: true
-
-      - name: Analyze sanitized projections
-        id: analyze
-        if: ${{ steps.plans.outcome == 'success' }}
-        continue-on-error: true
-        env:
-          MODEL_ID: ${{ vars.BEDROCK_MODEL_ID || 'us.anthropic.claude-haiku-5-5' }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: python -m tofu_plan_ci.workflow analyze
-
-      - name: Upload LLM explanation
-        if: ${{ steps.analyze.outcome == 'success' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: tofu-plan-llm
-          path: ${{ runner.temp }}/tofu-plan-analysis/
           retention-days: 7
           if-no-files-found: error
 
@@ -290,7 +259,7 @@ jobs:
             github.event.pull_request.draft == false &&
             github.event.pull_request.head.repo.full_name == github.repository &&
             github.event.pull_request.user.type == 'User')) }}
-    needs: [discover, validation, live_plan, analysis]
+    needs: [discover, validation, live_plan]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -300,7 +269,6 @@ jobs:
       REQUIRE_LIVE: >-
         ${{ vars.TOFU_PLAN_LIVE == 'true' &&
             needs.discover.outputs.live_eligible == 'true' }}
-      ANALYSIS_STATUS: ${{ needs.analysis.outputs.status || needs.analysis.result }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PYTHONPATH: trusted/@bin/scripts
     steps:
@@ -343,13 +311,13 @@ jobs:
           pattern: tofu-plan-validation-*
           path: ${{ runner.temp }}/tofu-plan-reports
 
-      - name: Download LLM explanation
-        if: ${{ needs.analysis.outputs.status == 'success' }}
+      - name: Download LLM analyses
+        if: ${{ needs.discover.outputs.has_layers == 'true' && env.REQUIRE_LIVE == 'true' }}
         continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: tofu-plan-llm
-          path: ${{ runner.temp }}/tofu-plan-analysis
+          pattern: tofu-plan-llm-*
+          path: ${{ runner.temp }}/tofu-plan-llm
 
       - name: Build and enforce native GitHub summary
         run: python -m tofu_plan_ci.workflow aggregate

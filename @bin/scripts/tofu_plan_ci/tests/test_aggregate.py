@@ -70,8 +70,6 @@ class AggregateTests(unittest.TestCase):
             gate="pass",
             reasons=[],
             require_live=False,
-            analysis_markdown=None,
-            analysis_status="disabled",
         )
         self.assertIn("Live planning is not enabled", markdown)
         self.assertIn("init -backend=false", markdown)

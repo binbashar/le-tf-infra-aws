@@ -8,13 +8,15 @@ with a plan role only.
 
 ## Trust boundary
 
-Each role can be assumed only when GitHub issues a token for its own protected
-environment:
+Each role can be assumed only when GitHub issues a token for a protected environment it trusts:
 
-| Role | Environment |
+| Role | Environments |
 | --- | --- |
 | Plan | `tofu-plan` |
-| Bedrock explanation | `tofu-plan-bedrock` |
+| Bedrock explanation | `tofu-plan`; `tofu-plan-bedrock` only until the retired analysis job is gone from `master` |
+
+The Bedrock steps run inside the plan job after its plan-role credentials are cleared, so one
+approval of `tofu-plan` covers both.
 
 Every trust policy also requires the repository's immutable ID, the `binbashar`
 organization ID, a pull-request merge ref or the `master` branch, and the
@@ -35,9 +37,10 @@ The Bedrock role can invoke exactly two models: Claude Haiku 5.5 through the
 `us.anthropic.claude-haiku-5-5` system inference profile (and its destination models in
 `us-east-1`, `us-east-2`, and `us-west-2`, only via that profile), and Amazon Nova Lite
 (`amazon.nova-lite-v1:0`) directly in `us-east-1`. It has no state, IAM-read, or infrastructure
-permission. The workflow sends it only the sanitized plan projection.
+permission. The workflow sends it the redacted action section of the plan (`tofu show` text with
+sensitive values masked and account IDs, ARNs' account parts, and Identity Center IDs removed).
 
-The `BEDROCK_MODEL_ID` variable of the `tofu-plan-bedrock` environment selects the model; without
+The `BEDROCK_MODEL_ID` variable of the `tofu-plan` environment selects the model; without
 it the workflow uses Haiku 5.5. The analyzer accepts only these two IDs and rejects any other before
 calling AWS. Adding a model means updating both this policy and the analyzer's model registry.
 
@@ -85,6 +88,7 @@ Applying this bootstrap is a maintainer decision; the plan workflow has no apply
 After a reviewed apply, add the plan role ARN and account ID under `apps-devstg` in the
 `TOFU_PLAN_ROLES` repository variable.
 Configure the Bedrock role as `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN` and
-`AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID`. `TOFU_PLAN_LIVE` and `TOFU_PLAN_LLM` stay `true`; environment
+`AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID`. `TOFU_PLAN_LIVE`, `TOFU_PLAN_LLM_EXPLAINER`, and
+`TOFU_PLAN_LLM_SECURITY` stay `true`; environment
 approval gates every run, and the variables are kill switches (see
 [`docs/ai-sdlc/tofu-plan.md`](../../../docs/ai-sdlc/tofu-plan.md#kill-switches)).

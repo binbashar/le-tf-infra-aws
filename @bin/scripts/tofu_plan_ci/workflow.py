@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Mapping, Sequence
 
 from . import aggregate as aggregate_report
-from . import bedrock_analysis, discover, plan_identity, plan_report
+from . import bedrock_client, discover, plan_identity, plan_llm, plan_report
 
 PROFILE = re.compile(
     r'^\s*profile\s*=\s*"(?P<profile>[A-Za-z0-9_-]+)"\s*(?:#.*)?$'
@@ -318,6 +318,43 @@ def _write_aws_profile(directory: Path, *, profile: str, region: str) -> dict[st
     return process_env
 
 
+def _llm_input_path(slug: str) -> Path:
+    return Path(_required_env("RUNNER_TEMP")) / f"tofu-plan-llm-input-{slug}.txt"
+
+
+def _llm_out_dir(slug: str) -> Path:
+    return Path(_required_env("RUNNER_TEMP")) / "tofu-plan-llm" / slug
+
+
+def prepare_llm_input(
+    *, slug: str, plan_file: Path, process_env: Mapping[str, str], layer_dir: Path
+) -> str:
+    """Write the redacted plan text for the LLM steps; return a safe state name."""
+
+    runner_temp = Path(_required_env("RUNNER_TEMP"))
+    show_text = runner_temp / f"tofu-show-{slug}.txt"
+    try:
+        if run_logged(
+            ["tofu", "show", "-no-color", str(plan_file)],
+            stdout_path=show_text,
+            stderr_path=runner_temp / "tofu-show-text.log",
+            env=process_env,
+            cwd=layer_dir,
+        ) != 0:
+            return "unavailable"
+        try:
+            text = plan_llm.prepare_plan_text(show_text.read_text(encoding="utf-8"))
+        except plan_llm.PlanUnavailable as reason:
+            return str(reason)
+        target = _llm_input_path(slug)
+        target.write_text(text, encoding="utf-8")
+        target.chmod(0o600)
+        return "ready"
+    finally:
+        show_text.unlink(missing_ok=True)
+        (runner_temp / "tofu-show-text.log").unlink(missing_ok=True)
+
+
 def run_credentials(layer: str) -> int:
     """Resolve the plan role and session policy before any credential request."""
 
@@ -353,6 +390,7 @@ def run_live(layer: str) -> int:
     failure_diagnostic = None
     common_tfvars_shape_value = None
     failure_location = None
+    llm_input = "disabled"
 
     try:
         if layer not in allowed_layers():
@@ -421,6 +459,12 @@ def run_live(layer: str) -> int:
             )
             if show_exit != 0:
                 plan_exit = 1
+        if plan_exit == 2 and os.environ.get("LLM_ENABLED") == "true":
+            llm_input = prepare_llm_input(
+                slug=slug, plan_file=plan_file, process_env=process_env, layer_dir=layer_dir
+            )
+        elif plan_exit == 0:
+            llm_input = "no-changes"
     except (OSError, ValueError) as error:
         print(f"::error::{error}")
     finally:
@@ -470,6 +514,7 @@ def run_live(layer: str) -> int:
                 ]
             )
             _summary(report_dir / "summary.md")
+            _output("llm_input", llm_input)
         finally:
             for path in (common_tfvars, plan_file, plan_json):
                 path.unlink(missing_ok=True)
@@ -492,41 +537,55 @@ def run_live(layer: str) -> int:
     return 1
 
 
-def run_analysis() -> int:
-    runner_temp = Path(_required_env("RUNNER_TEMP"))
+def run_llm(layer: str, kind: str) -> int:
+    """Run one advisory analysis; failures warn and never fail the job."""
+
+    slug = layer_slug(layer)
+    out_dir = _llm_out_dir(slug)
+    model_id = os.environ.get("MODEL_ID") or bedrock_client.DEFAULT_MODEL_ID
     try:
-        return bedrock_analysis.main(
-            [
-                "--reviews-dir",
-                str(runner_temp / "tofu-plan-reports"),
-                "--model-id",
-                os.environ.get("MODEL_ID", "us.anthropic.claude-haiku-5-5"),
-                "--region",
-                os.environ.get("AWS_REGION", "us-east-1"),
-                "--repository",
-                os.environ.get("GITHUB_REPOSITORY", "unknown"),
-                "--run-id",
-                os.environ.get("GITHUB_RUN_ID", "unknown"),
-                "--head-sha",
-                os.environ.get("HEAD_SHA", "unknown"),
-                "--out-json",
-                str(runner_temp / "tofu-plan-analysis" / "analysis.json"),
-                "--out-markdown",
-                str(runner_temp / "tofu-plan-analysis" / "analysis.md"),
-            ]
+        status = plan_llm.run(
+            kind,
+            plan_text=_llm_input_path(slug).read_text(encoding="utf-8"),
+            layer=layer,
+            model_id=model_id,
+            region=os.environ.get("AWS_REGION", "us-east-1"),
+            request_metadata={
+                "repository": os.environ.get("GITHUB_REPOSITORY", "unknown"),
+                "run-id": os.environ.get("GITHUB_RUN_ID", "unknown"),
+                "analysis": kind,
+            },
+            out_dir=out_dir,
         )
-    finally:
-        _append(
-            os.environ.get("GITHUB_ENV"),
-            "AWS_ACCESS_KEY_ID=\nAWS_SECRET_ACCESS_KEY=\nAWS_SESSION_TOKEN=\n",
+    except Exception as error:  # noqa: BLE001 - advisory step; never leak details.
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / f"{kind}.json").write_text(
+            json.dumps({"kind": kind, "layer": layer, "status": "failed"}) + "\n",
+            encoding="utf-8",
         )
+        print(f"::warning::{kind} analysis failed for {layer} ({type(error).__name__})")
+        return 0
+    _summary(out_dir / f"{kind}.md")
+    print(
+        f"{kind}: {status['input_tokens']} input and {status['output_tokens']} output tokens"
+    )
+    return 0
+
+
+def run_llm_cleanup(layer: str) -> int:
+    _llm_input_path(layer_slug(layer)).unlink(missing_ok=True)
+    _append(
+        os.environ.get("GITHUB_ENV"),
+        "AWS_ACCESS_KEY_ID=\nAWS_SECRET_ACCESS_KEY=\nAWS_SESSION_TOKEN=\n",
+    )
+    return 0
 
 
 def run_aggregate() -> int:
     runner_temp = Path(_required_env("RUNNER_TEMP"))
     discovery_path = runner_temp / "tofu-plan-discovery" / "discovery.json"
     reports_dir = runner_temp / "tofu-plan-reports"
-    analysis_path = runner_temp / "tofu-plan-analysis" / "analysis.md"
+    llm_dir = runner_temp / "tofu-plan-llm"
     require_live = os.environ.get("REQUIRE_LIVE") == "true"
     discovery_result = json.loads(discovery_path.read_text(encoding="utf-8"))
     results = aggregate_report.load_results(reports_dir)
@@ -546,10 +605,11 @@ def run_aggregate() -> int:
         gate=gate,
         reasons=reasons,
         require_live=require_live,
-        analysis_markdown=(
-            analysis_path.read_text(encoding="utf-8") if analysis_path.is_file() else None
-        ),
-        analysis_status=os.environ.get("ANALYSIS_STATUS", "disabled"),
+        llm_markdown=[
+            path.read_text(encoding="utf-8")
+            for kind in plan_llm.ANALYSES
+            for path in sorted(llm_dir.glob(f"*/{kind}.md"))
+        ],
     )
     summary_path = runner_temp / "tofu-plan-summary.md"
     summary_path.write_text(markdown, encoding="utf-8")
@@ -565,11 +625,12 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("discover")
-    commands.add_parser("analyze")
     commands.add_parser("aggregate")
-    for name in ("static", "credentials", "live"):
+    for name in ("static", "credentials", "live", "llm", "llm-cleanup"):
         command = commands.add_parser(name)
         command.add_argument("--layer", default="")
+        if name == "llm":
+            command.add_argument("--kind", choices=sorted(plan_llm.ANALYSES), required=True)
     return parser
 
 
@@ -583,8 +644,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_credentials(args.layer or _required_env("LAYER"))
     if args.command == "live":
         return run_live(args.layer or _required_env("LAYER"))
-    if args.command == "analyze":
-        return run_analysis()
+    if args.command == "llm":
+        return run_llm(args.layer or _required_env("LAYER"), args.kind)
+    if args.command == "llm-cleanup":
+        return run_llm_cleanup(args.layer or _required_env("LAYER"))
     return run_aggregate()
 
 
