@@ -10,6 +10,10 @@ Order matters: UUIDs are redacted before bare digit runs, otherwise `\\d{12}`
 chews through a UUID's digit groups first and the scan passes on the mangled
 result.
 
+IAM Identity Center IDs are redacted too: they are not account IDs, but they
+identify this organization's instance (`ssoins-`/`ins-`), identity store (`d-`),
+applications (`apl-`) and permission sets (`ps-`), and an sso plan is full of them.
+
 Pattern matching alone is not enough. Route53 zone IDs, ACM validation tokens
 and PGP/password blobs have no distinctive shape, so they are also redacted by
 the attribute name that carries them.
@@ -25,10 +29,25 @@ import argparse
 import re
 import sys
 
+# IAM Identity Center IDs, using the character sets of the SSO Admin API ARN
+# patterns rather than the lowercase hex seen in practice, so a valid ID never
+# survives. The ends are lookarounds, not \b: these sets include "-", "." and
+# "/", which can be the last character of an ID.
+_START, _END = r"(?<![A-Za-z0-9-])", r"(?![A-Za-z0-9])"
+SSO_INSTANCE_ID = _START + r"(?:sso)?ins-[A-Za-z0-9.-]{16}" + _END
+IDENTITY_STORE_ID = _START + r"d-[0-9a-f]{10}" + _END
+SSO_APPLICATION_ID = _START + r"apl-[A-Za-z0-9]{16}" + _END
+SSO_PERMISSION_SET_ID = _START + r"ps-[A-Za-z0-9./-]{16}" + _END
+
 SUBSTITUTIONS: list[tuple[str, str]] = [
     # UUIDs first -- see module docstring.
     (r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "<UUID>"),
     (r"\b\d{12}\b", "<ACCOUNT_NAME_ACCOUNT_ID>"),
+    # IAM Identity Center -- see module docstring.
+    (SSO_INSTANCE_ID, "<SSO_INSTANCE_ID>"),
+    (IDENTITY_STORE_ID, "<IDENTITY_STORE_ID>"),
+    (SSO_APPLICATION_ID, "<SSO_APPLICATION_ID>"),
+    (SSO_PERMISSION_SET_ID, "<SSO_PERMISSION_SET_ID>"),
     (r"(AKIA|ASIA)[A-Z0-9]{16}", "***"),
     (r'"Z[A-Z0-9]{10,}"', '"<ZONE_ID>"'),
     # by attribute name, for values with no recognisable shape
@@ -44,6 +63,7 @@ LEAK_SCAN = re.compile(
     r"|-----BEGIN"
     r"|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
     r'|"Z[A-Z0-9]{10,}"'
+    + "|" + "|".join([SSO_INSTANCE_ID, IDENTITY_STORE_ID, SSO_APPLICATION_ID, SSO_PERMISSION_SET_ID])
 )
 
 
