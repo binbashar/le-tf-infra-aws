@@ -31,16 +31,15 @@ and lock with an inline session policy. The role has no IAM mutation,
 secret-read, KMS-decrypt, `iam:PassRole`, or general resource-read permission. State object writes
 and deletes are explicitly denied.
 
-The Bedrock role can invoke only the configured system inference profile and its verified
-destination foundation models, plus the exact regional Amazon Nova Lite fallback. A condition
-prevents direct model invocation outside that profile or the one explicitly named fallback; it has
-no state, IAM-read, or infrastructure permission. The workflow sends it only the sanitized plan
-projection.
+The Bedrock role can invoke exactly two models: Claude Haiku 5.5 through the
+`us.anthropic.claude-haiku-5-5` system inference profile (and its destination models in
+`us-east-1`, `us-east-2`, and `us-west-2`, only via that profile), and Amazon Nova Lite
+(`amazon.nova-lite-v1:0`) directly in `us-east-1`. It has no state, IAM-read, or infrastructure
+permission. The workflow sends it only the sanitized plan projection.
 
-The workflow still defaults to the system inference profile. While the Anthropic account agreement
-is pending, a maintainer may set `BEDROCK_MODEL_ID=amazon.nova-lite-v1:0` only after applying this
-layer's reviewed policy update. The analyzer recognizes only that exact Nova model ID and uses a
-forced, schema-bound tool call for its output. Any other unpermitted model ID fails closed.
+The `BEDROCK_MODEL_ID` variable of the `tofu-plan-bedrock` environment selects the model; without
+it the workflow uses Haiku 5.5. The analyzer accepts only these two IDs and rejects any other before
+calling AWS. Adding a model means updating both this policy and the analyzer's model registry.
 
 The DynamoDB write operations are only for the state lock. If a plan requires any other write,
 state access, or broad read, stop and review the provider operation rather than broadening the

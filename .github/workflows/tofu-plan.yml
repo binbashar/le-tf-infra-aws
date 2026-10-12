@@ -268,7 +268,7 @@ jobs:
         if: ${{ steps.plans.outcome == 'success' }}
         continue-on-error: true
         env:
-          MODEL_ID: ${{ vars.BEDROCK_MODEL_ID || 'us.anthropic.claude-sonnet-4-6' }}
+          MODEL_ID: ${{ vars.BEDROCK_MODEL_ID || 'us.anthropic.claude-haiku-5-5' }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python -m tofu_plan_ci.workflow analyze
 

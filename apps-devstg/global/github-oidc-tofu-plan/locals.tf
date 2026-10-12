@@ -32,8 +32,8 @@ locals {
   # Verified with a read-only GetInferenceProfile call before this policy was
   # authored. InvokeModel evaluates both this system inference profile and its
   # destination foundation models.
-  bedrock_model_id              = "us.anthropic.claude-sonnet-4-6"
-  bedrock_foundation_model      = "anthropic.claude-sonnet-4-6"
+  bedrock_model_id              = "us.anthropic.claude-haiku-5-5"
+  bedrock_foundation_model      = "anthropic.claude-haiku-5-5"
   bedrock_destination_regions   = ["us-east-1", "us-east-2", "us-west-2"]
   bedrock_inference_profile_arn = "arn:${data.aws_partition.current.partition}:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:inference-profile/${local.bedrock_model_id}"
   bedrock_foundation_model_arns = [
@@ -41,8 +41,8 @@ locals {
     "arn:${data.aws_partition.current.partition}:bedrock:${region}::foundation-model/${local.bedrock_foundation_model}"
   ]
 
-  # Temporary direct-model fallback while the Anthropic account agreement is pending.
-  # The workflow selects it only when BEDROCK_MODEL_ID is explicitly configured.
+  # Second reviewed model, selected with the BEDROCK_MODEL_ID variable of the
+  # tofu-plan-bedrock environment. Invoked directly, not through a profile.
   bedrock_nova_lite_model_id  = "amazon.nova-lite-v1:0"
   bedrock_nova_lite_model_arn = "arn:${data.aws_partition.current.partition}:bedrock:${var.region}::foundation-model/${local.bedrock_nova_lite_model_id}"
 

@@ -11,8 +11,23 @@ from typing import Any, Sequence
 from . import SCHEMA_VERSION
 
 MAX_CHANGES_PER_LAYER = 150
+HAIKU_MODEL_ID = "us.anthropic.claude-haiku-5-5"
 NOVA_LITE_MODEL_ID = "amazon.nova-lite-v1:0"
-NOVA_TOOL_NAME = "review_sanitized_tofu_plan"
+REVIEW_TOOL_NAME = "review_sanitized_tofu_plan"
+DEFAULT_MODEL_ID = HAIKU_MODEL_ID
+
+# Reviewed models. The Bedrock role allows exactly these IDs, so any other
+# value is rejected before invocation. Both return structured output through a
+# forced, schema-bound tool call: Bedrock's JSON-schema output is not supported
+# for Haiku 5.5. Haiku 5.5 also rejects `temperature`, and its adaptive
+# thinking is disabled to keep the answer short and the latency low.
+MODELS = {
+    HAIKU_MODEL_ID: {
+        "temperature": False,
+        "request_fields": {"thinking": {"type": "disabled"}},
+    },
+    NOVA_LITE_MODEL_ID: {"temperature": True, "request_fields": {}},
+}
 
 ANALYSIS_SCHEMA = {
     "type": "object",
@@ -96,22 +111,8 @@ def llm_payload(reviews: Sequence[dict]) -> dict:
     return {"schema_version": SCHEMA_VERSION, "layers": layers}
 
 
-def parse_model_text(response: dict) -> dict:
-    content = response.get("output", {}).get("message", {}).get("content", [])
-    text_blocks = [
-        item["text"]
-        for item in content
-        if isinstance(item, dict) and "text" in item
-    ]
-    if not text_blocks:
-        raise ValueError("Bedrock returned no text content")
-    result = json.loads("\n".join(text_blocks))
-    validate_analysis(result)
-    return result
-
-
 def parse_model_tool_use(response: dict) -> dict:
-    """Read the single, forced Nova tool call used as structured output."""
+    """Read the single, forced tool call used as structured output."""
 
     content = response.get("output", {}).get("message", {}).get("content", [])
     tool_inputs = [
@@ -119,7 +120,7 @@ def parse_model_tool_use(response: dict) -> dict:
         for item in content
         if isinstance(item, dict)
         and isinstance(item.get("toolUse"), dict)
-        and item["toolUse"].get("name") == NOVA_TOOL_NAME
+        and item["toolUse"].get("name") == REVIEW_TOOL_NAME
     ]
     if len(tool_inputs) != 1 or not isinstance(tool_inputs[0], dict):
         raise ValueError("Bedrock returned no usable structured tool response")
@@ -128,19 +129,30 @@ def parse_model_tool_use(response: dict) -> dict:
     return result
 
 
-def uses_nova_tool_calling(model_id: str) -> bool:
-    """Keep the model-specific structured-output path deliberately narrow."""
+def model_settings(model_id: str) -> dict:
+    """Return the reviewed settings for a model, rejecting unreviewed IDs."""
 
-    return model_id == NOVA_LITE_MODEL_ID
+    if model_id not in MODELS:
+        raise ValueError(
+            f"unsupported Bedrock model {model_id!r}; expected one of {sorted(MODELS)}"
+        )
+    return MODELS[model_id]
 
 
-def nova_tool_config() -> dict:
+def inference_config(model_id: str) -> dict:
+    config: dict[str, Any] = {"maxTokens": 2400}
+    if model_settings(model_id)["temperature"]:
+        config["temperature"] = 0
+    return config
+
+
+def review_tool_config() -> dict:
     return {
-        "toolChoice": {"tool": {"name": NOVA_TOOL_NAME}},
+        "toolChoice": {"tool": {"name": REVIEW_TOOL_NAME}},
         "tools": [
             {
                 "toolSpec": {
-                    "name": NOVA_TOOL_NAME,
+                    "name": REVIEW_TOOL_NAME,
                     "description": "Return the requested OpenTofu plan review structure.",
                     "inputSchema": {"json": ANALYSIS_SCHEMA},
                 }
@@ -223,6 +235,7 @@ def invoke_bedrock(
     region: str,
     request_metadata: dict[str, str],
 ) -> dict:
+    model_settings(model_id)  # Fail before importing or calling AWS.
     import boto3  # Imported lazily so unit tests need no AWS dependency.
 
     client = boto3.client("bedrock-runtime", region_name=region)
@@ -243,32 +256,14 @@ def invoke_bedrock(
                 ],
             }
         ],
-        "inferenceConfig": {"maxTokens": 2400, "temperature": 0},
+        "inferenceConfig": inference_config(model_id),
         "requestMetadata": request_metadata,
     }
-    if uses_nova_tool_calling(model_id):
-        response = client.converse(
-            **request,
-            toolConfig=nova_tool_config(),
-        )
-        return parse_model_tool_use(response)
-
-    response = client.converse(
-        **request,
-        outputConfig={
-            "textFormat": {
-                "type": "json_schema",
-                "structure": {
-                    "jsonSchema": {
-                        "name": "tofu_plan_review",
-                        "description": "Human-readable OpenTofu plan review",
-                        "schema": json.dumps(ANALYSIS_SCHEMA, separators=(",", ":")),
-                    }
-                },
-            }
-        },
-    )
-    return parse_model_text(response)
+    request_fields = model_settings(model_id)["request_fields"]
+    if request_fields:
+        request["additionalModelRequestFields"] = request_fields
+    response = client.converse(**request, toolConfig=review_tool_config())
+    return parse_model_tool_use(response)
 
 
 def _parser() -> argparse.ArgumentParser:

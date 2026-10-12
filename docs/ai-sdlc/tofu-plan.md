@@ -90,7 +90,7 @@ flowchart LR
   end
 
   subgraph AWSB["apps-devstg"]
-    BRole["GitHubActionsOpenTofuBedrock<br/>invoke only"] --> Model["Bedrock<br/>Nova Lite"]
+    BRole["GitHubActionsOpenTofuBedrock<br/>invoke only"] --> Model["Bedrock<br/>Haiku 5.5 or Nova Lite"]
   end
 
   L -- "OIDC + session policy" --> PRole
@@ -104,7 +104,7 @@ flowchart LR
 | `discover` job | Maps changed files to layers (nearest `config.tf`), keeps only allowlisted active layers, and decides whether a live plan is allowed. Also runs the package's unit tests. |
 | `validation` job | `tofu init -backend=false -lockfile=readonly` and `tofu validate` per layer. No credentials, no environment. |
 | `live_plan` job | Environment `tofu-plan`. Assumes the account's plan role, runs `init`, `plan`, and `tofu show -json`, and keeps only the sanitized projection. |
-| `analysis` job | Environment `tofu-plan-bedrock`. Sends the projection to Bedrock with a separate role and validates the structured answer. Advisory only. |
+| `analysis` job | Environment `tofu-plan-bedrock`. Sends the projection to Bedrock with a separate role; the model must answer through a forced, schema-bound tool call, which is validated. Advisory only. |
 | `report` job (`OpenTofu Plan`) | Aggregates all results into the stable check and the run summary. |
 | `tofu_plan_ci` package | `discover.py` (layers), `policy.py` (live-plan eligibility), `plan_identity.py` (role and session policy), `plan_report.py` (sanitization), `bedrock_analysis.py`, `aggregate.py`, and `workflow.py` (one command per job). |
 | `<account>/global/github-oidc-tofu-plan` | One per account with allowlisted layers: OIDC provider, plan role, and its policy, built from a `plan_targets` map plus one `plan-target-<layer>.tf` per layer. apps-devstg also holds the Bedrock role. |
@@ -179,10 +179,10 @@ layer; the rest is waiting for approvals.
 | --- | --- |
 | GitHub Actions | Free: public repository on standard runners (about 2 runner-minutes per layer per commit). |
 | AWS STS, IAM, S3 and DynamoDB reads | Effectively $0 (a few requests per run). |
-| Bedrock, Nova Lite (current) | About **$0.0005 per explanation** (~3K input, ~1.2K output tokens at $0.06 / $0.24 per million); at most ~$0.0012 (output capped at 2,400 tokens). |
-| Bedrock, Claude Sonnet 4.6 (if adopted) | About **$0.03 per explanation** at $3 / $15 per million tokens list price, billed through AWS Marketplace; at most ~$0.07. |
+| Bedrock, Claude Haiku 5.5 | About **$0.0006 per explanation** (measured on #1228: ~1.4K input, ~0.9K output tokens at $0.10 / $0.50 per million, Anthropic list price billed through AWS Marketplace); at most ~$0.002 (output capped at 2,400 tokens). |
+| Bedrock, Nova Lite | About **$0.0001 per explanation** (measured: ~1K input, ~0.2K output tokens at $0.06 / $0.24 per million); at most ~$0.0012. |
 
-At 100 explained commits a month: about $0.05 with Nova Lite, about $3 with Claude.
+At 100 explained commits a month: under $0.10 with either model.
 
 ## 5. Security
 
@@ -223,7 +223,7 @@ environment reviewer is authorizing execution of that commit; approval is not a 
 | Variable | `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN`, `AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID` | Bedrock role and its account. |
 | Variable | `OPENTOFU_VERSION`, `AWS_REGION` | Default `1.9.1`, `us-east-1`. |
 | `tofu-plan` secret | `TOFU_PLAN_COMMON_TFVARS` | Copy of the ignored `config/common.tfvars`; written `0600` and removed after the plan. |
-| `tofu-plan-bedrock` variable | `BEDROCK_MODEL_ID` | `amazon.nova-lite-v1:0`. Keep it on the environment: `claude.yml` reads the repository variable of the same name. Without it, the job uses `us.anthropic.claude-sonnet-4-6`. |
+| `tofu-plan-bedrock` variable | `BEDROCK_MODEL_ID` | `us.anthropic.claude-haiku-5-5` or `amazon.nova-lite-v1:0`, the only two IDs the role and the analyzer accept. Without it, the job uses Haiku 5.5. Keep it on the environment: `claude.yml` reads the repository variable of the same name. |
 
 ### Kill switches
 
@@ -292,7 +292,7 @@ The Bedrock client is the only third-party dependency, pinned with hashes in
 | Credential-free validation, protected live plan, Bedrock explanation | Done (POC, promoted 2026-10-11) |
 | Per-account roles and per-layer session policy; `management/global/sso` onboarded | Done (2026-10-11) |
 | Active by default; variables as kill switches | Done (2026-10-12) |
-| Model choice: compare Claude and Nova Lite on the same plans (usefulness, hallucinations, latency, cost), then keep or drop the Nova Lite permission | Open; Nova Lite stays by decision |
+| Models: Claude Haiku 5.5 and Nova Lite, switchable per environment; Sonnet 4.6 removed | Done (2026-10-12). On #1228 Haiku gave a far more specific explanation (5 s vs 2 s) |
 | Destructive-change policy: should delete/replace warn or fail the check | Open |
 | Make `OpenTofu Plan` a required check | Blocked by the two items above, plus an incident and credential-revocation procedure |
 | More layers | On demand, through [Adding a layer](#adding-a-layer) |
