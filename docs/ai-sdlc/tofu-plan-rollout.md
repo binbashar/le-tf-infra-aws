@@ -133,13 +133,20 @@ that toggle these variables record how the rollout was run; they are not the ope
 
 The first PR planned in this state was #1228, a real change to `management/global/sso`. Its live
 plan matched the local plan: two in-place updates of permission set inline policies, no drift.
+Its explanation ([run 38194574887](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38194574887))
+ran on the default `us.anthropic.claude-sonnet-4-6` profile, because the run started before the
+environment variable was set. The invocation succeeded although `get-foundation-model-availability`
+still reported `agreementAvailability: NOT_AVAILABLE` for the model in the same account, so that
+field does not tell whether the profile can be invoked. The explanation was accurate (medium risk,
+two in-place policy updates, management-account blast radius) and its reviewer questions were
+generic, since the projection withholds policy content by design.
 
-Nova Lite is the standing model, set as `BEDROCK_MODEL_ID` on the `tofu-plan-bedrock` environment.
-Still open:
+Nova Lite stays the standing model by maintainer decision, set as `BEDROCK_MODEL_ID` on the
+`tofu-plan-bedrock` environment. Still open:
 
-1. Recheck the Anthropic foundation-model agreement. When it is available, compare a Claude
-   explanation with the deterministic projection and the Nova Lite record (usefulness,
-   hallucinations, latency, cost, prompt-injection behavior) before switching models.
+1. Before switching to Claude, compare its explanations with Nova Lite's on the same plans
+   (usefulness, hallucinations, latency, cost, prompt-injection behavior). The #1228 run above is
+   the first Claude sample.
 2. Decide whether to keep the Nova Lite permission in a separate reviewed identity-layer change.
    Do not broaden it to a model family or wildcard.
 3. Keep the aggregate check non-required until the promotion decision resolves the

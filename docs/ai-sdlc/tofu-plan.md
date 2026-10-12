@@ -64,8 +64,8 @@ What this means for each PR that touches an allowlisted layer:
 
 The model is Nova Lite (`amazon.nova-lite-v1:0`), set as `BEDROCK_MODEL_ID` on the
 `tofu-plan-bedrock` environment so that it does not change the repository-wide value that
-`claude.yml` reads. The Anthropic agreement was still `NOT_AVAILABLE` in the pilot account on
-2026-10-11. The check stays non-required, and each new layer goes through the onboarding steps in
+`claude.yml` reads. Nova Lite is a deliberate choice, not a constraint: the Claude inference profile
+also works (see the rollout record). The check stays non-required, and each new layer goes through the onboarding steps in
 [`tofu-plan-rollout.md`](tofu-plan-rollout.md).
 
 ## Workflow layout
@@ -102,7 +102,7 @@ Optional LLM explanation requires:
 | Variable | `TOFU_PLAN_LLM` | Must equal `true` to invoke Bedrock. Normally `true`; set `false` as a kill switch. |
 | Variable | `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN` | Separate OIDC role with only model invocation permission. |
 | Variable | `AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID` | Exact AWS account allowed for the Bedrock-role session. |
-| Environment variable (`tofu-plan-bedrock`) | `BEDROCK_MODEL_ID` | Model or inference profile. Set to `amazon.nova-lite-v1:0`. Without it the job falls back to the repository variable of the same name, and then to `us.anthropic.claude-sonnet-4-6`, which is not enabled in the pilot account. Keep it on the environment: `claude.yml` reads the repository variable. |
+| Environment variable (`tofu-plan-bedrock`) | `BEDROCK_MODEL_ID` | Model or inference profile. Set to `amazon.nova-lite-v1:0`. Without it the job falls back to the repository variable of the same name, and then to `us.anthropic.claude-sonnet-4-6`. Keep it on the environment: `claude.yml` reads the repository variable. |
 
 The two roles are deliberately separate. A Bedrock failure does not turn a successful OpenTofu
 plan into a failure, and the Bedrock job never receives plan-role credentials or a token accepted by
