@@ -102,6 +102,27 @@ IAM roles kept their names. Because the OIDC trust policies match the environmen
 identity layer was applied with the new subjects before the rename merged; the environment secret
 was re-entered in `tofu-plan`, since GitHub cannot copy a secret's value.
 
+## Multi-layer onboarding record (2026-10-11)
+
+`management/global/sso` joined `apps-devstg/global/cli-test-layer` in the allowlist, with one
+plan role per account (`TOFU_PLAN_ROLES`) and a per-job session policy (#1223). The supervised
+dispatch took three runs; each fix was its own reviewed change:
+
+| Run | Result | Cause | Fix |
+| --- | --- | --- | --- |
+| [38191968886](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38191968886) | Credential-free validation failed | The layer's lock file had no `linux_amd64` `h1:` hash for `hashicorp/aws`; `init -lockfile=readonly` installed the provider by its `zh:` hash and `validate` then rejected it. Passed on macOS. | #1225 regenerated the lock for four platforms |
+| [38192501713](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38192501713) | Live plan denied `sso:ListTagsForResource` at `client-vpn-application.tf:1` | The CloudTrail-derived policy granted the action on the instance, permission sets, and accounts, not on applications | #1226 added it to the applications statement |
+| [38192953426](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38192953426) | **Passed: 0 create, 0 update, 0 delete, 0 replace** | | |
+
+The artifacts of the passing run held no e-mail addresses or Identity Center IDs, and
+`redact_plan.py --scan` reported them clean. `TOFU_PLAN_LIVE` was returned to `false`. The old
+`AWS_TOFU_PLAN_ROLE_ARN`/`_ACCOUNT_ID` variables and the pre-rename apps-devstg state object were
+deleted after #1223 merged; the state bucket is versioned.
+
+Data exposure (onboarding step 7): the management plan role can read Identity Center users,
+including names and e-mail addresses, groups, memberships, permission sets, and assignments. The
+maintainer accepted this when approving the management OIDC provider.
+
 ## Paused state and next resumption
 
 The workflow is intentionally paused after the successful Nova Lite revalidation. It is not a
@@ -287,11 +308,16 @@ and resources. Each addition is its own reviewed change:
 
 1. **Confirm fit.** Single `aws` provider for the layer's own account (no aliased or cross-account
    providers), no `terraform_remote_state` into accounts the plan role cannot read, no external
-   data sources, and a lock file with `linux_amd64` hashes.
+   data sources, and a lock file with `linux_amd64` hashes. A macOS validate cannot detect a
+   missing one; validate in a `linux/amd64` OpenTofu container, or regenerate the lock with
+   `tofu providers lock` for all four platforms.
 2. **Derive the reads.** Run a local `leverage tofu plan` of the converged layer, then list the
    CloudTrail management events its session produced (`lookup-events` by event source, about
    15 minutes later). State and lock access are data events and do not appear; the shared
-   `policy.tf` already grants them per `plan_targets` entry.
+   `policy.tf` already grants them per `plan_targets` entry. An event shows the action, not every
+   resource type it authorizes against: when the service authorization reference lists several
+   (for example `sso:ListTagsForResource` on instances, permission sets, and applications), grant
+   it on each type the layer manages.
 3. **Extend the account's identity layer.** Add a `plan_targets` entry with the layer's backend
    key and a `plan-target-<layer>.tf` with only those reads, scoped to the narrowest resource
    ARNs the actions support. If the account has no `github-oidc-tofu-plan` layer yet, create one
