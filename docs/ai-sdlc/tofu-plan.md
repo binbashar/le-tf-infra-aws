@@ -293,6 +293,7 @@ The Bedrock client is the only third-party dependency, pinned with hashes in
 | Per-account roles and per-layer session policy; `management/global/sso` onboarded | Done (2026-10-11) |
 | Active by default; variables as kill switches | Done (2026-10-12) |
 | Models: Claude Haiku 5.5 and Nova Lite, switchable per environment; Sonnet 4.6 removed | Done (2026-10-12). On #1228 Haiku gave a far more specific explanation (5 s vs 2 s) |
+| Bedrock role placement: today one role in apps-devstg explains plans for every account. Decide between keeping it central or one role per account, and, if central, whether apps-devstg is the right account | Open |
 | Destructive-change policy: should delete/replace warn or fail the check | Open |
 | Make `OpenTofu Plan` a required check | Blocked by the two items above, plus an incident and credential-revocation procedure |
 | More layers | On demand, through [Adding a layer](#adding-a-layer) |
