@@ -11,12 +11,15 @@ optional Bedrock explanation. It never applies anything.
 
 ## 1. What it is
 
-For every PR that touches an allowlisted layer, the workflow:
+For a PR that touches one allowlisted layer, the workflow:
 
 1. validates the layer without credentials;
 2. after a reviewer approves, runs a read-only `tofu plan` against the real state;
 3. after a second approval, asks Bedrock to explain the plan;
 4. publishes a sanitized summary and the `OpenTofu Plan` check.
+
+Steps 2 and 3 are skipped for PRs that touch more layers than the limit or change the workflow,
+providers, backends, or configuration (see [Limitations](#limitations)).
 
 Status (2026-10-12): **active** on two layers, `apps-devstg/global/cli-test-layer` (test layer)
 and `management/global/sso`. The check is not required.
@@ -57,8 +60,10 @@ Reject it when no explanation is needed; the check still completes.
 | `tofu-plan-llm` | `analysis.md` / `analysis.json`: risk level, summary, risks, reviewer questions |
 | `tofu-plan-validation-<layer>`, `tofu-plan-discovery` | Credential-free validation and layer discovery |
 
-Artifacts are kept for 7 days. The summary shows *which* attributes change, never their values;
-compare it with the local plan the author attaches to the PR.
+Artifacts are kept for 7 days. The summary shows *which* attributes change, never their values.
+For the values, use the author's local plan in the PR description: only the action section,
+redacted and scanned with `@bin/scripts/redact_plan.py`, never a raw plan, saved plan file, or
+`tofu show -json` output (procedure in [`CLAUDE.md`](../../CLAUDE.md#standard-workflow-posting-a-tofu-plan-to-a-pr-for-review)).
 
 ## 4. Architecture
 
