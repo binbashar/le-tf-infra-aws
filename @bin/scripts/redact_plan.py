@@ -10,6 +10,10 @@ Order matters: UUIDs are redacted before bare digit runs, otherwise `\\d{12}`
 chews through a UUID's digit groups first and the scan passes on the mangled
 result.
 
+IAM Identity Center IDs are redacted too: they are not account IDs, but they
+identify this organization's instance (`ssoins-`), identity store (`d-`),
+applications (`apl-`) and permission sets (`ps-`), and an sso plan is full of them.
+
 Pattern matching alone is not enough. Route53 zone IDs, ACM validation tokens
 and PGP/password blobs have no distinctive shape, so they are also redacted by
 the attribute name that carries them.
@@ -29,6 +33,11 @@ SUBSTITUTIONS: list[tuple[str, str]] = [
     # UUIDs first -- see module docstring.
     (r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "<UUID>"),
     (r"\b\d{12}\b", "<ACCOUNT_NAME_ACCOUNT_ID>"),
+    # IAM Identity Center -- see module docstring.
+    (r"\bssoins-[0-9a-f]{16}\b", "<SSO_INSTANCE_ID>"),
+    (r"\bd-[0-9a-f]{10}\b", "<IDENTITY_STORE_ID>"),
+    (r"\bapl-[0-9a-f]{16}\b", "<SSO_APPLICATION_ID>"),
+    (r"\bps-[0-9a-f]{16}\b", "<SSO_PERMISSION_SET_ID>"),
     (r"(AKIA|ASIA)[A-Z0-9]{16}", "***"),
     (r'"Z[A-Z0-9]{10,}"', '"<ZONE_ID>"'),
     # by attribute name, for values with no recognisable shape
@@ -44,6 +53,7 @@ LEAK_SCAN = re.compile(
     r"|-----BEGIN"
     r"|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
     r'|"Z[A-Z0-9]{10,}"'
+    r"|\b(?:ssoins-[0-9a-f]{16}|d-[0-9a-f]{10}|apl-[0-9a-f]{16}|ps-[0-9a-f]{16})\b"
 )
 
 
