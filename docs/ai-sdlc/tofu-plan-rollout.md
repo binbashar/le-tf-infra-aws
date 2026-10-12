@@ -123,25 +123,26 @@ Data exposure (onboarding step 7): the management plan role can read Identity Ce
 including names and e-mail addresses, groups, memberships, permission sets, and assignments. The
 maintainer accepted this when approving the management OIDC provider.
 
-## Paused state and next resumption
+## Operating state (2026-10-12)
 
-The workflow is intentionally paused after the successful Nova Lite revalidation. It is not a
-required check and no live or LLM job should be dispatched while `TOFU_PLAN_LIVE` and
-`TOFU_PLAN_LLM` remain `false`.
+The workflow left its paused state on 2026-10-12. `TOFU_PLAN_LIVE` and `TOFU_PLAN_LLM` stay `true`
+and act only as kill switches; environment approval of `tofu-plan` and `tofu-plan-bedrock` is the
+gate for every credentialed or model run (see
+[Current operating state](tofu-plan.md#current-operating-state-active)). The gate procedures below
+that toggle these variables record how the rollout was run; they are not the operating procedure.
 
-When work resumes:
+The first PR planned in this state was #1228, a real change to `management/global/sso`. Its live
+plan matched the local plan: two in-place updates of permission set inline policies, no drift.
 
-1. Recheck the Anthropic foundation-model agreement status. If it is available, set the Claude
-   model explicitly for one supervised Gate 6 comparison; otherwise, explicitly reopen the
-   documented Nova Lite fallback window. As of 2026-10-11 the agreement was still
-   `NOT_AVAILABLE` in the pilot account (a public offer exists), so Nova Lite remains the working
-   model.
-2. Compare the new explanation with the deterministic projection and this Nova Lite record. Record
-   usefulness, hallucinations, latency, cost, and any prompt-injection behavior before changing
-   the selected model or permission set.
-3. Decide whether to retain or remove the Nova Lite fallback permission in a separate reviewed
-   identity-layer change. Do not broaden it to a model family or wildcard.
-4. Keep the aggregate check non-required until the separate promotion decision resolves the
+Nova Lite is the standing model, set as `BEDROCK_MODEL_ID` on the `tofu-plan-bedrock` environment.
+Still open:
+
+1. Recheck the Anthropic foundation-model agreement. When it is available, compare a Claude
+   explanation with the deterministic projection and the Nova Lite record (usefulness,
+   hallucinations, latency, cost, prompt-injection behavior) before switching models.
+2. Decide whether to keep the Nova Lite permission in a separate reviewed identity-layer change.
+   Do not broaden it to a model family or wildcard.
+3. Keep the aggregate check non-required until the promotion decision resolves the
    destructive-change policy, state confidentiality, and incident/credential-revocation process.
 
 ## Gate 1: credential-free pull request
