@@ -1,259 +1,295 @@
 # OpenTofu pull-request plan
 
-A native GitHub Actions check for OpenTofu changes, without Atlantis, a custom GitHub App,
-automated apply, or PR comments. It started as a proof of concept (see the execution record in the
-rollout runbook) and was promoted on 2026-10-11. Its scope is deliberately limited to an explicit
-layer allowlist; the AWS role and report redaction are reviewed before each layer is added.
+A GitHub Actions check that validates and plans OpenTofu changes on pull requests, with an
+optional Bedrock explanation. It never applies anything.
 
-Workflow: [`.github/workflows/tofu-plan.yml`](../../.github/workflows/tofu-plan.yml).
+- Workflow: [`.github/workflows/tofu-plan.yml`](../../.github/workflows/tofu-plan.yml)
+- Code: [`@bin/scripts/tofu_plan_ci/`](../../@bin/scripts/tofu_plan_ci/)
+- AWS identities: [`apps-devstg/global/github-oidc-tofu-plan`](../../apps-devstg/global/github-oidc-tofu-plan/),
+  [`management/global/github-oidc-tofu-plan`](../../management/global/github-oidc-tofu-plan/)
+- History, gates, and decisions: [`tofu-plan-history.md`](tofu-plan-history.md)
 
-Staged activation and rollback checklist:
-[`tofu-plan-rollout.md`](tofu-plan-rollout.md).
+## 1. What it is
 
-## Current scope
+For every PR that touches an allowlisted layer, the workflow:
 
-- Runs on PR open, reopen, ready-for-review, and every new PR commit (`synchronize`), but only for
-  non-draft, human-authored PRs whose head branch lives in this repository. Creating that branch
-  requires repository write access. GitHub's event-time `author_association` is deliberately not
-  used because it can remain `CONTRIBUTOR` for an internal member. Fork PRs and bot-authored PRs
-  register no runner work; supporting external contributors is out of scope.
-- A newer commit cancels an in-progress stale run; the cancelled run remains in Actions history.
-- Detects root modules by the nearest `config.tf`, including nested layers. It does not assume an
-  `account/region/layer` depth.
-- Expands changes under `config/` or `<account>/config/`, but never silently truncates a scope that
-  exceeds the configured `TOFU_PLAN_MAX_LAYERS` limit.
-- Excludes any path with a segment ending in `--` and records why it was skipped.
-- Plans only layers listed in the `TOFU_PLAN_LAYERS` repository variable (comma- or
-  newline-separated; defaults to the `apps-devstg/global/cli-test-layer` integration layer, which
-  stays allowlisted for testing). Add a layer only after validating its providers, data sources,
-  backend, remote states, profiles, README/deployment notes, and the plan role's permissions.
-- Changes to the workflow or its Python package self-test the allowlisted layers, so the
-  workflow's own PR exercises more than a no-op discovery path. Those and other execution-control changes are
-  always static-only and cannot reach a credentialed job.
-- Runs credential-free `tofu init -backend=false -lockfile=readonly` and `tofu validate` by default.
-- Runs a live backend init and speculative plan only when explicitly enabled with an OIDC role and
-  approved through the protected `tofu-plan` GitHub environment.
-- Uploads only sanitized JSON/Markdown reports. It never uploads the binary plan, prior state,
-  variables, full UI stream, or before/after values.
-- Can ask Bedrock to explain the sanitized projection. The model is advisory and cannot change the
-  deterministic check result.
+1. validates the layer without credentials;
+2. after a reviewer approves, runs a read-only `tofu plan` against the real state;
+3. after a second approval, asks Bedrock to explain the plan;
+4. publishes a sanitized summary and the `OpenTofu Plan` check.
 
-There is no apply path in this workflow.
+Status (2026-10-12): **active** on two layers, `apps-devstg/global/cli-test-layer` (test layer)
+and `management/global/sso`. The check is not required.
 
-## Current operating state: active
+## 2. Purpose
 
-Since 2026-10-12, `TOFU_PLAN_LIVE=true` and `TOFU_PLAN_LLM=true` are the normal state. The
-security boundary is environment approval, not these variables: a live plan receives AWS
-credentials only after a reviewer approves the `tofu-plan` environment, and the Bedrock
-explanation runs only after a separate approval of `tofu-plan-bedrock`. Both environments
-require a reviewer other than the run initiator, with **Prevent self-review** and no
-administrator bypass.
+**Problem.** Reviewers judged infrastructure PRs by reading HCL, and the plan was generated
+locally by the author and pasted by hand, which leaks identifiers easily and can go stale against
+later commits.
 
-The two variables are kill switches. Set either to `false` to stop that stage for every PR at
-once, without a workflow change, for example during an incident, a suspected credential or role
-problem, or unexpected model behavior. A run reads them when it starts, so a change affects only
-runs started afterwards.
+**What it gives maintainers:**
 
-What this means for each PR that touches an allowlisted layer:
+- a plan for every commit, generated in CI from real state, not from the author's machine;
+- a summary of actions per resource (create, update, delete, replace) and drift, with no values,
+  so it is safe to keep in a public repository;
+- an advisory explanation of risk and review questions;
+- no new infrastructure to run: no Atlantis server, GitHub App, or webhook.
 
-- It waits for approval of `tofu-plan`, and then of `tofu-plan-bedrock`. An unapproved run keeps
-  the `OpenTofu Plan` check pending; the check is not required, so it never blocks a merge. A
-  waiting job uses no runner minutes, and GitHub cancels it after 30 days.
-- Approving `tofu-plan-bedrock` sends the sanitized plan projection to the model. Reject it when
-  the explanation is not wanted.
+**Deliberately out of scope:** apply, destroy, import, any state change, PR comments, fork and
+bot PRs, and planning layers outside the allowlist. Applying stays a manual maintainer step.
 
-The model is Nova Lite (`amazon.nova-lite-v1:0`), set as `BEDROCK_MODEL_ID` on the
-`tofu-plan-bedrock` environment so that it does not change the repository-wide value that
-`claude.yml` reads. The Anthropic agreement was still `NOT_AVAILABLE` in the pilot account on
-2026-10-11. The check stays non-required, and each new layer goes through the onboarding steps in
-[`tofu-plan-rollout.md`](tofu-plan-rollout.md).
+## 3. Using it
 
-## Workflow layout
+**PR author.** Open a non-draft PR from a branch in this repository. Nothing else is needed.
 
-The workflow intentionally keeps five visible orchestration jobs: discovery, credential-free
-validation, protected live planning, optional Bedrock analysis, and the stable aggregate report.
-Their imperative mechanics live in
-[`workflow.py`](../../@bin/scripts/tofu_plan_ci/workflow.py) behind matching `discover`, `static`,
-`live`, `analyze`, and `aggregate` commands. This keeps credentials and job dependencies visible in
-GitHub Actions while making command construction, cleanup, reporting, and failure behavior unit
-testable without long inline shell blocks.
+**Reviewer approving `tofu-plan`.** Approval runs the PR's exact commit with read access to that
+layer's state and resources. Approve only after reading the diff: provider code, data sources, and
+modules in the PR execute during the plan.
 
-## GitHub configuration
+**Reviewer approving `tofu-plan-bedrock`.** Approval sends the sanitized summary to the model.
+Reject it when no explanation is needed; the check still completes.
 
-The default credential-free mode needs no repository configuration. It is suitable for validating
-the workflow mechanics in a PR before granting AWS access.
+**Reading the result.** Open the run's summary, or the artifacts:
 
-Live planning requires:
+| Artifact | Contents |
+| --- | --- |
+| `tofu-plan-layer-<layer>` | `summary.md` (actions table), `result.json` (status, counts), `review.json` (per-resource actions and changed attribute names, drift, check counts) |
+| `tofu-plan-llm` | `analysis.md` / `analysis.json`: risk level, summary, risks, reviewer questions |
+| `tofu-plan-validation-<layer>`, `tofu-plan-discovery` | Credential-free validation and layer discovery |
 
-| Kind | Name | Purpose |
-| --- | --- | --- |
-| Variable | `TOFU_PLAN_LIVE` | Must equal `true` to request live planning. Normally `true`; set `false` as a kill switch. |
-| Variable | `TOFU_PLAN_LAYERS` | Comma- or newline-separated layer allowlist. Defaults to `apps-devstg/global/cli-test-layer`. A manual dispatch must name its layer when several are listed. |
-| Variable | `TOFU_PLAN_MAX_LAYERS` | Safety cap. Defaults to `1`. No subset is chosen when exceeded. |
-| Variable | `TOFU_PLAN_ROLES` | JSON map from account directory to its plan role, e.g. `{"management": {"role_arn": "arn:aws:iam::<ID>:role/GitHubActionsOpenTofuPlan", "account_id": "<ID>"}}`. The role must be in `account_id` and must not be `DeployMaster`. A layer whose account is missing fails closed. |
-| Variable | `OPENTOFU_VERSION` | OpenTofu runner version. Defaults to `1.9.1`. |
-| Variable | `AWS_REGION` | AWS/Bedrock region. Defaults to `us-east-1`. |
-| Environment secret | `TOFU_PLAN_COMMON_TFVARS` | Exact CI copy of the ignored root `config/common.tfvars`. It is written with mode `0600` and removed after planning. |
+Artifacts are kept for 7 days. The summary shows *which* attributes change, never their values;
+compare it with the local plan the author attaches to the PR.
 
-Optional LLM explanation requires:
+## 4. Architecture
 
-| Kind | Name | Purpose |
-| --- | --- | --- |
-| Variable | `TOFU_PLAN_LLM` | Must equal `true` to invoke Bedrock. Normally `true`; set `false` as a kill switch. |
-| Variable | `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN` | Separate OIDC role with only model invocation permission. |
-| Variable | `AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID` | Exact AWS account allowed for the Bedrock-role session. |
-| Environment variable (`tofu-plan-bedrock`) | `BEDROCK_MODEL_ID` | Model or inference profile. Set to `amazon.nova-lite-v1:0`. Without it the job falls back to the repository variable of the same name, and then to `us.anthropic.claude-sonnet-4-6`, which is not enabled in the pilot account. Keep it on the environment: `claude.yml` reads the repository variable. |
+### Diagram
 
-The two roles are deliberately separate. A Bedrock failure does not turn a successful OpenTofu
-plan into a failure, and the Bedrock job never receives plan-role credentials or a token accepted by
-the plan role.
+```mermaid
+flowchart LR
+  PR["Pull request<br/>(same repo, human, non-draft)"] --> D
 
-Before enabling a credentialed role, configure each of these GitHub environments with required
-reviewers, **Prevent self-review**, and administrator bypass disabled:
+  subgraph GHA["GitHub Actions: tofu-plan.yml"]
+    D["discover<br/>affected layers + policy"] --> V["validation<br/>no credentials"]
+    V --> A1{{"approval<br/>env tofu-plan"}}
+    A1 --> L["live_plan<br/>tofu plan, sanitize"]
+    L --> A2{{"approval<br/>env tofu-plan-bedrock"}}
+    A2 --> B["analysis<br/>Bedrock explanation"]
+    L --> R["report<br/>check: OpenTofu Plan"]
+    B --> R
+  end
 
-| Environment | Credentialed purpose | Extra configuration |
-| --- | --- | --- |
-| `tofu-plan` | OpenTofu plan | `TOFU_PLAN_COMMON_TFVARS` environment secret |
-| `tofu-plan-bedrock` | Bedrock explanation | No OpenTofu tfvars secret |
+  subgraph AWSA["Layer account (apps-devstg, management)"]
+    OIDC1["GitHub OIDC provider"] --> PRole["GitHubActionsOpenTofuPlan<br/>read-only, union of layer reads"]
+    PRole --> State["S3 state + DynamoDB lock"]
+    PRole --> Res["Layer resources<br/>(read calls only)"]
+  end
 
-The automatic credential-free validation job references none of these environments, so it never
-gets `id-token: write` or waits for approval.
+  subgraph AWSB["apps-devstg"]
+    BRole["GitHubActionsOpenTofuBedrock<br/>invoke only"] --> Model["Bedrock<br/>Nova Lite"]
+  end
 
-## AWS role boundary
-
-Each role must use GitHub OIDC and short-lived credentials. Its trust policy must require the
-matching environment subject (using the actual owner/repository names):
-
-```text
-plan    = repo:OWNER/REPOSITORY:environment:tofu-plan
-bedrock = repo:OWNER/REPOSITORY:environment:tofu-plan-bedrock
+  L -- "OIDC + session policy" --> PRole
+  B -- "OIDC" --> BRole
 ```
 
-Do not trust the broader `repo:OWNER/REPOSITORY:pull_request` subject. A PR can change
-workflow code; binding AWS trust to the protected environment prevents that change from bypassing
-the approval boundary. Do not reuse the repository's static AWS keys or any `DeployMaster` role.
+### Components
 
-Each account that hosts an allowlisted layer has one plan role, created by that account's
-`<account>/global/github-oidc-tofu-plan` layer. The role's policy is the union of its layers'
-needs, generated from a `plan_targets` map plus one `plan-target-<layer>.tf` file per layer. For
-each allowlisted layer, grant only:
+| Component | Role |
+| --- | --- |
+| `discover` job | Maps changed files to layers (nearest `config.tf`), keeps only allowlisted active layers, and decides whether a live plan is allowed. Also runs the package's unit tests. |
+| `validation` job | `tofu init -backend=false -lockfile=readonly` and `tofu validate` per layer. No credentials, no environment. |
+| `live_plan` job | Environment `tofu-plan`. Assumes the account's plan role, runs `init`, `plan`, and `tofu show -json`, and keeps only the sanitized projection. |
+| `analysis` job | Environment `tofu-plan-bedrock`. Sends the projection to Bedrock with a separate role and validates the structured answer. Advisory only. |
+| `report` job (`OpenTofu Plan`) | Aggregates all results into the stable check and the run summary. |
+| `tofu_plan_ci` package | `discover.py` (layers), `policy.py` (live-plan eligibility), `plan_identity.py` (role and session policy), `plan_report.py` (sanitization), `bedrock_analysis.py`, `aggregate.py`, and `workflow.py` (one command per job). |
+| `<account>/global/github-oidc-tofu-plan` | One per account with allowlisted layers: OIDC provider, plan role, and its policy, built from a `plan_targets` map plus one `plan-target-<layer>.tf` per layer. apps-devstg also holds the Bedrock role. |
+| Environments `tofu-plan`, `tofu-plan-bedrock` | Required reviewer, Prevent self-review, no admin bypass. `tofu-plan` holds the `TOFU_PLAN_COMMON_TFVARS` secret; `tofu-plan-bedrock` sets `BEDROCK_MODEL_ID`. |
 
-- read access to its S3 state object and the minimum bucket listing needed by the backend;
-- the DynamoDB operations required to acquire and release its state lock;
-- the read-only provider calls needed to refresh the resources already in that layer, derived from
-  a converged local plan's CloudTrail events rather than from a managed read-only policy;
-- no create, update, delete, pass-role, state-write, secret-value, or KMS-decrypt permissions unless
-  a reviewed provider/data-source requirement proves one is unavoidable.
+### Interactions: one PR
 
-Every live job assumes its account's role with an **inline session policy** built by the trusted
-base revision from the layer's backend key (`config.tf`) and the account's `backend.tfvars`. It
-narrows `s3:GetObject`/`s3:ListBucket` on the state bucket and the lock-item operations on the lock
-table to that one layer, and leaves every other permission to the role. An approved plan of one
-layer therefore cannot read another layer's state, even though the role could.
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Dev as Author
+  participant GH as GitHub Actions
+  actor Rev as Reviewer
+  participant AWS as Layer account
+  participant BR as Bedrock
 
-Read-only planning is still privileged: provider code and data sources execute from the PR and can
-read whatever the role can read. Therefore every job is skipped for forks, while credentialed jobs
-also require protected-environment approval. A live plan is suppressed when a PR changes CI
-control files, provider locks, `config.tf`, project or account configuration (`config/`,
-`<account>/config/`), any OpenTofu JSON configuration, provider/backend
-declarations, module/provider sources, external data sources, or provisioners. The policy scans both
-native `.tf` and `.tofu` configuration before allowing a credentialed plan. Live sanitization and
-LLM analysis import their code from the PR base revision, not from the candidate checkout. Expanding
-the allowlist requires a fresh permission and data-exposure review.
-
-The workflow requests 15-minute sessions, verifies the returned AWS account, masks account IDs,
-and removes its temporary profile and raw plan logs after creating the sanitized report. GitHub
-Actions are pinned to full commits; the optional Bedrock client is installed from a hash-locked
-requirements file.
-
-The Bedrock role needs only the relevant `bedrock:InvokeModel` permission for the configured model
-or inference profile. The policy permits the configured Claude system profile and its verified
-destination models, plus the exact regional `amazon.nova-lite-v1:0` fallback while its use is
-being evaluated. A different variable value fails closed at IAM.
-
-## Evidence and check behavior
-
-Each selected layer produces an artifact retained for 7 days:
-
-```text
-result.json
-review.json       # live plans only
-summary.md
+  Dev->>GH: push commit
+  GH->>GH: discover + validate (no credentials)
+  GH-->>Rev: wait for approval (tofu-plan)
+  Rev->>GH: approve
+  GH->>AWS: OIDC token for env tofu-plan + session policy
+  AWS-->>GH: 15-minute read-only credentials
+  GH->>AWS: read state and layer resources (plan)
+  GH->>GH: sanitize, drop raw plan and credentials
+  GH-->>Rev: wait for approval (tofu-plan-bedrock)
+  Rev->>GH: approve
+  GH->>BR: sanitized projection only
+  BR-->>GH: structured explanation
+  GH-->>Dev: check OpenTofu Plan + summary + artifacts
 ```
 
-When Bedrock analysis is enabled for a supervised window, it additionally retains a 7-day
-`tofu-plan-llm` artifact containing only `analysis.json` and `analysis.md`. It is derived from
-the same sanitized projection and remains advisory.
+A new commit cancels the in-progress run for that PR. Typical runner time is about 2 minutes per
+layer; the rest is waiting for approvals.
 
-The stable `OpenTofu Plan` job is the future branch-protection candidate. It remains
-non-required until the promotion decisions in the rollout runbook are made.
+### Key design points
 
-The aggregate check fails when:
+- **Trust is bound to the environment.** Each role accepts only a GitHub token issued for its own
+  environment (`repo:binbashar/le-tf-infra-aws:environment:tofu-plan` or `...:tofu-plan-bedrock`),
+  plus the repository and organization IDs and a PR merge ref or `master`. Approval is therefore
+  required to get credentials, even if a PR edits the workflow.
+- **Least privilege per layer.** The plan role holds the union of its layers' reads, derived from
+  CloudTrail. Each job adds an inline session policy that narrows the state bucket and lock table
+  to its own layer, so a plan of one layer cannot read another layer's state. State writes are
+  explicitly denied.
+- **Trusted tooling.** Sanitization, role resolution, and the Bedrock client run from the PR's
+  base revision, not from the PR.
+- **Control-plane changes never get credentials.** A PR that changes the workflow, its package,
+  CODEOWNERS, provider locks, `config.tf`, `config/`, `<account>/config/`, JSON configuration,
+  providers, backends, module or provider sources, external data sources, provisioners, or
+  `null_resource`/`terraform_data` runs validation only.
+- **Sanitized contract.** Persisted output has resource addresses (instance keys replaced),
+  action classes, changed attribute names, drift, and counts. It never has values, variables,
+  state, or the binary plan; account IDs, ARNs, and credential shapes are redacted.
+- **The model cannot change the result.** The check depends only on the deterministic plan.
 
-- discovery exceeds its safety limit;
-- an expected layer result is missing;
-- credential-free init or validation fails;
-- live mode is enabled but no live result is produced;
-- backend init, plan, or JSON projection fails;
-- a downloaded result has duplicate layers or provenance metadata for another repository, commit,
-  or workflow run.
+### Limitations
 
-OpenTofu exit code `2` is treated as a successful plan with changes. Delete/replace actions are
-reported as high-severity review signals but do not yet fail the check by policy.
+| Limitation | Consequence |
+| --- | --- |
+| Allowlist plus `TOFU_PLAN_MAX_LAYERS=1` | A PR touching two allowlisted layers plans neither; split it. |
+| Layer fit | Only layers with a single `aws` provider for their own account and no cross-account remote state. |
+| Control-plane changes are validation-only | Lock, provider, or backend changes are never planned live; plan them locally. |
+| No values in the report | Reviewers and the model see *what* changes, not *how*; the explanation's questions are generic. |
+| Approval per run | An unapproved run keeps the check pending until GitHub cancels it after 30 days. |
+| Manual dispatch works only from `master` | The role trusts PR merge refs and `master`, not feature branches. |
+| Variables are read at run start | Changing a variable does not affect a run already started. |
+| Delete and replace only warn | They are reported as high-severity signals but do not fail the check. |
 
-## Sanitized plan contract
+### Estimated cost
 
-The reporting code reads `tofu show -json` only on the ephemeral runner. Its persisted projection
-contains canonical resource addresses/types, action classes, changed top-level attribute names,
-replacement attributes, output names, drift metadata, check counts, and aggregate counts. Instance
-keys are replaced by a fixed marker; nested map keys are not persisted. It intentionally drops all
-before/after values, variables, configuration bodies, and prior state. AWS account IDs, ARNs, and
-common credential/token shapes in persisted identifiers are redacted.
+| Item | Cost |
+| --- | --- |
+| GitHub Actions | Free: public repository on standard runners (about 2 runner-minutes per layer per commit). |
+| AWS STS, IAM, S3 and DynamoDB reads | Effectively $0 (a few requests per run). |
+| Bedrock, Nova Lite (current) | About **$0.0005 per explanation** (~3K input, ~1.2K output tokens at $0.06 / $0.24 per million); at most ~$0.0012 (output capped at 2,400 tokens). |
+| Bedrock, Claude Sonnet 4.6 (if adopted) | About **$0.03 per explanation** at $3 / $15 per million tokens list price, billed through AWS Marketplace; at most ~$0.07. |
 
-The Bedrock prompt receives only this projection. Structured output is validated and rendered as
-escaped Markdown. Plan content is treated as untrusted data. Claude uses Bedrock JSON-schema
-output; the exact Nova Lite fallback is forced to return the same schema as a tool input, without
-any tool execution capability.
+At 100 explained commits a month: about $0.05 with Nova Lite, about $3 with Claude.
 
-## Local verification
+## 5. Security
 
-The core mechanics have no third-party Python dependencies:
+**Threat model.** A PR author can change OpenTofu configuration, modules, and the workflow
+itself. Anything that runs during a credentialed plan can read what the role can read.
+
+| Control | Protects against |
+| --- | --- |
+| Same-repo, human, non-draft PRs only | Forks and bots never start a job; creating a branch requires write access. |
+| Environment approval + environment-bound trust | Credentials without a human decision on that exact commit. |
+| Validation-only for control-plane changes | A PR changing the workflow, providers, or backends getting credentials. |
+| Base-revision tooling | A PR altering sanitization or the Bedrock client in its own run. |
+| Session policy per layer, explicit state-write deny | Reading other layers' state; persisting refreshed state. |
+| 15-minute sessions, account check, masked IDs, temporary files removed | Credential reuse and leaks through logs. |
+| Full-SHA Action pins, hash-locked Bedrock client, CODEOWNERS | Supply-chain changes going unreviewed. |
+
+**Residual risk.** The workflow runs on `pull_request`, so its YAML comes from the PR. The
+environment reviewer is authorizing execution of that commit; approval is not a formality.
+
+**Data the roles can read beyond what the report shows:**
+
+| Layer | Readable data |
+| --- | --- |
+| `apps-devstg/global/cli-test-layer` | The test IAM role and policy. |
+| `management/global/sso` | Identity Center users (names, e-mail addresses), groups, memberships, permission sets, and assignments. Accepted by the maintainer on 2026-10-11. |
+
+## 6. Operations
+
+### Configuration
+
+| Kind | Name | Value / purpose |
+| --- | --- | --- |
+| Variable | `TOFU_PLAN_LIVE` | `true`. Kill switch for live plans. |
+| Variable | `TOFU_PLAN_LLM` | `true`. Kill switch for the Bedrock explanation. |
+| Variable | `TOFU_PLAN_LAYERS` | Allowlist, comma- or newline-separated. |
+| Variable | `TOFU_PLAN_MAX_LAYERS` | `1`. Above it, no layer is planned. |
+| Variable | `TOFU_PLAN_ROLES` | JSON: account directory → `{role_arn, account_id}`. A missing account fails closed. |
+| Variable | `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN`, `AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID` | Bedrock role and its account. |
+| Variable | `OPENTOFU_VERSION`, `AWS_REGION` | Default `1.9.1`, `us-east-1`. |
+| `tofu-plan` secret | `TOFU_PLAN_COMMON_TFVARS` | Copy of the ignored `config/common.tfvars`; written `0600` and removed after the plan. |
+| `tofu-plan-bedrock` variable | `BEDROCK_MODEL_ID` | `amazon.nova-lite-v1:0`. Keep it on the environment: `claude.yml` reads the repository variable of the same name. Without it, the job uses `us.anthropic.claude-sonnet-4-6`. |
+
+### Kill switches
+
+Set `TOFU_PLAN_LIVE` or `TOFU_PLAN_LLM` to `false` to stop that stage for every PR, for example
+during an incident, a suspected role problem, or bad model output. Runs started afterwards skip
+it; the rest of the check keeps working.
+
+### Re-running
+
+- Push a new commit, or close and reopen the PR (picks up changed variables).
+- Manual dispatch: `gh workflow run tofu-plan.yml --ref master -f layer=<layer>`. Only from
+  `master`; a feature branch fails at `AssumeRoleWithWebIdentity` by design.
+
+### Adding a layer
+
+Each layer grants approved PR code read access to its state and resources, so each is its own
+reviewed change:
+
+1. **Check fit.** Single `aws` provider for the layer's own account, no cross-account remote state,
+   no external data sources, and a lock file with `linux_amd64` hashes: validate in a
+   `linux/amd64` OpenTofu container, or run `tofu providers lock` for linux and darwin, amd64 and
+   arm64. macOS cannot detect a missing hash.
+2. **Derive the reads.** Run `leverage tofu plan` on the converged layer and list the session's
+   CloudTrail management events about 15 minutes later. State and lock access are already granted
+   per `plan_targets` entry. When the service authorization reference lists several resource
+   types for an action (for example `sso:ListTagsForResource`), grant it on each type the layer
+   manages; CloudTrail shows only the action.
+3. **Extend the account's identity layer.** Add a `plan_targets` entry and a
+   `plan-target-<layer>.tf` scoped to the narrowest ARNs. A new account needs its own
+   `github-oidc-tofu-plan` layer; check first for an existing GitHub OIDC provider (one per
+   account).
+4. **Simulate.** `iam simulate-custom-policy` against real ARNs (allowed) and against writes and
+   other layers' state (denied), with the job's session policy as the permissions boundary.
+5. **Apply and configure.** A maintainer applies the identity layer; add the account to
+   `TOFU_PLAN_ROLES` and the layer to `TOFU_PLAN_LAYERS`.
+6. **Supervised plan.** Dispatch the layer from `master`, approve, and inspect the artifacts. On
+   `AccessDenied`, add only the denied read.
+7. **Record data exposure** in [Security](#5-security) and get the risk accepted.
+
+### Troubleshooting
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| Validation fails in CI but passes locally | Lock file lacks the `linux_amd64` `h1:` hash; `validate` rejects the provider | Regenerate the lock for four platforms. |
+| Live plan fails with `Denied AWS action: X` in `summary.md` | The plan role lacks a read | Add exactly that action, on the resource types the layer manages. |
+| Live plan skipped on a PR | Control-plane change, layer not allowlisted, more than `TOFU_PLAN_MAX_LAYERS` layers, or `TOFU_PLAN_LIVE=false` | See `discovery.md`. Plan control-plane changes locally. |
+| Bedrock job skipped | `TOFU_PLAN_LLM` was `false` when the run started, or the live plan did not succeed | Re-run after fixing. |
+| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | Dispatch from a feature branch, or wrong environment | Dispatch from `master`, or use the PR. |
+| Check stays pending | Nobody approved the environment | Approve or reject the deployment. |
+
+### Local verification
 
 ```bash
-PYTHONPATH=@bin/scripts python3 -m unittest discover \
-  -s @bin/scripts/tofu_plan_ci/tests -v
-
+PYTHONPATH=@bin/scripts python3 -m unittest discover -s @bin/scripts/tofu_plan_ci/tests -v
 actionlint .github/workflows/tofu-plan.yml
 ```
 
-The Bedrock runtime dependency is isolated in a human-edited
-[`requirements.in`](../../@bin/scripts/tofu_plan_ci/requirements.in) and compiled to the
-hash-locked [`requirements.txt`](../../@bin/scripts/tofu_plan_ci/requirements.txt). It is installed
-with `--require-hashes` only by the optional analysis job.
+The Bedrock client is the only third-party dependency, pinned with hashes in
+[`requirements.txt`](../../@bin/scripts/tofu_plan_ci/requirements.txt) (edit
+[`requirements.in`](../../@bin/scripts/tofu_plan_ci/requirements.in) and recompile).
 
-## Residual security boundary
+## 7. Roadmap
 
-This remains a single `pull_request` workflow, so its YAML is itself proposed by the PR. Full-SHA
-action pins, explicit `CODEOWNERS`, internal-author filtering, static-only control-plane changes,
-base-revision tooling, and the protected environment reduce the risk, but the environment reviewer
-is still authorizing execution of the exact candidate commit. Before live mode, enable required
-code-owner review and last-push approval in branch protection, restrict allowed Actions, retain the
-environment approval boundary, and create least-privilege roles. None of those external settings or
-AWS resources are changed by this repository patch.
-
-## Proof-of-concept exit criteria (met)
-
-The proof of concept met these criteria before promotion; the evidence is in the rollout runbook:
-
-1. A credential-free PR run with working native summary/artifact navigation.
-2. Protected environments and dedicated OIDC roles whose trust policies accept only their own
-   environment subject.
-3. A manual live plan whose uploaded artifact contains no values, account IDs, ARNs, variables,
-   state, or plan binary.
-4. A harmless plan diff with OpenTofu exit code `2` staying green.
-5. An intentional init/plan failure that the aggregate check cannot report green.
-6. A Bedrock explanation compared with the deterministic projection, with model and prompt
-   limitations recorded.
-
-Still open before making the check required: whether delete/replace signals warn or block. The
-workflow does not make that policy decision implicitly.
+| Item | Status |
+| --- | --- |
+| Credential-free validation, protected live plan, Bedrock explanation | Done (POC, promoted 2026-10-11) |
+| Per-account roles and per-layer session policy; `management/global/sso` onboarded | Done (2026-10-11) |
+| Active by default; variables as kill switches | Done (2026-10-12) |
+| Model choice: compare Claude and Nova Lite on the same plans (usefulness, hallucinations, latency, cost), then keep or drop the Nova Lite permission | Open; Nova Lite stays by decision |
+| Destructive-change policy: should delete/replace warn or fail the check | Open |
+| Make `OpenTofu Plan` a required check | Blocked by the two items above, plus an incident and credential-revocation procedure |
+| More layers | On demand, through [Adding a layer](#adding-a-layer) |
+| Planning more than one layer per PR (`TOFU_PLAN_MAX_LAYERS` > 1) | Not planned; needs a review of approval and cost per run |
+| External contributors (fork PRs) | Out of scope; would need a separate design |

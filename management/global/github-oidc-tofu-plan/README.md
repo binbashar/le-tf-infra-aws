@@ -38,7 +38,7 @@ against this data.
 
 ## Adding a layer
 
-Follow [Layer onboarding](../../../docs/ai-sdlc/tofu-plan-rollout.md#layer-onboarding): add a
+Follow [Adding a layer](../../../docs/ai-sdlc/tofu-plan.md#adding-a-layer): add a
 `plan_targets` entry and a `plan-target-<layer>.tf` with only the demonstrated reads.
 
 ## Deployment
