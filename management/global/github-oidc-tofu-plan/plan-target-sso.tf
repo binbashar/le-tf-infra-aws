@@ -3,7 +3,8 @@
 #
 # Derived from the CloudTrail events of a converged local plan on 2026-10-11
 # (191 resources). Everything is read-only and scoped to this organization's
-# IAM Identity Center instance and its identity store.
+# IAM Identity Center instance and its identity store. sso:ListTagsForResource
+# on applications was added after the first CI plan was denied it.
 #
 data "aws_ssoadmin_instances" "main" {}
 
@@ -44,6 +45,7 @@ data "aws_iam_policy_document" "github_actions_opentofu_plan_sso" {
     actions = [
       "sso:DescribeApplication",
       "sso:DescribeApplicationAssignment",
+      "sso:ListTagsForResource",
     ]
     resources = [
       local.sso_instance_arn,
