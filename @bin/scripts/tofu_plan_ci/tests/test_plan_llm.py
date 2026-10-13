@@ -112,6 +112,25 @@ class AnswerTests(unittest.TestCase):
         self.assertIn("&lt;b&gt;permissions&lt;/b&gt;", security)
         self.assertIn("Advisory only", security)
 
+    def test_code_spans_keep_addresses_literal(self):
+        answer = {
+            **EXPLAINER,
+            "changes": [
+                {
+                    "resource": 'module.a_b.aws_iam_policy.this["x|y"]',
+                    "action": "update",
+                    "description": "Splits a | b",
+                },
+                {"resource": "weird`name", "action": "create", "description": "x"},
+            ],
+        }
+        markdown = plan_llm.render_markdown("explainer", answer, layer="a/b_c", model_id="m")
+        self.assertIn("`a/b_c`", markdown)
+        self.assertIn('`module.a_b.aws_iam_policy.this["x\\|y"]`', markdown)
+        self.assertIn("``weird`name``", markdown)
+        self.assertIn("Splits a \\| b", markdown)
+        self.assertNotIn("a\\_b", markdown)
+
     def test_run_writes_markdown_and_status(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(
             plan_llm.bedrock_client,

@@ -70,6 +70,16 @@ class WorkflowSecurityContractTests(unittest.TestCase):
         self.assertIn("vars.TOFU_PLAN_LLM_SECURITY == 'true' }}", live_plan)
         self.assertNotIn("vars.TOFU_PLAN_LLM ==", self.workflow)
 
+    def test_bedrock_setup_cannot_fail_the_plan_job(self):
+        live_plan = self.live_plan()
+        for step in ("- name: Install Bedrock client", "- name: Configure short-lived Bedrock credentials"):
+            start = live_plan.index(step)
+            body = live_plan[start : live_plan.index("- name:", start + 1)]
+            self.assertIn("continue-on-error: true", body)
+        self.assertEqual(
+            live_plan.count("if: ${{ steps.bedrock_credentials.outcome == 'success' &&"), 2
+        )
+
     def test_llm_artifacts_do_not_match_the_plan_evidence_pattern(self):
         self.assertIn("name: tofu-plan-llm-${{ steps.run.outputs.slug }}", self.workflow)
         self.assertIn("pattern: tofu-plan-layer-*", self.workflow)

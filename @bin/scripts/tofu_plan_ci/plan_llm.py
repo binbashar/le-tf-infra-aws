@@ -210,19 +210,36 @@ def mask_text(value: str) -> str:
 
 def _safe(value: Any) -> str:
     safe = html.escape(" ".join(mask_text(str(value)).split()), quote=False)
-    for character in ("\\", "`", "*", "_", "[", "]"):
+    for character in ("\\", "`", "*", "_", "[", "]", "|"):
         safe = safe.replace(character, f"\\{character}")
     return safe
 
 
+def _code(value: Any, *, table: bool = False) -> str:
+    """Render text as an inline code span, where Markdown escapes do not apply.
+
+    The delimiter is one backtick longer than the longest backtick run in the
+    text, so the content cannot close the span. Inside a table cell, GitHub
+    still splits on "|", so pipes are escaped there.
+    """
+
+    text = " ".join(mask_text(str(value)).split())
+    if table:
+        text = text.replace("|", "\\|")
+    longest = max((len(run) for run in re.findall(r"`+", text)), default=0)
+    fence = "`" * (longest + 1)
+    padding = " " if text.startswith("`") or text.endswith("`") else ""
+    return f"{fence}{padding}{text}{padding}{fence}"
+
+
 def render_markdown(kind: str, result: dict, *, layer: str, model_id: str) -> str:
-    lines = [f"## {ANALYSES[kind]['title']}: `{_safe(layer)}`", "", f"Model: `{_safe(model_id)}`", ""]
+    lines = [f"## {ANALYSES[kind]['title']}: {_code(layer)}", "", f"Model: {_code(model_id)}", ""]
     if kind == "explainer":
         lines.extend(f"- {_safe(item)}" for item in result["summary"])
         if result["changes"]:
             lines.extend(["", "| Resource | Action | What changes |", "|---|---|---|"])
             lines.extend(
-                f"| `{_safe(change['resource'])}` | {_safe(change['action'])} | "
+                f"| {_code(change['resource'], table=True)} | {_safe(change['action'])} | "
                 f"{_safe(change['description'])} |"
                 for change in result["changes"]
             )
@@ -235,7 +252,7 @@ def render_markdown(kind: str, result: dict, *, layer: str, model_id: str) -> st
             lines.extend(
                 [
                     "",
-                    f"- **{_safe(finding['severity'])}** · `{_safe(finding['resource'])}`: "
+                    f"- **{_safe(finding['severity'])}** · {_code(finding['resource'])}: "
                     f"{_safe(finding['issue'])}",
                     f"  - Evidence: {_safe(finding['evidence'])}",
                     f"  - Recommendation: {_safe(finding['recommendation'])}",
