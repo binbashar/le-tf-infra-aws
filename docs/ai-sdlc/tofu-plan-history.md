@@ -15,6 +15,7 @@ needed to operate it. Add new entries at the end of the relevant section.
 | 2026-10-12 | First real change planned and explained in CI (`finops-agent:*` for DevOps) | PR #1228, [run 38194574887](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38194574887) |
 | 2026-10-12 | Haiku 5.5 replaces Sonnet 4.6; Nova Lite kept as the second model | PR #1235, [run 38310871272](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38310871272) |
 | 2026-10-12 | Explainer and security review of the redacted plan text run inside the plan job; first CI run on `cli-test-layer` found the `vpc:*` wildcard and the account-root trust | PR #1237, [run 38331108509](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38331108509) |
+| 2026-10-12 | `TOFU_PLAN_MAX_LAYERS` applies only to live-eligible runs. With two allowlisted layers, every PR touching the workflow code self-tested both and was blocked by the cap of 1; `OpenTofu Plan` failed on #1235 and #1237 unnoticed (the check is not required) | PR #1238 |
 | 2026-10-12 | Bedrock role stops trusting `tofu-plan-bedrock`; the environment and `TOFU_PLAN_LLM` are left for deletion after the apply | PR #1238 |
 
 ## Rollout gates

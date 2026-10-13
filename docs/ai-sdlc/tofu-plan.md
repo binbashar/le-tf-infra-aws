@@ -170,7 +170,7 @@ layer, about 10 seconds of it in Bedrock; the rest is waiting for the approval.
 
 | Limitation | Consequence |
 | --- | --- |
-| Allowlist plus `TOFU_PLAN_MAX_LAYERS=1` | A PR touching two allowlisted layers plans neither; split it. |
+| Allowlist plus `TOFU_PLAN_MAX_LAYERS=1` | A PR touching two allowlisted layers gets no live plan for either; split it. Validation-only runs (workflow or configuration changes) are not capped and validate every layer in scope. |
 | Layer fit | Only layers with a single `aws` provider for their own account and no cross-account remote state. |
 | Control-plane changes are validation-only | Lock, provider, or backend changes are never planned live; plan them locally. |
 | No values in the deterministic report | The summary shows *what* changes; the *how* is only in the advisory analyses and the author's local plan. |
@@ -229,7 +229,7 @@ environment reviewer is authorizing execution of that commit; approval is not a 
 | Variable | `TOFU_PLAN_LLM_EXPLAINER` | `true`. Kill switch for the explainer. |
 | Variable | `TOFU_PLAN_LLM_SECURITY` | `true`. Kill switch for the security review. |
 | Variable | `TOFU_PLAN_LAYERS` | Allowlist, comma- or newline-separated. |
-| Variable | `TOFU_PLAN_MAX_LAYERS` | `1`. Above it, no layer is planned. |
+| Variable | `TOFU_PLAN_MAX_LAYERS` | `1`. Above it, no layer gets a live plan. Credential-free validation is not capped. |
 | Variable | `TOFU_PLAN_ROLES` | JSON: account directory → `{role_arn, account_id}`. A missing account fails closed. |
 | Variable | `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN`, `AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID` | Bedrock role and its account. |
 | Variable | `OPENTOFU_VERSION`, `AWS_REGION` | Default `1.9.1`, `us-east-1`. |

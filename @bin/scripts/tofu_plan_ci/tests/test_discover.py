@@ -68,6 +68,31 @@ class DiscoverTests(unittest.TestCase):
         self.assertIn("above the safety limit", result["blocked_reason"])
         self.assertEqual(len(result["candidate_layers"]), 3)
 
+    def test_validation_only_runs_are_not_capped(self):
+        allow = {"apps-devstg/global/cli-test-layer", "security/us-east-1/security-audit"}
+        result = self.discover(
+            ["@bin/scripts/tofu_plan_ci/workflow.py"],
+            allow_layers=allow,
+            max_layers=1,
+            live_blockers=["CI control-plane file changed: @bin/scripts/tofu_plan_ci/workflow.py"],
+        )
+        self.assertEqual(result["layers"], sorted(allow))
+        self.assertIsNone(result["blocked_reason"])
+        self.assertFalse(result["live_eligible"])
+
+    def test_live_eligible_runs_stay_capped(self):
+        allow = {"apps-devstg/global/cli-test-layer", "security/us-east-1/security-audit"}
+        result = self.discover(
+            [
+                "apps-devstg/global/cli-test-layer/roles.tf",
+                "security/us-east-1/security-audit/main.tf",
+            ],
+            allow_layers=allow,
+            max_layers=1,
+        )
+        self.assertEqual(result["layers"], [])
+        self.assertIn("above the safety limit", result["blocked_reason"])
+
     def test_allowlist_keeps_scope_explicit(self):
         result = self.discover(
             [
