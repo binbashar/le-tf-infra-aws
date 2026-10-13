@@ -310,7 +310,8 @@ The Bedrock client is the only third-party dependency, pinned with hashes in
 | Active by default; variables as kill switches | Done (2026-10-12) |
 | Models: Claude Haiku 5.5 and Nova Lite, switchable per environment; Sonnet 4.6 removed | Done (2026-10-12). On #1228 Haiku gave a far more specific explanation (5 s vs 2 s) |
 | Explainer and security review on the redacted plan text, inside the plan job, with one approval and a switch each | Done (2026-10-12) |
-| Remove `tofu-plan-bedrock` from the Bedrock role's trust and delete the environment | Done (2026-10-12) |
+| Remove `tofu-plan-bedrock` from the Bedrock role's trust | Done (2026-10-12, #1238) |
+| Delete the `tofu-plan-bedrock` environment and the `TOFU_PLAN_LLM` variable | Pending, after the #1238 apply; nothing references them |
 | Calibrate the security review on real PRs (false positives, missed findings) before relying on it | Open |
 | Bedrock role placement: today one role in apps-devstg explains plans for every account. Decide between keeping it central or one role per account, and, if central, whether apps-devstg is the right account | Open |
 | Destructive-change policy: should delete/replace warn or fail the check | Open |

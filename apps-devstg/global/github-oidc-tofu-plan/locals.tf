@@ -47,7 +47,7 @@ locals {
   ]
 
   # Second reviewed model, selected with the BEDROCK_MODEL_ID variable of the
-  # tofu-plan-bedrock environment. Invoked directly, not through a profile.
+  # tofu-plan environment. Invoked directly, not through a profile.
   bedrock_nova_lite_model_id  = "amazon.nova-lite-v1:0"
   bedrock_nova_lite_model_arn = "arn:${data.aws_partition.current.partition}:bedrock:${var.region}::foundation-model/${local.bedrock_nova_lite_model_id}"
 
