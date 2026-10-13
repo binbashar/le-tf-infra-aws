@@ -81,8 +81,7 @@ def render_markdown(
     gate: str,
     reasons: Sequence[str],
     require_live: bool,
-    analysis_markdown: str | None,
-    analysis_status: str,
+    llm_markdown: Sequence[str] = (),
 ) -> str:
     def safe(value: object) -> str:
         return html.escape(str(value), quote=False).replace("`", "\\`")
@@ -126,18 +125,8 @@ def render_markdown(
                 "`validate` without AWS credentials.",
             ]
         )
-    if analysis_markdown:
-        lines.extend(["", analysis_markdown.rstrip()])
-    elif results:
-        lines.extend(
-            [
-                "",
-                "## LLM-assisted explanation",
-                "",
-                f"Not available for this run (`{safe(analysis_status)}`). The deterministic "
-                "result above is unaffected.",
-            ]
-        )
+    for markdown in llm_markdown:
+        lines.extend(["", markdown.rstrip()])
     lines.extend(
         [
             "",
@@ -156,8 +145,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--discovery", type=Path, required=True)
     parser.add_argument("--reports-dir", type=Path, required=True)
     parser.add_argument("--require-live", action="store_true")
-    parser.add_argument("--analysis-markdown", type=Path)
-    parser.add_argument("--analysis-status", default="disabled")
+    parser.add_argument("--llm-markdown", type=Path, action="append", default=[])
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--github-output", type=Path)
     return parser
@@ -170,17 +158,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     gate, reasons = aggregate(
         discovery=discovery, results=results, require_live=args.require_live
     )
-    analysis = None
-    if args.analysis_markdown and args.analysis_markdown.is_file():
-        analysis = args.analysis_markdown.read_text(encoding="utf-8")
     markdown = render_markdown(
         discovery=discovery,
         results=results,
         gate=gate,
         reasons=reasons,
         require_live=args.require_live,
-        analysis_markdown=analysis,
-        analysis_status=args.analysis_status,
+        llm_markdown=[
+            path.read_text(encoding="utf-8") for path in args.llm_markdown if path.is_file()
+        ],
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(markdown, encoding="utf-8")

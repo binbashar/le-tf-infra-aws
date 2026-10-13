@@ -46,13 +46,13 @@ data "aws_iam_policy_document" "github_actions_opentofu_trust" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = [local.github_oidc_subjects[each.key]]
+      values   = local.github_oidc_subjects[each.key]
     }
 
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:environment"
-      values   = [each.value]
+      values   = each.value
     }
 
     condition {
