@@ -13,7 +13,7 @@ Each role can be assumed only when GitHub issues a token for a protected environ
 | Role | Environments |
 | --- | --- |
 | Plan | `tofu-plan` |
-| Bedrock explanation | `tofu-plan`; `tofu-plan-bedrock` only until the retired analysis job is gone from `master` |
+| Bedrock explanation | `tofu-plan` |
 
 The Bedrock steps run inside the plan job after its plan-role credentials are cleared, so one
 approval of `tofu-plan` covers both.

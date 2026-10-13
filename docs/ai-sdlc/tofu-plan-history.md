@@ -13,6 +13,9 @@ needed to operate it. Add new entries at the end of the relevant section.
 | 2026-10-11 | Per-account roles and per-layer session policy; `management/global/sso` onboarded | PRs #1223, #1225, #1226, [record](#management-sso-onboarding) |
 | 2026-10-12 | Active by default: `TOFU_PLAN_LIVE`/`TOFU_PLAN_LLM` become kill switches | PR #1229, [decisions](#decisions) |
 | 2026-10-12 | First real change planned and explained in CI (`finops-agent:*` for DevOps) | PR #1228, [run 38194574887](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38194574887) |
+| 2026-10-12 | Haiku 5.5 replaces Sonnet 4.6; Nova Lite kept as the second model | PR #1235, [run 38310871272](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38310871272) |
+| 2026-10-12 | Explainer and security review of the redacted plan text run inside the plan job; first CI run on `cli-test-layer` found the `vpc:*` wildcard and the account-root trust | PR #1237, [run 38331108509](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38331108509) |
+| 2026-10-12 | `tofu-plan-bedrock` environment and `TOFU_PLAN_LLM` retired | This change |
 
 ## Rollout gates
 
