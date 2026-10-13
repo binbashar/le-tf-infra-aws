@@ -13,6 +13,10 @@ needed to operate it. Add new entries at the end of the relevant section.
 | 2026-10-11 | Per-account roles and per-layer session policy; `management/global/sso` onboarded | PRs #1223, #1225, #1226, [record](#management-sso-onboarding) |
 | 2026-10-12 | Active by default: `TOFU_PLAN_LIVE`/`TOFU_PLAN_LLM` become kill switches | PR #1229, [decisions](#decisions) |
 | 2026-10-12 | First real change planned and explained in CI (`finops-agent:*` for DevOps) | PR #1228, [run 38194574887](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38194574887) |
+| 2026-10-12 | Haiku 5.5 replaces Sonnet 4.6; Nova Lite kept as the second model | PR #1235, [run 38310871272](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38310871272) |
+| 2026-10-12 | Explainer and security review of the redacted plan text run inside the plan job; first CI run on `cli-test-layer` found the `vpc:*` wildcard and the account-root trust | PR #1237, [run 38331108509](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38331108509) |
+| 2026-10-12 | `TOFU_PLAN_MAX_LAYERS` applies only to live-eligible runs. With two allowlisted layers, every PR touching the workflow code self-tested both and was blocked by the cap of 1; `OpenTofu Plan` failed on #1235 and #1237 unnoticed (the check is not required) | PR #1238 |
+| 2026-10-12 | Bedrock role stops trusting `tofu-plan-bedrock`; the environment and `TOFU_PLAN_LLM` are left for deletion after the apply | PR #1238 |
 
 ## Rollout gates
 
@@ -37,7 +41,7 @@ gate procedures are in the git history of the former `tofu-plan-rollout.md`.
 | Kind | POC | Current |
 | --- | --- | --- |
 | Workflow file / check | `tofu-plan-poc.yml` / `POC \| OpenTofu Plan` | `tofu-plan.yml` / `OpenTofu Plan` |
-| Environments | `tofu-plan-poc`, `tofu-plan-poc-bedrock`, `tofu-plan-poc-noop` | `tofu-plan`, `tofu-plan-bedrock`, noop retired |
+| Environments | `tofu-plan-poc`, `tofu-plan-poc-bedrock`, `tofu-plan-poc-noop` | `tofu-plan`, `tofu-plan-bedrock` (retired 2026-10-12, #1238), noop retired |
 | Variables | `TOFU_PLAN_POC_LIVE`, `_LLM`, `_MAX_LAYERS`, `_LAYER` | `TOFU_PLAN_LIVE`, `_LLM`, `_MAX_LAYERS`, `TOFU_PLAN_LAYERS` (list) |
 | Artifacts / docs | `tofu-plan-poc-*` / `tofu-plan-poc*.md` | `tofu-plan-*` / `tofu-plan.md` |
 

@@ -32,9 +32,10 @@ no write, `iam:PassRole`, secret-read, or KMS permission; the state bucket uses 
 table uses AWS-owned encryption.
 
 **Data exposure.** The role can read Identity Center user names and emails, and the sso state
-contains them too. The workflow's sanitized report never persists values, but an approved PR's
-code runs with this role, so environment approval is authorization to run that exact commit
-against this data.
+contains them too. The workflow's deterministic report never persists values. The redacted plan
+text, which can include changed emails, is sent to Bedrock in apps-devstg, and the published
+analyses are masked and scanned. An approved PR's code runs with this role, so environment
+approval is authorization to run that exact commit against this data.
 
 ## Adding a layer
 

@@ -2,11 +2,10 @@ locals {
   github_oidc_issuer_url = "https://token.actions.githubusercontent.com"
   github_repository      = "binbashar/le-tf-infra-aws"
   # GitHub environments each role trusts. The Bedrock steps run inside the plan
-  # job, so the Bedrock role trusts tofu-plan. tofu-plan-bedrock belongs to the
-  # retired separate analysis job; remove it once that job is gone from master.
+  # job, after its plan credentials are cleared, so both roles trust tofu-plan.
   github_environments = {
     plan    = ["tofu-plan"]
-    bedrock = ["tofu-plan", "tofu-plan-bedrock"]
+    bedrock = ["tofu-plan"]
   }
 
   # The repository currently uses GitHub's classic default OIDC subject format.
@@ -48,7 +47,7 @@ locals {
   ]
 
   # Second reviewed model, selected with the BEDROCK_MODEL_ID variable of the
-  # tofu-plan-bedrock environment. Invoked directly, not through a profile.
+  # tofu-plan environment. Invoked directly, not through a profile.
   bedrock_nova_lite_model_id  = "amazon.nova-lite-v1:0"
   bedrock_nova_lite_model_arn = "arn:${data.aws_partition.current.partition}:bedrock:${var.region}::foundation-model/${local.bedrock_nova_lite_model_id}"
 

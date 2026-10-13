@@ -180,7 +180,9 @@ def discover_from_paths(
         blocked_reason = "deleted layer(s) cannot be planned: " + ", ".join(
             sorted(deleted_layers)
         )
-    if len(selected) > max_layers:
+    # The cap bounds credentialed plans and their approvals. A run with live-plan
+    # blockers is credential-free validation only, so every selected layer runs.
+    if not live_blockers and len(selected) > max_layers:
         limit_reason = (
             f"{len(selected)} layers are in scope, above the safety limit of "
             f"{max_layers}; no subset was selected"

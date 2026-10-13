@@ -20,7 +20,8 @@ For a PR that touches one allowlisted layer, the workflow:
 4. publishes a sanitized summary, both analyses, and the `OpenTofu Plan` check.
 
 Steps 2 and 3 are skipped for PRs that touch more layers than the limit or change the workflow,
-providers, backends, or configuration (see [Limitations](#limitations)).
+providers, backends, or configuration (see [Limitations](#limitations)). Step 3 is also skipped
+when the plan has no changes.
 
 Status (2026-10-12): **active** on two layers, `apps-devstg/global/cli-test-layer` (test layer)
 and `management/global/sso`. The check is not required.
@@ -144,8 +145,8 @@ layer, about 10 seconds of it in Bedrock; the rest is waiting for the approval.
   CloudTrail. Each job adds an inline session policy that narrows the state bucket and lock table
   to its own layer, so a plan of one layer cannot read another layer's state. State writes are
   explicitly denied.
-- **Trusted tooling.** Sanitization, role resolution, and the Bedrock client run from the PR's
-  base revision, not from the PR.
+- **Trusted tooling.** Sanitization, role resolution, the prompts, the output masking, and the
+  Bedrock client run from the PR's base revision, not from the PR.
 - **Control-plane changes never get credentials.** A PR that changes the workflow, its package,
   CODEOWNERS, provider locks, `config.tf`, `config/`, `<account>/config/`, JSON configuration,
   providers, backends, module or provider sources, external data sources, provisioners, or
@@ -169,11 +170,11 @@ layer, about 10 seconds of it in Bedrock; the rest is waiting for the approval.
 
 | Limitation | Consequence |
 | --- | --- |
-| Allowlist plus `TOFU_PLAN_MAX_LAYERS=1` | A PR touching two allowlisted layers plans neither; split it. |
+| Allowlist plus `TOFU_PLAN_MAX_LAYERS=1` | A PR touching two allowlisted layers gets no live plan for either; split it. Validation-only runs (workflow or configuration changes) are not capped and validate every layer in scope. |
 | Layer fit | Only layers with a single `aws` provider for their own account and no cross-account remote state. |
 | Control-plane changes are validation-only | Lock, provider, or backend changes are never planned live; plan them locally. |
 | No values in the deterministic report | The summary shows *what* changes; the *how* is only in the advisory analyses and the author's local plan. |
-| Plans over ~80K tokens | No analysis; the summary says why. Keeps Haiku 5.5 under its 100K-token price tier. |
+| Plans over ~80K tokens | No analysis; the plan job's summary and a notice say why. Keeps Haiku 5.5 under its 100K-token price tier. |
 | Advisory analyses | They can miss issues or be steered by content in the plan; they never replace the reviewer. |
 | Approval per run | An unapproved run keeps the check pending until GitHub cancels it after 30 days. |
 | Manual dispatch works only from `master` | The role trusts PR merge refs and `master`, not feature branches. |
@@ -186,7 +187,7 @@ layer, about 10 seconds of it in Bedrock; the rest is waiting for the approval.
 | --- | --- |
 | GitHub Actions | Free: public repository on standard runners (about 2 runner-minutes per layer per commit). |
 | AWS STS, IAM, S3 and DynamoDB reads | Effectively $0 (a few requests per run). |
-| Bedrock, Claude Haiku 5.5 | About **$0.001 per commit** for both analyses (measured on #1228: ~4.6K input and ~1.2K output tokens in total, at $0.10 / $0.50 per million, Anthropic list price billed through AWS Marketplace). At the 80K-token cap, at most ~$0.02. |
+| Bedrock, Claude Haiku 5.5 | About **$0.001 per commit** for both analyses (measured in CI on `cli-test-layer`, [run 38331108509](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38331108509): 4.3K input and 1.5K output tokens in total, at $0.10 / $0.50 per million, Anthropic list price billed through AWS Marketplace). At the 80K-token cap, at most ~$0.02. |
 | Bedrock, Nova Lite | About **$0.0003 per commit** (measured: ~3K input, ~0.35K output tokens at $0.06 / $0.24 per million). |
 
 At 100 planned commits a month: about $0.10 with Haiku 5.5, about $2 if every plan hit the cap.
@@ -228,7 +229,7 @@ environment reviewer is authorizing execution of that commit; approval is not a 
 | Variable | `TOFU_PLAN_LLM_EXPLAINER` | `true`. Kill switch for the explainer. |
 | Variable | `TOFU_PLAN_LLM_SECURITY` | `true`. Kill switch for the security review. |
 | Variable | `TOFU_PLAN_LAYERS` | Allowlist, comma- or newline-separated. |
-| Variable | `TOFU_PLAN_MAX_LAYERS` | `1`. Above it, no layer is planned. |
+| Variable | `TOFU_PLAN_MAX_LAYERS` | `1`. Above it, no layer gets a live plan. Credential-free validation is not capped. |
 | Variable | `TOFU_PLAN_ROLES` | JSON: account directory → `{role_arn, account_id}`. A missing account fails closed. |
 | Variable | `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN`, `AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID` | Bedrock role and its account. |
 | Variable | `OPENTOFU_VERSION`, `AWS_REGION` | Default `1.9.1`, `us-east-1`. |
@@ -247,6 +248,9 @@ switches off, the plan text is never written and no Bedrock credentials are requ
 - Push a new commit, or close and reopen the PR (picks up changed variables).
 - Manual dispatch: `gh workflow run tofu-plan.yml --ref master -f layer=<layer>`. Only from
   `master`; a feature branch fails at `AssumeRoleWithWebIdentity` by design.
+- To exercise the analyses, dispatch `apps-devstg/global/cli-test-layer`: it is intentionally
+  left unapplied, so its plan always has three creates. A converged layer has no changes and
+  skips them.
 
 ### Adding a layer
 
@@ -281,7 +285,7 @@ reviewed change:
 | Validation fails in CI but passes locally | Lock file lacks the `linux_amd64` `h1:` hash; `validate` rejects the provider | Regenerate the lock for four platforms. |
 | Live plan fails with `Denied AWS action: X` in `summary.md` | The plan role lacks a read | Add exactly that action, on the resource types the layer manages. |
 | Live plan skipped on a PR | Control-plane change, layer not allowlisted, more than `TOFU_PLAN_MAX_LAYERS` layers, or `TOFU_PLAN_LIVE=false` | See `discovery.md`. Plan control-plane changes locally. |
-| No analysis in the summary | The plan has no changes, exceeded ~80K tokens, failed redaction, a switch was `false` at run start, or the live plan failed | The `llm_input` output of the plan step names the reason. |
+| No analysis in the summary | The plan has no changes, exceeded ~80K tokens, failed redaction, the live plan failed, or both switches were `false` at run start | Except for the switches, the plan job's summary and a `::notice::` say which. |
 | `::warning::explainer analysis failed` (or `security`) | Bedrock error or an answer that failed validation or the scan; the exception type is printed, never its text | Re-run; if persistent, switch `BEDROCK_MODEL_ID` or turn the switch off. |
 | `Not authorized to perform sts:AssumeRoleWithWebIdentity` | Dispatch from a feature branch, or wrong environment | Dispatch from `master`, or use the PR. |
 | Check stays pending | Nobody approved the environment | Approve or reject the deployment. |
@@ -306,7 +310,8 @@ The Bedrock client is the only third-party dependency, pinned with hashes in
 | Active by default; variables as kill switches | Done (2026-10-12) |
 | Models: Claude Haiku 5.5 and Nova Lite, switchable per environment; Sonnet 4.6 removed | Done (2026-10-12). On #1228 Haiku gave a far more specific explanation (5 s vs 2 s) |
 | Explainer and security review on the redacted plan text, inside the plan job, with one approval and a switch each | Done (2026-10-12) |
-| Remove `tofu-plan-bedrock` from the Bedrock role's trust and delete the environment | Next, once the separate analysis job is gone from `master` |
+| Remove `tofu-plan-bedrock` from the Bedrock role's trust | Done (2026-10-12, #1238) |
+| Delete the `tofu-plan-bedrock` environment and the `TOFU_PLAN_LLM` variable | Pending, after the #1238 apply; nothing references them |
 | Calibrate the security review on real PRs (false positives, missed findings) before relying on it | Open |
 | Bedrock role placement: today one role in apps-devstg explains plans for every account. Decide between keeping it central or one role per account, and, if central, whether apps-devstg is the right account | Open |
 | Destructive-change policy: should delete/replace warn or fail the check | Open |
