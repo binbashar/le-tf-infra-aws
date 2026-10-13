@@ -303,19 +303,21 @@ The Bedrock client is the only third-party dependency, pinned with hashes in
 
 ## 7. Roadmap
 
-| Item | Status |
-| --- | --- |
-| Credential-free validation, protected live plan, Bedrock explanation | Done (POC, promoted 2026-10-11) |
-| Per-account roles and per-layer session policy; `management/global/sso` onboarded | Done (2026-10-11) |
-| Active by default; variables as kill switches | Done (2026-10-12) |
-| Models: Claude Haiku 5.5 and Nova Lite, switchable per environment; Sonnet 4.6 removed | Done (2026-10-12). On #1228 Haiku gave a far more specific explanation (5 s vs 2 s) |
-| Explainer and security review on the redacted plan text, inside the plan job, with one approval and a switch each | Done (2026-10-12) |
-| Remove `tofu-plan-bedrock` from the Bedrock role's trust | Done (2026-10-12, #1238) |
-| Delete the `tofu-plan-bedrock` environment and the `TOFU_PLAN_LLM` variable | Done (2026-10-12, after the #1238 apply) |
-| Calibrate the security review on real PRs (false positives, missed findings) before relying on it | Open |
-| Bedrock role placement: today one role in apps-devstg explains plans for every account. Decide between keeping it central or one role per account, and, if central, whether apps-devstg is the right account | Open |
-| Destructive-change policy: should delete/replace warn or fail the check | Open |
-| Make `OpenTofu Plan` a required check | Blocked by the destructive-change policy and the Bedrock role placement, plus an incident and credential-revocation procedure |
-| More layers | On demand, through [Adding a layer](#adding-a-layer) |
-| Planning more than one layer per PR (`TOFU_PLAN_MAX_LAYERS` > 1) | Not planned; needs a review of approval and cost per run |
-| External contributors (fork PRs) | Out of scope; would need a separate design |
+✅ done · 🟡 open · ⛔ blocked · 🔄 on demand · ⏸️ not planned · 🚫 out of scope
+
+| Item | Status | Notes |
+| --- | :---: | --- |
+| Credential-free validation, protected live plan, Bedrock explanation | ✅ | POC, promoted 2026-10-11 |
+| Per-account roles and per-layer session policy; `management/global/sso` onboarded | ✅ | 2026-10-11 |
+| Active by default; variables as kill switches | ✅ | 2026-10-12 |
+| Models: Claude Haiku 5.5 and Nova Lite, switchable per environment; Sonnet 4.6 removed | ✅ | 2026-10-12. On #1228 Haiku gave a far more specific explanation (5 s vs 2 s) |
+| Explainer and security review on the redacted plan text, inside the plan job, with one approval and a switch each | ✅ | 2026-10-12 |
+| Remove `tofu-plan-bedrock` from the Bedrock role's trust | ✅ | 2026-10-12, #1238 |
+| Delete the `tofu-plan-bedrock` environment and the `TOFU_PLAN_LLM` variable | ✅ | 2026-10-12, after the #1238 apply |
+| Calibrate the security review on real PRs (false positives, missed findings) before relying on it | 🟡 | |
+| Bedrock role placement: today one role in apps-devstg explains plans for every account. Decide between keeping it central or one role per account, and, if central, whether apps-devstg is the right account | 🟡 | |
+| Destructive-change policy: should delete/replace warn or fail the check | 🟡 | |
+| Make `OpenTofu Plan` a required check | ⛔ | Blocked by the destructive-change policy and the Bedrock role placement, plus an incident and credential-revocation procedure |
+| More layers | 🔄 | Through [Adding a layer](#adding-a-layer) |
+| Planning more than one layer per PR (`TOFU_PLAN_MAX_LAYERS` > 1) | ⏸️ | Needs a review of approval and cost per run |
+| External contributors (fork PRs) | 🚫 | Would need a separate design |
