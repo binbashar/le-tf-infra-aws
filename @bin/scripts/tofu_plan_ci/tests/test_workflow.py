@@ -147,6 +147,68 @@ class WorkflowTests(unittest.TestCase):
             self.assertFalse((runner / "aws").exists())
             self.assertFalse((runner / "tofu-plan-ui.jsonl").exists())
 
+    def live_run_with_llm(self, root: Path, show_text: str) -> tuple[str, str]:
+        workspace = root / "workspace"
+        runner = root / "runner"
+        (workspace / "config").mkdir(parents=True)
+        account_config = workspace / "apps-devstg/config"
+        account_config.mkdir(parents=True)
+        (account_config / "backend.tfvars").write_text('profile = "apps-devstg-ci"\n')
+        (account_config / "account.tfvars").write_text("")
+        runner.mkdir()
+        env = {
+            **self.github_env(root),
+            "COMMON_TFVARS": 'project = "example"',
+            "AWS_ACCESS_KEY_ID": "temporary-access-key",
+            "AWS_SECRET_ACCESS_KEY": "temporary-secret-key",
+            "AWS_SESSION_TOKEN": "temporary-session-token",
+            "PLAN_LAYERS": "apps-devstg/global/cli-test-layer",
+            "LLM_ENABLED": "true",
+        }
+
+        def fake_run(command, *, stdout_path, stderr_path=None, env=None, cwd=None):
+            if "plan" in command:
+                return 2
+            if "-json" in command:
+                stdout_path.write_text(
+                    json.dumps({"format_version": "1.0", "resource_changes": []})
+                )
+            elif "show" in command:
+                stdout_path.write_text(show_text)
+            return 0
+
+        output = io.StringIO()
+        with patch.dict(os.environ, env, clear=True), patch(
+            "tofu_plan_ci.workflow.run_logged", side_effect=fake_run
+        ), redirect_stdout(output):
+            self.assertEqual(run_live("apps-devstg/global/cli-test-layer"), 0)
+        return (root / "github-output").read_text(), output.getvalue()
+
+    def test_live_run_writes_redacted_plan_text_for_the_llm(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            outputs, _ = self.live_run_with_llm(
+                root,
+                "OpenTofu will perform the following actions:\n"
+                '  + role = "arn:aws:iam::123456789012:role/x"\n'
+                "Plan: 1 to add, 0 to change, 0 to destroy.\n",
+            )
+            self.assertIn("llm_input=ready", outputs)
+            text = root / "runner" / "tofu-plan-llm-input-apps-devstg-global-cli-test-layer.txt"
+            self.assertNotIn("123456789012", text.read_text())
+            self.assertEqual(text.stat().st_mode & 0o777, 0o600)
+            self.assertFalse(any((root / "runner").glob("tofu-show-*")))
+
+    def test_live_run_says_why_there_is_no_analysis(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            outputs, printed = self.live_run_with_llm(
+                root, "No changes. Your infrastructure matches the configuration.\n"
+            )
+            self.assertIn("llm_input=no-changes", outputs)
+            self.assertIn("::notice::No LLM analysis", printed)
+            self.assertIn("the plan has no changes", (root / "github-summary").read_text())
+
     def test_live_run_rejects_a_layer_outside_the_allowlist(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

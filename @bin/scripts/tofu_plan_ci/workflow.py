@@ -22,6 +22,12 @@ DENIED_ACTION = re.compile(
     re.IGNORECASE,
 )
 TOP_LEVEL_ACCOUNTS = re.compile(r"(?m)^accounts\s*=")
+LLM_SKIP_REASONS = {
+    "no-changes": "the plan has no changes",
+    "too-large": "the plan exceeds the ~80K-token limit",
+    "redaction-incomplete": "the plan text did not pass the redaction scan",
+    "unavailable": "the plan text could not be rendered",
+}
 SECURITY_ACCOUNT = re.compile(r"(?m)^\s+security\s*=")
 
 
@@ -515,6 +521,13 @@ def run_live(layer: str) -> int:
             )
             _summary(report_dir / "summary.md")
             _output("llm_input", llm_input)
+            if os.environ.get("LLM_ENABLED") == "true" and llm_input != "ready":
+                reason = LLM_SKIP_REASONS.get(llm_input, "the live plan did not complete")
+                print(f"::notice::No LLM analysis for {layer}: {reason}")
+                _append(
+                    os.environ.get("GITHUB_STEP_SUMMARY"),
+                    f"\n> No LLM analysis for `{layer}`: {reason}.\n",
+                )
         finally:
             for path in (common_tfvars, plan_file, plan_json):
                 path.unlink(missing_ok=True)
