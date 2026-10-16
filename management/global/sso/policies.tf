@@ -81,6 +81,7 @@ data "aws_iam_policy_document" "devops" {
       "network-firewall:*",
       "networkmanager:*",
       "notifications:*",
+      "mgm:*",
       "pipes:*",
       "q:*",
       "quicksight:*",
