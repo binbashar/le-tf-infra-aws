@@ -6,6 +6,8 @@
 # Leverage CLI Testing Policy: Bogus Policy
 #
 resource "aws_iam_policy" "leverage_test" {
+  count = local.provisioned ? 1 : 0
+
   name        = "leverage_test"
   description = "Bogus policy for testing Leverage CLI"
   tags        = local.tags

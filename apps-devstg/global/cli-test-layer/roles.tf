@@ -13,17 +13,15 @@ module "iam_assumable_role_leverage_test" {
     "arn:aws:iam::${var.accounts.security.id}:root"
   ]
 
-  create_role = true
+  create_role = local.provisioned
   role_name   = "LeverageTest"
   role_path   = "/"
 
   #
   # MFA setup
   #
-  role_requires_mfa = false
-  custom_role_policy_arns = [
-    aws_iam_policy.leverage_test.arn
-  ]
+  role_requires_mfa       = false
+  custom_role_policy_arns = aws_iam_policy.leverage_test[*].arn
 
   tags = local.tags
 }
