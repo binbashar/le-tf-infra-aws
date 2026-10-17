@@ -330,12 +330,23 @@ jobs:
       - name: Build and enforce native GitHub summary
         run: python -m tofu_plan_ci.workflow aggregate
 
+      # The status step holds a write token, so its tooling always comes from the
+      # base revision, even when the reporter above runs the candidate's.
+      - name: Checkout status tooling from the base revision
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: status-trusted
+          persist-credentials: false
+
       # Pending when an onboarded layer has changes to `/tofu apply`; success when
       # there is nothing for CI to apply. Advisory: a failure here never fails the plan.
       - name: Set the OpenTofu Apply status
         if: ${{ always() && github.event_name == 'pull_request' }}
         continue-on-error: true
         env:
+          PYTHONPATH: status-trusted/@bin/scripts
           GH_TOKEN: ${{ github.token }}
           RESULTS_DIR: ${{ runner.temp }}/tofu-plan-reports
           APPLY_LAYERS: ${{ vars.TOFU_APPLY_LAYERS }}

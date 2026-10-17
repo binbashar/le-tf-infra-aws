@@ -106,6 +106,10 @@ class GitHub:
             limit=2,
         )
 
+    def run_jobs(self, run_id: str, attempt: str) -> list[dict]:
+        return self.paginate(
+            f"{self.repo}/actions/runs/{run_id}/attempts/{attempt}/jobs", "jobs", limit=2)
+
     # Git data: locks are annotated tags under refs/tofu-locks/
     def matching_refs(self, prefix: str) -> list[dict]:
         return self.get(f"{self.repo}/git/matching-refs/{prefix}") or []

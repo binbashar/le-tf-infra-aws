@@ -339,6 +339,9 @@ def run_apply(layer: str) -> int:
             return _finish(result)
 
         stage = "apply"
+        # From here on the infrastructure may change. If the job dies mid-apply,
+        # this marker (uploaded by an always() step) keeps the lock in place.
+        _write_json(_state_dir() / "result.json", {**result, "failure": {"stage": "apply"}})
         apply_exit = workflow.run_logged(
             ["tofu", "apply", "-input=false", "-lock-timeout=5m", "-json", str(plan_file)],
             stdout_path=logs[4], env=process_env, cwd=layer_dir,
@@ -421,7 +424,9 @@ def run_report() -> int:
             "(approval rejected or cancelled)")
 
     github = _github()
-    if should_release_lock(outcome, result, os.environ.get("LOCK_CREATED") == "true"):
+    created = os.environ.get("LOCK_CREATED") == "true"
+    if should_release_lock(outcome, result, created,
+                           apply_job_ran=bool(created and not result) and _apply_job_ran(github)):
         github.delete_ref(apply_gates.lock_ref(layer_slug(layer)))
         reasons.append("nothing was applied, so the lock this run took was released")
     run_url = _run_url()
@@ -439,15 +444,36 @@ def run_report() -> int:
     return 0
 
 
-def should_release_lock(outcome: str, result: dict, created_by_this_run: bool) -> bool:
+def _apply_job_ran(github: GitHub) -> bool:
+    """Whether this run's apply job executed any step, judged from the jobs API.
+
+    A rejected approval or a skipped job has no steps. When in doubt (the job is
+    missing or the API fails), answer True so that the lock is kept.
+    """
+
+    try:
+        jobs = github.run_jobs(_required_env("GITHUB_RUN_ID"),
+                               os.environ.get("GITHUB_RUN_ATTEMPT", "1"))
+    except (RuntimeError, ValueError):
+        return True
+    apply_jobs = [job for job in jobs if str(job.get("name", "")).startswith("Apply ")]
+    return not apply_jobs or any(job.get("steps") for job in apply_jobs)
+
+
+def should_release_lock(outcome: str, result: dict, created_by_this_run: bool,
+                        *, apply_job_ran: bool = True) -> bool:
     """Release a lock this run took when it provably changed nothing.
 
     A lock that an earlier apply took is never released here: that PR has
-    changed the infrastructure and still has to be merged or reverted.
+    changed the infrastructure and still has to be merged or reverted. Without
+    a result, the lock is released only if the apply job never ran a step;
+    a job that died mid-apply leaves no result but may have changed things.
     """
 
     if not created_by_this_run or outcome == "applied":
         return False
+    if not result:
+        return not apply_job_ran
     return (result.get("failure") or {}).get("stage") != "apply"
 
 

@@ -111,6 +111,12 @@ manually.
 
 A rejected command leaves the status unchanged.
 
+**Before making it required (phase 6):** any workflow that runs on a branch of this repository
+can post a commit status, and a PR can edit workflows. So a required `OpenTofu Apply` status
+alone can be forged by anyone who can push a branch. The status tooling runs from the base
+revision, which narrows the risk but does not remove it. Phase 6 has to close this gap, for
+example with a ruleset that requires the workflow itself, or by checking the status's creator.
+
 ## 6. Lock and failure modes
 
 | Case | Behaviour |

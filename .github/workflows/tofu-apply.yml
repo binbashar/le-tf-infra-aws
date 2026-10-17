@@ -14,8 +14,16 @@ on:
   pull_request:
     types: [closed]
 
+# One queue per PR for commands. Any other comment gets a group of its own: a
+# newer pending run replaces an older one, so an ordinary comment must never
+# share the group and silently drop a queued /tofu apply.
 concurrency:
-  group: tofu-apply-${{ github.event_name }}-${{ github.event.issue.number || github.event.pull_request.number }}
+  group: >-
+    tofu-apply-${{ github.event_name }}-${{ github.event.issue.number || github.event.pull_request.number }}${{
+    (github.event_name == 'issue_comment' &&
+    !(startsWith(github.event.comment.body, '/tofu apply') ||
+      startsWith(github.event.comment.body, '/tofu unlock')))
+    && format('-other-{0}', github.event.comment.id) || '' }}
   cancel-in-progress: false
 
 permissions: {}
@@ -253,6 +261,7 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: write
+      actions: read
       pull-requests: write
       statuses: write
     env:

@@ -25,8 +25,11 @@ class ApplyWorkflowContractTests(unittest.TestCase):
         self.assertIn("\npermissions: {}\n", self.workflow)
 
     def test_comment_text_is_never_interpolated_into_a_script(self):
-        self.assertEqual(self.workflow.count("github.event.comment.body"), 2)
         self.assertIn("COMMENT_BODY: ${{ github.event.comment.body }}", self.workflow)
+        steps = self.workflow.split("\njobs:\n", maxsplit=1)[1]
+        for line in steps.splitlines():
+            if "github.event.comment.body" in line:
+                self.assertTrue("COMMENT_BODY:" in line or "startsWith(" in line, line)
         for line in self.workflow.splitlines():
             if line.strip().startswith("run:"):
                 self.assertNotIn("${{", line)
@@ -54,6 +57,18 @@ class ApplyWorkflowContractTests(unittest.TestCase):
         for secret in ("secrets.TOFU_PLAN_DIGEST_KEY", "secrets.TOFU_PLAN_COMMON_TFVARS"):
             self.assertEqual(self.workflow.count(secret), 1)
             self.assertIn(secret, job(self.workflow, "apply"))
+
+    def test_ordinary_comments_never_share_the_command_queue(self):
+        header = self.workflow.split("\npermissions: {}\n", maxsplit=1)[0]
+        self.assertIn("startsWith(github.event.comment.body, '/tofu apply')", header)
+        self.assertIn("format('-other-{0}', github.event.comment.id)", header)
+
+    def test_status_tooling_comes_from_the_base_revision(self):
+        report = self.plan_workflow.split("\n  report:\n", maxsplit=1)[1]
+        step = report[report.index("Set the OpenTofu Apply status"):]
+        self.assertIn("PYTHONPATH: status-trusted/@bin/scripts", step)
+        self.assertIn("ref: ${{ github.event.pull_request.base.sha }}\n          path: status-trusted",
+                      report)
 
     def test_unlock_needs_the_admin_environment(self):
         self.assertIn("environment: tofu-apply\n", job(self.workflow, "unlock"))

@@ -118,6 +118,8 @@ class RunApplyTests(ApplyWorkflowTestCase):
             if command[1] == "show":
                 stdout_path.write_text(json.dumps(plan))
             if command[1] == "apply":
+                marker = self.root / "runner" / "tofu-apply" / "result.json"
+                self.marker_before_apply = json.loads(marker.read_text())
                 stdout_path.write_text(json.dumps({"type": "change_summary", "changes": {
                     "add": 1, "change": 0, "remove": 0, "operation": "apply"}}) + "\n")
                 return apply_exit
@@ -140,6 +142,10 @@ class RunApplyTests(ApplyWorkflowTestCase):
         self.assertFalse((runner / "aws").exists())
         self.assertFalse((self.root / "workspace/config/common.tfvars").exists())
         self.assertIn("AWS_SESSION_TOKEN=\n", (self.root / "github-env").read_text())
+
+    def test_a_marker_keeps_the_lock_if_the_job_dies_mid_apply(self):
+        self.run_apply()
+        self.assertEqual(self.marker_before_apply["failure"]["stage"], "apply")
 
     def test_the_digest_key_never_reaches_tofu(self):
         self.run_apply()
@@ -276,6 +282,40 @@ class ReportAndReleaseTests(ApplyWorkflowTestCase):
         self.assertTrue(apply_workflow.should_release_lock(
             "failed", {"failure": {"stage": "plan"}}, True))
         self.assertFalse(apply_workflow.should_release_lock("cancelled", {}, False))
+
+    def test_without_a_result_the_lock_is_released_only_if_apply_never_ran(self):
+        self.assertTrue(apply_workflow.should_release_lock(
+            "failed", {}, True, apply_job_ran=False))
+        self.assertFalse(apply_workflow.should_release_lock(
+            "cancelled", {}, True, apply_job_ran=True))
+
+    def test_apply_job_ran_reads_the_jobs_api_and_fails_closed(self):
+        class Jobs(FakeGitHub):
+            def __init__(self, jobs=None, error=False):
+                super().__init__()
+                self._jobs, self._error = jobs, error
+
+            def run_jobs(self, run_id, attempt):
+                if self._error:
+                    raise RuntimeError("boom")
+                return self._jobs
+
+        with patch.dict(os.environ, self.env, clear=True):
+            rejected = [{"name": "Apply · x", "steps": []}, {"name": "Lock · x", "steps": [{}]}]
+            self.assertFalse(apply_workflow._apply_job_ran(Jobs(rejected)))
+            self.assertTrue(apply_workflow._apply_job_ran(Jobs([{"name": "Apply · x", "steps": [{}]}])))
+            self.assertTrue(apply_workflow._apply_job_ran(Jobs([])))
+            self.assertTrue(apply_workflow._apply_job_ran(Jobs(error=True)))
+
+    def test_rejected_approval_releases_a_fresh_lock(self):
+        class Rejected(FakeGitHub):
+            def run_jobs(self, run_id, attempt):
+                return [{"name": "Apply · x", "steps": []}]
+
+        github = Rejected()
+        self.report(github, decision={"verb": "apply", "reasons": [], "head_sha": HEAD, "layer": LAYER},
+                    extra={"APPLY_RESULT": "failure", "LOCK_CREATED": "true"})
+        self.assertEqual(github.deleted, ["refs/tofu-locks/apps-devstg-global-cli-test-layer"])
 
     def test_rejected_approval_is_reported(self):
         github = FakeGitHub()
