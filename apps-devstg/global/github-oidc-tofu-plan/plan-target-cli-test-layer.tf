@@ -1,6 +1,8 @@
 #
-# Provider reads needed to refresh apps-devstg/global/cli-test-layer, the
-# intentionally unprovisioned test layer: it only reads its own role and policy.
+# Provider reads needed to refresh apps-devstg/global/cli-test-layer, the test
+# layer of the plan and apply workflows: it only reads its own role and policy.
+# ListRolePolicies and GetRolePolicy back the role's inline_policy attribute; the
+# first refresh after the layer was provisioned (2026-10-17) was denied without them.
 #
 locals {
   cli_test_layer_role_name   = "LeverageTest"
@@ -13,7 +15,9 @@ data "aws_iam_policy_document" "github_actions_opentofu_plan_cli_test_layer" {
     effect = "Allow"
     actions = [
       "iam:GetRole",
+      "iam:GetRolePolicy",
       "iam:ListAttachedRolePolicies",
+      "iam:ListRolePolicies",
       "iam:ListRoleTags",
     ]
     resources = [
