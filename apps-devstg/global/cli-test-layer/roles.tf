@@ -4,6 +4,7 @@
 
 #
 # Assumable Role Cross-Account: Leverage Test
+# Also the target of the tofu-apply supervised test (docs/ai-sdlc/tofu-apply.md).
 #
 module "iam_assumable_role_leverage_test" {
   source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v4.24.1"
