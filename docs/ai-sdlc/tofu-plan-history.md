@@ -17,6 +17,10 @@ needed to operate it. Add new entries at the end of the relevant section.
 | 2026-10-12 | Explainer and security review of the redacted plan text run inside the plan job; first CI run on `cli-test-layer` found the `vpc:*` wildcard and the account-root trust | PR #1237, [run 38331108509](https://github.com/binbashar/le-tf-infra-aws/actions/runs/38331108509) |
 | 2026-10-12 | `TOFU_PLAN_MAX_LAYERS` applies only to live-eligible runs. With two allowlisted layers, every PR touching the workflow code self-tested both and was blocked by the cap of 1; `OpenTofu Plan` failed on #1235 and #1237 unnoticed (the check is not required) | PR #1238 |
 | 2026-10-12 | Bedrock role stops trusting `tofu-plan-bedrock`; after the apply, the environment and `TOFU_PLAN_LLM` are deleted | PR #1238 |
+| 2026-10-16 | Atlantis POC config removed; plan result gains a keyed `plan_digest` | PRs #1244, #1245 |
+| 2026-10-17 | Incident and credential-revocation procedure rehearsed on apps-devstg | PR #1246, [record](#incident-procedure-rehearsal) |
+| 2026-10-17 | Apply-before-merge: apps-devstg apply role, `tofu-apply` environment, `/tofu apply` workflow | PRs #1247, #1248 |
+| 2026-10-17 | First CI apply (`cli-test-layer`, 3 creates); all eight supervised cases pass | PRs #1249–#1253, [record](#apply-supervised-test) |
 
 ## Rollout gates
 
@@ -94,6 +98,43 @@ Lessons, folded into the procedure:
   be pasted must fit on one line or live in a script.
 - Two runs on the same commit and state produced the same `plan_digest` in CI.
 
+## Apply supervised test
+
+On 2026-10-17, phase 5 of [`tofu-apply.md`](tofu-apply.md#8-phases) ran on
+`apps-devstg/global/cli-test-layer`. `diego-ojeda-binbash` authored the PRs and posted the
+commands, and `binbashdevops` approved the PRs and both environments.
+
+| # | Case | PR | Run | Result |
+| --- | --- | --- | --- | --- |
+| 1a | `/tofu apply` before the PR was approved | #1249 | [39045722080](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39045722080) | ⛔ "no approving review on the current head commit…"; no lock, no approval requested |
+| 1b | `/tofu apply --force` | #1249 | [39045829847](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39045829847) | ⛔ "unsupported flag --force" |
+| 2 | Create | #1249 | [39045971132](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39045971132) | ✅ 3 added. Status `OpenTofu Apply` went from pending to success; lock tag recorded PR, head, and run. AWS evaluates `job_workflow_ref` in the trust |
+| — | First plan of the provisioned layer | #1250 | [39046115733](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39046115733) | Plan failed: `iam:ListRolePolicies` denied for the plan role. Fixed by #1251 |
+| 3 | Lock conflict | #1250 | [39046949041](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39046949041) | ⛔ "locked by #1249"; `lock` and `apply` skipped |
+| 4 | Merge releases the lock | #1249 | [39047144958](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39047144958) | Lock deleted |
+| 5 | Update (tag the policy) | #1250 | [39047647296](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39047647296) | ✅ 1 changed |
+| 6 | Manual tag added after review | #1252 | [39057306825](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39057306825) | ⛔ "the plan changed since it was reviewed"; the run's own lock released. After close and reopen and a new plan, [39057592666](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39057592666): ✅ 1 changed, manual tag removed |
+| 8 | Closed without merging after the apply | #1252 | [39057732940](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39057732940), [39057802433](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39057802433) | Lock kept with a comment; `/tofu unlock` on the closed PR released it after the environment approval |
+| 7 | Destroy (`provisioned = false`) | #1253 | [39058229444](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39058229444), [39058288047](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39058288047) | ⛔ without `--allow-destroy`; ✅ 3 destroyed with it. Merge released the lock; `master` and AWS match |
+
+Lessons:
+
+- **Strict up-to-date has a cost.** Every merge to `master` meant updating the other PR's branch,
+  waiting for a new plan, and approving the new head again (#1250 went through it twice).
+  It is still strict; revisit it with real traffic.
+- **Commands are not queued behind a plan.** `/tofu apply` posted while the new head's plan was
+  still running was rejected ("has not finished"). That is correct, but easy to trip on.
+- **Close and reopen re-plans the same head without a new approval.** That is how case 6 recovered.
+- **A layer that was never provisioned hides missing plan reads.** The plan role only failed on the
+  first refresh of existing resources. The apply role already had the read.
+- **Post-create drift is noise.** The first refresh after a create reports drift on
+  `managed_policy_arns` and `tags`, which are not external changes.
+- **Least privilege shapes the tests.** Changing `aws_iam_policy.description` forces a replacement,
+  so the update case tags the policy instead. And because the apply role can only touch
+  `LeverageTest` and `leverage_test`, the destroy case tears the layer down rather than deleting a
+  throwaway resource.
+- **The close comment printed the lock slug.** It now prints the layer path.
+
 ## Decisions
 
 | Date | Decision | Why |
@@ -107,4 +148,5 @@ Lessons, folded into the procedure:
 | 2026-10-12 | Merge the two docs into a reference doc plus this history | The rollout runbook mixed live procedures with history and had drifted from the current state. |
 | 2026-10-12 | Replace Claude Sonnet 4.6 with Claude Haiku 5.5; keep Nova Lite as the switchable second model | Haiku 5.5 costs $0.10 / $0.50 per million tokens. On the #1228 projection it named the affected resource type, the missing values, and concrete review questions, while Nova Lite produced two generic lines and rated it low risk. Haiku 5.5 does not support Bedrock structured outputs and rejects `temperature`, so both models answer through a forced tool call and the analyzer keeps a per-model registry; Haiku runs with adaptive thinking disabled (5 s instead of 11 s, ~30% fewer output tokens). |
 | 2026-10-12 | Replace the explanation of the value-free projection with two analyses of the redacted plan text: an explainer and a security review | The projection hides values, so explanations were generic. On the #1228 plan text, Haiku 5.5 named the exact change (`finops-agent:*` added to DevOps and DevOpsPrd) and flagged the wildcard grant with evidence and a recommendation, for ~$0.001 per commit for both. |
+| 2026-10-17 | `cli-test-layer` converges with no resources (`local.provisioned = false`) instead of staying unprovisioned with a standing plan of three creates | With apply-before-merge, `master` and the infrastructure must match. A test that needs resources sets `provisioned = true` in a PR and applies it. |
 | 2026-10-12 | Run both analyses inside the plan job (one approval), with the central apps-devstg Bedrock role trusting `tofu-plan`; a kill switch per analysis; no analysis above ~80K estimated tokens; sso e-mails may reach Bedrock | The raw plan cannot travel as an artifact in a public repository. The e-mails are already in the public sso code. The token cap keeps Haiku 5.5 under its 100K-token price tier. Keeping the second approval would have required an S3 handoff and a write permission on the plan role. |
