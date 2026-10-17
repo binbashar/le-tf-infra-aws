@@ -1,120 +1,160 @@
-# OpenTofu pull-request apply (design, draft)
+# OpenTofu pull-request apply
 
-Status (2026-10-16): **design, not implemented.** Extends [`tofu-plan.md`](tofu-plan.md) from
-plan-only to GitOps: the PR is applied **before** it is merged, Atlantis-style, so `master` only
-ever receives code that is already live. Replaces the unused Atlantis POC (`atlantis.yaml`).
+Apply-before-merge for the OpenTofu PR workflow, Atlantis-style. A maintainer comments
+`/tofu apply` on a PR, CI applies the reviewed plan, and a human merges. `master` therefore only
+receives code that is already live. This extends [`tofu-plan.md`](tofu-plan.md) and replaces the
+unused Atlantis POC.
+
+- Workflow: [`.github/workflows/tofu-apply.yml`](../../.github/workflows/tofu-apply.yml)
+- Code: [`@bin/scripts/tofu_plan_ci/`](../../@bin/scripts/tofu_plan_ci/) (`apply_gates.py`,
+  `apply_workflow.py`, `github_api.py`, `plan_digest.py`)
+- AWS identity: [`apps-devstg/global/github-oidc-tofu-apply`](../../apps-devstg/global/github-oidc-tofu-apply/)
+- Incident procedure: [`tofu-ci-incident.md`](tofu-ci-incident.md)
+
+Status (2026-10-17): **implemented, not exercised yet.** It is inactive until `TOFU_APPLY_LIVE`
+is `true`. The supervised test on `cli-test-layer` (phase 5) is next.
 
 ## 1. Decisions
 
 | Topic | Decision |
 | --- | --- |
-| Model | Apply-before-merge. Merge is manual, after a successful apply |
-| Trigger | PR comment `/tofu apply`, run by `issue_comment`, so the workflow and tooling come from `master` |
-| What is applied | Fresh `plan -out` in the apply job, compared to the reviewed plan, then `apply` of **that same file**. The binary never leaves the runner, so the compare-to-apply window is zero |
-| Lock | Taken at apply, held until merge. Other PRs can plan the layer meanwhile, but their apply is rejected |
-| Write credentials | One apply role per account, **least privilege**: union of the allowlisted layers' write actions, narrowed per job by a session policy to that layer (same pattern as the plan roles) |
-| Delete / replace | `/tofu apply` is rejected when the plan has delete or replace. `/tofu apply --allow-destroy` is required |
-| PR feedback | Minimal comment: a reaction on the command, then one reply with status, counts, and the run link. No plan content |
-| Merge gate | Required check `OpenTofu Apply` on the head SHA: green when the layer has no changes or that SHA was applied |
-| Lock storage | Git ref (see §5) |
-| Approvers | Only the `leverage-ref-architecture-aws-admin` team, as the sole required reviewer of the `tofu-apply` environment |
-| Up to date | Strict: the head must contain the latest `master` (`behind_by == 0`). To be relaxed after the supervised test if it proves too costly |
+| Model | Apply-before-merge. Merging is manual, after a successful apply |
+| Trigger | PR comment `/tofu apply`. `issue_comment` runs the workflow and its tooling from `master` |
+| What is applied | A fresh `plan -out` in the apply job, compared by digest with the reviewed plan; then `apply` of **that same file**. The binary never leaves the runner, so nothing can change between the comparison and the apply |
+| Lock | Taken when `/tofu apply` passes the gates, and held until merge. Other PRs can still plan the layer, but cannot apply it |
+| Lock storage | An annotated tag under `refs/tofu-locks/<layer-slug>`. Creating a ref is atomic, so two PRs cannot both take it |
+| Write credentials | One apply role per account, least privilege: the union of the allowlisted layers, narrowed per job to one layer by a session policy |
+| Delete / replace | Rejected unless the command is `/tofu apply --allow-destroy` |
+| Approvers | The `leverage-ref-architecture-aws-admin` team, the only reviewer of the `tofu-apply` environment |
+| Up to date | Strict: the head must contain the latest `master`. To be relaxed after the supervised test if it proves too costly |
+| PR feedback | A 👀 reaction, then one reply with the outcome, counts, reasons, and the run link. No plan content |
+| Merge gate | Commit status `OpenTofu Apply` on the head commit (§5). Not required yet (phase 6) |
 
-## 2. Flow
+## 2. Using it
+
+1. **Author:** open the PR. It must touch exactly one layer that is allowlisted in both
+   `TOFU_PLAN_LAYERS` and `TOFU_APPLY_LAYERS`. Keep the branch up to date with `master`.
+2. **Reviewer:** read the diff and the plan run, approve `tofu-plan`, then **approve the PR**.
+   The approval must be on the current head commit.
+3. **Anyone with write access:** comment `/tofu apply`, or `/tofu apply --allow-destroy` if the
+   plan deletes or replaces.
+4. **Admin team member:** approve the `tofu-apply` deployment. This runs the PR's code with write
+   access to the layer, so check the diff, including providers, modules, and data sources.
+5. **Author:** after `✅ Applied`, merge right away. Merging releases the lock.
+
+`/tofu unlock` releases this PR's locks once the admin team approves it. It is meant for the
+cases in §6. Any other `/tofu` verb, such as `/tofu plan`, is ignored by this workflow.
+
+## 3. Flow
 
 ```mermaid
 flowchart TD
-  P["push to PR"] --> PL["tofu-plan.yml (existing)<br/>plan + digest + lock status"]
-  PL --> R["human review + approval"]
+  P["push to PR"] --> PL["tofu-plan.yml<br/>plan + plan_digest<br/>OpenTofu Apply: pending"]
+  PL --> R["review: approve the PR"]
   R --> C["comment: /tofu apply [--allow-destroy]"]
-  C --> AU["authorize (no AWS)<br/>write access · approved on head · up to date<br/>plan check green · layer not locked by another PR"]
-  AU --> LK["lock job<br/>create refs/tofu-locks/&lt;layer&gt; (contents: write)"]
-  LK --> AP{{"env tofu-apply<br/>reviewer approval"}}
-  AP --> J["apply job (OIDC apply role)<br/>plan -out · digest == reviewed? · destructive flag? · apply"]
-  J --> RP["report job<br/>PR reply · OpenTofu Apply status"]
+  C --> AU["authorize (no AWS)<br/>gates 1–8"]
+  AU -- rejected --> RP
+  AU --> LK["lock job (contents: write)<br/>create refs/tofu-locks/&lt;layer&gt;"]
+  LK --> AP{{"env tofu-apply<br/>admin team approval"}}
+  AP --> J["apply job (apply role, contents: read)<br/>re-check · plan -out · digest == reviewed? ·<br/>--allow-destroy? · apply that file"]
+  J --> RP["report: one PR reply<br/>OpenTofu Apply: success / failure"]
   RP --> M["human merges"]
-  M --> UL["on merge: release lock"]
+  M --> UL["release job: delete the lock"]
 ```
 
-## 3. Gates
+Jobs and their permissions:
 
-The apply runs only when **all** hold. `authorize` checks them before any credential is minted,
-and the apply job re-checks the ones that can change while it waits for approval:
+| Job | Runs | Permissions |
+| --- | --- | --- |
+| `authorize` | trusted tooling | `contents: read`, `actions: read` (plan evidence), `pull-requests: write` (reaction) |
+| `lock` | trusted tooling | `contents: write` (lock ref) |
+| `apply` | **PR code** + trusted tooling, env `tofu-apply` | `contents: read`, `pull-requests: read`, `id-token: write` |
+| `unlock` | trusted tooling, env `tofu-apply` | `contents: write` |
+| `report` | trusted tooling | `contents: write` (release an unused lock), `pull-requests: write`, `statuses: write` |
+| `release` (PR closed) | trusted tooling | `contents: write`, `pull-requests: write` |
 
-1. The commenter has write or admin access.
-2. The PR has an approving review **on the current head SHA**, from someone other than the author.
-   Branch protection must dismiss stale approvals.
-3. The head is up to date with `master` (`behind_by == 0`). Otherwise the apply would roll back
+## 4. Gates
+
+`authorize` checks every gate before any lock or credential exists. The apply job re-checks the
+gates marked ↻, because they can change while the run waits for approval:
+
+1. The commenter has write, maintain, or admin access, and `TOFU_APPLY_LIVE` is `true`.
+2. The PR is open, not a draft, from this repository, and opened by a user ↻.
+3. The PR has an approval **on the current head commit** from someone other than the author, and
+   no outstanding "changes requested" ↻. Pushing a new commit invalidates the approval ↻.
+4. The head is up to date with `master` (`behind_by == 0`) ↻. Otherwise the apply would undo
    whatever `master` changed in the layer.
-4. `OpenTofu Plan` is green for that head SHA, with exactly one layer (`TOFU_PLAN_MAX_LAYERS` stays 1).
-5. The layer is not locked by another PR.
-6. The fresh plan's digest equals the reviewed plan's digest (see §4).
-7. No delete or replace unless the command carried `--allow-destroy`.
-8. The `tofu-apply` environment is approved by a member of `leverage-ref-architecture-aws-admin`.
-   GitHub must have "prevent self-review" enabled and a deployment branch policy of `master` only.
-   Team membership is enforced by GitHub at this step, not in `authorize`: `GITHUB_TOKEN`
-   cannot read organization team membership.
+5. The latest `OpenTofu Plan` run for the head commit succeeded. It has exactly one live layer
+   result, and that result has a `plan_digest`.
+6. The layer is in `TOFU_APPLY_LAYERS`, and `TOFU_APPLY_ROLES` has an apply role for its account.
+7. No other PR holds the layer's lock.
+8. The plan has no delete or replace unless the command carried `--allow-destroy`. This is checked
+   again on the fresh plan.
+9. The fresh plan's digest equals the reviewed plan's digest (apply job).
+10. A member of `leverage-ref-architecture-aws-admin` approves `tofu-apply`. GitHub enforces this
+    together with Prevent self-review and the `master`-only branch policy; `GITHUB_TOKEN` cannot
+    read team membership.
 
-## 4. Plan digest
+A PR that changes a workflow, the CI tooling, providers, or backends gets no live plan
+([Limitations](tofu-plan.md#limitations)), so gate 5 rejects it. Those changes are applied
+manually.
 
-`review.json` lists only addresses, actions, and attribute names, so it cannot detect a value
-that changed between review and apply. The plan job will add `plan_digest` to `result.json`:
-an HMAC-SHA256 over the normalized `resource_changes` (address, actions, before, after,
-after_unknown, sorted), keyed with an environment secret. It is HMAC and not a plain hash
-because the artifact is public, and a plain hash of a low-entropy value can be brute-forced.
-The apply job computes the same digest on its own plan and refuses to apply if the two differ.
+## 5. The `OpenTofu Apply` status
 
-## 5. Lock
+| Posted by | When | State |
+| --- | --- | --- |
+| Plan workflow | The onboarded layer has changes | pending: "comment /tofu apply after review" |
+| Plan workflow | No changes, no live plan, or the layer is not onboarded | success, with the reason |
+| Plan workflow | The plan failed | none: `OpenTofu Plan` already fails |
+| Apply workflow | Applied, or nothing to apply | success |
+| Apply workflow | The apply failed | failure |
 
-- **Storage:** a git ref `refs/tofu-locks/<layer-slug>` pointing at the PR head, created through
-  the API (creation is atomic, so a race fails). It is written by a dedicated job with
-  `contents: write`. The apply job, which runs PR code with AWS credentials, keeps `contents: read`.
-- **Release:** a `pull_request: closed` workflow deletes the lock when the PR is **merged**.
-- **Closed unmerged after an apply:** the lock is **kept**, because the infrastructure no longer
-  matches `master`. The workflow comments to say so. The way out is to revert in the same PR,
-  `/tofu apply`, and then `/tofu unlock`, which a maintainer runs as an explicit acknowledgement.
-- Plans on other PRs still run and show `locked by #N` in their summary.
+A rejected command leaves the status unchanged.
 
-## 6. Failure modes
+## 6. Lock and failure modes
 
 | Case | Behaviour |
 | --- | --- |
-| Apply fails partway | Lock held, `OpenTofu Apply` red. Fix forward with new commits and `/tofu apply`, or revert and `/tofu apply`. Never merge red |
-| New commits after an apply | `OpenTofu Apply` goes pending on the new SHA. Re-plan, re-approve, `/tofu apply` (only the delta) |
-| `master` moves while locked | Gate 3 rejects. Rebase, re-plan, re-apply |
-| Digest mismatch (drift or a stale plan) | Rejected. Push or re-run the plan, review again |
-| Credential compromise | Incident and revocation procedure (prerequisite, see §8) |
+| Applied, then merged | The `release` job deletes the lock |
+| The run applied nothing (rejected at re-check, digest mismatch, no changes, approval rejected, failure before the apply step) | The lock is released, **only if this run took it** |
+| Apply failed partway | The lock is kept and `OpenTofu Apply` is red. Fix forward or revert, then `/tofu apply` again. Never merge red |
+| New commits after an apply | The new head is pending. Wait for its plan, approve again, then `/tofu apply`. Only the delta is applied |
+| `master` moved | Gate 4 rejects. Update the branch, wait for the plan, then apply |
+| Digest mismatch (drift, a stale plan, a changed value) | Rejected. Re-run or push to plan again, review, then apply |
+| Closed without merging after an apply | The lock is **kept** and the workflow comments. Reopen, revert, `/tofu apply`, then `/tofu unlock` |
+| Credential compromise | [`tofu-ci-incident.md`](tofu-ci-incident.md) |
 
-## 7. Identities
+The lock is an annotated tag whose message records the PR, the layer, the head commit, and the
+run. Inspect it with `git ls-remote origin 'refs/tofu-locks/*'`.
 
-- New layer per account: `<account>/global/github-oidc-tofu-apply`, starting with apps-devstg and
-  `cli-test-layer`. It reuses the existing OIDC provider.
-- Trust: `repo:binbashar/le-tf-infra-aws:environment:tofu-apply` only.
-- Permissions: the layer's create, update, delete, and tag actions, plus `s3:PutObject` on its state key and its lock.
-  The permissions boundary denies changes to the role itself, its boundary, its trust, and the OIDC
-  provider. A layer that manages IAM is admin-equivalent in practice, which must be recorded when
-  onboarding it.
-- Session policy per job, computed by the trusted tooling from `master`, as in `plan_identity.py`.
+## 7. Configuration
+
+| Kind | Name | Value |
+| --- | --- | --- |
+| Variable | `TOFU_APPLY_LIVE` | `true` to accept applies. Kill switch: `false` rejects new commands. A run reads it when it starts, so reject or cancel a run that is already waiting for approval |
+| Variable | `TOFU_APPLY_LAYERS` | Allowlist, comma- or newline-separated. Each layer must also be in `TOFU_PLAN_LAYERS` |
+| Variable | `TOFU_APPLY_ROLES` | JSON: account directory → `{role_arn, account_id}`, as `TOFU_PLAN_ROLES` |
+| `tofu-apply` secret | `TOFU_PLAN_COMMON_TFVARS` | Same value as in `tofu-plan` |
+| `tofu-apply` secret | `TOFU_PLAN_DIGEST_KEY` | **Same value as in `tofu-plan`**; otherwise every digest mismatches. Rotate both together |
+| Environment | `tofu-apply` | Reviewer `leverage-ref-architecture-aws-admin`, Prevent self-review, no admin bypass, branch `master` |
 
 ## 8. Phases
 
-| # | Work | Exit criterion |
+| # | Work | Status |
 | --- | --- | --- |
-| 0 | Remove `atlantis.yaml` | No Atlantis config left in the repo |
-| 1 | Plan side: `plan_digest`, lock status in the summary, `OpenTofu Apply` reported on every PR (a required check must always post) | Merged, plan behaviour unchanged |
-| 2 | Incident and credential-revocation procedure (roadmap item) | Documented and rehearsed |
-| 3 | `github-oidc-tofu-apply` for apps-devstg, `tofu-apply` environment | Applied by a maintainer |
-| 4 | `tofu-apply.yml`: parse → authorize → lock → apply → report; `tofu-unlock.yml` on close and `/tofu unlock` | Unit tests for the parser, gates, and digest |
-| 5 | Supervised test on `cli-test-layer`: no-op, create, update, destroy with and without the flag, digest mismatch, lock conflict between two PRs, failed apply, close unmerged | Every case recorded in `tofu-plan-history.md` |
-| 6 | Branch protection: required `OpenTofu Plan` + `OpenTofu Apply`, up to date, dismiss stale approvals | Enforced on `master` |
-| 7 | Onboard `management/global/sso` and more layers | Per-layer runbook |
-| Later | Scheduled drift detection; cut human write access (break-glass role) so git is the only path | — |
+| 0 | Remove `atlantis.yaml` | ✅ #1244 |
+| 1 | `plan_digest` in the plan result | ✅ #1245 |
+| 2 | Incident and credential-revocation procedure | ✅ #1246, rehearsed |
+| 3 | `github-oidc-tofu-apply` for apps-devstg, `tofu-apply` environment | ✅ #1247 |
+| 4 | `tofu-apply.yml`, gates, lock, report, `OpenTofu Apply` status | ✅ this document's PR |
+| 5 | Supervised test on `cli-test-layer`: no-op, create, update, destroy with and without the flag, digest mismatch, lock conflict between two PRs, failed apply, close unmerged | 🟡 next |
+| 6 | Branch protection: required `OpenTofu Plan` and `OpenTofu Apply`, up to date, dismiss stale approvals | 🟡 |
+| 7 | Onboard `management/global/sso` and more layers | 🔄 |
+| Later | Scheduled drift detection. Cut human write access (break-glass role) so git is the only path | — |
 
 ## 9. Coexistence with PR #1101
 
 PR #1101 (`terraform-plan.yml`) is a parallel alternative that another team member is still
-developing. This work must not modify it. Its workflow also reacts to `/tofu plan` and `/tf-plan`
-comments. While it is unmerged that is harmless: `issue_comment` workflows run only from
-`master`, so its comment handler never fires. The workflow is also disabled in Actions as a
-temporary guard. **Before #1101 merges**, the command namespace has to be agreed with its author,
-or one comment could trigger both workflows.
+developing. This work does not modify it. This workflow acts only on `/tofu apply` and
+`/tofu unlock`, and ignores every other `/tofu` verb, so `/tofu plan` stays free for #1101. The
+maintainers are coordinating the command names before #1101 merges.

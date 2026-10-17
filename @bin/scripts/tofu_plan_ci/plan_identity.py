@@ -1,10 +1,11 @@
-"""Resolve the per-account plan role and the per-layer inline session policy.
+"""Resolve the per-account CI role and the per-layer inline session policy.
 
 Each account has one plan role whose permissions are the union of its allowlisted
-layers' reads. A job assumes it with an inline session policy that narrows the
-state bucket and lock table to that job's own layer, so an approved plan of one
-layer cannot read another layer's state. Reads outside the state backend are left
-to the role's own policy.
+layers' reads, and may have one apply role built the same way for writes. A job
+assumes its role with an inline session policy that narrows the state bucket and
+lock table to that job's own layer, so an approved run on one layer cannot touch
+another layer's state. Everything outside the state backend is left to the
+role's own policy.
 """
 
 from __future__ import annotations
@@ -23,25 +24,25 @@ SAFE_VALUE = re.compile(r"^[A-Za-z0-9_.-]+$")
 SESSION_POLICY_LIMIT = 2048
 
 
-def parse_roles(value: str) -> dict[str, dict[str, str]]:
-    """Validate the TOFU_PLAN_ROLES JSON: {account: {role_arn, account_id}}."""
+def parse_roles(value: str, name: str = "TOFU_PLAN_ROLES") -> dict[str, dict[str, str]]:
+    """Validate a roles variable's JSON: {account: {role_arn, account_id}}."""
 
     try:
         roles = json.loads(value)
     except json.JSONDecodeError as error:
-        raise ValueError(f"TOFU_PLAN_ROLES is not valid JSON: {error.msg}") from None
+        raise ValueError(f"{name} is not valid JSON: {error.msg}") from None
     if not isinstance(roles, dict) or not roles:
-        raise ValueError("TOFU_PLAN_ROLES must be a non-empty JSON object")
+        raise ValueError(f"{name} must be a non-empty JSON object")
     for account, entry in roles.items():
         if not isinstance(entry, dict) or set(entry) != {"role_arn", "account_id"}:
             raise ValueError(
-                f"TOFU_PLAN_ROLES[{account!r}] must contain exactly role_arn and account_id"
+                f"{name}[{account!r}] must contain exactly role_arn and account_id"
             )
         match = ROLE_ARN.match(str(entry["role_arn"]))
         if not match or not ACCOUNT_ID.match(str(entry["account_id"])):
-            raise ValueError(f"TOFU_PLAN_ROLES[{account!r}] has a malformed role or account")
+            raise ValueError(f"{name}[{account!r}] has a malformed role or account")
         if match.group("account") != entry["account_id"]:
-            raise ValueError(f"TOFU_PLAN_ROLES[{account!r}] role is not in its account_id")
+            raise ValueError(f"{name}[{account!r}] role is not in its account_id")
     return roles
 
 
@@ -72,14 +73,25 @@ def read_tfvar(path: Path, name: str) -> str:
 
 
 def session_policy(
-    *, bucket: str, table: str, region: str, account_id: str, state_key: str
+    *,
+    bucket: str,
+    table: str,
+    region: str,
+    account_id: str,
+    state_key: str,
+    write_state: bool = False,
 ) -> str:
-    """Build a compact session policy that narrows the backend to one layer."""
+    """Build a compact session policy that narrows the backend to one layer.
+
+    With write_state, the layer's own state object may also be written (apply).
+    """
 
     bucket_arn = f"arn:aws:s3:::{bucket}"
     table_arn = f"arn:aws:dynamodb:{region}:{account_id}:table/{table}"
-    narrowed = ["s3:GetObject", "s3:ListBucket", "dynamodb:DeleteItem",
+    object_actions = ["s3:GetObject", "s3:PutObject"] if write_state else ["s3:GetObject"]
+    narrowed = [*object_actions, "s3:ListBucket", "dynamodb:DeleteItem",
                 "dynamodb:GetItem", "dynamodb:PutItem"]
+    lock_actions = narrowed[len(object_actions) + 1 :]
     policy = {
         "Version": "2012-10-17",
         "Statement": [
@@ -87,16 +99,17 @@ def session_policy(
             {"Sid": "RolePermissions", "Effect": "Allow", "NotAction": narrowed,
              "Resource": "*"},
             {"Sid": "ObjectsOutsideStateBucket", "Effect": "Allow",
-             "Action": ["s3:GetObject", "s3:ListBucket"],
+             "Action": [*object_actions, "s3:ListBucket"],
              "NotResource": [bucket_arn, f"{bucket_arn}/*"]},
             {"Sid": "ListOwnState", "Effect": "Allow", "Action": "s3:ListBucket",
              "Resource": bucket_arn,
              "Condition": {"StringEquals": {"s3:prefix": state_key}}},
-            {"Sid": "ReadOwnState", "Effect": "Allow", "Action": "s3:GetObject",
+            {"Sid": "ReadWriteOwnState" if write_state else "ReadOwnState", "Effect": "Allow",
+             "Action": object_actions if write_state else "s3:GetObject",
              "Resource": f"{bucket_arn}/{state_key}"},
             {"Sid": "ItemsOutsideLockTable", "Effect": "Allow",
-             "Action": narrowed[2:], "NotResource": table_arn},
-            {"Sid": "OwnLockItems", "Effect": "Allow", "Action": narrowed[2:],
+             "Action": lock_actions, "NotResource": table_arn},
+            {"Sid": "OwnLockItems", "Effect": "Allow", "Action": lock_actions,
              "Resource": table_arn,
              "Condition": {"ForAllValues:StringEquals": {"dynamodb:LeadingKeys": [
                  f"{bucket}/{state_key}", f"{bucket}/{state_key}-md5"]}}},
@@ -111,13 +124,21 @@ def session_policy(
     return document
 
 
-def resolve(workspace: Path, layer: str, roles_value: str) -> Mapping[str, str]:
+def resolve(
+    workspace: Path,
+    layer: str,
+    roles_value: str,
+    *,
+    roles_name: str = "TOFU_PLAN_ROLES",
+    write_state: bool = False,
+) -> Mapping[str, str]:
     """Return the role, account, and session policy for one allowlisted layer."""
 
     account = layer.split("/", 1)[0]
-    roles = parse_roles(roles_value)
+    roles = parse_roles(roles_value, roles_name)
     if account not in roles:
-        raise ValueError(f"TOFU_PLAN_ROLES has no plan role for account {account!r}")
+        kind = "apply" if write_state else "plan"
+        raise ValueError(f"{roles_name} has no {kind} role for account {account!r}")
     entry = roles[account]
     backend_config = workspace / account / "config" / "backend.tfvars"
     state_key = backend_state_key(
@@ -132,5 +153,6 @@ def resolve(workspace: Path, layer: str, roles_value: str) -> Mapping[str, str]:
             region=read_tfvar(backend_config, "region"),
             account_id=entry["account_id"],
             state_key=state_key,
+            write_state=write_state,
         ),
     }

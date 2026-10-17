@@ -98,6 +98,36 @@ class PlanIdentityTests(unittest.TestCase):
                 and "Action" in item for item in statements.values())
         )
 
+    def test_apply_session_policy_writes_only_its_own_state(self):
+        document = session_policy(
+            bucket="state-bucket",
+            table="lock-table",
+            region="us-east-1",
+            account_id="111111111111",
+            state_key="apps-devstg/cli-test-layer/terraform.tfstate",
+            write_state=True,
+        )
+        self.assertLessEqual(len(document), 2048)
+        statements = {item["Sid"]: item for item in json.loads(document)["Statement"]}
+        self.assertEqual(statements["ReadWriteOwnState"]["Action"], ["s3:GetObject", "s3:PutObject"])
+        self.assertEqual(
+            statements["ReadWriteOwnState"]["Resource"],
+            "arn:aws:s3:::state-bucket/apps-devstg/cli-test-layer/terraform.tfstate",
+        )
+        self.assertIn("s3:PutObject", statements["RolePermissions"]["NotAction"])
+        self.assertEqual(
+            statements["ObjectsOutsideStateBucket"]["NotResource"],
+            ["arn:aws:s3:::state-bucket", "arn:aws:s3:::state-bucket/*"],
+        )
+        self.assertEqual(statements["OwnLockItems"]["Action"],
+                         ["dynamodb:DeleteItem", "dynamodb:GetItem", "dynamodb:PutItem"])
+
+    def test_resolve_names_the_roles_variable_and_kind(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(ValueError, "TOFU_APPLY_ROLES has no apply role"):
+                resolve(Path(directory), "apps-devstg/global/cli-test-layer", ROLES,
+                        roles_name="TOFU_APPLY_ROLES", write_state=True)
+
     def test_resolve_uses_the_layer_account_and_backend(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

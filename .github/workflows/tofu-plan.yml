@@ -272,6 +272,7 @@ jobs:
     permissions:
       contents: read
       actions: read
+      statuses: write
     env:
       REQUIRE_LIVE: >-
         ${{ vars.TOFU_PLAN_LIVE == 'true' &&
@@ -328,3 +329,14 @@ jobs:
 
       - name: Build and enforce native GitHub summary
         run: python -m tofu_plan_ci.workflow aggregate
+
+      # Pending when an onboarded layer has changes to `/tofu apply`; success when
+      # there is nothing for CI to apply. Advisory: a failure here never fails the plan.
+      - name: Set the OpenTofu Apply status
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULTS_DIR: ${{ runner.temp }}/tofu-plan-reports
+          APPLY_LAYERS: ${{ vars.TOFU_APPLY_LAYERS }}
+        run: python -m tofu_plan_ci.apply_workflow plan-status
