@@ -13,4 +13,7 @@ module "iam_group_auditors" {
     "arn:aws:iam::aws:policy/SecurityAudit",
     "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess",
   ]
+
+  # auditors holds machine users only (auditor.ci), which cannot satisfy MFA
+  enable_mfa_enforcement = false
 }
