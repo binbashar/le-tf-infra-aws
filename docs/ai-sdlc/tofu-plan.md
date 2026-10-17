@@ -45,8 +45,8 @@ later commits.
 
 **Deliberately out of scope:** apply, destroy, import, any state change, PR comments, fork and
 bot PRs, and planning layers outside the allowlist. Applying is a separate workflow,
-[`tofu-apply.md`](tofu-apply.md), triggered by a maintainer's `/tofu apply`; the plan workflow
-only posts the `OpenTofu Apply` status it uses.
+[`tofu-apply.md`](tofu-apply.md), triggered by a maintainer's `/tofu apply`. The plan's evidence
+also feeds the `OpenTofu Apply` status, which `tofu-apply-status.yml` posts.
 
 ## 3. Using it
 

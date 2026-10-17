@@ -9,9 +9,11 @@ from tofu_plan_ci.apply_gates import (
     parse_command,
     parse_lock,
     plan_status,
+    pr_status,
     recheck_reasons,
     review_reasons,
     select_plan_run,
+    touched_apply_layers,
 )
 
 HEAD = "a" * 40
@@ -185,6 +187,54 @@ class PlanStatusTests(unittest.TestCase):
         self.assertIn("no changes", plan_status(results=[no_changes], apply_layers=[LAYER])[1])
         self.assertEqual(plan_status(results=[result()], apply_layers=[LAYER])[0], "pending")
         self.assertIn("manually", plan_status(results=[result()], apply_layers=[])[1])
+
+
+
+class PrStatusTests(unittest.TestCase):
+    RUN = {"id": 1, "conclusion": "success"}
+
+    def status(self, paths, **overrides):
+        args = dict(paths=paths, apply_layers=[LAYER], head_sha=HEAD)
+        args.update(overrides)
+        return pr_status(**args)[0]
+
+    def test_touched_layers(self):
+        self.assertEqual(touched_apply_layers([f"{LAYER}/main.tf"], [LAYER]), [LAYER])
+        self.assertEqual(touched_apply_layers(["config/common.tfvars"], [LAYER]), [LAYER])
+        self.assertEqual(touched_apply_layers(["apps-devstg/config/backend.tfvars"], [LAYER]), [LAYER])
+        for path in (f"{LAYER}-other/main.tf", "apps-prd/config/backend.tfvars", "README.md"):
+            self.assertEqual(touched_apply_layers([path], [LAYER]), [], path)
+
+    def test_untouched_is_success_before_any_plan(self):
+        self.assertEqual(self.status(["docs/x.md"]), "success")
+        self.assertEqual(self.status([f"{LAYER}/main.tf"]), "pending")
+
+    def test_plan_evidence_decides(self):
+        no_changes = result(summary={"create": 0, "no-op": 1})
+        self.assertEqual(self.status([f"{LAYER}/main.tf"], plan_run=self.RUN, results=[no_changes]),
+                         "success")
+        self.assertEqual(self.status([f"{LAYER}/main.tf"], plan_run=self.RUN, results=[result()]),
+                         "pending")
+
+    def test_changed_plan_tooling_is_decided_without_the_evidence(self):
+        for tooling in ("@bin/scripts/tofu_plan_ci/workflow.py", ".github/workflows/tofu-plan.yml"):
+            paths = [f"{LAYER}/main.tf", tooling]
+            self.assertEqual(self.status(paths), "success")
+            self.assertEqual(self.status(paths, plan_run=self.RUN, results=[result()]), "success")
+
+    def test_failed_plans_stay_pending(self):
+        no_changes = result(summary={"create": 0, "no-op": 1})
+        for paths, run, results in (
+            ([f"{LAYER}/main.tf"], {"conclusion": "failure"}, [no_changes]),
+            ([f"{LAYER}/main.tf"], self.RUN, [result(status="failed")]),
+        ):
+            with self.subTest(paths=paths, run=run):
+                self.assertEqual(self.status(paths, plan_run=run, results=results), "pending")
+
+    def test_evidence_from_another_commit_is_ignored(self):
+        other = result(summary={"create": 1}, metadata={"head_sha": "c" * 40, "repository": REPO})
+        self.assertEqual(self.status([f"{LAYER}/main.tf"], plan_run=self.RUN, results=[other]),
+                         "success")  # no live plan for this commit: CI cannot apply it
 
 
 class CommentTests(unittest.TestCase):

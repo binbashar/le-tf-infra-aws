@@ -14,15 +14,18 @@ class ApplyWorkflowContractTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[4]
         cls.workflow = (root / ".github/workflows/tofu-apply.yml").read_text()
         cls.plan_workflow = (root / ".github/workflows/tofu-plan.yml").read_text()
+        cls.status_workflow = (root / ".github/workflows/tofu-apply-status.yml").read_text()
 
     def test_actions_are_pinned_to_full_commit_shas(self):
-        references = re.findall(r"^\s*uses:\s+([^\s#]+)", self.workflow, re.MULTILINE)
-        self.assertTrue(references)
-        for reference in references:
-            self.assertRegex(reference, r"@[0-9a-f]{40}$")
+        for workflow in (self.workflow, self.status_workflow):
+            references = re.findall(r"^\s*uses:\s+([^\s#]+)", workflow, re.MULTILINE)
+            self.assertTrue(references)
+            for reference in references:
+                self.assertRegex(reference, r"@[0-9a-f]{40}$")
 
     def test_no_default_permissions(self):
         self.assertIn("\npermissions: {}\n", self.workflow)
+        self.assertIn("\npermissions: {}\n", self.status_workflow)
 
     def test_comment_text_is_never_interpolated_into_a_script(self):
         self.assertIn("COMMENT_BODY: ${{ github.event.comment.body }}", self.workflow)
@@ -63,13 +66,6 @@ class ApplyWorkflowContractTests(unittest.TestCase):
         self.assertIn("startsWith(github.event.comment.body, '/tofu apply')", header)
         self.assertIn("format('-other-{0}', github.event.comment.id)", header)
 
-    def test_status_tooling_comes_from_the_base_revision(self):
-        report = self.plan_workflow.split("\n  report:\n", maxsplit=1)[1]
-        step = report[report.index("Set the OpenTofu Apply status"):]
-        self.assertIn("PYTHONPATH: status-trusted/@bin/scripts", step)
-        self.assertIn("ref: ${{ github.event.pull_request.base.sha }}\n          path: status-trusted",
-                      report)
-
     def test_unlock_needs_the_admin_environment(self):
         self.assertIn("environment: tofu-apply\n", job(self.workflow, "unlock"))
 
@@ -77,12 +73,26 @@ class ApplyWorkflowContractTests(unittest.TestCase):
         self.assertIn("group: tofu-apply-layer-${{ needs.authorize.outputs.slug }}",
                       job(self.workflow, "apply"))
 
-    def test_plan_report_posts_the_apply_status_without_failing_the_plan(self):
-        report = self.plan_workflow.split("\n  report:\n", maxsplit=1)[1]
-        self.assertIn("statuses: write", report)
-        step = report[report.index("Set the OpenTofu Apply status"):]
-        self.assertIn("continue-on-error: true", step)
-        self.assertIn("apply_workflow plan-status", step)
+    def test_github_token_never_posts_a_status(self):
+        for workflow in (self.workflow, self.plan_workflow, self.status_workflow):
+            self.assertNotRegex(workflow, r"\n\s+statuses: write")
+
+    def test_the_status_app_key_is_used_only_in_its_environment(self):
+        environment = "environment:\n      name: tofu-status\n      deployment: false\n"
+        for workflow, name in ((self.workflow, "report"), (self.status_workflow, "status")):
+            self.assertEqual(workflow.count("secrets.TOFU_STATUS_APP_PRIVATE_KEY"), 1)
+            body = job(workflow, name)
+            self.assertIn(environment, body)
+            self.assertIn("secrets.TOFU_STATUS_APP_PRIVATE_KEY", body)
+            self.assertIn("permission-statuses: write", body)
+
+    def test_status_workflow_never_runs_pr_code(self):
+        self.assertIn("pull_request_target:", self.status_workflow)
+        self.assertNotIn("ref:", self.status_workflow)
+        self.assertNotIn("head.sha }}\n", self.status_workflow.split("\njobs:\n", 1)[1])
+        for line in self.status_workflow.splitlines():
+            if line.strip().startswith("run:"):
+                self.assertNotIn("${{", line)
 
 
 if __name__ == "__main__":
