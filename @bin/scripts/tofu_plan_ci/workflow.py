@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Mapping, Sequence
 
 from . import aggregate as aggregate_report
-from . import bedrock_client, discover, plan_identity, plan_llm, plan_report
+from . import bedrock_client, discover, plan_digest, plan_identity, plan_llm, plan_report
 
 PROFILE = re.compile(
     r'^\s*profile\s*=\s*"(?P<profile>[A-Za-z0-9_-]+)"\s*(?:#.*)?$'
@@ -397,6 +397,10 @@ def run_live(layer: str) -> int:
     common_tfvars_shape_value = None
     failure_location = None
     llm_input = "disabled"
+    digest = None
+    # Popped, not read: the tofu subprocesses get a copy of this environment, and
+    # provider and module code from the PR must not see the key.
+    digest_key = os.environ.pop("PLAN_DIGEST_KEY", "")
 
     try:
         if layer not in allowed_layers():
@@ -465,6 +469,12 @@ def run_live(layer: str) -> int:
             )
             if show_exit != 0:
                 plan_exit = 1
+            elif digest_key:
+                digest = plan_digest.plan_digest(
+                    json.loads(plan_json.read_text(encoding="utf-8")), digest_key
+                )
+            else:
+                print(f"::notice::No plan digest for {layer}: PLAN_DIGEST_KEY is not set")
         if plan_exit == 2 and os.environ.get("LLM_ENABLED") == "true":
             llm_input = prepare_llm_input(
                 slug=slug, plan_file=plan_file, process_env=process_env, layer_dir=layer_dir
@@ -516,6 +526,7 @@ def run_live(layer: str) -> int:
                     *(["--failure-diagnostic", failure_diagnostic] if failure_diagnostic else []),
                     *(["--common-tfvars-shape", common_tfvars_shape_value] if common_tfvars_shape_value else []),
                     *(["--failure-location", failure_location] if failure_location else []),
+                    *(["--plan-digest", digest] if digest else []),
                     *_metadata_args(),
                 ]
             )

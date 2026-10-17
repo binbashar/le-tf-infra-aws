@@ -147,6 +147,65 @@ class WorkflowTests(unittest.TestCase):
             self.assertFalse((runner / "aws").exists())
             self.assertFalse((runner / "tofu-plan-ui.jsonl").exists())
 
+    def live_run_for_digest(self, root: Path, extra_env: dict[str, str]) -> tuple[dict, list]:
+        workspace = root / "workspace"
+        runner = root / "runner"
+        (workspace / "config").mkdir(parents=True)
+        account_config = workspace / "apps-devstg/config"
+        account_config.mkdir(parents=True)
+        (account_config / "backend.tfvars").write_text('profile = "apps-devstg-ci"\n')
+        (account_config / "account.tfvars").write_text("")
+        runner.mkdir()
+        env = {
+            **self.github_env(root),
+            "COMMON_TFVARS": 'project = "example"',
+            "AWS_ACCESS_KEY_ID": "temporary-access-key",
+            "AWS_SECRET_ACCESS_KEY": "temporary-secret-key",
+            "AWS_SESSION_TOKEN": "temporary-session-token",
+            "PLAN_LAYERS": "apps-devstg/global/cli-test-layer",
+            **extra_env,
+        }
+        subprocess_envs = []
+
+        def fake_run(command, *, stdout_path, stderr_path=None, env=None, cwd=None):
+            subprocess_envs.append(env)
+            if "plan" in command:
+                return 2
+            if "show" in command:
+                stdout_path.write_text(
+                    json.dumps(
+                        {
+                            "format_version": "1.0",
+                            "resource_changes": [
+                                {"address": "aws_iam_role.x", "change": {"actions": ["create"], "after": {"name": "x"}}}
+                            ],
+                        }
+                    )
+                )
+            return 0
+
+        with patch.dict(os.environ, env, clear=True), patch(
+            "tofu_plan_ci.workflow.run_logged", side_effect=fake_run
+        ), redirect_stdout(io.StringIO()):
+            self.assertEqual(run_live("apps-devstg/global/cli-test-layer"), 0)
+        report = next((runner / "tofu-plan-report").rglob("result.json"))
+        return json.loads(report.read_text()), subprocess_envs
+
+    def test_live_run_records_a_plan_digest_without_exposing_the_key(self):
+        key = "digest-key-" + "x" * 32
+        with tempfile.TemporaryDirectory() as directory:
+            result, envs = self.live_run_for_digest(Path(directory), {"PLAN_DIGEST_KEY": key})
+        self.assertRegex(result["plan_digest"], r"\Ahmac-sha256:v1:[0-9a-f]{64}\Z")
+        self.assertTrue(envs)
+        for env in envs:
+            self.assertNotIn("PLAN_DIGEST_KEY", env)
+            self.assertNotIn(key, env.values())
+
+    def test_live_run_without_a_key_has_no_digest(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result, _ = self.live_run_for_digest(Path(directory), {})
+        self.assertIsNone(result["plan_digest"])
+
     def live_run_with_llm(self, root: Path, show_text: str) -> tuple[str, str]:
         workspace = root / "workspace"
         runner = root / "runner"
