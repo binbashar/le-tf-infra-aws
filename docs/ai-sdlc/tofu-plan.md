@@ -8,6 +8,7 @@ optional Bedrock explanation and security review. It never applies anything.
 - AWS identities: [`apps-devstg/global/github-oidc-tofu-plan`](../../apps-devstg/global/github-oidc-tofu-plan/),
   [`management/global/github-oidc-tofu-plan`](../../management/global/github-oidc-tofu-plan/)
 - History, gates, and decisions: [`tofu-plan-history.md`](tofu-plan-history.md)
+- Incident and credential revocation: [`tofu-ci-incident.md`](tofu-ci-incident.md)
 
 ## 1. What it is
 
@@ -243,6 +244,9 @@ that stage for every PR, for example during an incident, a suspected role proble
 output. Runs started afterwards skip it; the rest of the check keeps working. With both LLM
 switches off, the plan text is never written and no Bedrock credentials are requested.
 
+A kill switch is not an incident response: it does not stop runs already started, and does not
+cut off sessions already issued. For that, follow [`tofu-ci-incident.md`](tofu-ci-incident.md).
+
 ### Re-running
 
 - Push a new commit, or close and reopen the PR (picks up changed variables).
@@ -323,7 +327,7 @@ The Bedrock client is the only third-party dependency, pinned with hashes in
 | PRM attribution of the Bedrock calls | 🟡 | Anthropic models need the User Agent String method; `bedrock_client.py` does not set it |
 | Cost cap and alarm for the Bedrock role (AWS Budget or CloudWatch alarm) | 🟡 | Nothing warns today on a loop or abuse of the role |
 | Short artifact retention (explicit `retention-days`, e.g. 14) | 🟡 | Default is 90 days on a public repository |
-| Incident and credential-revocation procedure | 🟡 | Prerequisite for making the check required |
+| Incident and credential-revocation procedure | ✅ | 2026-10-17, [`tofu-ci-incident.md`](tofu-ci-incident.md), rehearsed on apps-devstg. Rehearse again for the apply role |
 | Model lifecycle tracking for Haiku 5.5 and Nova Lite | 🟡 | Renovate does not track Bedrock model IDs |
 | Sticky PR comment with the explanation | 🟡 | Revisit: PR comments are out of scope today, and reviewers must open the run summary |
 | Make `OpenTofu Plan` a required check | ⛔ | Blocked by the destructive-change policy and the Bedrock role placement, plus an incident and credential-revocation procedure |
