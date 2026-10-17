@@ -15,7 +15,7 @@ resource "aws_iam_policy" "leverage_test" {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "BogusPolicyForTesting",
+            "Sid": "BogusPolicyForApplyTesting",
             "Effect": "Allow",
             "Action": [
                 "vpc:*"
