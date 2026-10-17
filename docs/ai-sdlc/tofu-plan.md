@@ -327,7 +327,7 @@ The Bedrock client is the only third-party dependency, pinned with hashes in
 | PRM attribution of the Bedrock calls | 🟡 | Anthropic models need the User Agent String method; `bedrock_client.py` does not set it |
 | Cost cap and alarm for the Bedrock role (AWS Budget or CloudWatch alarm) | 🟡 | Nothing warns today on a loop or abuse of the role |
 | Short artifact retention (explicit `retention-days`, e.g. 14) | 🟡 | Default is 90 days on a public repository |
-| Incident and credential-revocation procedure | 🟡 | Draft in [`tofu-ci-incident.md`](tofu-ci-incident.md); done once rehearsed on apps-devstg. Prerequisite for the apply role and for making the check required |
+| Incident and credential-revocation procedure | ✅ | 2026-10-17, [`tofu-ci-incident.md`](tofu-ci-incident.md), rehearsed on apps-devstg. Rehearse again for the apply role |
 | Model lifecycle tracking for Haiku 5.5 and Nova Lite | 🟡 | Renovate does not track Bedrock model IDs |
 | Sticky PR comment with the explanation | 🟡 | Revisit: PR comments are out of scope today, and reviewers must open the run summary |
 | Make `OpenTofu Plan` a required check | ⛔ | Blocked by the destructive-change policy and the Bedrock role placement, plus an incident and credential-revocation procedure |

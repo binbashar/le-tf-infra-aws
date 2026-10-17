@@ -64,6 +64,36 @@ management. The supervised dispatch needed three runs:
 The artifacts held no e-mail addresses or Identity Center IDs. Both lessons are now steps 1 and 2
 of [Adding a layer](tofu-plan.md#adding-a-layer).
 
+## Incident procedure rehearsal
+
+On 2026-10-17, the [incident procedure](tofu-ci-incident.md) was rehearsed on the apps-devstg plan
+role. One maintainer ran the IAM writes with `bb-apps-devstg-devops`, and Claude Code ran the
+dispatches and checks.
+
+| Time (UTC) | Step | Result |
+| --- | --- | --- |
+| 04:02:51 | `IncidentDenyAll` on `GitHubActionsOpenTofuPlan` | Applied |
+| 04:05 | Dispatch [39001184626](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39001184626) | `AssumeRoleWithWebIdentity` succeeded; live plan failed at `init` with no plan digest; check red |
+| 04:05:52 | Disable workflow, dispatch, enable | Dispatch refused: `HTTP 422: Cannot trigger a 'workflow_dispatch' on a disabled workflow` |
+| 04:07:10 | `AWSRevokeOlderSessions` (`aws:TokenIssueTime` < 04:07:10) | Applied |
+| 04:07:28 | `IncidentDenyAll` removed | Role has only the revoke policy |
+| 04:08 | Dispatch [39001391540](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39001391540) | Passed, 3 creates. Same `plan_digest` as run 38994289204 on the same commit and state |
+| — | CloudTrail Event history | `tofu-plan-39001184626` found by session name; its key made only `GetCallerIdentity` calls |
+| pending | Remove `AWSRevokeOlderSessions` | Due after 2026-10-18 04:07 UTC |
+
+Lessons, folded into the procedure:
+
+- The deny does not block `AssumeRoleWithWebIdentity`, because that call is evaluated against the
+  trust policy, nor `GetCallerIdentity`, which IAM cannot deny. Both succeed; everything else is
+  denied.
+- The live plan reports `stage: init` with no denied action: the S3 backend error does not use the
+  "not authorized to perform" wording that the diagnostic extracts.
+- The account's Event history holds management events only. The S3 state reads are data events, so
+  following them needs the organization trail with data events enabled.
+- Long commands pasted from the terminal wrapped onto several lines and failed. Commands meant to
+  be pasted must fit on one line or live in a script.
+- Two runs on the same commit and state produced the same `plan_digest` in CI.
+
 ## Decisions
 
 | Date | Decision | Why |

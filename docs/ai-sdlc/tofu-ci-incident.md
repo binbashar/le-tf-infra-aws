@@ -5,7 +5,8 @@ covers the plan stage that runs today ([`tofu-plan.md`](tofu-plan.md)) and the a
 being designed. Having this procedure documented and rehearsed is a prerequisite for creating any
 write role and for making the check required.
 
-Status (2026-10-17): **draft, not rehearsed yet.** See [§8](#8-rehearsal).
+Status (2026-10-17): **rehearsed once on apps-devstg** ([record](tofu-plan-history.md#incident-procedure-rehearsal)).
+Not yet rehearsed for an apply role.
 
 ## 1. When to use it
 
@@ -68,6 +69,10 @@ done
 The layers do not manage inline policies, so `tofu` neither shows nor removes `IncidentDenyAll`.
 It stays in place until someone removes it by hand (§6).
 
+`AssumeRoleWithWebIdentity` and `GetCallerIdentity` still succeed, which is expected: the first
+call is evaluated against the trust policy, and IAM cannot deny the second. Every other call is
+denied, and a live plan fails at `init`.
+
 **3. Revoke the sessions issued so far.** This step is for later: when `IncidentDenyAll` is
 removed, sessions issued before the incident would otherwise become valid again for up to an hour.
 It is the same policy the console's "Revoke active sessions" button writes:
@@ -102,9 +107,13 @@ evidence, and the OIDC provider is shared with other workflows (`prevent_destroy
 Every session name contains the GitHub run ID (`tofu-plan-<run_id>`, `tofu-plan-llm-<run_id>`),
 so each AWS session maps to exactly one run.
 
-- **AWS:** use the organization trail (`security/us-east-1/security-audit`). Look for
-  `AssumeRoleWithWebIdentity` on `GitHubActionsOpenTofu*` roles in the window, then follow each
-  session's access key through its events. For the apply role, list every write event: that is the
+- **AWS:** look for `AssumeRoleWithWebIdentity` on `GitHubActionsOpenTofu*` roles in the window,
+  then follow each session's access key (`responseElements.credentials.accessKeyId`) through its
+  events. The account's Event history is enough for a first pass:
+  `aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=AssumeRoleWithWebIdentity`.
+  It holds management events only, though. State reads and writes in S3 are data events, which
+  are only visible in the organization trail (`security/us-east-1/security-audit`) when data
+  events are enabled there. For the apply role, list every write event: that is the
   set of changes to verify or undo.
 - **GitHub:** review the run's logs and jobs, who approved the `tofu-plan` or `tofu-apply`
   deployment and on which commit, and the PR diff at that commit. In the organization audit log,
@@ -152,7 +161,7 @@ Phase 2 of the apply plan is complete when this has been done once on apps-devst
 `tofu-plan-history.md`:
 
 1. Put `IncidentDenyAll` on `GitHubActionsOpenTofuPlan`.
-2. Dispatch `tofu-plan` on `cli-test-layer` and confirm the live plan fails with `AccessDenied`.
+2. Dispatch `tofu-plan` on `cli-test-layer` and confirm the live plan fails at `init`.
 3. Disable and re-enable the workflow, and confirm a dispatch is refused while disabled.
 4. Follow §6 steps 2 to 5, then confirm a dispatch passes.
 5. Find the drill's sessions in the organization trail by their session names.
