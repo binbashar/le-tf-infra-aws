@@ -8,6 +8,7 @@
 resource "aws_iam_policy" "leverage_test" {
   name        = "leverage_test"
   description = "Bogus policy for testing Leverage CLI"
+  tags        = local.tags
 
   policy = <<EOF
 {
