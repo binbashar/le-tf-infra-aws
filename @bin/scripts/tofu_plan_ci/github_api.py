@@ -74,6 +74,9 @@ class GitHub:
     def pull(self, number: int) -> dict:
         return self.get(f"{self.repo}/pulls/{number}")
 
+    def pull_files(self, number: int) -> list[dict]:
+        return self.paginate(f"{self.repo}/pulls/{number}/files", limit=30)
+
     def reviews(self, number: int) -> list[dict]:
         return self.paginate(f"{self.repo}/pulls/{number}/reviews")
 
@@ -97,6 +100,11 @@ class GitHub:
         if target_url:
             body["target_url"] = target_url
         self.call("POST", f"{self.repo}/statuses/{sha}", body)
+
+    def commit_statuses(self, sha: str) -> list[dict]:
+        """The newest 100 statuses of a commit, newest first."""
+
+        return self.get(f"{self.repo}/commits/{sha}/statuses?per_page=100") or []
 
     # Workflow runs
     def workflow_runs(self, workflow: str, head_sha: str) -> list[dict]:
