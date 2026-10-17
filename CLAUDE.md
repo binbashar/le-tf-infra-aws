@@ -21,7 +21,7 @@ This is the **Binbash Leverage Reference Architecture** - a comprehensive OpenTo
 - **Data lake and analytics capabilities** including ML/AI workloads with AWS Bedrock
 - **Comprehensive backup and disaster recovery** strategies
 - **Cost optimization** with built-in Infracost integration
-- **Atlantis integration** for automated workflow management
+- **OpenTofu plan CI** on pull requests (`.github/workflows/tofu-plan.yml`)
 
 ### Advanced Capabilities
 - **AWS Bedrock integration** for AI/ML workloads and document processing
@@ -291,7 +291,7 @@ Within each region, resources are organized into functional layers:
 - **tools-*** - Operational tools
 
 Directories whose name ends in `--` are **disabled/optional layers**, excluded from active
-deployment and Atlantis autodiscover. Both forms occur in the tree — spaced (`databases-mysql --`)
+deployment and from CI layer discovery. Both forms occur in the tree — spaced (`databases-mysql --`)
 and attached (`databases-dynamodb--`) — and one carries a trailing space, so tooling must match
 `segment.rstrip().endswith("--")`, as `@bin/scripts/version_support/discover.py` does. Matching only
 `" --"` silently treats 11 dormant layers as active.
@@ -439,7 +439,6 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 
 ### Project Configuration Files
 - **`build.env`** (repo root): `PROJECT=bb`, `TERRAFORM_IMAGE_TAG=1.9.1-tofu-0.3.0` -- configures the Leverage CLI Docker image
-- **`atlantis.yaml`**: Autodiscover enabled with `config/*` ignored; automerge and delete-source-branch on merge
 - **`infracost.yml`**: Defines cost analysis entries for every layer across all accounts
 - **`renovate.json`**: Automated dependency updates
 - **`.pre-commit-config.yaml`**: Enforces `terraform_fmt`, JSON validation, trailing whitespace, private key detection
@@ -461,7 +460,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 9. **Documentation** - Reference official [Leverage Documentation](https://leverage.binbash.co) for guidance
 10. **Testing** - Use native `tofu test` for module unit tests (the leverage wrapper does not expose `test`) and integrate with CI/CD
 11. **Code quality** - Always run `leverage tofu format` and `leverage tofu validate` before commits
-12. **Atlantis integration** - The repository uses Atlantis for automated OpenTofu/Terraform workflows
+12. **CI plan** - `OpenTofu Plan` plans allowlisted layers on PRs; see `docs/ai-sdlc/tofu-plan.md`. Atlantis is no longer used
 
 ### CI / Pre-commit
 - CI job "Test and Lint" runs `make pre-commit` → `pre-commit run --all-files`
@@ -507,7 +506,7 @@ binary (no Docker on recent Leverage CLI), so it hangs identically.
 
 **Fix**: use a native `darwin_arm64` OpenTofu (install one, or download a release zip to
 `/tmp` for a one-off). When (re)generating `.terraform.lock.hcl`, include hashes for all
-platforms so Atlantis/CI (linux) and both macOS architectures verify:
+platforms so CI (linux) and both macOS architectures verify:
 ```bash
 tofu providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_amd64 -platform=darwin_arm64
 ```

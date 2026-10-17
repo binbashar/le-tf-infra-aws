@@ -249,7 +249,7 @@ Location: `/renovate.json`
 4. **Test thoroughly** before merging
 
 ## Automated Checks
-- Atlantis will run `plan` on PR
+- `OpenTofu Plan` will plan allowlisted layers on PR
 - CodeRabbit will review changes
 - Infracost will check cost impact
 - Static checks must pass
