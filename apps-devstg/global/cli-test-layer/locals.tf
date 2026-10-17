@@ -1,4 +1,9 @@
 locals {
+  # Test layer of the OpenTofu plan and apply workflows. Its code and its
+  # infrastructure must match (GitOps), so a test that needs resources flips
+  # this to true in a PR and applies it with /tofu apply.
+  provisioned = false
+
   tags = {
     Terraform    = "true"
     Environment  = var.environment
