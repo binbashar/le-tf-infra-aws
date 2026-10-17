@@ -340,10 +340,11 @@ class ReportAndReleaseTests(ApplyWorkflowTestCase):
         self.assertEqual(github.deleted, ["refs/tofu-locks/a"])
 
     def test_close_without_merge_keeps_the_lock_and_says_so(self):
-        github = FakeGitHub(locks={"refs/tofu-locks/a": lock_message(pr=7, layer="a", head_sha=HEAD, run_id="1")})
+        github = FakeGitHub(locks={"refs/tofu-locks/a-slug": lock_message(pr=7, layer="a", head_sha=HEAD, run_id="1")})
         self.release(github, "false")
         self.assertEqual(github.deleted, [])
         self.assertIn("lock kept", github.comments[0])
+        self.assertIn("`a`", github.comments[0])
 
 
 class GitHubClientTests(unittest.TestCase):

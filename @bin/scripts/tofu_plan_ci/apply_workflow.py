@@ -492,7 +492,7 @@ def run_release() -> int:
 
     github = _github()
     number = int(_required_env("PR_NUMBER"))
-    owned = [ref for ref, owner in read_locks(github).items() if owner.get("pr") == number]
+    owned = {ref: owner for ref, owner in read_locks(github).items() if owner.get("pr") == number}
     if not owned:
         return 0
     if os.environ.get("MERGED") == "true":
@@ -500,7 +500,8 @@ def run_release() -> int:
             github.delete_ref(ref)
             print(f"Released {ref}")
         return 0
-    layers = ", ".join(f"`{ref.rsplit('/', 1)[-1]}`" for ref in owned)
+    layers = ", ".join(f"`{owner.get('layer') or ref.rsplit('/', 1)[-1]}`"
+                       for ref, owner in owned.items())
     github.comment(number, (
         f"**🔒 Closed without merging, lock kept** · {layers}\n\n"
         "This PR applied changes that `master` does not have. Revert them here and "

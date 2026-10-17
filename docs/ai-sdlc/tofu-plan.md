@@ -255,9 +255,9 @@ cut off sessions already issued. For that, follow [`tofu-ci-incident.md`](tofu-c
 - Push a new commit, or close and reopen the PR (picks up changed variables).
 - Manual dispatch: `gh workflow run tofu-plan.yml --ref master -f layer=<layer>`. Only from
   `master`; a feature branch fails at `AssumeRoleWithWebIdentity` by design.
-- To exercise the analyses, dispatch `apps-devstg/global/cli-test-layer`: it is intentionally
-  left unapplied, so its plan always has three creates. A converged layer has no changes and
-  skips them.
+- To exercise the analyses, open a PR that sets `local.provisioned = true` in
+  `apps-devstg/global/cli-test-layer`; its plan has three creates. The layer is converged with no
+  resources (since 2026-10-17), so a dispatch has no changes and skips the analyses.
 
 ### Adding a layer
 
