@@ -189,6 +189,8 @@ jobs:
         id: run
         env:
           COMMON_TFVARS: ${{ secrets.TOFU_PLAN_COMMON_TFVARS }}
+          # Keys the plan digest that the apply stage compares against; optional for now.
+          PLAN_DIGEST_KEY: ${{ secrets.TOFU_PLAN_DIGEST_KEY }}
           LLM_ENABLED: >-
             ${{ (vars.TOFU_PLAN_LLM_EXPLAINER == 'true' ||
                  vars.TOFU_PLAN_LLM_SECURITY == 'true') &&

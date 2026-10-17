@@ -167,6 +167,22 @@ class PlanReportTests(unittest.TestCase):
             self.assertEqual(result["failure"], {"stage": "plan", "denied_action": "dynamodb:PutItem", "diagnostic": "Error acquiring the state lock", "common_tfvars_shape": None, "location": "roles.tf:12"})
             self.assertIn("Denied AWS action", (out / "summary.md").read_text())
 
+    def test_live_result_carries_a_well_formed_plan_digest(self):
+        digest = "hmac-sha256:v1:" + "a" * 64
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory)
+            main(["live", "--layer", "apps-devstg/global/cli-test-layer", "--init-exit", "0", "--validate-exit", "0", "--plan-exit", "0", "--plan-digest", digest, "--out-dir", str(out)])
+            self.assertEqual(json.loads((out / "result.json").read_text())["plan_digest"], digest)
+
+    def test_failed_plan_has_no_digest_and_malformed_digest_is_rejected(self):
+        digest = "hmac-sha256:v1:" + "a" * 64
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory)
+            main(["live", "--layer", "apps-devstg/global/cli-test-layer", "--init-exit", "0", "--validate-exit", "0", "--plan-exit", "1", "--plan-digest", digest, "--out-dir", str(out)])
+            self.assertIsNone(json.loads((out / "result.json").read_text())["plan_digest"])
+            with self.assertRaises(SystemExit):
+                main(["live", "--layer", "x", "--init-exit", "0", "--validate-exit", "0", "--plan-exit", "0", "--plan-digest", "secret-value", "--out-dir", str(out)])
+
 
 if __name__ == "__main__":
     unittest.main()

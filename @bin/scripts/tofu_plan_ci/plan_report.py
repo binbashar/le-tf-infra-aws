@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from . import SCHEMA_VERSION
+from .plan_digest import DIGEST
 
 ACCOUNT_ID = re.compile(r"(?<!\d)\d{12}(?!\d)")
 ARN = re.compile(r"arn:(?:aws|aws-us-gov|aws-cn):[^\s\"']+")
@@ -269,6 +270,7 @@ def _write_result(
     failure_diagnostic: str | None = None,
     common_tfvars_shape: str | None = None,
     failure_location: str | None = None,
+    plan_digest: str | None = None,
 ) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     result = {
@@ -281,6 +283,7 @@ def _write_result(
         "plan_exit_code": plan_exit,
         "summary": review["summary"] if review else None,
         "review_signals": review["review_signals"] if review else [],
+        "plan_digest": plan_digest,
         "metadata": metadata or {},
         "failure": (
             {"stage": failure_stage, "denied_action": denied_action, "diagnostic": failure_diagnostic, "common_tfvars_shape": common_tfvars_shape, "location": failure_location}
@@ -344,6 +347,7 @@ def _parser() -> argparse.ArgumentParser:
     live.add_argument("--failure-diagnostic")
     live.add_argument("--common-tfvars-shape", choices=("accounts=present;accounts.security=present", "accounts=present;accounts.security=absent", "accounts=absent;accounts.security=present", "accounts=absent;accounts.security=absent"))
     live.add_argument("--failure-location")
+    live.add_argument("--plan-digest")
     live.add_argument("--out-dir", type=Path, required=True)
     for command in (static, live):
         command.add_argument("--repository", default="unknown")
@@ -384,6 +388,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         raise SystemExit("failure diagnostic has an unsafe format")
     if args.failure_location and not FAILURE_LOCATION.fullmatch(args.failure_location):
         raise SystemExit("failure location has an unsafe format")
+    if args.plan_digest and not DIGEST.fullmatch(args.plan_digest):
+        raise SystemExit("plan digest has an unsafe format")
     if args.plan_exit in (0, 2) and args.plan_json and args.plan_json.is_file():
         review = build_review(
             json.loads(args.plan_json.read_text(encoding="utf-8")),
@@ -406,6 +412,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         failure_diagnostic=args.failure_diagnostic,
         common_tfvars_shape=args.common_tfvars_shape,
         failure_location=args.failure_location,
+        plan_digest=args.plan_digest if passed else None,
     )
     return 0
 

@@ -98,6 +98,14 @@ class WorkflowSecurityContractTests(unittest.TestCase):
             2,
         )
 
+    def test_digest_key_reaches_only_the_live_plan_step(self):
+        secret = "PLAN_DIGEST_KEY: ${{ secrets.TOFU_PLAN_DIGEST_KEY }}"
+        self.assertEqual(self.workflow.count("secrets.TOFU_PLAN_DIGEST_KEY"), 1)
+        live_plan = self.live_plan()
+        step = live_plan[live_plan.rindex("- name:", 0, live_plan.index(secret)) :]
+        step = step[: step.index("\n      - name:", 1)]
+        self.assertIn("python -m tofu_plan_ci.workflow live", step)
+
 
 if __name__ == "__main__":
     unittest.main()
