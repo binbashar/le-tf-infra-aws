@@ -107,7 +107,9 @@ PR with this exact, repeatable procedure so no sensitive data leaks:
    ```` ```text ```` fence (keep the What / Why / References sections intact). Never paste the
    raw refresh log.
 5. **Review only — do not apply or merge from automation.** A human runs `leverage tofu apply`
-   after approval. Never commit the `tfplan` binary (see the Git rule above).
+   after approval, or, for layers onboarded to CI apply, comments `/tofu apply` on the PR
+   (`docs/ai-sdlc/tofu-apply.md`). Claude never posts `/tofu apply` itself. Never commit the
+   `tfplan` binary (see the Git rule above).
 
 ## Essential Commands
 

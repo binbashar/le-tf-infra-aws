@@ -9,6 +9,7 @@ optional Bedrock explanation and security review. It never applies anything.
   [`management/global/github-oidc-tofu-plan`](../../management/global/github-oidc-tofu-plan/)
 - History, gates, and decisions: [`tofu-plan-history.md`](tofu-plan-history.md)
 - Incident and credential revocation: [`tofu-ci-incident.md`](tofu-ci-incident.md)
+- Apply before merge (`/tofu apply`): [`tofu-apply.md`](tofu-apply.md)
 
 ## 1. What it is
 
@@ -43,7 +44,9 @@ later commits.
 - no new infrastructure to run: no Atlantis server, GitHub App, or webhook.
 
 **Deliberately out of scope:** apply, destroy, import, any state change, PR comments, fork and
-bot PRs, and planning layers outside the allowlist. Applying stays a manual maintainer step.
+bot PRs, and planning layers outside the allowlist. Applying is a separate workflow,
+[`tofu-apply.md`](tofu-apply.md), triggered by a maintainer's `/tofu apply`; the plan workflow
+only posts the `OpenTofu Apply` status it uses.
 
 ## 3. Using it
 

@@ -1,0 +1,326 @@
+name: OpenTofu apply
+
+# Apply-before-merge. `/tofu apply` on a PR re-plans its one allowlisted layer,
+# applies it only if the plan is the one that was reviewed, and leaves the layer
+# locked until the PR is merged. A human merges.
+#
+# issue_comment always runs this file from the default branch, so every job runs
+# trusted tooling. Only the apply job executes the PR's OpenTofu code, with the
+# apply role, after a member of the admin team approves the tofu-apply
+# environment. Docs: docs/ai-sdlc/tofu-apply.md
+on:
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [closed]
+
+# One queue per PR for commands. Any other comment gets a group of its own: a
+# newer pending run replaces an older one, so an ordinary comment must never
+# share the group and silently drop a queued /tofu apply.
+concurrency:
+  group: >-
+    tofu-apply-${{ github.event_name }}-${{ github.event.issue.number || github.event.pull_request.number }}${{
+    (github.event_name == 'issue_comment' &&
+    !(startsWith(github.event.comment.body, '/tofu apply') ||
+      startsWith(github.event.comment.body, '/tofu unlock')))
+    && format('-other-{0}', github.event.comment.id) || '' }}
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  PYTHONPATH: '@bin/scripts'
+  APPLY_LAYERS: ${{ vars.TOFU_APPLY_LAYERS }}
+
+jobs:
+  authorize:
+    name: Authorize
+    if: >-
+      ${{ github.event_name == 'issue_comment' &&
+          github.event.issue.pull_request &&
+          startsWith(github.event.comment.body, '/tofu ') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    outputs:
+      verb: ${{ steps.command.outputs.verb }}
+      allowed: ${{ steps.decide.outputs.allowed }}
+      layer: ${{ steps.decide.outputs.layer }}
+      slug: ${{ steps.decide.outputs.slug }}
+      digest: ${{ steps.decide.outputs.digest }}
+      head_sha: ${{ steps.decide.outputs.head_sha }}
+      allow_destroy: ${{ steps.decide.outputs.allow_destroy }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.issue.number }}
+      COMMENT_ID: ${{ github.event.comment.id }}
+      # Read from the environment only; never interpolated into a script.
+      COMMENT_BODY: ${{ github.event.comment.body }}
+      COMMENTER: ${{ github.event.comment.user.login }}
+    steps:
+      - name: Checkout trusted tooling
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Parse the command
+        id: command
+        run: python -m tofu_plan_ci.apply_workflow command
+
+      - name: Download the reviewed plan evidence
+        if: ${{ steps.command.outputs.plan_run_id != '' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          run-id: ${{ steps.command.outputs.plan_run_id }}
+          github-token: ${{ github.token }}
+          pattern: tofu-plan-layer-*
+          path: ${{ runner.temp }}/tofu-apply-plan
+
+      - name: Evaluate the gates
+        id: decide
+        if: ${{ steps.command.outputs.verb != 'none' }}
+        env:
+          RESULTS_DIR: ${{ runner.temp }}/tofu-apply-plan
+          TOFU_APPLY_ROLES: ${{ vars.TOFU_APPLY_ROLES }}
+          APPLY_ENABLED: ${{ vars.TOFU_APPLY_LIVE }}
+        run: python -m tofu_plan_ci.apply_workflow authorize
+
+      - name: Upload the decision
+        if: ${{ always() && steps.command.outputs.verb != 'none' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: tofu-apply-decision
+          path: ${{ runner.temp }}/tofu-apply/decision.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # Separate from the apply job so that the job running PR code never holds a
+  # token that can write to the repository.
+  lock:
+    name: Lock · ${{ needs.authorize.outputs.layer }}
+    needs: authorize
+    if: ${{ needs.authorize.outputs.verb == 'apply' && needs.authorize.outputs.allowed == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    outputs:
+      created: ${{ steps.lock.outputs.created }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.issue.number }}
+      LAYER: ${{ needs.authorize.outputs.layer }}
+      HEAD_SHA: ${{ needs.authorize.outputs.head_sha }}
+    steps:
+      - name: Checkout trusted tooling
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Take the layer lock
+        id: lock
+        run: python -m tofu_plan_ci.apply_workflow lock
+
+  apply:
+    name: Apply · ${{ needs.authorize.outputs.layer }}
+    needs: [authorize, lock]
+    if: >-
+      ${{ needs.lock.result == 'success' &&
+          vars.TOFU_APPLY_LIVE == 'true' &&
+          vars.TOFU_APPLY_ROLES != '' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: tofu-apply
+    concurrency:
+      group: tofu-apply-layer-${{ needs.authorize.outputs.slug }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.issue.number }}
+      LAYER: ${{ needs.authorize.outputs.layer }}
+      HEAD_SHA: ${{ needs.authorize.outputs.head_sha }}
+      APPLY_ENABLED: ${{ vars.TOFU_APPLY_LIVE }}
+      CANDIDATE_ROOT: ${{ github.workspace }}/candidate
+      PYTHONPATH: trusted/@bin/scripts
+    steps:
+      - name: Checkout the reviewed commit
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.authorize.outputs.head_sha }}
+          path: candidate
+          persist-credentials: false
+
+      - name: Checkout trusted tooling
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          path: trusted
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with:
+          tofu_version: ${{ vars.OPENTOFU_VERSION || '1.9.1' }}
+          tofu_wrapper: false
+
+      # The approval may have taken hours: check again that the head, the review,
+      # and master have not moved before any credential is requested.
+      - name: Re-check the pull request
+        run: python -m tofu_plan_ci.apply_workflow recheck
+
+      - name: Resolve apply role and layer session policy
+        id: identity
+        env:
+          TOFU_APPLY_ROLES: ${{ vars.TOFU_APPLY_ROLES }}
+        run: python -m tofu_plan_ci.apply_workflow credentials
+
+      - name: Configure short-lived AWS apply credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
+        with:
+          role-to-assume: ${{ steps.identity.outputs.role_arn }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          role-session-name: tofu-apply-${{ github.run_id }}
+          role-duration-seconds: 3600
+          allowed-account-ids: ${{ steps.identity.outputs.account_id }}
+          inline-session-policy: ${{ steps.identity.outputs.session_policy }}
+          mask-aws-account-id: true
+          unset-current-credentials: true
+
+      - name: Re-plan, compare with the reviewed plan, and apply it
+        env:
+          COMMON_TFVARS: ${{ secrets.TOFU_PLAN_COMMON_TFVARS }}
+          PLAN_DIGEST_KEY: ${{ secrets.TOFU_PLAN_DIGEST_KEY }}
+          REVIEWED_DIGEST: ${{ needs.authorize.outputs.digest }}
+          ALLOW_DESTROY: ${{ needs.authorize.outputs.allow_destroy }}
+        run: python -m tofu_plan_ci.apply_workflow apply
+
+      - name: Upload the sanitized result
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: tofu-apply-result
+          path: ${{ runner.temp }}/tofu-apply/result.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # The environment approval is what makes this an admin-team action.
+  unlock:
+    name: Unlock
+    needs: authorize
+    if: ${{ needs.authorize.outputs.verb == 'unlock' && needs.authorize.outputs.allowed == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: tofu-apply
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.issue.number }}
+    steps:
+      - name: Checkout trusted tooling
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Release this pull request's locks
+        run: python -m tofu_plan_ci.apply_workflow unlock
+
+  report:
+    name: Report
+    needs: [authorize, lock, apply, unlock]
+    if: >-
+      ${{ always() && github.event_name == 'issue_comment' &&
+          needs.authorize.outputs.verb != '' && needs.authorize.outputs.verb != 'none' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      actions: read
+      pull-requests: write
+      statuses: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.issue.number }}
+      VERB: ${{ needs.authorize.outputs.verb }}
+      LOCK_RESULT: ${{ needs.lock.result }}
+      LOCK_CREATED: ${{ needs.lock.outputs.created }}
+      APPLY_RESULT: ${{ needs.apply.result }}
+      UNLOCK_RESULT: ${{ needs.unlock.result }}
+    steps:
+      - name: Checkout trusted tooling
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Download the decision and result
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: tofu-apply-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/tofu-apply-report
+
+      - name: Reply on the pull request and set the status
+        env:
+          REPORT_DIR: ${{ runner.temp }}/tofu-apply-report
+        run: python -m tofu_plan_ci.apply_workflow report
+
+  release:
+    name: Release locks on close
+    if: >-
+      ${{ github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      MERGED: ${{ github.event.pull_request.merged }}
+    steps:
+      - name: Checkout trusted tooling
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Release or keep this pull request's locks
+        run: python -m tofu_plan_ci.apply_workflow release
