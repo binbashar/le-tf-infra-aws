@@ -317,6 +317,15 @@ The Bedrock client is the only third-party dependency, pinned with hashes in
 | Calibrate the security review on real PRs (false positives, missed findings) before relying on it | 🟡 | |
 | Bedrock role placement: today one role in apps-devstg explains plans for every account. Decide between keeping it central or one role per account, and, if central, whether apps-devstg is the right account | 🟡 | |
 | Destructive-change policy: should delete/replace warn or fail the check | 🟡 | |
+| Deterministic checks on the plan JSON (checkov, trivy, or OPA/conftest): IAM wildcards, public S3, disabled encryption | 🟡 | Today only the advisory LLM reviews security; fixed rules could fail the check |
+| Evaluation set for the prompts: fixture plans with known risks (`*:*`, trust to `*`, public bucket, prompt injection in a tag, no changes) | 🟡 | Catches regressions when the model or a prompt changes; complements calibration on real PRs |
+| Scheduled drift detection: periodic plan of the allowlisted layers that opens an issue on differences | 🟡 | Drift is found late today (#1214, #1216) |
+| PRM attribution of the Bedrock calls | 🟡 | Anthropic models need the User Agent String method; `bedrock_client.py` does not set it |
+| Cost cap and alarm for the Bedrock role (AWS Budget or CloudWatch alarm) | 🟡 | Nothing warns today on a loop or abuse of the role |
+| Short artifact retention (explicit `retention-days`, e.g. 14) | 🟡 | Default is 90 days on a public repository |
+| Incident and credential-revocation procedure | 🟡 | Prerequisite for making the check required |
+| Model lifecycle tracking for Haiku 5.5 and Nova Lite | 🟡 | Renovate does not track Bedrock model IDs |
+| Sticky PR comment with the explanation | 🟡 | Revisit: PR comments are out of scope today, and reviewers must open the run summary |
 | Make `OpenTofu Plan` a required check | ⛔ | Blocked by the destructive-change policy and the Bedrock role placement, plus an incident and credential-revocation procedure |
 | More layers | 🔄 | Through [Adding a layer](#adding-a-layer) |
 | Planning more than one layer per PR (`TOFU_PLAN_MAX_LAYERS` > 1) | ⏸️ | Needs a review of approval and cost per run |
