@@ -86,6 +86,15 @@ class ApplyWorkflowContractTests(unittest.TestCase):
             self.assertIn("secrets.TOFU_STATUS_APP_PRIVATE_KEY", body)
             self.assertIn("permission-statuses: write", body)
 
+    def test_status_evidence_downloads_never_share_a_directory(self):
+        paths = re.findall(r"path: (\$\{\{ runner.temp \}\}/tofu-plan-\S+)", self.status_workflow)
+        self.assertEqual(len(paths), 3)
+        self.assertEqual(len(set(paths)), 3)
+        for first in paths:
+            for second in paths:
+                if first != second:
+                    self.assertFalse(second.startswith(first + "/"), (first, second))
+
     def test_status_workflow_never_runs_pr_code(self):
         self.assertIn("pull_request_target:", self.status_workflow)
         self.assertNotIn("ref:", self.status_workflow)
