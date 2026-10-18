@@ -21,6 +21,7 @@ needed to operate it. Add new entries at the end of the relevant section.
 | 2026-10-17 | Incident and credential-revocation procedure rehearsed on apps-devstg | PR #1246, [record](#incident-procedure-rehearsal) |
 | 2026-10-17 | Apply-before-merge: apps-devstg apply role, `tofu-apply` environment, `/tofu apply` workflow | PRs #1247, #1248 |
 | 2026-10-17 | First CI apply (`cli-test-layer`, 3 creates); all eight supervised cases pass | PRs #1249–#1253, [record](#apply-supervised-test) |
+| 2026-10-17 | `OpenTofu Apply` required on `master`, counted only from the `tofu-status` GitHub App | PRs #1255, #1257, [record](#required-apply-status) |
 
 ## Rollout gates
 
@@ -135,6 +136,29 @@ Lessons:
   throwaway resource.
 - **The close comment printed the lock slug.** It now prints the layer path.
 
+## Required apply status
+
+Branch protection on `master` requires `OpenTofu Apply`, with the `tofu-status` app as its
+source. Strict up-to-date, dismiss stale approvals and enforce admins were already on.
+
+| Check | Result |
+| --- | --- |
+| Docs-only PR (#1254) | success: "No layer onboarded to CI apply changed" |
+| `cli-test-layer` PR, comment only (#1256), plan running | pending: "Waiting for the OpenTofu plan" |
+| Same PR, plan finished with no changes | first pending "No plan evidence"; after #1257, success: "The plan has no changes" |
+| Branch workflow using the `tofu-status` environment, `deployment: false` | refused: branch not allowed by the environment protection rules |
+| Branch workflow posting `OpenTofu Apply: success` with `GITHUB_TOKEN` | posted as `github-actions[bot]`: the reason the check is pinned to the app |
+
+Lessons:
+
+- **`download-artifact` and single matches.** A pattern that matches one artifact extracts it
+  straight into `path`. Two downloads into one directory overwrote `result.json`. The status
+  stayed pending, so the positive-evidence rule (from CodeRabbit's review of #1255) failed safe.
+- **The sandbox and `~/Downloads`.** The app key could not be read from `~/Downloads` by a
+  shell without the macOS Files and Folders permission. Move the key first.
+- **Open PRs at the switch.** PRs opened before #1255 have no app status. With strict
+  up-to-date on, they must be updated anyway, and the update triggers the status.
+
 ## Decisions
 
 | Date | Decision | Why |
@@ -150,3 +174,4 @@ Lessons:
 | 2026-10-12 | Replace the explanation of the value-free projection with two analyses of the redacted plan text: an explainer and a security review | The projection hides values, so explanations were generic. On the #1228 plan text, Haiku 5.5 named the exact change (`finops-agent:*` added to DevOps and DevOpsPrd) and flagged the wildcard grant with evidence and a recommendation, for ~$0.001 per commit for both. |
 | 2026-10-17 | `cli-test-layer` converges with no resources (`local.provisioned = false`) instead of staying unprovisioned with a standing plan of three creates | With apply-before-merge, `master` and the infrastructure must match. A test that needs resources sets `provisioned = true` in a PR and applies it. |
 | 2026-10-12 | Run both analyses inside the plan job (one approval), with the central apps-devstg Bedrock role trusting `tofu-plan`; a kill switch per analysis; no analysis above ~80K estimated tokens; sso e-mails may reach Bedrock | The raw plan cannot travel as an artifact in a public repository. The e-mails are already in the public sso code. The token cap keeps Haiku 5.5 under its 100K-token price tier. Keeping the second approval would have required an S3 handoff and a write permission on the plan role. |
+| 2026-10-17 | The `OpenTofu Apply` status comes from a dedicated GitHub App whose key only the default branch can read, and the required check is pinned to it | Every workflow on every branch posts statuses as `github-actions`, so a required status from `GITHUB_TOKEN` can be forged by anyone who can push. |

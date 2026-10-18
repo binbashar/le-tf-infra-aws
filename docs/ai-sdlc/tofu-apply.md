@@ -185,7 +185,7 @@ run. Inspect it with `git ls-remote origin 'refs/tofu-locks/*'`.
 | 3 | `github-oidc-tofu-apply` for apps-devstg, `tofu-apply` environment | ✅ #1247 |
 | 4 | `tofu-apply.yml`, gates, lock, report, `OpenTofu Apply` status | ✅ #1248 |
 | 5 | Supervised test on `cli-test-layer`: rejections, create, lock conflict, merge release, update, digest mismatch, destroy with and without the flag, close unmerged and unlock | ✅ #1249–#1253, [record](tofu-plan-history.md#apply-supervised-test) |
-| 6 | Required `OpenTofu Apply` from the `tofu-status` app (up to date and dismiss stale approvals were already on). `OpenTofu Plan` is not required: it adds no apply guarantee and is forgeable | 🟡 in progress |
+| 6 | Required `OpenTofu Apply` from the `tofu-status` app (up to date and dismiss stale approvals were already on). `OpenTofu Plan` is not required: it adds no apply guarantee and is forgeable | ✅ #1255, #1257, [record](tofu-plan-history.md#required-apply-status) |
 | 7 | Onboard `management/global/sso` and more layers | 🔄 |
 | Later | Scheduled drift detection. Cut human write access (break-glass role) so git is the only path | — |
 
