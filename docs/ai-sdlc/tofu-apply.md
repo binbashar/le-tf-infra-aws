@@ -11,8 +11,8 @@ unused Atlantis POC.
 - AWS identity: [`apps-devstg/global/github-oidc-tofu-apply`](../../apps-devstg/global/github-oidc-tofu-apply/)
 - Incident procedure: [`tofu-ci-incident.md`](tofu-ci-incident.md)
 
-Status (2026-10-17): **implemented, not exercised yet.** It is inactive until `TOFU_APPLY_LIVE`
-is `true`. The supervised test on `cli-test-layer` (phase 5) is next.
+Status (2026-10-17): **active** on `apps-devstg/global/cli-test-layer`. All eight supervised cases
+passed ([record](tofu-plan-history.md#apply-supervised-test)). The status is not required yet.
 
 ## 1. Decisions
 
@@ -183,9 +183,9 @@ run. Inspect it with `git ls-remote origin 'refs/tofu-locks/*'`.
 | 1 | `plan_digest` in the plan result | ✅ #1245 |
 | 2 | Incident and credential-revocation procedure | ✅ #1246, rehearsed |
 | 3 | `github-oidc-tofu-apply` for apps-devstg, `tofu-apply` environment | ✅ #1247 |
-| 4 | `tofu-apply.yml`, gates, lock, report, `OpenTofu Apply` status | ✅ this document's PR |
-| 5 | Supervised test on `cli-test-layer`: no-op, create, update, destroy with and without the flag, digest mismatch, lock conflict between two PRs, failed apply, close unmerged | 🟡 next |
-| 6 | Required `OpenTofu Apply` from the `tofu-status` app (up to date and dismiss stale approvals were already on). `OpenTofu Plan` is not required: it adds no apply guarantee and is forgeable | 🟡 in progress |
+| 4 | `tofu-apply.yml`, gates, lock, report, `OpenTofu Apply` status | ✅ #1248 |
+| 5 | Supervised test on `cli-test-layer`: rejections, create, lock conflict, merge release, update, digest mismatch, destroy with and without the flag, close unmerged and unlock | ✅ #1249–#1253, [record](tofu-plan-history.md#apply-supervised-test) |
+| 6 | Required `OpenTofu Apply` from the `tofu-status` app (up to date and dismiss stale approvals were already on). `OpenTofu Plan` is not required: it adds no apply guarantee and is forgeable | ✅ #1255, #1257, [record](tofu-plan-history.md#required-apply-status) |
 | 7 | Onboard `management/global/sso` and more layers | 🔄 |
 | Later | Scheduled drift detection. Cut human write access (break-glass role) so git is the only path | — |
 
