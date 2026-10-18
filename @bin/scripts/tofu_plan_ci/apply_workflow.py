@@ -562,9 +562,12 @@ def run_pr_status() -> int:
         paths += [item.get("filename", ""), item.get("previous_filename", "")]
     if len(files) >= MAX_PR_FILES:
         paths.append("config/")  # the list is truncated: assume every layer is touched
+    discovery = None
+    if plan_run and (path := Path(_required_env("DISCOVERY_DIR")) / "discovery.json").is_file():
+        discovery = json.loads(path.read_text(encoding="utf-8"))
     state, description = apply_gates.pr_status(
         paths=[path for path in paths if path], apply_layers=_apply_layers(), head_sha=head_sha,
-        plan_run=plan_run,
+        plan_run=plan_run, discovery=discovery, plan_live=os.environ.get("PLAN_LIVE") == "true",
         results=_load_results(Path(_required_env("RESULTS_DIR"))) if plan_run else ())
     print(f"{apply_gates.STATUS_CONTEXT}: {state}: {description}")
     if status_github := _status_github():

@@ -113,13 +113,18 @@ Branch protection requires `OpenTofu Apply` on the head commit, and counts it on
 | `tofu-apply-status.yml`, PR event | Otherwise, while the plan runs | pending |
 | `tofu-apply-status.yml`, plan finished | The onboarded layer has changes | pending: "comment /tofu apply after review" |
 | `tofu-apply-status.yml`, plan finished | No changes, no live plan, or a layer that is not onboarded | success, with the reason |
-| `tofu-apply-status.yml`, plan finished | The plan failed | pending |
+| `tofu-apply-status.yml`, plan finished | The plan failed, or its evidence is missing | pending |
 | `tofu-apply.yml` report | Applied, or nothing to apply | success |
 | `tofu-apply.yml` report | The apply failed | failure |
 
 A rejected command leaves the status unchanged. The PR event never replaces a status the app
 already set on that commit. A plan run is read only if it is the latest `tofu-plan.yml` run for
 the head commit, and the PR is not a draft.
+
+Success needs positive evidence. "No live plan" counts only when the run was skipped, when
+discovery left the layer out, or when the layer has the validation result that discovery and
+`TOFU_PLAN_LIVE` call for. A failed artifact download or a missing result keeps the status
+pending.
 
 **Why an app.** Any workflow on any branch can post a commit status as `github-actions`, and a PR
 can add or edit workflows, so a status from `GITHUB_TOKEN` proves nothing. The app's private key

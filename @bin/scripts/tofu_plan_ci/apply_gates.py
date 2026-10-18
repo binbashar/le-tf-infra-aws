@@ -293,25 +293,38 @@ def touched_apply_layers(paths: Iterable[str], apply_layers: Sequence[str]) -> l
 
 
 def pr_status(*, paths: Sequence[str], apply_layers: Sequence[str], head_sha: str,
-              plan_run: dict | None = None, results: Sequence[dict] = ()) -> tuple[str, str]:
+              plan_run: dict | None = None, discovery: dict | None = None,
+              plan_live: bool = False, results: Sequence[dict] = ()) -> tuple[str, str]:
     """The `OpenTofu Apply` status of a PR head, decided by the status workflow.
 
     `paths` comes from the API. Without `plan_run` (the PR event) this is the
     state until the plan finishes; with it, the plan's evidence decides. A PR
     that changes the plan tooling gets no live plan, so CI cannot apply it, and
     its run's evidence is never read: that run executed the PR's own workflow.
+
+    Success needs positive evidence. Missing evidence (a failed download, a
+    missing result) keeps the status pending.
     """
 
-    if not touched_apply_layers(paths, apply_layers):
+    touched = touched_apply_layers(paths, apply_layers)
+    if not touched:
         return "success", "No layer onboarded to CI apply changed"
     if any(path == PLAN_TOOLING[0] or path.startswith(PLAN_TOOLING[1]) for path in paths):
         return "success", "The plan tooling changed: no live plan, apply it manually"
     if plan_run is None:
         return "pending", "Waiting for the OpenTofu plan"
-    if plan_run.get("conclusion") not in ("success", "skipped"):
+    if plan_run.get("conclusion") == "skipped":
+        return "success", "The plan did not run (fork or bot PR): apply it manually"
+    if plan_run.get("conclusion") != "success" or discovery is None:
         return "pending", "Waiting for a passing OpenTofu plan"
+    mode = "live" if plan_live and discovery.get("live_eligible") else "validation"
     own = [result for result in results
-           if (result.get("metadata") or {}).get("head_sha") == head_sha]
+           if (result.get("metadata") or {}).get("head_sha") == head_sha
+           and result.get("mode") == mode]
+    planned = set(discovery.get("layers") or [])
+    for layer in touched:
+        if layer in planned and not any(result.get("layer") == layer for result in own):
+            return "pending", f"No plan evidence for {layer}"
     return (plan_status(results=own, apply_layers=apply_layers)
             or ("pending", "Waiting for a passing OpenTofu plan"))
 

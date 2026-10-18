@@ -192,9 +192,12 @@ class PlanStatusTests(unittest.TestCase):
 
 class PrStatusTests(unittest.TestCase):
     RUN = {"id": 1, "conclusion": "success"}
+    DISCOVERY = {"layers": [LAYER], "live_eligible": True}
+    TOUCHED = [f"{LAYER}/main.tf"]
 
-    def status(self, paths, **overrides):
-        args = dict(paths=paths, apply_layers=[LAYER], head_sha=HEAD)
+    def status(self, paths=TOUCHED, **overrides):
+        args = dict(paths=paths, apply_layers=[LAYER], head_sha=HEAD, plan_run=self.RUN,
+                    discovery=self.DISCOVERY, plan_live=True, results=[])
         args.update(overrides)
         return pr_status(**args)[0]
 
@@ -205,36 +208,42 @@ class PrStatusTests(unittest.TestCase):
         for path in (f"{LAYER}-other/main.tf", "apps-prd/config/backend.tfvars", "README.md"):
             self.assertEqual(touched_apply_layers([path], [LAYER]), [], path)
 
-    def test_untouched_is_success_before_any_plan(self):
-        self.assertEqual(self.status(["docs/x.md"]), "success")
-        self.assertEqual(self.status([f"{LAYER}/main.tf"]), "pending")
+    def test_before_the_plan(self):
+        self.assertEqual(self.status(["docs/x.md"], plan_run=None), "success")
+        self.assertEqual(self.status(plan_run=None), "pending")
 
-    def test_plan_evidence_decides(self):
+    def test_live_plan_evidence_decides(self):
         no_changes = result(summary={"create": 0, "no-op": 1})
-        self.assertEqual(self.status([f"{LAYER}/main.tf"], plan_run=self.RUN, results=[no_changes]),
-                         "success")
-        self.assertEqual(self.status([f"{LAYER}/main.tf"], plan_run=self.RUN, results=[result()]),
-                         "pending")
+        self.assertEqual(self.status(results=[no_changes]), "success")
+        self.assertEqual(self.status(results=[result()]), "pending")
+        self.assertEqual(self.status(results=[result(status="failed")]), "pending")
+
+    def test_missing_evidence_stays_pending(self):
+        validation_only = result(mode="validation", plan_digest=None)
+        other_commit = result(summary={"create": 0}, metadata={"head_sha": "c" * 40, "repository": REPO})
+        for name, overrides in {
+            "no results": dict(results=[]),
+            "no discovery": dict(discovery=None, results=[result(summary={"create": 0})]),
+            "validation when live was due": dict(results=[validation_only]),
+            "another commit": dict(results=[other_commit]),
+            "failed run": dict(plan_run={"conclusion": "failure"}),
+        }.items():
+            with self.subTest(name):
+                self.assertEqual(self.status(**overrides), "pending")
+
+    def test_positive_evidence_of_no_live_plan(self):
+        validation_only = result(mode="validation", plan_digest=None)
+        self.assertEqual(self.status(plan_live=False, results=[validation_only]), "success")
+        blockers = {"layers": [LAYER], "live_eligible": False}
+        self.assertEqual(self.status(discovery=blockers, results=[validation_only]), "success")
+        self.assertEqual(self.status(discovery={"layers": [], "live_eligible": True}), "success")
+        self.assertEqual(self.status(plan_run={"conclusion": "skipped"}, discovery=None), "success")
 
     def test_changed_plan_tooling_is_decided_without_the_evidence(self):
         for tooling in ("@bin/scripts/tofu_plan_ci/workflow.py", ".github/workflows/tofu-plan.yml"):
             paths = [f"{LAYER}/main.tf", tooling]
-            self.assertEqual(self.status(paths), "success")
-            self.assertEqual(self.status(paths, plan_run=self.RUN, results=[result()]), "success")
-
-    def test_failed_plans_stay_pending(self):
-        no_changes = result(summary={"create": 0, "no-op": 1})
-        for paths, run, results in (
-            ([f"{LAYER}/main.tf"], {"conclusion": "failure"}, [no_changes]),
-            ([f"{LAYER}/main.tf"], self.RUN, [result(status="failed")]),
-        ):
-            with self.subTest(paths=paths, run=run):
-                self.assertEqual(self.status(paths, plan_run=run, results=results), "pending")
-
-    def test_evidence_from_another_commit_is_ignored(self):
-        other = result(summary={"create": 1}, metadata={"head_sha": "c" * 40, "repository": REPO})
-        self.assertEqual(self.status([f"{LAYER}/main.tf"], plan_run=self.RUN, results=[other]),
-                         "success")  # no live plan for this commit: CI cannot apply it
+            self.assertEqual(self.status(paths, plan_run=None), "success")
+            self.assertEqual(self.status(paths, results=[result()]), "success")
 
 
 class CommentTests(unittest.TestCase):

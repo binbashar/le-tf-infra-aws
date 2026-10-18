@@ -391,8 +391,12 @@ class PrStatusTests(ApplyWorkflowTestCase):
     def pr_status(self, github, **extra):
         results = self.root / "results"
         results.mkdir(exist_ok=True)
+        discovery = self.root / "discovery"
+        discovery.mkdir(exist_ok=True)
+        (discovery / "discovery.json").write_text(json.dumps({"layers": [LAYER], "live_eligible": True}))
         env = {**self.env, "STATUS_TOKEN": "app", "STATUS_APP": "tofu-status",
-               "RESULTS_DIR": str(results), **extra}
+               "RESULTS_DIR": str(results), "DISCOVERY_DIR": str(discovery), "PLAN_LIVE": "true",
+               **extra}
         with patch.dict(os.environ, env, clear=True), patch.object(
             apply_workflow, "_github", return_value=github
         ), patch.object(apply_workflow, "GitHub", return_value=github), redirect_stdout(io.StringIO()):
@@ -427,6 +431,9 @@ class PrStatusTests(ApplyWorkflowTestCase):
     def test_plan_run_without_changes_sets_success(self):
         self.write_result(**{"no-op": 2})
         self.assertEqual(self.pr_status(FakeGitHub(), PLAN_RUN_ID="11"), (0, ["success"]))
+
+    def test_plan_run_without_evidence_stays_pending(self):
+        self.assertEqual(self.pr_status(FakeGitHub(), PLAN_RUN_ID="11"), (0, ["pending"]))
 
     def test_plan_run_with_changes_stays_pending(self):
         self.write_result(create=1)
