@@ -28,7 +28,7 @@ is `true`. The supervised test on `cli-test-layer` (phase 5) is next.
 | Approvers | The `leverage-ref-architecture-aws-admin` team, the only reviewer of the `tofu-apply` environment |
 | Up to date | Strict: the head must contain the latest `master`. To be relaxed after the supervised test if it proves too costly |
 | PR feedback | A 👀 reaction, then one reply with the outcome, counts, reasons, and the run link. No plan content |
-| Merge gate | Commit status `OpenTofu Apply` on the head commit (§5). Not required yet (phase 6) |
+| Merge gate | Required commit status `OpenTofu Apply` on the head commit, posted only by the `tofu-status` GitHub App (§5) |
 
 ## 2. Using it
 
@@ -49,8 +49,10 @@ cases in §6. Any other `/tofu` verb, such as `/tofu plan`, is ignored by this w
 
 ```mermaid
 flowchart TD
-  P["push to PR"] --> PL["tofu-plan.yml<br/>plan + plan_digest<br/>OpenTofu Apply: pending"]
-  PL --> R["review: approve the PR"]
+  P["push to PR"] --> ST["tofu-apply-status.yml<br/>OpenTofu Apply: pending"]
+  P --> PL["tofu-plan.yml<br/>plan + plan_digest"]
+  PL --> ST2["tofu-apply-status.yml<br/>pending, or success if nothing to apply"]
+  ST2 --> R["review: approve the PR"]
   R --> C["comment: /tofu apply [--allow-destroy]"]
   C --> AU["authorize (no AWS)<br/>gates 1–8"]
   AU -- rejected --> RP
@@ -70,7 +72,7 @@ Jobs and their permissions:
 | `lock` | trusted tooling | `contents: write` (lock ref) |
 | `apply` | **PR code** + trusted tooling, env `tofu-apply` | `contents: read`, `pull-requests: read`, `id-token: write` |
 | `unlock` | trusted tooling, env `tofu-apply` | `contents: write` |
-| `report` | trusted tooling | `contents: write` (release an unused lock), `pull-requests: write`, `statuses: write` |
+| `report` | trusted tooling, env `tofu-status` | `contents: write` (release an unused lock), `pull-requests: write`; the status goes out with the app's token |
 | `release` (PR closed) | trusted tooling | `contents: write`, `pull-requests: write` |
 
 ## 4. Gates
@@ -101,21 +103,45 @@ manually.
 
 ## 5. The `OpenTofu Apply` status
 
+Branch protection requires `OpenTofu Apply` on the head commit, and counts it only when the
+`tofu-status` GitHub App posted it. Two workflows post it, both from `master`:
+
 | Posted by | When | State |
 | --- | --- | --- |
-| Plan workflow | The onboarded layer has changes | pending: "comment /tofu apply after review" |
-| Plan workflow | No changes, no live plan, or the layer is not onboarded | success, with the reason |
-| Plan workflow | The plan failed | none: `OpenTofu Plan` already fails |
-| Apply workflow | Applied, or nothing to apply | success |
-| Apply workflow | The apply failed | failure |
+| `tofu-apply-status.yml`, PR event | No onboarded layer changed (from the PR files API) | success |
+| `tofu-apply-status.yml`, PR event | The PR changes the plan tooling: it gets no live plan | success: "apply it manually" |
+| `tofu-apply-status.yml`, PR event | Otherwise, while the plan runs | pending |
+| `tofu-apply-status.yml`, plan finished | The onboarded layer has changes | pending: "comment /tofu apply after review" |
+| `tofu-apply-status.yml`, plan finished | No changes, no live plan, or a layer that is not onboarded | success, with the reason |
+| `tofu-apply-status.yml`, plan finished | The plan failed, or its evidence is missing | pending |
+| `tofu-apply.yml` report | Applied, or nothing to apply | success |
+| `tofu-apply.yml` report | The apply failed | failure |
 
-A rejected command leaves the status unchanged.
+A rejected command leaves the status unchanged. The PR event never replaces a status the app
+already set on that commit. A plan run is read only if it is the latest `tofu-plan.yml` run for
+the head commit, and the PR is not a draft.
 
-**Before making it required (phase 6):** any workflow that runs on a branch of this repository
-can post a commit status, and a PR can edit workflows. So a required `OpenTofu Apply` status
-alone can be forged by anyone who can push a branch. The status tooling runs from the base
-revision, which narrows the risk but does not remove it. Phase 6 has to close this gap, for
-example with a ruleset that requires the workflow itself, or by checking the status's creator.
+Success needs positive evidence. "No live plan" counts only when the run was skipped, when
+discovery left the layer out, or when the layer has the validation result that discovery and
+`TOFU_PLAN_LIVE` call for. A failed artifact download or a missing result keeps the status
+pending.
+
+**Why an app.** Any workflow on any branch can post a commit status as `github-actions`, and a PR
+can add or edit workflows, so a status from `GITHUB_TOKEN` proves nothing. The app's private key
+is a secret of the `tofu-status` environment, whose branch policy admits only `master`. Jobs
+from a PR (`pull_request`, a push to a branch, or `workflow_dispatch` on a branch) cannot read it.
+`pull_request_target`, `workflow_run` and `issue_comment` run the default branch's file. A
+`github-actions` status named `OpenTofu Apply` can still appear on a PR, but it does not satisfy
+the rule.
+
+**What it still trusts.** The plan evidence comes from the PR's plan run, which ran the PR's
+OpenTofu code. A malicious data source could rewrite that evidence. That run needs the
+`tofu-plan` approval, so the reviewer who approves it is the safeguard, as for the plan role.
+A PR that changes the plan tooling is decided from the file list, without reading its run.
+
+**Limits.** A PR from a fork or a bot gets no live plan, so it gets "no live plan: apply it
+manually" when the plan run ends. A PR touching more than 3000 files is treated as touching every
+onboarded layer.
 
 ## 6. Lock and failure modes
 
@@ -143,6 +169,11 @@ run. Inspect it with `git ls-remote origin 'refs/tofu-locks/*'`.
 | `tofu-apply` secret | `TOFU_PLAN_COMMON_TFVARS` | Same value as in `tofu-plan` |
 | `tofu-apply` secret | `TOFU_PLAN_DIGEST_KEY` | **Same value as in `tofu-plan`**; otherwise every digest mismatches. Rotate both together |
 | Environment | `tofu-apply` | Reviewer `leverage-ref-architecture-aws-admin`, Prevent self-review, no admin bypass, branch `master` |
+| Variable | `TOFU_STATUS_APP_CLIENT_ID` | Client ID of the `tofu-status` GitHub App |
+| `tofu-status` secret | `TOFU_STATUS_APP_PRIVATE_KEY` | The app's private key. Never a repository secret: any branch could read it |
+| Environment | `tofu-status` | No reviewers, branch `master` only. Jobs use it with `deployment: false` |
+| GitHub App | `tofu-status` | Repository permission Commit statuses: read and write, nothing else. Installed on this repository only; no webhook |
+| Branch protection | `master` | Required check `OpenTofu Apply`, source: the `tofu-status` app |
 
 ## 8. Phases
 
@@ -154,7 +185,7 @@ run. Inspect it with `git ls-remote origin 'refs/tofu-locks/*'`.
 | 3 | `github-oidc-tofu-apply` for apps-devstg, `tofu-apply` environment | ✅ #1247 |
 | 4 | `tofu-apply.yml`, gates, lock, report, `OpenTofu Apply` status | ✅ this document's PR |
 | 5 | Supervised test on `cli-test-layer`: no-op, create, update, destroy with and without the flag, digest mismatch, lock conflict between two PRs, failed apply, close unmerged | 🟡 next |
-| 6 | Branch protection: required `OpenTofu Plan` and `OpenTofu Apply`, up to date, dismiss stale approvals | 🟡 |
+| 6 | Required `OpenTofu Apply` from the `tofu-status` app (up to date and dismiss stale approvals were already on). `OpenTofu Plan` is not required: it adds no apply guarantee and is forgeable | 🟡 in progress |
 | 7 | Onboard `management/global/sso` and more layers | 🔄 |
 | Later | Scheduled drift detection. Cut human write access (break-glass role) so git is the only path | — |
 

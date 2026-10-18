@@ -1,0 +1,106 @@
+name: OpenTofu apply status
+
+# Sets the `OpenTofu Apply` commit status that branch protection requires:
+# pending while an onboarded layer has changes to `/tofu apply`, success when
+# CI has nothing to apply. The apply workflow sets it after an apply.
+#
+# Only a status from the tofu-status GitHub App counts. Its key is in the
+# tofu-status environment, which only the default branch can use, and both
+# triggers run this file from the default branch. A workflow on any other
+# branch can post an `OpenTofu Apply` status, but not as the app.
+#
+# Never check out the PR here: pull_request_target runs with secrets.
+# Docs: docs/ai-sdlc/tofu-apply.md
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_run:
+    workflows: [OpenTofu plan]
+    types: [completed]
+
+concurrency:
+  group: tofu-apply-status-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  status:
+    name: Set the OpenTofu Apply status
+    if: >-
+      ${{ github.event_name == 'pull_request_target' ||
+          github.event.workflow_run.event == 'pull_request' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment:
+      name: tofu-status
+      deployment: false
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+    env:
+      PYTHONPATH: '@bin/scripts'
+      GH_TOKEN: ${{ github.token }}
+      APPLY_LAYERS: ${{ vars.TOFU_APPLY_LAYERS }}
+      PR_NUMBER: ${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number }}
+      PLAN_RUN_ID: ${{ github.event.workflow_run.id }}
+    steps:
+      - name: Checkout trusted tooling
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      # Evidence from the PR's plan run: data only, never executed. A failed
+      # download leaves the evidence missing, which keeps the status pending.
+      - name: Download the plan discovery
+        if: ${{ github.event_name == 'workflow_run' }}
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          name: tofu-plan-discovery
+          path: ${{ runner.temp }}/tofu-plan-discovery
+
+      - name: Download the live plan results
+        if: ${{ github.event_name == 'workflow_run' }}
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          pattern: tofu-plan-layer-*
+          path: ${{ runner.temp }}/tofu-plan-reports
+
+      - name: Download the validation results
+        if: ${{ github.event_name == 'workflow_run' }}
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          pattern: tofu-plan-validation-*
+          path: ${{ runner.temp }}/tofu-plan-reports
+
+      - name: Create the status app token
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.TOFU_STATUS_APP_CLIENT_ID }}
+          private-key: ${{ secrets.TOFU_STATUS_APP_PRIVATE_KEY }}
+          permission-statuses: write
+
+      - name: Set the status
+        env:
+          STATUS_TOKEN: ${{ steps.app.outputs.token }}
+          STATUS_APP: ${{ steps.app.outputs.app-slug }}
+          RESULTS_DIR: ${{ runner.temp }}/tofu-plan-reports
+          DISCOVERY_DIR: ${{ runner.temp }}/tofu-plan-discovery
+          PLAN_LIVE: ${{ vars.TOFU_PLAN_LIVE }}
+        run: python -m tofu_plan_ci.apply_workflow pr-status
