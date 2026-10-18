@@ -58,6 +58,8 @@ jobs:
 
       # Evidence from the PR's plan run: data only, never executed. A failed
       # download leaves the evidence missing, which keeps the status pending.
+      # Each kind gets its own directory: a pattern that matches one artifact
+      # extracts it straight into `path`, so a shared path overwrites result.json.
       - name: Download the plan discovery
         if: ${{ github.event_name == 'workflow_run' }}
         continue-on-error: true
@@ -76,7 +78,7 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
           pattern: tofu-plan-layer-*
-          path: ${{ runner.temp }}/tofu-plan-reports
+          path: ${{ runner.temp }}/tofu-plan-reports/live
 
       - name: Download the validation results
         if: ${{ github.event_name == 'workflow_run' }}
@@ -86,7 +88,7 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
           pattern: tofu-plan-validation-*
-          path: ${{ runner.temp }}/tofu-plan-reports
+          path: ${{ runner.temp }}/tofu-plan-reports/validation
 
       - name: Create the status app token
         id: app
