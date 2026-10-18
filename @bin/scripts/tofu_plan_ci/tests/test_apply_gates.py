@@ -9,9 +9,11 @@ from tofu_plan_ci.apply_gates import (
     parse_command,
     parse_lock,
     plan_status,
+    pr_status,
     recheck_reasons,
     review_reasons,
     select_plan_run,
+    touched_apply_layers,
 )
 
 HEAD = "a" * 40
@@ -185,6 +187,63 @@ class PlanStatusTests(unittest.TestCase):
         self.assertIn("no changes", plan_status(results=[no_changes], apply_layers=[LAYER])[1])
         self.assertEqual(plan_status(results=[result()], apply_layers=[LAYER])[0], "pending")
         self.assertIn("manually", plan_status(results=[result()], apply_layers=[])[1])
+
+
+
+class PrStatusTests(unittest.TestCase):
+    RUN = {"id": 1, "conclusion": "success"}
+    DISCOVERY = {"layers": [LAYER], "live_eligible": True}
+    TOUCHED = [f"{LAYER}/main.tf"]
+
+    def status(self, paths=TOUCHED, **overrides):
+        args = dict(paths=paths, apply_layers=[LAYER], head_sha=HEAD, plan_run=self.RUN,
+                    discovery=self.DISCOVERY, plan_live=True, results=[])
+        args.update(overrides)
+        return pr_status(**args)[0]
+
+    def test_touched_layers(self):
+        self.assertEqual(touched_apply_layers([f"{LAYER}/main.tf"], [LAYER]), [LAYER])
+        self.assertEqual(touched_apply_layers(["config/common.tfvars"], [LAYER]), [LAYER])
+        self.assertEqual(touched_apply_layers(["apps-devstg/config/backend.tfvars"], [LAYER]), [LAYER])
+        for path in (f"{LAYER}-other/main.tf", "apps-prd/config/backend.tfvars", "README.md"):
+            self.assertEqual(touched_apply_layers([path], [LAYER]), [], path)
+
+    def test_before_the_plan(self):
+        self.assertEqual(self.status(["docs/x.md"], plan_run=None), "success")
+        self.assertEqual(self.status(plan_run=None), "pending")
+
+    def test_live_plan_evidence_decides(self):
+        no_changes = result(summary={"create": 0, "no-op": 1})
+        self.assertEqual(self.status(results=[no_changes]), "success")
+        self.assertEqual(self.status(results=[result()]), "pending")
+        self.assertEqual(self.status(results=[result(status="failed")]), "pending")
+
+    def test_missing_evidence_stays_pending(self):
+        validation_only = result(mode="validation", plan_digest=None)
+        other_commit = result(summary={"create": 0}, metadata={"head_sha": "c" * 40, "repository": REPO})
+        for name, overrides in {
+            "no results": dict(results=[]),
+            "no discovery": dict(discovery=None, results=[result(summary={"create": 0})]),
+            "validation when live was due": dict(results=[validation_only]),
+            "another commit": dict(results=[other_commit]),
+            "failed run": dict(plan_run={"conclusion": "failure"}),
+        }.items():
+            with self.subTest(name):
+                self.assertEqual(self.status(**overrides), "pending")
+
+    def test_positive_evidence_of_no_live_plan(self):
+        validation_only = result(mode="validation", plan_digest=None)
+        self.assertEqual(self.status(plan_live=False, results=[validation_only]), "success")
+        blockers = {"layers": [LAYER], "live_eligible": False}
+        self.assertEqual(self.status(discovery=blockers, results=[validation_only]), "success")
+        self.assertEqual(self.status(discovery={"layers": [], "live_eligible": True}), "success")
+        self.assertEqual(self.status(plan_run={"conclusion": "skipped"}, discovery=None), "success")
+
+    def test_changed_plan_tooling_is_decided_without_the_evidence(self):
+        for tooling in ("@bin/scripts/tofu_plan_ci/workflow.py", ".github/workflows/tofu-plan.yml"):
+            paths = [f"{LAYER}/main.tf", tooling]
+            self.assertEqual(self.status(paths, plan_run=None), "success")
+            self.assertEqual(self.status(paths, results=[result()]), "success")
 
 
 class CommentTests(unittest.TestCase):

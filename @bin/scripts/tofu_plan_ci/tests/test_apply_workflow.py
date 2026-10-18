@@ -25,7 +25,8 @@ PLAN = {
 
 
 class FakeGitHub:
-    def __init__(self, *, pr=None, permission="write", reviews=None, behind=0, runs=None, locks=None):
+    def __init__(self, *, pr=None, permission="write", reviews=None, behind=0, runs=None, locks=None,
+                 files=None, existing=None):
         self._pr = pr or {
             "number": 7, "state": "open", "draft": False,
             "user": {"login": "author", "type": "User"},
@@ -39,6 +40,8 @@ class FakeGitHub:
             {"id": 11, "head_sha": HEAD, "event": "pull_request", "run_number": 1,
              "status": "completed", "conclusion": "success"}]
         self.locks = dict(locks or {})
+        self._files = files if files is not None else [{"filename": f"{LAYER}/main.tf"}]
+        self._existing = existing or []
         self.comments, self.statuses, self.reactions, self.deleted = [], [], [], []
 
     def pull(self, number): return self._pr
@@ -46,6 +49,8 @@ class FakeGitHub:
     def reviews(self, number): return self._reviews
     def compare(self, base, head): return {"behind_by": self._behind}
     def workflow_runs(self, workflow, head_sha): return self._runs
+    def pull_files(self, number): return self._files
+    def commit_statuses(self, sha): return self._existing
     def react(self, comment_id, content): self.reactions.append(content)
     def comment(self, number, body): self.comments.append(body)
     def status(self, sha, **kwargs): self.statuses.append((sha, kwargs))
@@ -246,9 +251,11 @@ class ReportAndReleaseTests(ApplyWorkflowTestCase):
             (report_dir / "decision.json").write_text(json.dumps(decision))
         if result is not None:
             (report_dir / "result.json").write_text(json.dumps(result))
-        env = {**self.env, "REPORT_DIR": str(report_dir), **(extra or {})}
+        env = {**self.env, "REPORT_DIR": str(report_dir), "STATUS_TOKEN": "app", **(extra or {})}
         with patch.dict(os.environ, env, clear=True), patch.object(
             apply_workflow, "_github", return_value=github
+        ), patch.object(apply_workflow, "urllib_transport", return_value=None), patch.object(
+            apply_workflow, "GitHub", return_value=github
         ), redirect_stdout(io.StringIO()):
             self.assertEqual(apply_workflow.run_report(), 0)
 
@@ -260,6 +267,14 @@ class ReportAndReleaseTests(ApplyWorkflowTestCase):
         self.assertEqual(github.statuses[0][1]["state"], "success")
         self.assertIn("Applied", github.comments[0])
         self.assertEqual(github.deleted, [])
+
+    def test_without_the_app_token_it_replies_but_sets_no_status(self):
+        github = FakeGitHub()
+        self.report(github, decision={"verb": "apply", "reasons": [], "head_sha": HEAD, "layer": LAYER},
+                    result={"outcome": "applied", "layer": LAYER, "counts": {"add": 1}},
+                    extra={"STATUS_TOKEN": ""})
+        self.assertEqual(github.statuses, [])
+        self.assertIn("Applied", github.comments[0])
 
     def test_rejected_comments_without_a_status(self):
         github = FakeGitHub()
@@ -370,6 +385,70 @@ class GitHubClientTests(unittest.TestCase):
             return 200, pages.get(page, [])
 
         self.assertEqual(len(GitHub(REPO, transport).reviews(1)), 101)
+
+
+
+class PrStatusTests(ApplyWorkflowTestCase):
+    def pr_status(self, github, **extra):
+        results = self.root / "results"
+        results.mkdir(exist_ok=True)
+        discovery = self.root / "discovery"
+        discovery.mkdir(exist_ok=True)
+        (discovery / "discovery.json").write_text(json.dumps({"layers": [LAYER], "live_eligible": True}))
+        env = {**self.env, "STATUS_TOKEN": "app", "STATUS_APP": "tofu-status",
+               "RESULTS_DIR": str(results), "DISCOVERY_DIR": str(discovery), "PLAN_LIVE": "true",
+               **extra}
+        with patch.dict(os.environ, env, clear=True), patch.object(
+            apply_workflow, "_github", return_value=github
+        ), patch.object(apply_workflow, "GitHub", return_value=github), redirect_stdout(io.StringIO()):
+            code = apply_workflow.run_pr_status()
+        return code, [kwargs["state"] for _, kwargs in github.statuses]
+
+    def write_result(self, **summary):
+        directory = self.root / "results" / "tofu-plan-layer-x"
+        directory.mkdir(parents=True)
+        (directory / "result.json").write_text(json.dumps({
+            "mode": "live", "status": "passed", "layer": LAYER,
+            "summary": {"create": 0, "update": 0, "delete": 0, "replace": 0, "no-op": 0, **summary},
+            "metadata": {"head_sha": HEAD, "repository": REPO}}))
+
+    def test_pr_event_sets_pending_for_an_onboarded_layer(self):
+        self.assertEqual(self.pr_status(FakeGitHub()), (0, ["pending"]))
+
+    def test_pr_event_sets_success_when_no_onboarded_layer_changed(self):
+        github = FakeGitHub(files=[{"filename": "docs/x.md"}])
+        self.assertEqual(self.pr_status(github), (0, ["success"]))
+
+    def test_a_renamed_file_counts_with_its_old_path(self):
+        github = FakeGitHub(files=[{"filename": "docs/x.tf", "previous_filename": f"{LAYER}/x.tf"}])
+        self.assertEqual(self.pr_status(github), (0, ["pending"]))
+
+    def test_pr_event_keeps_an_existing_app_status(self):
+        app = {"context": "OpenTofu Apply", "creator": {"login": "tofu-status[bot]"}}
+        self.assertEqual(self.pr_status(FakeGitHub(existing=[app])), (0, []))
+        forged = {"context": "OpenTofu Apply", "creator": {"login": "github-actions[bot]"}}
+        self.assertEqual(self.pr_status(FakeGitHub(existing=[forged])), (0, ["pending"]))
+
+    def test_plan_run_without_changes_sets_success(self):
+        self.write_result(**{"no-op": 2})
+        self.assertEqual(self.pr_status(FakeGitHub(), PLAN_RUN_ID="11"), (0, ["success"]))
+
+    def test_plan_run_without_evidence_stays_pending(self):
+        self.assertEqual(self.pr_status(FakeGitHub(), PLAN_RUN_ID="11"), (0, ["pending"]))
+
+    def test_plan_run_with_changes_stays_pending(self):
+        self.write_result(create=1)
+        self.assertEqual(self.pr_status(FakeGitHub(), PLAN_RUN_ID="11"), (0, ["pending"]))
+
+    def test_an_older_plan_run_or_a_draft_changes_nothing(self):
+        self.write_result()
+        self.assertEqual(self.pr_status(FakeGitHub(), PLAN_RUN_ID="10"), (0, []))
+        draft = FakeGitHub(pr={**FakeGitHub()._pr, "draft": True})
+        self.assertEqual(self.pr_status(draft, PLAN_RUN_ID="11"), (0, []))
+
+    def test_no_pull_request_or_no_token(self):
+        self.assertEqual(self.pr_status(FakeGitHub(), PR_NUMBER=""), (0, []))
+        self.assertEqual(self.pr_status(FakeGitHub(), STATUS_TOKEN=""), (1, []))
 
 
 if __name__ == "__main__":

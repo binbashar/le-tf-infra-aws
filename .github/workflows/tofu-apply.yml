@@ -259,11 +259,14 @@ jobs:
           needs.authorize.outputs.verb != '' && needs.authorize.outputs.verb != 'none' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    # Holds the status app's key: the only `OpenTofu Apply` status that counts.
+    environment:
+      name: tofu-status
+      deployment: false
     permissions:
       contents: write
       actions: read
       pull-requests: write
-      statuses: write
     env:
       GH_TOKEN: ${{ github.token }}
       PR_NUMBER: ${{ github.event.issue.number }}
@@ -291,9 +294,20 @@ jobs:
           merge-multiple: true
           path: ${{ runner.temp }}/tofu-apply-report
 
+      # A missing app still lets the report reply; the status is then not set.
+      - name: Create the status app token
+        id: app
+        continue-on-error: true
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.TOFU_STATUS_APP_CLIENT_ID }}
+          private-key: ${{ secrets.TOFU_STATUS_APP_PRIVATE_KEY }}
+          permission-statuses: write
+
       - name: Reply on the pull request and set the status
         env:
           REPORT_DIR: ${{ runner.temp }}/tofu-apply-report
+          STATUS_TOKEN: ${{ steps.app.outputs.token }}
         run: python -m tofu_plan_ci.apply_workflow report
 
   release:

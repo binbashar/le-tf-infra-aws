@@ -20,10 +20,22 @@ from .github_api import GitHub, urllib_transport
 from .workflow import _append, _output, _required_env, layer_slug
 
 PLAN_WORKFLOW = "tofu-plan.yml"
+# The pull request files API stops at 3000 files.
+MAX_PR_FILES = 3000
 
 
 def _github() -> GitHub:
     return GitHub(_required_env("GITHUB_REPOSITORY"), urllib_transport(_required_env("GH_TOKEN")))
+
+
+def _status_github() -> GitHub | None:
+    """A client with the status app's token, the only status branch protection counts."""
+
+    token = os.environ.get("STATUS_TOKEN", "")
+    if not token:
+        print("::warning::No status app token; the OpenTofu Apply status was not set")
+        return None
+    return GitHub(_required_env("GITHUB_REPOSITORY"), urllib_transport(token))
 
 
 def _run_url() -> str:
@@ -437,9 +449,9 @@ def run_report() -> int:
     states = {"applied": ("success", "Applied by CI"),
               "no-changes": ("success", "Nothing to apply"),
               "failed": ("failure", "Apply failed; see the run")}
-    if verb == "apply" and head_sha and outcome in states:
+    if verb == "apply" and head_sha and outcome in states and (status_github := _status_github()):
         state_name, description = states[outcome]
-        github.status(head_sha, state=state_name, context=apply_gates.STATUS_CONTEXT,
+        status_github.status(head_sha, state=state_name, context=apply_gates.STATUS_CONTEXT,
                       description=description, target_url=run_url)
     return 0
 
@@ -509,25 +521,68 @@ def run_release() -> int:
     return 0
 
 
-def run_plan_status() -> int:
-    """Post the `OpenTofu Apply` status from the plan workflow's report job."""
+def _has_app_status(github: GitHub, sha: str) -> bool:
+    app = os.environ.get("STATUS_APP", "")
+    return any(status.get("context") == apply_gates.STATUS_CONTEXT
+               and (status.get("creator") or {}).get("login") == f"{app}[bot]"
+               for status in github.commit_statuses(sha))
 
-    results = _load_results(Path(_required_env("RESULTS_DIR")))
-    status = apply_gates.plan_status(results=results, apply_layers=_apply_layers())
-    if status is None:
+
+def run_pr_status() -> int:
+    """Set the `OpenTofu Apply` status from the status workflow.
+
+    It runs from the default branch on PR events and after every plan run. The
+    PR event only sets the initial state: once a status exists on the commit,
+    a plan run or an apply owns it.
+    """
+
+    number = os.environ.get("PR_NUMBER", "")
+    if not number:
+        print("The run belongs to no pull request of this repository; nothing to do")
         return 0
-    state, description = status
-    _github().status(_required_env("HEAD_SHA"), state=state,
-                     context=apply_gates.STATUS_CONTEXT, description=description,
-                     target_url=_run_url())
-    return 0
+    github = _github()
+    pr = github.pull(int(number))
+    head_sha = pr["head"]["sha"]
+    if pr.get("state") != "open":
+        return 0
+    plan_run = None
+    if run_id := os.environ.get("PLAN_RUN_ID", ""):
+        if pr.get("draft"):
+            print("Draft pull request: the plan did not run; nothing to do")
+            return 0
+        plan_run = apply_gates.select_plan_run(github.workflow_runs(PLAN_WORKFLOW, head_sha), head_sha)
+        if plan_run is None or str(plan_run.get("id")) != run_id:
+            print(f"Run {run_id} is not the latest plan of the head commit; nothing to do")
+            return 0
+    elif _has_app_status(github, head_sha):
+        print("The head commit already has a status; the plan run or an apply updates it")
+        return 0
+    paths = []
+    files = github.pull_files(int(number))
+    for item in files:
+        paths += [item.get("filename", ""), item.get("previous_filename", "")]
+    if len(files) >= MAX_PR_FILES:
+        paths.append("config/")  # the list is truncated: assume every layer is touched
+    discovery = None
+    if plan_run and (path := Path(_required_env("DISCOVERY_DIR")) / "discovery.json").is_file():
+        discovery = json.loads(path.read_text(encoding="utf-8"))
+    state, description = apply_gates.pr_status(
+        paths=[path for path in paths if path], apply_layers=_apply_layers(), head_sha=head_sha,
+        plan_run=plan_run, discovery=discovery, plan_live=os.environ.get("PLAN_LIVE") == "true",
+        results=_load_results(Path(_required_env("RESULTS_DIR"))) if plan_run else ())
+    print(f"{apply_gates.STATUS_CONTEXT}: {state}: {description}")
+    if status_github := _status_github():
+        status_github.status(head_sha, state=state, context=apply_gates.STATUS_CONTEXT,
+                             description=description, target_url=_run_url())
+        return 0
+    return 1
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     for name in ("command", "authorize", "lock", "recheck", "report", "unlock", "release",
-                 "plan-status"):
+                 "pr-status"):
         commands.add_parser(name)
     for name in ("credentials", "apply"):
         commands.add_parser(name).add_argument("--layer", default="")
@@ -535,7 +590,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     handlers = {
         "command": run_command, "authorize": run_authorize, "lock": run_lock,
         "recheck": run_recheck, "report": run_report, "unlock": run_unlock,
-        "release": run_release, "plan-status": run_plan_status,
+        "release": run_release, "pr-status": run_pr_status,
     }
     if args.command in handlers:
         return handlers[args.command]()
