@@ -175,6 +175,30 @@ run. Inspect it with `git ls-remote origin 'refs/tofu-locks/*'`.
 | GitHub App | `tofu-status` | Repository permission Commit statuses: read and write, nothing else. Installed on this repository only; no webhook |
 | Branch protection | `master` | Required check `OpenTofu Apply`, source: the `tofu-status` app |
 
+### Rotating the `tofu-status` key
+
+The only copy of the app's private key is the `tofu-status` environment secret. Do not keep
+another: whoever holds the key can post `OpenTofu Apply: success` as the app and bypass the
+merge gate. Rotate when the key may have leaked, when someone who handled it leaves, or
+periodically. GitHub accepts several active keys, so there is no gap.
+
+1. Org owner: *binbashar → Settings → Developer settings → GitHub Apps → tofu-status → Private
+   keys → Generate a private key*. Move the downloaded `.pem` out of `~/Downloads` first if
+   your shell cannot read that folder (macOS Files and Folders permission).
+2. Repository admin: replace the secret, reading the file into the command so the key is never
+   typed or pasted:
+   ```bash
+   gh secret set TOFU_STATUS_APP_PRIVATE_KEY --repo binbashar/le-tf-infra-aws --env tofu-status < tofu-status.pem
+   ```
+3. Check it: push to any open PR, or close and reopen one. The `OpenTofu Apply` status must come
+   from `tofu-status[bot]`, and the *Set the OpenTofu Apply status* run must be green.
+4. Delete the old key on the app's page, then delete the local `.pem` and empty the trash.
+
+If the key leaked, do step 4 for the leaked key first: until it is deleted, it can still post
+statuses. That leaves the gate unable to post statuses until step 2, so PRs wait; none can merge
+wrongly. Then look for statuses the app posted that no run explains: compare each head commit's
+`OpenTofu Apply` with the *OpenTofu apply status* and *OpenTofu apply* runs.
+
 ## 8. Phases
 
 | # | Work | Status |
