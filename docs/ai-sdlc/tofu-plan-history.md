@@ -84,7 +84,7 @@ dispatches and checks.
 | 04:07:28 | `IncidentDenyAll` removed | Role has only the revoke policy |
 | 04:08 | Dispatch [39001391540](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39001391540) | Passed, 3 creates. Same `plan_digest` as run 38994289204 on the same commit and state |
 | — | CloudTrail Event history | `tofu-plan-39001184626` found by session name; its key made only `GetCallerIdentity` calls |
-| pending | Remove `AWSRevokeOlderSessions` | Due after 2026-10-18 04:07 UTC |
+| 2026-10-19 14:49 | Remove `AWSRevokeOlderSessions` (due after 2026-10-18 04:07 UTC) | Removed; the role has no inline policies left |
 
 Lessons, folded into the procedure:
 
