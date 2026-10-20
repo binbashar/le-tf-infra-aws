@@ -134,7 +134,7 @@ module "permission_sets" {
     #
     {
       name                                = "TofuApplyTest"
-      description                         = "Test of /tofu apply. Grants nothing."
+      description                         = "Test of /tofu apply (updated). Grants nothing."
       relay_state                         = local.default_relay_state
       session_duration                    = local.default_session_duration
       tags                                = local.tags
