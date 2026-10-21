@@ -108,7 +108,7 @@ PR with this exact, repeatable procedure so no sensitive data leaks:
    raw refresh log.
 5. **Review only — do not apply or merge from automation.** A human runs `leverage tofu apply`
    after approval, or, for layers onboarded to CI apply, comments `/tofu apply` on the PR
-   (`docs/ai-sdlc/tofu-apply.md`). Claude never posts `/tofu apply` itself. Never commit the
+   (`docs/tofu-plan-apply/tofu-apply.md`). Claude never posts `/tofu apply` itself. Never commit the
    `tfplan` binary (see the Git rule above).
 
 ## Essential Commands
@@ -462,7 +462,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 9. **Documentation** - Reference official [Leverage Documentation](https://leverage.binbash.co) for guidance
 10. **Testing** - Use native `tofu test` for module unit tests (the leverage wrapper does not expose `test`) and integrate with CI/CD
 11. **Code quality** - Always run `leverage tofu format` and `leverage tofu validate` before commits
-12. **CI plan** - `OpenTofu Plan` plans allowlisted layers on PRs; see `docs/ai-sdlc/tofu-plan.md`. Atlantis is no longer used
+12. **CI plan** - `OpenTofu Plan` plans allowlisted layers on PRs; see `docs/tofu-plan-apply/`, which also covers `/tofu apply`. Atlantis is no longer used
 
 ### CI / Pre-commit
 - CI job "Test and Lint" runs `make pre-commit` → `pre-commit run --all-files`

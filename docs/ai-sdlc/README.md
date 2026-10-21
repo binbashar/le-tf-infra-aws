@@ -7,9 +7,8 @@ runs at each step, and how the on-demand `@claude` assistant routes through
 For local Codex sessions, see [Working with Codex](codex.md): repository instruction
 discovery, setup, validation commands, and infrastructure execution boundaries.
 
-The plan-only GitHub Actions check is documented in
-[OpenTofu pull-request plan](tofu-plan.md). It uses native checks, sanitized artifacts, and an
-advisory Bedrock explanation and security review of the redacted plan; it has no apply path.
+OpenTofu plan and apply on pull requests (the `OpenTofu Plan` check, `/tofu apply`, and the
+required `OpenTofu Apply` status) are documented in [`docs/tofu-plan-apply/`](../tofu-plan-apply/).
 
 > **Local sessions too:** developers can route their own Claude Code sessions
 > through Bedrock (data-science account) on demand — see
@@ -60,7 +59,7 @@ These run on every PR with no human action required.
 | --- | --- | --- |
 | **Test and Lint** | [`.github/workflows/test-static-code-and-linting.yml`](../../.github/workflows/test-static-code-and-linting.yml) | Runs the pre-commit hooks (terraform_fmt, pretty-format-json, trailing-whitespace, private-key detection). On a branch push it checks **only the files changed since the merge-base with `master`**, so an unrelated violation elsewhere can't fail your PR; a weekly schedule and `workflow_dispatch` still run the full `make pre-commit` → `pre-commit run --all-files` sweep to catch drift in untouched layers. |
 | **Infracost** | [`.github/workflows/infracost.yml`](../../.github/workflows/infracost.yml) | Posts a monthly cost-diff comment per layer ([`infracost.yml`](../../infracost.yml)). |
-| **OpenTofu Plan** | [`.github/workflows/tofu-plan.yml`](../../.github/workflows/tofu-plan.yml) | Credential-free `tofu validate` for allowlisted layers; protected, reviewer-approved speculative plan with sanitized artifacts, plus an advisory Bedrock explanation and security review. Non-required; see [`tofu-plan.md`](tofu-plan.md). |
+| **OpenTofu Plan** | [`.github/workflows/tofu-plan.yml`](../../.github/workflows/tofu-plan.yml) | Credential-free `tofu validate` for allowlisted layers; protected, reviewer-approved speculative plan with sanitized artifacts, plus an advisory Bedrock explanation and security review. Non-required; see [`tofu-plan.md`](../tofu-plan-apply/tofu-plan.md). |
 | **GitGuardian** | GitHub App | Secret scanning across the diff. |
 
 ## 4. On-demand `@claude` review via AWS Bedrock

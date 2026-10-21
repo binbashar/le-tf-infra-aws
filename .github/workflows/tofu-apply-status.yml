@@ -10,7 +10,7 @@ name: OpenTofu apply status
 # branch can post an `OpenTofu Apply` status, but not as the app.
 #
 # Never check out the PR here: pull_request_target runs with secrets.
-# Docs: docs/ai-sdlc/tofu-apply.md
+# Docs: docs/tofu-plan-apply/tofu-apply.md
 on:
   pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]

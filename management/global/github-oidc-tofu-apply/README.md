@@ -1,7 +1,7 @@
 # GitHub OIDC identity for `tofu-apply` (management)
 
 This layer creates the OpenTofu **apply** role for management, used by `/tofu apply` on a PR
-([`docs/ai-sdlc/tofu-apply.md`](../../../docs/ai-sdlc/tofu-apply.md)). It is the management copy
+([`docs/tofu-plan-apply/tofu-apply.md`](../../../docs/tofu-plan-apply/tofu-apply.md)). It is the management copy
 of [`apps-devstg/global/github-oidc-tofu-apply`](../../../apps-devstg/global/github-oidc-tofu-apply/):
 the same trust, backend policy, and permissions boundary. Read that README for the trust claims
 and the boundary.
