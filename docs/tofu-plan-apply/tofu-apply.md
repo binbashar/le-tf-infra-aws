@@ -86,7 +86,8 @@ gates marked ↻, because they can change while the run waits for approval:
 1. The commenter has write, maintain, or admin access, and `TOFU_APPLY_LIVE` is `true`.
 2. The PR is open, not a draft, from this repository, and opened by a user ↻.
 3. The PR has an approval **on the current head commit** from someone other than the author, and
-   no outstanding "changes requested" ↻. Pushing a new commit invalidates the approval ↻.
+   no outstanding "changes requested" ↻. A push that changes the diff invalidates the approval ↻;
+   merging `master` into the branch does not.
 4. The head is up to date with `master` (`behind_by == 0`) ↻. Otherwise the apply would undo
    whatever `master` changed in the layer.
 5. The latest `OpenTofu Plan` run for the head commit succeeded. It has exactly one live layer

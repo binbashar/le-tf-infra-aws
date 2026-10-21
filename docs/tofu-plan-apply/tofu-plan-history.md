@@ -182,8 +182,16 @@ Lessons:
   `mgn:*` from DevOps and DevOpsPrd: #1241 had been applied by hand and merged after the branch
   was cut. The reviewer caught it, and gate 4 (up to date) would have rejected the apply anyway.
   On the most frequently changed layer, the strict rule earns its cost.
-- **Approve the PR as its own step.** A push dismisses the approval, and the first `/tofu apply`
-  on #1264 was rejected for that reason. Runbooks list the PR approval as a separate step.
+- **Approve the PR as its own step.** The first `/tofu apply` on #1264 came about a minute before
+  the PR approval, and gate 3 rejected it. Runbooks list the PR approval as a separate step.
+- **Which pushes dismiss an approval.** A commit that changes the PR's diff dismisses it. A merge
+  of `master` that leaves the diff unchanged keeps it, and GitHub moves the review to the new
+  head, so gate 3 still passes (#1268: review `commit_id` = the merge commit).
+- **Mode names drift silently (#1269).** The status code expected validation results in mode
+  `validation`; `plan_report` writes `static`. #1268, which gets no live plan because it changes
+  workflows, stayed pending with "No plan evidence", and the required check blocked its merge.
+  It failed closed. The unit tests used the same invented name, so they passed. The fix builds the
+  test result with `plan_report` itself.
 
 ## Decisions
 
