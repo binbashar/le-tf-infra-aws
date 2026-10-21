@@ -129,10 +129,10 @@ sequenceDiagram
   GH->>AWS: OIDC token for env tofu-plan + session policy
   AWS-->>GH: 15-minute read-only credentials
   GH->>AWS: read state and layer resources (plan)
-  GH->>GH: sanitize; keep redacted plan text; drop plan credentials
-  GH->>BR: OIDC (same env) → invoke-only role; redacted plan text
+  GH->>GH: sanitize, keep redacted plan text, drop plan credentials
+  GH->>BR: OIDC (same env) → invoke-only role, redacted plan text
   BR-->>GH: explainer answer, then security answer
-  GH->>GH: mask + scan answers; delete plan text
+  GH->>GH: mask + scan answers, delete plan text
   GH-->>Dev: check OpenTofu Plan + summary + analyses
 ```
 

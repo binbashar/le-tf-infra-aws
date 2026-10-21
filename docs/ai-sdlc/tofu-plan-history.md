@@ -172,7 +172,7 @@ sso applies over 90 days, and an explicit deny on the Administrator permission s
 | b. Update its description | #1265 | [39602689284](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39602689284) | ✅ 1 changed |
 | c. Anti-lockout deny | — | `iam simulate-principal-policy` | ✅ `explicitDeny` on Administrator, `allowed` on DevOps, for inline policy, assignments, delete, and provisioning |
 | d. Destroy without the flag | #1266 | [39603561241](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39603561241) | ✅ rejected, no lock |
-| d. Destroy with `--allow-destroy` | #1266 | [39603675722](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39603675722) | ✅ 1 destroyed; layer back to its pre-test state |
+| e. Destroy with `--allow-destroy` | #1266 | [39603675722](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39603675722) | ✅ 1 destroyed; layer back to its pre-test state |
 
 Lessons:
 
