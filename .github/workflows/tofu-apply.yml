@@ -7,7 +7,7 @@ name: OpenTofu apply
 # issue_comment always runs this file from the default branch, so every job runs
 # trusted tooling. Only the apply job executes the PR's OpenTofu code, with the
 # apply role, after a member of the admin team approves the tofu-apply
-# environment. Docs: docs/ai-sdlc/tofu-apply.md
+# environment. Docs: docs/tofu-plan-apply/tofu-apply.md
 on:
   issue_comment:
     types: [created]

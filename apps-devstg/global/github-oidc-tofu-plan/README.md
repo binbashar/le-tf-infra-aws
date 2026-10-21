@@ -91,4 +91,4 @@ Configure the Bedrock role as `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN` and
 `AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID`. `TOFU_PLAN_LIVE`, `TOFU_PLAN_LLM_EXPLAINER`, and
 `TOFU_PLAN_LLM_SECURITY` stay `true`; environment
 approval gates every run, and the variables are kill switches (see
-[`docs/ai-sdlc/tofu-plan.md`](../../../docs/ai-sdlc/tofu-plan.md#kill-switches)).
+[`docs/tofu-plan-apply/tofu-plan.md`](../../../docs/tofu-plan-apply/tofu-plan.md#kill-switches)).

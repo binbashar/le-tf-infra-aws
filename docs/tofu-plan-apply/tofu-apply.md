@@ -8,7 +8,8 @@ unused Atlantis POC.
 - Workflow: [`.github/workflows/tofu-apply.yml`](../../.github/workflows/tofu-apply.yml)
 - Code: [`@bin/scripts/tofu_plan_ci/`](../../@bin/scripts/tofu_plan_ci/) (`apply_gates.py`,
   `apply_workflow.py`, `github_api.py`, `plan_digest.py`)
-- AWS identity: [`apps-devstg/global/github-oidc-tofu-apply`](../../apps-devstg/global/github-oidc-tofu-apply/)
+- AWS identities: [`apps-devstg/global/github-oidc-tofu-apply`](../../apps-devstg/global/github-oidc-tofu-apply/),
+  [`management/global/github-oidc-tofu-apply`](../../management/global/github-oidc-tofu-apply/)
 - Incident procedure: [`tofu-ci-incident.md`](tofu-ci-incident.md)
 
 Status (2026-10-21): **active** on `apps-devstg/global/cli-test-layer` and `management/global/sso`.

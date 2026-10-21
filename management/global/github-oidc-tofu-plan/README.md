@@ -1,7 +1,7 @@
 # GitHub OIDC identity for `tofu-plan` (management)
 
 This layer owns the account-wide GitHub Actions OIDC provider in `management` and the read-only
-role that the [`tofu-plan`](../../../docs/ai-sdlc/tofu-plan.md) workflow assumes to plan
+role that the [`tofu-plan`](../../../docs/tofu-plan-apply/tofu-plan.md) workflow assumes to plan
 management layers. It is not a deployment role. The apps-devstg counterpart,
 [`apps-devstg/global/github-oidc-tofu-plan`](../../../apps-devstg/global/github-oidc-tofu-plan/),
 also owns the Bedrock explanation role; this account has none.
@@ -39,7 +39,7 @@ approval is authorization to run that exact commit against this data.
 
 ## Adding a layer
 
-Follow [Adding a layer](../../../docs/ai-sdlc/tofu-plan.md#adding-a-layer): add a
+Follow [Adding a layer](../../../docs/tofu-plan-apply/tofu-plan.md#adding-a-layer): add a
 `plan_targets` entry and a `plan-target-<layer>.tf` with only the demonstrated reads.
 
 ## Deployment
