@@ -128,19 +128,5 @@ module "permission_sets" {
       policy_attachments                  = []
       customer_managed_policy_attachments = []
     },
-    #
-    # Supervised test of /tofu apply on this layer (phase 7). No policies and no
-    # assignments, so it grants nothing. Removed by the last test PR.
-    #
-    {
-      name                                = "TofuApplyTest"
-      description                         = "Test of /tofu apply (updated). Grants nothing."
-      relay_state                         = local.default_relay_state
-      session_duration                    = local.default_session_duration
-      tags                                = local.tags
-      inline_policy                       = ""
-      policy_attachments                  = []
-      customer_managed_policy_attachments = []
-    },
   ]
 }
