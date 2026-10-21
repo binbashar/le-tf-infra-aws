@@ -317,7 +317,8 @@ def pr_status(*, paths: Sequence[str], apply_layers: Sequence[str], head_sha: st
         return "success", "The plan did not run (fork or bot PR): apply it manually"
     if plan_run.get("conclusion") != "success" or discovery is None:
         return "pending", "Waiting for a passing OpenTofu plan"
-    mode = "live" if plan_live and discovery.get("live_eligible") else "validation"
+    # plan_report writes "live" for a credentialed plan, "static" for validation only.
+    mode = "live" if plan_live and discovery.get("live_eligible") else "static"
     own = [result for result in results
            if (result.get("metadata") or {}).get("head_sha") == head_sha
            and result.get("mode") == mode]
