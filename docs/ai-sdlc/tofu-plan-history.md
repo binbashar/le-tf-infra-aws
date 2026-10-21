@@ -22,6 +22,7 @@ needed to operate it. Add new entries at the end of the relevant section.
 | 2026-10-17 | Apply-before-merge: apps-devstg apply role, `tofu-apply` environment, `/tofu apply` workflow | PRs #1247, #1248 |
 | 2026-10-17 | First CI apply (`cli-test-layer`, 3 creates); all eight supervised cases pass | PRs #1249–#1253, [record](#apply-supervised-test) |
 | 2026-10-17 | `OpenTofu Apply` required on `master`, counted only from the `tofu-status` GitHub App | PRs #1255, #1257, [record](#required-apply-status) |
+| 2026-10-21 | `/tofu apply` on `management/global/sso`: management apply role, supervised test passes | PRs #1263–#1266, [record](#sso-apply-supervised-test) |
 
 ## Rollout gates
 
@@ -159,6 +160,31 @@ Lessons:
 - **Open PRs at the switch.** PRs opened before #1255 have no app status. With strict
   up-to-date on, they must be updated anyway, and the update triggers the status.
 
+## SSO apply supervised test
+
+Management apply role from #1263: writes derived from the CloudTrail write events of the manual
+sso applies over 90 days, and an explicit deny on the Administrator permission set
+(anti-lockout). Access to management without Identity Center was verified before the test.
+
+| Case | PR | Run | Result |
+| --- | --- | --- | --- |
+| a. Create `TofuApplyTest` (no policies, no assignments) | #1264 | [39512415412](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39512415412) | ✅ 1 added; `OpenTofu Apply` success from `tofu-status[bot]` |
+| b. Update its description | #1265 | [39602689284](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39602689284) | ✅ 1 changed |
+| c. Anti-lockout deny | — | `iam simulate-principal-policy` | ✅ `explicitDeny` on Administrator, `allowed` on DevOps, for inline policy, assignments, delete, and provisioning |
+| d. Destroy without the flag | #1266 | [39603561241](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39603561241) | ✅ rejected, no lock |
+| d. Destroy with `--allow-destroy` | #1266 | [39603675722](https://github.com/binbashar/le-tf-infra-aws/actions/runs/39603675722) | ✅ 1 destroyed; layer back to its pre-test state |
+
+Lessons:
+
+- **The CloudTrail-derived writes were enough.** No case failed on a missing permission, unlike
+  the plan role, whose reads needed two fixes.
+- **A stale branch reverts someone else's apply.** The first plan of #1264 also wanted to remove
+  `mgn:*` from DevOps and DevOpsPrd: #1241 had been applied by hand and merged after the branch
+  was cut. The reviewer caught it, and gate 4 (up to date) would have rejected the apply anyway.
+  On the most frequently changed layer, the strict rule earns its cost.
+- **Approve the PR as its own step.** A push dismisses the approval, and the first `/tofu apply`
+  on #1264 was rejected for that reason. Runbooks list the PR approval as a separate step.
+
 ## Decisions
 
 | Date | Decision | Why |
@@ -175,3 +201,4 @@ Lessons:
 | 2026-10-17 | `cli-test-layer` converges with no resources (`local.provisioned = false`) instead of staying unprovisioned with a standing plan of three creates | With apply-before-merge, `master` and the infrastructure must match. A test that needs resources sets `provisioned = true` in a PR and applies it. |
 | 2026-10-12 | Run both analyses inside the plan job (one approval), with the central apps-devstg Bedrock role trusting `tofu-plan`; a kill switch per analysis; no analysis above ~80K estimated tokens; sso e-mails may reach Bedrock | The raw plan cannot travel as an artifact in a public repository. The e-mails are already in the public sso code. The token cap keeps Haiku 5.5 under its 100K-token price tier. Keeping the second approval would have required an S3 handoff and a write permission on the plan role. |
 | 2026-10-17 | The `OpenTofu Apply` status comes from a dedicated GitHub App whose key only the default branch can read, and the required check is pinned to it | Every workflow on every branch posts statuses as `github-actions`, so a required status from `GITHUB_TOKEN` can be forged by anyone who can push. |
+| 2026-10-19 | Onboard `management/global/sso` to `/tofu apply` with an explicit deny on the Administrator permission set, its policies and its assignments | The role is close to organization admin and no condition key limits it. The deny keeps a mistaken apply from locking everyone out; Administrator changes stay manual. Membership of the admin group is not covered. |

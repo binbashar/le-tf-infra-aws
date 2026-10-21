@@ -11,8 +11,10 @@ unused Atlantis POC.
 - AWS identity: [`apps-devstg/global/github-oidc-tofu-apply`](../../apps-devstg/global/github-oidc-tofu-apply/)
 - Incident procedure: [`tofu-ci-incident.md`](tofu-ci-incident.md)
 
-Status (2026-10-17): **active** on `apps-devstg/global/cli-test-layer`. All eight supervised cases
-passed ([record](tofu-plan-history.md#apply-supervised-test)). The status is not required yet.
+Status (2026-10-21): **active** on `apps-devstg/global/cli-test-layer` and `management/global/sso`.
+Both passed a supervised test ([cli-test-layer](tofu-plan-history.md#apply-supervised-test),
+[sso](tofu-plan-history.md#sso-apply-supervised-test)). `OpenTofu Apply` is a required check on
+`master`.
 
 ## 1. Decisions
 
@@ -152,6 +154,7 @@ onboarded layer.
 | Apply failed partway | The lock is kept and `OpenTofu Apply` is red. Fix forward or revert, then `/tofu apply` again. Never merge red |
 | New commits after an apply | The new head is pending. Wait for its plan, approve again, then `/tofu apply`. Only the delta is applied |
 | `master` moved | Gate 4 rejects. Update the branch, wait for the plan, then apply |
+| `AccessDenied` on the Administrator permission set (sso) | By design: the management role cannot change it. Earlier changes of that apply stay applied and the lock is kept. Apply the rest manually, then `/tofu unlock` |
 | Digest mismatch (drift, a stale plan, a changed value) | Rejected. Re-run or push to plan again, review, then apply |
 | Closed without merging after an apply | The lock is **kept** and the workflow comments. Reopen, revert, `/tofu apply`, then `/tofu unlock` |
 | Credential compromise | [`tofu-ci-incident.md`](tofu-ci-incident.md) |
@@ -210,7 +213,8 @@ wrongly. Then look for statuses the app posted that no run explains: compare eac
 | 4 | `tofu-apply.yml`, gates, lock, report, `OpenTofu Apply` status | ✅ #1248 |
 | 5 | Supervised test on `cli-test-layer`: rejections, create, lock conflict, merge release, update, digest mismatch, destroy with and without the flag, close unmerged and unlock | ✅ #1249–#1253, [record](tofu-plan-history.md#apply-supervised-test) |
 | 6 | Required `OpenTofu Apply` from the `tofu-status` app (up to date and dismiss stale approvals were already on). `OpenTofu Plan` is not required: it adds no apply guarantee and is forgeable | ✅ #1255, #1257, [record](tofu-plan-history.md#required-apply-status) |
-| 7 | Onboard `management/global/sso` and more layers | 🔄 |
+| 7 | Onboard `management/global/sso`: management apply role with an anti-lockout deny on the Administrator permission set | ✅ #1263, #1264–#1266, [record](tofu-plan-history.md#sso-apply-supervised-test) |
+| 7+ | More layers, one at a time, with the same steps | 🔄 |
 | Later | Scheduled drift detection. Cut human write access (break-glass role) so git is the only path | — |
 
 ## 9. Coexistence with PR #1101
