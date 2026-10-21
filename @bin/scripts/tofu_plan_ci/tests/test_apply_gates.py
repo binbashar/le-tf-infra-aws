@@ -1,5 +1,9 @@
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
+from tofu_plan_ci import plan_report
 from tofu_plan_ci.apply_gates import (
     Command,
     comment_body,
@@ -219,7 +223,7 @@ class PrStatusTests(unittest.TestCase):
         self.assertEqual(self.status(results=[result(status="failed")]), "pending")
 
     def test_missing_evidence_stays_pending(self):
-        validation_only = result(mode="validation", plan_digest=None)
+        validation_only = result(mode="static", plan_digest=None)
         other_commit = result(summary={"create": 0}, metadata={"head_sha": "c" * 40, "repository": REPO})
         for name, overrides in {
             "no results": dict(results=[]),
@@ -232,12 +236,22 @@ class PrStatusTests(unittest.TestCase):
                 self.assertEqual(self.status(**overrides), "pending")
 
     def test_positive_evidence_of_no_live_plan(self):
-        validation_only = result(mode="validation", plan_digest=None)
+        validation_only = result(mode="static", plan_digest=None)
         self.assertEqual(self.status(plan_live=False, results=[validation_only]), "success")
         blockers = {"layers": [LAYER], "live_eligible": False}
         self.assertEqual(self.status(discovery=blockers, results=[validation_only]), "success")
         self.assertEqual(self.status(discovery={"layers": [], "live_eligible": True}), "success")
         self.assertEqual(self.status(plan_run={"conclusion": "skipped"}, discovery=None), "success")
+
+    def test_a_real_validation_report_is_positive_evidence(self):
+        # Built by the same code the plan workflow runs, so the mode names cannot drift.
+        with tempfile.TemporaryDirectory() as directory:
+            plan_report.main(["static", "--layer", LAYER, "--init-exit", "0", "--validate-exit", "0",
+                              "--out-dir", directory, "--repository", REPO, "--head-sha", HEAD])
+            static = json.loads((Path(directory) / "result.json").read_text())
+        blockers = {"layers": [LAYER], "live_eligible": False}
+        self.assertEqual(self.status(discovery=blockers, results=[static]), "success")
+        self.assertEqual(self.status(discovery=blockers, results=[]), "pending")
 
     def test_changed_plan_tooling_is_decided_without_the_evidence(self):
         for tooling in ("@bin/scripts/tofu_plan_ci/workflow.py", ".github/workflows/tofu-plan.yml"):
