@@ -106,17 +106,17 @@ def test_delta_never_prints_negative_zero():
 def test_rows_show_change_in_dollars_and_percent(load_fixture):
     rows = table_rows(run(load_fixture("normal.json"))[1])
 
-    assert rows["Amazon Elastic Compute Cloud - Compute"] == (5.5, 0.5, "+10%")
-    assert rows["Amazon Simple Storage Service"] == (1.8, 0.0, "+0%")
-    assert rows["Amazon Bedrock"] == (0.8, 0.8, "new")
-    assert rows["Amazon Route 53"] == (0.0, -0.07, "-100%")
+    assert rows["EC2 - Compute"] == (5.5, 0.5, "+10%")
+    assert rows["S3"] == (1.8, 0.0, "+0%")
+    assert rows["Bedrock"] == (0.8, 0.8, "new")
+    assert rows["Route 53"] == (0.0, -0.07, "-100%")
 
 
 def test_negligible_services_fold_into_other(load_fixture):
     rows = table_rows(run(load_fixture("normal.json"))[1])
 
-    assert "Amazon GuardDuty" not in rows
-    assert "Amazon Redshift" not in rows
+    assert "GuardDuty" not in rows
+    assert "Redshift" not in rows
     assert rows["Other (2 services)"][0] == 0.0
 
 
@@ -125,9 +125,9 @@ def test_movers_are_listed_outside_the_top_n(load_fixture):
 
     # top 2 by cost, plus Bedrock (+0.80 >= 0.50), in cost order
     assert list(rows) == [
-        "Amazon Elastic Compute Cloud - Compute",
-        "Amazon Simple Storage Service",
-        "Amazon Bedrock",
+        "EC2 - Compute",
+        "S3",
+        "Bedrock",
         "Other (5 services)",
         "Total",
     ]
@@ -150,14 +150,14 @@ def test_mover_threshold_uses_the_unrounded_change():
 
 def test_mover_threshold_is_configurable(load_fixture):
     rows = table_rows(run(load_fixture("normal.json"), length=2, mover_min_usd=1.0)[1])
-    assert "Amazon Bedrock" not in rows
+    assert "Bedrock" not in rows
 
 
 def test_service_dropped_to_zero_is_listed(load_fixture):
     _, buffer, data = run(load_fixture("drop_to_zero.json"), length=1)
     rows = table_rows(buffer)
 
-    assert rows["Amazon OpenSearch Service"] == (0.0, -3.0, "-100%")
+    assert rows["OpenSearch Service"] == (0.0, -3.0, "-100%")
     assert rows["Total"] == (4.0, -3.0, "-43%")
     assert data["Amazon OpenSearch Service"][-1] == 0
 
@@ -185,7 +185,7 @@ def test_sparse_days_are_filled_with_zero(load_fixture):
 
 def test_sparkline_covers_the_last_seven_days(load_fixture):
     buffer = run(load_fixture("normal.json"))[1]
-    route53 = next(line for line in buffer.splitlines() if line.startswith("Amazon Route 53"))
+    route53 = next(line for line in buffer.splitlines() if line.startswith("Route 53"))
 
     # the $0.50 fee on day one of the 8-day window is outside the sparkline
     assert route53.endswith("▁" * 7)
@@ -249,3 +249,145 @@ def test_credits_summary_is_dated_too(monkeypatch, load_fixture):
 
     assert "(2026-10-22, partial)" in summary
     assert "of credit budget $10.00" in summary
+
+
+# --- names ------------------------------------------------------------------
+
+@pytest.mark.parametrize("name, short", [
+    ("Amazon Elastic Compute Cloud - Compute", "EC2 - Compute"),
+    ("Amazon Simple Storage Service", "S3"),
+    ("AmazonCloudWatch", "CloudWatch"),
+    ("AWS Config", "Config"),
+    ("Amazon Route 53", "Route 53"),
+    ("Claude Haiku 5.5 (Amazon Bedrock Edition)", "Claude Haiku 5.5 (Bedrock)"),
+    ("EC2 - Other", "EC2 - Other"),
+    ("Kiro", "Kiro"),
+])
+def test_short_name(name, short):
+    assert handler.short_name(name) == short
+
+
+def test_full_names_are_kept_when_shortening_would_collide():
+    result = {"ResultsByTime": [
+        {"TimePeriod": {"Start": f"2026-10-{d}"}, "Groups": [
+            {"Keys": [key], "Metrics": {"UnblendedCost": {"Amount": "1"}}}
+            for key in ("Amazon Widget", "AWS Widget")
+        ]}
+        for d in range(15, 23)
+    ]}
+    rows = table_rows(run(result)[1])
+    assert {"Amazon Widget", "AWS Widget"} <= set(rows)
+
+
+def test_linked_account_names_are_not_shortened(load_fixture):
+    report = handler.build_report(group_by="LINKED_ACCOUNT", length=20, result=load_fixture("normal.json"),
+                                  today=TODAY, account_name="test-org")
+    assert "Amazon Simple Storage Service" in [r["name"] for r in report["rows"]]
+
+
+# --- Block Kit --------------------------------------------------------------
+
+def blocks_for(fixture, **kwargs):
+    kwargs.setdefault("length", 20)
+    report = handler.build_report(result=fixture, today=TODAY, account_name="test-org", **kwargs)
+    return report, handler.render_blocks(report)
+
+
+def cell_text(cell):
+    if cell["type"] == "raw_text":
+        return cell["text"]
+    return cell["elements"][0]["elements"][0]["text"]
+
+
+def test_blocks_layout(load_fixture):
+    report, payload = blocks_for(load_fixture("normal.json"))
+
+    assert payload["text"] == report["summary"]
+    assert [b["type"] for b in payload["blocks"]] == ["header", "section", "table", "context"]
+
+    header = payload["blocks"][0]["text"]
+    assert header == {"type": "plain_text", "text": "AWS cost · 2026-10-22 (partial)"}
+    assert len(header["text"]) <= 150
+
+    section = payload["blocks"][1]["text"]["text"]
+    assert section.startswith("*$9.60* yesterday · ∆ +$1.27 (+15%) vs. the 7-day average")
+    assert "For account test-org" in section
+
+
+def test_blocks_table_matches_the_text_table(load_fixture):
+    report, payload = blocks_for(load_fixture("normal.json"), length=2)
+    table = payload["blocks"][2]
+
+    header, *rows = table["rows"]
+    assert [cell_text(c) for c in header] == ["Service", "Yday*", "∆$", "∆%", "Last 7d"]
+    assert [[cell_text(c) for c in r][:4] for r in rows] == [
+        ["EC2 - Compute", "$5.50", "+$0.50", "+10%"],
+        ["S3", "$1.80", "+$0.00", "+0%"],
+        ["Bedrock", "$0.80", "+$0.80", "new"],
+        ["Other (5 services)", "$1.50", "-$0.03", "-2%"],
+        ["Total", "$9.60", "+$1.27", "+15%"],
+    ]
+    assert all(len(r) == len(header) for r in rows)
+    assert len(table["rows"]) <= 100
+
+
+def test_blocks_table_bolds_header_other_and_total(load_fixture):
+    _, payload = blocks_for(load_fixture("normal.json"), length=2)
+    first_cells = [r[0]["type"] for r in payload["blocks"][2]["rows"]]
+    assert first_cells == ["rich_text", "raw_text", "raw_text", "raw_text", "rich_text", "rich_text"]
+
+
+def test_blocks_footer_is_the_text_footer(load_fixture):
+    report, payload = blocks_for(load_fixture("normal.json"))
+    context = payload["blocks"][3]["elements"]
+    assert [e["text"] for e in context] == report["footer"].splitlines()
+    assert all(e["type"] == "plain_text" for e in context)
+
+
+def test_blocks_carry_the_credit_line(monkeypatch, load_fixture):
+    monkeypatch.setenv("CREDITS_EXPIRE_DATE", "12/31/2026")
+    monkeypatch.setenv("CREDITS_REMAINING_AS_OF", "10/01/2026")
+    monkeypatch.setenv("CREDITS_REMAINING", "910")
+    _, payload = blocks_for(load_fixture("normal.json"))
+    assert "of the credit budget $10.00 for the day" in payload["blocks"][1]["text"]["text"]
+
+
+def test_blocks_for_an_empty_result(load_fixture):
+    _, payload = blocks_for(load_fixture("empty.json"))
+    rows = payload["blocks"][2]["rows"]
+    assert [cell_text(c) for c in rows[-1]][:4] == ["Total", "$0.00", "+$0.00", "-"]
+
+
+@pytest.mark.parametrize("usd, sign, text", [
+    (1234.5, False, "$1,234.50"),
+    (1.27, True, "+$1.27"),
+    (-0.4, True, "-$0.40"),
+    (0.0, True, "+$0.00"),
+])
+def test_money(usd, sign, text):
+    assert handler.money(usd, sign=sign) == text
+
+
+# --- publishing -------------------------------------------------------------
+
+def test_slack_gets_the_blocks_payload(monkeypatch):
+    sent = []
+    monkeypatch.setattr(handler, "post_json", lambda url, payload: sent.append(payload) or (200, "ok"))
+
+    handler.publish_slack("https://hook", "summary", "table", {"text": "summary", "blocks": []})
+
+    assert sent == [{"text": "summary", "blocks": []}]
+
+
+def test_slack_falls_back_to_text_when_blocks_are_rejected(monkeypatch):
+    sent = []
+
+    def post(url, payload):
+        sent.append(payload)
+        return (400, "invalid_blocks") if "blocks" in payload else (200, "ok")
+
+    monkeypatch.setattr(handler, "post_json", post)
+    handler.publish_slack("https://hook", "summary", "table", {"text": "summary", "blocks": []})
+
+    assert len(sent) == 2
+    assert sent[1] == {"text": "summary\n\n```\ntable\n```"}
