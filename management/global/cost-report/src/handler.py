@@ -4,9 +4,11 @@
 from collections import defaultdict
 import boto3
 import datetime
+import json
 import os
-import requests
 import sys
+import urllib.error
+import urllib.request
 
 n_days = 7
 today = datetime.datetime.today()
@@ -249,30 +251,51 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
     return summary, buffer, cost_per_day_by_service
 
 
+def post_json(url, payload, timeout=5):
+    """
+    POST a JSON payload using only the standard library, so the function
+    has no third-party dependencies to package.
+
+    Returns:
+        tuple: (HTTP status code, response body)
+    """
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.status, resp.read().decode()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode()
+
+
 def publish_slack(hook_url, summary, buffer):
 
-    resp = requests.post(
+    status, body = post_json(
         hook_url,
-        json={
+        {
             "text": summary + "\n\n```\n" + buffer + "\n```",
         }
     )
 
-    if resp.status_code != 200:
-        print("HTTP %s: %s" % (resp.status_code, resp.text))
+    if status != 200:
+        print("HTTP %s: %s" % (status, body))
 
 
 def publish_teams(hook_url, summary, buffer):
 
-    resp = requests.post(
+    status, body = post_json(
         hook_url,
-        json={
+        {
             "text": summary + "\n\n```\n" + buffer + "\n```",
         }
     )
 
-    if resp.status_code != 200:
-        print("HTTP %s: %s" % (resp.status_code, resp.text))
+    if status != 200:
+        print("HTTP %s: %s" % (status, body))
 
 def publish_google(hook_url, summary, buffer):
 
@@ -280,10 +303,10 @@ def publish_google(hook_url, summary, buffer):
         "text": summary + "\n\n```\n" + buffer + "\n```"
     }
 
-    resp = requests.post(hook_url, json=message)
+    status, body = post_json(hook_url, message)
 
-    if resp.status_code != 200:
-        print("HTTP %s: %s" % (resp.status_code, resp.text))
+    if status != 200:
+        print("HTTP %s: %s" % (status, body))
 
 if __name__ == "__main__":
     # for running locally to test

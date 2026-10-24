@@ -5,7 +5,7 @@ This module deploys a Lambda function to fetch AWS cost data and post a daily re
 ## Key Considerations
 
 - **Lambda Source**: Uses `terraform-aws-lambda` (binbashar) module, with code in the `src/` directory.
-- **Python Packaging**: Lambda dependencies must be built in Docker (`build_in_docker = true`) due to packaging issues with PIP in the default environment.
+- **Python Packaging**: The function has no third-party dependencies (standard library plus the runtime's bundled `boto3`), so there is no `requirements.txt` and the package is a plain zip of `src/` — applying needs neither Docker nor pip (`build_in_docker = false`). Adding a dependency would require building it in Docker again.
 - **Slack Integration**: Requires a valid Slack webhook URL in the environment variables.
 - **Permissions**: Lambda is granted only the minimum required permissions (`ce:GetCostAndUsage`, `iam:ListAccountAliases`).
 - **Scheduling**: Triggered daily at a configurable time via CloudWatch EventBridge rule (`var.report_run_schedule`).
