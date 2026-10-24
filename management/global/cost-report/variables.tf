@@ -63,7 +63,8 @@ variable "report_full_report_weekday" {
   default     = 0
 
   validation {
-    condition     = var.report_full_report_weekday >= 0 && var.report_full_report_weekday <= 6
-    error_message = "report_full_report_weekday must be between 0 (Monday) and 6 (Sunday)."
+    # an integer too: the Lambda parses it with int(), which rejects "1.5"
+    condition     = var.report_full_report_weekday == floor(var.report_full_report_weekday) && var.report_full_report_weekday >= 0 && var.report_full_report_weekday <= 6
+    error_message = "report_full_report_weekday must be a whole number between 0 (Monday) and 6 (Sunday)."
   }
 }

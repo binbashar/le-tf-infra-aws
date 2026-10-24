@@ -625,6 +625,19 @@ def test_compact_line(load_fixture):
     assert " · October to date $220.00 · on pace for $310.00 · no alerts" in handler.compact_line(with_month)
 
 
+def test_compact_line_on_a_day_with_alerts_states_the_real_verdict():
+    line = handler.compact_line(alerting_report())
+    assert line.startswith(":warning: AWS cost 2026-10-22 (partial)")
+    assert line.endswith(" · 1 alert")
+
+
+def test_compact_line_without_alerts_configured_claims_nothing(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org")
+    line = handler.compact_line(report)
+    assert line.startswith("AWS cost 2026-10-22 (partial)")
+    assert "alert" not in line
+
+
 def test_compact_blocks_are_one_section():
     payload = handler.render_compact_blocks(quiet_report())
     assert payload["text"] == handler.compact_line(quiet_report())

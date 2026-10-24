@@ -610,14 +610,23 @@ def report_mode(report, requested: str = None, daily_mode: str = "full", full_re
 
 
 def compact_line(report):
-    """':white_check_mark: AWS cost 2026-10-23 (partial): $10.81 (-15%) · October to date $872.65 · on pace for $974.81'"""
+    """
+    ':white_check_mark: AWS cost 2026-10-23 (partial): $10.81 (-15% vs. the 7-day average) ·
+    October to date $872.65 · on pace for $974.81 · no alerts'
+
+    One line, so no alert list -- but the verdict is the real one: a compact
+    report requested on a day with alerts says ':warning: … · 2 alerts'.
+    """
     total = report["rows"][-1]
-    line = (f":white_check_mark: AWS cost {report['date']:%Y-%m-%d} (partial): {money(total['yday'])} "
+    line = (f"AWS cost {report['date']:%Y-%m-%d} (partial): {money(total['yday'])} "
             f"({total['pct']} vs. the {baseline_days}-day average)")
     if report["month"]:
         month = report["month"]
         line += f" · {month['month']:%B} to date {money(month['month_to_date'])} · on pace for {money(month['pace'])}"
-    return line + " · no alerts"
+    if report["alerts"] is None:
+        return line
+    emoji, status = verdict(report)
+    return f"{emoji} {line} · {status}"
 
 
 def render_compact_blocks(report):
