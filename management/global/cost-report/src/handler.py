@@ -52,21 +52,27 @@ def sparkline(datapoints):
     return line
 
 
+def baseline(costs):
+    """Average daily cost of the days before yesterday (costs[-1])."""
+    return sum(costs[:-1]) / len(costs[:-1])
+
+
 def delta(costs):
     """
-    Yesterday (costs[-1]) against the average of the days before it.
+    Yesterday (costs[-1]) against the average of the days before it, for display.
 
     Returns:
-        tuple: (change in USD, change as a string: '+12%', '-100%', 'new' when
-                there was no baseline to compare with, or '-' when both are nil)
+        tuple: (change in USD rounded to cents, change as a string: '+12%',
+                '-100%', 'new' when there was no baseline to compare with, or
+                '-' when both are nil)
     """
-    baseline = sum(costs[:-1]) / len(costs[:-1])
+    base = baseline(costs)
     # round() then + 0.0 turns -0.0 into 0.0, so a flat cost never prints "-0.00"
-    usd = round(costs[-1] - baseline, 2) + 0.0
-    if baseline < negligible_usd:
+    usd = round(costs[-1] - base, 2) + 0.0
+    if base < negligible_usd:
         pct = "new" if costs[-1] >= negligible_usd else "-"
     else:
-        pct = f"{round((costs[-1] / baseline - 1) * 100) + 0:+d}%"
+        pct = f"{round((costs[-1] / base - 1) * 100) + 0:+d}%"
     return usd, pct
 
 
@@ -256,7 +262,8 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
     visible = [(name, costs) for name, costs in most_expensive_yesterday if not is_negligible(costs)]
     rows = [
         (name, costs) for rank, (name, costs) in enumerate(visible)
-        if rank < length or abs(delta(costs)[0]) >= mover_min_usd
+        # the unrounded change: a $0.495 move must not pass a $0.50 threshold
+        if rank < length or abs(costs[-1] - baseline(costs)) >= mover_min_usd
     ]
     row_names = {name for name, _ in rows}
     folded = [(name, costs) for name, costs in most_expensive_yesterday if name not in row_names]

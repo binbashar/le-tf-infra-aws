@@ -133,6 +133,21 @@ def test_movers_are_listed_outside_the_top_n(load_fixture):
     ]
 
 
+def test_mover_threshold_uses_the_unrounded_change():
+    # a row outside the top 1 that moved +0.4996: rounds to +0.50, yet is under the threshold
+    result = {"ResultsByTime": [
+        {"TimePeriod": {"Start": f"2026-10-{d}"}, "Groups": [
+            {"Keys": ["Big"], "Metrics": {"UnblendedCost": {"Amount": "9"}}},
+            {"Keys": ["Mover"], "Metrics": {"UnblendedCost": {"Amount": "0.4996" if d == 22 else "0"}}},
+        ]}
+        for d in range(15, 23)
+    ]}
+    rows = table_rows(run(result, length=1)[1])
+
+    assert "Mover" not in rows
+    assert handler.delta([0.0] * 7 + [0.4996])[0] == 0.5  # what the old check compared
+
+
 def test_mover_threshold_is_configurable(load_fixture):
     rows = table_rows(run(load_fixture("normal.json"), length=2, mover_min_usd=1.0)[1])
     assert "Amazon Bedrock" not in rows
