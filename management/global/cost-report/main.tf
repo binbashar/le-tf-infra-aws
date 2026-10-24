@@ -15,7 +15,7 @@ module "cost_report" {
   function_name = "${var.project}-${var.environment}-cost-report"
   description   = "Send account daily cost data to Slack"
   handler       = "handler.lambda_handler"
-  runtime       = "python3.9"
+  runtime       = "python3.13"
   memory_size   = 128
   timeout       = 10
   source_path   = "src/"
