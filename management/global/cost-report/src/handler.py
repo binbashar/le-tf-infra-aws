@@ -9,7 +9,26 @@ import os
 import urllib.error
 import urllib.request
 
-n_days = 7
+# Yesterday is compared against the average of the baseline_days days before
+# it, so the query covers baseline_days + 1 days; the sparkline shows the last
+# spark_days of them.
+baseline_days = 7
+n_days = baseline_days + 1
+spark_days = 7
+
+# A service whose every day stays under half a cent prints as $0.00 all week:
+# it is folded into the "Other" row instead of taking a line of its own.
+negligible_usd = 0.005
+
+excluded_record_types = ["Credit", "Refund", "Upfront", "Support"]
+
+metric_labels = {
+    "UnblendedCost": "Unblended cost",
+    "BlendedCost": "Blended cost",
+    "AmortizedCost": "Amortized cost",
+    "NetUnblendedCost": "Net unblended cost",
+    "NetAmortizedCost": "Net amortized cost",
+}
 
 # Cost Explorer has usually not finished billing yesterday when the report
 # runs, so yesterday's figure is always flagged as partial.
@@ -20,13 +39,13 @@ partial_note = "* partial: Cost Explorer may still add charges for this day"
 sparks = ['▁', '▂', '▃', '▄', '▅', '▆', '▇']
 
 def sparkline(datapoints):
-    lower = min(datapoints)
     upper = max(datapoints)
     n_sparks = len(sparks) - 1
 
     line = ""
     for dp in datapoints:
-        scaled = 1 if upper == 0 else dp/upper
+        # An all-zero series is a flat floor, not a full bar
+        scaled = 0 if upper == 0 else dp/upper
         which_spark = round(scaled * n_sparks)
         line += (sparks[which_spark])
 
@@ -34,12 +53,35 @@ def sparkline(datapoints):
 
 
 def delta(costs):
-    if (len(costs) > 1 and costs[-1] >= 1 and costs[-2] >= 1):
-        # This only handles positive numbers
-        result = ((costs[-1]/costs[-2])-1)*100.0
+    """
+    Yesterday (costs[-1]) against the average of the days before it.
+
+    Returns:
+        tuple: (change in USD, change as a string: '+12%', '-100%', 'new' when
+                there was no baseline to compare with, or '-' when both are nil)
+    """
+    baseline = sum(costs[:-1]) / len(costs[:-1])
+    # round() then + 0.0 turns -0.0 into 0.0, so a flat cost never prints "-0.00"
+    usd = round(costs[-1] - baseline, 2) + 0.0
+    if baseline < negligible_usd:
+        pct = "new" if costs[-1] >= negligible_usd else "-"
     else:
-        result = 0
-    return result
+        pct = f"{round((costs[-1] / baseline - 1) * 100) + 0:+d}%"
+    return usd, pct
+
+
+def is_negligible(costs):
+    return all(cost < negligible_usd for cost in costs)
+
+
+def footer(cost_aggregation: str):
+    metric = metric_labels.get(cost_aggregation, cost_aggregation)
+    excluded = ", ".join(excluded_record_types[:-1]) + " and " + excluded_record_types[-1]
+    return (
+        f"∆: yesterday vs. the average of the previous {baseline_days} days\n"
+        f"{metric}, excluding {excluded} records\n"
+        f"{partial_note}\n"
+    )
 
 
 def date_window(today: datetime.date):
@@ -107,8 +149,9 @@ def lambda_handler(event, context):
     group_by = os.environ.get("GROUP_BY", "SERVICE")
     length = int(os.environ.get("LENGTH", "5"))
     cost_aggregation = os.environ.get("COST_AGGREGATION", "UnblendedCost")
+    mover_min_usd = float(os.environ.get("MOVER_MIN_USD", "0.5"))
 
-    summary, buffer, data = report_cost(group_by=group_by, length=length, cost_aggregation=cost_aggregation)
+    summary, buffer, data = report_cost(group_by=group_by, length=length, cost_aggregation=cost_aggregation, mover_min_usd=mover_min_usd)
 
     slack_hook_url = None
     slack_secret_id = os.environ.get('SLACK_WEBHOOK_SECRET_ID')
@@ -128,9 +171,13 @@ def lambda_handler(event, context):
     if google_hook_url:
         publish_google(google_hook_url, summary, buffer)
 
-def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None):
+def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5):
     """
     Build the report for the n_days days before `today`.
+
+    Rows are the `length` most expensive items yesterday, plus any item whose
+    cost moved by at least `mover_min_usd` against its baseline -- so a service
+    that dropped to $0 is listed instead of vanishing into "Other".
 
     Args:
         result: a GetCostAndUsage response to report on instead of querying
@@ -164,12 +211,7 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
             "Not": {
                 "Dimensions": {
                     "Key": "RECORD_TYPE",
-                    "Values": [
-                        "Credit",
-                        "Refund",
-                        "Upfront",
-                        "Support",
-                    ]
+                    "Values": excluded_record_types,
                 }
             }
         },
@@ -211,35 +253,52 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
     # Sort the map by yesterday's cost
     most_expensive_yesterday = sorted(cost_per_day_by_service.items(), key=lambda i: i[1][-1], reverse=True)
 
-    service_names = [k for k,_ in most_expensive_yesterday[:length]]
-    longest_name_len = max(len(name) for name in service_names + ['Service', 'Other', 'Total'])
-
-    buffer = f"{'Service':{longest_name_len}} ${'Yday*':8} {'∆%':>5} {'Last '}{n_days}{'d':7}\n"
-
-    for service_name, costs in most_expensive_yesterday[:length]:
-        buffer += f"{service_name:{longest_name_len}} ${costs[-1]:8,.2f} {delta(costs):4.0f}% {sparkline(costs):7}\n"
+    visible = [(name, costs) for name, costs in most_expensive_yesterday if not is_negligible(costs)]
+    rows = [
+        (name, costs) for rank, (name, costs) in enumerate(visible)
+        if rank < length or abs(delta(costs)[0]) >= mover_min_usd
+    ]
+    row_names = {name for name, _ in rows}
+    folded = [(name, costs) for name, costs in most_expensive_yesterday if name not in row_names]
 
     other_costs = [0.0] * n_days
-    for service_name, costs in most_expensive_yesterday[length:]:
+    for service_name, costs in folded:
         for i, cost in enumerate(costs):
             other_costs[i] += cost
 
-    buffer += f"{'Other':{longest_name_len}} ${other_costs[-1]:8,.2f} {delta(other_costs):4.0f}% {sparkline(other_costs):7}\n"
-
     total_costs = [0.0] * n_days
-    for day_number in range(n_days):
-        for service_name, costs in most_expensive_yesterday:
-            try:
-                total_costs[day_number] += costs[day_number]
-            except IndexError:
-                total_costs[day_number] += 0.0
+    for service_name, costs in most_expensive_yesterday:
+        for i, cost in enumerate(costs):
+            total_costs[i] += cost
 
-    buffer += f"{'Total':{longest_name_len}} ${total_costs[-1]:8,.2f} {delta(total_costs):4.0f}% {sparkline(total_costs):7}\n"
-    buffer += f"\n{partial_note}\n"
+    noun = "services" if group_by == "SERVICE" else "items"
+    other_label = f"Other ({len(folded)} {noun})"
+
+    longest_name_len = max(len(name) for name in list(row_names) + ['Service', other_label, 'Total'])
+
+    def line(name, costs):
+        usd, pct = delta(costs)
+        return f"{name:{longest_name_len}} ${costs[-1]:8,.2f} {usd:+8,.2f} {pct:>5} {sparkline(costs[-spark_days:])}\n"
+
+    buffer = f"{'Service':{longest_name_len}} ${'Yday*':8} {'∆$':>8} {'∆%':>5} Last {spark_days}d\n"
+
+    for service_name, costs in rows:
+        buffer += line(service_name, costs)
+
+    if folded:
+        buffer += line(other_label, other_costs)
+
+    buffer += line('Total', total_costs)
+    buffer += "\n" + footer(cost_aggregation)
 
     cost_per_day_by_service["total"] = total_costs[-1]
 
     yesterday_label = f"{yesterday:%Y-%m-%d}, partial"
+
+    # The Lambda runs in the management (payer) account, where Cost Explorer
+    # returns the consolidated bill: REPORT_SCOPE says so in the summary.
+    scope = os.environ.get("REPORT_SCOPE")
+    report_for = f"{scope} ({account_name})" if scope else f"account {account_name}"
 
     credits_expire_date = os.environ.get('CREDITS_EXPIRE_DATE')
     if credits_expire_date:
@@ -262,12 +321,12 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
         else:
             emoji = ":warning:"
 
-        summary = (f"{emoji} Yesterday's cost ({yesterday_label}) for {account_name} ${total_costs[-1]:,.2f} "
+        summary = (f"{emoji} Yesterday's cost ({yesterday_label}) for {report_for} ${total_costs[-1]:,.2f} "
                    f"is {relative_to_budget:.2f}% of credit budget "
                    f"${allowed_credits_per_day:,.2f} for the day."
                   )
     else:
-        summary = f"Yesterday's cost ({yesterday_label}) for account {account_name} was ${total_costs[-1]:,.2f}"
+        summary = f"Yesterday's cost ({yesterday_label}) for {report_for} was ${total_costs[-1]:,.2f}"
 
     return summary, buffer, cost_per_day_by_service
 

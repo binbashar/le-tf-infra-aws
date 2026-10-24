@@ -34,6 +34,38 @@
         }
       ],
       "TimePeriod": {
+        "End": "2026-10-16",
+        "Start": "2026-10-15"
+      },
+      "Total": {}
+    },
+    {
+      "Estimated": true,
+      "Groups": [
+        {
+          "Keys": [
+            "Amazon Elastic Compute Cloud - Compute"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "4.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon OpenSearch Service"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "3.0000000000",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "TimePeriod": {
         "End": "2026-10-17",
         "Start": "2026-10-16"
       },
