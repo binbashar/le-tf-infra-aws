@@ -15,3 +15,9 @@ variable "report_group_by" {
   type        = string
   default     = "SERVICE"
 }
+
+variable "report_mover_min_usd" {
+  description = "List any item whose cost moved by at least this many USD against its 7-day average, even when it is outside the top report_items_length."
+  type        = number
+  default     = 0.5
+}

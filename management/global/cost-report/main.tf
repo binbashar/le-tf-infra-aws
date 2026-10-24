@@ -19,7 +19,7 @@ module "cost_report" {
   handler       = "handler.lambda_handler"
   runtime       = "python3.13"
   memory_size   = 128
-  timeout       = 10
+  timeout       = 30
   source_path   = "src/"
 
   # No third-party dependencies to install (see "Packaging" above)
@@ -32,6 +32,10 @@ module "cost_report" {
     LENGTH = var.report_items_length
     # How to group the items in the report
     GROUP_BY = var.report_group_by
+    # List any item whose cost moved at least this much (USD), even outside the top LENGTH
+    MOVER_MIN_USD = var.report_mover_min_usd
+    # Cost Explorer in the payer account returns the whole Organization's bill
+    REPORT_SCOPE = "the AWS Organization"
     # The Slack webhook URL for sending the report
     SLACK_WEBHOOK_SECRET_ID = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-m8z5y2"
 

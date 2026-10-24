@@ -11,6 +11,15 @@
       "Estimated": true,
       "Groups": [],
       "TimePeriod": {
+        "End": "2026-10-16",
+        "Start": "2026-10-15"
+      },
+      "Total": {}
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
         "End": "2026-10-17",
         "Start": "2026-10-16"
       },

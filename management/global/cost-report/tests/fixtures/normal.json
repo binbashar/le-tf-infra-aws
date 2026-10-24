@@ -64,11 +64,33 @@
               "Unit": "USD"
             }
           }
+        },
+        {
+          "Keys": [
+            "Amazon GuardDuty"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon Redshift"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0004000000",
+              "Unit": "USD"
+            }
+          }
         }
       ],
       "TimePeriod": {
-        "End": "2026-10-17",
-        "Start": "2026-10-16"
+        "End": "2026-10-16",
+        "Start": "2026-10-15"
       },
       "Total": {}
     },
@@ -118,6 +140,93 @@
               "Unit": "USD"
             }
           }
+        },
+        {
+          "Keys": [
+            "Amazon GuardDuty"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon Redshift"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0004000000",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "TimePeriod": {
+        "End": "2026-10-17",
+        "Start": "2026-10-16"
+      },
+      "Total": {}
+    },
+    {
+      "Estimated": true,
+      "Groups": [
+        {
+          "Keys": [
+            "Amazon Elastic Compute Cloud - Compute"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "5.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon Simple Storage Service"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "1.8000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "AWS Key Management Service"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "1.2000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon GuardDuty"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon Redshift"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0004000000",
+              "Unit": "USD"
+            }
+          }
         }
       ],
       "TimePeriod": {
@@ -158,6 +267,39 @@
           "Metrics": {
             "UnblendedCost": {
               "Amount": "1.2000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "AmazonCloudWatch"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.3000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon GuardDuty"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon Redshift"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0004000000",
               "Unit": "USD"
             }
           }
@@ -215,6 +357,28 @@
               "Unit": "USD"
             }
           }
+        },
+        {
+          "Keys": [
+            "Amazon GuardDuty"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon Redshift"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0004000000",
+              "Unit": "USD"
+            }
+          }
         }
       ],
       "TimePeriod": {
@@ -266,6 +430,28 @@
           "Metrics": {
             "UnblendedCost": {
               "Amount": "0.3000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon GuardDuty"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon Redshift"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0004000000",
               "Unit": "USD"
             }
           }
@@ -323,6 +509,28 @@
               "Unit": "USD"
             }
           }
+        },
+        {
+          "Keys": [
+            "Amazon GuardDuty"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon Redshift"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0004000000",
+              "Unit": "USD"
+            }
+          }
         }
       ],
       "TimePeriod": {
@@ -369,11 +577,44 @@
         },
         {
           "Keys": [
+            "Amazon Bedrock"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.8000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
             "AmazonCloudWatch"
           ],
           "Metrics": {
             "UnblendedCost": {
               "Amount": "0.3000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon GuardDuty"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Amazon Redshift"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0004000000",
               "Unit": "USD"
             }
           }

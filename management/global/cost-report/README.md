@@ -11,7 +11,9 @@ This module deploys a Lambda function to fetch AWS cost data and post a daily re
 - **Scheduling**: Triggered daily at a configurable time via CloudWatch EventBridge rule (`var.report_run_schedule`).
 - **Environment Variables**: Control report length, grouping, and Slack destination. Adjust as needed.
 - **Logs**: CloudWatch logs are retained for 7 days.
-- **Report window**: the 7 UTC days before the run. Yesterday is always flagged *partial* (dated, with a `*` on the `Yday*` column), because Cost Explorer has usually not finished billing it when the report runs at 12:00 UTC.
+- **Report window**: the 8 UTC days before the run — yesterday plus a 7-day baseline. Yesterday is always flagged *partial* (dated, with a `*` on the `Yday*` column), because Cost Explorer has usually not finished billing it when the report runs at 12:00 UTC.
+- **Table**: `∆$` and `∆%` compare yesterday with the average of the 7 days before it (`new` when there was nothing to compare with). Rows are the top `report_items_length` items by yesterday's cost, plus any item that moved by at least `report_mover_min_usd` — so a service that dropped to $0 is listed rather than hidden. Items under half a cent every day fold into `Other (N services)`, and the rows add up to `Total` (each figure is rounded to cents on its own, so the printed rows can differ from `Total` by a few cents). The footer states the cost metric and the excluded record types.
+- **Scope**: run from the management (payer) account, Cost Explorer returns the whole Organization's bill; `REPORT_SCOPE` says so in the summary line.
 
 ## Testing
 
