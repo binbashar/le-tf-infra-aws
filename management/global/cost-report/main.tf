@@ -3,10 +3,12 @@
 # This helper will run on the given schedule in order to fetch AWS costs for
 # the past week, build a report and post it to Slack.
 # --------------------------------------------------
-# Known Issues:
-#  1. Leverage toolbox image doesn't have PIP
-#  2. tried to run outside of Leverage, but the packager couldn't find the python executable
-#  3. tried the same as above but via docker (locally, outside Leverage) using the following, that worked but it is not ideal
+# Packaging: src/ uses only the Python standard library plus boto3 (bundled in
+# the Lambda runtime), so there is no requirements.txt and the module simply
+# zips src/ -- no pip, no Docker, no local Python matching the runtime.
+# Adding a requirements.txt brings all of that back: pip then has to run for
+# the Lambda runtime, which in practice means build_in_docker = true and a
+# running Docker daemon on whoever applies.
 
 module "cost_report" {
   source = "github.com/binbashar/terraform-aws-lambda.git?ref=v8.0.1"
@@ -20,8 +22,8 @@ module "cost_report" {
   timeout       = 10
   source_path   = "src/"
 
-  # Had to build the script dependencies and create the package via docker (issue #3)
-  build_in_docker = true
+  # No third-party dependencies to install (see "Packaging" above)
+  build_in_docker = false
 
   trigger_on_package_timestamp = false
 
