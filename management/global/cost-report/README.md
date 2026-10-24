@@ -13,6 +13,7 @@ This module deploys a Lambda function to fetch AWS cost data and post a daily re
 - **Logs**: CloudWatch logs are retained for 7 days.
 - **Report window**: the 8 UTC days before the run — yesterday plus a 7-day baseline. Yesterday is always flagged *partial* (dated, with a `*` on the `Yday*` column), because Cost Explorer has usually not finished billing it when the report runs at 12:00 UTC.
 - **Table**: `∆$` and `∆%` compare yesterday with the average of the 7 days before it (`new` when there was nothing to compare with). Rows are the top `report_items_length` items by yesterday's cost, plus any item that moved by at least `report_mover_min_usd` — so a service that dropped to $0 is listed rather than hidden. Items under half a cent every day fold into `Other (N services)`, and the rows add up to `Total` (each figure is rounded to cents on its own, so the printed rows can differ from `Total` by a few cents). The footer states the cost metric and the excluded record types.
+- **Slack message**: a Block Kit message — header, summary line, a `table` block and the footer as context. Service names are shortened (`S3`, `EC2 - Compute`, prefixes `Amazon `/`AWS ` dropped) unless that would make two rows identical. If Slack rejects the blocks, the function posts the plain-text report instead, so a layout error never loses the day's report. Teams and Google Chat get the plain-text report.
 - **Scope**: run from the management (payer) account, Cost Explorer returns the whole Organization's bill; `REPORT_SCOPE` says so in the summary line.
 
 ## Testing
@@ -20,7 +21,7 @@ This module deploys a Lambda function to fetch AWS cost data and post a daily re
 `src/` is the whole Lambda package, so tests live in `tests/` and are never deployed. From the repository root:
 
 - `make cost-report-test` — offline tests against the synthetic Cost Explorer responses in `tests/fixtures/` (no AWS calls; the suite fails any test that tries).
-- `make cost-report-preview` — builds the report from live Cost Explorer data with the management profile and prints it instead of posting to Slack. Each run is one billed request ($0.01).
+- `make cost-report-preview` — builds the report from live Cost Explorer data with the management profile and prints it instead of posting to Slack. Each run is one billed request ($0.01). It also checks the Block Kit message with Slack's public `blocks.validate` method and prints a Block Kit Builder link to preview it.
 
 ### Access to Slack Webhook Secret
 

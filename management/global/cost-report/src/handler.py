@@ -90,6 +90,36 @@ def footer(cost_aggregation: str):
     )
 
 
+# Cost Explorer's service names, shortened so the table fits a phone screen
+short_names = {
+    "Amazon Elastic Compute Cloud - Compute": "EC2 - Compute",
+    "Amazon EC2 Container Registry (ECR)": "ECR",
+    "Amazon Elastic Container Service": "ECS",
+    "Amazon Elastic Container Service for Kubernetes": "EKS",
+    "Amazon Elastic File System": "EFS",
+    "Amazon Elastic Load Balancing": "ELB",
+    "Amazon Relational Database Service": "RDS",
+    "Amazon Simple Email Service": "SES",
+    "Amazon Simple Notification Service": "SNS",
+    "Amazon Simple Queue Service": "SQS",
+    "Amazon Simple Storage Service": "S3",
+    "Amazon Virtual Private Cloud": "VPC",
+    "AWS Key Management Service": "KMS",
+    "AmazonCloudWatch": "CloudWatch",
+}
+
+
+def short_name(name: str):
+    """'Amazon Simple Storage Service' -> 'S3', 'AWS Config' -> 'Config'."""
+    if name in short_names:
+        return short_names[name]
+    name = name.replace("(Amazon Bedrock Edition)", "(Bedrock)")
+    for prefix in ("Amazon ", "AWS "):
+        if name.startswith(prefix):
+            return name[len(prefix):]
+    return name
+
+
 def date_window(today: datetime.date):
     """
     The report covers the n_days days before `today` (UTC), `today` excluded.
@@ -157,7 +187,8 @@ def lambda_handler(event, context):
     cost_aggregation = os.environ.get("COST_AGGREGATION", "UnblendedCost")
     mover_min_usd = float(os.environ.get("MOVER_MIN_USD", "0.5"))
 
-    summary, buffer, data = report_cost(group_by=group_by, length=length, cost_aggregation=cost_aggregation, mover_min_usd=mover_min_usd)
+    report = build_report(group_by=group_by, length=length, cost_aggregation=cost_aggregation, mover_min_usd=mover_min_usd)
+    summary, buffer = report["summary"], render_text(report)
 
     slack_hook_url = None
     slack_secret_id = os.environ.get('SLACK_WEBHOOK_SECRET_ID')
@@ -167,7 +198,7 @@ def lambda_handler(event, context):
         slack_hook_url = os.environ.get('SLACK_WEBHOOK_URL')
 
     if slack_hook_url:
-        publish_slack(slack_hook_url, summary, buffer)
+        publish_slack(slack_hook_url, summary, buffer, render_blocks(report))
 
     teams_hook_url = os.environ.get('TEAMS_WEBHOOK_URL')
     if teams_hook_url:
@@ -179,7 +210,17 @@ def lambda_handler(event, context):
 
 def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5):
     """
-    Build the report for the n_days days before `today`.
+    The report as (summary line, monospace table, cost per day by item) --
+    the plain-text form, used by Teams, Google Chat and the Slack fallback.
+    """
+    report = build_report(group_by=group_by, length=length, cost_aggregation=cost_aggregation, result=result, today=today, account_name=account_name, mover_min_usd=mover_min_usd)
+    return report["summary"], render_text(report), report["data"]
+
+
+def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5):
+    """
+    Build the report for the n_days days before `today`, as data: the
+    render_* functions turn it into a message.
 
     Rows are the `length` most expensive items yesterday, plus any item whose
     cost moved by at least `mover_min_usd` against its baseline -- so a service
@@ -281,22 +322,20 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
     noun = "services" if group_by == "SERVICE" else "items"
     other_label = f"Other ({len(folded)} {noun})"
 
-    longest_name_len = max(len(name) for name in list(row_names) + ['Service', other_label, 'Total'])
+    # Shorten names only while that keeps every row distinct
+    names = {name: name for name, _ in rows}
+    if group_by == "SERVICE" and len({short_name(name) for name in names}) == len(names):
+        names = {name: short_name(name) for name in names}
 
-    def line(name, costs):
+    def row(label, costs, kind):
         usd, pct = delta(costs)
-        return f"{name:{longest_name_len}} ${costs[-1]:8,.2f} {usd:+8,.2f} {pct:>5} {sparkline(costs[-spark_days:])}\n"
+        return {"name": label, "kind": kind, "yday": costs[-1], "usd": usd, "pct": pct,
+                "spark": sparkline(costs[-spark_days:])}
 
-    buffer = f"{'Service':{longest_name_len}} ${'Yday*':8} {'∆$':>8} {'∆%':>5} Last {spark_days}d\n"
-
-    for service_name, costs in rows:
-        buffer += line(service_name, costs)
-
+    table = [row(names[name], costs, "item") for name, costs in rows]
     if folded:
-        buffer += line(other_label, other_costs)
-
-    buffer += line('Total', total_costs)
-    buffer += "\n" + footer(cost_aggregation)
+        table.append(row(other_label, other_costs, "other"))
+    table.append(row("Total", total_costs, "total"))
 
     cost_per_day_by_service["total"] = total_costs[-1]
 
@@ -328,14 +367,88 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
         else:
             emoji = ":warning:"
 
+        credit_line = (f"{emoji} {relative_to_budget:.2f}% of the credit budget "
+                       f"${allowed_credits_per_day:,.2f} for the day")
         summary = (f"{emoji} Yesterday's cost ({yesterday_label}) for {report_for} ${total_costs[-1]:,.2f} "
                    f"is {relative_to_budget:.2f}% of credit budget "
                    f"${allowed_credits_per_day:,.2f} for the day."
                   )
     else:
+        credit_line = None
         summary = f"Yesterday's cost ({yesterday_label}) for {report_for} was ${total_costs[-1]:,.2f}"
 
-    return summary, buffer, cost_per_day_by_service
+    return {
+        "summary": summary,
+        "date": yesterday,
+        "report_for": report_for,
+        "credit_line": credit_line,
+        "rows": table,
+        "footer": footer(cost_aggregation),
+        "data": cost_per_day_by_service,
+    }
+
+
+def render_text(report):
+    """The table as monospace text."""
+    rows = report["rows"]
+    width = max(len(r["name"]) for r in rows + [{"name": "Service"}])
+
+    buffer = f"{'Service':{width}} ${'Yday*':8} {'∆$':>8} {'∆%':>5} Last {spark_days}d\n"
+    for r in rows:
+        buffer += f"{r['name']:{width}} ${r['yday']:8,.2f} {r['usd']:+8,.2f} {r['pct']:>5} {r['spark']}\n"
+    buffer += "\n" + report["footer"]
+    return buffer
+
+
+def money(usd: float, sign: bool = False):
+    """$1,234.50, or with sign=True +$1.27 / -$0.40."""
+    if not sign:
+        return f"${usd:,.2f}"
+    return f"{'-' if usd < 0 else '+'}${abs(usd):,.2f}"
+
+
+def render_blocks(report):
+    """
+    The report as a Slack Block Kit message: header, summary, table, footer.
+    The top-level `text` is what notifications and screen readers show.
+    """
+    total = report["rows"][-1]
+
+    def cell(text, bold=False):
+        if not bold:
+            return {"type": "raw_text", "text": text}
+        return {"type": "rich_text", "elements": [{"type": "rich_text_section", "elements": [
+            {"type": "text", "text": text, "style": {"bold": True}}]}]}
+
+    header = ["Service", "Yday*", "∆$", "∆%", f"Last {spark_days}d"]
+    rows = [[cell(text, bold=True) for text in header]]
+    for r in report["rows"]:
+        rows.append([
+            cell(r["name"], bold=r["kind"] != "item"),
+            cell(money(r["yday"])),
+            cell(money(r["usd"], sign=True)),
+            cell(r["pct"]),
+            cell(r["spark"]),
+        ])
+
+    summary = (f"*{money(total['yday'])}* yesterday · ∆ {money(total['usd'], sign=True)} ({total['pct']}) "
+               f"vs. the {baseline_days}-day average\n"
+               f"For {report['report_for']}")
+    if report["credit_line"]:
+        summary += "\n" + report["credit_line"]
+
+    return {
+        "text": report["summary"],
+        "blocks": [
+            {"type": "header", "text": {"type": "plain_text", "text": f"AWS cost · {report['date']:%Y-%m-%d} (partial)"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": summary}},
+            {"type": "table",
+             "column_settings": [{"is_wrapped": True}] + [{"align": "right"}] * 3 + [{"align": "left"}],
+             "rows": rows},
+            {"type": "context", "elements": [
+                {"type": "plain_text", "text": text} for text in report["footer"].splitlines()]},
+        ],
+    }
 
 
 def post_json(url, payload, timeout=5):
@@ -359,7 +472,16 @@ def post_json(url, payload, timeout=5):
         return e.code, e.read().decode()
 
 
-def publish_slack(hook_url, summary, buffer):
+def publish_slack(hook_url, summary, buffer, blocks_payload=None):
+    """
+    Post the Block Kit message; if Slack rejects it, post the plain-text
+    report instead, so a layout error never costs the day's report.
+    """
+    if blocks_payload:
+        status, body = post_json(hook_url, blocks_payload)
+        if status == 200:
+            return
+        print("HTTP %s: %s -- retrying as plain text" % (status, body))
 
     status, body = post_json(
         hook_url,
