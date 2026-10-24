@@ -33,7 +33,7 @@ report = handler.build_report(
     alert_min_usd=float(os.environ.get("ALERT_MIN_USD", "1")),
     alert_min_pct=float(os.environ.get("ALERT_MIN_PCT", "30")),
 )
-mode = handler.report_mode(report, os.environ.get("MODE"), os.environ.get("DAILY_MODE", "compact"),
+mode = handler.report_mode(report, os.environ.get("MODE"), os.environ.get("DAILY_MODE", "full"),
                            int(os.environ.get("FULL_REPORT_WEEKDAY", "0")))
 print()
 print(f"Today's mode: {mode} ({len(report['alerts'])} alerts). Both forms follow.")

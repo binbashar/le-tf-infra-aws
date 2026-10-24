@@ -47,9 +47,9 @@ variable "report_alert_mention" {
 }
 
 variable "report_daily_mode" {
-  description = "\"compact\": a one-line message on quiet days and the full report when there are alerts or on report_full_report_weekday. \"full\": the full report every day."
+  description = "\"full\": the full report every day. \"compact\": a one-line message on quiet days, and the full report only when there are alerts or on report_full_report_weekday."
   type        = string
-  default     = "compact"
+  default     = "full"
 
   validation {
     condition     = contains(["compact", "full"], var.report_daily_mode)
@@ -58,7 +58,7 @@ variable "report_daily_mode" {
 }
 
 variable "report_full_report_weekday" {
-  description = "Day of the week (0 = Monday, UTC) on which the full report goes out even without alerts."
+  description = "With report_daily_mode = \"compact\": day of the week (0 = Monday, UTC) on which the full report goes out even without alerts."
   type        = number
   default     = 0
 

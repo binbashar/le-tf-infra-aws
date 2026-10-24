@@ -43,7 +43,7 @@ module "cost_report" {
     ALERT_MIN_PCT = var.report_alert_min_pct
     # Slack mention added to alerts, e.g. "<!here>" or "<!subteam^S0123>" (empty: none)
     ALERT_MENTION = var.report_alert_mention
-    # "compact": one line on quiet days, full report on alerts and on FULL_REPORT_WEEKDAY; "full": always
+    # "full": the full report every day; "compact": one line on quiet days, full report on alerts and on FULL_REPORT_WEEKDAY
     DAILY_MODE          = var.report_daily_mode
     FULL_REPORT_WEEKDAY = var.report_full_report_weekday
     # The Slack webhook URL for sending the report

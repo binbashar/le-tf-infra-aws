@@ -659,11 +659,23 @@ def test_lambda_posts_the_compact_line_on_a_quiet_day(monkeypatch, load_fixture)
     monkeypatch.setattr(handler, "build_report", lambda **kwargs: report)
     monkeypatch.setattr(handler, "post_json", lambda url, payload: sent.append(payload) or (200, "ok"))
     monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hook")
+    monkeypatch.setenv("DAILY_MODE", "compact")
     monkeypatch.setenv("FULL_REPORT_WEEKDAY", "0")
 
     handler.lambda_handler({}, None)
 
     assert sent == [handler.render_compact_blocks(report)]
+
+
+def test_lambda_sends_the_full_report_by_default(monkeypatch):
+    sent, report = [], quiet_report()
+    monkeypatch.setattr(handler, "build_report", lambda **kwargs: report)
+    monkeypatch.setattr(handler, "post_json", lambda url, payload: sent.append(payload) or (200, "ok"))
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hook")
+
+    handler.lambda_handler({}, None)
+
+    assert sent == [handler.render_blocks(report)]
 
 
 def test_lambda_posts_the_full_report_when_asked(monkeypatch):

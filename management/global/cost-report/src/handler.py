@@ -332,7 +332,7 @@ def lambda_handler(event, context):
     report = build_report(group_by=group_by, length=length, cost_aggregation=cost_aggregation, mover_min_usd=mover_min_usd, budget_name=budget_name,
                           alert_min_usd=alert_min_usd, alert_min_pct=alert_min_pct)
 
-    mode = report_mode(report, (event or {}).get("mode"), os.environ.get("DAILY_MODE", "compact"),
+    mode = report_mode(report, (event or {}).get("mode"), os.environ.get("DAILY_MODE", "full"),
                        int(os.environ.get("FULL_REPORT_WEEKDAY", "0")))
     print(f"mode={mode} alerts={len(report['alerts'])}")
     if mode == "compact":
@@ -591,14 +591,15 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
     }
 
 
-def report_mode(report, requested: str = None, daily_mode: str = "compact", full_report_weekday: int = 0):
+def report_mode(report, requested: str = None, daily_mode: str = "full", full_report_weekday: int = 0):
     """
     'full' (header, alerts, month summary, table) or 'compact' (one line).
 
-    Compact only on a quiet day: any alert, the weekly full-report day
-    (Monday=0, the day the report runs), DAILY_MODE=full, or an invocation
-    with {"mode": "full"} sends the full report. The one line still goes out
-    every quiet day, so silence always means the report broke.
+    DAILY_MODE=full (the default) always sends the full report. With
+    DAILY_MODE=compact, a quiet day gets the one line instead; any alert, the
+    weekly full-report day (Monday=0, the day the report runs) or an
+    invocation with {"mode": "full"} still sends the full report. The one
+    line goes out every quiet day, so silence always means the report broke.
     """
     if requested in ("full", "compact"):
         return requested
