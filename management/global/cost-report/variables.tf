@@ -21,3 +21,9 @@ variable "report_mover_min_usd" {
   type        = number
   default     = 0.5
 }
+
+variable "report_budget_name" {
+  description = "AWS Budget shown in the report's month summary (defined in management/global/cost-mgmt). Its figures are AWS Budgets' own, which may count charges the report excludes; the report labels which. Empty string to leave it out."
+  type        = string
+  default     = "budget-MONTHLY-management-100-percent"
+}

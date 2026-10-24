@@ -1,0 +1,733 @@
+{
+  "DimensionValueAttributes": [],
+  "ResultsByTime": [
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-02",
+        "Start": "2026-09-01"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-03",
+        "Start": "2026-09-02"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-04",
+        "Start": "2026-09-03"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-05",
+        "Start": "2026-09-04"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-06",
+        "Start": "2026-09-05"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-07",
+        "Start": "2026-09-06"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-08",
+        "Start": "2026-09-07"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-09",
+        "Start": "2026-09-08"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-10",
+        "Start": "2026-09-09"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-11",
+        "Start": "2026-09-10"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-12",
+        "Start": "2026-09-11"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-13",
+        "Start": "2026-09-12"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-14",
+        "Start": "2026-09-13"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-15",
+        "Start": "2026-09-14"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-16",
+        "Start": "2026-09-15"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-17",
+        "Start": "2026-09-16"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-18",
+        "Start": "2026-09-17"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-19",
+        "Start": "2026-09-18"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-20",
+        "Start": "2026-09-19"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-21",
+        "Start": "2026-09-20"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-22",
+        "Start": "2026-09-21"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-23",
+        "Start": "2026-09-22"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-24",
+        "Start": "2026-09-23"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-25",
+        "Start": "2026-09-24"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-26",
+        "Start": "2026-09-25"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-27",
+        "Start": "2026-09-26"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-28",
+        "Start": "2026-09-27"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-29",
+        "Start": "2026-09-28"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-09-30",
+        "Start": "2026-09-29"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-01",
+        "Start": "2026-09-30"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "8.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-02",
+        "Start": "2026-10-01"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-03",
+        "Start": "2026-10-02"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-04",
+        "Start": "2026-10-03"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-05",
+        "Start": "2026-10-04"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-06",
+        "Start": "2026-10-05"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-07",
+        "Start": "2026-10-06"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-08",
+        "Start": "2026-10-07"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-09",
+        "Start": "2026-10-08"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-10",
+        "Start": "2026-10-09"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-11",
+        "Start": "2026-10-10"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-12",
+        "Start": "2026-10-11"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-13",
+        "Start": "2026-10-12"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-14",
+        "Start": "2026-10-13"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-15",
+        "Start": "2026-10-14"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-16",
+        "Start": "2026-10-15"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-17",
+        "Start": "2026-10-16"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-18",
+        "Start": "2026-10-17"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-19",
+        "Start": "2026-10-18"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-20",
+        "Start": "2026-10-19"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-21",
+        "Start": "2026-10-20"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-22",
+        "Start": "2026-10-21"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-23",
+        "Start": "2026-10-22"
+      },
+      "Total": {
+        "UnblendedCost": {
+          "Amount": "10.0000000000",
+          "Unit": "USD"
+        }
+      }
+    }
+  ]
+}

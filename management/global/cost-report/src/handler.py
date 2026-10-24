@@ -3,9 +3,11 @@
 #
 from collections import defaultdict
 import boto3
+import calendar
 import datetime
 import json
 import os
+import statistics
 import urllib.error
 import urllib.request
 
@@ -57,6 +59,13 @@ def baseline(costs):
     return sum(costs[:-1]) / len(costs[:-1])
 
 
+def pct_change(new: float, old: float):
+    """'+12%', '-100%', 'new' when there is nothing to compare with, '-' when both are nil."""
+    if old < negligible_usd:
+        return "new" if new >= negligible_usd else "-"
+    return f"{round((new / old - 1) * 100) + 0:+d}%"
+
+
 def delta(costs):
     """
     Yesterday (costs[-1]) against the average of the days before it, for display.
@@ -69,11 +78,7 @@ def delta(costs):
     base = baseline(costs)
     # round() then + 0.0 turns -0.0 into 0.0, so a flat cost never prints "-0.00"
     usd = round(costs[-1] - base, 2) + 0.0
-    if base < negligible_usd:
-        pct = "new" if costs[-1] >= negligible_usd else "-"
-    else:
-        pct = f"{round((costs[-1] / base - 1) * 100) + 0:+d}%"
-    return usd, pct
+    return usd, pct_change(costs[-1], base)
 
 
 def is_negligible(costs):
@@ -136,6 +141,95 @@ def date_window(today: datetime.date):
     return week_ago, yesterday, list_of_dates
 
 
+def month_window(yesterday: datetime.date):
+    """
+    The month yesterday falls in, and the same stretch of the month before.
+    On the 1st, yesterday is the last day of the previous month, so that
+    month is reported whole.
+
+    Returns:
+        tuple: (start of last month, same day last month -- capped at that
+                month's length --, start of this month)
+    """
+    month_start = yesterday.replace(day=1)
+    last_month_end = month_start - datetime.timedelta(days=1)
+    last_month_start = last_month_end.replace(day=1)
+    same_point = last_month_start.replace(day=min(yesterday.day, last_month_end.day))
+    return last_month_start, same_point, month_start
+
+
+def month_summary(daily_totals: dict, yesterday: datetime.date):
+    """
+    Month to date against the same point last month, and the month-end pace:
+    month to date plus, for each day left, the median of the baseline_days
+    days before yesterday. The median, not the mean: a once-a-month charge
+    (a Marketplace subscription, say) inside those days would otherwise be
+    projected onto every remaining day. Every figure uses the report's own
+    metric.
+
+    Args:
+        daily_totals: {'YYYY-MM-DD': total cost} from the start of last month
+    """
+    last_month_start, same_point, month_start = month_window(yesterday)
+
+    def total(start, end):
+        return sum(cost for day, cost in daily_totals.items()
+                   if start.isoformat() <= day <= end.isoformat())
+
+    month_to_date = total(month_start, yesterday)
+    last_month_to_date = total(last_month_start, same_point)
+    recent = [daily_totals.get((yesterday - datetime.timedelta(days=d)).isoformat(), 0.0)
+              for d in range(1, baseline_days + 1)]
+    days_left = calendar.monthrange(yesterday.year, yesterday.month)[1] - yesterday.day
+    return {
+        "month": month_start,
+        "last_month": last_month_start,
+        "month_to_date": month_to_date,
+        "last_month_to_date": last_month_to_date,
+        "pct": pct_change(month_to_date, last_month_to_date),
+        "pace": month_to_date + statistics.median(recent) * days_left,
+    }
+
+
+def get_budget(budget_name: str):
+    """
+    The AWS Budget as reported by AWS Budgets, or None when it cannot be read:
+    a budget problem must never stop the day's report.
+    """
+    try:
+        account_id = boto3.client("sts").get_caller_identity()["Account"]
+        return boto3.client("budgets").describe_budget(AccountId=account_id, BudgetName=budget_name)["Budget"]
+    except Exception as e:
+        print(f"Could not read budget {budget_name}: {e}")
+        return None
+
+
+def budget_line(budget: dict):
+    """
+    'AWS Budget (incl. tax, support; excl. credits): $874.64 of $750.00 (117%) · forecast $952.91'
+
+    The figures are AWS Budgets' own, which counts charges this report
+    excludes; the label is built from the budget's CostTypes so it says which.
+    """
+    types = budget.get("CostTypes", {})
+    included = [label for flag, label in (
+        ("IncludeTax", "tax"), ("IncludeSupport", "support"),
+        ("IncludeUpfront", "upfront"), ("IncludeOtherSubscription", "Marketplace"),
+    ) if types.get(flag)]
+    label = "incl. " + ", ".join(included) if included else "usage only"
+    label += "; " + ("incl." if types.get("IncludeCredit") else "excl.") + " credits"
+
+    limit = float(budget["BudgetLimit"]["Amount"])
+    spend = budget.get("CalculatedSpend", {})
+    actual = float(spend.get("ActualSpend", {}).get("Amount", 0))
+    line = f"AWS Budget ({label}): {money(actual)} of {money(limit)}"
+    if limit:
+        line += f" ({actual / limit:.0%})"
+    if "ForecastedSpend" in spend:
+        line += f" · forecast {money(float(spend['ForecastedSpend']['Amount']))}"
+    return line
+
+
 def get_account_name():
     # Get account account name from env, or account id/account alias from boto3
     account_name = os.environ.get("AWS_ACCOUNT_NAME", None)
@@ -186,8 +280,9 @@ def lambda_handler(event, context):
     length = int(os.environ.get("LENGTH", "5"))
     cost_aggregation = os.environ.get("COST_AGGREGATION", "UnblendedCost")
     mover_min_usd = float(os.environ.get("MOVER_MIN_USD", "0.5"))
+    budget_name = os.environ.get("BUDGET_NAME")
 
-    report = build_report(group_by=group_by, length=length, cost_aggregation=cost_aggregation, mover_min_usd=mover_min_usd)
+    report = build_report(group_by=group_by, length=length, cost_aggregation=cost_aggregation, mover_min_usd=mover_min_usd, budget_name=budget_name)
     summary, buffer = report["summary"], render_text(report)
 
     slack_hook_url = None
@@ -217,7 +312,7 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
     return report["summary"], render_text(report), report["data"]
 
 
-def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5):
+def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5, monthly_result: dict = None, budget_name: str = None, budget: dict = None):
     """
     Build the report for the n_days days before `today`, as data: the
     render_* functions turn it into a message.
@@ -229,6 +324,11 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
     Args:
         result: a GetCostAndUsage response to report on instead of querying
             Cost Explorer (used by the tests)
+        monthly_result: the same for the daily totals behind the month
+            summary. When `result` is given and this is not, the month
+            summary is left out rather than queried.
+        budget_name: the AWS Budget to show; budget: its DescribeBudget
+            'Budget', to skip the lookup (tests)
         today: 'YYYY-MM-DD'; defaults to the current UTC date. Computed per
             call, not at import time, so a warm Lambda container never
             reports a stale window.
@@ -274,6 +374,15 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
     # Only run the query when on lambda, not when testing locally with a fixture
     if result is None:
         result = boto3.client('ce').get_cost_and_usage(**query)
+        if monthly_result is None:
+            # Ungrouped daily totals from the start of last month: one more
+            # request, a single page (at most 62 rows).
+            monthly_query = {k: v for k, v in query.items() if k != "GroupBy"}
+            monthly_query["TimePeriod"] = {
+                "Start": month_window(yesterday)[0].strftime('%Y-%m-%d'),
+                "End": today.strftime('%Y-%m-%d'),
+            }
+            monthly_result = boto3.client('ce').get_cost_and_usage(**monthly_query)
 
     cost_per_day_by_service = defaultdict(list)
 
@@ -377,11 +486,32 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
         credit_line = None
         summary = f"Yesterday's cost ({yesterday_label}) for {report_for} was ${total_costs[-1]:,.2f}"
 
+    month = None
+    if monthly_result is not None:
+        month = month_summary({
+            day["TimePeriod"]["Start"]: float(day["Total"][cost_aggregation]["Amount"])
+            for day in monthly_result["ResultsByTime"]
+        }, yesterday)
+
+    if budget is None and budget_name:
+        budget = get_budget(budget_name)
+
+    month_lines = []
+    if month:
+        month_lines.append(
+            f"{month['month']:%B} to date: {money(month['month_to_date'])} · "
+            f"same point in {month['last_month']:%B} {money(month['last_month_to_date'])} ({month['pct']}) · "
+            f"on pace for {money(month['pace'])}")
+    if budget:
+        month_lines.append(budget_line(budget))
+
     return {
         "summary": summary,
         "date": yesterday,
         "report_for": report_for,
         "credit_line": credit_line,
+        "month": month,
+        "month_lines": month_lines,
         "rows": table,
         "footer": footer(cost_aggregation),
         "data": cost_per_day_by_service,
@@ -393,7 +523,10 @@ def render_text(report):
     rows = report["rows"]
     width = max(len(r["name"]) for r in rows + [{"name": "Service"}])
 
-    buffer = f"{'Service':{width}} ${'Yday*':8} {'∆$':>8} {'∆%':>5} Last {spark_days}d\n"
+    buffer = "".join(line + "\n" for line in report["month_lines"])
+    if buffer:
+        buffer += "\n"
+    buffer += f"{'Service':{width}} ${'Yday*':8} {'∆$':>8} {'∆%':>5} Last {spark_days}d\n"
     for r in rows:
         buffer += f"{r['name']:{width}} ${r['yday']:8,.2f} {r['usd']:+8,.2f} {r['pct']:>5} {r['spark']}\n"
     buffer += "\n" + report["footer"]
@@ -436,6 +569,8 @@ def render_blocks(report):
                f"For {report['report_for']}")
     if report["credit_line"]:
         summary += "\n" + report["credit_line"]
+    for line in report["month_lines"]:
+        summary += "\n" + line
 
     return {
         "text": report["summary"],

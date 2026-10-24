@@ -26,6 +26,15 @@ def table_rows(buffer):
     return rows
 
 
+def fake_ce(load_fixture, queries, grouped="normal.json"):
+    """A Cost Explorer stand-in: the grouped fixture for the table query, monthly.json for the month summary."""
+    class FakeCE:
+        def get_cost_and_usage(self, **query):
+            queries.append(query)
+            return load_fixture(grouped if "GroupBy" in query else "monthly.json")
+    return lambda service: FakeCE()
+
+
 # --- window -----------------------------------------------------------------
 
 def test_window_is_a_baseline_week_plus_yesterday():
@@ -43,13 +52,7 @@ def test_window_crosses_month_boundary():
 
 def test_query_uses_the_window_of_the_given_day(monkeypatch, load_fixture):
     queries = []
-
-    class FakeCE:
-        def get_cost_and_usage(self, **query):
-            queries.append(query)
-            return load_fixture("normal.json")
-
-    monkeypatch.setattr(handler.boto3, "client", lambda service: FakeCE())
+    monkeypatch.setattr(handler.boto3, "client", fake_ce(load_fixture, queries))
     handler.report_cost(today=TODAY, account_name="test-org")
 
     assert queries[0]["TimePeriod"] == {"Start": "2026-10-15", "End": "2026-10-23"}
@@ -57,12 +60,7 @@ def test_query_uses_the_window_of_the_given_day(monkeypatch, load_fixture):
 
 def test_default_day_is_computed_per_call(monkeypatch, load_fixture):
     """Regression: the date used to be fixed at import, so a warm container reported a stale window."""
-    seen = []
-
-    class FakeCE:
-        def get_cost_and_usage(self, **query):
-            seen.append(query["TimePeriod"]["End"])
-            return load_fixture("empty.json")
+    queries = []
 
     class FakeDatetime(datetime.datetime):
         current = datetime.datetime(2026, 10, 23, 12, tzinfo=datetime.timezone.utc)
@@ -71,14 +69,14 @@ def test_default_day_is_computed_per_call(monkeypatch, load_fixture):
         def now(cls, tz=None):
             return cls.current
 
-    monkeypatch.setattr(handler.boto3, "client", lambda service: FakeCE())
+    monkeypatch.setattr(handler.boto3, "client", fake_ce(load_fixture, queries, grouped="empty.json"))
     monkeypatch.setattr(handler.datetime, "datetime", FakeDatetime)
 
     handler.report_cost(account_name="test-org")
     FakeDatetime.current += datetime.timedelta(days=1)
     handler.report_cost(account_name="test-org")
 
-    assert seen == ["2026-10-23", "2026-10-24"]
+    assert [q["TimePeriod"]["End"] for q in queries if "GroupBy" in q] == ["2026-10-23", "2026-10-24"]
 
 
 # --- delta ------------------------------------------------------------------
@@ -227,13 +225,7 @@ def test_footer_follows_the_cost_metric():
 
 def test_query_excludes_the_record_types_the_footer_names(monkeypatch, load_fixture):
     queries = []
-
-    class FakeCE:
-        def get_cost_and_usage(self, **query):
-            queries.append(query)
-            return load_fixture("empty.json")
-
-    monkeypatch.setattr(handler.boto3, "client", lambda service: FakeCE())
+    monkeypatch.setattr(handler.boto3, "client", fake_ce(load_fixture, queries, grouped="empty.json"))
     handler.report_cost(today=TODAY, account_name="test-org")
 
     excluded = queries[0]["Filter"]["Not"]["Dimensions"]["Values"]
@@ -391,3 +383,124 @@ def test_slack_falls_back_to_text_when_blocks_are_rejected(monkeypatch):
 
     assert len(sent) == 2
     assert sent[1] == {"text": "summary\n\n```\ntable\n```"}
+
+
+# --- month summary ------------------------------------------------------------
+
+def test_monthly_query_is_ungrouped_from_the_start_of_last_month(monkeypatch, load_fixture):
+    queries = []
+    monkeypatch.setattr(handler.boto3, "client", fake_ce(load_fixture, queries))
+    handler.build_report(today=TODAY, account_name="test-org")
+
+    table_query, monthly_query = queries
+    assert "GroupBy" not in monthly_query
+    assert monthly_query["TimePeriod"] == {"Start": "2026-09-01", "End": "2026-10-23"}
+    assert monthly_query["Filter"] == table_query["Filter"]
+    assert monthly_query["Metrics"] == table_query["Metrics"]
+
+
+@pytest.mark.parametrize("yesterday, expected", [
+    ("2026-10-22", ("2026-09-01", "2026-09-22", "2026-10-01")),
+    ("2026-03-31", ("2026-02-01", "2026-02-28", "2026-03-01")),   # capped at February's length
+    ("2026-10-31", ("2026-09-01", "2026-09-30", "2026-10-01")),   # report run on Nov 1st
+    ("2027-01-15", ("2026-12-01", "2026-12-15", "2027-01-01")),   # across a year
+])
+def test_month_window(yesterday, expected):
+    window = handler.month_window(datetime.date.fromisoformat(yesterday))
+    assert tuple(day.isoformat() for day in window) == expected
+
+
+def test_month_summary(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), monthly_result=load_fixture("monthly.json"),
+                                  today=TODAY, account_name="test-org")
+    month = report["month"]
+
+    # Oct 1-22 at $10/day vs Sep 1-22 at $8/day; 9 days left at the $10 average
+    assert month["month_to_date"] == pytest.approx(220)
+    assert month["last_month_to_date"] == pytest.approx(176)
+    assert month["pct"] == "+25%"
+    assert month["pace"] == pytest.approx(310)
+    assert report["month_lines"] == [
+        "October to date: $220.00 · same point in September $176.00 (+25%) · on pace for $310.00"]
+
+
+def test_month_pace_ignores_a_one_off_charge_in_the_last_week():
+    totals = {f"2026-10-{d:02d}": 10.0 for d in range(1, 23)}
+    totals["2026-10-18"] = 635.0   # a monthly Marketplace fee, inside the 7 days before yesterday
+    month = handler.month_summary(totals, datetime.date(2026, 10, 22))
+
+    # 9 days left at the $10 median; the mean ($99/day) would add ~$800
+    assert month["pace"] == pytest.approx(sum(totals.values()) + 9 * 10)
+
+
+def test_month_summary_on_the_last_day_has_nothing_left_to_pace():
+    totals = {f"2026-10-{d:02d}": 1.0 for d in range(1, 32)}
+    month = handler.month_summary(totals, datetime.date(2026, 10, 31))
+    assert month["pace"] == month["month_to_date"] == 31
+
+
+def test_month_summary_left_out_without_monthly_data(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org")
+    assert report["month"] is None and report["month_lines"] == []
+    assert handler.render_text(report).startswith("Service")
+
+
+# --- budget -------------------------------------------------------------------
+
+BUDGET = {
+    "BudgetName": "budget-MONTHLY-test",
+    "BudgetLimit": {"Amount": "750.0", "Unit": "USD"},
+    "CalculatedSpend": {"ActualSpend": {"Amount": "874.644", "Unit": "USD"},
+                        "ForecastedSpend": {"Amount": "952.91", "Unit": "USD"}},
+    "CostTypes": {"IncludeTax": True, "IncludeSupport": True, "IncludeUpfront": True,
+                  "IncludeOtherSubscription": True, "IncludeCredit": False},
+}
+
+
+def test_budget_line_uses_aws_budgets_figures_and_says_what_they_include():
+    assert handler.budget_line(BUDGET) == (
+        "AWS Budget (incl. tax, support, upfront, Marketplace; excl. credits): "
+        "$874.64 of $750.00 (117%) · forecast $952.91")
+
+
+def test_budget_line_without_forecast_or_extras():
+    budget = {"BudgetLimit": {"Amount": "100"}, "CalculatedSpend": {"ActualSpend": {"Amount": "40"}},
+              "CostTypes": {"IncludeCredit": True}}
+    assert handler.budget_line(budget) == "AWS Budget (usage only; incl. credits): $40.00 of $100.00 (40%)"
+
+
+def test_month_lines_in_text_and_blocks(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), monthly_result=load_fixture("monthly.json"),
+                                  budget=BUDGET, today=TODAY, account_name="test-org", length=20)
+
+    lines = report["month_lines"]
+    assert len(lines) == 2 and lines[1].startswith("AWS Budget")
+    assert handler.render_text(report).startswith(lines[0] + "\n" + lines[1] + "\n\n")
+    section = handler.render_blocks(report)["blocks"][1]["text"]["text"]
+    assert section.endswith("\n" + lines[0] + "\n" + lines[1])
+
+
+def test_budget_is_read_from_aws_budgets(monkeypatch):
+    calls = []
+
+    class Fake:
+        def get_caller_identity(self):
+            return {"Account": "000000000000"}
+
+        def describe_budget(self, **kwargs):
+            calls.append(kwargs)
+            return {"Budget": BUDGET}
+
+    monkeypatch.setattr(handler.boto3, "client", lambda service: Fake())
+    assert handler.get_budget("budget-MONTHLY-test") == BUDGET
+    assert calls == [{"AccountId": "000000000000", "BudgetName": "budget-MONTHLY-test"}]
+
+
+def test_budget_failure_does_not_stop_the_report(monkeypatch, load_fixture):
+    def broken(service):
+        raise RuntimeError("AccessDenied")
+
+    monkeypatch.setattr(handler.boto3, "client", broken)
+    report = handler.build_report(result=load_fixture("normal.json"), monthly_result=load_fixture("monthly.json"),
+                                  budget_name="budget-MONTHLY-test", today=TODAY, account_name="test-org")
+    assert len(report["month_lines"]) == 1
