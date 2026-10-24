@@ -30,5 +30,6 @@ def no_aws(monkeypatch):
     def _refuse(*args, **kwargs):
         raise AssertionError(f"unexpected AWS client: {args}")
     monkeypatch.setattr(handler.boto3, "client", _refuse)
-    for var in ("CREDITS_EXPIRE_DATE", "AWS_ACCOUNT_NAME", "REPORT_SCOPE"):
+    for var in ("CREDITS_EXPIRE_DATE", "AWS_ACCOUNT_NAME", "REPORT_SCOPE", "SLACK_WEBHOOK_SECRET_ID", "SLACK_WEBHOOK_URL",
+                "TEAMS_WEBHOOK_URL", "GOOGLE_WEBHOOK_URL", "DAILY_MODE", "FULL_REPORT_WEEKDAY", "ALERT_MENTION"):
         monkeypatch.delenv(var, raising=False)

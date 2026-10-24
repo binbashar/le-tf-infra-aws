@@ -55,7 +55,8 @@ def test_query_uses_the_window_of_the_given_day(monkeypatch, load_fixture):
     monkeypatch.setattr(handler.boto3, "client", fake_ce(load_fixture, queries))
     handler.report_cost(today=TODAY, account_name="test-org")
 
-    assert queries[0]["TimePeriod"] == {"Start": "2026-10-15", "End": "2026-10-23"}
+    # one day before the table's 8: drops are judged on the day before yesterday
+    assert queries[0]["TimePeriod"] == {"Start": "2026-10-14", "End": "2026-10-23"}
 
 
 def test_default_day_is_computed_per_call(monkeypatch, load_fixture):
@@ -298,7 +299,7 @@ def test_blocks_layout(load_fixture):
     assert [b["type"] for b in payload["blocks"]] == ["header", "section", "table", "context"]
 
     header = payload["blocks"][0]["text"]
-    assert header == {"type": "plain_text", "text": "AWS cost · 2026-10-22 (partial)"}
+    assert header == {"type": "plain_text", "emoji": True, "text": "AWS cost · 2026-10-22 (partial)"}
     assert len(header["text"]) <= 150
 
     section = payload["blocks"][1]["text"]["text"]
@@ -504,3 +505,198 @@ def test_budget_failure_does_not_stop_the_report(monkeypatch, load_fixture):
     report = handler.build_report(result=load_fixture("normal.json"), monthly_result=load_fixture("monthly.json"),
                                   budget_name="budget-MONTHLY-test", today=TODAY, account_name="test-org")
     assert len(report["month_lines"]) == 1
+
+
+# --- alerts (D1) --------------------------------------------------------------
+
+YESTERDAY = datetime.date(2026, 10, 22)
+
+
+def history_result(series):
+    """A GetCostAndUsage response for the 9 days 2026-10-14 .. 2026-10-22 from {name: [9 costs]}."""
+    days = [datetime.date(2026, 10, 14) + datetime.timedelta(days=d) for d in range(9)]
+    return {"ResultsByTime": [
+        {"TimePeriod": {"Start": day.isoformat()}, "Groups": [
+            {"Keys": [name], "Metrics": {"UnblendedCost": {"Amount": str(costs[i])}}}
+            for name, costs in series.items() if costs[i]
+        ]}
+        for i, day in enumerate(days)
+    ]}
+
+
+def alerts(history, min_usd=1.0, min_pct=30.0):
+    return [(a["direction"], a["day"].isoformat(), round(a["usd"], 2), a["pct"])
+            for a in handler.find_alerts("X", history, min_usd, min_pct, YESTERDAY)]
+
+
+def test_rise_on_yesterday_alerts():
+    assert alerts([2.0] * 8 + [3.5]) == [("up", "2026-10-22", 1.5, "+75%")]
+
+
+@pytest.mark.parametrize("history", [
+    [2.0] * 8 + [2.9],    # +$0.90: under $1
+    [10.0] * 8 + [12.5],  # +25%: under 30%
+])
+def test_rise_needs_both_thresholds(history):
+    assert alerts(history) == []
+
+
+def test_new_cost_alerts_on_dollars_alone():
+    assert alerts([0.0] * 8 + [1.2]) == [("up", "2026-10-22", 1.2, "new")]
+
+
+def test_partial_yesterday_never_raises_a_drop():
+    # yesterday reads $0 because it is partial; the day before was normal
+    assert alerts([3.0] * 8 + [0.0]) == []
+
+
+def test_drop_alerts_on_the_day_before_yesterday():
+    assert alerts([3.0] * 7 + [0.0, 0.0]) == [("down", "2026-10-21", -3.0, "-100%")]
+
+
+def test_one_off_monthly_charge_alerts_once_and_never_as_a_drop():
+    # a $625 Marketplace fee: alerts the day it lands...
+    assert alerts([0.0] * 8 + [625.0]) == [("up", "2026-10-22", 625.0, "new")]
+    # ...and its absence afterwards is not a drop, while the mean would say -$89
+    assert alerts([0.0] * 4 + [625.0] + [0.0] * 4) == []
+
+
+def test_thresholds_are_configurable():
+    assert alerts([2.0] * 8 + [2.9], min_usd=0.5) == [("up", "2026-10-22", 0.9, "+45%")]
+
+
+def test_report_alerts_use_short_names_and_sort_by_size():
+    result = history_result({
+        "Amazon Simple Storage Service": [2.0] * 8 + [3.5],
+        "Amazon OpenSearch Service": [3.0] * 7 + [0.0, 0.0],
+        "AWS Key Management Service": [1.0] * 9,
+    })
+    report = handler.build_report(result=result, today=TODAY, account_name="test-org", length=20, alert_min_usd=1.0)
+    assert [(a["name"], a["direction"]) for a in report["alerts"]] == [("OpenSearch Service", "down"), ("S3", "up")]
+
+
+def test_alerts_are_off_without_a_threshold(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org")
+    assert report["alerts"] is None
+
+
+def alerting_report(**kwargs):
+    result = history_result({"Amazon Simple Storage Service": [2.0] * 8 + [3.5], "Kiro": [0.65] * 9})
+    return handler.build_report(result=result, today=TODAY, account_name="test-org", length=20,
+                                alert_min_usd=1.0, **kwargs)
+
+
+def quiet_report(**kwargs):
+    return handler.build_report(result=history_result({"Kiro": [0.65] * 9}), monthly_result=kwargs.pop("monthly", None),
+                                today=TODAY, account_name="test-org", length=20, alert_min_usd=1.0, **kwargs)
+
+
+def test_full_report_shows_the_verdict_and_alerts():
+    report = alerting_report()
+    payload = handler.render_blocks(report, mention="<!here>")
+
+    assert payload["blocks"][0]["text"]["text"] == ":warning: AWS cost · 2026-10-22 (partial) · 1 alert"
+    assert payload["blocks"][1]["text"]["text"] == (
+        "<!here>\n• S3: $3.50 yesterday (partial), +$1.50 (+75%) vs. a typical day ($2.00)")
+    assert payload["text"].startswith(":warning: 1 alert · Yesterday's cost")
+    assert [b["type"] for b in payload["blocks"]] == ["header", "section", "section", "table", "context"]
+
+    text = handler.render_text(report)
+    assert text.startswith(":warning: 1 alert\n• S3: $3.50 yesterday (partial)")
+
+
+def test_quiet_full_report_says_no_alerts_and_skips_the_alert_section():
+    payload = handler.render_blocks(quiet_report())
+    assert payload["blocks"][0]["text"]["text"].startswith(":white_check_mark: AWS cost")
+    assert payload["blocks"][0]["text"]["text"].endswith("· no alerts")
+    assert [b["type"] for b in payload["blocks"]] == ["header", "section", "table", "context"]
+
+
+def test_footer_states_the_alert_rule():
+    footer = alerting_report()["footer"]
+    assert ("Alerts: a move of $1.00 and 30% vs. a typical day (median of the 7 days before); "
+            "rises on yesterday, drops on the day before") in footer
+
+
+def test_compact_line(load_fixture):
+    assert handler.compact_line(quiet_report()) == (
+        ":white_check_mark: AWS cost 2026-10-22 (partial): $0.65 (+0% vs. the 7-day average) · no alerts")
+    with_month = quiet_report(monthly=load_fixture("monthly.json"))
+    assert " · October to date $220.00 · on pace for $310.00 · no alerts" in handler.compact_line(with_month)
+
+
+def test_compact_line_on_a_day_with_alerts_states_the_real_verdict():
+    line = handler.compact_line(alerting_report())
+    assert line.startswith(":warning: AWS cost 2026-10-22 (partial)")
+    assert line.endswith(" · 1 alert")
+
+
+def test_compact_line_without_alerts_configured_claims_nothing(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org")
+    line = handler.compact_line(report)
+    assert line.startswith("AWS cost 2026-10-22 (partial)")
+    assert "alert" not in line
+
+
+def test_compact_blocks_are_one_section():
+    payload = handler.render_compact_blocks(quiet_report())
+    assert payload["text"] == handler.compact_line(quiet_report())
+    assert [b["type"] for b in payload["blocks"]] == ["section"]
+
+
+# TODAY (2026-10-23) is a Friday; 2026-10-26 a Monday
+@pytest.mark.parametrize("build, requested, daily_mode, weekday, expected", [
+    (quiet_report, None, "compact", 0, "compact"),
+    (alerting_report, None, "compact", 0, "full"),       # alerts
+    (quiet_report, None, "compact", 4, "full"),          # weekly full-report day
+    (quiet_report, None, "full", 0, "full"),             # DAILY_MODE=full
+    (quiet_report, "full", "compact", 0, "full"),        # {"mode": "full"}
+    (alerting_report, "compact", "compact", 0, "compact"),
+])
+def test_report_mode(build, requested, daily_mode, weekday, expected):
+    assert handler.report_mode(build(), requested, daily_mode, weekday) == expected
+
+
+def test_report_mode_is_full_when_alerts_are_off(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org")
+    assert handler.report_mode(report) == "full"
+
+
+def test_as_text_without_a_table():
+    assert handler.as_text("one line", None) == "one line"
+    assert handler.as_text("summary", "table") == "summary\n\n```\ntable\n```"
+
+
+def test_lambda_posts_the_compact_line_on_a_quiet_day(monkeypatch, load_fixture):
+    sent, report = [], quiet_report()
+    monkeypatch.setattr(handler, "build_report", lambda **kwargs: report)
+    monkeypatch.setattr(handler, "post_json", lambda url, payload: sent.append(payload) or (200, "ok"))
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hook")
+    monkeypatch.setenv("DAILY_MODE", "compact")
+    monkeypatch.setenv("FULL_REPORT_WEEKDAY", "0")
+
+    handler.lambda_handler({}, None)
+
+    assert sent == [handler.render_compact_blocks(report)]
+
+
+def test_lambda_sends_the_full_report_by_default(monkeypatch):
+    sent, report = [], quiet_report()
+    monkeypatch.setattr(handler, "build_report", lambda **kwargs: report)
+    monkeypatch.setattr(handler, "post_json", lambda url, payload: sent.append(payload) or (200, "ok"))
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hook")
+
+    handler.lambda_handler({}, None)
+
+    assert sent == [handler.render_blocks(report)]
+
+
+def test_lambda_posts_the_full_report_when_asked(monkeypatch):
+    sent, report = [], quiet_report()
+    monkeypatch.setattr(handler, "build_report", lambda **kwargs: report)
+    monkeypatch.setattr(handler, "post_json", lambda url, payload: sent.append(payload) or (200, "ok"))
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hook")
+
+    handler.lambda_handler({"mode": "full"}, None)
+
+    assert sent[0]["blocks"][0]["type"] == "header"
