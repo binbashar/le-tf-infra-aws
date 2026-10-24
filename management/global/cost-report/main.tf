@@ -36,6 +36,8 @@ module "cost_report" {
     MOVER_MIN_USD = var.report_mover_min_usd
     # Cost Explorer in the payer account returns the whole Organization's bill
     REPORT_SCOPE = "the AWS Organization"
+    # The AWS Budget shown in the month summary (empty: none)
+    BUDGET_NAME = var.report_budget_name
     # The Slack webhook URL for sending the report
     SLACK_WEBHOOK_SECRET_ID = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-m8z5y2"
 
@@ -67,6 +69,12 @@ module "cost_report" {
             "iam:ListAccountAliases"
           ],
           "Resource": ["*"]
+        },
+        {
+          "Sid": "ReadBudget",
+          "Effect": "Allow",
+          "Action": "budgets:ViewBudget",
+          "Resource": "arn:aws:budgets::${var.accounts.management.id}:budget/${var.report_budget_name}"
         },
         {
           "Sid": "ReadSlackWebhookSecret",

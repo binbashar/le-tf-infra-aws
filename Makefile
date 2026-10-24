@@ -87,7 +87,7 @@ prm-tags-test: ## Run the PRM tag guardrail's own tests
 
 # The cost-report Lambda bundles only src/, so its tests and preview live
 # beside it in tests/. The tests use fixtures and never reach AWS; the preview
-# queries Cost Explorer for real ($0.01 per run) and prints instead of posting.
+# queries Cost Explorer for real ($0.02 per run) and prints instead of posting.
 # Cost Explorer is read from the management (payer) account, so the profile
 # comes from management's backend.tfvars, same rules as VERSION_SUPPORT_AWS_ENV.
 COST_REPORT_DIR := management/global/cost-report
@@ -103,5 +103,5 @@ cost-report-test: ## Run the cost-report Lambda's tests (offline, fixtures only)
 	@uv run --quiet --with pytest --with boto3 pytest ./$(COST_REPORT_DIR)/tests/ -q
 
 .PHONY: cost-report-preview
-cost-report-preview: ## Print today's cost report from live data without posting it ($0.01)
+cost-report-preview: ## Print today's cost report from live data without posting it ($0.02)
 	@$(COST_REPORT_AWS_ENV) uv run --quiet --with boto3 python ./$(COST_REPORT_DIR)/tests/preview.py
