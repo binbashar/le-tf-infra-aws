@@ -68,3 +68,15 @@ variable "report_full_report_weekday" {
     error_message = "report_full_report_weekday must be a whole number between 0 (Monday) and 6 (Sunday)."
   }
 }
+
+variable "report_anomaly_days" {
+  description = "Show Cost Anomaly Detection anomalies nobody has given feedback on that ended in the last N days, with an impact of at least report_alert_min_usd. 0 turns the section off."
+  type        = number
+  default     = 14
+
+  validation {
+    # AWS keeps anomalies for 90 days; an integer, since the Lambda parses it with int()
+    condition     = var.report_anomaly_days == floor(var.report_anomaly_days) && var.report_anomaly_days >= 0 && var.report_anomaly_days <= 90
+    error_message = "report_anomaly_days must be a whole number between 0 (off) and 90."
+  }
+}
