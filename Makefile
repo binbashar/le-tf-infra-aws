@@ -84,3 +84,24 @@ prm-tags: ## Check every layer carries the PRM aws-apn-id tag
 .PHONY: prm-tags-test
 prm-tags-test: ## Run the PRM tag guardrail's own tests
 	@uv run --quiet --with pytest pytest ./@bin/scripts/prm_tags/tests/ -q
+
+# The cost-report Lambda bundles only src/, so its tests and preview live
+# beside it in tests/. The tests use fixtures and never reach AWS; the preview
+# queries Cost Explorer for real ($0.01 per run) and prints instead of posting.
+# Cost Explorer is read from the management (payer) account, so the profile
+# comes from management's backend.tfvars, same rules as VERSION_SUPPORT_AWS_ENV.
+COST_REPORT_DIR := management/global/cost-report
+COST_REPORT_PROFILE := $(shell sed -nE 's/^[[:space:]]*profile[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' management/config/backend.tfvars 2>/dev/null | head -1)
+COST_REPORT_AWS_ENV := \
+	AWS_CONFIG_FILE="$${AWS_CONFIG_FILE:-$$HOME/.aws/$(LEVERAGE_PROJECT)/config}" \
+	AWS_SHARED_CREDENTIALS_FILE="$${AWS_SHARED_CREDENTIALS_FILE:-$$HOME/.aws/$(LEVERAGE_PROJECT)/credentials}" \
+	AWS_DEFAULT_REGION="$${AWS_DEFAULT_REGION:-us-east-1}" \
+	$(if $(COST_REPORT_PROFILE),AWS_PROFILE="$${AWS_PROFILE:-$(COST_REPORT_PROFILE)}")
+
+.PHONY: cost-report-test
+cost-report-test: ## Run the cost-report Lambda's tests (offline, fixtures only)
+	@uv run --quiet --with pytest --with boto3 pytest ./$(COST_REPORT_DIR)/tests/ -q
+
+.PHONY: cost-report-preview
+cost-report-preview: ## Print today's cost report from live data without posting it ($0.01)
+	@$(COST_REPORT_AWS_ENV) uv run --quiet --with boto3 python ./$(COST_REPORT_DIR)/tests/preview.py

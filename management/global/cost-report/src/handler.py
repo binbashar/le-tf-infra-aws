@@ -6,14 +6,14 @@ import boto3
 import datetime
 import json
 import os
-import sys
 import urllib.error
 import urllib.request
 
 n_days = 7
-today = datetime.datetime.today()
-yesterday = today - datetime.timedelta(days=1)
-week_ago = today - datetime.timedelta(days=n_days)
+
+# Cost Explorer has usually not finished billing yesterday when the report
+# runs, so yesterday's figure is always flagged as partial.
+partial_note = "* partial: Cost Explorer may still add charges for this day"
 
 # It seems that the sparkline symbols don't line up (probably based on font?) so put them last
 # Also, leaving out the full block because Slack doesn't like it: '█'
@@ -40,6 +40,41 @@ def delta(costs):
     else:
         result = 0
     return result
+
+
+def date_window(today: datetime.date):
+    """
+    The report covers the n_days days before `today` (UTC), `today` excluded.
+
+    Returns:
+        tuple: (week_ago, yesterday, list of the n_days dates as 'YYYY-MM-DD')
+    """
+    yesterday = today - datetime.timedelta(days=1)
+    week_ago = today - datetime.timedelta(days=n_days)
+    list_of_dates = [
+        (week_ago + datetime.timedelta(days=x)).strftime('%Y-%m-%d')
+        for x in range(n_days)
+    ]
+    return week_ago, yesterday, list_of_dates
+
+
+def get_account_name():
+    # Get account account name from env, or account id/account alias from boto3
+    account_name = os.environ.get("AWS_ACCOUNT_NAME", None)
+    if account_name is None:
+        iam = boto3.client("iam")
+        paginator = iam.get_paginator("list_account_aliases")
+        for aliases in paginator.paginate(PaginationConfig={"MaxItems": 1}):
+            if "AccountAliases" in aliases and len(aliases["AccountAliases"]) > 0:
+                account_name = aliases["AccountAliases"][0]
+
+    if account_name is None:
+        account_name = boto3.client("sts").get_caller_identity().get("Account")
+
+    if account_name is None:
+        account_name = "[NOT FOUND]"
+
+    return account_name
 
 
 def find_by_key(values: list, key: str, value: str):
@@ -93,39 +128,31 @@ def lambda_handler(event, context):
     if google_hook_url:
         publish_google(google_hook_url, summary, buffer)
 
-def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, yesterday: str = None, new_method=True):
+def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None):
+    """
+    Build the report for the n_days days before `today`.
 
-    if yesterday is None:
-        yesterday = today - datetime.timedelta(days=1)
+    Args:
+        result: a GetCostAndUsage response to report on instead of querying
+            Cost Explorer (used by the tests)
+        today: 'YYYY-MM-DD'; defaults to the current UTC date. Computed per
+            call, not at import time, so a warm Lambda container never
+            reports a stale window.
+        account_name: skips the account name lookup when given
+    """
+    if today is None:
+        today = datetime.datetime.now(datetime.timezone.utc).date()
     else:
-        yesterday = datetime.datetime.strptime(yesterday, '%Y-%m-%d')
+        today = datetime.datetime.strptime(today, '%Y-%m-%d').date()
 
-    week_ago = today - datetime.timedelta(days=n_days)
     # Generate list of dates, so that even if our data is sparse,
     # we have the correct length lists of costs (len is n_days)
-    list_of_dates = [
-        (week_ago + datetime.timedelta(days=x)).strftime('%Y-%m-%d')
-        for x in range(n_days)
-    ]
+    week_ago, yesterday, list_of_dates = date_window(today)
     print(yesterday)
     print(list_of_dates)
 
-    # Get account account name from env, or account id/account alias from boto3
-    account_name = os.environ.get("AWS_ACCOUNT_NAME", None)
     if account_name is None:
-        iam = boto3.client("iam")
-        paginator = iam.get_paginator("list_account_aliases")
-        for aliases in paginator.paginate(PaginationConfig={"MaxItems": 1}):
-            if "AccountAliases" in aliases and len(aliases["AccountAliases"]) > 0:
-                account_name = aliases["AccountAliases"][0]
-
-    if account_name is None:
-        account_name = boto3.client("sts").get_caller_identity().get("Account")
-
-    if account_name is None:
-        account_name = "[NOT FOUND]"
-
-    client = boto3.client('ce')
+        account_name = get_account_name()
 
     query = {
         "TimePeriod": {
@@ -155,48 +182,39 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
         ],
     }
 
-    # Only run the query when on lambda, not when testing locally with example json
+    # Only run the query when on lambda, not when testing locally with a fixture
     if result is None:
-        result = client.get_cost_and_usage(**query)
+        result = boto3.client('ce').get_cost_and_usage(**query)
 
     cost_per_day_by_service = defaultdict(list)
 
-    if new_method == False:
-        # Build a map of service -> array of daily costs for the time frame
-        for day in result['ResultsByTime']:
-            for group in day['Groups']:
-                key = group['Keys'][0]
-                cost = float(group['Metrics'][cost_aggregation]['Amount'])
-                cost_per_day_by_service[key].append(cost)
-    else:
-        # New method, which first creates a dict of dicts
-        # then loop over the services and loop over the list_of_dates
-        # and this means even for sparse data we get a full list of costs
-        cost_per_day_dict = defaultdict(dict)
+    # First create a dict of dicts, then loop over the services and over
+    # list_of_dates, so that even for sparse data we get a full list of costs
+    cost_per_day_dict = defaultdict(dict)
 
-        for day in result['ResultsByTime']:
-            start_date = day["TimePeriod"]["Start"]
-            for group in day['Groups']:
-                key = group['Keys'][0]
-                if group_by == "LINKED_ACCOUNT":
-                    dimension = find_by_key(result["DimensionValueAttributes"], "Value", key)
-                    if dimension:
-                        key += " ("+dimension["Attributes"]["description"]+")"
-                cost = float(group['Metrics'][cost_aggregation]['Amount'])
-                cost_per_day_dict[key][start_date] = cost
+    for day in result['ResultsByTime']:
+        start_date = day["TimePeriod"]["Start"]
+        for group in day['Groups']:
+            key = group['Keys'][0]
+            if group_by == "LINKED_ACCOUNT":
+                dimension = find_by_key(result["DimensionValueAttributes"], "Value", key)
+                if dimension:
+                    key += " ("+dimension["Attributes"]["description"]+")"
+            cost = float(group['Metrics'][cost_aggregation]['Amount'])
+            cost_per_day_dict[key][start_date] = cost
 
-        for key in cost_per_day_dict.keys():
-            for start_date in list_of_dates:
-                cost = cost_per_day_dict[key].get(start_date, 0.0)  # fallback for sparse data
-                cost_per_day_by_service[key].append(cost)
+    for key in cost_per_day_dict.keys():
+        for start_date in list_of_dates:
+            cost = cost_per_day_dict[key].get(start_date, 0.0)  # fallback for sparse data
+            cost_per_day_by_service[key].append(cost)
 
     # Sort the map by yesterday's cost
     most_expensive_yesterday = sorted(cost_per_day_by_service.items(), key=lambda i: i[1][-1], reverse=True)
 
     service_names = [k for k,_ in most_expensive_yesterday[:length]]
-    longest_name_len = len(max(service_names, key = len))
+    longest_name_len = max(len(name) for name in service_names + ['Service', 'Other', 'Total'])
 
-    buffer = f"{'Service':{longest_name_len}} ${'Yday':8} {'∆%':>5} {'Last '}{n_days}{'d':7}\n"
+    buffer = f"{'Service':{longest_name_len}} ${'Yday*':8} {'∆%':>5} {'Last '}{n_days}{'d':7}\n"
 
     for service_name, costs in most_expensive_yesterday[:length]:
         buffer += f"{service_name:{longest_name_len}} ${costs[-1]:8,.2f} {delta(costs):4.0f}% {sparkline(costs):7}\n"
@@ -217,8 +235,11 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
                 total_costs[day_number] += 0.0
 
     buffer += f"{'Total':{longest_name_len}} ${total_costs[-1]:8,.2f} {delta(total_costs):4.0f}% {sparkline(total_costs):7}\n"
+    buffer += f"\n{partial_note}\n"
 
     cost_per_day_by_service["total"] = total_costs[-1]
+
+    yesterday_label = f"{yesterday:%Y-%m-%d}, partial"
 
     credits_expire_date = os.environ.get('CREDITS_EXPIRE_DATE')
     if credits_expire_date:
@@ -241,12 +262,12 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
         else:
             emoji = ":warning:"
 
-        summary = (f"{emoji} Yesterday's cost for {account_name} ${total_costs[-1]:,.2f} "
+        summary = (f"{emoji} Yesterday's cost ({yesterday_label}) for {account_name} ${total_costs[-1]:,.2f} "
                    f"is {relative_to_budget:.2f}% of credit budget "
                    f"${allowed_credits_per_day:,.2f} for the day."
                   )
     else:
-        summary = f"Yesterday's cost for account {account_name} was ${total_costs[-1]:,.2f}"
+        summary = f"Yesterday's cost ({yesterday_label}) for account {account_name} was ${total_costs[-1]:,.2f}"
 
     return summary, buffer, cost_per_day_by_service
 
@@ -307,51 +328,3 @@ def publish_google(hook_url, summary, buffer):
 
     if status != 200:
         print("HTTP %s: %s" % (status, body))
-
-if __name__ == "__main__":
-    # for running locally to test
-    # IMPORTANT: you may need to update the dates in the .json files since the
-    #  report_cost will look for entries that fall within the past week.
-    import json
-    with open("example_boto3_result.json", "r") as f:
-        example_result = json.load(f)
-    with open("example_boto3_result2.json", "r") as f:
-        example_result2 = json.load(f)
-
-    # summary, buffer, data = report_cost(group_by="LINKED_ACCOUNT")
-    # print(summary)
-    # print(buffer)
-    #
-    # summary, buffer, data = report_cost(group_by="REGION")
-    # print(summary)
-    # print(buffer)
-    #
-    # summary, buffer, data = report_cost(group_by="USAGE_TYPE", length=20)
-    # print(summary)
-    # print(buffer)
-    #
-    # summary, buffer, data = report_cost(group_by="SERVICE", length=20)
-    # print(summary)
-    # print(buffer)
-    # summary, buffer, data = report_cost(group_by="SERVICE", length=5, cost_aggregation="UnblendedCost")
-    # print(summary)
-    # print(buffer)
-    # summary, buffer, data = report_cost(group_by="SERVICE", length=5, cost_aggregation="AmortizedCost")
-    # print(summary)
-    # print(buffer)
-
-    # New Method with 2 example jsons
-    summary, buffer, cost_dict = report_cost(None, None, "UnblendedCost", example_result, yesterday="2025-07-04", new_method=True)
-    print(summary)
-    print(buffer)
-    # slack_hook_url = os.environ.get('SLACK_WEBHOOK_URL')
-    # publish_slack(slack_hook_url, summary, buffer)
-    # assert "{0:.2f}".format(cost_dict.get("total", 0.0)) == "286.37", f'{cost_dict.get("total"):,.2f} != 286.37'
-    # summary, buffer, cost_dict = report_cost(None, None, "UnblendedCost", example_result2, yesterday="2025-07-04", new_method=True)
-    # assert "{0:.2f}".format(cost_dict.get("total", 0.0)) == "21.45", f'{cost_dict.get("total"):,.2f} != 21.45'
-
-    # Old Method with same jsons (will fail)
-    # summary, buffer, cost_dict = report_cost(None, None, "UnblendedCost", example_result, yesterday="2025-07-04", new_method=False)
-    # assert "{0:.2f}".format(cost_dict.get("total", 0.0)) == "286.37", f'{cost_dict.get("total"):,.2f} != 286.37'
-    # summary, buffer, cost_dict = report_cost(None, None, "UnblendedCost", example_result2, yesterday="2025-07-04", new_method=False)
-    # assert "{0:.2f}".format(cost_dict.get("total", 0.0)) == "21.45", f'{cost_dict.get("total"):,.2f} != 21.45'
