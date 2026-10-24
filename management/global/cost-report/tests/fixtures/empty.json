@@ -1,0 +1,74 @@
+{
+  "DimensionValueAttributes": [],
+  "GroupDefinitions": [
+    {
+      "Key": "SERVICE",
+      "Type": "DIMENSION"
+    }
+  ],
+  "ResultsByTime": [
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-17",
+        "Start": "2026-10-16"
+      },
+      "Total": {}
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-18",
+        "Start": "2026-10-17"
+      },
+      "Total": {}
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-19",
+        "Start": "2026-10-18"
+      },
+      "Total": {}
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-20",
+        "Start": "2026-10-19"
+      },
+      "Total": {}
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-21",
+        "Start": "2026-10-20"
+      },
+      "Total": {}
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-22",
+        "Start": "2026-10-21"
+      },
+      "Total": {}
+    },
+    {
+      "Estimated": true,
+      "Groups": [],
+      "TimePeriod": {
+        "End": "2026-10-23",
+        "Start": "2026-10-22"
+      },
+      "Total": {}
+    }
+  ]
+}

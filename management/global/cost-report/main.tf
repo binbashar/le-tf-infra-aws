@@ -92,7 +92,7 @@ module "cost_report" {
 #
 resource "aws_cloudwatch_event_rule" "lambda_schedule" {
   name                = "${var.project}-${var.environment}-cost-report-helper-daily"
-  description         = "Trigger the cost-report-helper every day at 6AM UTC"
+  description         = "Trigger the cost-report-helper on ${var.report_run_schedule} (UTC)"
   schedule_expression = var.report_run_schedule
 }
 

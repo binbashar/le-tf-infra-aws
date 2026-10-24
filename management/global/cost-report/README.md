@@ -11,6 +11,14 @@ This module deploys a Lambda function to fetch AWS cost data and post a daily re
 - **Scheduling**: Triggered daily at a configurable time via CloudWatch EventBridge rule (`var.report_run_schedule`).
 - **Environment Variables**: Control report length, grouping, and Slack destination. Adjust as needed.
 - **Logs**: CloudWatch logs are retained for 7 days.
+- **Report window**: the 7 UTC days before the run. Yesterday is always flagged *partial* (dated, with a `*` on the `Yday*` column), because Cost Explorer has usually not finished billing it when the report runs at 12:00 UTC.
+
+## Testing
+
+`src/` is the whole Lambda package, so tests live in `tests/` and are never deployed. From the repository root:
+
+- `make cost-report-test` — offline tests against the synthetic Cost Explorer responses in `tests/fixtures/` (no AWS calls; the suite fails any test that tries).
+- `make cost-report-preview` — builds the report from live Cost Explorer data with the management profile and prints it instead of posting to Slack. Each run is one billed request ($0.01).
 
 ### Access to Slack Webhook Secret
 
