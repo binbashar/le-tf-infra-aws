@@ -38,6 +38,14 @@ module "cost_report" {
     REPORT_SCOPE = "the AWS Organization"
     # The AWS Budget shown in the month summary (empty: none)
     BUDGET_NAME = var.report_budget_name
+    # Alert on an item that moved by both this much (USD) and this much (%) vs. a typical day
+    ALERT_MIN_USD = var.report_alert_min_usd
+    ALERT_MIN_PCT = var.report_alert_min_pct
+    # Slack mention added to alerts, e.g. "<!here>" or "<!subteam^S0123>" (empty: none)
+    ALERT_MENTION = var.report_alert_mention
+    # "compact": one line on quiet days, full report on alerts and on FULL_REPORT_WEEKDAY; "full": always
+    DAILY_MODE          = var.report_daily_mode
+    FULL_REPORT_WEEKDAY = var.report_full_report_weekday
     # The Slack webhook URL for sending the report
     SLACK_WEBHOOK_SECRET_ID = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-m8z5y2"
 

@@ -27,3 +27,43 @@ variable "report_budget_name" {
   type        = string
   default     = "budget-MONTHLY-management-100-percent"
 }
+
+variable "report_alert_min_usd" {
+  description = "Alert on an item whose cost moved by at least this many USD against a typical day (median of the 7 days before), together with report_alert_min_pct."
+  type        = number
+  default     = 1
+}
+
+variable "report_alert_min_pct" {
+  description = "Alert on an item whose cost moved by at least this percentage against a typical day, together with report_alert_min_usd. A cost rising from nothing passes on the USD threshold alone."
+  type        = number
+  default     = 30
+}
+
+variable "report_alert_mention" {
+  description = "Slack mention prepended to alerts, e.g. \"<!here>\" or \"<!subteam^S0123ABC>\". Empty for none."
+  type        = string
+  default     = ""
+}
+
+variable "report_daily_mode" {
+  description = "\"compact\": a one-line message on quiet days and the full report when there are alerts or on report_full_report_weekday. \"full\": the full report every day."
+  type        = string
+  default     = "compact"
+
+  validation {
+    condition     = contains(["compact", "full"], var.report_daily_mode)
+    error_message = "report_daily_mode must be \"compact\" or \"full\"."
+  }
+}
+
+variable "report_full_report_weekday" {
+  description = "Day of the week (0 = Monday, UTC) on which the full report goes out even without alerts."
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.report_full_report_weekday >= 0 && var.report_full_report_weekday <= 6
+    error_message = "report_full_report_weekday must be between 0 (Monday) and 6 (Sunday)."
+  }
+}

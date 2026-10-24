@@ -18,6 +18,11 @@ baseline_days = 7
 n_days = baseline_days + 1
 spark_days = 7
 
+# Drops are judged on the day before yesterday (complete, unlike yesterday)
+# against the baseline_days before *it*, so the query reaches one day further
+# back than the table shows.
+history_days = n_days + 1
+
 # A service whose every day stays under half a cent prints as $0.00 all week:
 # it is folded into the "Other" row instead of taking a line of its own.
 negligible_usd = 0.005
@@ -85,14 +90,53 @@ def is_negligible(costs):
     return all(cost < negligible_usd for cost in costs)
 
 
-def footer(cost_aggregation: str):
+def find_alerts(name: str, history: list, min_usd: float, min_pct: float, yesterday: datetime.date):
+    """
+    Alert when an item moved by at least min_usd AND min_pct against a typical
+    day: the median of the baseline_days days before. The median, not the
+    mean, so a once-a-month charge does not read as a week-long drop after it.
+
+    - Rises are judged on yesterday: partial, but if it already rose, it did.
+    - Drops are judged on the day before yesterday, which is complete, since
+      a partial yesterday always looks lower than it will end up.
+
+    Args:
+        history: history_days daily costs, oldest first, ending yesterday
+    """
+    found = []
+    checks = (
+        ("up", yesterday, history[-1], history[-1 - baseline_days:-1]),
+        ("down", yesterday - datetime.timedelta(days=1), history[-2], history[-2 - baseline_days:-2]),
+    )
+    for direction, day, cost, before in checks:
+        typical = statistics.median(before)
+        change = cost - typical
+        if direction == "up" and change < min_usd:
+            continue
+        if direction == "down" and -change < min_usd:
+            continue
+        # a rise from nothing is always a large change in percent
+        if typical >= negligible_usd and abs(change) / typical * 100 < min_pct:
+            continue
+        found.append({"name": name, "direction": direction, "day": day, "cost": cost,
+                      "typical": typical, "usd": change, "pct": pct_change(cost, typical)})
+    return found
+
+
+def alert_line(alert: dict, yesterday: datetime.date):
+    when = "yesterday (partial)" if alert["day"] == yesterday else f"on {alert['day']:%Y-%m-%d}"
+    return (f"{alert['name']}: {money(alert['cost'])} {when}, {money(alert['usd'], sign=True)} ({alert['pct']}) "
+            f"vs. a typical day ({money(alert['typical'])})")
+
+
+def footer(cost_aggregation: str, alert_min_usd: float = None, alert_min_pct: float = None):
     metric = metric_labels.get(cost_aggregation, cost_aggregation)
     excluded = ", ".join(excluded_record_types[:-1]) + " and " + excluded_record_types[-1]
-    return (
-        f"∆: yesterday vs. the average of the previous {baseline_days} days\n"
-        f"{metric}, excluding {excluded} records\n"
-        f"{partial_note}\n"
-    )
+    lines = f"∆: yesterday vs. the average of the previous {baseline_days} days\n"
+    if alert_min_usd is not None:
+        lines += (f"Alerts: a move of {money(alert_min_usd)} and {alert_min_pct:g}% vs. a typical day "
+                  f"(median of the {baseline_days} days before); rises on yesterday, drops on the day before\n")
+    return lines + f"{metric}, excluding {excluded} records\n{partial_note}\n"
 
 
 # Cost Explorer's service names, shortened so the table fits a phone screen
@@ -281,9 +325,20 @@ def lambda_handler(event, context):
     cost_aggregation = os.environ.get("COST_AGGREGATION", "UnblendedCost")
     mover_min_usd = float(os.environ.get("MOVER_MIN_USD", "0.5"))
     budget_name = os.environ.get("BUDGET_NAME")
+    alert_min_usd = float(os.environ.get("ALERT_MIN_USD", "1"))
+    alert_min_pct = float(os.environ.get("ALERT_MIN_PCT", "30"))
+    mention = os.environ.get("ALERT_MENTION", "")
 
-    report = build_report(group_by=group_by, length=length, cost_aggregation=cost_aggregation, mover_min_usd=mover_min_usd, budget_name=budget_name)
-    summary, buffer = report["summary"], render_text(report)
+    report = build_report(group_by=group_by, length=length, cost_aggregation=cost_aggregation, mover_min_usd=mover_min_usd, budget_name=budget_name,
+                          alert_min_usd=alert_min_usd, alert_min_pct=alert_min_pct)
+
+    mode = report_mode(report, (event or {}).get("mode"), os.environ.get("DAILY_MODE", "compact"),
+                       int(os.environ.get("FULL_REPORT_WEEKDAY", "0")))
+    print(f"mode={mode} alerts={len(report['alerts'])}")
+    if mode == "compact":
+        summary, buffer, blocks = compact_line(report), None, render_compact_blocks(report)
+    else:
+        summary, buffer, blocks = report["summary"], render_text(report), render_blocks(report, mention)
 
     slack_hook_url = None
     slack_secret_id = os.environ.get('SLACK_WEBHOOK_SECRET_ID')
@@ -293,7 +348,7 @@ def lambda_handler(event, context):
         slack_hook_url = os.environ.get('SLACK_WEBHOOK_URL')
 
     if slack_hook_url:
-        publish_slack(slack_hook_url, summary, buffer, render_blocks(report))
+        publish_slack(slack_hook_url, summary, buffer, blocks)
 
     teams_hook_url = os.environ.get('TEAMS_WEBHOOK_URL')
     if teams_hook_url:
@@ -312,7 +367,7 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
     return report["summary"], render_text(report), report["data"]
 
 
-def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5, monthly_result: dict = None, budget_name: str = None, budget: dict = None):
+def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5, monthly_result: dict = None, budget_name: str = None, budget: dict = None, alert_min_usd: float = None, alert_min_pct: float = 30.0):
     """
     Build the report for the n_days days before `today`, as data: the
     render_* functions turn it into a message.
@@ -333,6 +388,8 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
             call, not at import time, so a warm Lambda container never
             reports a stale window.
         account_name: skips the account name lookup when given
+        alert_min_usd, alert_min_pct: alert thresholds (see find_alerts);
+            no alerts when alert_min_usd is None
     """
     if today is None:
         today = datetime.datetime.now(datetime.timezone.utc).date()
@@ -348,9 +405,13 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
     if account_name is None:
         account_name = get_account_name()
 
+    history_start = week_ago - datetime.timedelta(days=history_days - n_days)
+    history_dates = [(history_start + datetime.timedelta(days=x)).strftime('%Y-%m-%d')
+                     for x in range(history_days)]
+
     query = {
         "TimePeriod": {
-            "Start": week_ago.strftime('%Y-%m-%d'),
+            "Start": history_start.strftime('%Y-%m-%d'),
             "End": today.strftime('%Y-%m-%d'),
         },
         "Granularity": "DAILY",
@@ -401,10 +462,12 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
             cost = float(group['Metrics'][cost_aggregation]['Amount'])
             cost_per_day_dict[key][start_date] = cost
 
-    for key in cost_per_day_dict.keys():
-        for start_date in list_of_dates:
-            cost = cost_per_day_dict[key].get(start_date, 0.0)  # fallback for sparse data
-            cost_per_day_by_service[key].append(cost)
+    history = {
+        key: [cost_per_day_dict[key].get(day, 0.0) for day in history_dates]  # fallback for sparse data
+        for key in cost_per_day_dict
+    }
+    for key, costs in history.items():
+        cost_per_day_by_service[key] = costs[-n_days:]
 
     # Sort the map by yesterday's cost
     most_expensive_yesterday = sorted(cost_per_day_by_service.items(), key=lambda i: i[1][-1], reverse=True)
@@ -442,6 +505,15 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
                 "spark": sparkline(costs[-spark_days:])}
 
     table = [row(names[name], costs, "item") for name, costs in rows]
+
+    # None when alerts are off, so no verdict claims "no alerts"
+    alerts = None
+    if alert_min_usd is not None:
+        alerts = []
+        for name, costs in history.items():
+            label = names.get(name, short_name(name) if group_by == "SERVICE" else name)
+            alerts += find_alerts(label, costs, alert_min_usd, alert_min_pct, yesterday)
+        alerts.sort(key=lambda a: abs(a["usd"]), reverse=True)
     if folded:
         table.append(row(other_label, other_costs, "other"))
     table.append(row("Total", total_costs, "total"))
@@ -513,9 +585,50 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
         "month": month,
         "month_lines": month_lines,
         "rows": table,
-        "footer": footer(cost_aggregation),
+        "alerts": alerts,
+        "footer": footer(cost_aggregation, alert_min_usd, alert_min_pct),
         "data": cost_per_day_by_service,
     }
+
+
+def report_mode(report, requested: str = None, daily_mode: str = "compact", full_report_weekday: int = 0):
+    """
+    'full' (header, alerts, month summary, table) or 'compact' (one line).
+
+    Compact only on a quiet day: any alert, the weekly full-report day
+    (Monday=0, the day the report runs), DAILY_MODE=full, or an invocation
+    with {"mode": "full"} sends the full report. The one line still goes out
+    every quiet day, so silence always means the report broke.
+    """
+    if requested in ("full", "compact"):
+        return requested
+    run_day = report["date"] + datetime.timedelta(days=1)
+    if report["alerts"] or report["alerts"] is None or daily_mode == "full" or run_day.weekday() == full_report_weekday:
+        return "full"
+    return "compact"
+
+
+def compact_line(report):
+    """':white_check_mark: AWS cost 2026-10-23 (partial): $10.81 (-15%) · October to date $872.65 · on pace for $974.81'"""
+    total = report["rows"][-1]
+    line = (f":white_check_mark: AWS cost {report['date']:%Y-%m-%d} (partial): {money(total['yday'])} "
+            f"({total['pct']} vs. the {baseline_days}-day average)")
+    if report["month"]:
+        month = report["month"]
+        line += f" · {month['month']:%B} to date {money(month['month_to_date'])} · on pace for {money(month['pace'])}"
+    return line + " · no alerts"
+
+
+def render_compact_blocks(report):
+    line = compact_line(report)
+    return {"text": line, "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": line}}]}
+
+
+def verdict(report):
+    count = len(report["alerts"])
+    if not count:
+        return ":white_check_mark:", "no alerts"
+    return ":warning:", f"{count} alert{'s' if count > 1 else ''}"
 
 
 def render_text(report):
@@ -523,7 +636,10 @@ def render_text(report):
     rows = report["rows"]
     width = max(len(r["name"]) for r in rows + [{"name": "Service"}])
 
-    buffer = "".join(line + "\n" for line in report["month_lines"])
+    lines = []
+    if report["alerts"] is not None:
+        lines = [" ".join(verdict(report))] + ["• " + alert_line(a, report["date"]) for a in report["alerts"]] + [""]
+    buffer = "".join(line + "\n" for line in lines + report["month_lines"])
     if buffer:
         buffer += "\n"
     buffer += f"{'Service':{width}} ${'Yday*':8} {'∆$':>8} {'∆%':>5} Last {spark_days}d\n"
@@ -540,7 +656,7 @@ def money(usd: float, sign: bool = False):
     return f"{'-' if usd < 0 else '+'}${abs(usd):,.2f}"
 
 
-def render_blocks(report):
+def render_blocks(report, mention: str = ""):
     """
     The report as a Slack Block Kit message: header, summary, table, footer.
     The top-level `text` is what notifications and screen readers show.
@@ -572,10 +688,25 @@ def render_blocks(report):
     for line in report["month_lines"]:
         summary += "\n" + line
 
+    title = f"AWS cost · {report['date']:%Y-%m-%d} (partial)"
+    text = report["summary"]
+    if report["alerts"] is not None:
+        emoji, status = verdict(report)
+        title = f"{emoji} {title} · {status}"
+        text = f"{emoji} {status} · {text}"
+
+    alert_blocks = []
+    if report["alerts"]:
+        listing = "\n".join("• " + alert_line(a, report["date"]) for a in report["alerts"])
+        if mention:
+            listing = f"{mention}\n{listing}"
+        alert_blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": listing}})
+
     return {
-        "text": report["summary"],
+        "text": text,
         "blocks": [
-            {"type": "header", "text": {"type": "plain_text", "text": f"AWS cost · {report['date']:%Y-%m-%d} (partial)"}},
+            {"type": "header", "text": {"type": "plain_text", "emoji": True, "text": title}},
+        ] + alert_blocks + [
             {"type": "section", "text": {"type": "mrkdwn", "text": summary}},
             {"type": "table",
              "column_settings": [{"is_wrapped": True}] + [{"align": "right"}] * 3 + [{"align": "left"}],
@@ -618,36 +749,27 @@ def publish_slack(hook_url, summary, buffer, blocks_payload=None):
             return
         print("HTTP %s: %s -- retrying as plain text" % (status, body))
 
-    status, body = post_json(
-        hook_url,
-        {
-            "text": summary + "\n\n```\n" + buffer + "\n```",
-        }
-    )
+    status, body = post_json(hook_url, {"text": as_text(summary, buffer)})
 
     if status != 200:
         print("HTTP %s: %s" % (status, body))
 
 
+def as_text(summary, buffer):
+    """The plain-text message: the summary, and the table when there is one."""
+    return summary if buffer is None else summary + "\n\n```\n" + buffer + "\n```"
+
+
 def publish_teams(hook_url, summary, buffer):
 
-    status, body = post_json(
-        hook_url,
-        {
-            "text": summary + "\n\n```\n" + buffer + "\n```",
-        }
-    )
+    status, body = post_json(hook_url, {"text": as_text(summary, buffer)})
 
     if status != 200:
         print("HTTP %s: %s" % (status, body))
 
 def publish_google(hook_url, summary, buffer):
 
-    message = {
-        "text": summary + "\n\n```\n" + buffer + "\n```"
-    }
-
-    status, body = post_json(hook_url, message)
+    status, body = post_json(hook_url, {"text": as_text(summary, buffer)})
 
     if status != 200:
         print("HTTP %s: %s" % (status, body))

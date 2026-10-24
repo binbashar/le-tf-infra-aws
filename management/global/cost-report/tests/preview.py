@@ -3,8 +3,9 @@ Print the report built from live Cost Explorer data, without posting it.
 
 Each run is two GetCostAndUsage requests ($0.02). Run it through
 `make cost-report-preview`, which loads the management account's Leverage
-profile; LENGTH, GROUP_BY, COST_AGGREGATION, MOVER_MIN_USD, REPORT_SCOPE and
-BUDGET_NAME mirror the Lambda's env vars.
+profile; LENGTH, GROUP_BY, COST_AGGREGATION, MOVER_MIN_USD, REPORT_SCOPE,
+BUDGET_NAME, ALERT_*, DAILY_MODE and FULL_REPORT_WEEKDAY mirror the Lambda's env
+vars; MODE=full|compact stands in for the invocation's {"mode": ...}.
 
 The Block Kit message is checked with Slack's public blocks.validate method
 (no token; it sends the payload to Slack, the report's destination anyway)
@@ -29,19 +30,29 @@ report = handler.build_report(
     cost_aggregation=os.environ.get("COST_AGGREGATION", "UnblendedCost"),
     mover_min_usd=float(os.environ.get("MOVER_MIN_USD", "0.5")),
     budget_name=os.environ.get("BUDGET_NAME"),
+    alert_min_usd=float(os.environ.get("ALERT_MIN_USD", "1")),
+    alert_min_pct=float(os.environ.get("ALERT_MIN_PCT", "30")),
 )
+mode = handler.report_mode(report, os.environ.get("MODE"), os.environ.get("DAILY_MODE", "compact"),
+                           int(os.environ.get("FULL_REPORT_WEEKDAY", "0")))
 print()
+print(f"Today's mode: {mode} ({len(report['alerts'])} alerts). Both forms follow.")
+print()
+print("--- compact ---")
+print(handler.compact_line(report))
+print()
+print("--- full ---")
 print(report["summary"])
 print()
 print(handler.render_text(report))
 
-payload = handler.render_blocks(report)
-request = urllib.request.Request(
-    "https://slack.com/api/blocks.validate",
-    data=urllib.parse.urlencode({"blocks": json.dumps(payload["blocks"])}).encode(),
-)
-with urllib.request.urlopen(request, timeout=10) as response:
-    print("blocks.validate:", response.read().decode())
-
-builder = json.dumps({"blocks": payload["blocks"]}, separators=(",", ":"))
-print("Block Kit Builder:", "https://app.slack.com/block-kit-builder#" + urllib.parse.quote(builder))
+for name, payload in (("compact", handler.render_compact_blocks(report)),
+                      ("full", handler.render_blocks(report, os.environ.get("ALERT_MENTION", "")))):
+    request = urllib.request.Request(
+        "https://slack.com/api/blocks.validate",
+        data=urllib.parse.urlencode({"blocks": json.dumps(payload["blocks"])}).encode(),
+    )
+    with urllib.request.urlopen(request, timeout=10) as response:
+        print(f"blocks.validate ({name}):", response.read().decode())
+    builder = json.dumps({"blocks": payload["blocks"]}, separators=(",", ":"))
+    print(f"Block Kit Builder ({name}):", "https://app.slack.com/block-kit-builder#" + urllib.parse.quote(builder))
