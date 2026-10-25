@@ -9,6 +9,7 @@ import datetime
 import json
 import os
 import statistics
+import time
 import urllib.error
 import urllib.request
 
@@ -98,6 +99,18 @@ def is_negligible(costs):
     return all(cost < negligible_usd for cost in costs)
 
 
+def change_on(history: list, direction: str):
+    """
+    (cost, typical day, change) on the day an alert of `direction` is judged:
+    yesterday for "up", the day before yesterday for "down"; the typical day
+    is the median of the baseline_days days before it.
+    """
+    end = len(history) - (1 if direction == "up" else 2)
+    cost = history[end]
+    typical = statistics.median(history[end - baseline_days:end])
+    return cost, typical, cost - typical
+
+
 def find_alerts(name: str, history: list, min_usd: float, min_pct: float, yesterday: datetime.date):
     """
     Alert when an item moved by at least min_usd AND min_pct against a typical
@@ -112,13 +125,8 @@ def find_alerts(name: str, history: list, min_usd: float, min_pct: float, yester
         history: history_days daily costs, oldest first, ending yesterday
     """
     found = []
-    checks = (
-        ("up", yesterday, history[-1], history[-1 - baseline_days:-1]),
-        ("down", yesterday - datetime.timedelta(days=1), history[-2], history[-2 - baseline_days:-2]),
-    )
-    for direction, day, cost, before in checks:
-        typical = statistics.median(before)
-        change = cost - typical
+    for direction, day in (("up", yesterday), ("down", yesterday - datetime.timedelta(days=1))):
+        cost, typical, change = change_on(history, direction)
         if direction == "up" and change < min_usd:
             continue
         if direction == "down" and -change < min_usd:
@@ -135,6 +143,63 @@ def alert_line(alert: dict, yesterday: datetime.date):
     when = "yesterday (partial)" if alert["day"] == yesterday else f"on {alert['day']:%Y-%m-%d}"
     return (f"{alert['name']}: {money(alert['cost'])} {when}, {money(alert['usd'], sign=True)} ({alert['pct']}) "
             f"vs. a typical day ({money(alert['typical'])})")
+
+
+def get_breakdown(service: str, start: datetime.date, end: datetime.date, cost_aggregation: str):
+    """
+    One service's daily cost by linked account and usage type, start..end
+    (end excluded), as {(account, usage type): {'YYYY-MM-DD': cost}}. Account
+    IDs are replaced by their names where Cost Explorer returns them. None
+    when it cannot be read: the alert then simply goes out without it.
+    """
+    try:
+        client = boto3.client("ce", config=optional_call_config)
+        request = {
+            "TimePeriod": {"Start": start.isoformat(), "End": end.isoformat()},
+            "Granularity": "DAILY",
+            "Filter": {"And": [
+                {"Not": {"Dimensions": {"Key": "RECORD_TYPE", "Values": excluded_record_types}}},
+                {"Dimensions": {"Key": "SERVICE", "Values": [service]}},
+            ]},
+            "Metrics": [cost_aggregation],
+            "GroupBy": [{"Type": "DIMENSION", "Key": "LINKED_ACCOUNT"},
+                        {"Type": "DIMENSION", "Key": "USAGE_TYPE"}],
+        }
+        costs, names = defaultdict(dict), {}
+        while True:
+            page = client.get_cost_and_usage(**request)
+            for attribute in page.get("DimensionValueAttributes", []):
+                names[attribute["Value"]] = attribute.get("Attributes", {}).get("description")
+            for day in page["ResultsByTime"]:
+                for group in day["Groups"]:
+                    account, usage = group["Keys"]
+                    costs[(account, usage)][day["TimePeriod"]["Start"]] = float(group["Metrics"][cost_aggregation]["Amount"])
+            if not page.get("NextPageToken"):
+                break
+            request["NextPageToken"] = page["NextPageToken"]
+        return {(names.get(account) or account, usage): days for (account, usage), days in costs.items()}
+    except Exception as e:
+        print(f"Could not break down {service}: {e}")
+        return None
+
+
+def contributors(breakdown: dict, dates: list, direction: str, top: int = 2):
+    """
+    The (account, usage type) pairs that moved the most in the alert's
+    direction, judged exactly like the alert (change_on), largest first.
+    """
+    found = []
+    for (account, usage), days in breakdown.items():
+        _, _, change = change_on([days.get(day, 0.0) for day in dates], direction)
+        if (change > 0) == (direction == "up") and abs(change) >= 0.01:
+            found.append({"account": account, "usage": usage, "usd": change})
+    return sorted(found, key=lambda c: abs(c["usd"]), reverse=True)[:top]
+
+
+def contributor_line(contributor: dict, code: bool = True):
+    """'↳ `account · usage type`: +$1.90' -- backticks for mrkdwn, plain in the monospace table."""
+    where = f"{contributor['account']} · {contributor['usage']}"
+    return f"    ↳ {f'`{where}`' if code else where}: {money(contributor['usd'], sign=True)}"
 
 
 def footer(cost_aggregation: str, alert_min_usd: float = None, alert_min_pct: float = None, anomaly_days: int = None):
@@ -410,9 +475,15 @@ def lambda_handler(event, context):
     alert_min_pct = float(os.environ.get("ALERT_MIN_PCT", "30"))
     mention = os.environ.get("ALERT_MENTION", "")
     anomaly_days = int(os.environ.get("ANOMALY_DAYS", "14"))
+    drilldown_max = int(os.environ.get("DRILLDOWN_MAX", "3"))
+    # Stop starting breakdowns once fewer than 20 s are left for the rest
+    deadline = None
+    if context is not None:
+        deadline = time.monotonic() + context.get_remaining_time_in_millis() / 1000 - 20
 
     report = build_report(group_by=group_by, length=length, cost_aggregation=cost_aggregation, mover_min_usd=mover_min_usd, budget_name=budget_name,
-                          alert_min_usd=alert_min_usd, alert_min_pct=alert_min_pct, anomaly_days=anomaly_days)
+                          alert_min_usd=alert_min_usd, alert_min_pct=alert_min_pct, anomaly_days=anomaly_days,
+                          drilldown_max=drilldown_max, deadline=deadline)
 
     mode = report_mode(report, (event or {}).get("mode"), os.environ.get("DAILY_MODE", "full"),
                        int(os.environ.get("FULL_REPORT_WEEKDAY", "0")))
@@ -449,7 +520,7 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
     return report["summary"], render_text(report), report["data"]
 
 
-def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5, monthly_result: dict = None, budget_name: str = None, budget: dict = None, alert_min_usd: float = None, alert_min_pct: float = 30.0, anomaly_days: int = None, anomalies_result: list = None):
+def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5, monthly_result: dict = None, budget_name: str = None, budget: dict = None, alert_min_usd: float = None, alert_min_pct: float = 30.0, anomaly_days: int = None, anomalies_result: list = None, drilldown_max: int = 0, deadline: float = None):
     """
     Build the report for the n_days days before `today`, as data: the
     render_* functions turn it into a message.
@@ -476,6 +547,10 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
             in the last anomaly_days days (none when 0 or None), with an
             impact of at least alert_min_usd; anomalies_result: the
             GetAnomalies 'Anomalies' to use instead of querying (tests)
+        drilldown_max: break down the largest drilldown_max alerts by
+            account and usage type (one request each; SERVICE grouping only)
+        deadline: time.monotonic() after which no more breakdowns start,
+            so they never cost the report its slot inside the Lambda timeout
     """
     if today is None:
         today = datetime.datetime.now(datetime.timezone.utc).date()
@@ -598,8 +673,18 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
         alerts = []
         for name, costs in history.items():
             label = names.get(name, short_name(name) if group_by == "SERVICE" else name)
-            alerts += find_alerts(label, costs, alert_min_usd, alert_min_pct, yesterday)
+            for alert in find_alerts(label, costs, alert_min_usd, alert_min_pct, yesterday):
+                alerts.append(dict(alert, service=name, breakdown=None))
         alerts.sort(key=lambda a: abs(a["usd"]), reverse=True)
+
+        if group_by == "SERVICE":
+            for alert in alerts[:drilldown_max]:
+                if deadline is not None and time.monotonic() > deadline:
+                    print("Out of time: remaining alerts go out without a breakdown")
+                    break
+                breakdown = get_breakdown(alert["service"], history_start, today, cost_aggregation)
+                if breakdown is not None:
+                    alert["breakdown"] = contributors(breakdown, history_dates, alert["direction"])
     if folded:
         table.append(row(other_label, other_costs, "other"))
     table.append(row("Total", total_costs, "total"))
@@ -756,7 +841,10 @@ def render_text(report):
 
     lines = []
     if has_verdict(report):
-        lines = [" ".join(verdict(report))] + ["• " + alert_line(a, report["date"]) for a in report["alerts"] or []]
+        lines = [" ".join(verdict(report))]
+        for alert in report["alerts"] or []:
+            lines.append("• " + alert_line(alert, report["date"]))
+            lines += [contributor_line(c, code=False) for c in alert["breakdown"] or []]
         if report["anomalies"]:
             lines += [""] + anomaly_lines(report["anomalies"])
         lines += [""]
@@ -818,7 +906,9 @@ def render_blocks(report, mention: str = ""):
 
     listings = []
     if report["alerts"]:
-        listings.append("\n".join("• " + alert_line(a, report["date"]) for a in report["alerts"]))
+        listings.append("\n".join(
+            "\n".join(["• " + alert_line(a, report["date"])] + [contributor_line(c) for c in a["breakdown"] or []])
+            for a in report["alerts"]))
     if report["anomalies"]:
         listings.append("\n".join(anomaly_lines(report["anomalies"])))
     if listings and mention:

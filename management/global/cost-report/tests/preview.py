@@ -1,10 +1,12 @@
 """
 Print the report built from live Cost Explorer data, without posting it.
 
-Each run is two GetCostAndUsage requests and one GetAnomalies ($0.02-0.03). Run it through
+Each run is two GetCostAndUsage requests and one GetAnomalies ($0.02-0.03), plus one
+request per alert broken down. Run it through
 `make cost-report-preview`, which loads the management account's Leverage
 profile; LENGTH, GROUP_BY, COST_AGGREGATION, MOVER_MIN_USD, REPORT_SCOPE,
-BUDGET_NAME, ALERT_*, DAILY_MODE, FULL_REPORT_WEEKDAY and ANOMALY_DAYS mirror the Lambda's env
+BUDGET_NAME, ALERT_*, DAILY_MODE, FULL_REPORT_WEEKDAY, ANOMALY_DAYS and DRILLDOWN_MAX
+mirror the Lambda's env
 vars; MODE=full|compact stands in for the invocation's {"mode": ...}.
 
 The Block Kit message is checked with Slack's public blocks.validate method
@@ -33,6 +35,7 @@ report = handler.build_report(
     alert_min_usd=float(os.environ.get("ALERT_MIN_USD", "1")),
     alert_min_pct=float(os.environ.get("ALERT_MIN_PCT", "30")),
     anomaly_days=int(os.environ.get("ANOMALY_DAYS", "14")),
+    drilldown_max=int(os.environ.get("DRILLDOWN_MAX", "3")),
 )
 mode = handler.report_mode(report, os.environ.get("MODE"), os.environ.get("DAILY_MODE", "full"),
                            int(os.environ.get("FULL_REPORT_WEEKDAY", "0")))
