@@ -330,12 +330,10 @@ jobs:
           AWS_S3_FORCE_PATH_STYLE: true
           # Override AWS profile requirement for LocalStack testing
           # AWS_PROFILE unset to avoid profile configuration errors
-        run: |
-          if [ "${{ inputs.iac_platform }}" = "tofu" ]; then
-            tflocal init -upgrade
-          else
-            tflocal init -upgrade
-          fi
+        # tests keep state in memory, so skip the backend: opentofu-local does not
+        # override the partial `backend "s3" {}` and tofu would prompt for a bucket.
+        # -input=false turns any future prompt into a failure instead of a hang.
+        run: tflocal init -upgrade -backend=false -input=false
       - name: Run Test with LocalStack wrapper
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
