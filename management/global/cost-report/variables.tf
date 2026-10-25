@@ -80,3 +80,14 @@ variable "report_anomaly_days" {
     error_message = "report_anomaly_days must be a whole number between 0 (off) and 90."
   }
 }
+
+variable "report_drilldown_max" {
+  description = "Break down the largest N threshold alerts by linked account and usage type: one paginated Cost Explorer query per alert, $0.01 per page (at most 5 pages), on alert days only. 0 turns it off."
+  type        = number
+  default     = 3
+
+  validation {
+    condition     = var.report_drilldown_max == floor(var.report_drilldown_max) && var.report_drilldown_max >= 0 && var.report_drilldown_max <= 10
+    error_message = "report_drilldown_max must be a whole number between 0 (off) and 10."
+  }
+}

@@ -877,3 +877,263 @@ def test_verdict_with_only_anomaly_detection_on_says_no_anomalies(load_fixture):
     report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org",
                                   anomaly_days=14, anomalies_result=[])
     assert handler.verdict(report) == (":white_check_mark:", "no anomalies")
+
+
+# --- drill-down (D3) ----------------------------------------------------------
+
+DATES = [(datetime.date(2026, 10, 14) + datetime.timedelta(days=d)).isoformat() for d in range(9)]
+
+
+def breakdown_page(series, token=None, names=None):
+    """A GetCostAndUsage page grouped by (LINKED_ACCOUNT, USAGE_TYPE) from {(account, usage): [9 costs]}."""
+    page = {"ResultsByTime": [
+        {"TimePeriod": {"Start": day}, "Groups": [
+            {"Keys": list(key), "Metrics": {"UnblendedCost": {"Amount": str(costs[i])}}}
+            for key, costs in series.items() if costs[i]
+        ]}
+        for i, day in enumerate(DATES)
+    ], "DimensionValueAttributes": [
+        {"Value": account, "Attributes": {"description": name}} for account, name in (names or {}).items()
+    ]}
+    if token:
+        page["NextPageToken"] = token
+    return page
+
+
+S3_RISE = {
+    ("000000000001", "USE1-TimedStorage-ByteHrs"): [1.0] * 8 + [1.0],     # flat
+    ("000000000002", "USE1-Requests-Tier1"): [0.5] * 8 + [1.8],           # +1.30
+    ("000000000002", "USE1-DataTransfer-Out-Bytes"): [0.5] * 8 + [0.7],   # +0.20
+    ("000000000003", "USE1-Requests-Tier2"): [0.0] * 8 + [0.05],          # +0.05
+}
+
+
+def test_contributors_follow_the_alert_direction_and_rule():
+    breakdown = {key: dict(zip(DATES, costs)) for key, costs in S3_RISE.items()}
+    found = handler.contributors(breakdown, DATES, "up")
+    assert [(c["account"], c["usage"], round(c["usd"], 2)) for c in found] == [
+        ("000000000002", "USE1-Requests-Tier1", 1.3),
+        ("000000000002", "USE1-DataTransfer-Out-Bytes", 0.2),
+    ]
+    # nothing dropped on the day before yesterday
+    assert handler.contributors(breakdown, DATES, "down") == []
+
+
+def test_contributors_of_a_drop_use_the_day_before_yesterday():
+    breakdown = {("a", "gone"): dict(zip(DATES, [3.0] * 7 + [0.0, 0.0])),
+                 ("a", "partial-yesterday-only"): dict(zip(DATES, [2.0] * 8 + [0.0]))}
+    found = handler.contributors(breakdown, DATES, "down")
+    assert [(c["usage"], c["usd"]) for c in found] == [("gone", -3.0)]
+
+
+def fake_drilldown(monkeypatch, pages_by_service, calls):
+    class FakeCE:
+        def get_cost_and_usage(self, **request):
+            service = request["Filter"]["And"][1]["Dimensions"]["Values"][0]
+            calls.append((service, request))
+            pages = pages_by_service[service]
+            return pages[1] if "NextPageToken" in request else pages[0]
+
+    monkeypatch.setattr(handler.boto3, "client", lambda service, **kwargs: FakeCE())
+
+
+def drilled_report(**kwargs):
+    result = history_result({
+        "Amazon Simple Storage Service": [2.0] * 8 + [3.6],                   # +1.60 up
+        "Amazon OpenSearch Service": [3.0] * 7 + [0.0, 0.0],                  # -3.00 down
+        "Kiro": [0.65] * 9,
+    })
+    kwargs.setdefault("drilldown_max", 3)
+    return handler.build_report(result=result, today=TODAY, account_name="test-org", length=20,
+                                alert_min_usd=1.0, **kwargs)
+
+
+def test_alerts_are_broken_down_with_one_request_each(monkeypatch):
+    calls = []
+    fake_drilldown(monkeypatch, {
+        "Amazon Simple Storage Service": [breakdown_page(S3_RISE, names={"000000000002": "example-dev"})],
+        "Amazon OpenSearch Service": [breakdown_page({("000000000001", "USE1-ES:Instance"): [3.0] * 7 + [0.0, 0.0]})],
+    }, calls)
+
+    report = drilled_report()
+
+    service, request = calls[0]
+    assert request["TimePeriod"] == {"Start": "2026-10-14", "End": "2026-10-23"}
+    assert request["GroupBy"] == [{"Type": "DIMENSION", "Key": "LINKED_ACCOUNT"},
+                                  {"Type": "DIMENSION", "Key": "USAGE_TYPE"}]
+    assert request["Filter"]["And"][0] == {"Not": {"Dimensions": {"Key": "RECORD_TYPE",
+                                                                  "Values": handler.excluded_record_types}}}
+    assert [c[0] for c in calls] == ["Amazon OpenSearch Service", "Amazon Simple Storage Service"]
+
+    by_name = {a["name"]: a["breakdown"] for a in report["alerts"]}
+    assert [(c["account"], c["usage"]) for c in by_name["S3"]] == [
+        ("example-dev", "USE1-Requests-Tier1"), ("example-dev", "USE1-DataTransfer-Out-Bytes")]
+    assert [(c["account"], c["usd"]) for c in by_name["OpenSearch Service"]] == [("000000000001", -3.0)]
+
+
+def test_breakdown_follows_pagination(monkeypatch):
+    calls = []
+    half = dict(list(S3_RISE.items())[:2])
+    rest = dict(list(S3_RISE.items())[2:])
+    fake_drilldown(monkeypatch, {"Amazon Simple Storage Service": [breakdown_page(half, token="p2"), breakdown_page(rest)],
+                                 "Amazon OpenSearch Service": [breakdown_page({})]}, calls)
+    report = drilled_report()
+    s3 = next(a for a in report["alerts"] if a["name"] == "S3")
+    assert len(s3["breakdown"]) == 2
+    assert [c[1].get("NextPageToken") for c in calls if c[0] == "Amazon Simple Storage Service"] == [None, "p2"]
+
+
+def test_only_the_largest_alerts_are_broken_down(monkeypatch):
+    calls = []
+    fake_drilldown(monkeypatch, {"Amazon OpenSearch Service": [breakdown_page({})]}, calls)
+    report = drilled_report(drilldown_max=1)
+    assert [c[0] for c in calls] == ["Amazon OpenSearch Service"]   # -3.00 beats +1.60
+    assert next(a for a in report["alerts"] if a["name"] == "S3")["breakdown"] is None
+
+
+def test_no_breakdown_started_after_the_deadline(monkeypatch):
+    calls = []
+    fake_drilldown(monkeypatch, {}, calls)
+    report = drilled_report(deadline=handler.time.monotonic() - 1)
+    assert calls == []
+    assert all(a["breakdown"] is None for a in report["alerts"])
+
+
+def test_failed_breakdown_leaves_the_alert_without_one(monkeypatch):
+    def broken(service, **kwargs):
+        raise RuntimeError("Throttling")
+
+    monkeypatch.setattr(handler.boto3, "client", broken)
+    report = drilled_report()
+    assert len(report["alerts"]) == 2
+    assert all(a["breakdown"] is None for a in report["alerts"])
+
+
+def test_breakdown_uses_the_fail_fast_config(monkeypatch):
+    configs = []
+
+    class FakeCE:
+        def get_cost_and_usage(self, **request):
+            return breakdown_page({})
+
+    monkeypatch.setattr(handler.boto3, "client", lambda service, config=None: configs.append(config) or FakeCE())
+    drilled_report()
+    assert configs and all(c is handler.optional_call_config for c in configs)
+
+
+def test_no_breakdown_by_default(monkeypatch):
+    calls = []
+    fake_drilldown(monkeypatch, {}, calls)
+    report = drilled_report(drilldown_max=0)
+    assert calls == []
+
+
+def test_breakdown_in_blocks_and_text(monkeypatch):
+    fake_drilldown(monkeypatch, {
+        "Amazon Simple Storage Service": [breakdown_page(S3_RISE, names={"000000000002": "example_dev"})],
+        "Amazon OpenSearch Service": [breakdown_page({})],
+    }, [])
+    report = drilled_report()
+
+    listing = handler.render_blocks(report)["blocks"][1]["text"]["text"]
+    assert "• S3: $3.60 yesterday (partial), +$1.60 (+80%) vs. a typical day ($2.00)\n" \
+           "    ↳ `example_dev · USE1-Requests-Tier1`: +$1.30\n" \
+           "    ↳ `example_dev · USE1-DataTransfer-Out-Bytes`: +$0.20" in listing
+
+    text = handler.render_text(report)
+    assert "    ↳ example_dev · USE1-Requests-Tier1: +$1.30\n" in text
+    assert "`" not in text.split("Service")[0]
+
+
+def test_lambda_sets_the_deadline_from_the_remaining_time(monkeypatch):
+    seen, report = {}, quiet_report()
+
+    def build(**kwargs):
+        seen.update(kwargs)
+        return report
+
+    class Context:
+        def get_remaining_time_in_millis(self):
+            return 60_000
+
+    monkeypatch.setattr(handler, "build_report", build)
+    monkeypatch.setattr(handler.time, "monotonic", lambda: 1000.0)
+    handler.lambda_handler({}, Context())
+
+    assert seen["deadline"] == 1000.0 + 60 - 20
+    assert seen["drilldown_max"] == 3
+
+
+def test_contributors_skip_moves_against_the_alert():
+    # a rise where one usage type fell by more than the others rose
+    breakdown = {("a", "rose"): dict(zip(DATES, [1.0] * 8 + [3.0])),
+                 ("a", "fell"): dict(zip(DATES, [5.0] * 8 + [0.5]))}
+    assert [c["usage"] for c in handler.contributors(breakdown, DATES, "up")] == ["rose"]
+    assert [c["usage"] for c in handler.contributors(breakdown, DATES, "down")] == []
+
+
+# --- limits (CodeRabbit review of D3) -----------------------------------------
+
+def test_sections_split_between_items_within_slacks_limit():
+    items = ["x" * 1000] * 5
+    blocks = handler.sections(items)
+    texts = [b["text"]["text"] for b in blocks]
+    assert [t.count("x" * 1000) for t in texts] == [2, 2, 1]
+    assert all(len(t) <= handler.section_max_chars for t in texts)
+
+
+def test_sections_put_the_mention_on_the_first_block_only():
+    texts = [b["text"]["text"] for b in handler.sections(["a" * 2000, "b" * 2000], mention="<!here>")]
+    assert texts[0].startswith("<!here>\n") and not texts[1].startswith("<!here>")
+
+
+def test_sections_cut_an_item_too_long_on_its_own():
+    texts = [b["text"]["text"] for b in handler.sections(["y" * 5000], mention="<!here>")]
+    assert len(texts) == 1 and len(texts[0]) == handler.section_max_chars
+
+
+def test_sections_of_nothing():
+    assert handler.sections([], mention="<!here>") == []
+
+
+def test_many_anomalies_stay_within_slacks_limits():
+    many = [anomaly(f"Service {i:03d}", "2026-10-20", 2.0 + i, region="us-east-1",
+                    usage="USE1-" + "Long_Usage_Type_" * 6 + str(i)) for i in range(80)]
+    payload = handler.render_blocks(anomalous_report(alerting=True, anomalies=many), mention="<!here>")
+    sections = [b for b in payload["blocks"] if b["type"] == "section"]
+    assert len(sections) > 3
+    assert all(len(b["text"]["text"]) <= handler.section_max_chars for b in sections)
+    assert sum(b["text"]["text"].count("<!here>") for b in sections) == 1
+    assert sum(b["text"]["text"].count("• Service ") for b in sections) == 80
+    assert len(payload["blocks"]) <= 50
+
+
+def test_breakdown_pagination_stops_at_the_deadline(monkeypatch):
+    calls, clock = [], {"now": 0.0}
+
+    class FakeCE:
+        def get_cost_and_usage(self, **request):
+            calls.append(request)
+            clock["now"] += 30   # a slow page
+            return breakdown_page({}, token="more")
+
+    monkeypatch.setattr(handler.boto3, "client", lambda service, **kwargs: FakeCE())
+    monkeypatch.setattr(handler.time, "monotonic", lambda: clock["now"])
+
+    assert handler.get_breakdown("S", datetime.date(2026, 10, 14), datetime.date(2026, 10, 23),
+                                 "UnblendedCost", deadline=20.0) is None
+    assert len(calls) == 1
+
+
+def test_breakdown_gives_up_past_the_page_cap(monkeypatch):
+    calls = []
+
+    class FakeCE:
+        def get_cost_and_usage(self, **request):
+            calls.append(request)
+            return breakdown_page(S3_RISE, token="more")
+
+    monkeypatch.setattr(handler.boto3, "client", lambda service, **kwargs: FakeCE())
+    assert handler.get_breakdown("S", datetime.date(2026, 10, 14), datetime.date(2026, 10, 23),
+                                 "UnblendedCost") is None
+    assert len(calls) == handler.breakdown_max_pages
