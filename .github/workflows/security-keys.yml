@@ -6,6 +6,8 @@ on:
     paths:
       - '**/us-east-1/security-keys/**'
       - '**/us-east-2/security-keys/**'
+      - '.github/workflows/security-keys.yml'
+      - '.github/workflows/testing-workflow.yml'
 jobs:
   testing-security-keys-with-terraform:
     strategy:

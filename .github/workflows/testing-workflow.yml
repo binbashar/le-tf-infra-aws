@@ -93,6 +93,9 @@ jobs:
         with:
           image-tag: ${{ inputs.localstack_version }}
           install-awslocal: true
+          # Community image: KMS/S3/IAM are all these tests need, and pro
+          # requires a LOCALSTACK_AUTH_TOKEN this repo does not have (#1290).
+          use-pro: 'false'
       - name: Install LocalStack wrapper for platform
         if: steps.check-tests.outputs.hasTests == 'true'
         run: |
