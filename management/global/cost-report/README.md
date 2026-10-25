@@ -6,7 +6,7 @@ This module deploys a Lambda function to fetch AWS cost data and post a daily re
 
 - **Lambda Source**: Uses `terraform-aws-lambda` (binbashar) module, with code in the `src/` directory.
 - **Python Packaging**: The function has no third-party dependencies (standard library plus the runtime's bundled `boto3`), so there is no `requirements.txt` and the package is a plain zip of `src/` — applying needs neither Docker nor pip (`build_in_docker = false`). Adding a dependency would require building it in Docker again.
-- **Slack Integration**: Requires a valid Slack webhook URL in the environment variables.
+- **Slack Integration**: The Slack app's bot (`chat:write`) posts the report to `report_slack_channel_id` with `chat.postMessage`, which returns the message's `ts` so replies can go in its thread. The incoming webhook stays as the fallback: it posts when the channel is empty, or when the bot cannot post (token revoked, bot removed from the channel), so the day's report still goes out — without the thread reply.
 - **Permissions**: Lambda is granted only the minimum required permissions (`ce:GetCostAndUsage`, `ce:GetAnomalies`, `iam:ListAccountAliases`, `budgets:ViewBudget` on the one budget).
 - **Scheduling**: Triggered daily at a configurable time via CloudWatch EventBridge rule (`var.report_run_schedule`).
 - **Environment Variables**: Control report length, grouping, and Slack destination. Adjust as needed.
@@ -20,6 +20,7 @@ This module deploys a Lambda function to fetch AWS cost data and post a daily re
 - **Anomalies**: open Cost Anomaly Detection anomalies — no feedback yet, ended in the last `report_anomaly_days` (default 14) days, impact ≥ `report_alert_min_usd` — are listed under the alerts with their root cause (region, linked account, usage type), and count in the verdict (`1 alert, 2 anomalies`). They stay until someone gives feedback in Cost Explorer › Anomaly detection, or age out of the window. One `GetAnomalies` request a day; if it fails the report goes out without the section. `0` turns it off.
 - **Daily mode**: `report_daily_mode = "full"` (default) sends the full report every day, with the verdict in its header. `"compact"` sends a one-line message on quiet days instead (no table, so no view of the top services; it doubles as a heartbeat), and the full report when there are alerts, on `report_full_report_weekday` (default Monday), or on an invocation with `{"mode": "full"}`.
 - **Slack message**: a Block Kit message — header, summary line, a `table` block and the footer as context. Service names are shortened (`S3`, `EC2 - Compute`, prefixes `Amazon `/`AWS ` dropped) unless that would make two rows identical. If Slack rejects the blocks, the function posts the plain-text report instead, so a layout error never loses the day's report. Teams and Google Chat get the plain-text report.
+- **Cost by account**: with `report_show_accounts` (default on), a reply in the report's thread lists every linked account — by name, its ID when Cost Explorer has none — with yesterday's cost, ∆ against the 7-day average and the sparkline, the same columns as the main table; accounts under half a cent every day fold into `Other`, and `Total` matches the report's. One more Cost Explorer request a day ($0.01 per page, at most 5); if it fails the report goes out without the reply. Needs the bot: without one it is not queried. Skipped when `report_group_by` is already `LINKED_ACCOUNT`.
 - **Scope**: run from the management (payer) account, Cost Explorer returns the whole Organization's bill; `REPORT_SCOPE` says so in the summary line.
 
 ## Testing
@@ -27,13 +28,13 @@ This module deploys a Lambda function to fetch AWS cost data and post a daily re
 `src/` is the whole Lambda package, so tests live in `tests/` and are never deployed. From the repository root:
 
 - `make cost-report-test` — offline tests against the synthetic Cost Explorer responses in `tests/fixtures/` (no AWS calls; the suite fails any test that tries).
-- `make cost-report-preview` — builds the report from live Cost Explorer data with the management profile and prints it instead of posting to Slack. Each run is two or three billed requests ($0.02-0.03). It also checks the Block Kit message with Slack's public `blocks.validate` method and prints a Block Kit Builder link to preview it.
+- `make cost-report-preview` — builds the report from live Cost Explorer data with the management profile and prints it instead of posting to Slack. Each run is three or four billed requests ($0.03-0.04), plus any breakdowns, and it prints the thread reply too (`SHOW_ACCOUNTS=false` leaves it out). It also checks the Block Kit message with Slack's public `blocks.validate` method and prints a Block Kit Builder link to preview it.
 
-### Access to Slack Webhook Secret
+### Access to the Slack Secrets
 
-- **Secret Storage**: The Slack webhook URL is stored securely in AWS Secrets Manager, not directly in Lambda environment variables. The secret is encrypted using a customer-managed KMS key (CMK).
+- **Secret Storage**: The Slack webhook URL and the bot token (`/notifications/slack/cost-reports-bot`, set by hand, never in this repository) are stored securely in AWS Secrets Manager, not directly in Lambda environment variables. The secret is encrypted using a customer-managed KMS key (CMK).
 - **IAM Permissions**: The Lambda function is granted permission to call `secretsmanager:GetSecretValue` on the specific secret ARN, and `kms:Decrypt` on the relevant KMS key, via inline policies in `main.tf`.
-- **Runtime Retrieval**: At runtime, the Lambda reads the secret ARN from the `SLACK_WEBHOOK_SECRET_ID` environment variable and fetches the actual webhook URL using the AWS SDK (`boto3`).
+- **Runtime Retrieval**: At runtime, the Lambda reads the secret ARNs from the `SLACK_BOT_TOKEN_SECRET_ID` and `SLACK_WEBHOOK_SECRET_ID` environment variables and fetches the token and the webhook URL using the AWS SDK (`boto3`).
 - **Usage**: This approach ensures the Slack webhook URL is never exposed in plaintext in the Lambda configuration or logs, and can be rotated easily in Secrets Manager without redeploying the function. The use of a KMS CMK ensures that only authorized resources (like this Lambda) can decrypt and access the secret value.
 
 > For advanced configuration or troubleshooting, review the comments in `main.tf`.

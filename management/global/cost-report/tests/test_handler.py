@@ -1137,3 +1137,216 @@ def test_breakdown_gives_up_past_the_page_cap(monkeypatch):
     assert handler.get_breakdown("S", datetime.date(2026, 10, 14), datetime.date(2026, 10, 23),
                                  "UnblendedCost") is None
     assert len(calls) == handler.breakdown_max_pages
+
+
+# --- cost by account (E) ------------------------------------------------------
+
+def accounts_report(load_fixture, **kwargs):
+    return handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org",
+                                show_accounts=True, accounts_result=load_fixture("accounts.json"), **kwargs)
+
+
+def test_account_rows_by_name_most_expensive_first(load_fixture):
+    rows = accounts_report(load_fixture)["accounts"]
+    assert [(r["name"], r["kind"]) for r in rows] == [
+        ("example-shared", "item"), ("example-apps", "item"), ("000000000003", "item"),
+        ("Other (1 account)", "other"), ("Total", "total")]
+    shared = rows[0]
+    assert (shared["yday"], shared["usd"], shared["pct"]) == (4.5, 1.5, "+50%")
+
+
+def test_account_dropped_to_zero_is_listed_with_its_id(load_fixture):
+    # no name in DimensionValueAttributes: the ID stands in
+    dropped = accounts_report(load_fixture)["accounts"][2]
+    assert (dropped["name"], dropped["yday"], dropped["pct"]) == ("000000000003", 0.0, "-100%")
+
+
+def test_account_rows_add_up_to_total(load_fixture):
+    rows = accounts_report(load_fixture)["accounts"]
+    assert sum(r["yday"] for r in rows[:-1]) == pytest.approx(rows[-1]["yday"])
+    assert rows[-1]["yday"] == pytest.approx(4.5 + 2 + 0.001)
+
+
+def test_accounts_are_off_by_default(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org")
+    assert report["accounts"] is None
+
+
+def test_accounts_are_skipped_when_the_table_already_groups_by_account(load_fixture):
+    assert accounts_report(load_fixture, group_by="LINKED_ACCOUNT")["accounts"] is None
+
+
+def test_accounts_query_covers_the_table_window(monkeypatch, load_fixture):
+    queries = []
+
+    class FakeCE:
+        def get_cost_and_usage(self, **query):
+            queries.append(query)
+            return load_fixture("accounts.json")
+
+    monkeypatch.setattr(handler.boto3, "client", lambda service, **kwargs: FakeCE())
+    handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org", show_accounts=True)
+
+    assert len(queries) == 1
+    assert queries[0]["TimePeriod"] == {"Start": "2026-10-15", "End": TODAY}
+    assert queries[0]["GroupBy"] == [{"Type": "DIMENSION", "Key": "LINKED_ACCOUNT"}]
+    assert queries[0]["Filter"]["Not"]["Dimensions"]["Values"] == handler.excluded_record_types
+
+
+def test_accounts_failure_does_not_stop_the_report(monkeypatch, load_fixture):
+    def broken(service, **kwargs):
+        raise RuntimeError("throttled")
+    monkeypatch.setattr(handler.boto3, "client", broken)
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org", show_accounts=True)
+    assert report["accounts"] is None
+
+
+def test_accounts_merge_pages_and_give_up_past_the_cap(monkeypatch, load_fixture):
+    pages = load_fixture("accounts.json")
+
+    class TwoPages:
+        def __init__(self):
+            self.calls = 0
+
+        def get_cost_and_usage(self, **query):
+            self.calls += 1
+            first = self.calls == 1
+            return {"ResultsByTime": pages["ResultsByTime"][:4] if first else pages["ResultsByTime"][4:],
+                    "DimensionValueAttributes": pages["DimensionValueAttributes"],
+                    **({"NextPageToken": "next"} if first else {})}
+
+    monkeypatch.setattr(handler.boto3, "client", lambda service, **kwargs: TwoPages())
+    merged = handler.get_accounts(datetime.date(2026, 10, 15), datetime.date(2026, 10, 23), "UnblendedCost")
+    assert len(merged["ResultsByTime"]) == 8
+
+    class Endless:
+        calls = 0
+
+        def get_cost_and_usage(self, **query):
+            Endless.calls += 1
+            return {"ResultsByTime": [], "NextPageToken": "more"}
+
+    monkeypatch.setattr(handler.boto3, "client", lambda service, **kwargs: Endless())
+    assert handler.get_accounts(datetime.date(2026, 10, 15), datetime.date(2026, 10, 23), "UnblendedCost") is None
+    assert Endless.calls == handler.breakdown_max_pages
+
+
+def test_accounts_reply_blocks(load_fixture):
+    report = accounts_report(load_fixture)
+    payload = handler.render_accounts_blocks(report)
+    assert payload["text"] == "Cost by account · 2026-10-22 (partial)"
+    assert [b["type"] for b in payload["blocks"]] == ["section", "table", "context"]
+    table = payload["blocks"][1]["rows"]
+    assert cell_text(table[0][0]) == "Account"
+    assert [cell_text(r[0]) for r in table[1:]] == [r["name"] for r in report["accounts"]]
+
+
+def test_accounts_reply_text(load_fixture):
+    text = handler.render_accounts_text(accounts_report(load_fixture))
+    assert text.startswith("Account")
+    assert "example-shared" in text and handler.partial_note in text
+
+
+# --- posting with the bot (E) -------------------------------------------------
+
+def bot_env(monkeypatch, show_accounts="true"):
+    monkeypatch.setenv("SLACK_BOT_TOKEN_SECRET_ID", "bot-secret")
+    monkeypatch.setenv("SLACK_CHANNEL_ID", "C0TEST")
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hook")
+    monkeypatch.setenv("SHOW_ACCOUNTS", show_accounts)
+    monkeypatch.setattr(handler, "get_secret", lambda secret_id: "xoxb-test")
+
+
+def fake_slack(responses=None):
+    """chat.postMessage stand-in: answers from `responses` in order, else ok with ts '1.0', '2.0'..."""
+    calls = []
+
+    def call(token, method, payload):
+        calls.append((method, payload))
+        if responses:
+            return responses.pop(0)
+        return {"ok": True, "ts": f"{len(calls)}.0"}
+    return calls, call
+
+
+def test_bot_posts_the_report_and_the_accounts_in_its_thread(monkeypatch, load_fixture):
+    report, seen = accounts_report(load_fixture), {}
+    calls, call = fake_slack()
+    webhook = []
+    bot_env(monkeypatch)
+    monkeypatch.setattr(handler, "build_report", lambda **kwargs: seen.update(kwargs) or report)
+    monkeypatch.setattr(handler, "slack_api", call)
+    monkeypatch.setattr(handler, "post_json", lambda url, payload: webhook.append(payload) or (200, "ok"))
+
+    handler.lambda_handler({}, None)
+
+    assert seen["show_accounts"] is True
+    assert [(m, p["channel"], p.get("thread_ts")) for m, p in calls] == [
+        ("chat.postMessage", "C0TEST", None), ("chat.postMessage", "C0TEST", "1.0")]
+    assert calls[0][1]["blocks"] == handler.render_blocks(report)["blocks"]
+    assert calls[1][1]["blocks"] == handler.render_accounts_blocks(report)["blocks"]
+    assert webhook == []
+
+
+def test_accounts_can_be_turned_off(monkeypatch, load_fixture):
+    report, seen = accounts_report(load_fixture), {}
+    calls, call = fake_slack()
+    bot_env(monkeypatch, show_accounts="false")
+    monkeypatch.setattr(handler, "build_report", lambda **kwargs: seen.update(kwargs) or dict(report, accounts=None))
+    monkeypatch.setattr(handler, "slack_api", call)
+
+    handler.lambda_handler({}, None)
+
+    assert seen["show_accounts"] is False
+    assert len(calls) == 1
+
+
+def test_accounts_need_the_bot(monkeypatch, load_fixture):
+    seen, report = {}, quiet_report()
+    monkeypatch.setenv("SHOW_ACCOUNTS", "true")
+    monkeypatch.setattr(handler, "build_report", lambda **kwargs: seen.update(kwargs) or report)
+    monkeypatch.setattr(handler, "post_json", lambda url, payload: (200, "ok"))
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hook")
+
+    handler.lambda_handler({}, None)
+
+    # not queried: there would be nowhere to post it
+    assert seen["show_accounts"] is False
+
+
+def test_bot_retries_rejected_blocks_as_text(monkeypatch):
+    calls, call = fake_slack([{"ok": False, "error": "invalid_blocks"}, {"ok": True, "ts": "9.0"}])
+    monkeypatch.setattr(handler, "slack_api", call)
+
+    ts = handler.post_message("xoxb", "C0TEST", "summary", "table", {"text": "summary", "blocks": []}, thread_ts="1.0")
+
+    assert ts == "9.0"
+    assert calls[1][1] == {"channel": "C0TEST", "thread_ts": "1.0", "text": "summary\n\n```\ntable\n```"}
+
+
+@pytest.mark.parametrize("token_fails", [False, True])
+def test_webhook_posts_when_the_bot_cannot(monkeypatch, load_fixture, token_fails):
+    report = accounts_report(load_fixture)
+    calls, call = fake_slack([{"ok": False, "error": "not_in_channel"}] * 2)
+    webhook = []
+    bot_env(monkeypatch)
+    if token_fails:
+        def no_token(secret_id):
+            raise RuntimeError("AccessDenied")
+        monkeypatch.setattr(handler, "get_secret", no_token)
+    monkeypatch.setattr(handler, "build_report", lambda **kwargs: report)
+    monkeypatch.setattr(handler, "slack_api", call)
+    monkeypatch.setattr(handler, "post_json", lambda url, payload: webhook.append(payload) or (200, "ok"))
+
+    handler.lambda_handler({}, None)
+
+    assert len(calls) == (0 if token_fails else 2)
+    # the report goes out through the webhook; the accounts reply, with no thread, does not
+    assert webhook == [handler.render_blocks(report)]
+
+
+def test_slack_api_turns_network_errors_into_a_result(monkeypatch):
+    def down(*args, **kwargs):
+        raise OSError("timed out")
+    monkeypatch.setattr(handler.urllib.request, "urlopen", down)
+    assert handler.slack_api("xoxb", "chat.postMessage", {}) == {"ok": False, "error": "timed out"}

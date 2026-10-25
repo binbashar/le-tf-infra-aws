@@ -50,8 +50,13 @@ module "cost_report" {
     ANOMALY_DAYS = var.report_anomaly_days
     # Break the largest N threshold alerts down by account and usage type (one request each; 0: off)
     DRILLDOWN_MAX = var.report_drilldown_max
-    # The Slack webhook URL for sending the report
+    # The Slack webhook URL for sending the report; used only without the bot below, or when the bot cannot post
     SLACK_WEBHOOK_SECRET_ID = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-m8z5y2"
+    # The Slack app's bot token (chat:write) and its channel: the bot posts the report and replies in its thread (empty channel: webhook only)
+    SLACK_BOT_TOKEN_SECRET_ID = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-bot-hIQKFM"
+    SLACK_CHANNEL_ID          = var.report_slack_channel_id
+    # Reply in the report's thread with the cost by linked account (needs the bot; one more request)
+    SHOW_ACCOUNTS = var.report_show_accounts
 
     # Other parameters you may want to explore
     # AWS_ACCOUNT_NAME      = ""
@@ -90,13 +95,13 @@ module "cost_report" {
           "Resource": "arn:aws:budgets::${var.accounts.management.id}:budget/${var.report_budget_name}"
         },
         {
-          "Sid": "ReadSlackWebhookSecret",
+          "Sid": "ReadSlackSecrets",
           "Effect": "Allow",
           "Action": "secretsmanager:GetSecretValue",
           "Resource": "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-*"
         },
         {
-          "Sid": "DecryptKmsEncryptedSlackWebhookSecret",
+          "Sid": "DecryptKmsEncryptedSlackSecrets",
           "Effect": "Allow",
           "Action": "kms:Decrypt",
           "Resource": "arn:aws:kms:${var.region}:${var.accounts.shared.id}:key/cef0e7ad-2dcc-4a31-89bf-c3ea0cab5a4c"

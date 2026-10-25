@@ -91,3 +91,15 @@ variable "report_drilldown_max" {
     error_message = "report_drilldown_max must be a whole number between 0 (off) and 10."
   }
 }
+
+variable "report_slack_channel_id" {
+  description = "ID of the Slack channel the bot posts the report to (the bot must be a member). Empty: the webhook posts the report and there is no thread reply."
+  type        = string
+  default     = "C02LFRF8A00"
+}
+
+variable "report_show_accounts" {
+  description = "Reply in the report's thread with the cost by linked account: one more Cost Explorer request a day ($0.01 per page). Needs the Slack bot (report_slack_channel_id)."
+  type        = bool
+  default     = true
+}
