@@ -18,9 +18,10 @@ module "cost_report" {
   description   = "Send account daily cost data to Slack"
   handler       = "handler.lambda_handler"
   runtime       = "python3.13"
-  memory_size   = 128
-  timeout       = 60
-  source_path   = "src/"
+  # 128 MB left little headroom (104 MB used with block E); CPU scales with memory too
+  memory_size = 256
+  timeout     = 60
+  source_path = "src/"
 
   # No third-party dependencies to install (see "Packaging" above)
   build_in_docker = false
@@ -138,4 +139,26 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   function_name = module.cost_report.lambda_function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.lambda_schedule.arn
+}
+
+#
+# Alarm when a run fails -- out of memory, timeout or any exception -- since
+# that day's report then never reaches Slack. Notifies the costs SNS topic.
+#
+resource "aws_cloudwatch_metric_alarm" "errors" {
+  alarm_name          = "${var.project}-${var.environment}-cost-report-errors"
+  alarm_description   = "The cost report Lambda failed: that day's report did not go out. Check its CloudWatch logs."
+  namespace           = "AWS/Lambda"
+  metric_name         = "Errors"
+  dimensions          = { FunctionName = module.cost_report.lambda_function_name }
+  statistic           = "Sum"
+  period              = 3600
+  evaluation_periods  = 1
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  threshold           = 1
+  # The function runs once a day: the hours without a run are not a failure
+  treat_missing_data = "notBreaching"
+  alarm_actions      = [data.terraform_remote_state.notifications.outputs.sns_topic_arn_costs]
+
+  tags = local.tags
 }
