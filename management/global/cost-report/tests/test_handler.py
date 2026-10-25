@@ -492,13 +492,13 @@ def test_budget_is_read_from_aws_budgets(monkeypatch):
             calls.append(kwargs)
             return {"Budget": BUDGET}
 
-    monkeypatch.setattr(handler.boto3, "client", lambda service: Fake())
+    monkeypatch.setattr(handler.boto3, "client", lambda service, **kwargs: Fake())
     assert handler.get_budget("budget-MONTHLY-test") == BUDGET
     assert calls == [{"AccountId": "000000000000", "BudgetName": "budget-MONTHLY-test"}]
 
 
 def test_budget_failure_does_not_stop_the_report(monkeypatch, load_fixture):
-    def broken(service):
+    def broken(service, **kwargs):
         raise RuntimeError("AccessDenied")
 
     monkeypatch.setattr(handler.boto3, "client", broken)
@@ -758,7 +758,7 @@ def test_anomalies_are_read_since_the_window_with_the_impact_floor(monkeypatch, 
                 return {"Anomalies": ANOMALIES[:1], "NextPageToken": "page-2"}
             return {"Anomalies": ANOMALIES[1:]}
 
-    monkeypatch.setattr(handler.boto3, "client", lambda service: FakeCE())
+    monkeypatch.setattr(handler.boto3, "client", lambda service, **kwargs: FakeCE())
     report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org",
                                   alert_min_usd=1.0, anomaly_days=14)
 
@@ -771,7 +771,7 @@ def test_anomalies_are_read_since_the_window_with_the_impact_floor(monkeypatch, 
 
 
 def test_anomaly_read_failure_does_not_stop_the_report(monkeypatch, load_fixture):
-    def broken(service):
+    def broken(service, **kwargs):
         raise RuntimeError("AccessDenied")
 
     monkeypatch.setattr(handler.boto3, "client", broken)
@@ -841,3 +841,39 @@ def test_footer_states_the_anomaly_rule():
 def test_anomalies_force_the_full_report_in_compact_mode():
     assert handler.report_mode(anomalous_report(anomalies=[]), None, "compact", 0) == "compact"
     assert handler.report_mode(anomalous_report(), None, "compact", 0) == "full"
+
+
+def test_optional_calls_fail_fast(monkeypatch):
+    """Budget and anomaly reads must give up well inside the Lambda timeout, not after botocore's 60 s."""
+    configs = {}
+
+    class Fake:
+        def get_caller_identity(self):
+            return {"Account": "000000000000"}
+
+        def describe_budget(self, **kwargs):
+            return {"Budget": BUDGET}
+
+        def get_anomalies(self, **kwargs):
+            return {"Anomalies": []}
+
+    def client(service, config=None):
+        configs[service] = config
+        return Fake()
+
+    monkeypatch.setattr(handler.boto3, "client", client)
+    handler.get_budget("budget-MONTHLY-test")
+    handler.get_anomalies(datetime.date(2026, 10, 9), datetime.date(2026, 10, 23), 1.0)
+
+    assert set(configs) == {"sts", "budgets", "ce"}
+    for config in configs.values():
+        assert config is handler.optional_call_config
+    worst = (handler.optional_call_config.connect_timeout + handler.optional_call_config.read_timeout) \
+        * handler.optional_call_config.retries["total_max_attempts"]
+    assert worst * 3 < 60 - 15   # three optional calls, plus the report's own requests and the post
+
+
+def test_verdict_with_only_anomaly_detection_on_says_no_anomalies(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org",
+                                  anomaly_days=14, anomalies_result=[])
+    assert handler.verdict(report) == (":white_check_mark:", "no anomalies")

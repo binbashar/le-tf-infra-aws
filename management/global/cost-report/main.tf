@@ -19,7 +19,7 @@ module "cost_report" {
   handler       = "handler.lambda_handler"
   runtime       = "python3.13"
   memory_size   = 128
-  timeout       = 30
+  timeout       = 60
   source_path   = "src/"
 
   # No third-party dependencies to install (see "Packaging" above)

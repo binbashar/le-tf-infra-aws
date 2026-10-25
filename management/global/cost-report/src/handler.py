@@ -3,6 +3,7 @@
 #
 from collections import defaultdict
 import boto3
+import botocore.config
 import calendar
 import datetime
 import json
@@ -36,6 +37,13 @@ metric_labels = {
     "NetUnblendedCost": "Net unblended cost",
     "NetAmortizedCost": "Net amortized cost",
 }
+
+# For the calls the report can go out without (budget, anomalies): fail fast
+# instead of botocore's 60 s default, so a stalled call is caught here and the
+# report still goes out before the Lambda's own timeout. Worst case per call:
+# 2 attempts x (2 s connect + 5 s read).
+optional_call_config = botocore.config.Config(
+    connect_timeout=2, read_timeout=5, retries={"total_max_attempts": 2, "mode": "standard"})
 
 # Cost Explorer has usually not finished billing yesterday when the report
 # runs, so yesterday's figure is always flagged as partial.
@@ -244,8 +252,9 @@ def get_budget(budget_name: str):
     a budget problem must never stop the day's report.
     """
     try:
-        account_id = boto3.client("sts").get_caller_identity()["Account"]
-        return boto3.client("budgets").describe_budget(AccountId=account_id, BudgetName=budget_name)["Budget"]
+        account_id = boto3.client("sts", config=optional_call_config).get_caller_identity()["Account"]
+        budgets = boto3.client("budgets", config=optional_call_config)
+        return budgets.describe_budget(AccountId=account_id, BudgetName=budget_name)["Budget"]
     except Exception as e:
         print(f"Could not read budget {budget_name}: {e}")
         return None
@@ -285,7 +294,7 @@ def get_anomalies(start: datetime.date, end: datetime.date, min_impact_usd: floa
     to lose the day's report.
     """
     try:
-        client = boto3.client("ce")
+        client = boto3.client("ce", config=optional_call_config)
         request = {
             "DateInterval": {"StartDate": start.isoformat(), "EndDate": end.isoformat()},
             "TotalImpact": {"NumericOperator": "GREATER_THAN_OR_EQUAL", "StartValue": min_impact_usd},
@@ -735,7 +744,8 @@ def verdict(report):
     if anomalies:
         parts.append(f"{anomalies} anomal{'ies' if anomalies > 1 else 'y'}")
     if not parts:
-        return ":white_check_mark:", "no alerts"
+        # name only what was checked: with the alert rule off, say so
+        return ":white_check_mark:", "no anomalies" if report["alerts"] is None else "no alerts"
     return ":warning:", ", ".join(parts)
 
 
