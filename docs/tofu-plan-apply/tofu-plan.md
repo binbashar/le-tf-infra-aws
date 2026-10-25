@@ -236,7 +236,7 @@ environment reviewer is authorizing execution of that commit; approval is not a 
 | Variable | `TOFU_PLAN_MAX_LAYERS` | `1`. Above it, no layer gets a live plan. Credential-free validation is not capped. |
 | Variable | `TOFU_PLAN_ROLES` | JSON: account directory → `{role_arn, account_id}`. A missing account fails closed. |
 | Variable | `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN`, `AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID` | Bedrock role and its account. |
-| Variable | `OPENTOFU_VERSION`, `AWS_REGION` | Default `1.9.1`, `us-east-1`. |
+| Variable | `OPENTOFU_VERSION`, `AWS_REGION` | Default `1.13.2`, `us-east-1`. |
 | `tofu-plan` secret | `TOFU_PLAN_COMMON_TFVARS` | Copy of the ignored `config/common.tfvars`; written `0600` and removed after the plan. |
 | `tofu-plan` variable | `BEDROCK_MODEL_ID` | `us.anthropic.claude-haiku-5-5` or `amazon.nova-lite-v1:0`, the only two IDs the role and the code accept; both analyses use it. Without it, Haiku 5.5. Keep it on the environment: `claude.yml` reads the repository variable of the same name. |
 
