@@ -105,6 +105,18 @@ def is_negligible(costs):
     return all(cost < negligible_usd for cost in costs)
 
 
+def table_row(label: str, costs: list, kind: str):
+    """A table row: yesterday's cost, its change against the baseline and the sparkline."""
+    usd, pct = delta(costs)
+    return {"name": label, "kind": kind, "yday": costs[-1], "usd": usd, "pct": pct,
+            "spark": sparkline(costs[-spark_days:])}
+
+
+def column_sums(series: list):
+    """Day-by-day sum of equally long cost lists (n_days zeros for none)."""
+    return [sum(day) for day in zip(*series)] if series else [0.0] * n_days
+
+
 def change_on(history: list, direction: str):
     """
     (cost, typical day, change) on the day an alert of `direction` is judged:
@@ -434,6 +446,60 @@ def anomaly_lines(anomalies: list):
             + ["Give feedback in Cost Explorer › Anomaly detection to clear them."])
 
 
+def get_accounts(start: datetime.date, end: datetime.date, cost_aggregation: str):
+    """
+    Daily cost by linked account, start..end (end excluded), as one
+    GetCostAndUsage response with every page merged. None when it cannot be
+    read in full: the per-account reply is left out, never the report.
+    """
+    try:
+        client = boto3.client("ce", config=optional_call_config)
+        request = {
+            "TimePeriod": {"Start": start.isoformat(), "End": end.isoformat()},
+            "Granularity": "DAILY",
+            "Filter": {"Not": {"Dimensions": {"Key": "RECORD_TYPE", "Values": excluded_record_types}}},
+            "Metrics": [cost_aggregation],
+            "GroupBy": [{"Type": "DIMENSION", "Key": "LINKED_ACCOUNT"}],
+        }
+        merged = {"ResultsByTime": [], "DimensionValueAttributes": []}
+        for page_number in range(breakdown_max_pages):
+            page = client.get_cost_and_usage(**request)
+            merged["ResultsByTime"] += page["ResultsByTime"]
+            merged["DimensionValueAttributes"] += page.get("DimensionValueAttributes", [])
+            if not page.get("NextPageToken"):
+                return merged
+            request["NextPageToken"] = page["NextPageToken"]
+        print(f"Cost by account needs more than {breakdown_max_pages} pages: left out")
+        return None
+    except Exception as e:
+        print(f"Could not read the cost by account: {e}")
+        return None
+
+
+def account_rows(result: dict, cost_aggregation: str, dates: list):
+    """
+    One row per linked account, by name (its ID when Cost Explorer has no
+    name), most expensive yesterday first; accounts under half a cent every
+    day fold into "Other", and the rows add up to "Total".
+    """
+    names = {attribute["Value"]: attribute.get("Attributes", {}).get("description")
+             for attribute in result.get("DimensionValueAttributes", [])}
+    costs = defaultdict(lambda: defaultdict(float))
+    for day in result["ResultsByTime"]:
+        for group in day["Groups"]:
+            account = group["Keys"][0]
+            costs[names.get(account) or account][day["TimePeriod"]["Start"]] += float(group["Metrics"][cost_aggregation]["Amount"])
+
+    series = sorted(((name, [days.get(day, 0.0) for day in dates]) for name, days in costs.items()),
+                    key=lambda item: item[1][-1], reverse=True)
+    rows = [table_row(name, history, "item") for name, history in series if not is_negligible(history)]
+    folded = [history for _, history in series if is_negligible(history)]
+    if folded:
+        rows.append(table_row(f"Other ({len(folded)} account{'s' if len(folded) > 1 else ''})", column_sums(folded), "other"))
+    rows.append(table_row("Total", column_sums([history for _, history in series]), "total"))
+    return rows
+
+
 def get_account_name():
     # Get account account name from env, or account id/account alias from boto3
     account_name = os.environ.get("AWS_ACCOUNT_NAME", None)
@@ -490,6 +556,14 @@ def lambda_handler(event, context):
     mention = os.environ.get("ALERT_MENTION", "")
     anomaly_days = int(os.environ.get("ANOMALY_DAYS", "14"))
     drilldown_max = int(os.environ.get("DRILLDOWN_MAX", "3"))
+    # The Slack app's bot posts the report and replies in its thread; without
+    # one, the webhook posts the report alone
+    bot_secret_id = os.environ.get("SLACK_BOT_TOKEN_SECRET_ID")
+    channel = os.environ.get("SLACK_CHANNEL_ID")
+    has_bot = bool(bot_secret_id and channel)
+    show_accounts = os.environ.get("SHOW_ACCOUNTS", "false") == "true"
+    if show_accounts and not has_bot:
+        print("SHOW_ACCOUNTS needs SLACK_BOT_TOKEN_SECRET_ID and SLACK_CHANNEL_ID: cost by account left out")
     # Stop starting breakdowns once fewer than 20 s are left for the rest
     deadline = None
     if context is not None:
@@ -497,7 +571,7 @@ def lambda_handler(event, context):
 
     report = build_report(group_by=group_by, length=length, cost_aggregation=cost_aggregation, mover_min_usd=mover_min_usd, budget_name=budget_name,
                           alert_min_usd=alert_min_usd, alert_min_pct=alert_min_pct, anomaly_days=anomaly_days,
-                          drilldown_max=drilldown_max, deadline=deadline)
+                          drilldown_max=drilldown_max, deadline=deadline, show_accounts=show_accounts and has_bot)
 
     mode = report_mode(report, (event or {}).get("mode"), os.environ.get("DAILY_MODE", "full"),
                        int(os.environ.get("FULL_REPORT_WEEKDAY", "0")))
@@ -507,15 +581,30 @@ def lambda_handler(event, context):
     else:
         summary, buffer, blocks = report["summary"], render_text(report), render_blocks(report, mention)
 
-    slack_hook_url = None
-    slack_secret_id = os.environ.get('SLACK_WEBHOOK_SECRET_ID')
-    if slack_secret_id:
-        slack_hook_url = get_secret(slack_secret_id)
-    else:
-        slack_hook_url = os.environ.get('SLACK_WEBHOOK_URL')
+    ts = None
+    if has_bot:
+        try:
+            token = get_secret(bot_secret_id)
+        except Exception as e:
+            print(f"Could not read the Slack bot token: {e}")
+            token = None
+        ts = token and post_message(token, channel, summary, buffer, blocks)
+        if ts and report["accounts"]:
+            title = accounts_title(report)
+            post_message(token, channel, title, render_accounts_text(report), render_accounts_blocks(report), thread_ts=ts)
 
-    if slack_hook_url:
-        publish_slack(slack_hook_url, summary, buffer, blocks)
+    # The webhook posts when there is no bot, or when the bot could not post
+    # (revoked token, removed from the channel...), so the report still goes out
+    if ts is None:
+        slack_hook_url = None
+        slack_secret_id = os.environ.get('SLACK_WEBHOOK_SECRET_ID')
+        if slack_secret_id:
+            slack_hook_url = get_secret(slack_secret_id)
+        else:
+            slack_hook_url = os.environ.get('SLACK_WEBHOOK_URL')
+
+        if slack_hook_url:
+            publish_slack(slack_hook_url, summary, buffer, blocks)
 
     teams_hook_url = os.environ.get('TEAMS_WEBHOOK_URL')
     if teams_hook_url:
@@ -534,7 +623,7 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
     return report["summary"], render_text(report), report["data"]
 
 
-def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5, monthly_result: dict = None, budget_name: str = None, budget: dict = None, alert_min_usd: float = None, alert_min_pct: float = 30.0, anomaly_days: int = None, anomalies_result: list = None, drilldown_max: int = 0, deadline: float = None):
+def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5, monthly_result: dict = None, budget_name: str = None, budget: dict = None, alert_min_usd: float = None, alert_min_pct: float = 30.0, anomaly_days: int = None, anomalies_result: list = None, drilldown_max: int = 0, deadline: float = None, show_accounts: bool = False, accounts_result: dict = None):
     """
     Build the report for the n_days days before `today`, as data: the
     render_* functions turn it into a message.
@@ -565,6 +654,9 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
             account and usage type (one request each; SERVICE grouping only)
         deadline: time.monotonic() after which no more breakdowns start,
             so they never cost the report its slot inside the Lambda timeout
+        show_accounts: add the cost by linked account (one more request),
+            posted as a reply in the report's thread; accounts_result: the
+            GetCostAndUsage response to use instead of querying (tests)
     """
     if today is None:
         today = datetime.datetime.now(datetime.timezone.utc).date()
@@ -674,12 +766,7 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
     if group_by == "SERVICE" and len({short_name(name) for name in names}) == len(names):
         names = {name: short_name(name) for name in names}
 
-    def row(label, costs, kind):
-        usd, pct = delta(costs)
-        return {"name": label, "kind": kind, "yday": costs[-1], "usd": usd, "pct": pct,
-                "spark": sparkline(costs[-spark_days:])}
-
-    table = [row(names[name], costs, "item") for name, costs in rows]
+    table = [table_row(names[name], costs, "item") for name, costs in rows]
 
     # None when alerts are off, so no verdict claims "no alerts"
     alerts = None
@@ -700,8 +787,8 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
                 if breakdown is not None:
                     alert["breakdown"] = contributors(breakdown, history_dates, alert["direction"])
     if folded:
-        table.append(row(other_label, other_costs, "other"))
-    table.append(row("Total", total_costs, "total"))
+        table.append(table_row(other_label, other_costs, "other"))
+    table.append(table_row("Total", total_costs, "total"))
 
     cost_per_day_by_service["total"] = total_costs[-1]
 
@@ -761,6 +848,14 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
         if anomalies_result is not None:
             anomalies = open_anomalies(anomalies_result, group_by)
 
+    # None when off, unreadable, or already what the main table shows
+    accounts = None
+    if show_accounts and group_by != "LINKED_ACCOUNT":
+        if accounts_result is None:
+            accounts_result = get_accounts(week_ago, today, cost_aggregation)
+        if accounts_result is not None:
+            accounts = account_rows(accounts_result, cost_aggregation, list_of_dates)
+
     month_lines = []
     if month:
         month_lines.append(
@@ -780,6 +875,7 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
         "rows": table,
         "alerts": alerts,
         "anomalies": anomalies,
+        "accounts": accounts,
         "footer": footer(cost_aggregation, alert_min_usd, alert_min_pct, anomaly_days if anomalies is not None else None),
         "data": cost_per_day_by_service,
     }
@@ -851,7 +947,6 @@ def verdict(report):
 def render_text(report):
     """The table as monospace text."""
     rows = report["rows"]
-    width = max(len(r["name"]) for r in rows + [{"name": "Service"}])
 
     lines = []
     if has_verdict(report):
@@ -865,10 +960,15 @@ def render_text(report):
     buffer = "".join(line + "\n" for line in lines + report["month_lines"])
     if buffer:
         buffer += "\n"
-    buffer += f"{'Service':{width}} ${'Yday*':8} {'∆$':>8} {'∆%':>5} Last {spark_days}d\n"
+    return buffer + table_text(rows) + "\n" + report["footer"]
+
+
+def table_text(rows: list, first_column: str = "Service"):
+    """Rows as a monospace table."""
+    width = max(len(r["name"]) for r in rows + [{"name": first_column}])
+    buffer = f"{first_column:{width}} ${'Yday*':8} {'∆$':>8} {'∆%':>5} Last {spark_days}d\n"
     for r in rows:
         buffer += f"{r['name']:{width}} ${r['yday']:8,.2f} {r['usd']:+8,.2f} {r['pct']:>5} {r['spark']}\n"
-    buffer += "\n" + report["footer"]
     return buffer
 
 
@@ -904,23 +1004,6 @@ def render_blocks(report, mention: str = ""):
     """
     total = report["rows"][-1]
 
-    def cell(text, bold=False):
-        if not bold:
-            return {"type": "raw_text", "text": text}
-        return {"type": "rich_text", "elements": [{"type": "rich_text_section", "elements": [
-            {"type": "text", "text": text, "style": {"bold": True}}]}]}
-
-    header = ["Service", "Yday*", "∆$", "∆%", f"Last {spark_days}d"]
-    rows = [[cell(text, bold=True) for text in header]]
-    for r in report["rows"]:
-        rows.append([
-            cell(r["name"], bold=r["kind"] != "item"),
-            cell(money(r["yday"])),
-            cell(money(r["usd"], sign=True)),
-            cell(r["pct"]),
-            cell(r["spark"]),
-        ])
-
     summary = (f"*{money(total['yday'])}* yesterday · ∆ {money(total['usd'], sign=True)} ({total['pct']}) "
                f"vs. the {baseline_days}-day average\n"
                f"For {report['report_for']}")
@@ -953,13 +1036,59 @@ def render_blocks(report, mention: str = ""):
             {"type": "header", "text": {"type": "plain_text", "emoji": True, "text": title}},
         ] + alert_blocks + [
             {"type": "section", "text": {"type": "mrkdwn", "text": summary}},
-            {"type": "table",
-             "column_settings": [{"is_wrapped": True}] + [{"align": "right"}] * 3 + [{"align": "left"}],
-             "rows": rows},
+            table_block(report["rows"]),
             {"type": "context", "elements": [
                 {"type": "plain_text", "text": text} for text in report["footer"].splitlines()]},
         ],
     }
+
+
+def table_block(rows: list, first_column: str = "Service"):
+    """Rows as a Block Kit table: header, Other and Total in bold."""
+    def cell(text, bold=False):
+        if not bold:
+            return {"type": "raw_text", "text": text}
+        return {"type": "rich_text", "elements": [{"type": "rich_text_section", "elements": [
+            {"type": "text", "text": text, "style": {"bold": True}}]}]}
+
+    header = [first_column, "Yday*", "∆$", "∆%", f"Last {spark_days}d"]
+    cells = [[cell(text, bold=True) for text in header]]
+    for r in rows:
+        cells.append([
+            cell(r["name"], bold=r["kind"] != "item"),
+            cell(money(r["yday"])),
+            cell(money(r["usd"], sign=True)),
+            cell(r["pct"]),
+            cell(r["spark"]),
+        ])
+    return {"type": "table",
+            "column_settings": [{"is_wrapped": True}] + [{"align": "right"}] * 3 + [{"align": "left"}],
+            "rows": cells}
+
+
+def accounts_title(report):
+    return f"Cost by account · {report['date']:%Y-%m-%d} (partial)"
+
+
+def accounts_footer():
+    return [f"∆: yesterday vs. the average of the previous {baseline_days} days", partial_note]
+
+
+def render_accounts_blocks(report):
+    """The cost by account, as the reply posted in the report's thread."""
+    title = accounts_title(report)
+    return {
+        "text": title,
+        "blocks": [
+            {"type": "section", "text": {"type": "mrkdwn", "text": f"*{title}*"}},
+            table_block(report["accounts"], "Account"),
+            {"type": "context", "elements": [{"type": "plain_text", "text": text} for text in accounts_footer()]},
+        ],
+    }
+
+
+def render_accounts_text(report):
+    return table_text(report["accounts"], "Account") + "\n" + "\n".join(accounts_footer()) + "\n"
 
 
 def post_json(url, payload, timeout=5):
@@ -998,6 +1127,45 @@ def publish_slack(hook_url, summary, buffer, blocks_payload=None):
 
     if status != 200:
         print("HTTP %s: %s" % (status, body))
+
+
+def slack_api(token, method, payload, timeout=5):
+    """
+    Call a Slack Web API method. Slack answers HTTP 200 with "ok": false on
+    most errors, so the result is the decoded body, and a network error comes
+    back the same way.
+    """
+    req = urllib.request.Request(
+        f"https://slack.com/api/{method}",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json; charset=utf-8", "Authorization": f"Bearer {token}"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode())
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def post_message(token, channel, summary, buffer, blocks_payload, thread_ts=None):
+    """
+    Post with chat.postMessage, which -- unlike the webhook -- returns the
+    message's ts, so replies can go in its thread. Like publish_slack, rejected
+    blocks are retried as plain text.
+
+    Returns:
+        str: the message's ts, or None when it could not be posted
+    """
+    base = {"channel": channel}
+    if thread_ts:
+        base["thread_ts"] = thread_ts
+    for payload in (blocks_payload, {"text": as_text(summary, buffer)}):
+        response = slack_api(token, "chat.postMessage", dict(base, **payload))
+        if response.get("ok"):
+            return response["ts"]
+        print(f"chat.postMessage: {response.get('error')}")
+    return None
 
 
 def as_text(summary, buffer):

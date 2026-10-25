@@ -1,12 +1,12 @@
 """
 Print the report built from live Cost Explorer data, without posting it.
 
-Each run is two GetCostAndUsage requests and one GetAnomalies ($0.02-0.03), plus one
+Each run is three GetCostAndUsage requests and one GetAnomalies ($0.03-0.04), plus one
 paginated query per alert broken down ($0.01 per page). Run it through
 `make cost-report-preview`, which loads the management account's Leverage
 profile; LENGTH, GROUP_BY, COST_AGGREGATION, MOVER_MIN_USD, REPORT_SCOPE,
-BUDGET_NAME, ALERT_*, DAILY_MODE, FULL_REPORT_WEEKDAY, ANOMALY_DAYS and DRILLDOWN_MAX
-mirror the Lambda's env
+BUDGET_NAME, ALERT_*, DAILY_MODE, FULL_REPORT_WEEKDAY, ANOMALY_DAYS, DRILLDOWN_MAX
+and SHOW_ACCOUNTS mirror the Lambda's env
 vars; MODE=full|compact stands in for the invocation's {"mode": ...}.
 
 The Block Kit message is checked with Slack's public blocks.validate method
@@ -36,6 +36,7 @@ report = handler.build_report(
     alert_min_pct=float(os.environ.get("ALERT_MIN_PCT", "30")),
     anomaly_days=int(os.environ.get("ANOMALY_DAYS", "14")),
     drilldown_max=int(os.environ.get("DRILLDOWN_MAX", "3")),
+    show_accounts=os.environ.get("SHOW_ACCOUNTS", "true") == "true",
 )
 mode = handler.report_mode(report, os.environ.get("MODE"), os.environ.get("DAILY_MODE", "full"),
                            int(os.environ.get("FULL_REPORT_WEEKDAY", "0")))
@@ -50,8 +51,16 @@ print(report["summary"])
 print()
 print(handler.render_text(report))
 
-for name, payload in (("compact", handler.render_compact_blocks(report)),
-                      ("full", handler.render_blocks(report, os.environ.get("ALERT_MENTION", "")))):
+payloads = [("compact", handler.render_compact_blocks(report)),
+            ("full", handler.render_blocks(report, os.environ.get("ALERT_MENTION", "")))]
+if report["accounts"]:
+    print("--- thread reply ---")
+    print(handler.accounts_title(report))
+    print()
+    print(handler.render_accounts_text(report))
+    payloads.append(("thread reply", handler.render_accounts_blocks(report)))
+
+for name, payload in payloads:
     request = urllib.request.Request(
         "https://slack.com/api/blocks.validate",
         data=urllib.parse.urlencode({"blocks": json.dumps(payload["blocks"])}).encode(),
