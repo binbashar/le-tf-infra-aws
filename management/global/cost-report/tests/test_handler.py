@@ -492,13 +492,13 @@ def test_budget_is_read_from_aws_budgets(monkeypatch):
             calls.append(kwargs)
             return {"Budget": BUDGET}
 
-    monkeypatch.setattr(handler.boto3, "client", lambda service: Fake())
+    monkeypatch.setattr(handler.boto3, "client", lambda service, **kwargs: Fake())
     assert handler.get_budget("budget-MONTHLY-test") == BUDGET
     assert calls == [{"AccountId": "000000000000", "BudgetName": "budget-MONTHLY-test"}]
 
 
 def test_budget_failure_does_not_stop_the_report(monkeypatch, load_fixture):
-    def broken(service):
+    def broken(service, **kwargs):
         raise RuntimeError("AccessDenied")
 
     monkeypatch.setattr(handler.boto3, "client", broken)
@@ -700,3 +700,180 @@ def test_lambda_posts_the_full_report_when_asked(monkeypatch):
     handler.lambda_handler({"mode": "full"}, None)
 
     assert sent[0]["blocks"][0]["type"] == "header"
+
+
+# --- Cost Anomaly Detection (D2) ----------------------------------------------
+
+def anomaly(service, start, impact, end="same", feedback=None, region=None, account=None, account_id=None, usage=None):
+    cause = {k: v for k, v in (("Service", service), ("Region", region), ("LinkedAccountName", account),
+                               ("LinkedAccount", account_id), ("UsageType", usage)) if v}
+    found = {
+        "AnomalyId": f"id-{service}-{start}",
+        "AnomalyStartDate": f"{start}T00:00:00Z",
+        "DimensionValue": service,
+        "RootCauses": [cause],
+        "Impact": {"MaxImpact": impact, "TotalImpact": impact},
+        "MonitorArn": "arn:aws:ce::000000000000:anomalymonitor/test",
+    }
+    if end is not None:
+        found["AnomalyEndDate"] = f"{start if end == 'same' else end}T00:00:00Z"
+    if feedback:
+        found["Feedback"] = feedback
+    return found
+
+
+ANOMALIES = [
+    anomaly("Amazon Bedrock", "2026-10-21", 8.27, region="us-east-1", usage="USE1-Model_Large-input-tokens"),
+    anomaly("AWS End User Messaging", "2026-10-15", 1.89, region="us-east-1", account="example-dev"),
+    anomaly("Amazon QuickSight", "2026-10-12", 7.11, feedback="PLANNED_ACTIVITY"),
+]
+
+
+def test_open_anomalies_skip_the_ones_with_feedback_and_sort_by_impact():
+    found = handler.open_anomalies(ANOMALIES)
+    assert [(a["name"], a["impact"]) for a in found] == [("Bedrock", 8.27), ("End User Messaging", 1.89)]
+
+
+@pytest.mark.parametrize("found, line", [
+    (anomaly("Amazon Bedrock", "2026-10-21", 8.27, region="us-east-1", usage="USE1-Model_Large-input-tokens"),
+     "Bedrock · 2026-10-21 · +$8.27 · `us-east-1 · USE1-Model_Large-input-tokens`"),
+    (anomaly("AWS End User Messaging", "2026-10-15", 1.89, end="2026-10-17", account="example-dev"),
+     "End User Messaging · 2026-10-15 → 2026-10-17 · +$1.89 · `example-dev`"),
+    (anomaly("Amazon Cognito", "2026-10-20", 2.0, end=None, account_id="000000000000"),
+     "Cognito · since 2026-10-20 · +$2.00 · `000000000000`"),
+    (anomaly("Kiro", "2026-10-20", 3.0),
+     "Kiro · 2026-10-20 · +$3.00"),
+])
+def test_anomaly_line(found, line):
+    assert handler.anomaly_line(handler.open_anomalies([found])[0]) == line
+
+
+def test_anomalies_are_read_since_the_window_with_the_impact_floor(monkeypatch, load_fixture):
+    requests = []
+
+    class FakeCE:
+        def get_anomalies(self, **request):
+            requests.append(dict(request))
+            if "NextPageToken" not in request:
+                return {"Anomalies": ANOMALIES[:1], "NextPageToken": "page-2"}
+            return {"Anomalies": ANOMALIES[1:]}
+
+    monkeypatch.setattr(handler.boto3, "client", lambda service, **kwargs: FakeCE())
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org",
+                                  alert_min_usd=1.0, anomaly_days=14)
+
+    assert requests[0] == {
+        "DateInterval": {"StartDate": "2026-10-09", "EndDate": "2026-10-23"},
+        "TotalImpact": {"NumericOperator": "GREATER_THAN_OR_EQUAL", "StartValue": 1.0},
+    }
+    assert requests[1]["NextPageToken"] == "page-2"
+    assert [a["name"] for a in report["anomalies"]] == ["Bedrock", "End User Messaging"]
+
+
+def test_anomaly_read_failure_does_not_stop_the_report(monkeypatch, load_fixture):
+    def broken(service, **kwargs):
+        raise RuntimeError("AccessDenied")
+
+    monkeypatch.setattr(handler.boto3, "client", broken)
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org",
+                                  alert_min_usd=1.0, anomaly_days=14)
+    assert report["anomalies"] is None
+    assert "Anomalies:" not in report["footer"]
+
+
+def test_anomalies_off_by_default(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org")
+    assert report["anomalies"] is None
+
+
+def anomalous_report(alerting=False, anomalies=ANOMALIES):
+    build = alerting_report if alerting else quiet_report
+    return build(anomaly_days=14, anomalies_result=anomalies)
+
+
+@pytest.mark.parametrize("alerting, anomalies, status", [
+    (False, [], ":white_check_mark: no alerts"),
+    (False, ANOMALIES[:1], ":warning: 1 anomaly"),
+    (False, ANOMALIES, ":warning: 2 anomalies"),
+    (True, ANOMALIES, ":warning: 1 alert, 2 anomalies"),
+])
+def test_verdict_counts_alerts_and_anomalies(alerting, anomalies, status):
+    assert " ".join(handler.verdict(anomalous_report(alerting, anomalies))) == status
+
+
+def test_verdict_from_anomalies_alone_when_the_alert_rule_is_off(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org",
+                                  anomaly_days=14, anomalies_result=ANOMALIES)
+    assert handler.has_verdict(report)
+    assert handler.verdict(report) == (":warning:", "2 anomalies")
+
+
+def test_anomalies_in_blocks_after_the_alerts_with_one_mention():
+    payload = handler.render_blocks(anomalous_report(alerting=True), mention="<!here>")
+    blocks = payload["blocks"]
+
+    assert blocks[0]["text"]["text"].endswith("· 1 alert, 2 anomalies")
+    assert [b["type"] for b in blocks] == ["header", "section", "section", "section", "table", "context"]
+    assert blocks[1]["text"]["text"].startswith("<!here>\n• S3:")
+    assert blocks[2]["text"]["text"] == (
+        "Cost Anomaly Detection: 2 open, no feedback yet\n"
+        "• Bedrock · 2026-10-21 · +$8.27 · `us-east-1 · USE1-Model_Large-input-tokens`\n"
+        "• End User Messaging · 2026-10-15 · +$1.89 · `us-east-1 · example-dev`\n"
+        "Give feedback in Cost Explorer › Anomaly detection to clear them.")
+    assert "<!here>" not in blocks[2]["text"]["text"]
+
+
+def test_mention_goes_on_the_anomalies_when_there_are_no_alerts():
+    blocks = handler.render_blocks(anomalous_report(), mention="<!here>")["blocks"]
+    assert blocks[1]["text"]["text"].startswith("<!here>\nCost Anomaly Detection: 2 open")
+
+
+def test_anomalies_in_text():
+    text = handler.render_text(anomalous_report())
+    assert text.startswith(":warning: 2 anomalies\n\nCost Anomaly Detection: 2 open, no feedback yet\n• Bedrock")
+
+
+def test_footer_states_the_anomaly_rule():
+    assert ("Anomalies: Cost Anomaly Detection, without feedback, ended in the last 14 days, "
+            "impact of at least $1.00") in anomalous_report()["footer"]
+
+
+def test_anomalies_force_the_full_report_in_compact_mode():
+    assert handler.report_mode(anomalous_report(anomalies=[]), None, "compact", 0) == "compact"
+    assert handler.report_mode(anomalous_report(), None, "compact", 0) == "full"
+
+
+def test_optional_calls_fail_fast(monkeypatch):
+    """Budget and anomaly reads must give up well inside the Lambda timeout, not after botocore's 60 s."""
+    configs = {}
+
+    class Fake:
+        def get_caller_identity(self):
+            return {"Account": "000000000000"}
+
+        def describe_budget(self, **kwargs):
+            return {"Budget": BUDGET}
+
+        def get_anomalies(self, **kwargs):
+            return {"Anomalies": []}
+
+    def client(service, config=None):
+        configs[service] = config
+        return Fake()
+
+    monkeypatch.setattr(handler.boto3, "client", client)
+    handler.get_budget("budget-MONTHLY-test")
+    handler.get_anomalies(datetime.date(2026, 10, 9), datetime.date(2026, 10, 23), 1.0)
+
+    assert set(configs) == {"sts", "budgets", "ce"}
+    for config in configs.values():
+        assert config is handler.optional_call_config
+    worst = (handler.optional_call_config.connect_timeout + handler.optional_call_config.read_timeout) \
+        * handler.optional_call_config.retries["total_max_attempts"]
+    assert worst * 3 < 60 - 15   # three optional calls, plus the report's own requests and the post
+
+
+def test_verdict_with_only_anomaly_detection_on_says_no_anomalies(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org",
+                                  anomaly_days=14, anomalies_result=[])
+    assert handler.verdict(report) == (":white_check_mark:", "no anomalies")

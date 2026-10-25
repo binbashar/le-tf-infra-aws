@@ -19,7 +19,7 @@ module "cost_report" {
   handler       = "handler.lambda_handler"
   runtime       = "python3.13"
   memory_size   = 128
-  timeout       = 30
+  timeout       = 60
   source_path   = "src/"
 
   # No third-party dependencies to install (see "Packaging" above)
@@ -46,6 +46,8 @@ module "cost_report" {
     # "full": the full report every day; "compact": one line on quiet days, full report on alerts and on FULL_REPORT_WEEKDAY
     DAILY_MODE          = var.report_daily_mode
     FULL_REPORT_WEEKDAY = var.report_full_report_weekday
+    # Show Cost Anomaly Detection anomalies without feedback that ended in the last N days (0: off)
+    ANOMALY_DAYS = var.report_anomaly_days
     # The Slack webhook URL for sending the report
     SLACK_WEBHOOK_SECRET_ID = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-m8z5y2"
 
@@ -74,6 +76,7 @@ module "cost_report" {
           "Effect": "Allow",
           "Action": [
             "ce:GetCostAndUsage",
+            "ce:GetAnomalies",
             "iam:ListAccountAliases"
           ],
           "Resource": ["*"]

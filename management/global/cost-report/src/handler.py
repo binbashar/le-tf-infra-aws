@@ -3,6 +3,7 @@
 #
 from collections import defaultdict
 import boto3
+import botocore.config
 import calendar
 import datetime
 import json
@@ -36,6 +37,13 @@ metric_labels = {
     "NetUnblendedCost": "Net unblended cost",
     "NetAmortizedCost": "Net amortized cost",
 }
+
+# For the calls the report can go out without (budget, anomalies): fail fast
+# instead of botocore's 60 s default, so a stalled call is caught here and the
+# report still goes out before the Lambda's own timeout. Worst case per call:
+# 2 attempts x (2 s connect + 5 s read).
+optional_call_config = botocore.config.Config(
+    connect_timeout=2, read_timeout=5, retries={"total_max_attempts": 2, "mode": "standard"})
 
 # Cost Explorer has usually not finished billing yesterday when the report
 # runs, so yesterday's figure is always flagged as partial.
@@ -129,13 +137,16 @@ def alert_line(alert: dict, yesterday: datetime.date):
             f"vs. a typical day ({money(alert['typical'])})")
 
 
-def footer(cost_aggregation: str, alert_min_usd: float = None, alert_min_pct: float = None):
+def footer(cost_aggregation: str, alert_min_usd: float = None, alert_min_pct: float = None, anomaly_days: int = None):
     metric = metric_labels.get(cost_aggregation, cost_aggregation)
     excluded = ", ".join(excluded_record_types[:-1]) + " and " + excluded_record_types[-1]
     lines = f"∆: yesterday vs. the average of the previous {baseline_days} days\n"
     if alert_min_usd is not None:
         lines += (f"Alerts: a move of {money(alert_min_usd)} and {alert_min_pct:g}% vs. a typical day "
                   f"(median of the {baseline_days} days before); rises on yesterday, drops on the day before\n")
+    if anomaly_days:
+        lines += (f"Anomalies: Cost Anomaly Detection, without feedback, ended in the last {anomaly_days} days, "
+                  f"impact of at least {money(alert_min_usd or 0)}\n")
     return lines + f"{metric}, excluding {excluded} records\n{partial_note}\n"
 
 
@@ -241,8 +252,9 @@ def get_budget(budget_name: str):
     a budget problem must never stop the day's report.
     """
     try:
-        account_id = boto3.client("sts").get_caller_identity()["Account"]
-        return boto3.client("budgets").describe_budget(AccountId=account_id, BudgetName=budget_name)["Budget"]
+        account_id = boto3.client("sts", config=optional_call_config).get_caller_identity()["Account"]
+        budgets = boto3.client("budgets", config=optional_call_config)
+        return budgets.describe_budget(AccountId=account_id, BudgetName=budget_name)["Budget"]
     except Exception as e:
         print(f"Could not read budget {budget_name}: {e}")
         return None
@@ -272,6 +284,75 @@ def budget_line(budget: dict):
     if "ForecastedSpend" in spend:
         line += f" · forecast {money(float(spend['ForecastedSpend']['Amount']))}"
     return line
+
+
+def get_anomalies(start: datetime.date, end: datetime.date, min_impact_usd: float):
+    """
+    Cost Anomaly Detection anomalies that ended between start and end with a
+    total impact of at least min_impact_usd (filtered by the API), from every
+    monitor. None when they cannot be read: like the budget, never a reason
+    to lose the day's report.
+    """
+    try:
+        client = boto3.client("ce", config=optional_call_config)
+        request = {
+            "DateInterval": {"StartDate": start.isoformat(), "EndDate": end.isoformat()},
+            "TotalImpact": {"NumericOperator": "GREATER_THAN_OR_EQUAL", "StartValue": min_impact_usd},
+        }
+        anomalies = []
+        while True:
+            page = client.get_anomalies(**request)
+            anomalies += page.get("Anomalies", [])
+            if not page.get("NextPageToken"):
+                return anomalies
+            request["NextPageToken"] = page["NextPageToken"]
+    except Exception as e:
+        print(f"Could not read anomalies: {e}")
+        return None
+
+
+def open_anomalies(anomalies: list, group_by: str = "SERVICE"):
+    """
+    The anomalies nobody has given feedback on yet, largest impact first,
+    reduced to what the report shows.
+    """
+    found = []
+    for anomaly in anomalies:
+        if anomaly.get("Feedback"):
+            continue
+        cause = (anomaly.get("RootCauses") or [{}])[0]
+        root = [cause.get(key) for key in ("Region", "LinkedAccountName", "UsageType")]
+        if not root[1]:
+            root[1] = cause.get("LinkedAccount")
+        name = anomaly.get("DimensionValue") or cause.get("Service") or "?"
+        found.append({
+            "name": short_name(name) if group_by == "SERVICE" else name,
+            "start": anomaly["AnomalyStartDate"][:10],
+            "end": (anomaly.get("AnomalyEndDate") or "")[:10] or None,
+            "impact": float(anomaly["Impact"]["TotalImpact"]),
+            "root": " · ".join(part for part in root if part),
+        })
+    return sorted(found, key=lambda a: a["impact"], reverse=True)
+
+
+def anomaly_line(anomaly: dict):
+    """'Bedrock · 2026-10-21 · +$8.27 · `us-east-1 · USE1-Mistral-…`'"""
+    if anomaly["end"] is None:
+        when = f"since {anomaly['start']}"
+    elif anomaly["end"] == anomaly["start"]:
+        when = anomaly["start"]
+    else:
+        when = f"{anomaly['start']} → {anomaly['end']}"
+    line = f"{anomaly['name']} · {when} · {money(anomaly['impact'], sign=True)}"
+    # in backticks: usage types carry underscores, which mrkdwn would read as italics
+    return line + (f" · `{anomaly['root']}`" if anomaly["root"] else "")
+
+
+def anomaly_lines(anomalies: list):
+    count = len(anomalies)
+    return ([f"Cost Anomaly Detection: {count} open, no feedback yet"]
+            + ["• " + anomaly_line(a) for a in anomalies]
+            + ["Give feedback in Cost Explorer › Anomaly detection to clear them."])
 
 
 def get_account_name():
@@ -328,13 +409,14 @@ def lambda_handler(event, context):
     alert_min_usd = float(os.environ.get("ALERT_MIN_USD", "1"))
     alert_min_pct = float(os.environ.get("ALERT_MIN_PCT", "30"))
     mention = os.environ.get("ALERT_MENTION", "")
+    anomaly_days = int(os.environ.get("ANOMALY_DAYS", "14"))
 
     report = build_report(group_by=group_by, length=length, cost_aggregation=cost_aggregation, mover_min_usd=mover_min_usd, budget_name=budget_name,
-                          alert_min_usd=alert_min_usd, alert_min_pct=alert_min_pct)
+                          alert_min_usd=alert_min_usd, alert_min_pct=alert_min_pct, anomaly_days=anomaly_days)
 
     mode = report_mode(report, (event or {}).get("mode"), os.environ.get("DAILY_MODE", "full"),
                        int(os.environ.get("FULL_REPORT_WEEKDAY", "0")))
-    print(f"mode={mode} alerts={len(report['alerts'])}")
+    print(f"mode={mode} alerts={len(report['alerts'] or [])} anomalies={len(report['anomalies'] or [])}")
     if mode == "compact":
         summary, buffer, blocks = compact_line(report), None, render_compact_blocks(report)
     else:
@@ -367,7 +449,7 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
     return report["summary"], render_text(report), report["data"]
 
 
-def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5, monthly_result: dict = None, budget_name: str = None, budget: dict = None, alert_min_usd: float = None, alert_min_pct: float = 30.0):
+def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5, monthly_result: dict = None, budget_name: str = None, budget: dict = None, alert_min_usd: float = None, alert_min_pct: float = 30.0, anomaly_days: int = None, anomalies_result: list = None):
     """
     Build the report for the n_days days before `today`, as data: the
     render_* functions turn it into a message.
@@ -390,6 +472,10 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
         account_name: skips the account name lookup when given
         alert_min_usd, alert_min_pct: alert thresholds (see find_alerts);
             no alerts when alert_min_usd is None
+        anomaly_days: show open Cost Anomaly Detection anomalies that ended
+            in the last anomaly_days days (none when 0 or None), with an
+            impact of at least alert_min_usd; anomalies_result: the
+            GetAnomalies 'Anomalies' to use instead of querying (tests)
     """
     if today is None:
         today = datetime.datetime.now(datetime.timezone.utc).date()
@@ -568,6 +654,14 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
     if budget is None and budget_name:
         budget = get_budget(budget_name)
 
+    # None when off or unreadable, so no verdict claims there are none
+    anomalies = None
+    if anomaly_days:
+        if anomalies_result is None:
+            anomalies_result = get_anomalies(today - datetime.timedelta(days=anomaly_days), today, alert_min_usd or 0)
+        if anomalies_result is not None:
+            anomalies = open_anomalies(anomalies_result, group_by)
+
     month_lines = []
     if month:
         month_lines.append(
@@ -586,7 +680,8 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
         "month_lines": month_lines,
         "rows": table,
         "alerts": alerts,
-        "footer": footer(cost_aggregation, alert_min_usd, alert_min_pct),
+        "anomalies": anomalies,
+        "footer": footer(cost_aggregation, alert_min_usd, alert_min_pct, anomaly_days if anomalies is not None else None),
         "data": cost_per_day_by_service,
     }
 
@@ -597,14 +692,15 @@ def report_mode(report, requested: str = None, daily_mode: str = "full", full_re
 
     DAILY_MODE=full (the default) always sends the full report. With
     DAILY_MODE=compact, a quiet day gets the one line instead; any alert, the
-    weekly full-report day (Monday=0, the day the report runs) or an
+    open anomaly, the weekly full-report day (Monday=0, the day the report runs) or an
     invocation with {"mode": "full"} still sends the full report. The one
     line goes out every quiet day, so silence always means the report broke.
     """
     if requested in ("full", "compact"):
         return requested
     run_day = report["date"] + datetime.timedelta(days=1)
-    if report["alerts"] or report["alerts"] is None or daily_mode == "full" or run_day.weekday() == full_report_weekday:
+    if (report["alerts"] or report["anomalies"] or report["alerts"] is None
+            or daily_mode == "full" or run_day.weekday() == full_report_weekday):
         return "full"
     return "compact"
 
@@ -623,7 +719,7 @@ def compact_line(report):
     if report["month"]:
         month = report["month"]
         line += f" · {month['month']:%B} to date {money(month['month_to_date'])} · on pace for {money(month['pace'])}"
-    if report["alerts"] is None:
+    if not has_verdict(report):
         return line
     emoji, status = verdict(report)
     return f"{emoji} {line} · {status}"
@@ -634,11 +730,23 @@ def render_compact_blocks(report):
     return {"text": line, "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": line}}]}
 
 
+def has_verdict(report):
+    """A verdict needs something that checks: the alert rule or Cost Anomaly Detection."""
+    return report["alerts"] is not None or report["anomalies"] is not None
+
+
 def verdict(report):
-    count = len(report["alerts"])
-    if not count:
-        return ":white_check_mark:", "no alerts"
-    return ":warning:", f"{count} alert{'s' if count > 1 else ''}"
+    """(':warning:', '1 alert, 2 anomalies') or (':white_check_mark:', 'no alerts')."""
+    alerts, anomalies = len(report["alerts"] or []), len(report["anomalies"] or [])
+    parts = []
+    if alerts:
+        parts.append(f"{alerts} alert{'s' if alerts > 1 else ''}")
+    if anomalies:
+        parts.append(f"{anomalies} anomal{'ies' if anomalies > 1 else 'y'}")
+    if not parts:
+        # name only what was checked: with the alert rule off, say so
+        return ":white_check_mark:", "no anomalies" if report["alerts"] is None else "no alerts"
+    return ":warning:", ", ".join(parts)
 
 
 def render_text(report):
@@ -647,8 +755,11 @@ def render_text(report):
     width = max(len(r["name"]) for r in rows + [{"name": "Service"}])
 
     lines = []
-    if report["alerts"] is not None:
-        lines = [" ".join(verdict(report))] + ["• " + alert_line(a, report["date"]) for a in report["alerts"]] + [""]
+    if has_verdict(report):
+        lines = [" ".join(verdict(report))] + ["• " + alert_line(a, report["date"]) for a in report["alerts"] or []]
+        if report["anomalies"]:
+            lines += [""] + anomaly_lines(report["anomalies"])
+        lines += [""]
     buffer = "".join(line + "\n" for line in lines + report["month_lines"])
     if buffer:
         buffer += "\n"
@@ -700,17 +811,19 @@ def render_blocks(report, mention: str = ""):
 
     title = f"AWS cost · {report['date']:%Y-%m-%d} (partial)"
     text = report["summary"]
-    if report["alerts"] is not None:
+    if has_verdict(report):
         emoji, status = verdict(report)
         title = f"{emoji} {title} · {status}"
         text = f"{emoji} {status} · {text}"
 
-    alert_blocks = []
+    listings = []
     if report["alerts"]:
-        listing = "\n".join("• " + alert_line(a, report["date"]) for a in report["alerts"])
-        if mention:
-            listing = f"{mention}\n{listing}"
-        alert_blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": listing}})
+        listings.append("\n".join("• " + alert_line(a, report["date"]) for a in report["alerts"]))
+    if report["anomalies"]:
+        listings.append("\n".join(anomaly_lines(report["anomalies"])))
+    if listings and mention:
+        listings[0] = f"{mention}\n{listings[0]}"
+    alert_blocks = [{"type": "section", "text": {"type": "mrkdwn", "text": listing}} for listing in listings]
 
     return {
         "text": text,
