@@ -88,14 +88,22 @@ jobs:
           restore-keys: |
             docker-localstack-${{ inputs.localstack_version }}-${{ runner.os }}-
             docker-localstack-${{ inputs.localstack_version }}-
-      - uses: LocalStack/setup-localstack@v0.3.2
+      # Run the community image directly: KMS/S3/IAM are all these tests need.
+      # LocalStack/setup-localstack is not usable without a LOCALSTACK_AUTH_TOKEN:
+      # it defaults to the pro image, and the CLI it installs (2026.x) refuses
+      # to start even the community image without a license (#1290).
+      - name: Start LocalStack
         if: steps.check-tests.outputs.hasTests == 'true'
-        with:
-          image-tag: ${{ inputs.localstack_version }}
-          install-awslocal: true
-          # Community image: KMS/S3/IAM are all these tests need, and pro
-          # requires a LOCALSTACK_AUTH_TOKEN this repo does not have (#1290).
-          use-pro: 'false'
+        run: |
+          docker run -d --name localstack -p 4566:4566 \
+            localstack/localstack:${{ inputs.localstack_version }}
+          pip install awscli-local
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4566/_localstack/health && exit 0
+            sleep 2
+          done
+          docker logs localstack
+          exit 1
       - name: Install LocalStack wrapper for platform
         if: steps.check-tests.outputs.hasTests == 'true'
         run: |
