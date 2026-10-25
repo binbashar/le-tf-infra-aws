@@ -48,6 +48,8 @@ module "cost_report" {
     FULL_REPORT_WEEKDAY = var.report_full_report_weekday
     # Show Cost Anomaly Detection anomalies without feedback that ended in the last N days (0: off)
     ANOMALY_DAYS = var.report_anomaly_days
+    # Break the largest N threshold alerts down by account and usage type (one request each; 0: off)
+    DRILLDOWN_MAX = var.report_drilldown_max
     # The Slack webhook URL for sending the report
     SLACK_WEBHOOK_SECRET_ID = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-m8z5y2"
 
