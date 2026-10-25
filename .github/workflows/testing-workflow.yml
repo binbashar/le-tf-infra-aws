@@ -88,11 +88,22 @@ jobs:
           restore-keys: |
             docker-localstack-${{ inputs.localstack_version }}-${{ runner.os }}-
             docker-localstack-${{ inputs.localstack_version }}-
-      - uses: LocalStack/setup-localstack@v0.3.2
+      # Run the community image directly: KMS/S3/IAM are all these tests need.
+      # LocalStack/setup-localstack is not usable without a LOCALSTACK_AUTH_TOKEN:
+      # it defaults to the pro image, and the CLI it installs (2026.x) refuses
+      # to start even the community image without a license (#1290).
+      - name: Start LocalStack
         if: steps.check-tests.outputs.hasTests == 'true'
-        with:
-          image-tag: ${{ inputs.localstack_version }}
-          install-awslocal: true
+        run: |
+          docker run -d --name localstack -p 4566:4566 \
+            localstack/localstack:${{ inputs.localstack_version }}
+          pip install awscli-local
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4566/_localstack/health && exit 0
+            sleep 2
+          done
+          docker logs localstack
+          exit 1
       - name: Install LocalStack wrapper for platform
         if: steps.check-tests.outputs.hasTests == 'true'
         run: |
@@ -319,12 +330,10 @@ jobs:
           AWS_S3_FORCE_PATH_STYLE: true
           # Override AWS profile requirement for LocalStack testing
           # AWS_PROFILE unset to avoid profile configuration errors
-        run: |
-          if [ "${{ inputs.iac_platform }}" = "tofu" ]; then
-            tflocal init -upgrade
-          else
-            tflocal init -upgrade
-          fi
+        # tests keep state in memory, so skip the backend: opentofu-local does not
+        # override the partial `backend "s3" {}` and tofu would prompt for a bucket.
+        # -input=false turns any future prompt into a failure instead of a hang.
+        run: tflocal init -upgrade -backend=false -input=false
       - name: Run Test with LocalStack wrapper
         if: steps.check-tests.outputs.hasTests == 'true'
         working-directory: ${{ inputs.working_directory }}
