@@ -46,6 +46,12 @@ metric_labels = {
 optional_call_config = botocore.config.Config(
     connect_timeout=2, read_timeout=5, retries={"total_max_attempts": 2, "mode": "standard"})
 
+# A breakdown reads at most this many pages ($0.01 each)
+breakdown_max_pages = 5
+
+# Slack's limit for a section block's text
+section_max_chars = 3000
+
 # Cost Explorer has usually not finished billing yesterday when the report
 # runs, so yesterday's figure is always flagged as partial.
 partial_note = "* partial: Cost Explorer may still add charges for this day"
@@ -145,12 +151,16 @@ def alert_line(alert: dict, yesterday: datetime.date):
             f"vs. a typical day ({money(alert['typical'])})")
 
 
-def get_breakdown(service: str, start: datetime.date, end: datetime.date, cost_aggregation: str):
+def get_breakdown(service: str, start: datetime.date, end: datetime.date, cost_aggregation: str, deadline: float = None):
     """
     One service's daily cost by linked account and usage type, start..end
     (end excluded), as {(account, usage type): {'YYYY-MM-DD': cost}}. Account
-    IDs are replaced by their names where Cost Explorer returns them. None
-    when it cannot be read: the alert then simply goes out without it.
+    IDs are replaced by their names where Cost Explorer returns them.
+
+    None when it cannot be read in full -- an error, more than
+    breakdown_max_pages pages, or `deadline` (time.monotonic()) reached
+    before the next page: a partial breakdown could name the wrong
+    contributors, so the alert then goes out without one.
     """
     try:
         client = boto3.client("ce", config=optional_call_config)
@@ -166,7 +176,10 @@ def get_breakdown(service: str, start: datetime.date, end: datetime.date, cost_a
                         {"Type": "DIMENSION", "Key": "USAGE_TYPE"}],
         }
         costs, names = defaultdict(dict), {}
-        while True:
+        for page_number in range(breakdown_max_pages):
+            if deadline is not None and time.monotonic() > deadline:
+                print(f"Out of time breaking down {service}: left out")
+                return None
             page = client.get_cost_and_usage(**request)
             for attribute in page.get("DimensionValueAttributes", []):
                 names[attribute["Value"]] = attribute.get("Attributes", {}).get("description")
@@ -175,9 +188,10 @@ def get_breakdown(service: str, start: datetime.date, end: datetime.date, cost_a
                     account, usage = group["Keys"]
                     costs[(account, usage)][day["TimePeriod"]["Start"]] = float(group["Metrics"][cost_aggregation]["Amount"])
             if not page.get("NextPageToken"):
-                break
+                return {(names.get(account) or account, usage): days for (account, usage), days in costs.items()}
             request["NextPageToken"] = page["NextPageToken"]
-        return {(names.get(account) or account, usage): days for (account, usage), days in costs.items()}
+        print(f"Breakdown of {service} needs more than {breakdown_max_pages} pages: left out")
+        return None
     except Exception as e:
         print(f"Could not break down {service}: {e}")
         return None
@@ -682,7 +696,7 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
                 if deadline is not None and time.monotonic() > deadline:
                     print("Out of time: remaining alerts go out without a breakdown")
                     break
-                breakdown = get_breakdown(alert["service"], history_start, today, cost_aggregation)
+                breakdown = get_breakdown(alert["service"], history_start, today, cost_aggregation, deadline)
                 if breakdown is not None:
                     alert["breakdown"] = contributors(breakdown, history_dates, alert["direction"])
     if folded:
@@ -865,6 +879,24 @@ def money(usd: float, sign: bool = False):
     return f"{'-' if usd < 0 else '+'}${abs(usd):,.2f}"
 
 
+def sections(items: list, mention: str = ""):
+    """
+    Section blocks holding `items` (each one or more lines), split between
+    items so no block passes Slack's section_max_chars; an item longer than
+    that on its own is cut. The mention goes at the top of the first block.
+    """
+    blocks, current = [], mention
+    for item in items:
+        candidate = f"{current}\n{item}" if current else item
+        if len(candidate) > section_max_chars and current and current != mention:
+            blocks.append(current)
+            candidate = item
+        current = candidate[:section_max_chars]
+    if current and current != mention:
+        blocks.append(current)
+    return [{"type": "section", "text": {"type": "mrkdwn", "text": text}} for text in blocks]
+
+
 def render_blocks(report, mention: str = ""):
     """
     The report as a Slack Block Kit message: header, summary, table, footer.
@@ -904,16 +936,16 @@ def render_blocks(report, mention: str = ""):
         title = f"{emoji} {title} · {status}"
         text = f"{emoji} {status} · {text}"
 
-    listings = []
+    # Alerts, then anomalies, each in as many sections as Slack's size limit
+    # needs; the mention only once, on top
+    alert_blocks = []
     if report["alerts"]:
-        listings.append("\n".join(
+        alert_blocks += sections([
             "\n".join(["• " + alert_line(a, report["date"])] + [contributor_line(c) for c in a["breakdown"] or []])
-            for a in report["alerts"]))
+            for a in report["alerts"]], mention)
+        mention = ""
     if report["anomalies"]:
-        listings.append("\n".join(anomaly_lines(report["anomalies"])))
-    if listings and mention:
-        listings[0] = f"{mention}\n{listings[0]}"
-    alert_blocks = [{"type": "section", "text": {"type": "mrkdwn", "text": listing}} for listing in listings]
+        alert_blocks += sections(anomaly_lines(report["anomalies"]), mention)
 
     return {
         "text": text,

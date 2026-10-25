@@ -1070,3 +1070,70 @@ def test_contributors_skip_moves_against_the_alert():
                  ("a", "fell"): dict(zip(DATES, [5.0] * 8 + [0.5]))}
     assert [c["usage"] for c in handler.contributors(breakdown, DATES, "up")] == ["rose"]
     assert [c["usage"] for c in handler.contributors(breakdown, DATES, "down")] == []
+
+
+# --- limits (CodeRabbit review of D3) -----------------------------------------
+
+def test_sections_split_between_items_within_slacks_limit():
+    items = ["x" * 1000] * 5
+    blocks = handler.sections(items)
+    texts = [b["text"]["text"] for b in blocks]
+    assert [t.count("x" * 1000) for t in texts] == [2, 2, 1]
+    assert all(len(t) <= handler.section_max_chars for t in texts)
+
+
+def test_sections_put_the_mention_on_the_first_block_only():
+    texts = [b["text"]["text"] for b in handler.sections(["a" * 2000, "b" * 2000], mention="<!here>")]
+    assert texts[0].startswith("<!here>\n") and not texts[1].startswith("<!here>")
+
+
+def test_sections_cut_an_item_too_long_on_its_own():
+    texts = [b["text"]["text"] for b in handler.sections(["y" * 5000], mention="<!here>")]
+    assert len(texts) == 1 and len(texts[0]) == handler.section_max_chars
+
+
+def test_sections_of_nothing():
+    assert handler.sections([], mention="<!here>") == []
+
+
+def test_many_anomalies_stay_within_slacks_limits():
+    many = [anomaly(f"Service {i:03d}", "2026-10-20", 2.0 + i, region="us-east-1",
+                    usage="USE1-" + "Long_Usage_Type_" * 6 + str(i)) for i in range(80)]
+    payload = handler.render_blocks(anomalous_report(alerting=True, anomalies=many), mention="<!here>")
+    sections = [b for b in payload["blocks"] if b["type"] == "section"]
+    assert len(sections) > 3
+    assert all(len(b["text"]["text"]) <= handler.section_max_chars for b in sections)
+    assert sum(b["text"]["text"].count("<!here>") for b in sections) == 1
+    assert sum(b["text"]["text"].count("• Service ") for b in sections) == 80
+    assert len(payload["blocks"]) <= 50
+
+
+def test_breakdown_pagination_stops_at_the_deadline(monkeypatch):
+    calls, clock = [], {"now": 0.0}
+
+    class FakeCE:
+        def get_cost_and_usage(self, **request):
+            calls.append(request)
+            clock["now"] += 30   # a slow page
+            return breakdown_page({}, token="more")
+
+    monkeypatch.setattr(handler.boto3, "client", lambda service, **kwargs: FakeCE())
+    monkeypatch.setattr(handler.time, "monotonic", lambda: clock["now"])
+
+    assert handler.get_breakdown("S", datetime.date(2026, 10, 14), datetime.date(2026, 10, 23),
+                                 "UnblendedCost", deadline=20.0) is None
+    assert len(calls) == 1
+
+
+def test_breakdown_gives_up_past_the_page_cap(monkeypatch):
+    calls = []
+
+    class FakeCE:
+        def get_cost_and_usage(self, **request):
+            calls.append(request)
+            return breakdown_page(S3_RISE, token="more")
+
+    monkeypatch.setattr(handler.boto3, "client", lambda service, **kwargs: FakeCE())
+    assert handler.get_breakdown("S", datetime.date(2026, 10, 14), datetime.date(2026, 10, 23),
+                                 "UnblendedCost") is None
+    assert len(calls) == handler.breakdown_max_pages

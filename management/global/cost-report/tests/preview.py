@@ -2,7 +2,7 @@
 Print the report built from live Cost Explorer data, without posting it.
 
 Each run is two GetCostAndUsage requests and one GetAnomalies ($0.02-0.03), plus one
-request per alert broken down. Run it through
+paginated query per alert broken down ($0.01 per page). Run it through
 `make cost-report-preview`, which loads the management account's Leverage
 profile; LENGTH, GROUP_BY, COST_AGGREGATION, MOVER_MIN_USD, REPORT_SCOPE,
 BUDGET_NAME, ALERT_*, DAILY_MODE, FULL_REPORT_WEEKDAY, ANOMALY_DAYS and DRILLDOWN_MAX

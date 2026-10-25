@@ -82,7 +82,7 @@ variable "report_anomaly_days" {
 }
 
 variable "report_drilldown_max" {
-  description = "Break down the largest N threshold alerts by linked account and usage type: one Cost Explorer request ($0.01) per alert, on alert days only. 0 turns it off."
+  description = "Break down the largest N threshold alerts by linked account and usage type: one paginated Cost Explorer query per alert, $0.01 per page (at most 5 pages), on alert days only. 0 turns it off."
   type        = number
   default     = 3
 
