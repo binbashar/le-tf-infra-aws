@@ -377,6 +377,23 @@ def budget_line(budget: dict):
     return line
 
 
+def budget_short_line(budget: dict):
+    """
+    'Budget: $874.64 of $750.00 (117%) :warning: · forecast $952.91' -- what
+    the budget counts is in the README; the warning flags actual spend over
+    the limit.
+    """
+    limit = float(budget["BudgetLimit"]["Amount"])
+    spend = budget.get("CalculatedSpend", {})
+    actual = float(spend.get("ActualSpend", {}).get("Amount", 0))
+    line = f"Budget: {money(actual)} of {money(limit)}"
+    if limit:
+        line += f" ({actual / limit:.0%})" + (" :warning:" if actual > limit else "")
+    if "ForecastedSpend" in spend:
+        line += f" · forecast {money(float(spend['ForecastedSpend']['Amount']))}"
+    return line
+
+
 def get_anomalies(start: datetime.date, end: datetime.date, min_impact_usd: float):
     """
     Cost Anomaly Detection anomalies that ended between start and end with a
@@ -576,10 +593,11 @@ def lambda_handler(event, context):
     mode = report_mode(report, (event or {}).get("mode"), os.environ.get("DAILY_MODE", "full"),
                        int(os.environ.get("FULL_REPORT_WEEKDAY", "0")))
     print(f"mode={mode} alerts={len(report['alerts'] or [])} anomalies={len(report['anomalies'] or [])}")
+    help_url = os.environ.get("REPORT_HELP_URL") or None
     if mode == "compact":
         summary, buffer, blocks = compact_line(report), None, render_compact_blocks(report)
     else:
-        summary, buffer, blocks = report["summary"], render_text(report), render_blocks(report, mention)
+        summary, buffer, blocks = report["summary"], render_text(report), render_blocks(report, mention, help_url=help_url)
 
     ts = None
     if has_bot:
@@ -588,10 +606,7 @@ def lambda_handler(event, context):
         except Exception as e:
             print(f"Could not read the Slack bot token: {e}")
             token = None
-        ts = token and post_message(token, channel, summary, buffer, blocks)
-        if ts and report["accounts"]:
-            title = accounts_title(report)
-            post_message(token, channel, title, render_accounts_text(report), render_accounts_blocks(report), thread_ts=ts)
+        ts = token and post_with_bot(token, channel, report, mode, mention, help_url)
 
     # The webhook posts when there is no bot, or when the bot could not post
     # (revoked token, removed from the channel...), so the report still goes out
@@ -876,6 +891,8 @@ def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: s
         "alerts": alerts,
         "anomalies": anomalies,
         "accounts": accounts,
+        "budget": budget or None,
+        "group_by": group_by,
         "footer": footer(cost_aggregation, alert_min_usd, alert_min_pct, anomaly_days if anomalies is not None else None),
         "data": cost_per_day_by_service,
     }
@@ -997,20 +1014,41 @@ def sections(items: list, mention: str = ""):
     return [{"type": "section", "text": {"type": "mrkdwn", "text": text}} for text in blocks]
 
 
-def render_blocks(report, mention: str = ""):
+def anomaly_items(anomalies: list):
+    """The anomalies as section items: a title, one bullet each, the hint to clear them."""
+    return ([f"*Anomalies* · {len(anomalies)} open, no feedback yet"]
+            + ["• " + anomaly_line(a) for a in anomalies]
+            + ["Give feedback in Cost Explorer › Anomaly detection to clear them."])
+
+
+def breakdown_items(report):
+    """The alerts that have a breakdown, each with its contributors, under a title."""
+    broken_down = [a for a in report["alerts"] or [] if a["breakdown"]]
+    if not broken_down:
+        return []
+    return ["*Alert breakdown*"] + [
+        "\n".join([f"• {a['name']}: {money(a['usd'], sign=True)}"] + [contributor_line(c) for c in a["breakdown"]])
+        for a in broken_down]
+
+
+def has_thread(report):
+    """Whether the report has anything for the thread reply."""
+    return bool(report["anomalies"] or breakdown_items(report) or report["accounts"])
+
+
+def render_blocks(report, mention: str = "", threaded: bool = False, help_url: str = None):
     """
-    The report as a Slack Block Kit message: header, summary, table, footer.
-    The top-level `text` is what notifications and screen readers show.
+    The report as a Slack Block Kit message, one titled section each:
+    Yesterday, the month, Alerts, Anomalies, Top services. The top-level
+    `text` is what notifications and screen readers show.
+
+    threaded: the bot posts render_thread_blocks in the message's thread, so
+        the anomalies and the alert breakdowns go there and only a pointer
+        stays here. Without a thread (the webhook) everything stays here.
+    help_url: the README section explaining the report, linked from the
+        footer instead of spelling out the method every day.
     """
     total = report["rows"][-1]
-
-    summary = (f"*{money(total['yday'])}* yesterday · ∆ {money(total['usd'], sign=True)} ({total['pct']}) "
-               f"vs. the {baseline_days}-day average\n"
-               f"For {report['report_for']}")
-    if report["credit_line"]:
-        summary += "\n" + report["credit_line"]
-    for line in report["month_lines"]:
-        summary += "\n" + line
 
     title = f"AWS cost · {report['date']:%Y-%m-%d} (partial)"
     text = report["summary"]
@@ -1019,28 +1057,111 @@ def render_blocks(report, mention: str = ""):
         title = f"{emoji} {title} · {status}"
         text = f"{emoji} {status} · {text}"
 
+    def section(body):
+        return {"type": "section", "text": {"type": "mrkdwn", "text": body}}
+
+    yesterday = (f"*Yesterday*\n*{money(total['yday'])}* · ∆ {money(total['usd'], sign=True)} ({total['pct']}) "
+                 f"vs. the {baseline_days}-day average")
+    if report["credit_line"]:
+        yesterday += "\n" + report["credit_line"]
+    blocks = [{"type": "header", "text": {"type": "plain_text", "emoji": True, "text": title}}, section(yesterday)]
+
+    month_lines = []
+    if report["month"]:
+        month = report["month"]
+        month_lines.append(f"{money(month['month_to_date'])} to date · {month['pct']} vs. {month['last_month']:%B} · "
+                           f"on pace for {money(month['pace'])}")
+    if report["budget"]:
+        month_lines.append(budget_short_line(report["budget"]))
+    if month_lines:
+        month_title = f"{report['month']['month']:%B}" if report["month"] else "This month"
+        blocks.append(section(f"*{month_title}*\n" + "\n".join(month_lines)))
+
     # Alerts, then anomalies, each in as many sections as Slack's size limit
     # needs; the mention only once, on top
-    alert_blocks = []
     if report["alerts"]:
-        alert_blocks += sections([
-            "\n".join(["• " + alert_line(a, report["date"])] + [contributor_line(c) for c in a["breakdown"] or []])
+        blocks += sections(["*Alerts*"] + [
+            "\n".join(["• " + alert_line(a, report["date"])]
+                      + ([] if threaded else [contributor_line(c) for c in a["breakdown"] or []]))
             for a in report["alerts"]], mention)
         mention = ""
     if report["anomalies"]:
-        alert_blocks += sections(anomaly_lines(report["anomalies"]), mention)
+        if threaded:
+            count = len(report["anomalies"])
+            blocks += sections([f"*Anomalies* · {count} open, no feedback yet · details in the thread :thread:"], mention)
+        else:
+            blocks += sections(anomaly_items(report["anomalies"]), mention)
+
+    notes = [f"Yday* is partial: Cost Explorer may still add charges · ∆: vs. the {baseline_days}-day average"]
+    if threaded and has_thread(report):
+        notes.append("More in the thread")
+    if help_url:
+        notes.append(f"<{help_url}|How to read this report>")
+        footer = [{"type": "mrkdwn", "text": " · ".join(notes)}]
+    else:
+        footer = [{"type": "mrkdwn", "text": " · ".join(notes)}] + [
+            {"type": "plain_text", "text": line} for line in report["footer"].splitlines()[:-1]]
 
     return {
         "text": text,
-        "blocks": [
-            {"type": "header", "text": {"type": "plain_text", "emoji": True, "text": title}},
-        ] + alert_blocks + [
-            {"type": "section", "text": {"type": "mrkdwn", "text": summary}},
+        "blocks": blocks + [
+            section("*Top services*" if report["group_by"] == "SERVICE" else "*Top items*"),
             table_block(report["rows"]),
-            {"type": "context", "elements": [
-                {"type": "plain_text", "text": text} for text in report["footer"].splitlines()]},
+            {"type": "context", "elements": footer},
         ],
     }
+
+
+def thread_title(report):
+    return f"Details · {report['date']:%Y-%m-%d} (partial)"
+
+
+def thread_summary(report):
+    """
+    'Details · 2026-10-22 (partial): 2 anomalies · alert breakdown · cost by
+    account' -- the reply's notification text: what it holds, not all of it.
+    """
+    parts = []
+    if report["anomalies"]:
+        count = len(report["anomalies"])
+        parts.append(f"{count} anomal{'ies' if count > 1 else 'y'}")
+    if breakdown_items(report):
+        parts.append("alert breakdown")
+    if report["accounts"]:
+        parts.append("cost by account")
+    return f"{thread_title(report)}: {' · '.join(parts)}"
+
+
+def render_thread_blocks(report):
+    """
+    The reply posted in the report's thread: the anomalies with their root
+    cause, the alert breakdowns and the cost by account -- whichever there are.
+    None when there is nothing to post.
+    """
+    if not has_thread(report):
+        return None
+    blocks = []
+    if report["anomalies"]:
+        blocks += sections(anomaly_items(report["anomalies"]))
+    blocks += sections(breakdown_items(report))
+    if report["accounts"]:
+        blocks += [{"type": "section", "text": {"type": "mrkdwn", "text": "*By account*"}},
+                   table_block(report["accounts"], "Account")]
+    blocks.append({"type": "context", "elements": [{"type": "plain_text", "text": partial_note}]})
+    return {"text": thread_summary(report), "blocks": blocks}
+
+
+def render_thread_text(report):
+    """The thread reply as plain text, for when Slack rejects its blocks."""
+    parts = []
+    if report["anomalies"]:
+        parts.append("\n".join(anomaly_lines(report["anomalies"])))
+    breakdown = breakdown_items(report)
+    if breakdown:
+        parts.append("\n".join(item.replace("*", "").replace("`", "") for item in breakdown))
+    if report["accounts"]:
+        parts.append(table_text(report["accounts"], "Account"))
+    return "\n\n".join(parts) + "\n\n" + partial_note + "\n"
 
 
 def table_block(rows: list, first_column: str = "Service"):
@@ -1064,31 +1185,6 @@ def table_block(rows: list, first_column: str = "Service"):
     return {"type": "table",
             "column_settings": [{"is_wrapped": True}] + [{"align": "right"}] * 3 + [{"align": "left"}],
             "rows": cells}
-
-
-def accounts_title(report):
-    return f"Cost by account · {report['date']:%Y-%m-%d} (partial)"
-
-
-def accounts_footer():
-    return [f"∆: yesterday vs. the average of the previous {baseline_days} days", partial_note]
-
-
-def render_accounts_blocks(report):
-    """The cost by account, as the reply posted in the report's thread."""
-    title = accounts_title(report)
-    return {
-        "text": title,
-        "blocks": [
-            {"type": "section", "text": {"type": "mrkdwn", "text": f"*{title}*"}},
-            table_block(report["accounts"], "Account"),
-            {"type": "context", "elements": [{"type": "plain_text", "text": text} for text in accounts_footer()]},
-        ],
-    }
-
-
-def render_accounts_text(report):
-    return table_text(report["accounts"], "Account") + "\n" + "\n".join(accounts_footer()) + "\n"
 
 
 def post_json(url, payload, timeout=5):
@@ -1166,6 +1262,27 @@ def post_message(token, channel, summary, buffer, blocks_payload, thread_ts=None
             return response["ts"]
         print(f"chat.postMessage: {response.get('error')}")
     return None
+
+
+def post_with_bot(token, channel, report, mode, mention="", help_url=None):
+    """
+    Post the report with the bot and, when it has any, the thread reply.
+
+    Returns:
+        str: the report's ts, or None when it could not be posted
+    """
+    if mode == "compact":
+        ts = post_message(token, channel, compact_line(report), None, render_compact_blocks(report))
+    else:
+        ts = post_message(token, channel, report["summary"], render_text(report),
+                          render_blocks(report, mention, threaded=True, help_url=help_url))
+    thread = render_thread_blocks(report)
+    if ts and thread:
+        if not post_message(token, channel, thread_title(report), render_thread_text(report), thread, thread_ts=ts):
+            # the message points to the thread: do not let the details go missing
+            print("Could not post the thread reply: posting the details to the channel")
+            post_message(token, channel, thread_title(report), render_thread_text(report), thread)
+    return ts
 
 
 def as_text(summary, buffer):

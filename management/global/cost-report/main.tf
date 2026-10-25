@@ -58,6 +58,8 @@ module "cost_report" {
     SLACK_CHANNEL_ID          = var.report_slack_channel_id
     # Reply in the report's thread with the cost by linked account (needs the bot; one more request)
     SHOW_ACCOUNTS = var.report_show_accounts
+    # The README section linked from the message as "How to read this report"
+    REPORT_HELP_URL = var.report_help_url
 
     # Other parameters you may want to explore
     # AWS_ACCOUNT_NAME      = ""

@@ -1,40 +1,126 @@
-# Cost Report Module - Quick Reference
+# Cost Report
 
-This module deploys a Lambda function to fetch AWS cost data and post a daily report to Slack.
+A Lambda function that posts a daily AWS cost report to Slack. It runs in the management (payer) account, where Cost Explorer returns the whole Organization's bill.
 
-## Key Considerations
+- [How to read the report](#how-to-read-the-report) — for everyone who receives it
+- [Architecture](#architecture) — how it works
+- [Installation](#installation) — how to deploy it
+- [Usage](#usage) — configuration, testing and operations
 
-- **Lambda Source**: Uses `terraform-aws-lambda` (binbashar) module, with code in the `src/` directory.
-- **Python Packaging**: The function has no third-party dependencies (standard library plus the runtime's bundled `boto3`), so there is no `requirements.txt` and the package is a plain zip of `src/` — applying needs neither Docker nor pip (`build_in_docker = false`). Adding a dependency would require building it in Docker again.
-- **Slack Integration**: The Slack app's bot (`chat:write`) posts the report to `report_slack_channel_id` with `chat.postMessage`, which returns the message's `ts` so replies can go in its thread. The incoming webhook stays as the fallback: it posts when the channel is empty, or when the bot cannot post (token revoked, bot removed from the channel), so the day's report still goes out — without the thread reply.
-- **Permissions**: Lambda is granted only the minimum required permissions (`ce:GetCostAndUsage`, `ce:GetAnomalies`, `iam:ListAccountAliases`, `budgets:ViewBudget` on the one budget).
-- **Scheduling**: Triggered daily at a configurable time via CloudWatch EventBridge rule (`var.report_run_schedule`).
-- **Environment Variables**: Control report length, grouping, and Slack destination. Adjust as needed.
-- **Logs**: CloudWatch logs are retained for 7 days.
-- **Report window**: the 8 UTC days before the run — yesterday plus a 7-day baseline (the query reaches one day further back for the drop alerts). Yesterday is always flagged *partial* (dated, with a `*` on the `Yday*` column), because Cost Explorer has usually not finished billing it when the report runs at 12:00 UTC.
-- **Table**: `∆$` and `∆%` compare yesterday with the average of the 7 days before it (`new` when there was nothing to compare with). Rows are the top `report_items_length` items by yesterday's cost, plus any item that moved by at least `report_mover_min_usd` — so a service that dropped to $0 is listed rather than hidden. Items under half a cent every day fold into `Other (N services)`, and the rows add up to `Total` (each figure is rounded to cents on its own, so the printed rows can differ from `Total` by a few cents). The footer states the cost metric and the excluded record types.
-- **Month summary**: month to date against the same point last month (capped at that month's length), and the month-end pace — month to date plus the *median* of the last 7 complete days for each day left, so a once-a-month charge does not get projected onto every remaining day. One more Cost Explorer request (ungrouped daily totals since the start of last month). On the 1st the previous month is reported whole.
-- **Budget**: `report_budget_name` (default: the 100% budget from `management/global/cost-mgmt`) is shown with AWS Budgets' own actual and forecast, labelled from the budget's CostTypes (tax, support, Marketplace, credits) since it may count charges the table excludes. Needs `budgets:ViewBudget`; if the budget cannot be read the report goes out without it.
-- **Alerts**: an item alerts when it moved by both `report_alert_min_usd` (default $1) and `report_alert_min_pct` (default 30%) against a *typical day* — the median of the 7 days before, so a once-a-month charge alerts the day it lands but its absence afterwards is not a drop. Rises are judged on yesterday (partial, but a rise is real); drops on the day before yesterday, which is complete — so the query covers 9 days. A cost rising from nothing passes on the USD threshold alone. `report_alert_mention` (empty by default) is prepended to the alert list.
-- **Breakdown**: the largest `report_drilldown_max` (default 3) threshold alerts get the linked accounts and usage types that moved the most in the alert's direction, judged exactly like the alert (change vs. the median of the 7 days before). One paginated Cost Explorer query per alert ($0.01 per page, at most 5 pages), on alert days only, with the same fail-fast timeouts as the budget and anomaly reads. No page is requested once fewer than 20 s of the Lambda's time are left; an incomplete breakdown is dropped rather than shown, since it could name the wrong contributors. Anomalies are not broken down: Cost Anomaly Detection already reports their root cause.
-- **Anomalies**: open Cost Anomaly Detection anomalies — no feedback yet, ended in the last `report_anomaly_days` (default 14) days, impact ≥ `report_alert_min_usd` — are listed under the alerts with their root cause (region, linked account, usage type), and count in the verdict (`1 alert, 2 anomalies`). They stay until someone gives feedback in Cost Explorer › Anomaly detection, or age out of the window. One `GetAnomalies` request a day; if it fails the report goes out without the section. `0` turns it off.
-- **Daily mode**: `report_daily_mode = "full"` (default) sends the full report every day, with the verdict in its header. `"compact"` sends a one-line message on quiet days instead (no table, so no view of the top services; it doubles as a heartbeat), and the full report when there are alerts, on `report_full_report_weekday` (default Monday), or on an invocation with `{"mode": "full"}`.
-- **Slack message**: a Block Kit message — header, summary line, a `table` block and the footer as context. Service names are shortened (`S3`, `EC2 - Compute`, prefixes `Amazon `/`AWS ` dropped) unless that would make two rows identical. If Slack rejects the blocks, the function posts the plain-text report instead, so a layout error never loses the day's report. Teams and Google Chat get the plain-text report.
-- **Cost by account**: with `report_show_accounts` (default on), a reply in the report's thread lists every linked account — by name, its ID when Cost Explorer has none — with yesterday's cost, ∆ against the 7-day average and the sparkline, the same columns as the main table; accounts under half a cent every day fold into `Other`, and `Total` matches the report's. One more Cost Explorer request a day ($0.01 per page, at most 5); if it fails the report goes out without the reply. Needs the bot: without one it is not queried. Skipped when `report_group_by` is already `LINKED_ACCOUNT`.
-- **Scope**: run from the management (payer) account, Cost Explorer returns the whole Organization's bill; `REPORT_SCOPE` says so in the summary line.
+## How to read the report
 
-## Testing
+The report arrives every day as one Slack message, with the details in its thread.
 
-`src/` is the whole Lambda package, so tests live in `tests/` and are never deployed. From the repository root:
+### The message
 
-- `make cost-report-test` — offline tests against the synthetic Cost Explorer responses in `tests/fixtures/` (no AWS calls; the suite fails any test that tries).
-- `make cost-report-preview` — builds the report from live Cost Explorer data with the management profile and prints it instead of posting to Slack. Each run is three or four billed requests ($0.03-0.04), plus any breakdowns, and it prints the thread reply too (`SHOW_ACCOUNTS=false` leaves it out). It also checks the Block Kit message with Slack's public `blocks.validate` method and prints a Block Kit Builder link to preview it.
+- **Header**: the day reported and the verdict. :white_check_mark: means nothing needs attention; :warning: counts the alerts and anomalies (`1 alert, 2 anomalies`).
+- **Yesterday**: the total cost yesterday and how it compares with the average of the 7 days before it.
+- **The month** (e.g. *October*): the month so far, the change against the same point last month, and where the month is heading. The pace adds, for each remaining day, the *median* of the last 7 days, so a once-a-month charge is not projected onto every remaining day. **Budget** is the AWS Budget's own figures, which also count tax, support, upfront fees and Marketplace subscriptions — so it can be higher than the table. :warning: means it is over its limit.
+- **Alerts** (only when there are any): a service whose cost moved by at least **$1 and 30%** (the default thresholds) against a typical day (the median of the 7 days before). Rises are judged on yesterday; drops on the day before yesterday, because yesterday is still incomplete.
+- **Anomalies** (only when there are any): how many open anomalies Cost Anomaly Detection found. The list is in the thread.
+- **Top services**: the services that cost the most yesterday, plus any service that moved by $0.50 or more — so a service that dropped to $0 is listed rather than hidden.
 
-### Access to the Slack Secrets
+### The table
 
-- **Secret Storage**: The Slack webhook URL and the bot token (`/notifications/slack/cost-reports-bot`, set by hand, never in this repository) are stored securely in AWS Secrets Manager, not directly in Lambda environment variables. The secret is encrypted using a customer-managed KMS key (CMK).
-- **IAM Permissions**: The Lambda function is granted permission to call `secretsmanager:GetSecretValue` on the specific secret ARN, and `kms:Decrypt` on the relevant KMS key, via inline policies in `main.tf`.
-- **Runtime Retrieval**: At runtime, the Lambda reads the secret ARNs from the `SLACK_BOT_TOKEN_SECRET_ID` and `SLACK_WEBHOOK_SECRET_ID` environment variables and fetches the token and the webhook URL using the AWS SDK (`boto3`).
-- **Usage**: This approach ensures the Slack webhook URL is never exposed in plaintext in the Lambda configuration or logs, and can be rotated easily in Secrets Manager without redeploying the function. The use of a KMS CMK ensures that only authorized resources (like this Lambda) can decrypt and access the secret value.
+| Column | Meaning |
+|---|---|
+| `Yday*` | Yesterday's cost. The `*` means *partial*: Cost Explorer usually keeps adding charges for a day after the report runs, so the final figure tends to be higher. |
+| `∆$`, `∆%` | Yesterday against the average of the 7 days before it. `new`: no cost in those days to compare with. |
+| `Last 7d` | The last 7 days as a sparkline, oldest first. |
+| `Other (N services)` | Every service not listed in its own row, added together. |
+| `Total` | Every row added up. Each figure is rounded to cents on its own, so the rows can differ from `Total` by a few cents. |
 
-> For advanced configuration or troubleshooting, review the comments in `main.tf`.
+Costs are **unblended**, and exclude credits, refunds, upfront fees and support.
+
+### The thread
+
+- **Anomalies**: each open anomaly with its date, impact and root cause (region, account, usage type). An anomaly stays listed until someone gives feedback on it in *Cost Explorer › Anomaly detection*, or until it is 14 days old.
+- **Alert breakdown**: for each alert, the accounts and usage types that moved the most.
+- **By account**: the same table as the message, with one row per account.
+
+## Architecture
+
+```text
+EventBridge (daily, 12:00 UTC)
+  └─> Lambda bb-management-cost-report (management account)
+        ├─ Cost Explorer: GetCostAndUsage (by service, monthly totals, by account, alert breakdowns), GetAnomalies
+        ├─ AWS Budgets: DescribeBudget
+        ├─ Secrets Manager (shared account): Slack bot token, Slack webhook URL
+        └─> Slack: chat.postMessage (report + thread reply); the webhook if the bot cannot post
+CloudWatch alarm on the Lambda's Errors ──> SNS sns-topic-costs
+```
+
+- **Code**: `src/handler.py`, deployed with the `terraform-aws-lambda` module. It uses only the Python standard library plus the runtime's bundled `boto3`, so the package is a plain zip of `src/` (`build_in_docker = false`). There is no `requirements.txt`: adding a dependency would need Docker builds again.
+- **Slack**: a Slack app's bot (`chat:write`) posts the report with `chat.postMessage`. That call returns the message's `ts`, which lets the bot reply in the thread. The incoming webhook is the fallback when there is no bot or it cannot post (token revoked, bot removed from the channel). The report then still goes out, with everything in one message and no thread. If Slack rejects a message's blocks, it is sent again as plain text. Teams and Google Chat webhooks get the plain-text report.
+- **Secrets**: both Slack secrets live in `shared/us-east-1/secrets-manager`, encrypted with the shared account's KMS key. Their resource policies allow this Lambda's role. The Lambda reads them at runtime from `SLACK_BOT_TOKEN_SECRET_ID` and `SLACK_WEBHOOK_SECRET_ID`; neither value is in this repository or in the Lambda's configuration.
+- **Permissions**: `ce:GetCostAndUsage`, `ce:GetAnomalies` and `iam:ListAccountAliases`; `budgets:ViewBudget` on the one budget; `secretsmanager:GetSecretValue` and `kms:Decrypt` for the Slack secrets.
+- **Resilience**: the budget, anomalies, cost by account and alert breakdowns are optional. Each one uses fail-fast timeouts, and if it fails the report goes out without that part. Breakdowns stop when fewer than 20 s of the Lambda's 60 s remain. A failed run triggers the `bb-management-cost-report-errors` alarm.
+- **Cost**: three or four Cost Explorer requests a day ($0.01 each per page), plus one per alert broken down, on alert days only.
+
+## Installation
+
+1. **Slack app** (once, by a Slack workspace admin):
+   1. At <https://api.slack.com/apps>, choose *Create New App → From a manifest*, pick the workspace and paste:
+      ```yaml
+      display_information:
+        name: AWS Cost Report
+      features:
+        bot_user:
+          display_name: AWS Cost Report
+      oauth_config:
+        scopes:
+          bot:
+            - chat:write
+      settings:
+        token_rotation_enabled: false
+      ```
+   2. *Install App → Install to Workspace*, then copy the *Bot User OAuth Token* (`xoxb-…`).
+   3. In the report's channel: `/invite @AWS Cost Report`. Copy the channel ID from the channel's *About* tab.
+2. **Secrets**: apply `shared/us-east-1/secrets-manager`, which creates `/notifications/slack/cost-reports-bot` with a placeholder value. Then set the token by hand, from a shell with the shared account's profile:
+   ```bash
+   read -rs TOKEN && aws secretsmanager put-secret-value \
+     --secret-id /notifications/slack/cost-reports-bot --secret-string "$TOKEN"
+   ```
+   The webhook secret, `/notifications/slack/cost-reports`, is set the same way.
+3. **Lambda**: set `report_slack_channel_id` in `variables.tf`, then run `leverage tofu apply` from this layer.
+4. **Check**: invoke the function once and confirm that the message and its thread reply arrive:
+   ```bash
+   aws lambda invoke --function-name bb-management-cost-report /dev/stdout
+   ```
+
+## Usage
+
+### Configuration
+
+Every setting is a variable in `variables.tf`, passed to the Lambda as an environment variable.
+
+| Variable | Default | What it does |
+|---|---|---|
+| `report_run_schedule` | `cron(0 12 * * ? *)` | When the report runs (UTC). |
+| `report_slack_channel_id` | the report's channel | Where the bot posts. Empty: the webhook posts, without a thread. |
+| `report_items_length` | `20` | How many top services the table shows. |
+| `report_mover_min_usd` | `0.5` | Also list any service that moved by this much, even outside the top. |
+| `report_group_by` | `SERVICE` | The table's grouping (a Cost Explorer dimension). |
+| `report_budget_name` | the 100% budget of `management/global/cost-mgmt` | The AWS Budget shown under the month. Empty: none. |
+| `report_alert_min_usd`, `report_alert_min_pct` | `1`, `30` | The alert thresholds; a move has to pass both. |
+| `report_alert_mention` | empty | Slack mention added to the alerts, e.g. `<!here>`. |
+| `report_drilldown_max` | `3` | Break down the largest N alerts by account and usage type. `0`: off. |
+| `report_anomaly_days` | `14` | Show open anomalies that ended in the last N days. `0`: off. |
+| `report_show_accounts` | `true` | Add the cost by account to the thread. Needs the bot. |
+| `report_daily_mode` | `full` | `compact`: on quiet days, a one-line message instead of the full report. The full report still goes out on alert days, on `report_full_report_weekday` (default Monday), and on an invocation with `{"mode": "full"}`. |
+| `report_help_url` | this section of the README | The "How to read this report" link in the message. Empty: the method is spelled out in the footer instead. |
+
+### Testing and previewing
+
+`src/` is the whole Lambda package, so the tests live in `tests/` and are never deployed. From the repository root:
+
+- `make cost-report-test`: offline tests against the synthetic Cost Explorer responses in `tests/fixtures/`. Any test that tries to reach AWS fails.
+- `make cost-report-preview`: builds today's report from live data with the management profile and prints it instead of posting it ($0.03–0.04 per run). It checks every message with Slack's `blocks.validate` and prints Block Kit Builder links.
+- `make cost-report-preview SLACK_DM=<your Slack member ID>`: also posts the report, thread included, to your direct messages with the bot. It shows exactly what the channel would get, so this is the quickest way to iterate on the layout. You can find your member ID in your Slack profile → ⋮ → *Copy member ID*.
+
+### Operations
+
+- **Run it now**: `aws lambda invoke --function-name bb-management-cost-report --payload '{"mode": "full"}' --cli-binary-format raw-in-base64-out /dev/stdout`.
+- **Logs**: CloudWatch log group `/aws/lambda/bb-management-cost-report`, kept for 7 days. Each run logs `mode=… alerts=… anomalies=…`, and a line for every optional part it had to leave out.
+- **The report did not arrive**: the `bb-management-cost-report-errors` alarm notifies `sns-topic-costs`. Check the logs for the error.
+- **Rotate the bot token**: reinstall the app in Slack, then put the new token in the secret as in [Installation](#installation). There is nothing to redeploy.

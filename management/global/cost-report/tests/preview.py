@@ -12,6 +12,11 @@ vars; MODE=full|compact stands in for the invocation's {"mode": ...}.
 The Block Kit message is checked with Slack's public blocks.validate method
 (no token; it sends the payload to Slack, the report's destination anyway)
 and printed as a Block Kit Builder link to preview it.
+
+SLACK_DM=<your Slack member ID> also posts it, thread reply included, to your
+direct messages with the report's bot -- exactly what the channel would get,
+without posting there. The bot token is read from Secrets Manager with
+SLACK_PROFILE (the shared account's profile).
 """
 import json
 import os
@@ -19,6 +24,8 @@ import pathlib
 import sys
 import urllib.parse
 import urllib.request
+
+import boto3
 
 # src/ is zipped as-is into the Lambda package: keep __pycache__ out of it.
 sys.dont_write_bytecode = True
@@ -51,14 +58,18 @@ print(report["summary"])
 print()
 print(handler.render_text(report))
 
+mention = os.environ.get("ALERT_MENTION", "")
+help_url = os.environ.get("REPORT_HELP_URL") or None
 payloads = [("compact", handler.render_compact_blocks(report)),
-            ("full", handler.render_blocks(report, os.environ.get("ALERT_MENTION", "")))]
-if report["accounts"]:
+            ("full", handler.render_blocks(report, mention, help_url=help_url)),
+            ("full, threaded", handler.render_blocks(report, mention, threaded=True, help_url=help_url))]
+thread = handler.render_thread_blocks(report)
+if thread:
     print("--- thread reply ---")
-    print(handler.accounts_title(report))
+    print(handler.thread_title(report))
     print()
-    print(handler.render_accounts_text(report))
-    payloads.append(("thread reply", handler.render_accounts_blocks(report)))
+    print(handler.render_thread_text(report))
+    payloads.append(("thread reply", thread))
 
 for name, payload in payloads:
     request = urllib.request.Request(
@@ -69,3 +80,10 @@ for name, payload in payloads:
         print(f"blocks.validate ({name}):", response.read().decode())
     builder = json.dumps({"blocks": payload["blocks"]}, separators=(",", ":"))
     print(f"Block Kit Builder ({name}):", "https://app.slack.com/block-kit-builder#" + urllib.parse.quote(builder))
+
+dm = os.environ.get("SLACK_DM")
+if dm:
+    secrets = boto3.session.Session(profile_name=os.environ["SLACK_PROFILE"]).client("secretsmanager")
+    token = secrets.get_secret_value(SecretId=os.environ.get("SLACK_BOT_SECRET", "/notifications/slack/cost-reports-bot"))["SecretString"]
+    ts = handler.post_with_bot(token, dm, report, mode, mention, help_url)
+    print(f"Posted to your DM with the bot ({mode}):", "ok" if ts else "failed, see above")

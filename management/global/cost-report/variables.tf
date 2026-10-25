@@ -103,3 +103,9 @@ variable "report_show_accounts" {
   type        = bool
   default     = true
 }
+
+variable "report_help_url" {
+  description = "Linked as \"How to read this report\" in the message footer. Empty: the footer spells out the method instead."
+  type        = string
+  default     = "https://github.com/binbashar/le-tf-infra-aws/blob/master/management/global/cost-report/README.md#how-to-read-the-report"
+}

@@ -286,6 +286,15 @@ def blocks_for(fixture, **kwargs):
     return report, handler.render_blocks(report)
 
 
+def table_of(payload):
+    return next(b for b in payload["blocks"] if b["type"] == "table")
+
+
+def texts(payload):
+    """The mrkdwn text of every section, in order."""
+    return [b["text"]["text"] for b in payload["blocks"] if b["type"] == "section"]
+
+
 def cell_text(cell):
     if cell["type"] == "raw_text":
         return cell["text"]
@@ -296,20 +305,18 @@ def test_blocks_layout(load_fixture):
     report, payload = blocks_for(load_fixture("normal.json"))
 
     assert payload["text"] == report["summary"]
-    assert [b["type"] for b in payload["blocks"]] == ["header", "section", "table", "context"]
+    assert [b["type"] for b in payload["blocks"]] == ["header", "section", "section", "table", "context"]
 
     header = payload["blocks"][0]["text"]
     assert header == {"type": "plain_text", "emoji": True, "text": "AWS cost · 2026-10-22 (partial)"}
     assert len(header["text"]) <= 150
 
-    section = payload["blocks"][1]["text"]["text"]
-    assert section.startswith("*$9.60* yesterday · ∆ +$1.27 (+15%) vs. the 7-day average")
-    assert "For account test-org" in section
+    assert texts(payload) == ["*Yesterday*\n*$9.60* · ∆ +$1.27 (+15%) vs. the 7-day average", "*Top services*"]
 
 
 def test_blocks_table_matches_the_text_table(load_fixture):
     report, payload = blocks_for(load_fixture("normal.json"), length=2)
-    table = payload["blocks"][2]
+    table = table_of(payload)
 
     header, *rows = table["rows"]
     assert [cell_text(c) for c in header] == ["Service", "Yday*", "∆$", "∆%", "Last 7d"]
@@ -326,15 +333,23 @@ def test_blocks_table_matches_the_text_table(load_fixture):
 
 def test_blocks_table_bolds_header_other_and_total(load_fixture):
     _, payload = blocks_for(load_fixture("normal.json"), length=2)
-    first_cells = [r[0]["type"] for r in payload["blocks"][2]["rows"]]
+    first_cells = [r[0]["type"] for r in table_of(payload)["rows"]]
     assert first_cells == ["rich_text", "raw_text", "raw_text", "raw_text", "rich_text", "rich_text"]
 
 
-def test_blocks_footer_is_the_text_footer(load_fixture):
+def test_blocks_footer_spells_out_the_method_without_a_help_link(load_fixture):
     report, payload = blocks_for(load_fixture("normal.json"))
-    context = payload["blocks"][3]["elements"]
-    assert [e["text"] for e in context] == report["footer"].splitlines()
-    assert all(e["type"] == "plain_text" for e in context)
+    first, *rest = payload["blocks"][-1]["elements"]
+    assert first["text"] == "Yday* is partial: Cost Explorer may still add charges · ∆: vs. the 7-day average"
+    # the method, minus the partial note the first line already gives
+    assert [e["text"] for e in rest] == report["footer"].splitlines()[:-1]
+
+
+def test_blocks_footer_links_the_help_instead(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), today=TODAY, account_name="test-org")
+    footer = handler.render_blocks(report, help_url="https://example.com/readme#how")["blocks"][-1]["elements"]
+    assert len(footer) == 1
+    assert footer[0]["text"].endswith(" · <https://example.com/readme#how|How to read this report>")
 
 
 def test_blocks_carry_the_credit_line(monkeypatch, load_fixture):
@@ -342,12 +357,12 @@ def test_blocks_carry_the_credit_line(monkeypatch, load_fixture):
     monkeypatch.setenv("CREDITS_REMAINING_AS_OF", "10/01/2026")
     monkeypatch.setenv("CREDITS_REMAINING", "910")
     _, payload = blocks_for(load_fixture("normal.json"))
-    assert "of the credit budget $10.00 for the day" in payload["blocks"][1]["text"]["text"]
+    assert "of the credit budget $10.00 for the day" in texts(payload)[0]
 
 
 def test_blocks_for_an_empty_result(load_fixture):
     _, payload = blocks_for(load_fixture("empty.json"))
-    rows = payload["blocks"][2]["rows"]
+    rows = table_of(payload)["rows"]
     assert [cell_text(c) for c in rows[-1]][:4] == ["Total", "$0.00", "+$0.00", "-"]
 
 
@@ -477,8 +492,9 @@ def test_month_lines_in_text_and_blocks(load_fixture):
     lines = report["month_lines"]
     assert len(lines) == 2 and lines[1].startswith("AWS Budget")
     assert handler.render_text(report).startswith(lines[0] + "\n" + lines[1] + "\n\n")
-    section = handler.render_blocks(report)["blocks"][1]["text"]["text"]
-    assert section.endswith("\n" + lines[0] + "\n" + lines[1])
+    month = texts(handler.render_blocks(report))[1]
+    assert month.startswith("*October*\n")
+    assert month.splitlines()[2] == handler.budget_short_line(BUDGET)
 
 
 def test_budget_is_read_from_aws_budgets(monkeypatch):
@@ -596,10 +612,10 @@ def test_full_report_shows_the_verdict_and_alerts():
     payload = handler.render_blocks(report, mention="<!here>")
 
     assert payload["blocks"][0]["text"]["text"] == ":warning: AWS cost · 2026-10-22 (partial) · 1 alert"
-    assert payload["blocks"][1]["text"]["text"] == (
-        "<!here>\n• S3: $3.50 yesterday (partial), +$1.50 (+75%) vs. a typical day ($2.00)")
+    assert texts(payload)[1] == (
+        "<!here>\n*Alerts*\n• S3: $3.50 yesterday (partial), +$1.50 (+75%) vs. a typical day ($2.00)")
     assert payload["text"].startswith(":warning: 1 alert · Yesterday's cost")
-    assert [b["type"] for b in payload["blocks"]] == ["header", "section", "section", "table", "context"]
+    assert [b["type"] for b in payload["blocks"]] == ["header", "section", "section", "section", "table", "context"]
 
     text = handler.render_text(report)
     assert text.startswith(":warning: 1 alert\n• S3: $3.50 yesterday (partial)")
@@ -609,7 +625,8 @@ def test_quiet_full_report_says_no_alerts_and_skips_the_alert_section():
     payload = handler.render_blocks(quiet_report())
     assert payload["blocks"][0]["text"]["text"].startswith(":white_check_mark: AWS cost")
     assert payload["blocks"][0]["text"]["text"].endswith("· no alerts")
-    assert [b["type"] for b in payload["blocks"]] == ["header", "section", "table", "context"]
+    assert [b["type"] for b in payload["blocks"]] == ["header", "section", "section", "table", "context"]
+    assert "*Alerts*" not in "".join(texts(payload))
 
 
 def test_footer_states_the_alert_rule():
@@ -813,19 +830,31 @@ def test_anomalies_in_blocks_after_the_alerts_with_one_mention():
     blocks = payload["blocks"]
 
     assert blocks[0]["text"]["text"].endswith("· 1 alert, 2 anomalies")
-    assert [b["type"] for b in blocks] == ["header", "section", "section", "section", "table", "context"]
-    assert blocks[1]["text"]["text"].startswith("<!here>\n• S3:")
-    assert blocks[2]["text"]["text"] == (
-        "Cost Anomaly Detection: 2 open, no feedback yet\n"
+    assert [b["type"] for b in blocks] == ["header", "section", "section", "section", "section", "table", "context"]
+    assert texts(payload)[1].startswith("<!here>\n*Alerts*\n• S3:")
+    assert texts(payload)[2] == (
+        "*Anomalies* · 2 open, no feedback yet\n"
         "• Bedrock · 2026-10-21 · +$8.27 · `us-east-1 · USE1-Model_Large-input-tokens`\n"
         "• End User Messaging · 2026-10-15 · +$1.89 · `us-east-1 · example-dev`\n"
         "Give feedback in Cost Explorer › Anomaly detection to clear them.")
-    assert "<!here>" not in blocks[2]["text"]["text"]
+
+
+def test_threaded_report_points_to_the_anomalies_in_the_thread():
+    report = anomalous_report(alerting=True)
+    main = handler.render_blocks(report, threaded=True)
+    assert texts(main)[2] == "*Anomalies* · 2 open, no feedback yet · details in the thread :thread:"
+    assert "More in the thread" in main["blocks"][-1]["elements"][0]["text"]
+
+    thread = handler.render_thread_blocks(report)
+    assert texts(thread)[0].startswith("*Anomalies* · 2 open, no feedback yet\n• Bedrock")
+    assert thread["text"] == "Details · 2026-10-22 (partial): 2 anomalies"
 
 
 def test_mention_goes_on_the_anomalies_when_there_are_no_alerts():
-    blocks = handler.render_blocks(anomalous_report(), mention="<!here>")["blocks"]
-    assert blocks[1]["text"]["text"].startswith("<!here>\nCost Anomaly Detection: 2 open")
+    payload = handler.render_blocks(anomalous_report(), mention="<!here>")
+    assert texts(payload)[1].startswith("<!here>\n*Anomalies* · 2 open")
+    threaded = handler.render_blocks(anomalous_report(), mention="<!here>", threaded=True)
+    assert texts(threaded)[1].startswith("<!here>\n*Anomalies* · 2 open")
 
 
 def test_anomalies_in_text():
@@ -1035,10 +1064,17 @@ def test_breakdown_in_blocks_and_text(monkeypatch):
     }, [])
     report = drilled_report()
 
-    listing = handler.render_blocks(report)["blocks"][1]["text"]["text"]
+    listing = texts(handler.render_blocks(report))[1]
     assert "• S3: $3.60 yesterday (partial), +$1.60 (+80%) vs. a typical day ($2.00)\n" \
            "    ↳ `example_dev · USE1-Requests-Tier1`: +$1.30\n" \
            "    ↳ `example_dev · USE1-DataTransfer-Out-Bytes`: +$0.20" in listing
+
+    # threaded: the alert stays, its breakdown moves to the thread
+    assert "↳" not in texts(handler.render_blocks(report, threaded=True))[1]
+    assert texts(handler.render_thread_blocks(report))[0] == (
+        "*Alert breakdown*\n• S3: +$1.60\n"
+        "    ↳ `example_dev · USE1-Requests-Tier1`: +$1.30\n"
+        "    ↳ `example_dev · USE1-DataTransfer-Out-Bytes`: +$0.20")
 
     text = handler.render_text(report)
     assert "    ↳ example_dev · USE1-Requests-Tier1: +$1.30\n" in text
@@ -1231,18 +1267,22 @@ def test_accounts_merge_pages_and_give_up_past_the_cap(monkeypatch, load_fixture
     assert Endless.calls == handler.breakdown_max_pages
 
 
-def test_accounts_reply_blocks(load_fixture):
+def test_accounts_in_the_thread_reply(load_fixture):
     report = accounts_report(load_fixture)
-    payload = handler.render_accounts_blocks(report)
-    assert payload["text"] == "Cost by account · 2026-10-22 (partial)"
+    payload = handler.render_thread_blocks(report)
     assert [b["type"] for b in payload["blocks"]] == ["section", "table", "context"]
-    table = payload["blocks"][1]["rows"]
+    assert texts(payload) == ["*By account*"]
+    table = table_of(payload)["rows"]
     assert cell_text(table[0][0]) == "Account"
     assert [cell_text(r[0]) for r in table[1:]] == [r["name"] for r in report["accounts"]]
 
 
-def test_accounts_reply_text(load_fixture):
-    text = handler.render_accounts_text(accounts_report(load_fixture))
+def test_no_thread_reply_without_anything_for_it():
+    assert handler.render_thread_blocks(quiet_report()) is None
+
+
+def test_thread_reply_text(load_fixture):
+    text = handler.render_thread_text(accounts_report(load_fixture))
     assert text.startswith("Account")
     assert "example-shared" in text and handler.partial_note in text
 
@@ -1283,8 +1323,8 @@ def test_bot_posts_the_report_and_the_accounts_in_its_thread(monkeypatch, load_f
     assert seen["show_accounts"] is True
     assert [(m, p["channel"], p.get("thread_ts")) for m, p in calls] == [
         ("chat.postMessage", "C0TEST", None), ("chat.postMessage", "C0TEST", "1.0")]
-    assert calls[0][1]["blocks"] == handler.render_blocks(report)["blocks"]
-    assert calls[1][1]["blocks"] == handler.render_accounts_blocks(report)["blocks"]
+    assert calls[0][1]["blocks"] == handler.render_blocks(report, threaded=True)["blocks"]
+    assert calls[1][1]["blocks"] == handler.render_thread_blocks(report)["blocks"]
     assert webhook == []
 
 
@@ -1350,3 +1390,82 @@ def test_slack_api_turns_network_errors_into_a_result(monkeypatch):
         raise OSError("timed out")
     monkeypatch.setattr(handler.urllib.request, "urlopen", down)
     assert handler.slack_api("xoxb", "chat.postMessage", {}) == {"ok": False, "error": "timed out"}
+
+
+# --- titled layout ------------------------------------------------------------
+
+def budget_of(actual, limit, forecast=None):
+    spend = {"ActualSpend": {"Amount": str(actual)}}
+    if forecast is not None:
+        spend["ForecastedSpend"] = {"Amount": str(forecast)}
+    return {"BudgetLimit": {"Amount": str(limit)}, "CalculatedSpend": spend}
+
+
+def test_budget_short_line_warns_only_over_the_limit():
+    assert handler.budget_short_line(budget_of(885.32, 750, 953.44)) == (
+        "Budget: $885.32 of $750.00 (118%) :warning: · forecast $953.44")
+    assert handler.budget_short_line(budget_of(750, 750)) == "Budget: $750.00 of $750.00 (100%)"
+
+
+def test_budget_without_month_summary_gets_a_generic_title(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), budget=budget_of(40, 100),
+                                  today=TODAY, account_name="test-org")
+    assert texts(handler.render_blocks(report))[1] == "*This month*\nBudget: $40.00 of $100.00 (40%)"
+
+
+def test_table_title_follows_the_grouping(load_fixture):
+    report = handler.build_report(result=load_fixture("normal.json"), group_by="LINKED_ACCOUNT",
+                                  today=TODAY, account_name="test-org")
+    assert "*Top items*" in texts(handler.render_blocks(report))
+
+
+def test_threaded_footer_says_more_only_when_there_is_a_thread(load_fixture):
+    footer = handler.render_blocks(quiet_report(), threaded=True)["blocks"][-1]["elements"][0]["text"]
+    assert "thread" not in footer
+
+
+def test_bot_posts_no_reply_without_anything_for_the_thread(monkeypatch):
+    calls, call = fake_slack()
+    monkeypatch.setattr(handler, "slack_api", call)
+    assert handler.post_with_bot("xoxb", "C0TEST", quiet_report(), "full") == "1.0"
+    assert len(calls) == 1
+
+
+def test_bot_posts_the_compact_line_and_still_the_thread(monkeypatch, load_fixture):
+    report = accounts_report(load_fixture)
+    calls, call = fake_slack()
+    monkeypatch.setattr(handler, "slack_api", call)
+    handler.post_with_bot("xoxb", "C0TEST", report, "compact")
+    assert calls[0][1]["blocks"] == handler.render_compact_blocks(report)["blocks"]
+    assert calls[1][1]["thread_ts"] == "1.0"
+
+
+def test_lambda_links_the_help_url(monkeypatch, load_fixture):
+    report = accounts_report(load_fixture)
+    calls, call = fake_slack()
+    bot_env(monkeypatch)
+    monkeypatch.setenv("REPORT_HELP_URL", "https://example.com/readme#how")
+    monkeypatch.setattr(handler, "build_report", lambda **kwargs: report)
+    monkeypatch.setattr(handler, "slack_api", call)
+
+    handler.lambda_handler({}, None)
+
+    assert "<https://example.com/readme#how|How to read this report>" in calls[0][1]["blocks"][-1]["elements"][0]["text"]
+
+
+def test_thread_summary_says_what_the_reply_holds(load_fixture):
+    report = accounts_report(load_fixture, alert_min_usd=1.0, anomaly_days=14, anomalies_result=ANOMALIES[:1])
+    assert handler.render_thread_blocks(report)["text"] == (
+        "Details · 2026-10-22 (partial): 1 anomaly · cost by account")
+
+
+def test_details_go_to_the_channel_when_the_reply_fails(monkeypatch, load_fixture):
+    report = accounts_report(load_fixture)
+    calls, call = fake_slack([{"ok": True, "ts": "1.0"}] + [{"ok": False, "error": "ratelimited"}] * 2)
+    monkeypatch.setattr(handler, "slack_api", call)
+
+    assert handler.post_with_bot("xoxb", "C0TEST", report, "full") == "1.0"
+
+    # report, reply (blocks, then text), then the details unthreaded
+    assert [p.get("thread_ts") for _, p in calls] == [None, "1.0", "1.0", None]
+    assert calls[3][1]["blocks"] == handler.render_thread_blocks(report)["blocks"]
