@@ -92,16 +92,20 @@ prm-tags-test: ## Run the PRM tag guardrail's own tests
 # comes from management's backend.tfvars, same rules as VERSION_SUPPORT_AWS_ENV.
 COST_REPORT_DIR := management/global/cost-report
 COST_REPORT_PROFILE := $(shell sed -nE 's/^[[:space:]]*profile[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' management/config/backend.tfvars 2>/dev/null | head -1)
+# SLACK_DM=<member ID> posts the preview to your DM with the report's bot;
+# its token lives in the shared account.
+COST_REPORT_SLACK_PROFILE := $(shell sed -nE 's/^[[:space:]]*profile[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' shared/config/backend.tfvars 2>/dev/null | head -1)
 COST_REPORT_AWS_ENV := \
 	AWS_CONFIG_FILE="$${AWS_CONFIG_FILE:-$$HOME/.aws/$(LEVERAGE_PROJECT)/config}" \
 	AWS_SHARED_CREDENTIALS_FILE="$${AWS_SHARED_CREDENTIALS_FILE:-$$HOME/.aws/$(LEVERAGE_PROJECT)/credentials}" \
 	AWS_DEFAULT_REGION="$${AWS_DEFAULT_REGION:-us-east-1}" \
-	$(if $(COST_REPORT_PROFILE),AWS_PROFILE="$${AWS_PROFILE:-$(COST_REPORT_PROFILE)}")
+	$(if $(COST_REPORT_PROFILE),AWS_PROFILE="$${AWS_PROFILE:-$(COST_REPORT_PROFILE)}") \
+	SLACK_PROFILE="$${SLACK_PROFILE:-$(COST_REPORT_SLACK_PROFILE)}"
 
 .PHONY: cost-report-test
 cost-report-test: ## Run the cost-report Lambda's tests (offline, fixtures only)
 	@uv run --quiet --with pytest --with boto3 pytest ./$(COST_REPORT_DIR)/tests/ -q
 
 .PHONY: cost-report-preview
-cost-report-preview: ## Print today's cost report from live data without posting it ($0.02-0.03)
+cost-report-preview: ## Print today's cost report from live data; SLACK_DM=<member ID> posts it to your DM ($0.03-0.04)
 	@$(COST_REPORT_AWS_ENV) uv run --quiet --with boto3 python ./$(COST_REPORT_DIR)/tests/preview.py
