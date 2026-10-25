@@ -1116,6 +1116,22 @@ def thread_title(report):
     return f"Details · {report['date']:%Y-%m-%d} (partial)"
 
 
+def thread_summary(report):
+    """
+    'Details · 2026-10-22 (partial): 2 anomalies · alert breakdown · cost by
+    account' -- the reply's notification text: what it holds, not all of it.
+    """
+    parts = []
+    if report["anomalies"]:
+        count = len(report["anomalies"])
+        parts.append(f"{count} anomal{'ies' if count > 1 else 'y'}")
+    if breakdown_items(report):
+        parts.append("alert breakdown")
+    if report["accounts"]:
+        parts.append("cost by account")
+    return f"{thread_title(report)}: {' · '.join(parts)}"
+
+
 def render_thread_blocks(report):
     """
     The reply posted in the report's thread: the anomalies with their root
@@ -1132,7 +1148,7 @@ def render_thread_blocks(report):
         blocks += [{"type": "section", "text": {"type": "mrkdwn", "text": "*By account*"}},
                    table_block(report["accounts"], "Account")]
     blocks.append({"type": "context", "elements": [{"type": "plain_text", "text": partial_note}]})
-    return {"text": thread_title(report), "blocks": blocks}
+    return {"text": thread_summary(report), "blocks": blocks}
 
 
 def render_thread_text(report):
@@ -1263,7 +1279,9 @@ def post_with_bot(token, channel, report, mode, mention="", help_url=None):
     thread = render_thread_blocks(report)
     if ts and thread:
         if not post_message(token, channel, thread_title(report), render_thread_text(report), thread, thread_ts=ts):
-            print("Could not post the thread reply")
+            # the message points to the thread: do not let the details go missing
+            print("Could not post the thread reply: posting the details to the channel")
+            post_message(token, channel, thread_title(report), render_thread_text(report), thread)
     return ts
 
 

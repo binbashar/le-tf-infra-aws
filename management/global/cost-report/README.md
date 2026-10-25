@@ -27,7 +27,7 @@ The report arrives every day as one Slack message, with the details in its threa
 | `Yday*` | Yesterday's cost. The `*` means *partial*: Cost Explorer usually keeps adding charges for a day after the report runs, so the final figure tends to be higher. |
 | `∆$`, `∆%` | Yesterday against the average of the 7 days before it. `new`: no cost in those days to compare with. |
 | `Last 7d` | The last 7 days as a sparkline, oldest first. |
-| `Other (N services)` | Services under half a cent every day, folded together. |
+| `Other (N services)` | Every service not listed in its own row, added together. |
 | `Total` | Every row added up. Each figure is rounded to cents on its own, so the rows can differ from `Total` by a few cents. |
 
 Costs are **unblended**, and exclude credits, refunds, upfront fees and support.

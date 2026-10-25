@@ -847,7 +847,7 @@ def test_threaded_report_points_to_the_anomalies_in_the_thread():
 
     thread = handler.render_thread_blocks(report)
     assert texts(thread)[0].startswith("*Anomalies* · 2 open, no feedback yet\n• Bedrock")
-    assert thread["text"] == "Details · 2026-10-22 (partial)"
+    assert thread["text"] == "Details · 2026-10-22 (partial): 2 anomalies"
 
 
 def test_mention_goes_on_the_anomalies_when_there_are_no_alerts():
@@ -1451,3 +1451,21 @@ def test_lambda_links_the_help_url(monkeypatch, load_fixture):
     handler.lambda_handler({}, None)
 
     assert "<https://example.com/readme#how|How to read this report>" in calls[0][1]["blocks"][-1]["elements"][0]["text"]
+
+
+def test_thread_summary_says_what_the_reply_holds(load_fixture):
+    report = accounts_report(load_fixture, alert_min_usd=1.0, anomaly_days=14, anomalies_result=ANOMALIES[:1])
+    assert handler.render_thread_blocks(report)["text"] == (
+        "Details · 2026-10-22 (partial): 1 anomaly · cost by account")
+
+
+def test_details_go_to_the_channel_when_the_reply_fails(monkeypatch, load_fixture):
+    report = accounts_report(load_fixture)
+    calls, call = fake_slack([{"ok": True, "ts": "1.0"}] + [{"ok": False, "error": "ratelimited"}] * 2)
+    monkeypatch.setattr(handler, "slack_api", call)
+
+    assert handler.post_with_bot("xoxb", "C0TEST", report, "full") == "1.0"
+
+    # report, reply (blocks, then text), then the details unthreaded
+    assert [p.get("thread_ts") for _, p in calls] == [None, "1.0", "1.0", None]
+    assert calls[3][1]["blocks"] == handler.render_thread_blocks(report)["blocks"]
