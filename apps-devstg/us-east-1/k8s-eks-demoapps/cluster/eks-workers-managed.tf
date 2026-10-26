@@ -1,5 +1,5 @@
 module "cluster" {
-  source = "github.com/binbashar/terraform-aws-eks.git?ref=v21.25.0"
+  source = "github.com/binbashar/terraform-aws-eks.git?ref=v21.26.0"
 
   create             = true
   name               = data.terraform_remote_state.cluster-vpc.outputs.cluster_name
