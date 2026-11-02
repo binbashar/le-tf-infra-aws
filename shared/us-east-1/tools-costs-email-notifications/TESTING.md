@@ -2,6 +2,14 @@
 
 This document provides guidance on testing the MonthlyServicesUsage Lambda function.
 
+## Unit tests (no AWS access, no email sent)
+
+`tests/` runs `src/script.py` against a Cost Explorer and SES stand-in. From this layer directory:
+
+```bash
+uv run --no-project --python 3.13 --with pytest --with boto3 python -m pytest tests/ -q
+```
+
 ## Prerequisites
 
 - Access to the AWS account where the Lambda function is deployed
