@@ -10,6 +10,21 @@ This document provides guidance on testing the MonthlyServicesUsage Lambda funct
 uv run --no-project --python 3.13 --with pytest --with boto3 python -m pytest tests/ -q
 ```
 
+## Send a real report to one inbox (no deploy)
+
+`tests/send_test_report.sh` runs this checkout's `src/script.py` locally with the deployed
+Lambda's configuration and sends the report **only** to the address you pass, so a change can
+be reviewed in an inbox before it is applied:
+
+```bash
+tests/send_test_report.sh you@example.com
+```
+
+- Needs Leverage SSO credentials for the shared account and [uv](https://docs.astral.sh/uv/).
+- SES in the shared account is in the sandbox: the address must be a verified identity first
+  (`aws sesv2 create-email-identity --email-identity you@example.com`, then click the link).
+- About two Cost Explorer requests per account, at US$0.01 each.
+
 ## Prerequisites
 
 - Access to the AWS account where the Lambda function is deployed
