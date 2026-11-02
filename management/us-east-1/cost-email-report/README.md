@@ -2,9 +2,8 @@
 
 Monthly AWS cost report by email, sent from the management (payer) account (#1297).
 
-> **Status: SES only.** This layer currently sets up the sending domain. The report
-> itself (Lambda, schedule, recipients) comes next. Until then the old report keeps
-> running from `shared/us-east-1/tools-costs-email-notifications`.
+> **Status: running alongside the old report.** Until it has run for one or two monthly
+> cycles, `shared/us-east-1/tools-costs-email-notifications` keeps sending the old one.
 
 ## Design
 
@@ -37,7 +36,7 @@ or per-account breakdown. The Billing and Cost Management Dashboards **scheduled
 after 15 days, with no inline content, no CC and no contract end. This report has to stay
 ahead of that: an inline summary, the binbash copy, and the extra signals.
 
-**Roadmap:** SES (this layer, now) → the report Lambda, run alongside the old one for one
+**Roadmap:** SES → the report Lambda (this layer, now), run alongside the old one for one
 or two monthly cycles → retire `shared/us-east-1/tools-costs-email-notifications` and the
 `LambdaCostsExplorerAccess` roles → a client installation runbook.
 
@@ -49,9 +48,33 @@ Out of scope: `management/global/cost-report`, the daily Slack report.
 |---|---|
 | `aws_sesv2_email_identity.domain` | `var.ses_domain` as an SES **domain** identity with Easy DKIM (2048-bit). Any address under the domain can send |
 | `aws_route53_record.dkim` (×3) | The DKIM `CNAME` records, in the domain's public zone through the `aws.dns` provider (the `shared` account for `binbash.com.ar`) |
+| `module.cost_email_report` | The `<project>-<env>-cost-email-report` Lambda (`src/report.py`, python3.13), its role and its log group (90 days). Async retries are off, so a failure cannot send the email twice |
+| `aws_cloudwatch_event_rule.schedule` | Runs it on `var.schedule_expression`: the 5th at 12:00 UTC |
+| `module.errors_alarm` | Fires on any function error, which means no email that month; notifies the monitoring topic (Slack) |
 
 SES signs with `d=<ses_domain>`, so DMARC passes on DKIM alignment. The envelope
 `MAIL FROM` stays on `amazonses.com`, so the domain's SPF record needs no change.
+
+The function's role can read costs (`ce:GetCostAndUsage`, `GetCostForecast`, `GetAnomalies`,
+`GetSavingsPlansCoverage`), account names (`organizations:ListAccounts`), credit balances
+(`billing:GetCredits`) and the configured budget, and send email from `var.sender` only.
+
+## What the report reads
+
+| Section | Source | Requests |
+|---|---|---|
+| Invoice lines (usage, Marketplace, tax, support, credits...) | Cost Explorer grouped by `RECORD_TYPE` | 1 |
+| By account, by service per account | Cost Explorer grouped by `LINKED_ACCOUNT` + `SERVICE`, credits and refunds excluded | 1 per page |
+| Current month forecast | Cost Explorer month-to-date + `GetCostForecast` | 2 |
+| Cost anomalies | Cost Anomaly Detection, `anomaly_min_usd` and up | 1 |
+| Savings Plans coverage | `GetSavingsPlansCoverage` | 1 |
+| Untagged spend | Cost Explorer grouped by `untagged_tag_key` (off when empty) | 1 |
+| Budget | AWS Budgets, `budget_name` (off when empty) | free |
+| Credits remaining | Billing `GetCredits`: active, enabled credits only | free |
+
+About 8 Cost Explorer requests, US$0.08 a month. The two Cost Explorer reads that build
+the tables must succeed, or the function raises and nothing is sent. Every other read is
+optional: when one fails, its line is left out of the summary and the report still goes.
 
 ## Install
 
@@ -70,6 +93,23 @@ aws sts get-caller-identity --query Account   # must be the management account
    aws sesv2 get-email-identity --email-identity <ses_domain> \
      --query '{verified:VerifiedForSendingStatus,dkim:DkimAttributes.Status}'
    ```
+
+## Test and send by hand
+
+```bash
+# Unit tests (no AWS)
+uv run --no-project --python 3.13 --with pytest --with boto3 python -m pytest tests/ -q
+
+# The email for a sample organization, as an HTML file (no AWS)
+python3 tests/preview.py /tmp/preview.html
+
+# A real report, from this checkout, to ONE address under the verified domain (no deploy)
+tests/send_test_report.sh you@<ses_domain> [YYYY-MM]
+
+# The deployed function, to all its recipients (e.g. after fixing a failed month)
+aws lambda invoke --function-name <project>-<env>-cost-email-report \
+  --cli-binary-format raw-in-base64-out --payload '{"month": "2026-10"}' /dev/stdout
+```
 ## SES sandbox: is production access needed?
 
 Usually not. A new account's SES is in the **sandbox**: it sends only to verified
@@ -109,7 +149,12 @@ aws sesv2 get-account --query '{prod:ProductionAccessEnabled,review:Details.Revi
 
 ## In a client installation
 
-- Set `ses_domain` to the client's domain.
+- Set `ses_domain` to the client's domain, `sender` to an address under it,
+  `organization_name` to the client's name and `recipients` to their mailboxes.
+- If the contract includes the binbash copy: `binbash_recipients = ["finops@binbash.com.ar"]`
+  and `binbash_reporting_until` = the contract's end date.
+- Set `budget_name` to one of their budgets, or `""`; `untagged_tag_key` to an activated
+  cost allocation tag, or `""`.
 - Point the `aws.dns` provider and `data.terraform_remote_state.dns` at the account that
   holds the client's public zone. If their DNS is not in Route53, set
   `manage_dns_records = false` and hand them the `dkim_records` output.
