@@ -1,1 +1,0 @@
-../../../config/common-variables.tf
