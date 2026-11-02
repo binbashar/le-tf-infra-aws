@@ -14,7 +14,12 @@ resource "aws_cloudwatch_event_target" "lambda_target" {
 module "lambda_error_alarm" {
   source = "github.com/binbashar/terraform-aws-cloudwatch-alarms.git?ref=v1.3.3"
 
-  alarm_name          = "MonthlyServicesUsageLambdaErrors"
+  # The module names the alarm from its labels (lowercased), not from
+  # alarm_name: name + label_order give "monthly-services-usage-lambda-errors".
+  # alarm_name is still a required input, so keep it in step.
+  name                = "monthly-services-usage-lambda-errors"
+  label_order         = ["name"]
+  alarm_name          = "monthly-services-usage-lambda-errors"
   alarm_description   = "Alert when MonthlyServicesUsage Lambda function encounters errors"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1

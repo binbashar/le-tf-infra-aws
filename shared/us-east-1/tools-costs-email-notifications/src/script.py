@@ -36,7 +36,8 @@ if not RECIPIENTS:
 
 if FORCE_DATE := os.environ.get("FORCE_DATE"):
     FORCE_DATE = datetime.strptime(FORCE_DATE, "%Y-%m-%d")  # e.g. 2023-08-30
-EXCLUDE_CREDITS = os.environ.get('EXCLUDE_CREDITS')
+# Environment variables are strings: "false" is truthy, so compare explicitly
+EXCLUDE_CREDITS = os.environ.get('EXCLUDE_CREDITS', 'true').strip().lower() == 'true'
 REGION = os.environ.get('REGION', 'us-east-1')
 
 
@@ -161,7 +162,6 @@ def get_cost_data(ce_client, account_id, start_date_str, end_date_str, tag_key=N
     else:
         combined_filter = dimensions_filter
 
-    # Check if EXCLUDE_CREDITS is set to 'True' in the environment variables
     if EXCLUDE_CREDITS:
         filters_credits = {
             "Not": {
@@ -195,6 +195,24 @@ def get_cost_data(ce_client, account_id, start_date_str, end_date_str, tag_key=N
     return response['ResultsByTime'][0]['Groups']
 
 
+def costs_by_service(groups):
+    """{service: cost} from Cost Explorer groups keyed by SERVICE."""
+    return {group['Keys'][0]: Decimal(group['Metrics']['UnblendedCost']['Amount']) for group in groups}
+
+
+def parse_tags(tags_json):
+    """The cost allocation tags to report on, as {key: value}; raises on invalid input."""
+    try:
+        tags = json.loads(tags_json)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"TAGS_JSON is not valid JSON: {e}") from e
+    if not isinstance(tags, dict):
+        raise ValueError("TAGS_JSON is not a valid dictionary")
+    if len(tags) > 3:
+        raise ValueError(f"Only up to 3 tags are allowed, got {len(tags)}")
+    return tags
+
+
 # Function to calculate cost variation percentage
 def calculate_variation(prev_cost, current_cost):
     # Check if the previous month's cost was < $0.01
@@ -212,11 +230,23 @@ def calculate_variation(prev_cost, current_cost):
 # Function to generate an HTML table
 def generate_html_table(account_name, cost_data, ce_client, start_date_str, end_date_str, prev_start_date_str, prev_end_date_str, tags):
     # Calculate the cost data for the previous month
-    prev_cost_data = get_cost_data(ce_client, ACCOUNTS[account_name]['id'], prev_start_date_str, prev_end_date_str)
-    prev_cost_data_dict = {group['Keys'][0]: Decimal(group['Metrics']['UnblendedCost']['Amount']) for group in prev_cost_data}
+    account_id = ACCOUNTS[account_name]['id']
+    current_cost_dict = costs_by_service(cost_data)
+    prev_cost_data_dict = costs_by_service(get_cost_data(ce_client, account_id, prev_start_date_str, prev_end_date_str))
 
-    # Calculate the total cost of the previous month
-    total_prev_month_cost = sum(prev_cost_data_dict.values())
+    # One query per tag, grouped by service like the main query, so each row
+    # shows that service's tagged cost (not the whole account's on every row)
+    tag_costs_by_service = {
+        tag_key: costs_by_service(get_cost_data(ce_client, account_id, start_date_str, end_date_str, tag_key, tag_value))
+        for tag_key, tag_value in tags.items()
+    }
+
+    # List services from both months, so one that dropped to $0 still shows
+    services = sorted(
+        set(current_cost_dict) | set(prev_cost_data_dict),
+        key=lambda s: (current_cost_dict.get(s, Decimal(0)), prev_cost_data_dict.get(s, Decimal(0)), s),
+        reverse=True,
+    )
 
     # Calculate the month name from start_date_str
     last_month_name = datetime.strptime(start_date_str, '%Y-%m-%d').strftime('%B')
@@ -239,9 +269,8 @@ def generate_html_table(account_name, cost_data, ce_client, start_date_str, end_
     total_prev_month_cost = Decimal(0)
     total_tag_costs = {tag_key: Decimal(0) for tag_key in tags}
 
-    for group in cost_data:
-        service = group['Keys'][0]
-        current_cost = Decimal(group['Metrics']['UnblendedCost']['Amount']).quantize(Decimal('0.00'))  # Round to 2 decimals
+    for service in services:
+        current_cost = current_cost_dict.get(service, Decimal(0)).quantize(Decimal('0.00'))  # Round to 2 decimals
         prev_month_cost = prev_cost_data_dict.get(service, Decimal(0)).quantize(Decimal('0.00'))  # Round to 2 decimals
 
         variation_percent = calculate_variation(prev_month_cost, current_cost)
@@ -253,16 +282,11 @@ def generate_html_table(account_name, cost_data, ce_client, start_date_str, end_
                f'<td style="text-align:right;">${prev_month_cost:.2f}</td>',
                f'<td style="text-align:right; color:{variation_color};">{variation_percent:.2f}%</td>']
 
-        # Add cost columns for each tag, or an empty cell if the tag doesn't exist for this service
-        for tag_key, tag_value in tags.items():
-            tag_cost = get_cost_data(ce_client, ACCOUNTS[account_name]['id'], start_date_str, end_date_str, tag_key, tag_value)
-            tag_cost_amount = sum(Decimal(group['Metrics']['UnblendedCost']['Amount']) for group in tag_cost)
+        # Add this service's cost for each tag ($0.00 when none of it carries the tag)
+        for tag_key in tags:
+            tag_cost_amount = tag_costs_by_service[tag_key].get(service, Decimal(0)).quantize(Decimal('0.00'))
             row.append(f'<td style="text-align:right;">${tag_cost_amount:.2f}</td>')
             total_tag_costs[tag_key] += tag_cost_amount
-
-        # Ensure that each row has the same number of columns
-        while len(row) < len(tags) + 4:
-            row.append('<td></td>')
 
         html_table += '<tr>' + ' '.join(row) + '</tr>'
 
@@ -281,7 +305,7 @@ def generate_html_table(account_name, cost_data, ce_client, start_date_str, end_
                  variation_total]
 
     # Add total tag costs to the total row
-    for tag_key, tag_value in tags.items():
+    for tag_key in tags:
         total_row.append(f'<td style="text-align:right;"><b>${total_tag_costs[tag_key]:.2f}</b></td>')
 
     html_table += '<tr>' + ' '.join(total_row) + '</tr>'
@@ -290,13 +314,13 @@ def generate_html_table(account_name, cost_data, ce_client, start_date_str, end_
     return html_table
 
 
-    # Function to send an email using Amazon SES
-def send_email(subject, body, recipient):
+# Function to send an email using Amazon SES: one message to every recipient
+def send_email(subject, body, recipients):
     ses = boto3.client('ses', region_name=REGION)
 
     ses.send_email(
         Source=SENDER,
-        Destination={'ToAddresses': [recipient]},
+        Destination={'ToAddresses': recipients},
         Message={
             'Subject': {'Data': subject},
             'Body': {'Html': {'Data': body}}
@@ -309,6 +333,11 @@ def lambda_handler(event, context):
 
     logger.info("Starting MonthlyServicesUsage Lambda execution")
 
+    # Validate the input before spending any Cost Explorer requests. Raise, not
+    # return: only an exception counts as an Errors metric, so a returned
+    # status code would leave the alarm silent and send no email.
+    tags = parse_tags(os.environ.get('TAGS_JSON', '{}'))
+
     # Determine accounts to process
     if AUTO_DISCOVER_ACCOUNTS:
         logger.info("Auto-discovery enabled - fetching accounts from AWS Organizations")
@@ -320,34 +349,9 @@ def lambda_handler(event, context):
         else:
             logger.warning("Auto-discovery failed or returned no accounts. Falling back to configured ACCOUNTS.")
             if not ACCOUNTS:
-                logger.error("No accounts available to process")
-                return {
-                    'statusCode': 500,
-                    'body': json.dumps({'message': 'No accounts available to process'})
-                }
+                raise RuntimeError("No accounts available to process")
     else:
         logger.info(f"Using {len(ACCOUNTS)} configured accounts")
-
-    # Parse the JSON string for tags
-    tags_json = os.environ.get('TAGS_JSON', '{}')
-    tags = json.loads(tags_json)
-
-    # Don't allow more than 3 tags
-    if len(tags) > 3:
-        logger.error("Too many tags provided. Maximum is 3.")
-        return {
-            'statusCode': 400,
-            'body': 'Only up to 3 tags are allowed.'
-        }
-
-
-    if not isinstance(tags, dict):
-        # Handle the case where TAGS_JSON is not a valid dictionary
-        logger.error("TAGS_JSON is not a valid dictionary")
-        return {
-            'statusCode': 400,
-            'body': 'TAGS_JSON is not a valid dictionary.'
-        }
 
     ########################
     # IMPORTANT:
@@ -372,9 +376,6 @@ def lambda_handler(event, context):
     prev_end_date_str = prev_end_date.strftime("%Y-%m-%d")
 
 
-    # Fetch the cost associated the given tags for the entire previous month
-    # for each AWS account before entering the loop
-    tag_costs = {}
     for account_name, account_info in ACCOUNTS.items():
         logger.info(f"Processing account: {account_name} (ID: {account_info['id']})")
         ce_client = create_ce_client(account_info['id'])
@@ -384,42 +385,8 @@ def lambda_handler(event, context):
             failed_accounts.append(account_name)
             continue
 
-        # Loop through each tag and fetch cost data
-        try:
-            for tag_key, tag_value in tags.items():
-                tag_cost_data = get_cost_data(ce_client, account_info['id'], start_date_str, end_date_str, tag_key, tag_value)
-                tag_cost = sum(Decimal(group['Metrics']['UnblendedCost']['Amount']) for group in tag_cost_data)
-                tag_costs[account_name] = tag_cost
-        except Exception as e:
-            logger.error(f"Error fetching tag costs for account {account_name}: {str(e)}")
-            failed_accounts.append(account_name)
-            continue
-
-    # Enter the loop for each AWS account and service
-    for account_name, account_info in ACCOUNTS.items():
-        # Skip accounts that failed during the first pass
-        if account_name in failed_accounts:
-            continue
-
-        ce_client = create_ce_client(account_info['id'])
-
-        if ce_client is None:
-            logger.warning(f"Skipping account {account_name} - failed to create CE client")
-            if account_name not in failed_accounts:
-                failed_accounts.append(account_name)
-            continue
-
-        # Check if the account_name exists in tag_costs
-        if account_name in tag_costs:
-            prev_cost = tag_costs[account_name]
-        else:
-            # Handle the case where tag_costs doesn't contain the key
-            prev_cost = Decimal(0)
-
         try:
             cost_data = get_cost_data(ce_client, account_info['id'], start_date_str, end_date_str)
-            cost_data.sort(key=lambda x: Decimal(x['Metrics']['UnblendedCost']['Amount']), reverse=True)
-
             html_table = generate_html_table(account_name, cost_data, ce_client, start_date_str, end_date_str, prev_start_date_str, prev_end_date_str, tags)
             aggregated_html_tables.append(html_table)
             logger.info(f"Successfully processed account {account_name}")
@@ -436,7 +403,7 @@ def lambda_handler(event, context):
     if not aggregated_html_tables:
         error_msg = f"Failed to process all {len(failed_accounts)} accounts: {', '.join(failed_accounts)}"
         logger.error(error_msg)
-        raise Exception(error_msg)
+        raise RuntimeError(error_msg)
 
     # Add failure notice to email if some accounts failed
     failure_notice = ""
@@ -449,8 +416,7 @@ def lambda_handler(event, context):
     subject = 'AWS Cost Summary Report'
     body = f'<html><body>{failure_notice}' + ''.join(aggregated_html_tables) + '</body></html>'
 
-    for recipient in RECIPIENTS:
-        send_email(subject, body, recipient)
+    send_email(subject, body, RECIPIENTS)
 
     logger.info("Email sent successfully")
     return {
