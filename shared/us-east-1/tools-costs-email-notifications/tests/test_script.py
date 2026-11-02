@@ -85,7 +85,7 @@ def test_credits_are_included_when_not_excluded(run):
 
 
 def test_credits_are_excluded_by_default(run):
-    _, ce, _ = run({OCTOBER: {"EC2": 10}}, EXCLUDE_CREDITS="true")
+    _, ce, _ = run({OCTOBER: {"EC2": 10}}, EXCLUDE_CREDITS=None)
     assert all(has_credit_filter(q["Filter"]) for q in ce.queries)
 
 
@@ -127,9 +127,16 @@ def test_invalid_tags_raise_before_querying(run, tags_json):
 
 # --- failures -----------------------------------------------------------------
 
-def test_no_accounts_raises(run):
+def test_no_configured_accounts_raises(run):
     with pytest.raises(RuntimeError):
         run({}, ACCOUNTS="{}", AUTO_DISCOVER_ACCOUNTS="false")
+
+
+def test_auto_discovery_with_no_accounts_raises(load_script, monkeypatch):
+    script = load_script(ACCOUNTS="{}", AUTO_DISCOVER_ACCOUNTS="true")
+    monkeypatch.setattr(script, "discover_accounts", lambda: {})
+    with pytest.raises(RuntimeError, match="No accounts"):
+        script.lambda_handler({}, None)
 
 
 def test_all_accounts_failing_raises_and_sends_nothing(load_script, monkeypatch):

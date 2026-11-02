@@ -24,6 +24,9 @@ LAYER="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export AWS_CONFIG_FILE="${AWS_CONFIG_FILE:-$HOME/.aws/bb/config}"
 export AWS_SHARED_CREDENTIALS_FILE="${AWS_SHARED_CREDENTIALS_FILE:-$HOME/.aws/bb/credentials}"
 export AWS_PROFILE="${AWS_PROFILE:-bb-shared-devops}"
+# Credentials in the environment take precedence over AWS_PROFILE: drop them so
+# stale or other-account keys cannot pick the wrong account's function
+unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
 export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-east-1}"
 
 # The deployed function's environment, kept in a variable and never printed
