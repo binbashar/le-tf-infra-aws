@@ -70,7 +70,7 @@ The function's role can read costs (`ce:GetCostAndUsage`, `GetCostForecast`, `Ge
 | Savings Plans coverage | `GetSavingsPlansCoverage` | 1 |
 | Untagged spend | Cost Explorer grouped by `untagged_tag_key` (off when empty) | 1 |
 | Budget | AWS Budgets, `budget_name` (off when empty) | free |
-| Credits remaining | Billing `GetCredits`: active, enabled credits only | free |
+| Credits remaining | Billing `GetCredits`: active, enabled credits only. **Not shown yet when deployed:** the boto3 bundled in the Lambda runtime (checked 2026-11-02) predates this API, so the read is skipped until AWS updates it; `tests/send_test_report.sh` shows it | free |
 
 About 8 Cost Explorer requests, US$0.08 a month. The two Cost Explorer reads that build
 the tables must succeed, or the function raises and nothing is sent. Every other read is
