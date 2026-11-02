@@ -2,8 +2,8 @@
 
 Monthly AWS cost report by email, sent from the management (payer) account (#1297).
 
-> **Status: running alongside the old report.** Until it has run for one or two monthly
-> cycles, `shared/us-east-1/tools-costs-email-notifications` keeps sending the old one.
+> **Status:** replaces `shared/us-east-1/tools-costs-email-notifications`, retired in #1304
+> together with the per-account `LambdaCostsExplorerAccess` roles.
 
 ## Design
 
@@ -36,9 +36,8 @@ or per-account breakdown. The Billing and Cost Management Dashboards **scheduled
 after 15 days, with no inline content, no CC and no contract end. This report has to stay
 ahead of that: an inline summary, the binbash copy, and the extra signals.
 
-**Roadmap:** SES → the report Lambda (this layer, now), run alongside the old one for one
-or two monthly cycles → retire `shared/us-east-1/tools-costs-email-notifications` and the
-`LambdaCostsExplorerAccess` roles → a client installation runbook.
+**Roadmap:** SES → the report Lambda → retire the old report and its per-account roles
+(#1304) → a client installation runbook.
 
 Out of scope: `management/global/cost-report`, the daily Slack report.
 
