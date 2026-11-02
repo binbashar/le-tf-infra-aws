@@ -2,7 +2,8 @@
 
 Monthly AWS cost report by email, sent from the management (payer) account. The
 layer is both binbash's own report and the **reference code** we copy into client
-repositories. Design and decisions: [`docs/monthly-cost-email/design.md`](../../../docs/monthly-cost-email/design.md) (#1297).
+repositories. Design and decisions: [#1299](https://github.com/binbashar/le-tf-infra-aws/pull/1299)
+(`docs/monthly-cost-email/design.md`), for #1297.
 
 > **Status: step 1 of 3, SES only.** This layer currently sets up the sending domain.
 > The report itself (Lambda, schedule, recipients) comes next. Until then the old
@@ -19,6 +20,16 @@ SES signs with `d=<ses_domain>`, so DMARC passes on DKIM alignment. The envelope
 `MAIL FROM` stays on `amazonses.com`, so the domain's SPF record needs no change.
 
 ## Install
+
+The `aws` commands below must run against the **management account** in **us-east-1**;
+`put-account-details` in the wrong account or region requests production access there
+instead. With Leverage's credentials (adjust the profile in a client installation):
+
+```bash
+export AWS_CONFIG_FILE=~/.aws/bb/config AWS_SHARED_CREDENTIALS_FILE=~/.aws/bb/credentials
+export AWS_PROFILE=bb-management-administrator AWS_REGION=us-east-1
+aws sts get-caller-identity --query Account   # must be the management account
+```
 
 1. `leverage tofu apply` from this directory.
 2. Wait for verification (usually minutes, up to 72 hours after the records resolve):

@@ -45,9 +45,12 @@ terraform {
 #=============================#
 
 #
-# The sending domain's public zone (binbash.com.ar, in the shared account)
+# The sending domain's public zone (binbash.com.ar, in the shared account).
+# Not read when manage_dns_records = false, so an installation without access
+# to that state can still create the identity and get the dkim_records output.
 #
 data "terraform_remote_state" "dns" {
+  count   = var.manage_dns_records ? 1 : 0
   backend = "s3"
 
   config = {

@@ -17,7 +17,7 @@ resource "aws_route53_record" "dkim" {
   provider = aws.dns
   count    = var.manage_dns_records ? 3 : 0
 
-  zone_id = data.terraform_remote_state.dns.outputs.aws_public_zone_id
+  zone_id = data.terraform_remote_state.dns[0].outputs.aws_public_zone_id
   name    = "${aws_sesv2_email_identity.domain.dkim_signing_attributes[0].tokens[count.index]}._domainkey.${var.ses_domain}"
   type    = "CNAME"
   ttl     = 600
