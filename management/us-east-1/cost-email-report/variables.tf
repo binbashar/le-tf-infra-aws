@@ -1,17 +1,30 @@
 #=================#
 # Layer Variables #
 #=================#
+# This installation's values are in report.auto.tfvars. A copy of this layer
+# in another repository changes that file only.
 
 variable "ses_domain" {
   description = "Domain the report is sent from, verified in SES with Easy DKIM (e.g. binbash.com.ar). The sender address is any mailbox under it."
   type        = string
-  default     = "binbash.com.ar"
 }
 
 variable "manage_dns_records" {
   description = "Create the DKIM CNAME records in the Route53 zone reached through the aws.dns provider. Set to false when the domain's DNS is not in Route53, and add the records from the dkim_records output by hand."
   type        = bool
   default     = true
+}
+
+variable "dns_account" {
+  description = "Account that holds the sending domain's public Route53 zone, as named in the repository (e.g. shared). Its profile and backend come from <dns_account>/config/backend.tfvars."
+  type        = string
+  default     = "shared"
+}
+
+variable "dns_state_key" {
+  description = "State key of the layer that owns the zone and outputs aws_public_zone_id. Empty: <dns_account>/dns/<ses_domain>/terraform.tfstate, the base-dns convention."
+  type        = string
+  default     = ""
 }
 
 #=========================#
@@ -21,13 +34,11 @@ variable "manage_dns_records" {
 variable "organization_name" {
   description = "Shown in the subject and header, e.g. [binbash] AWS cost report — October 2026. Lets one mailbox tell several organizations' reports apart."
   type        = string
-  default     = "binbash"
 }
 
 variable "sender" {
   description = "From address, optionally with a display name (\"FinOps <finops@example.com>\"). Must be under ses_domain."
   type        = string
-  default     = "binbash FinOps <finops@binbash.com.ar>"
 
   validation {
     condition     = can(regex("[^<>[:space:]]+@[^<>[:space:]]+", var.sender))
@@ -38,7 +49,6 @@ variable "sender" {
 variable "recipients" {
   description = "The installation's own mailboxes, in To. In the SES sandbox they must be under a verified domain or be verified addresses."
   type        = list(string)
-  default     = ["finops@binbash.com.ar"]
 
   validation {
     condition     = length(var.recipients) > 0
@@ -76,7 +86,7 @@ variable "schedule_expression" {
 variable "budget_name" {
   description = "AWS Budget shown in the summary (empty: none)."
   type        = string
-  default     = "budget-MONTHLY-management-100-percent"
+  default     = ""
 }
 
 variable "change_min_usd" {
