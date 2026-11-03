@@ -1,52 +1,19 @@
 # Monthly cost email report
 
-Monthly AWS cost report by email, sent from the management (payer) account (#1297).
+Monthly AWS cost report by email, sent from the management (payer) account on the 5th:
+the organization's total, its change, the top services and accounts, and the invoice
+lines, forecast, budget, anomalies and Savings Plans coverage.
 
-> **Status:** replaces `shared/us-east-1/tools-costs-email-notifications`, retired in #1304
-> together with the per-account `LambdaCostsExplorerAccess` roles.
-
-## Design
-
-**Two uses.** This layer is binbash's own monthly cost email, and the **reference code**
-we copy into a client's repository and adapt to their domain, SES and mailboxes. If the
-client agrees, binbash receives a copy of the report.
-
-**Decisions:**
-
-| Topic | Decision | Why |
-|---|---|---|
-| Shape | One self-contained layer in the management account. No versioned module | Clients get a copy of this directory. Trade-off: copies diverge and later fixes are ported by hand |
-| Data | One `GetCostAndUsage` grouped by `LINKED_ACCOUNT` + `SERVICE` from the payer | Covers the whole organization with no per-account `LambdaCostsExplorerAccess` roles |
-| Inputs | Everything installation-specific is a variable, with no binbash-only dependencies | Copying it to a client means filling in its variables |
-| SES | A **domain** identity with Easy DKIM in the same account. Production access only when needed (see [SES sandbox](#ses-sandbox-is-production-access-needed)) | In the sandbox, every address under a verified domain is a valid recipient, so the domain identity alone covers the installation's own mailboxes |
-| Recipients | The installation's mailboxes in To; the binbash copy in **CC** (visible, agreed in the contract) to `finops@binbash.com.ar`, dropped automatically after a `binbash_reporting_until` date | binbash keeps visibility for the contract's length without anyone having to remember to remove it. Empty in binbash's own installation |
-| Failures | The error alarm notifies the installation's own SNS topic only | binbash is not alerted about a client's failures; a missing copy is noticed by hand |
-| Schedule | The 5th of the month, 12:00 UTC | Support, tax and Savings Plans charges land days after the 1st |
-| Retries | No duplicate email on a Lambda retry (`maximum_retry_attempts = 0` or a per-month send record) | EventBridge invokes asynchronously and Lambda retries on error |
-
-**Content.** A summary first: organization total, change in $ and %, top services by
-increase and top accounts by spend, with % shown only above a $ threshold. Then credits,
-tax and support as separate lines so the total matches the invoice, plus forecast,
-budget status, remaining credits, open anomalies, Savings Plans coverage and untagged
-share. Each extra signal is one Cost Explorer request (US$0.01).
-
-**Native baseline.** AWS Budgets reports email budget vs actual, but with no per-service
-or per-account breakdown. The Billing and Cost Management Dashboards **scheduled email**
-(GA April 2026, free in us-east-1) sends a link to a password-protected PDF that expires
-after 15 days, with no inline content, no CC and no contract end. This report has to stay
-ahead of that: an inline summary, the binbash copy, and the extra signals.
-
-**Roadmap:** SES → the report Lambda → retire the old report and its per-account roles
-(#1304) → a client installation runbook.
-
-Out of scope: `management/global/cost-report`, the daily Slack report.
+- Why it is built this way: [DESIGN.md](DESIGN.md)
+- Installing it for a client: [RUNBOOK.md](RUNBOOK.md)
+- This installation's values (domain, sender, recipients, budget): `report.auto.tfvars`
 
 ## What it creates
 
 | Resource | Purpose |
 |---|---|
 | `aws_sesv2_email_identity.domain` | `var.ses_domain` as an SES **domain** identity with Easy DKIM (2048-bit). Any address under the domain can send |
-| `aws_route53_record.dkim` (×3) | The DKIM `CNAME` records, in the domain's public zone through the `aws.dns` provider (the `shared` account for `binbash.com.ar`) |
+| `aws_route53_record.dkim` (×3) | The DKIM `CNAME` records, in the domain's public zone in the `shared` account, through the `aws.dns` provider |
 | `module.cost_email_report` | The `<project>-<env>-cost-email-report` Lambda (`src/report.py`, python3.13), its role and its log group (90 days). Async retries are off, so a failure cannot send the email twice |
 | `aws_cloudwatch_event_rule.schedule` | Runs it on `var.schedule_expression`: the 5th at 12:00 UTC |
 | `module.errors_alarm` | Fires on any function error, which means no email that month; notifies the monitoring topic (Slack) |
@@ -77,12 +44,13 @@ optional: when one fails, its line is left out of the summary and the report sti
 
 ## Install
 
-The `aws` commands below must run against the **management account** in **us-east-1**.
-With Leverage's credentials (adjust the profile in a client installation):
+The `aws` commands below must run against the **management account** in **us-east-1**,
+with Leverage's credentials (`<project>` is `PROJECT` in `build.env`, the profile is the one
+in `management/config/backend.tfvars`):
 
 ```bash
-export AWS_CONFIG_FILE=~/.aws/bb/config AWS_SHARED_CREDENTIALS_FILE=~/.aws/bb/credentials
-export AWS_PROFILE=bb-management-administrator AWS_REGION=us-east-1
+export AWS_CONFIG_FILE=~/.aws/<project>/config AWS_SHARED_CREDENTIALS_FILE=~/.aws/<project>/credentials
+export AWS_PROFILE=<project>-management-<role> AWS_REGION=us-east-1
 aws sts get-caller-identity --query Account   # must be the management account
 ```
 
@@ -148,14 +116,4 @@ aws sesv2 get-account --query '{prod:ProductionAccessEnabled,review:Details.Revi
 
 ## In a client installation
 
-- Set `ses_domain` to the client's domain, `sender` to an address under it,
-  `organization_name` to the client's name and `recipients` to their mailboxes.
-- If the contract includes the binbash copy: `binbash_recipients = ["finops@binbash.com.ar"]`
-  and `binbash_reporting_until` = the contract's end date.
-- Set `budget_name` to one of their budgets, or `""`; `untagged_tag_key` to an activated
-  cost allocation tag, or `""`.
-- Point the `aws.dns` provider and `data.terraform_remote_state.dns` at the account that
-  holds the client's public zone. If their DNS is not in Route53, set
-  `manage_dns_records = false` and hand them the `dkim_records` output.
-- If the client agreed to the binbash copy, verify `finops@binbash.com.ar` in their account
-  (see [SES sandbox](#ses-sandbox-is-production-access-needed)).
+See [RUNBOOK.md](RUNBOOK.md).

@@ -11,7 +11,8 @@ provider "aws" {
 }
 
 # The account that hosts the sending domain's public DNS zone.
-# In a client installation, point this at wherever their zone lives.
+# Keep the profile a literal "${var.project}-<account>-devops": Leverage reads it
+# from this file to refresh that account's credentials, and skips local values.
 provider "aws" {
   alias   = "dns"
   region  = var.region
@@ -45,9 +46,10 @@ terraform {
 #=============================#
 
 #
-# The sending domain's public zone (binbash.com.ar, in the shared account).
-# Not read when manage_dns_records = false, so an installation without access
-# to that state can still create the identity and get the dkim_records output.
+# The sending domain's public zone, in the same account as the aws.dns
+# provider (keep the two in step). Not read when manage_dns_records = false,
+# so an installation without access to that state can still create the
+# identity and get the dkim_records output.
 #
 data "terraform_remote_state" "dns" {
   count   = var.manage_dns_records ? 1 : 0
@@ -57,7 +59,7 @@ data "terraform_remote_state" "dns" {
     region  = var.region
     profile = "${var.project}-shared-devops"
     bucket  = "${var.project}-shared-terraform-backend"
-    key     = "shared/dns/binbash.com.ar/terraform.tfstate"
+    key     = var.dns_state_key != "" ? var.dns_state_key : "shared/dns/${var.ses_domain}/terraform.tfstate"
   }
 }
 
