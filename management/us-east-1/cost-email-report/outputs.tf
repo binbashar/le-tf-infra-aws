@@ -13,3 +13,8 @@ output "dkim_records" {
     }
   ]
 }
+
+output "lambda_function_name" {
+  description = "The report function; invoke it to send a report by hand (payload {\"month\": \"YYYY-MM\"} for another month)"
+  value       = module.cost_email_report.lambda_function_name
+}

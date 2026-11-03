@@ -60,3 +60,19 @@ data "terraform_remote_state" "dns" {
     key     = "shared/dns/binbash.com.ar/terraform.tfstate"
   }
 }
+
+#
+# The monitoring SNS topic (Slack) the errors alarm notifies, unless
+# alarm_sns_topic_arn names another one
+#
+data "terraform_remote_state" "notifications" {
+  count   = var.alarm_sns_topic_arn == "" ? 1 : 0
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = var.profile
+    bucket  = var.bucket
+    key     = "${var.environment}/notifications/terraform.tfstate"
+  }
+}
