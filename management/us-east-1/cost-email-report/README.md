@@ -13,7 +13,7 @@ lines, forecast, budget, anomalies and Savings Plans coverage.
 | Resource | Purpose |
 |---|---|
 | `aws_sesv2_email_identity.domain` | `var.ses_domain` as an SES **domain** identity with Easy DKIM (2048-bit). Any address under the domain can send |
-| `aws_route53_record.dkim` (×3) | The DKIM `CNAME` records, in the domain's public zone in `var.dns_account`, through the `aws.dns` provider |
+| `aws_route53_record.dkim` (×3) | The DKIM `CNAME` records, in the domain's public zone in the `shared` account, through the `aws.dns` provider |
 | `module.cost_email_report` | The `<project>-<env>-cost-email-report` Lambda (`src/report.py`, python3.13), its role and its log group (90 days). Async retries are off, so a failure cannot send the email twice |
 | `aws_cloudwatch_event_rule.schedule` | Runs it on `var.schedule_expression`: the 5th at 12:00 UTC |
 | `module.errors_alarm` | Fires on any function error, which means no email that month; notifies the monitoring topic (Slack) |

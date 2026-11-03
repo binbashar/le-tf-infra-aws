@@ -43,8 +43,7 @@ Add the layer to the client's `infracost.yml`, like its other layers.
 Rewrite `report.auto.tfvars`. It holds everything that belongs to the installation:
 
 ```hcl
-ses_domain  = "client.com"
-dns_account = "shared"            # the account that holds the zone
+ses_domain = "client.com"
 
 organization_name = "Client"      # shown in the subject: [Client] AWS cost report — October 2026
 sender            = "Client FinOps <finops@client.com>"
@@ -62,8 +61,9 @@ Other variables have defaults that fit most installations (see `variables.tf`):
 
 | When | Set |
 |---|---|
-| The zone's layer does not follow `<dns_account>/dns/<domain>/terraform.tfstate` | `dns_state_key` |
-| The domain's DNS is not in Route53 | `manage_dns_records = false`, `dns_account = "management"`; give the client the `dkim_records` output to add by hand |
+| The zone is in another account than `shared` | In `config.tf`, replace `shared` in the `aws.dns` provider's profile and in the `dns` remote state (profile, bucket and key). Keep them literal: Leverage reads them to refresh that account's credentials |
+| The zone's layer does not follow `shared/dns/<domain>/terraform.tfstate` | `dns_state_key` |
+| The domain's DNS is not in Route53 | `manage_dns_records = false`; give the client the `dkim_records` output to add by hand |
 | The alarm should notify another topic than the monitoring one | `alarm_sns_topic_arn` |
 | Another day or time | `schedule_expression` (UTC) |
 

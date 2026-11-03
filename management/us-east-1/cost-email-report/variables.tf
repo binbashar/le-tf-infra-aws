@@ -15,14 +15,8 @@ variable "manage_dns_records" {
   default     = true
 }
 
-variable "dns_account" {
-  description = "Account that holds the sending domain's public Route53 zone, as named in the repository (e.g. shared). Its profile and backend come from <dns_account>/config/backend.tfvars."
-  type        = string
-  default     = "shared"
-}
-
 variable "dns_state_key" {
-  description = "State key of the layer that owns the zone and outputs aws_public_zone_id. Empty: <dns_account>/dns/<ses_domain>/terraform.tfstate, the base-dns convention."
+  description = "State key of the layer that owns the zone and outputs aws_public_zone_id. Empty: shared/dns/<ses_domain>/terraform.tfstate, the base-dns convention."
   type        = string
   default     = ""
 }
