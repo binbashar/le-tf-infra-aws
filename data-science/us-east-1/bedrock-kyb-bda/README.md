@@ -4,6 +4,10 @@ This OpenTofu configuration deploys a comprehensive Know Your Business (KYB) dat
 
 ## Architecture Overview
 
+![KYB Data Automation architecture](../../../docs/diagrams/kyb-bda.png "KYB Data Automation")
+
+Editable source: [`docs/diagrams/kyb-bda.drawio`](../../../docs/diagrams/kyb-bda.drawio) (open in draw.io / diagrams.net).
+
 The KYB agent consists of the following components:
 
 1. **S3 Buckets**: Input and output buckets for document processing
