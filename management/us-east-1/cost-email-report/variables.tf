@@ -38,7 +38,7 @@ variable "sender" {
 variable "recipients" {
   description = "The installation's own mailboxes, in To. In the SES sandbox they must be under a verified domain or be verified addresses."
   type        = list(string)
-  default     = ["diego.ojeda@binbash.com.ar"]
+  default     = ["finops@binbash.com.ar"]
 
   validation {
     condition     = length(var.recipients) > 0
