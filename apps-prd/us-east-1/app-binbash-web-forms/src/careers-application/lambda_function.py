@@ -97,6 +97,10 @@ EXPERIENCE = frozenset({"0-2", "3-5", "6-9", "10+"})
 SENIORITY = frozenset({"junior", "semi-senior", "senior", "lead"})
 LOCALES = frozenset({"en", "es", "pt"})
 
+# "Have you worked at another AWS Partner?" -- and, after a "yes", which one(s) in
+# `awsPartnerName`. bb-ai-sales-tools PRD F-CAREERS-19 / F-JOBS-18.
+AWS_PARTNER = frozenset({"yes", "no"})
+
 MAX_LENGTHS = {
     "name": 120,
     "email": 254,
@@ -104,6 +108,7 @@ MAX_LENGTHS = {
     "linkedin": 500,
     "github": 500,
     "awsCerts": 500,
+    "awsPartnerName": 200,
     "message": 4000,
 }
 
@@ -222,6 +227,19 @@ def validate(payload):
     if not _in_closed_set(payload.get("locale"), LOCALES):
         failed.append("locale")
 
+    # Required on the form, optional HERE, on purpose: the form that predates this
+    # question is live until bb-ai-sales-tools ships its half, and a browser holding a
+    # cached copy keeps posting without it after that. Rejecting a missing answer
+    # would 400 those applicants and lose their message; render() prints "—" instead.
+    # A value that IS sent must still be one of the two the form offers.
+    aws_partner = payload.get("awsPartner")
+    if aws_partner is not None and not _in_closed_set(aws_partner, AWS_PARTNER):
+        failed.append("awsPartner")
+    if aws_partner == "yes":
+        partner_name = _text(payload, "awsPartnerName")
+        if not partner_name or len(partner_name) > MAX_LENGTHS["awsPartnerName"]:
+            failed.append("awsPartnerName")
+
     # `is True`, not truthy: the string "true" and the integer 1 are both a client
     # bug, and a consent checkbox that accepts a coerced value is not consent.
     if payload.get("consent") is not True:
@@ -244,7 +262,21 @@ _FIELD_LABELS = (
     ("linkedin", "LinkedIn"),
     ("github", "GitHub / portfolio"),
     ("awsCerts", "AWS certifications"),
+    ("awsPartner", "Previous AWS Partner"),
 )
+
+
+def _aws_partner_value(payload):
+    """The "Previous AWS Partner" cell: "Yes — <name>", "No", or "" -- which the
+    row loop renders as "—" -- for an application from a form that predates the
+    question. The name is dropped after a "no": validate() does not check it then,
+    so it must not reach the email either."""
+    answer = payload.get("awsPartner")
+    if answer == "yes":
+        return f"Yes — {_text(payload, 'awsPartnerName')}"
+    if answer == "no":
+        return "No"
+    return ""
 
 
 def render(payload):
@@ -255,11 +287,12 @@ def render(payload):
     a bare `"` in a name is enough to break out of an attribute. This app's own
     monorepo shipped exactly this bug once (AI Use Case Lab SES notification,
     fixed in PR #173), which is why every free-text field has its own escaping
-    test (name, email, country, linkedin, github, awsCerts, message). The
-    closed-set fields — role, experience, seniority, locale — are excluded from
-    that set of tests because validate() constrains them to a fixed handful of
-    safe literals before render() ever runs; they still pass through
-    html.escape() here, just without a dedicated adversarial test.
+    test (name, email, country, linkedin, github, awsCerts, awsPartnerName,
+    message). The closed-set fields — role, experience, seniority, locale,
+    awsPartner — are excluded from that set of tests because validate()
+    constrains them to a fixed handful of safe literals before render() ever
+    runs; they still pass through html.escape() here, just without a dedicated
+    adversarial test.
 
     The subject is a header, not markup, so it carries the raw value: escaping it
     would put `&lt;` in a recruiter's inbox.
@@ -271,6 +304,7 @@ def render(payload):
     values = {key: _text(payload, key) for key, _ in _FIELD_LABELS}
     values["experience"] = payload["experience"]
     values["seniority"] = payload["seniority"]
+    values["awsPartner"] = _aws_partner_value(payload)
     message = _text(payload, "message", keep_newlines=True)
 
     rows = []

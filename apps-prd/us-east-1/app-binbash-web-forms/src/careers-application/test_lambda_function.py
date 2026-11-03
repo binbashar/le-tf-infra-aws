@@ -171,6 +171,47 @@ def test_over_long_values_are_rejected():
     assert validate(valid_payload(linkedin="https://x.com/" + "a" * 500)) == ["linkedin"]
 
 
+def test_an_application_without_the_aws_partner_answer_is_still_valid():
+    # The form that predates the "worked at another AWS Partner?" question stays live
+    # until the bb-ai-sales-tools PR ships, and a browser holding a cached copy keeps
+    # posting without it after that. Requiring the answer here would 400 those
+    # applicants and lose their message -- the form requires it instead.
+    assert validate(valid_payload(awsPartner=None, awsPartnerName=None)) == []
+
+
+# Literals, for the same reason as FORM_SLUGS above: these are the two values the
+# form's <select> sends.
+@pytest.mark.parametrize(
+    "answer", [{"awsPartner": "no"}, {"awsPartner": "yes", "awsPartnerName": "Acme Cloud"}]
+)
+def test_both_aws_partner_answers_the_form_sends_are_accepted(answer):
+    assert validate(valid_payload(**answer)) == []
+
+
+def test_the_aws_partner_answer_is_a_closed_set():
+    # "" is the form's unselected "—" option: only a client that skipped its own
+    # validation can send it, and the field error tells that applicant what to fix.
+    assert validate(valid_payload(awsPartner="")) == ["awsPartner"]
+    assert validate(valid_payload(awsPartner="maybe")) == ["awsPartner"]
+    assert validate(valid_payload(awsPartner=True)) == ["awsPartner"]
+
+
+def test_a_yes_needs_the_partner_name():
+    assert validate(valid_payload(awsPartner="yes")) == ["awsPartnerName"]
+    assert validate(valid_payload(awsPartner="yes", awsPartnerName="   ")) == ["awsPartnerName"]
+
+
+def test_the_partner_name_is_capped_at_200_characters():
+    assert validate(valid_payload(awsPartner="yes", awsPartnerName="a" * 200)) == []
+    assert validate(valid_payload(awsPartner="yes", awsPartnerName="a" * 201)) == ["awsPartnerName"]
+
+
+def test_a_no_ignores_a_stray_partner_name():
+    # render() never prints the name after a "no", so a client that sends one anyway
+    # must not get a 400 over a field the email would drop.
+    assert validate(valid_payload(awsPartner="no", awsPartnerName="a" * 201)) == []
+
+
 def test_every_failing_field_is_reported_not_just_the_first():
     # The client renders a message per field. Bailing on the first failure would
     # make a form with three errors take three round trips to fix.
@@ -208,6 +249,8 @@ def test_html_body_carries_every_submitted_value():
             github="https://github.com/ada",
             awsCerts="https://skillsprofile.skillbuilder.aws/user/ada/certification-badges",
             message="Platform engineering, please.",
+            awsPartner="yes",
+            awsPartnerName="Acme Cloud",
         )
     )
     for expected in [
@@ -221,6 +264,8 @@ def test_html_body_carries_every_submitted_value():
         "6-9",
         "senior",
         "Platform engineering, please.",
+        "Previous AWS Partner",
+        "Yes — Acme Cloud",
     ]:
         assert expected in html
 
@@ -237,6 +282,30 @@ def test_absent_optional_fields_render_a_dash_not_the_word_none():
     assert "None" not in text
 
 
+# Exact lines, via splitlines(): a bare substring "Previous AWS Partner: No" would
+# also match a "No — Acme Cloud" that leaked the name past a "no".
+@pytest.mark.parametrize(
+    "answer,line",
+    [
+        (
+            {"awsPartner": "yes", "awsPartnerName": "Acme Cloud"},
+            "Previous AWS Partner: Yes — Acme Cloud",
+        ),
+        ({"awsPartner": "no"}, "Previous AWS Partner: No"),
+        ({}, "Previous AWS Partner: —"),  # posted by a form that predates the question
+    ],
+)
+def test_the_aws_partner_line_in_the_text_body(answer, line):
+    _, _, text = render(valid_payload(**answer))
+    assert line in text.splitlines()
+
+
+def test_a_no_drops_a_stray_partner_name_from_both_bodies():
+    _, html, text = render(valid_payload(awsPartner="no", awsPartnerName="Acme Cloud"))
+    assert "Acme Cloud" not in html
+    assert "Acme Cloud" not in text
+
+
 @pytest.mark.parametrize(
     "field", ["name", "email", "country", "linkedin", "github", "awsCerts", "message"]
 )
@@ -248,6 +317,14 @@ def test_script_tags_are_escaped_in_the_html_body(field):
     # matter here precisely because the URL check (https:// prefix + length cap)
     # does not forbid a payload like https://x.com/"><script>alert(1)</script>.
     _, html, _ = render(valid_payload(**{field: XSS}))
+    assert "<script>" not in html
+    assert "&lt;script&gt;" in html
+
+
+def test_the_partner_name_is_escaped_in_the_html_body():
+    # Not in the parametrize above: the name is only printed after a "yes", so it
+    # needs that answer beside it to reach render's output at all.
+    _, html, _ = render(valid_payload(awsPartner="yes", awsPartnerName=XSS))
     assert "<script>" not in html
     assert "&lt;script&gt;" in html
 
@@ -388,7 +465,7 @@ def test_validation_failure_returns_400_and_names_the_fields(sent):
     assert sent == []
 
 
-@pytest.mark.parametrize("field", ["role", "experience", "seniority", "locale"])
+@pytest.mark.parametrize("field", ["role", "experience", "seniority", "locale", "awsPartner"])
 def test_an_unhashable_closed_set_value_returns_400_not_500(field, sent):
     # payload.get(field) not in ROLES/EXPERIENCE/SENIORITY/LOCALES hashes the
     # value; a list is unhashable, so a naive membership check would raise
