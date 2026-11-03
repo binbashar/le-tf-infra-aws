@@ -293,3 +293,19 @@ def test_handler_raises_when_there_is_no_cost_data(aws, monkeypatch):
 def test_optional_calls_are_not_retried():
     # max_attempts would count retries after the first request, not the request
     assert report.optional_call_config.retries == {"total_max_attempts": 1}
+
+
+def test_optional_clients_receive_the_optional_config(aws, monkeypatch):
+    seen = []
+    fake_client = report.boto3.client
+
+    def recording_client(name, **kwargs):
+        seen.append((name, kwargs.get("config")))
+        return fake_client(name, **kwargs)
+
+    monkeypatch.setattr(report.boto3, "client", recording_client)
+    report.lambda_handler({}, None, today=sample.TODAY)
+    for name in ("ce", "organizations", "budgets", "billing"):
+        assert (name, report.optional_call_config) in seen
+    # The month's own costs keep the default retries
+    assert ("ce", None) in seen
