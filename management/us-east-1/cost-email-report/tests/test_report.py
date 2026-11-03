@@ -288,3 +288,8 @@ def test_handler_raises_when_there_is_no_cost_data(aws, monkeypatch):
     with pytest.raises(RuntimeError):
         report.lambda_handler({}, None, today=sample.TODAY)
     assert aws == []
+
+
+def test_optional_calls_are_not_retried():
+    # max_attempts would count retries after the first request, not the request
+    assert report.optional_call_config.retries == {"total_max_attempts": 1}

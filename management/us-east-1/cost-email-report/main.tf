@@ -19,8 +19,10 @@ module "cost_email_report" {
   handler       = "report.lambda_handler"
   runtime       = "python3.13"
   memory_size   = 256
-  timeout       = 120
-  source_path   = "src/"
+  # A normal run takes seconds. The headroom covers every optional read
+  # timing out (about 15 s each) and still reaching the send.
+  timeout     = 300
+  source_path = "src/"
 
   # No third-party dependencies to install (see "Packaging" above)
   build_in_docker              = false

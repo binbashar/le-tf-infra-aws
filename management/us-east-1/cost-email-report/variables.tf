@@ -58,8 +58,12 @@ variable "binbash_reporting_until" {
   default     = ""
 
   validation {
-    condition     = var.binbash_reporting_until == "" || can(regex("^\\d{4}-\\d{2}-\\d{2}$", var.binbash_reporting_until))
-    error_message = "Use YYYY-MM-DD."
+    condition = (
+      var.binbash_reporting_until == ""
+      ? length(var.binbash_recipients) == 0
+      : can(regex("^\\d{4}-\\d{2}-\\d{2}$", var.binbash_reporting_until)) && can(formatdate("YYYY-MM-DD", "${var.binbash_reporting_until}T00:00:00Z"))
+    )
+    error_message = "Use a real date, YYYY-MM-DD. It is required when binbash_recipients is set."
   }
 }
 
@@ -85,6 +89,11 @@ variable "top_n" {
   description = "How many services and accounts the summary lists."
   type        = number
   default     = 3
+
+  validation {
+    condition     = var.top_n >= 1 && floor(var.top_n) == var.top_n
+    error_message = "Use a whole number, 1 or more."
+  }
 }
 
 variable "anomaly_min_usd" {

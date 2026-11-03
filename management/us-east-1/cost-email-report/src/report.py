@@ -49,8 +49,9 @@ RECORD_TYPE_LABELS = {
 
 CENT = Decimal("0.005")
 
-# Optional signals must never cost the month's report: fail fast, no retries
-optional_call_config = Config(connect_timeout=5, read_timeout=10, retries={"max_attempts": 1})
+# Optional signals must never cost the month's report: fail fast, no retries.
+# total_max_attempts counts the first request; max_attempts would add a retry.
+optional_call_config = Config(connect_timeout=5, read_timeout=10, retries={"total_max_attempts": 1})
 
 
 # --- dates --------------------------------------------------------------------
