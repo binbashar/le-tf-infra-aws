@@ -13,6 +13,7 @@ linked account's spend is already included, with no per-account setup.
 | `module.aws_cost_mgmt_billing_alert_50` / `_100` | CloudWatch billing alarms at fixed USD thresholds |
 | `module.aws_cost_mgmt_budget_notif_75` / `_100` | AWS Budgets notifications at 75% / 100% of the monthly limit |
 | `aws_ce_anomaly_monitor.service` | Cost Anomaly Detection, `DIMENSIONAL` on `SERVICE` |
+| `aws_budgets_budget.workload` | One monthly budget per workload (`var.workload_budgets`), scoped to its `Purpose` tag; emails the workload's owners at 100% of actual and forecast spend |
 
 ## Key Considerations
 
