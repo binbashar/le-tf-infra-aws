@@ -1,6 +1,10 @@
 default_language_version:
     # force all unspecified python hooks to run python3
     python: python3
+    # Pin node so pre-commit builds its own node+npm via nodeenv instead of
+    # using the system ones. npm 11.12+ rejects the git+file install that
+    # pre-commit uses for node hooks (EALLOWGIT), breaking renovate-config-validator.
+    node: 22.21.1
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
