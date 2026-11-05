@@ -34,9 +34,12 @@ linked account's spend is already included, with no per-account setup.
   `budgets.amazonaws.com` and is KMS-encrypted — so alerting needs both a topic-policy and a
   key-policy change in other layers. Anomalies are still readable through
   `ce:GetAnomalies`; nothing is lost except a push notification.
-- **Notifications come from another layer.** The alarms and budgets publish to the costs SNS
-  topic read from `data.terraform_remote_state.notifications`. Changing who gets paged is a
+- **Account-wide notifications come from another layer.** The billing alarms and the
+  account budgets publish to the costs SNS topic read from
+  `data.terraform_remote_state.notifications`. Changing who gets paged for the whole bill is a
   change in `management/us-east-1/notifications`, not here.
+- **Workload budgets email their owners directly.** Their recipients are
+  `var.workload_budgets[*].emails` in this layer; they never reach the costs SNS topic.
 - **Provider is pinned `aws ~> 5.0`.** `aws_ce_anomaly_monitor` needs `>= 4.19`; the layer was
   on `~> 3.0` until then. The two binbash cost modules only require `>= 2.70.0`, so the pin is
   this layer's own choice, not a module constraint.
