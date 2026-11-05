@@ -1,0 +1,80 @@
+# Throwaway spike for #1295. Not meant to be merged: the PR that carries it stays a draft
+# and is closed once the results are recorded in docs/tofu-plan-apply/.
+name: 'Spike #1295 · leverage tofu in CI'
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/spike-1295-leverage.yml
+      - .github/spike-1295/**
+
+permissions:
+  contents: read
+
+jobs:
+  spike:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: tofu-plan
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      LAYER: apps-devstg/global/cli-test-layer
+      PLAN_LAYERS: apps-devstg/global/cli-test-layer
+      CANDIDATE_ROOT: ${{ github.workspace }}/candidate
+      TRUSTED_SCRIPTS: ${{ github.workspace }}/trusted/@bin/scripts
+      PYTHONPATH: trusted/@bin/scripts
+    steps:
+      - name: Checkout candidate
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          path: candidate
+          persist-credentials: false
+
+      - name: Checkout trusted tooling from the base revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with:
+          tofu_version: ${{ vars.OPENTOFU_VERSION || '1.13.2' }}
+          tofu_wrapper: false
+
+      - name: Install the Leverage CLI, hash-pinned
+        run: |
+          python -m pip install -q --require-hashes -r candidate/.github/spike-1295/requirements.txt
+          leverage --version
+
+      - name: Resolve plan role and layer session policy
+        id: identity
+        env:
+          TOFU_PLAN_ROLES: ${{ vars.TOFU_PLAN_ROLES }}
+        run: python -m tofu_plan_ci.workflow credentials
+
+      - name: Configure short-lived AWS plan credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
+        with:
+          role-to-assume: ${{ steps.identity.outputs.role_arn }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          role-session-name: tofu-plan-spike-${{ github.run_id }}
+          role-duration-seconds: 900
+          allowed-account-ids: ${{ steps.identity.outputs.account_id }}
+          inline-session-policy: ${{ steps.identity.outputs.session_policy }}
+          mask-aws-account-id: true
+          unset-current-credentials: true
+
+      - name: Run the experiments (exit codes only, no tofu output)
+        env:
+          COMMON_TFVARS: ${{ secrets.TOFU_PLAN_COMMON_TFVARS }}
+        run: python candidate/.github/spike-1295/leverage_spike.py
