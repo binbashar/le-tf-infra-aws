@@ -10,6 +10,14 @@
 # the Lambda runtime, which in practice means build_in_docker = true and a
 # running Docker daemon on whoever applies.
 
+locals {
+  # The two Slack secrets in shared/us-east-1/secrets-manager, by full ARN (with the
+  # 6-character suffix AWS appends). The Lambda reads them from these ARNs and the role
+  # may read only these two: a future secret sharing the name prefix is not covered.
+  slack_webhook_secret_arn   = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-m8z5y2"
+  slack_bot_token_secret_arn = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-bot-hIQKFM"
+}
+
 module "cost_report" {
   source = "github.com/binbashar/terraform-aws-lambda.git?ref=v8.0.1"
 
@@ -52,17 +60,20 @@ module "cost_report" {
     # Break the largest N threshold alerts down by account and usage type (one request each; 0: off)
     DRILLDOWN_MAX = var.report_drilldown_max
     # The Slack webhook URL for sending the report; used only without the bot below, or when the bot cannot post
-    SLACK_WEBHOOK_SECRET_ID = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-m8z5y2"
+    SLACK_WEBHOOK_SECRET_ID = local.slack_webhook_secret_arn
     # The Slack app's bot token (chat:write) and its channel: the bot posts the report and replies in its thread (empty channel: webhook only)
-    SLACK_BOT_TOKEN_SECRET_ID = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-bot-hIQKFM"
+    SLACK_BOT_TOKEN_SECRET_ID = local.slack_bot_token_secret_arn
     SLACK_CHANNEL_ID          = var.report_slack_channel_id
     # Reply in the report's thread with the cost by linked account (needs the bot; one more request)
     SHOW_ACCOUNTS = var.report_show_accounts
     # The README section linked from the message as "How to read this report"
     REPORT_HELP_URL = var.report_help_url
 
+    # Shown in the summary line; the payer account's IAM alias (management/global/base-identities).
+    # Set here so the role needs no iam:ListAccountAliases.
+    AWS_ACCOUNT_NAME = "${var.project_long}-${var.environment}"
+
     # Other parameters you may want to explore
-    # AWS_ACCOUNT_NAME      = ""
     # CREDITS_EXPIRE_DATE     = "01-15-2026"
     # CREDITS_REMAINING_AS_OF = "01-15-2026"
     # CREDITS_REMAINING       = "500"
@@ -86,8 +97,7 @@ module "cost_report" {
           "Effect": "Allow",
           "Action": [
             "ce:GetCostAndUsage",
-            "ce:GetAnomalies",
-            "iam:ListAccountAliases"
+            "ce:GetAnomalies"
           ],
           "Resource": ["*"]
         },
@@ -101,13 +111,21 @@ module "cost_report" {
           "Sid": "ReadSlackSecrets",
           "Effect": "Allow",
           "Action": "secretsmanager:GetSecretValue",
-          "Resource": "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-*"
+          "Resource": [
+            "${local.slack_webhook_secret_arn}",
+            "${local.slack_bot_token_secret_arn}"
+          ]
         },
         {
           "Sid": "DecryptKmsEncryptedSlackSecrets",
           "Effect": "Allow",
           "Action": "kms:Decrypt",
-          "Resource": "arn:aws:kms:${var.region}:${var.accounts.shared.id}:key/cef0e7ad-2dcc-4a31-89bf-c3ea0cab5a4c"
+          "Resource": "arn:aws:kms:${var.region}:${var.accounts.shared.id}:key/cef0e7ad-2dcc-4a31-89bf-c3ea0cab5a4c",
+          "Condition": {
+            "StringEquals": {
+              "kms:ViaService": "secretsmanager.${var.region}.amazonaws.com"
+            }
+          }
         }
       ]
     }
@@ -116,6 +134,8 @@ module "cost_report" {
 
   # Logs retention
   cloudwatch_logs_retention_in_days = 7
+  # The module creates the log group, so the role needs no logs:CreateLogGroup
+  attach_create_log_group_permission = false
 
   tags = local.tags
 }
