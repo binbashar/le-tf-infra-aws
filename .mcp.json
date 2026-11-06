@@ -1,21 +1,5 @@
 {
   "mcpServers": {
-    "aws-api": {
-      "args": [
-        "awslabs.aws-api-mcp-server@latest"
-      ],
-      "command": "uvx",
-      "env": {
-        "AWS_API_MCP_PROFILE_NAME": "bb-shared-devops",
-        "AWS_CONFIG_FILE": "${HOME}/.aws/bb/config",
-        "AWS_PROFILE": "bb-shared-devops",
-        "AWS_REGION": "us-east-1",
-        "AWS_SHARED_CREDENTIALS_FILE": "${HOME}/.aws/bb/credentials",
-        "FASTMCP_LOG_LEVEL": "ERROR",
-        "READ_OPERATIONS_ONLY": "true"
-      },
-      "type": "stdio"
-    },
     "aws-documentation": {
       "args": [
         "awslabs.aws-documentation-mcp-server@latest"
@@ -23,6 +7,23 @@
       "command": "uvx",
       "env": {
         "AWS_DOCUMENTATION_PARTITION": "aws"
+      },
+      "type": "stdio"
+    },
+    "aws-mcp": {
+      "args": [
+        "mcp-proxy-for-aws-cli@1.8.0",
+        "https://aws-mcp.us-east-1.api.aws/mcp",
+        "--profile",
+        "bb-shared-devops",
+        "--read-only",
+        "--metadata",
+        "AWS_REGION=us-east-1"
+      ],
+      "command": "uvx",
+      "env": {
+        "AWS_CONFIG_FILE": "${HOME}/.aws/bb/config",
+        "AWS_SHARED_CREDENTIALS_FILE": "${HOME}/.aws/bb/credentials"
       },
       "type": "stdio"
     }
