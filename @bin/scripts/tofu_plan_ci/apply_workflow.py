@@ -280,7 +280,7 @@ def run_apply(layer: str) -> int:
     workspace = Path(os.environ.get("CANDIDATE_ROOT") or _required_env("GITHUB_WORKSPACE")).resolve()
     runner_temp = Path(_required_env("RUNNER_TEMP"))
     layer_dir = workspace / layer
-    common_tfvars = workspace / "config" / "common.tfvars"
+    common_tfvars, account_config, backend_config = workflow.layer_config_files(workspace, layer)
     plan_file = runner_temp / f"tofu-apply-{slug}"
     plan_json = runner_temp / f"tofu-apply-{slug}.json"
     logs = [runner_temp / name for name in (
@@ -300,9 +300,6 @@ def run_apply(layer: str) -> int:
         common = _required_env("COMMON_TFVARS")
         common_tfvars.write_text(common.rstrip("\n") + "\n", encoding="utf-8")
         common_tfvars.chmod(0o600)
-        account = layer.split("/", 1)[0]
-        backend_config = workspace / account / "config" / "backend.tfvars"
-        account_config = workspace / account / "config" / "account.tfvars"
         process_env = workflow._write_aws_profile(
             runner_temp / "aws",
             profile=workflow.read_backend_profile(backend_config),
