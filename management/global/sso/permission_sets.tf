@@ -8,7 +8,7 @@ module "permission_sets" {
       relay_state                         = local.default_relay_state
       session_duration                    = local.default_session_duration
       tags                                = local.tags
-      inline_policy                       = ""
+      inline_policy                       = data.aws_iam_policy_document.deny_all_via_aws_mcp.json
       policy_attachments                  = ["arn:aws:iam::aws:policy/AdministratorAccess"]
       customer_managed_policy_attachments = []
     },

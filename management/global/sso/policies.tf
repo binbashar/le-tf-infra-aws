@@ -1,7 +1,41 @@
 #------------------------------------------------------------------------------
+# Agent guard: AWS managed MCP servers
+#------------------------------------------------------------------------------
+# AWS adds aws:ViaAWSMCPService = true to every request an AWS managed MCP
+# server forwards on someone's behalf: the AWS MCP Server behind the aws-mcp
+# entry in .mcp.json, the claude.ai AWS connector, and plugins that bundle it.
+# Direct API calls (console, CLI, leverage, CI) never carry the key, so this
+# statement only ever applies to AI agents. Attached to Administrator, and to
+# DevOps and DevOpsPrd through the devops document, it denies every AWS API
+# call an agent makes through such a server under those roles, reads included.
+# IAM cannot express "deny everything but reads" generically: a service prefix
+# cannot be wildcarded, so "*:Get*" is invalid. The repo's aws-mcp server runs
+# with --read-only and makes no API calls, so it is unaffected; narrow this
+# statement before dropping that flag.
+# https://docs.aws.amazon.com/agent-toolkit/latest/userguide/security_iam_id-based-policy-examples.html
+data "aws_iam_policy_document" "deny_all_via_aws_mcp" {
+  statement {
+    sid       = "DenyAllActionsViaAWSManagedMCP"
+    effect    = "Deny"
+    actions   = ["*"]
+    resources = ["*"]
+
+    condition {
+      test     = "Bool"
+      variable = "aws:ViaAWSMCPService"
+      values   = ["true"]
+    }
+  }
+}
+
+#------------------------------------------------------------------------------
 # DevOps
 #------------------------------------------------------------------------------
 data "aws_iam_policy_document" "devops" {
+  # A statement with a new sid in override_policy_documents is appended after
+  # this document's own, so the existing statements keep their positions.
+  override_policy_documents = [data.aws_iam_policy_document.deny_all_via_aws_mcp.json]
+
   statement {
     sid = "MultiServiceFullAccessCustom"
     actions = [
