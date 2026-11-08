@@ -129,8 +129,10 @@ inspect them before running and use mocks for ordinary local regression coverage
   Use file-scoped pre-commit locally. `make init-makefiles` replaces the ignored
   `@bin/makefiles` directory with an external checkout and is unnecessary for
   direct pre-commit or the version-support Make targets.
-- [Leverage CLI integration](../../.github/workflows/leverage-cli-test.yml)
-  performs init, plan, apply, and destroy. It is not a harmless lint job.
+- No CI here runs the Leverage CLI. Its init/plan/apply/destroy test against
+  `apps-devstg/global/cli-test-layer` lives in the CLI repo
+  (`binbashar/leverage`, job `integration_tests_cli_refarch`) and clones this
+  repo's `master`, so keep that layer.
 - The [version-support workflow](../../.github/workflows/version-support.yml)
   runs Python tests before its AWS phase. Forks without secrets skip the AWS
   phase; its successful job status does not prove version support was checked.
