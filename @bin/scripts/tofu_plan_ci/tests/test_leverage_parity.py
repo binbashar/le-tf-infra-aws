@@ -30,6 +30,7 @@ LEVERAGE_RULE_VERSION = "3.1.0"
 COMMON_EXAMPLE = ROOT / "config" / "common.tfvars.example"
 # Names only: tofu fmt keeps top-level assignments in column 0 and nested keys indented.
 TOP_LEVEL_ASSIGNMENT = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=")
+HEREDOC_START = re.compile(r"<<-?([A-Za-z_][A-Za-z0-9_]*)\s*$")
 
 
 def accounts() -> list[str]:
@@ -41,11 +42,19 @@ def accounts() -> list[str]:
 
 
 def top_level_names(path: Path) -> set[str]:
-    return {
-        match.group(1)
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if (match := TOP_LEVEL_ASSIGNMENT.match(line))
-    }
+    names: set[str] = set()
+    heredoc_end = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        # Heredoc bodies are string content: an `x = y` line inside one is not a variable.
+        if heredoc_end:
+            if line.strip() == heredoc_end:
+                heredoc_end = None
+            continue
+        if match := TOP_LEVEL_ASSIGNMENT.match(line):
+            names.add(match.group(1))
+        if start := HEREDOC_START.search(line):
+            heredoc_end = start.group(1)
+    return names
 
 
 class TreeMatchesTheCiTests(unittest.TestCase):
@@ -107,8 +116,8 @@ class LeverageRuleTests(unittest.TestCase):
         if created:
             common.write_text("# test_leverage_parity stand-in\n", encoding="utf-8")
         previous = Path.cwd()
-        os.chdir(ROOT / self.LAYER)
         try:
+            os.chdir(ROOT / self.LAYER)
             state = State()
             state.paths = PathsHandler(conf.load())
             with click.Context(click.Command("parity"), obj=state):
