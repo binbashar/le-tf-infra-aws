@@ -8,6 +8,7 @@ reviewed plan, and onboarded layers are applied from the PR with `/tofu apply` b
 | [`tofu-plan.md`](tofu-plan.md) | Understand and operate the plan check (`OpenTofu Plan`), and add a layer to it |
 | [`tofu-apply.md`](tofu-apply.md) | Apply a PR with `/tofu apply`, understand the gates, the lock, and the required `OpenTofu Apply` status, and onboard a layer |
 | [`tofu-ci-incident.md`](tofu-ci-incident.md) | Stop the workflows and revoke their AWS credentials in an incident |
+| [`leverage-cli-decision.md`](leverage-cli-decision.md) | See why the workflows run native `tofu` instead of `leverage tofu`, and what would change that |
 | [`tofu-plan-history.md`](tofu-plan-history.md) | See how both were rolled out: runs, supervised tests, lessons, and decisions |
 
 Code lives in [`@bin/scripts/tofu_plan_ci/`](../../@bin/scripts/tofu_plan_ci/), and the workflows
