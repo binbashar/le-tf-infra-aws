@@ -196,6 +196,7 @@ def discover_from_paths(
         "schema_version": SCHEMA_VERSION,
         "layers": sorted(selected),
         "candidate_layers": candidate_layers,
+        "deleted_layers": sorted(deleted_layers),
         "scope_reasons": sorted(scope_reasons),
         "skipped": sorted(skipped.values(), key=lambda item: (item["path"], item["reason"])),
         "blocked_reason": blocked_reason,

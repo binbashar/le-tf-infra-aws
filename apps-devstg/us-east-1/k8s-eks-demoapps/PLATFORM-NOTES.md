@@ -399,8 +399,8 @@ Built, attached, verified and taken back down on 2026-08-10. What it took:
 
 - **`apps-devstg/us-east-1/security-firewall --` renamed out of its ` --`
   exclusion** and applied — three resources: the WebACL, its logging
-  configuration and the `aws-waf-logs-wafv2-apps` log group. `infracost.yml`
-  needs the path updated to match. **It went back behind the marker afterwards**:
+  configuration and the `aws-waf-logs-wafv2-apps` log group. (The Infracost
+  config is now generated from the layer tree, so no path needs updating.) **It went back behind the marker afterwards**:
   the marker tracks the deployed set, and this is a capability held ready rather
   than one this cluster runs. The backend key does not contain the directory
   name, so the rename migrates no state either way.
@@ -424,7 +424,7 @@ protect nothing while threatening to break the tests. The remaining six run at
 priorities 0-5, **all in COUNT** — a rule is promoted to `block` only after its
 counted requests show no legitimate traffic caught.
 
-Re-attaching is: rename the layer, restore its `infracost.yml` path, apply it,
+Re-attaching is: rename the layer, apply it,
 set `waf_enabled = true`.
 
 ### Argo CD needed three things replaced, not one

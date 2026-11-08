@@ -62,7 +62,9 @@ mcp__plugin_context7_context7__query-docs(libraryId="<id>", query="<what to look
 ## Cost Analysis Tools
 
 ### Infracost Integration
-**Location:** `/infracost.yml`
+**Location:** no committed config. The project list is generated from the layer tree by
+`@bin/scripts/infracost_ci` (`make infracost-breakdown` for every active layer; the PR check
+estimates only the layers a PR affects).
 
 ```bash
 # Generate cost breakdown
