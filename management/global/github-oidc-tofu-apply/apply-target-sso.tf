@@ -170,11 +170,13 @@ data "aws_iam_policy_document" "github_actions_opentofu_apply_sso" {
   }
 
   # The same guard for the Administrator permission set's role in this account,
-  # so no IAM grant on the AWSReservedSSO_* roles ever reaches it.
+  # so no IAM grant on the AWSReservedSSO_* roles ever reaches it. The wildcard
+  # before the name also covers the aws-reserved/sso.amazonaws.com/<region>/
+  # path Identity Center uses when its instance is outside us-east-1.
   statement {
     sid       = "DenyAdministratorIdentityCenterRole"
     effect    = "Deny"
     actions   = ["iam:*"]
-    resources = ["arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_Administrator_*"]
+    resources = ["arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/aws-reserved/sso.amazonaws.com/*AWSReservedSSO_Administrator_*"]
   }
 }
