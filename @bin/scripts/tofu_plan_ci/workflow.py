@@ -81,6 +81,21 @@ def read_backend_profile(path: Path) -> str:
     raise ValueError(f"could not resolve a safe AWS profile from {path}")
 
 
+# The inputs `leverage tofu` loads for a layer, rebuilt without the CLI (#1295).
+# Leverage 3.1.0 passes every `config/*.tfvars` at the repository root and in the
+# account, and `-backend-config=<account>/config/backend.tfvars` to init.
+# test_leverage_parity keeps this list and the tree in step with that rule.
+def layer_config_files(workspace: Path, layer: str) -> tuple[Path, Path, Path]:
+    """Return (common.tfvars, account.tfvars, backend.tfvars) for a layer."""
+    account = layer.split("/", 1)[0]
+    config = workspace / account / "config"
+    return (
+        workspace / "config" / "common.tfvars",
+        config / "account.tfvars",
+        config / "backend.tfvars",
+    )
+
+
 def _layer_paths(layer: str) -> tuple[str, Path]:
     slug = layer_slug(layer)
     report_dir = Path(_required_env("RUNNER_TEMP")) / "tofu-plan-report" / slug
@@ -387,7 +402,7 @@ def run_live(layer: str) -> int:
     ).resolve()
     runner_temp = Path(_required_env("RUNNER_TEMP"))
     layer_dir = workspace / layer
-    common_tfvars = workspace / "config" / "common.tfvars"
+    common_tfvars, account_config, backend_config = layer_config_files(workspace, layer)
     plan_file = runner_temp / f"tofu-plan-{slug}"
     plan_json = runner_temp / f"tofu-plan-{slug}.json"
     init_exit = validate_exit = plan_exit = 99
@@ -410,9 +425,6 @@ def run_live(layer: str) -> int:
         common_tfvars.write_text(common.rstrip("\n") + "\n", encoding="utf-8")
         common_tfvars.chmod(0o600)
 
-        account = layer.split("/", 1)[0]
-        backend_config = workspace / account / "config" / "backend.tfvars"
-        account_config = workspace / account / "config" / "account.tfvars"
         profile = read_backend_profile(backend_config)
         process_env = _write_aws_profile(
             runner_temp / "aws",

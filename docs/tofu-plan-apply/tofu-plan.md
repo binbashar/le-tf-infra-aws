@@ -155,6 +155,9 @@ layer, about 10 seconds of it in Bedrock; the rest is waiting for the approval.
   CODEOWNERS, provider locks, `config.tf`, `config/`, `<account>/config/`, JSON configuration,
   providers, backends, module or provider sources, external data sources, provisioners, or
   `null_resource`/`terraform_data` runs validation only.
+- **Native `tofu`, not `leverage tofu`.** The job rebuilds the CLI's var-file and backend
+  arguments in `workflow.layer_config_files`, and `test_leverage_parity.py` fails if they
+  drift. Why the CLI is not used: [`leverage-cli-decision.md`](leverage-cli-decision.md).
 - **Sanitized contract.** The persisted deterministic report has resource addresses (instance keys
   replaced), action classes, changed attribute names, drift, and counts. It never has values,
   variables, state, or the binary plan; account IDs, ARNs, and credential shapes are redacted.
