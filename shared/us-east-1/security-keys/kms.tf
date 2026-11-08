@@ -41,6 +41,12 @@ data "aws_iam_policy_document" "kms" {
         "arn:aws:iam::${var.accounts.management.id}:role/bb-management-cost-report"
       ]
     }
+    # Only through Secrets Manager: a principal added here cannot decrypt arbitrary ciphertext with the key
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["secretsmanager.${var.region}.amazonaws.com"]
+    }
   }
 
   statement {

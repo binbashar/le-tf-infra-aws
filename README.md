@@ -111,22 +111,28 @@ subdirectory guidance and tool prerequisites; AWS access is configured separatel
   - [`CLAUDE.md`](CLAUDE.md) - Project instructions and context for Claude
   - [`.claude/agents/`](.claude/agents/) - Specialized agent definitions (architect, security, terraform-layer, etc.)
   - [`.claude/settings.json`](.claude/settings.json) - Enabled plugins and the `bb-ai-marketplace` tag pin
-  - [`.mcp.json`](.mcp.json) - Root-level MCP server configurations (AWS API, AWS Documentation)
+  - [`.mcp.json`](.mcp.json) - Root-level MCP server configurations (AWS MCP Server, AWS Documentation)
 
 ### Claude Code usage
 
 These configurations are discovered when you open the project in Claude Code. `CLAUDE.md` and
 `.claude/agents/` load automatically, but the **project-scoped MCP servers in `.mcp.json`
 require explicit approval before first use** — until approved they show as pending in
-`claude mcp list`. The `aws-api` server additionally needs valid credentials for the
-`bb-shared-devops` profile (`leverage aws sso login`), and is restricted to read-only AWS
-operations via `READ_OPERATIONS_ONLY`.
+`claude mcp list`. The `aws-mcp` server is the managed
+[AWS MCP Server](https://docs.aws.amazon.com/agent-toolkit/latest/userguide/getting-started-aws-mcp-server.html),
+reached through the version-pinned `mcp-proxy-for-aws-cli`, which signs requests with the
+`bb-shared-devops` profile; the server fails to start if that profile is missing from
+`~/.aws/bb/config`. It runs with `--read-only`, which hides `aws___run_script` and
+`aws___get_presigned_url`, so it serves documentation, skills and Region lookups but makes no
+AWS API calls and needs no valid credentials. Without that flag `aws___run_script` can do
+anything the DevOps role can in the shared account, so put an IAM guard in place before
+removing it: a Deny on write actions conditioned on `aws:ViaAWSMCPService`.
 
 They provide:
 - Context-aware code suggestions aligned with Leverage best practices
 - AWS- and OpenTofu/Terraform-specific assistance
 - Consistent code formatting and structure guidelines
-- Direct access to AWS documentation and the AWS API
+- Direct access to current AWS documentation and AWS skills
 
 ### Plugins
 
