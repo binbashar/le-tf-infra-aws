@@ -8,6 +8,9 @@
 # the OpenTofu write events of the manual sso applies in CloudTrail (90 days,
 # 2026-07-22 to 2026-10-13), plus their update and delete counterparts. The
 # layer makes no IAM writes: Identity Center creates the account roles itself.
+# In this (management) account, though, Identity Center reads each
+# AWSReservedSSO_* role with the caller's identity while provisioning, so the
+# role needs iam:GetRole on them (ReadIdentityCenterRolesForProvisioning).
 #
 # Writing to Identity Center is close to admin of the organization: an
 # approved PR can assign any permission set to anyone. The controls are the
@@ -151,5 +154,27 @@ data "aws_iam_policy_document" "github_actions_opentofu_apply_sso" {
       "sso:UpdatePermissionSet",
     ]
     resources = [data.aws_ssoadmin_permission_set.administrator.arn]
+  }
+
+  # Provisioning a permission set into this (management) account makes Identity
+  # Center call iam:GetRole on its AWSReservedSSO_* role as the caller (forward
+  # access session, invokedBy sso.amazonaws.com). Without it, DataScientist,
+  # FinOps, MarketplaceAIPublisher and MarketplaceAndPartnerCentral fail to
+  # provision here (PR #1321's apply, 2026-11-08). Read-only, and the only call
+  # on record; the Administrator role is excluded by the anti-lockout guard.
+  statement {
+    sid       = "ReadIdentityCenterRolesForProvisioning"
+    effect    = "Allow"
+    actions   = ["iam:GetRole"]
+    resources = ["arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/aws-reserved/sso.amazonaws.com/*"]
+  }
+
+  # The same guard for the Administrator permission set's role in this account,
+  # so no IAM grant on the AWSReservedSSO_* roles ever reaches it.
+  statement {
+    sid       = "DenyAdministratorIdentityCenterRole"
+    effect    = "Deny"
+    actions   = ["iam:*"]
+    resources = ["arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_Administrator_*"]
   }
 }
