@@ -1,0 +1,114 @@
+name: Costs | infracost v2 spike
+# TEMPORARY (#1293): probes Infracost CLI v2 / infracost/actions diff@v5 before the
+# migration is designed. Deleted before the PR leaves draft.
+on:
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  diff-v5:
+    name: diff@v5 with a generated infracost.yml
+    if: ${{ github.head_ref == '1293-infracost-improvement' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          path: head
+          persist-credentials: false
+
+      # Three layers only. tools-github-selfhosted-runners is deliberately left out:
+      # if it shows up in the output, the config file is not honoured.
+      - name: Write scoped config into both checkouts and mutate head
+        run: |
+          for dir in base head; do
+            cp "$dir/config/common.tfvars.example" "$dir/config/common.tfvars"
+            rm -f "$dir/infracost.yml"
+            cat > "$dir/infracost.yml" <<'EOF'
+          version: "0.3"
+          projects:
+            - path: shared/us-east-1/tools-vpn-server
+              terraform:
+                var_files:
+                  - ../../../config/common.tfvars
+                  - ../../config/account.tfvars
+                  - ../../config/backend.tfvars
+            - path: apps-devstg/us-east-1/elasticache-redis
+              terraform:
+                var_files:
+                  - ../../../config/common.tfvars
+                  - ../../config/account.tfvars
+                  - ../../config/backend.tfvars
+            - path: apps-devstg/us-east-1/base-network
+              terraform:
+                var_files:
+                  - ../../../config/common.tfvars
+                  - ../../config/account.tfvars
+                  - ../../config/backend.tfvars
+          EOF
+          done
+          sed -i 's/default     = "t3.micro"/default     = "t3.large"/' head/shared/us-east-1/tools-vpn-server/variables.tf
+          sed -i 's/default     = "cache.t3.small"/default     = "cache.t3.medium"/' head/apps-devstg/us-east-1/elasticache-redis/variables.tf
+          git -C head diff --stat
+
+      - name: Infracost diff@v5
+        uses: infracost/actions/diff@v5
+        env:
+          INFRACOST_CLI_LOG_LEVEL: debug
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+          base-path: base
+          head-path: head
+
+  probe-cli:
+    name: Probe the v2 CLI inside ghcr.io/infracost/ci:2
+    if: ${{ github.head_ref == '1293-infracost-improvement' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: CLI help surface
+        run: |
+          docker run --rm --entrypoint sh ghcr.io/infracost/ci:2 -c '
+            set -x
+            ls /usr/local/bin /usr/bin | grep -i infracost
+            infracost version
+            infracost --help
+            infracost scan --help
+            infracost inspect --help
+            infracost-ci --help
+            infracost-ci diff --help
+          ' || true
+      - name: Scan a scoped config with the old API key
+        env:
+          INFRACOST_CLI_AUTHENTICATION_TOKEN: ${{ secrets.INFRACOST_API_KEY }}
+        run: |
+          cp config/common.tfvars.example config/common.tfvars
+          cat > infracost.yml <<'EOF'
+          version: "0.3"
+          projects:
+            - path: shared/us-east-1/tools-vpn-server
+              terraform:
+                var_files:
+                  - ../../../config/common.tfvars
+                  - ../../config/account.tfvars
+                  - ../../config/backend.tfvars
+          EOF
+          docker run --rm -e INFRACOST_CLI_AUTHENTICATION_TOKEN -v "$PWD:/repo" -w /repo \
+            --entrypoint sh ghcr.io/infracost/ci:2 -c '
+              set -x
+              infracost scan . --json > /repo/scan.json; echo "exit=$?"
+              head -c 4000 /repo/scan.json; echo
+              infracost inspect --summary --json; echo "exit=$?"
+            ' || true
