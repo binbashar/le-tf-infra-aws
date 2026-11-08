@@ -81,6 +81,11 @@ from its secret), and no variable is set in two files. The parity test checks th
 facts on every run. It also asks an installed Leverage CLI for its arguments, when one is
 importable.
 
+The overlap check covers the committed stand-in, `config/common.tfvars.example`, not the
+`TOFU_PLAN_COMMON_TFVARS` secret the CI actually loads. The test cannot see that secret, and no CI step
+checks it, so a variable added only to the secret and also set in an account's tfvars would
+go unnoticed. Keep the secret's variables in the example.
+
 ## Revisit when
 
 Option 2 becomes worth another spike when the Leverage CLI:

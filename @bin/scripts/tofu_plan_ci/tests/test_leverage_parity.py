@@ -7,8 +7,10 @@ Leverage 3.1.0 (`leverage/modules/tf.py`, `tf_default_args` and `_init`) passes:
 - `-backend-config=<account>/config/backend.tfvars` to `init`.
 
 Two kinds of drift are possible. The tree can change: someone adds a tfvars file that
-Leverage would load and the CI would not, or defines one variable twice so that the
-unordered glob decides which value wins. Those are caught here on every run. The CLI
+Leverage would load and the CI would not, or sets one variable in two files so that the
+unordered glob decides which value wins. The common file is checked through its committed
+stand-in, `config/common.tfvars.example`; the CI's `TOFU_PLAN_COMMON_TFVARS` secret is not
+visible here. Those are caught here on every run. The CLI
 can change its rule: that is caught by `LeverageRuleTests`, which runs only where the
 Leverage CLI is importable, and by `LEVERAGE_RULE_VERSION`, which says which release
 this file was checked against.
@@ -26,7 +28,8 @@ ROOT = Path(__file__).resolve().parents[4]
 LEVERAGE_RULE_VERSION = "3.1.0"
 # The CI writes config/common.tfvars from a secret; the committed stand-in is this one.
 COMMON_EXAMPLE = ROOT / "config" / "common.tfvars.example"
-TOP_LEVEL_ASSIGNMENT = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*(?:#.*)?$")
+# Names only: tofu fmt keeps top-level assignments in column 0 and nested keys indented.
+TOP_LEVEL_ASSIGNMENT = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=")
 
 
 def accounts() -> list[str]:
@@ -37,12 +40,12 @@ def accounts() -> list[str]:
     )
 
 
-def top_level_values(path: Path) -> dict[str, str]:
-    values = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if match := TOP_LEVEL_ASSIGNMENT.match(line):
-            values[match.group(1)] = match.group(2)
-    return values
+def top_level_names(path: Path) -> set[str]:
+    return {
+        match.group(1)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if (match := TOP_LEVEL_ASSIGNMENT.match(line))
+    }
 
 
 class TreeMatchesTheCiTests(unittest.TestCase):
@@ -63,22 +66,19 @@ class TreeMatchesTheCiTests(unittest.TestCase):
                 }
                 self.assertEqual(ci, leverage)
 
-    def test_no_variable_is_set_twice_with_different_values(self):
+    def test_no_variable_is_set_in_two_files(self):
         # Leverage's glob has no defined order, so a variable set in two files would
-        # get whichever value the filesystem lists last. Keep that from mattering.
-        common = top_level_values(COMMON_EXAMPLE)
+        # get whichever value the filesystem lists last. Forbidding the overlap outright,
+        # whatever the values, keeps the order irrelevant without parsing HCL values.
         for account in accounts():
             with self.subTest(account=account):
-                seen = {name: {("common.tfvars", value)} for name, value in common.items()}
-                for path in sorted((ROOT / account / "config").glob("*.tfvars")):
-                    for name, value in top_level_values(path).items():
-                        seen.setdefault(name, set()).add((path.name, value))
-                conflicts = {
-                    name: sorted(entries)
-                    for name, entries in seen.items()
-                    if len({value for _, value in entries}) > 1
-                }
-                self.assertEqual(conflicts, {})
+                files = [COMMON_EXAMPLE, *sorted((ROOT / account / "config").glob("*.tfvars"))]
+                owners: dict[str, list[str]] = {}
+                for path in files:
+                    for name in top_level_names(path):
+                        owners.setdefault(name, []).append(path.name)
+                overlaps = {name: names for name, names in owners.items() if len(names) > 1}
+                self.assertEqual(overlaps, {})
 
     def test_backend_config_is_the_account_backend_tfvars(self):
         *_, backend = workflow.layer_config_files(ROOT, "apps-devstg/global/cli-test-layer")
@@ -99,6 +99,13 @@ class LeverageRuleTests(unittest.TestCase):
         from leverage.modules.tf import tf_default_args
         from leverage.path import PathsHandler
 
+        # The CI always writes config/common.tfvars; a checkout usually lacks it, so
+        # create a stand-in to see whether the CLI still loads it. An operator's own
+        # file is left alone, and only a file this test created is removed.
+        common = ROOT / "config" / "common.tfvars"
+        created = not common.exists()
+        if created:
+            common.write_text("# test_leverage_parity stand-in\n", encoding="utf-8")
         previous = Path.cwd()
         os.chdir(ROOT / self.LAYER)
         try:
@@ -108,11 +115,11 @@ class LeverageRuleTests(unittest.TestCase):
                 arguments = tf_default_args()
         finally:
             os.chdir(previous)
+            if created:
+                common.unlink()
 
         loaded = sorted(Path(argument.removeprefix("-var-file=")).resolve() for argument in arguments)
-        ci = sorted(
-            path.resolve() for path in workflow.layer_config_files(ROOT, self.LAYER) if path.exists()
-        )
+        ci = sorted(path.resolve() for path in workflow.layer_config_files(ROOT, self.LAYER))
         self.assertEqual(
             loaded, ci,
             f"Leverage {leverage.__version__} loads different tfvars than the CI; "
