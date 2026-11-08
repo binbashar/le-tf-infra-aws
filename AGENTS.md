@@ -86,8 +86,8 @@ as incidental cleanup; inspect automation configuration before assuming it is ex
   destroy, import, state mutation, force-unlock, or deployment scripts. If the user
   explicitly authorizes an operation, honor that scope and verify its target and
   prerequisites without asking for the same authorization again.
-- Inspect tests before executing them. `tofu test` and the Leverage CLI CI workflow
-  can create and destroy real infrastructure; the KMS tests are not fully mocked.
+- Inspect tests before executing them. `tofu test` can create and destroy real
+  infrastructure; the KMS tests are not fully mocked.
   Do not run them as an offline check. Never dispatch cloud workflows just to lint.
 
 ## Review and delivery
