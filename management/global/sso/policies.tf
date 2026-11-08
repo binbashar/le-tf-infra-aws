@@ -5,9 +5,12 @@
 # server forwards on someone's behalf: the AWS MCP Server behind the aws-mcp
 # entry in .mcp.json, the claude.ai AWS connector, and plugins that bundle it.
 # Direct API calls (console, CLI, leverage, CI) never carry the key, so this
-# statement only ever applies to AI agents. Attached to Administrator, and to
-# DevOps and DevOpsPrd through the devops document, it denies every AWS API
-# call an agent makes through such a server under those roles, reads included.
+# statement only ever applies to AI agents. It denies every AWS API call an
+# agent makes through such a server, reads included, under every permission
+# set that can write: Administrator, FinOps and MarketplaceAIPublisher (as
+# their inline policy) and DevOps, DevOpsPrd, DataScientist, GithubAutomation,
+# MarketplaceBuyer and MarketplaceAndPartnerCentral (appended to their policy
+# documents below). ReadOnly and SecurityAuditor are read-only by policy.
 # IAM cannot express "deny everything but reads" generically: a service prefix
 # cannot be wildcarded, so "*:Get*" is invalid. The repo's aws-mcp server runs
 # with --read-only and makes no API calls, so it is unaffected; narrow this
@@ -283,6 +286,9 @@ data "aws_iam_policy_document" "devops" {
 # Github Automation
 #------------------------------------------------------------------------------
 data "aws_iam_policy_document" "github_automation" {
+  # Appends the agent guard defined at the top of this file.
+  override_policy_documents = [data.aws_iam_policy_document.deny_all_via_aws_mcp.json]
+
   statement {
     sid = "NATGatewayManager"
     actions = [
@@ -298,6 +304,9 @@ data "aws_iam_policy_document" "github_automation" {
 # Marketplace Buyer
 #------------------------------------------------------------------------------
 data "aws_iam_policy_document" "marketplace_buyer" {
+  # Appends the agent guard defined at the top of this file.
+  override_policy_documents = [data.aws_iam_policy_document.deny_all_via_aws_mcp.json]
+
   statement {
     sid = "LicenseManagerReadAccess"
     actions = [
@@ -311,6 +320,9 @@ data "aws_iam_policy_document" "marketplace_buyer" {
 # Data Scientist
 #------------------------------------------------------------------------------
 data "aws_iam_policy_document" "data_scientist" {
+  # Appends the agent guard defined at the top of this file.
+  override_policy_documents = [data.aws_iam_policy_document.deny_all_via_aws_mcp.json]
+
   statement {
     sid = "Default"
     actions = [
@@ -399,6 +411,9 @@ data "aws_iam_policy_document" "data_scientist" {
 }
 
 data "aws_iam_policy_document" "marketplaceandpartnercentral" {
+  # Appends the agent guard defined at the top of this file.
+  override_policy_documents = [data.aws_iam_policy_document.deny_all_via_aws_mcp.json]
+
   statement {
     sid = "FullSupportAccess"
     actions = [
