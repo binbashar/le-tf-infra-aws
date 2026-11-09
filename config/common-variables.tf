@@ -177,3 +177,5 @@ locals {
   prm_apn_id = lookup(local.prm_product_codes, var.environment, local.prm_product_codes["default"])
 }
 
+
+# infracost full-run test
