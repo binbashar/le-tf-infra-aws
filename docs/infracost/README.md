@@ -60,9 +60,10 @@ schema `0.3`. The local make target keeps the v0.10 `breakdown` command and sche
 ## Policies
 
 CLI v2 applies the Infracost Cloud organization's FinOps and tagging policies, and a
-policy marked **blocking** fails the job. Keep them non-blocking in dashboard.infracost.io →
-Governance. Their findings still show in the PR comment. The example "FinOps tags" tagging
-policy expects `Environment` to be `Dev`/`Stage`/`Prod`, which does not match this
-repository's convention (`environment` = account name), so it stays disabled.
+policy marked **blocking** fails the job. All of them are currently **disabled** in
+dashboard.infracost.io → Governance. If one is re-enabled, make it non-blocking: its findings
+still show in the PR comment without turning the check red. The example "FinOps tags"
+tagging policy expects `Environment` to be `Dev`/`Stage`/`Prod`, which does not match this
+repository's convention (`environment` = account name).
 
 The check is not a required status check, so a red Infracost run never blocks a merge.
