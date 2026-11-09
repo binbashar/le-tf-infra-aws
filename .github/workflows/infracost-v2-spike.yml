@@ -65,37 +65,31 @@ jobs:
         env:
           INFRACOST_CLI_LOG_LEVEL: debug
         with:
-          api-key: ${{ secrets.INFRACOST_API_KEY }}
+          api-key: ${{ secrets.INFRACOST_CLI_AUTHENTICATION_TOKEN }}
           base-path: base
           head-path: head
 
   probe-cli:
-    name: Probe the v2 CLI inside ghcr.io/infracost/ci:2
+    name: infracost-ci diff in docker, comment to a file
     if: ${{ github.head_ref == '1293-infracost-improvement' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
           persist-credentials: false
-      - name: CLI help surface
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          path: head
+          persist-credentials: false
+      - name: Scoped config (one layer) and mutate head
         run: |
-          docker run --rm --entrypoint sh ghcr.io/infracost/ci:2 -c '
-            set -x
-            ls /usr/local/bin /usr/bin | grep -i infracost
-            infracost version
-            infracost --help
-            infracost scan --help
-            infracost inspect --help
-            infracost-ci --help
-            infracost-ci diff --help
-          ' || true
-      - name: Scan a scoped config with the old API key
-        env:
-          INFRACOST_CLI_AUTHENTICATION_TOKEN: ${{ secrets.INFRACOST_API_KEY }}
-        run: |
-          cp config/common.tfvars.example config/common.tfvars
-          cat > infracost.yml <<'EOF'
+          for dir in base head; do
+            cp "$dir/config/common.tfvars.example" "$dir/config/common.tfvars"
+            rm -f "$dir/infracost.yml"
+            cat > "$dir/infracost.yml" <<'EOF2'
           version: "0.3"
           projects:
             - path: shared/us-east-1/tools-vpn-server
@@ -104,11 +98,16 @@ jobs:
                   - ../../../config/common.tfvars
                   - ../../config/account.tfvars
                   - ../../config/backend.tfvars
-          EOF
-          docker run --rm -e INFRACOST_CLI_AUTHENTICATION_TOKEN -v "$PWD:/repo" -w /repo \
-            --entrypoint sh ghcr.io/infracost/ci:2 -c '
-              set -x
-              infracost scan . --json > /repo/scan.json; echo "exit=$?"
-              head -c 4000 /repo/scan.json; echo
-              infracost inspect --summary --json; echo "exit=$?"
-            ' || true
+          EOF2
+          done
+          sed -i 's/default     = "t3.micro"/default     = "t3.large"/' head/shared/us-east-1/tools-vpn-server/variables.tf
+      - name: Diff to a file
+        env:
+          INFRACOST_CLI_AUTHENTICATION_TOKEN: ${{ secrets.INFRACOST_CLI_AUTHENTICATION_TOKEN }}
+          INFRACOST_CI_DISABLE_DASHBOARD: "true"
+        run: |
+          docker run --rm -e INFRACOST_CLI_AUTHENTICATION_TOKEN -e INFRACOST_CI_DISABLE_DASHBOARD \
+            -v "$PWD:/w" -w /w ghcr.io/infracost/ci:2 diff \
+            --base-path base --head-path head --comment-out-file /w/comment.md; echo "exit=$?"
+          ls -la; echo ----- COMMENT -----; cat comment.md || true
+          docker run --rm --entrypoint sh ghcr.io/infracost/ci:2 -c 'ls -la /root /tmp 2>/dev/null; infracost-scanner --help 2>&1 | head -40' || true
