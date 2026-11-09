@@ -102,6 +102,11 @@ jobs:
             cp "$side/config/common.tfvars.example" "$side/config/common.tfvars"
           done
 
+      - name: Mark the start of the diff
+        id: started
+        if: ${{ steps.scope.outputs.has_layers == 'true' }}
+        run: echo "at=$(date -u -d '-5 seconds' +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
       - name: Infracost diff
         id: diff
         if: ${{ steps.scope.outputs.has_layers == 'true' }}
@@ -112,17 +117,25 @@ jobs:
           head-path: head
 
       # diff@v5 exposes no outputs, so the headline is read back from the PR comment it
-      # just posted (tagged `infracost-comment`). Only cost increases reach Slack.
+      # just posted. Only that comment counts: authored by github-actions[bot], opening
+      # with the `infracost-comment` marker, and written by this run. A pasted lookalike
+      # comment, or one left by an earlier run, is ignored. An estimate the run did not
+      # change is not rewritten, so it is not re-announced either. Only increases reach Slack.
       - name: Read the estimate headline
         id: headline
         if: ${{ steps.diff.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          SINCE: ${{ steps.started.outputs.at }}
           SLACK_WEBHOOK_URL_COST: ${{ secrets.SLACK_WEBHOOK_URL_COST }}
         run: |
           body=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
-            --jq '.[] | select(.body | contains("infracost-comment")) | .body' | tail -c 200000)
+            --jq '.[]
+              | select(.user.login == "github-actions[bot]")
+              | select(.body | startswith("[//]: <> (infracost-comment"))
+              | select(.updated_at >= env.SINCE)
+              | .body' | tail -c 200000)
           headline=$(printf '%s' "$body" | grep -oE 'Monthly estimate [a-z]+ by \$[0-9.,]+[kKmM]?' | tail -n1 || true)
           echo "headline=${headline}" >> "$GITHUB_OUTPUT"
           if [[ "$headline" == *increased* && -n "$SLACK_WEBHOOK_URL_COST" ]]; then
@@ -136,9 +149,15 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        # Slack mrkdwn reads &, < and > as control characters, so the title is escaped
+        # (a literal "&amp;" stays "&amp;"). A | would end the link label; it has no
+        # escape, so it becomes a look-alike.
         run: |
-          jq -n --arg text ":chart_with_upwards_trend: *${GITHUB_REPOSITORY}*: ${HEADLINE}/month in <${PR_URL}|${PR_TITLE//[<>|]/}> by ${PR_AUTHOR}" \
-            '{text: $text}' > "$SCOPE_DIR/slack.json"
+          jq -n --arg repo "$GITHUB_REPOSITORY" --arg headline "$HEADLINE" --arg url "$PR_URL" \
+            --arg title "$PR_TITLE" --arg author "$PR_AUTHOR" '
+            def esc: gsub("&"; "&amp;") | gsub("<"; "&lt;") | gsub(">"; "&gt;");
+            {text: ":chart_with_upwards_trend: *\($repo)*: \($headline)/month in <\($url)|\($title | esc | gsub("[|]"; "\u2223"))> by \($author | esc)"}
+          ' > "$SCOPE_DIR/slack.json"
 
       - name: Send the cost increase to Slack
         if: ${{ steps.headline.outputs.notify == 'true' }}

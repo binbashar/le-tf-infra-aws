@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Sequence
 
 from tofu_plan_ci.discover import (
@@ -29,11 +29,20 @@ def _github_output(name: str, value: str) -> None:
             handle.write(f"{name}={value}\n")
 
 
+def normalise_layer(layer: str) -> str:
+    """Accept ``./a/b`` and ``a/b/`` as ``a/b``, as a shell completion would type them."""
+    path = PurePosixPath(layer)
+    if path.is_absolute() or ".." in path.parts:
+        raise SystemExit(f"layer must be a repository-relative path: {layer!r}")
+    return path.as_posix()
+
+
 def run_config(args: argparse.Namespace) -> int:
     root = args.root.resolve()
     active, _ = working_tree_roots(root, account_names(root))
-    layers = active if args.all else set(args.layer)
-    unknown = sorted(set(args.layer) - active)
+    requested = {normalise_layer(layer) for layer in args.layer}
+    layers = active if args.all else requested
+    unknown = sorted(requested - active)
     if unknown:
         raise SystemExit(f"not an active layer: {', '.join(unknown)}")
     text = config.render(layers, schema=args.schema)

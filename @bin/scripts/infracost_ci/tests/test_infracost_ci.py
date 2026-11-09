@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 
 from infracost_ci import config, scope
+from infracost_ci.__main__ import normalise_layer
 from tofu_plan_ci.discover import account_names, working_tree_roots
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -49,6 +50,16 @@ class ConfigTests(unittest.TestCase):
     def test_rejects_unknown_schema(self):
         with self.assertRaises(ValueError):
             config.render(["a/x/y"], schema="9")
+
+
+class NormaliseLayerTests(unittest.TestCase):
+    def test_strips_leading_dot_and_trailing_slash(self):
+        self.assertEqual(normalise_layer("./shared/us-east-1/tools-vpn-server/"), "shared/us-east-1/tools-vpn-server")
+
+    def test_rejects_paths_outside_the_repository(self):
+        for bad in ("/etc/x", "../x", "a/../../b"):
+            with self.assertRaises(SystemExit):
+                normalise_layer(bad)
 
 
 class ScopeTests(unittest.TestCase):
