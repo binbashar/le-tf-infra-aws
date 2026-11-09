@@ -67,3 +67,5 @@ tagging policy expects `Environment` to be `Dev`/`Stage`/`Prod`, which does not 
 repository's convention (`environment` = account name).
 
 The check is not a required status check, so a red Infracost run never blocks a merge.
+
+<!-- infracost scope test -->

@@ -71,3 +71,5 @@ variable "tag_approved_ami_value" {
   description = "Set the specific tag ApprovedAMI ('true' | 'false') that identifies aws-config compliant AMIs"
   default     = "true"
 }
+
+# infracost scope test
