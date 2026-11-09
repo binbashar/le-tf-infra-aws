@@ -68,7 +68,15 @@ def run_scope(args: argparse.Namespace) -> int:
     )
     out = args.out_dir
     out.mkdir(parents=True, exist_ok=True)
-    config.write(out / "head.yml", result["head_layers"], schema=args.schema)
+    # A deleted layer is also listed at the head, where the workflow stands an empty stub
+    # in for it: with no head-side project Infracost posts no comment at all, and the
+    # removal would go unreported.
+    config.write(
+        out / "head.yml", [*result["head_layers"], *result["deleted_layers"]], schema=args.schema
+    )
+    (out / "stubs.txt").write_text(
+        "".join(f"{layer}\n" for layer in result["deleted_layers"]), encoding="utf-8"
+    )
     config.write(out / "base.yml", result["base_layers"], schema=args.schema)
     (out / "scope.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     markdown = scope.render_markdown(result)
