@@ -48,6 +48,9 @@ def render(layers: Iterable[str], *, schema: str = "0.1") -> str:
     lines.append("projects:")
     for layer in ordered:
         lines.append(f"  - path: {_quote(layer)}")
+        # Without an explicit name Infracost derives one, and a layer present on only one
+        # side of the diff came out as "main" instead of its path.
+        lines.append(f"    name: {_quote(layer)}")
         if schema == "0.1":
             lines.append("    terraform_var_files:")
             indent = "      "

@@ -40,6 +40,9 @@ class ConfigTests(unittest.TestCase):
     def test_empty_layer_set_is_an_empty_project_list(self):
         self.assertTrue(config.render([]).endswith("projects: []\n"))
 
+    def test_projects_are_named_after_their_layer(self):
+        self.assertIn('    name: "a/x/y"\n', config.render(["a/x/y"], schema="0.3"))
+
     def test_paths_with_spaces_are_quoted(self):
         self.assertIn('- path: "a/x/odd name"', config.render(["a/x/odd name"]))
 

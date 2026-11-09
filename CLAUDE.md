@@ -469,7 +469,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - Includes `terraform_fmt` hook — always run `leverage tofu format` before pushing (it is already
   recursive; the hook itself is a pre-commit hook name, unrelated to the wrapper's subcommand)
 - `pretty-format-json` hook sorts keys alphabetically and autofixes — ensure JSON files have sorted keys before pushing
-- **Infracost** workflow for cost impact analysis on PRs
+- **Infracost** workflow posts the cost change of the **active layers a PR affects** (CLI v2, `diff@v5`); a PR touching no active layer skips with a notice. Runbook: `docs/infracost/README.md`
 - Slack notifications on pipeline success/failure
 - **Dependabot and fork PRs get no Actions secrets** (the repo keeps no Dependabot secrets), so
   Infracost and the Slack notifications skip with a `::notice::` instead of failing. On such
