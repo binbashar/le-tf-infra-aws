@@ -1,6 +1,7 @@
 name: Costs | infracost v2 spike
-# TEMPORARY (#1293): probes Infracost CLI v2 / infracost/actions diff@v5 before the
-# migration is designed. Deleted before the PR leaves draft.
+# TEMPORARY (#1293): does diff@v5 accept an empty base project list (a PR that only adds
+# layers), or does it fall back to auto-detecting the whole base checkout?
+# Deleted before the PR leaves draft.
 on:
   pull_request:
     branches: [master]
@@ -10,8 +11,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  diff-v5:
-    name: diff@v5 with a generated infracost.yml
+  empty-base:
+    name: diff@v5 with an empty base config
     if: ${{ github.head_ref == '1293-infracost-improvement' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -25,89 +26,25 @@ jobs:
         with:
           path: head
           persist-credentials: false
-
-      # Three layers only. tools-github-selfhosted-runners is deliberately left out:
-      # if it shows up in the output, the config file is not honoured.
-      - name: Write scoped config into both checkouts and mutate head
-        run: |
-          for dir in base head; do
-            cp "$dir/config/common.tfvars.example" "$dir/config/common.tfvars"
-            rm -f "$dir/infracost.yml"
-            cat > "$dir/infracost.yml" <<'EOF'
-          version: "0.3"
-          projects:
-            - path: shared/us-east-1/tools-vpn-server
-              terraform:
-                var_files:
-                  - ../../../config/common.tfvars
-                  - ../../config/account.tfvars
-                  - ../../config/backend.tfvars
-            - path: apps-devstg/us-east-1/elasticache-redis
-              terraform:
-                var_files:
-                  - ../../../config/common.tfvars
-                  - ../../config/account.tfvars
-                  - ../../config/backend.tfvars
-            - path: apps-devstg/us-east-1/base-network
-              terraform:
-                var_files:
-                  - ../../../config/common.tfvars
-                  - ../../config/account.tfvars
-                  - ../../config/backend.tfvars
-          EOF
-          done
-          sed -i 's/default     = "t3.micro"/default     = "t3.large"/' head/shared/us-east-1/tools-vpn-server/variables.tf
-          sed -i 's/default     = "cache.t3.small"/default     = "cache.t3.medium"/' head/apps-devstg/us-east-1/elasticache-redis/variables.tf
-          git -C head diff --stat
-
-      - name: Infracost diff@v5
-        uses: infracost/actions/diff@v5
+      - name: Empty base, one-layer head
+        working-directory: head
         env:
-          INFRACOST_CLI_LOG_LEVEL: debug
+          PYTHONPATH: '@bin/scripts'
+        run: |
+          python3 -m infracost_ci --schema 0.3 config --layer shared/us-east-1/tools-vpn-server --out ../head.yml
+          python3 - <<'EOF'
+          import sys; sys.path.insert(0, "@bin/scripts")
+          from infracost_ci import config
+          open("../base.yml", "w").write(config.render([], schema="0.3"))
+          EOF
+          cd ..
+          for side in base head; do
+            cp "$side.yml" "$side/infracost.yml"
+            cp "$side/config/common.tfvars.example" "$side/config/common.tfvars"
+            echo "== $side"; cat "$side/infracost.yml"
+          done
+      - uses: infracost/actions/diff@a5783eb98adc93aa7a0049fce0abb06fdd30770a # v5.0.1
         with:
           api-key: ${{ secrets.INFRACOST_CLI_AUTHENTICATION_TOKEN }}
           base-path: base
           head-path: head
-
-  probe-cli:
-    name: infracost-ci diff in docker, comment to a file
-    if: ${{ github.head_ref == '1293-infracost-improvement' }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          path: base
-          persist-credentials: false
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          path: head
-          persist-credentials: false
-      - name: Scoped config (one layer) and mutate head
-        run: |
-          for dir in base head; do
-            cp "$dir/config/common.tfvars.example" "$dir/config/common.tfvars"
-            rm -f "$dir/infracost.yml"
-            cat > "$dir/infracost.yml" <<'EOF2'
-          version: "0.3"
-          projects:
-            - path: shared/us-east-1/tools-vpn-server
-              terraform:
-                var_files:
-                  - ../../../config/common.tfvars
-                  - ../../config/account.tfvars
-                  - ../../config/backend.tfvars
-          EOF2
-          done
-          sed -i 's/default     = "t3.micro"/default     = "t3.large"/' head/shared/us-east-1/tools-vpn-server/variables.tf
-      - name: Diff to a file
-        env:
-          INFRACOST_CLI_AUTHENTICATION_TOKEN: ${{ secrets.INFRACOST_CLI_AUTHENTICATION_TOKEN }}
-          INFRACOST_CI_DISABLE_DASHBOARD: "true"
-        run: |
-          docker run --rm -e INFRACOST_CLI_AUTHENTICATION_TOKEN -e INFRACOST_CI_DISABLE_DASHBOARD \
-            -v "$PWD:/w" -w /w ghcr.io/infracost/ci:2 diff \
-            --base-path base --head-path head --comment-out-file /w/comment.md; echo "exit=$?"
-          ls -la; echo ----- COMMENT -----; cat comment.md || true
-          docker run --rm --entrypoint sh ghcr.io/infracost/ci:2 -c 'ls -la /root /tmp 2>/dev/null; infracost-scanner --help 2>&1 | head -40' || true

@@ -1,122 +1,147 @@
 name: Costs | infracost
-# The GitHub Actions docs (https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#on)
-# describe other options for 'on', 'pull_request' is a good default.
+# Estimates the monthly cost change of a pull request with Infracost (CLI v2, run by
+# infracost/actions/diff@v5), scoped to the active OpenTofu layers the PR affects.
+#
+# Scope comes from @bin/scripts/infracost_ci, which reuses the layer discovery of the
+# OpenTofu plan CI: disabled `--` layers never count, a change under config/ or
+# {account}/config/ expands to every layer it feeds, a deleted layer is estimated on the
+# base side only. A PR that affects no active layer skips with a notice.
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - ready_for_review
+    types: [opened, synchronize, reopened, ready_for_review, closed]
+    # Cheap first filter; the scope step decides what actually runs.
+    paths:
+      - '**/*.tf'
+      - '**/*.tfvars'
+      - '**/*.tfvars.example'
+      - '**/.terraform.lock.hcl'
+      - 'config/**'
+      - '.github/workflows/infracost.yml'
+      - '@bin/scripts/infracost_ci/**'
+      - '@bin/scripts/tofu_plan_ci/discover.py'
 
-env:
-  # If you use private modules you'll need this env variable to use
-  # the same ssh-agent socket value across all jobs & steps.
-  SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: infracost-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
-  Infracost:
-    if: ${{ !github.event.pull_request.draft }}
+  infracost:
     name: Infracost
-    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     env:
-      TF_ROOT: . #/home/runner/work/le-tf-infra-aws/le-tf-infra-aws
-
+      SCOPE_DIR: ${{ github.workspace }}/.infracost-scope
     steps:
-      # Dependabot-triggered runs get no Actions secrets (this repo keeps no Dependabot
-      # secrets), and neither does a pull request from a fork, so the API key is empty
-      # there and `infracost breakdown` exits 1. Skip the estimate rather than fail the PR.
-      - name: Check for Infracost API key
-        id: api-key
+      # Dependabot-triggered runs and fork PRs get no Actions secrets, so the token is
+      # empty there. Skip the estimate rather than fail the PR.
+      - name: Check for an Infracost token
+        id: token
         env:
-          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+          INFRACOST_CLI_AUTHENTICATION_TOKEN: ${{ secrets.INFRACOST_CLI_AUTHENTICATION_TOKEN }}
         run: |
-          if [ -z "${INFRACOST_API_KEY}" ]; then
+          if [ -z "${INFRACOST_CLI_AUTHENTICATION_TOKEN}" ]; then
             echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No Infracost API key (Dependabot or fork PR) - Infracost did not run."
+            echo "::notice::No Infracost token (Dependabot or fork PR) - Infracost did not run."
           else
             echo "available=true" >> "$GITHUB_OUTPUT"
           fi
 
-      # If you use private modules, add an environment variable or secret
-      # called GIT_SSH_KEY with your private key, so Infracost can access
-      # private repositories (similar to how Terraform/Terragrunt does).
-      # - name: add GIT_SSH_KEY
-      #   run: |
-      #     ssh-agent -a $SSH_AUTH_SOCK
-      #     mkdir -p ~/.ssh
-      #     echo "${{ secrets.GIT_SSH_KEY }}" | tr -d '\r' | ssh-add -
-      #     ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-      - name: Setup Infracost
-        if: steps.api-key.outputs.available == 'true'
-        uses: infracost/actions/setup@v2
-        # See https://github.com/infracost/actions/tree/master/setup for other inputs
-        # If you can't use this action, see Docker images in https://infracost.io/cicd
+      # A closed PR has nothing to estimate: diff@v5 only reports the merged/closed
+      # status to the Infracost dashboard, which needs no checkout.
+      - name: Report the pull request status
+        if: ${{ steps.token.outputs.available == 'true' && github.event.action == 'closed' }}
+        uses: infracost/actions/diff@a5783eb98adc93aa7a0049fce0abb06fdd30770a # v5.0.1
         with:
-          api-key: ${{ secrets.INFRACOST_API_KEY }}
+          api-key: ${{ secrets.INFRACOST_CLI_AUTHENTICATION_TOKEN }}
 
-      # Checkout the base branch of the pull request (e.g. main/master).
-      - name: Checkout base branch
-        if: steps.api-key.outputs.available == 'true'
-        uses: actions/checkout@v2
-        with:
-          ref: '${{ github.event.pull_request.base.ref }}'
-
-      # Generate Infracost JSON file as the baseline.
-      - name: Generate Infracost cost estimate baseline
-        if: steps.api-key.outputs.available == 'true'
-        run: |
-          pwd
-          mv ${TF_ROOT}/config/common.tfvars.example ${TF_ROOT}/config/common.tfvars
-          infracost breakdown --config-file=${TF_ROOT}/infracost.yml \
-                              --format=json \
-                              --out-file=/tmp/infracost-base.json
-
-      # Checkout the current PR branch so we can create a diff.
       - name: Checkout PR branch
-        if: steps.api-key.outputs.available == 'true'
-        uses: actions/checkout@v2
-
-      # Generate an Infracost diff and save it to a JSON file.
-      - name: Generate Infracost diff
-        if: steps.api-key.outputs.available == 'true'
-        run: |
-          mv ${TF_ROOT}/config/common.tfvars.example ${TF_ROOT}/config/common.tfvars
-          infracost diff --config-file=${TF_ROOT}/infracost.yml \
-                              --format=json \
-                              --compare-to=/tmp/infracost-base.json \
-                              --out-file=/tmp/infracost.json
-
-      # Posts a comment to the PR using the 'update' behavior.
-      # This creates a single comment and updates it. The "quietest" option.
-      # The other valid behaviors are:
-      #   delete-and-new - Delete previous comments and create a new one.
-      #   hide-and-new - Minimize previous comments and create a new one.
-      #   new - Create a new cost estimate comment on every push.
-      # See https://www.infracost.io/docs/features/cli_commands/#comment-on-pull-requests for other options.
-      - name: Post Infracost comment
-        if: steps.api-key.outputs.available == 'true'
-        run: |
-          infracost comment github --path=/tmp/infracost.json \
-                                   --repo=$GITHUB_REPOSITORY \
-                                   --github-token=${{github.token}} \
-                                   --pull-request=${{github.event.pull_request.number}} \
-                                   --behavior=update
-
-      - name: Generate Slack message
-        id: infracost-slack
-        if: steps.api-key.outputs.available == 'true'
-        run: |
-          echo "::set-output name=slack-message::$(infracost output --path=/tmp/infracost.json --format=slack-message --show-skipped)"
-          echo "::set-output name=diffTotalMonthlyCost::$(jq '(.diffTotalMonthlyCost // 0) | tonumber' /tmp/infracost.json)"
-
-      - name: Send cost estimate to Slack
-        uses: slackapi/slack-github-action@v1
-        if: ${{ steps.api-key.outputs.available == 'true' && steps.infracost-slack.outputs.diffTotalMonthlyCost > 0 }} # Only post to Slack if there is a cost diff
+        if: ${{ steps.token.outputs.available == 'true' && github.event.action != 'closed' }}
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
-          payload: ${{ steps.infracost-slack.outputs.slack-message }}
+          path: head
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Scope to the affected layers
+        id: scope
+        if: ${{ steps.token.outputs.available == 'true' && github.event.action != 'closed' }}
+        working-directory: head
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_COST }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-          SLACK_CI_CHANNEL: ${{ secrets.SLACK_CI_CHANNEL_COST }}
+          PYTHONPATH: '@bin/scripts'
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 -m infracost_ci --schema 0.3 scope \
+            --base "$BASE_SHA" --head "$HEAD_SHA" --out-dir "$SCOPE_DIR"
+          if ! grep -q '^has_layers=true$' "$GITHUB_OUTPUT"; then
+            echo "::notice::No active OpenTofu layer is affected by this PR - Infracost did not run."
+          fi
+
+      - name: Checkout base branch
+        if: ${{ steps.scope.outputs.has_layers == 'true' }}
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+
+      # Infracost reads infracost.yml from the root of each checkout. common.tfvars is
+      # gitignored; the example carries the same keys with placeholder values.
+      - name: Install the scoped configs
+        if: ${{ steps.scope.outputs.has_layers == 'true' }}
+        run: |
+          for side in base head; do
+            cp "$SCOPE_DIR/$side.yml" "$side/infracost.yml"
+            cp "$side/config/common.tfvars.example" "$side/config/common.tfvars"
+          done
+
+      - name: Infracost diff
+        id: diff
+        if: ${{ steps.scope.outputs.has_layers == 'true' }}
+        uses: infracost/actions/diff@a5783eb98adc93aa7a0049fce0abb06fdd30770a # v5.0.1
+        with:
+          api-key: ${{ secrets.INFRACOST_CLI_AUTHENTICATION_TOKEN }}
+          base-path: base
+          head-path: head
+
+      # diff@v5 exposes no outputs, so the headline is read back from the PR comment it
+      # just posted (tagged `infracost-comment`). Only cost increases reach Slack.
+      - name: Read the estimate headline
+        id: headline
+        if: ${{ steps.diff.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SLACK_WEBHOOK_URL_COST: ${{ secrets.SLACK_WEBHOOK_URL_COST }}
+        run: |
+          body=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+            --jq '.[] | select(.body | contains("infracost-comment")) | .body' | tail -c 200000)
+          headline=$(printf '%s' "$body" | grep -oE 'Monthly estimate [a-z]+ by \$[0-9.,]+[kKmM]?' | tail -n1 || true)
+          echo "headline=${headline}" >> "$GITHUB_OUTPUT"
+          if [[ "$headline" == *increased* && -n "$SLACK_WEBHOOK_URL_COST" ]]; then
+            echo "notify=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build the Slack message
+        if: ${{ steps.headline.outputs.notify == 'true' }}
+        env:
+          HEADLINE: ${{ steps.headline.outputs.headline }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          jq -n --arg text ":chart_with_upwards_trend: *${GITHUB_REPOSITORY}*: ${HEADLINE}/month in <${PR_URL}|${PR_TITLE//[<>|]/}> by ${PR_AUTHOR}" \
+            '{text: $text}' > "$SCOPE_DIR/slack.json"
+
+      - name: Send the cost increase to Slack
+        if: ${{ steps.headline.outputs.notify == 'true' }}
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_COST }}
+          webhook-type: incoming-webhook
+          payload-file-path: ${{ env.SCOPE_DIR }}/slack.json
