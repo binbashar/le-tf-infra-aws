@@ -16,7 +16,7 @@ estimating is offline HCL parsing with no AWS credentials.
 | A file inside an active layer | that layer |
 | `config/**` (project-wide inputs) | every active layer, like today's full run |
 | `{account}/config/**` | every active layer of that account |
-| A layer deleted by the PR | that layer on the base side only, so its cost shows as removed |
+| A layer deleted by the PR | that layer at the base, against an empty stand-in at the head, so its cost shows as removed |
 | A layer added by the PR | that layer on the head side only |
 | A disabled layer (path segment ending in `--`) | nothing, listed as skipped |
 | The check itself (workflow or `infracost_ci`) | the smoke layer `shared/us-east-1/tools-vpn-server` |
@@ -51,7 +51,9 @@ schema `0.3`. The local make target keeps the v0.10 `breakdown` command and sche
   the old `INFRACOST_API_KEY`, is rejected by CLI v2 with "CI v2 needs a CLI v2 token".
 - **`SLACK_WEBHOOK_URL_COST`**: when the estimate **increases**, a one-line message with the
   PR link goes to the cost channel. `diff@v5` exposes no outputs, so the headline is read
-  back from the PR comment it posts.
+  back from the PR comment it posts. Infracost rewrites that comment on every run, so the
+  workflow compares it with the headline already on the PR and stays quiet when a push
+  leaves the estimate unchanged.
 - **Dependabot and fork PRs** get no secrets, so the job skips with a notice. A green
   check there means "did not run", not "passed".
 - When a PR closes, the workflow reports its merged or closed status to the Infracost
