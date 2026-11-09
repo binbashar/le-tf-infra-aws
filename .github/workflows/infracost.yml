@@ -24,14 +24,16 @@ permissions:
   contents: read
   pull-requests: write
 
-concurrency:
-  group: infracost-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
 jobs:
   infracost:
     name: Infracost
     if: ${{ !github.event.pull_request.draft }}
+    # Job-level, not workflow-level: a run whose job is skipped (a draft PR, or the
+    # synchronize event racing ready_for_review) never joins the group, so it cannot
+    # cancel the run that does the work.
+    concurrency:
+      group: infracost-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
