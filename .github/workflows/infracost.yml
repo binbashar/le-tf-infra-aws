@@ -93,7 +93,9 @@ jobs:
           persist-credentials: false
 
       # Infracost reads infracost.yml from the root of each checkout. common.tfvars is
-      # gitignored; the example carries the same keys with placeholder values.
+      # gitignored; the example carries the same keys with placeholder values. A layer the
+      # PR deletes gets an empty stand-in at the head, so it is estimated as removed rather
+      # than leaving the head with no project, in which case Infracost posts nothing.
       - name: Install the scoped configs
         if: ${{ steps.scope.outputs.has_layers == 'true' }}
         run: |
@@ -101,6 +103,28 @@ jobs:
             cp "$SCOPE_DIR/$side.yml" "$side/infracost.yml"
             cp "$side/config/common.tfvars.example" "$side/config/common.tfvars"
           done
+          while IFS= read -r layer; do
+            [ -n "$layer" ] || continue
+            mkdir -p "head/$layer"
+            : > "head/$layer/infracost-deleted-layer.tf"
+          done < "$SCOPE_DIR/stubs.txt"
+
+      # The headline already on the PR, if any. Infracost rewrites its comment on every
+      # run, so without this a push that leaves the estimate unchanged re-announces it.
+      - name: Read the previous estimate headline
+        id: previous
+        if: ${{ steps.scope.outputs.has_layers == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          body=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+            --jq '.[]
+              | select(.user.login == "github-actions[bot]")
+              | select(.body | startswith("[//]: <> (infracost-comment"))
+              | .body' | tail -c 200000)
+          headline=$(printf '%s' "$body" | grep -oE 'Monthly estimate [a-z]+ by \$[0-9.,]+[kKmM]?' | tail -n1 || true)
+          echo "headline=${headline}" >> "$GITHUB_OUTPUT"
 
       - name: Mark the start of the diff
         id: started
@@ -119,8 +143,8 @@ jobs:
       # diff@v5 exposes no outputs, so the headline is read back from the PR comment it
       # just posted. Only that comment counts: authored by github-actions[bot], opening
       # with the `infracost-comment` marker, and written by this run. A pasted lookalike
-      # comment, or one left by an earlier run, is ignored. An estimate the run did not
-      # change is not rewritten, so it is not re-announced either. Only increases reach Slack.
+      # comment, or one left by an earlier run, is ignored. Only an increase reaches Slack,
+      # and only when its headline differs from the one already on the PR.
       #
       # The comment carries no run id, so "written by this run" is a time window opening
       # 5 s before the diff (slack for runner/API clock skew). No earlier run can write in
@@ -135,6 +159,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           SINCE: ${{ steps.started.outputs.at }}
+          PREVIOUS: ${{ steps.previous.outputs.headline }}
           SLACK_WEBHOOK_URL_COST: ${{ secrets.SLACK_WEBHOOK_URL_COST }}
         run: |
           body=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
@@ -145,8 +170,10 @@ jobs:
               | .body' | tail -c 200000)
           headline=$(printf '%s' "$body" | grep -oE 'Monthly estimate [a-z]+ by \$[0-9.,]+[kKmM]?' | tail -n1 || true)
           echo "headline=${headline}" >> "$GITHUB_OUTPUT"
-          if [[ "$headline" == *increased* && -n "$SLACK_WEBHOOK_URL_COST" ]]; then
+          if [[ "$headline" == *increased* && "$headline" != "$PREVIOUS" && -n "$SLACK_WEBHOOK_URL_COST" ]]; then
             echo "notify=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$headline" == *increased* && "$headline" == "$PREVIOUS" ]]; then
+            echo "::notice::Estimate unchanged since the last run (${headline}) - Slack not notified again."
           fi
 
       - name: Build the Slack message
