@@ -21,9 +21,19 @@ init-makefiles: ## initialize makefiles
 -include ${MAKEFILES_DIR}/release-mgmt/release.mk
 -include ${MAKEFILES_DIR}/terraform1/terraform1-root-context.mk
 
-infracost-breakdown: ## Infracost breakdown
+# The project list is generated from the layer tree (every active layer, never a `--` one)
+# instead of being hand-maintained; see @bin/scripts/infracost_ci.
+INFRACOST_CONFIG := .infracost.generated.yml
+
+# config/common.tfvars is gitignored and holds the real project values. It is never created
+# here from the example: a placeholder copy would be read by every later leverage command.
+infracost-breakdown: ## Infracost breakdown of every active layer
+	@test -f config/common.tfvars || { \
+		echo "config/common.tfvars is missing: create it from config/common.tfvars.example first."; \
+		exit 1; }
+	PYTHONPATH=@bin/scripts python3 -m infracost_ci config --all --out $(INFRACOST_CONFIG)
 	infracost breakdown \
-		--config-file=./infracost.yml \
+		--config-file=$(INFRACOST_CONFIG) \
 		--show-skipped
 
 # The scanner is the one AWS-touching thing here that does not run through the leverage

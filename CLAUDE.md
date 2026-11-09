@@ -441,7 +441,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 
 ### Project Configuration Files
 - **`build.env`** (repo root): `PROJECT=bb`. There is no toolbox image tag: the current Leverage CLI runs the `tofu` binary on PATH, or the one named by `TF_BINARY` in a `build.env`, which a layer's own `build.env` can override
-- **`infracost.yml`**: Defines cost analysis entries for every layer across all accounts
+- **Infracost config**: not committed. `@bin/scripts/infracost_ci` generates it from the layer tree (every active layer, never a `--` one), so a new or renamed layer needs no cost-config edit
 - **`renovate.json`**: Automated dependency updates
 - **`.pre-commit-config.yaml`**: Enforces `terraform_fmt`, JSON validation, trailing whitespace, private key detection
 - **`.claude/settings.json`**: Enabled Claude Code plugins and the `bb-ai-marketplace` marketplace pin. Always pin `extraKnownMarketplaces.*.source.ref` to a **released tag**, never a branch or a bare commit — the tag is the public contract the marketplace repo maintains. Adopting a new plugin version is a deliberate bump of that ref, and takes effect only after a Claude Code restart
@@ -469,7 +469,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - Includes `terraform_fmt` hook — always run `leverage tofu format` before pushing (it is already
   recursive; the hook itself is a pre-commit hook name, unrelated to the wrapper's subcommand)
 - `pretty-format-json` hook sorts keys alphabetically and autofixes — ensure JSON files have sorted keys before pushing
-- **Infracost** workflow for cost impact analysis on PRs
+- **Infracost** workflow posts the cost change of the **active layers a PR affects** (CLI v2, `diff@v5`); a PR touching no active layer skips with a notice. Runbook: `docs/infracost/README.md`
 - Slack notifications on pipeline success/failure
 - **Dependabot and fork PRs get no Actions secrets** (the repo keeps no Dependabot secrets), so
   Infracost and the Slack notifications skip with a `::notice::` instead of failing. On such
