@@ -10,6 +10,14 @@
 # the Lambda runtime, which in practice means build_in_docker = true and a
 # running Docker daemon on whoever applies.
 
+locals {
+  # The two Slack secrets in shared/us-east-1/secrets-manager, by full ARN (with the
+  # 6-character suffix AWS appends). The Lambda reads them from these ARNs and the role
+  # may read only these two: a future secret sharing the name prefix is not covered.
+  slack_webhook_secret_arn   = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-m8z5y2"
+  slack_bot_token_secret_arn = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-bot-hIQKFM"
+}
+
 module "cost_report" {
   source = "github.com/binbashar/terraform-aws-lambda.git?ref=v8.0.1"
 
@@ -18,9 +26,10 @@ module "cost_report" {
   description   = "Send account daily cost data to Slack"
   handler       = "handler.lambda_handler"
   runtime       = "python3.13"
-  memory_size   = 128
-  timeout       = 10
-  source_path   = "src/"
+  # 128 MB left little headroom (104 MB used with block E); CPU scales with memory too
+  memory_size = 256
+  timeout     = 60
+  source_path = "src/"
 
   # No third-party dependencies to install (see "Packaging" above)
   build_in_docker = false
@@ -32,11 +41,39 @@ module "cost_report" {
     LENGTH = var.report_items_length
     # How to group the items in the report
     GROUP_BY = var.report_group_by
-    # The Slack webhook URL for sending the report
-    SLACK_WEBHOOK_SECRET_ID = "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-m8z5y2"
+    # List any item whose cost moved at least this much (USD), even outside the top LENGTH
+    MOVER_MIN_USD = var.report_mover_min_usd
+    # Cost Explorer in the payer account returns the whole Organization's bill
+    REPORT_SCOPE = "the AWS Organization"
+    # The AWS Budget shown in the month summary (empty: none)
+    BUDGET_NAME = var.report_budget_name
+    # Alert on an item that moved by both this much (USD) and this much (%) vs. a typical day
+    ALERT_MIN_USD = var.report_alert_min_usd
+    ALERT_MIN_PCT = var.report_alert_min_pct
+    # Slack mention added to alerts, e.g. "<!here>" or "<!subteam^S0123>" (empty: none)
+    ALERT_MENTION = var.report_alert_mention
+    # "full": the full report every day; "compact": one line on quiet days, full report on alerts and on FULL_REPORT_WEEKDAY
+    DAILY_MODE          = var.report_daily_mode
+    FULL_REPORT_WEEKDAY = var.report_full_report_weekday
+    # Show Cost Anomaly Detection anomalies without feedback that ended in the last N days (0: off)
+    ANOMALY_DAYS = var.report_anomaly_days
+    # Break the largest N threshold alerts down by account and usage type (one request each; 0: off)
+    DRILLDOWN_MAX = var.report_drilldown_max
+    # The Slack webhook URL for sending the report; used only without the bot below, or when the bot cannot post
+    SLACK_WEBHOOK_SECRET_ID = local.slack_webhook_secret_arn
+    # The Slack app's bot token (chat:write) and its channel: the bot posts the report and replies in its thread (empty channel: webhook only)
+    SLACK_BOT_TOKEN_SECRET_ID = local.slack_bot_token_secret_arn
+    SLACK_CHANNEL_ID          = var.report_slack_channel_id
+    # Reply in the report's thread with the cost by linked account (needs the bot; one more request)
+    SHOW_ACCOUNTS = var.report_show_accounts
+    # The README section linked from the message as "How to read this report"
+    REPORT_HELP_URL = var.report_help_url
+
+    # Shown in the summary line; the payer account's IAM alias (management/global/base-identities).
+    # Set here so the role needs no iam:ListAccountAliases.
+    AWS_ACCOUNT_NAME = "${var.project_long}-${var.environment}"
 
     # Other parameters you may want to explore
-    # AWS_ACCOUNT_NAME      = ""
     # CREDITS_EXPIRE_DATE     = "01-15-2026"
     # CREDITS_REMAINING_AS_OF = "01-15-2026"
     # CREDITS_REMAINING       = "500"
@@ -60,21 +97,35 @@ module "cost_report" {
           "Effect": "Allow",
           "Action": [
             "ce:GetCostAndUsage",
-            "iam:ListAccountAliases"
+            "ce:GetAnomalies"
           ],
           "Resource": ["*"]
         },
         {
-          "Sid": "ReadSlackWebhookSecret",
+          "Sid": "ReadBudget",
           "Effect": "Allow",
-          "Action": "secretsmanager:GetSecretValue",
-          "Resource": "arn:aws:secretsmanager:${var.region}:${var.accounts.shared.id}:secret:/notifications/slack/cost-reports-*"
+          "Action": "budgets:ViewBudget",
+          "Resource": "arn:aws:budgets::${var.accounts.management.id}:budget/${var.report_budget_name}"
         },
         {
-          "Sid": "DecryptKmsEncryptedSlackWebhookSecret",
+          "Sid": "ReadSlackSecrets",
+          "Effect": "Allow",
+          "Action": "secretsmanager:GetSecretValue",
+          "Resource": [
+            "${local.slack_webhook_secret_arn}",
+            "${local.slack_bot_token_secret_arn}"
+          ]
+        },
+        {
+          "Sid": "DecryptKmsEncryptedSlackSecrets",
           "Effect": "Allow",
           "Action": "kms:Decrypt",
-          "Resource": "arn:aws:kms:${var.region}:${var.accounts.shared.id}:key/cef0e7ad-2dcc-4a31-89bf-c3ea0cab5a4c"
+          "Resource": "arn:aws:kms:${var.region}:${var.accounts.shared.id}:key/cef0e7ad-2dcc-4a31-89bf-c3ea0cab5a4c",
+          "Condition": {
+            "StringEquals": {
+              "kms:ViaService": "secretsmanager.${var.region}.amazonaws.com"
+            }
+          }
         }
       ]
     }
@@ -83,6 +134,8 @@ module "cost_report" {
 
   # Logs retention
   cloudwatch_logs_retention_in_days = 7
+  # The module creates the log group, so the role needs no logs:CreateLogGroup
+  attach_create_log_group_permission = false
 
   tags = local.tags
 }
@@ -92,7 +145,7 @@ module "cost_report" {
 #
 resource "aws_cloudwatch_event_rule" "lambda_schedule" {
   name                = "${var.project}-${var.environment}-cost-report-helper-daily"
-  description         = "Trigger the cost-report-helper every day at 6AM UTC"
+  description         = "Trigger the cost-report-helper on ${var.report_run_schedule} (UTC)"
   schedule_expression = var.report_run_schedule
 }
 
@@ -108,4 +161,26 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   function_name = module.cost_report.lambda_function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.lambda_schedule.arn
+}
+
+#
+# Alarm when a run fails -- out of memory, timeout or any exception -- since
+# that day's report then never reaches Slack. Notifies the costs SNS topic.
+#
+resource "aws_cloudwatch_metric_alarm" "errors" {
+  alarm_name          = "${var.project}-${var.environment}-cost-report-errors"
+  alarm_description   = "The cost report Lambda failed: that day's report did not go out. Check its CloudWatch logs."
+  namespace           = "AWS/Lambda"
+  metric_name         = "Errors"
+  dimensions          = { FunctionName = module.cost_report.lambda_function_name }
+  statistic           = "Sum"
+  period              = 3600
+  evaluation_periods  = 1
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  threshold           = 1
+  # The function runs once a day: the hours without a run are not a failure
+  treat_missing_data = "notBreaching"
+  alarm_actions      = [data.terraform_remote_state.notifications.outputs.sns_topic_arn_costs]
+
+  tags = local.tags
 }

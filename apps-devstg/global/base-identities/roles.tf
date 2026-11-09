@@ -254,58 +254,6 @@ module "iam_assumable_role_service_trustedadvisor" {
 
 }
 
-#
-# Assumable Role: Costs Explorer access
-#
-module "iam_assumable_role_lambda_costs_explorer_access" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
-
-  trusted_role_arns = [
-    "arn:aws:iam::${var.accounts.shared.id}:root",
-    "arn:aws:iam::${var.accounts.shared.id}:role/monthly-services-usage-lambdarole"
-  ]
-
-  create_role = true
-  role_name   = "LambdaCostsExplorerAccess"
-  role_path   = "/"
-
-  #
-  # MFA setup
-  #
-  role_requires_mfa    = false
-  mfa_age              = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
-  max_session_duration = 10800 # Max age of the session (in seconds) when assuming roles
-  custom_role_policy_arns = [
-    aws_iam_policy.lambda_costs_explorer_access.arn,
-  ]
-
-}
-
-#
-# Assumable Role: north.cloud
-#
-module "iam_assumable_role_north_cloud_access" {
-  source = "github.com/binbashar/terraform-aws-iam.git//modules/iam-assumable-role?ref=v5.60.0"
-
-  trusted_role_arns = [
-    "arn:aws:iam::${var.external_accounts.north_cloud.aws_account_id}:root"
-  ]
-
-  create_role = true
-  role_name   = "NorthCostAndUsageRole"
-  role_path   = "/"
-
-  #
-  # MFA setup
-  #
-  role_requires_mfa    = false
-  mfa_age              = 86400 # Maximum CLI/API session duration in seconds between 3600 and 43200
-  max_session_duration = 10800 # Max age of the session (in seconds) when assuming roles
-  custom_role_policy_arns = [
-    aws_iam_policy.north_cloud_tool_access.arn,
-  ]
-
-}
 
 #
 # Cross-Account Role: Atlantis

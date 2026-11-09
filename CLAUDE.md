@@ -433,14 +433,14 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
     Config, CloudTrail, Inspector and Macie are **not** among them.
 
 ### Version Constraints
-- **OpenTofu**: >= 1.0.9 to ~> 1.6 (varies by layer; primary IaC tool)
+- **OpenTofu**: **1.13.2**, locally and in CI (`OPENTOFU_VERSION`). Layers still declare `required_version` (`>= 1.0.9` to `~> 1.6`), but **OpenTofu 1.12+ does not enforce `terraform { required_version }`**: it is kept only for Terraform compatibility, and OpenTofu constraints go in the new `language` block. A constraint that excludes 1.13 therefore neither fails nor protects anything. Only binaries older than 1.12 still enforce it.
 - **AWS Provider**: ~> 3.0 to ~> 6.0 (most layers use ~> 5.0 or ~> 4.10)
 - **AWSCC Provider**: ~> 1.0 (used in Bedrock/AI layers under data-science/)
 - **Kubernetes Provider**: ~> 2.11 to ~> 2.23
 - **Helm Provider**: ~> 2.11 to ~> 2.13
 
 ### Project Configuration Files
-- **`build.env`** (repo root): `PROJECT=bb`, `TERRAFORM_IMAGE_TAG=1.9.1-tofu-0.3.0` -- configures the Leverage CLI Docker image
+- **`build.env`** (repo root): `PROJECT=bb`. There is no toolbox image tag: the current Leverage CLI runs the `tofu` binary on PATH, or the one named by `TF_BINARY` in a `build.env`, which a layer's own `build.env` can override
 - **`infracost.yml`**: Defines cost analysis entries for every layer across all accounts
 - **`renovate.json`**: Automated dependency updates
 - **`.pre-commit-config.yaml`**: Enforces `terraform_fmt`, JSON validation, trailing whitespace, private key detection
@@ -472,8 +472,12 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - **Infracost** workflow for cost impact analysis on PRs
 - Slack notifications on pipeline success/failure
 - **Dependabot and fork PRs get no Actions secrets** (the repo keeps no Dependabot secrets), so
-  Infracost, `test_leverage` and the Slack notifications skip with a `::notice::` instead of
-  failing. On such a PR a green Infracost or `test_leverage` means "did not run", not "passed".
+  Infracost and the Slack notifications skip with a `::notice::` instead of failing. On such
+  a PR a green Infracost means "did not run", not "passed".
+- **No CI here exercises the Leverage CLI itself** — `tofu-plan.yml`/`tofu-apply.yml` call
+  native `tofu`. The CLI-against-ref-arch test (`apps-devstg/global/cli-test-layer`) lives in
+  the CLI repo (`binbashar/leverage`, job `integration_tests_cli_refarch`), which clones this
+  repo's `master` — so keep that layer, even though nothing in this repo applies it.
 - PR template at `.github/PULL_REQUEST_TEMPLATE.md` uses What? / Why? / References format
 
 ### @claude on PRs

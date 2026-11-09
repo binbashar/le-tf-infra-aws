@@ -1,6 +1,12 @@
 default_language_version:
     # force all unspecified python hooks to run python3
     python: python3
+    # Default for node hooks that do not set their own language_version, so
+    # pre-commit builds an isolated node+npm via nodeenv instead of using the
+    # system ones (system npm 11.12 rejected pre-commit's git+file install with
+    # EALLOWGIT). renovate-config-validator sets `language_version: lts`
+    # upstream, so this pin does not apply to it.
+    node: 24.22.2
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -26,7 +32,7 @@ repos:
       - id: terraform_fmt
 #      - id: terraform_validate
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 37.419.1
+    rev: 44.221.0
     hooks:
       - id: renovate-config-validator
 

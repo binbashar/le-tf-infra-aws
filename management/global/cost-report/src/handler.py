@@ -3,43 +3,537 @@
 #
 from collections import defaultdict
 import boto3
+import botocore.config
+import calendar
 import datetime
 import json
 import os
-import sys
+import statistics
+import time
 import urllib.error
 import urllib.request
 
-n_days = 7
-today = datetime.datetime.today()
-yesterday = today - datetime.timedelta(days=1)
-week_ago = today - datetime.timedelta(days=n_days)
+# Yesterday is compared against the average of the baseline_days days before
+# it, so the query covers baseline_days + 1 days; the sparkline shows the last
+# spark_days of them.
+baseline_days = 7
+n_days = baseline_days + 1
+spark_days = 7
+
+# Drops are judged on the day before yesterday (complete, unlike yesterday)
+# against the baseline_days before *it*, so the query reaches one day further
+# back than the table shows.
+history_days = n_days + 1
+
+# A service whose every day stays under half a cent prints as $0.00 all week:
+# it is folded into the "Other" row instead of taking a line of its own.
+negligible_usd = 0.005
+
+excluded_record_types = ["Credit", "Refund", "Upfront", "Support"]
+
+metric_labels = {
+    "UnblendedCost": "Unblended cost",
+    "BlendedCost": "Blended cost",
+    "AmortizedCost": "Amortized cost",
+    "NetUnblendedCost": "Net unblended cost",
+    "NetAmortizedCost": "Net amortized cost",
+}
+
+# For the calls the report can go out without (budget, anomalies): fail fast
+# instead of botocore's 60 s default, so a stalled call is caught here and the
+# report still goes out before the Lambda's own timeout. Worst case per call:
+# 2 attempts x (2 s connect + 5 s read).
+optional_call_config = botocore.config.Config(
+    connect_timeout=2, read_timeout=5, retries={"total_max_attempts": 2, "mode": "standard"})
+
+# A breakdown reads at most this many pages ($0.01 each)
+breakdown_max_pages = 5
+
+# Slack's limit for a section block's text
+section_max_chars = 3000
+
+# Cost Explorer has usually not finished billing yesterday when the report
+# runs, so yesterday's figure is always flagged as partial.
+partial_note = "* partial: Cost Explorer may still add charges for this day"
 
 # It seems that the sparkline symbols don't line up (probably based on font?) so put them last
 # Also, leaving out the full block because Slack doesn't like it: '█'
 sparks = ['▁', '▂', '▃', '▄', '▅', '▆', '▇']
 
 def sparkline(datapoints):
-    lower = min(datapoints)
     upper = max(datapoints)
     n_sparks = len(sparks) - 1
 
     line = ""
     for dp in datapoints:
-        scaled = 1 if upper == 0 else dp/upper
+        # An all-zero series is a flat floor, not a full bar
+        scaled = 0 if upper == 0 else dp/upper
         which_spark = round(scaled * n_sparks)
         line += (sparks[which_spark])
 
     return line
 
 
+def baseline(costs):
+    """Average daily cost of the days before yesterday (costs[-1])."""
+    return sum(costs[:-1]) / len(costs[:-1])
+
+
+def pct_change(new: float, old: float):
+    """'+12%', '-100%', 'new' when there is nothing to compare with, '-' when both are nil."""
+    if old < negligible_usd:
+        return "new" if new >= negligible_usd else "-"
+    return f"{round((new / old - 1) * 100) + 0:+d}%"
+
+
 def delta(costs):
-    if (len(costs) > 1 and costs[-1] >= 1 and costs[-2] >= 1):
-        # This only handles positive numbers
-        result = ((costs[-1]/costs[-2])-1)*100.0
+    """
+    Yesterday (costs[-1]) against the average of the days before it, for display.
+
+    Returns:
+        tuple: (change in USD rounded to cents, change as a string: '+12%',
+                '-100%', 'new' when there was no baseline to compare with, or
+                '-' when both are nil)
+    """
+    base = baseline(costs)
+    # round() then + 0.0 turns -0.0 into 0.0, so a flat cost never prints "-0.00"
+    usd = round(costs[-1] - base, 2) + 0.0
+    return usd, pct_change(costs[-1], base)
+
+
+def is_negligible(costs):
+    return all(cost < negligible_usd for cost in costs)
+
+
+def table_row(label: str, costs: list, kind: str):
+    """A table row: yesterday's cost, its change against the baseline and the sparkline."""
+    usd, pct = delta(costs)
+    return {"name": label, "kind": kind, "yday": costs[-1], "usd": usd, "pct": pct,
+            "spark": sparkline(costs[-spark_days:])}
+
+
+def column_sums(series: list):
+    """Day-by-day sum of equally long cost lists (n_days zeros for none)."""
+    return [sum(day) for day in zip(*series)] if series else [0.0] * n_days
+
+
+def change_on(history: list, direction: str):
+    """
+    (cost, typical day, change) on the day an alert of `direction` is judged:
+    yesterday for "up", the day before yesterday for "down"; the typical day
+    is the median of the baseline_days days before it.
+    """
+    end = len(history) - (1 if direction == "up" else 2)
+    cost = history[end]
+    typical = statistics.median(history[end - baseline_days:end])
+    return cost, typical, cost - typical
+
+
+def find_alerts(name: str, history: list, min_usd: float, min_pct: float, yesterday: datetime.date):
+    """
+    Alert when an item moved by at least min_usd AND min_pct against a typical
+    day: the median of the baseline_days days before. The median, not the
+    mean, so a once-a-month charge does not read as a week-long drop after it.
+
+    - Rises are judged on yesterday: partial, but if it already rose, it did.
+    - Drops are judged on the day before yesterday, which is complete, since
+      a partial yesterday always looks lower than it will end up.
+
+    Args:
+        history: history_days daily costs, oldest first, ending yesterday
+    """
+    found = []
+    for direction, day in (("up", yesterday), ("down", yesterday - datetime.timedelta(days=1))):
+        cost, typical, change = change_on(history, direction)
+        if direction == "up" and change < min_usd:
+            continue
+        if direction == "down" and -change < min_usd:
+            continue
+        # a rise from nothing is always a large change in percent
+        if typical >= negligible_usd and abs(change) / typical * 100 < min_pct:
+            continue
+        found.append({"name": name, "direction": direction, "day": day, "cost": cost,
+                      "typical": typical, "usd": change, "pct": pct_change(cost, typical)})
+    return found
+
+
+def alert_line(alert: dict, yesterday: datetime.date):
+    when = "yesterday (partial)" if alert["day"] == yesterday else f"on {alert['day']:%Y-%m-%d}"
+    return (f"{alert['name']}: {money(alert['cost'])} {when}, {money(alert['usd'], sign=True)} ({alert['pct']}) "
+            f"vs. a typical day ({money(alert['typical'])})")
+
+
+def get_breakdown(service: str, start: datetime.date, end: datetime.date, cost_aggregation: str, deadline: float = None):
+    """
+    One service's daily cost by linked account and usage type, start..end
+    (end excluded), as {(account, usage type): {'YYYY-MM-DD': cost}}. Account
+    IDs are replaced by their names where Cost Explorer returns them.
+
+    None when it cannot be read in full -- an error, more than
+    breakdown_max_pages pages, or `deadline` (time.monotonic()) reached
+    before the next page: a partial breakdown could name the wrong
+    contributors, so the alert then goes out without one.
+    """
+    try:
+        client = boto3.client("ce", config=optional_call_config)
+        request = {
+            "TimePeriod": {"Start": start.isoformat(), "End": end.isoformat()},
+            "Granularity": "DAILY",
+            "Filter": {"And": [
+                {"Not": {"Dimensions": {"Key": "RECORD_TYPE", "Values": excluded_record_types}}},
+                {"Dimensions": {"Key": "SERVICE", "Values": [service]}},
+            ]},
+            "Metrics": [cost_aggregation],
+            "GroupBy": [{"Type": "DIMENSION", "Key": "LINKED_ACCOUNT"},
+                        {"Type": "DIMENSION", "Key": "USAGE_TYPE"}],
+        }
+        costs, names = defaultdict(dict), {}
+        for page_number in range(breakdown_max_pages):
+            if deadline is not None and time.monotonic() > deadline:
+                print(f"Out of time breaking down {service}: left out")
+                return None
+            page = client.get_cost_and_usage(**request)
+            for attribute in page.get("DimensionValueAttributes", []):
+                names[attribute["Value"]] = attribute.get("Attributes", {}).get("description")
+            for day in page["ResultsByTime"]:
+                for group in day["Groups"]:
+                    account, usage = group["Keys"]
+                    costs[(account, usage)][day["TimePeriod"]["Start"]] = float(group["Metrics"][cost_aggregation]["Amount"])
+            if not page.get("NextPageToken"):
+                return {(names.get(account) or account, usage): days for (account, usage), days in costs.items()}
+            request["NextPageToken"] = page["NextPageToken"]
+        print(f"Breakdown of {service} needs more than {breakdown_max_pages} pages: left out")
+        return None
+    except Exception as e:
+        print(f"Could not break down {service}: {e}")
+        return None
+
+
+def contributors(breakdown: dict, dates: list, direction: str, top: int = 2):
+    """
+    The (account, usage type) pairs that moved the most in the alert's
+    direction, judged exactly like the alert (change_on), largest first.
+    """
+    found = []
+    for (account, usage), days in breakdown.items():
+        _, _, change = change_on([days.get(day, 0.0) for day in dates], direction)
+        if (change > 0) == (direction == "up") and abs(change) >= 0.01:
+            found.append({"account": account, "usage": usage, "usd": change})
+    return sorted(found, key=lambda c: abs(c["usd"]), reverse=True)[:top]
+
+
+def contributor_line(contributor: dict, code: bool = True):
+    """'↳ `account · usage type`: +$1.90' -- backticks for mrkdwn, plain in the monospace table."""
+    where = f"{contributor['account']} · {contributor['usage']}"
+    return f"    ↳ {f'`{where}`' if code else where}: {money(contributor['usd'], sign=True)}"
+
+
+def footer(cost_aggregation: str, alert_min_usd: float = None, alert_min_pct: float = None, anomaly_days: int = None):
+    metric = metric_labels.get(cost_aggregation, cost_aggregation)
+    excluded = ", ".join(excluded_record_types[:-1]) + " and " + excluded_record_types[-1]
+    lines = f"∆: yesterday vs. the average of the previous {baseline_days} days\n"
+    if alert_min_usd is not None:
+        lines += (f"Alerts: a move of {money(alert_min_usd)} and {alert_min_pct:g}% vs. a typical day "
+                  f"(median of the {baseline_days} days before); rises on yesterday, drops on the day before\n")
+    if anomaly_days:
+        lines += (f"Anomalies: Cost Anomaly Detection, without feedback, ended in the last {anomaly_days} days, "
+                  f"impact of at least {money(alert_min_usd or 0)}\n")
+    return lines + f"{metric}, excluding {excluded} records\n{partial_note}\n"
+
+
+# Cost Explorer's service names, shortened so the table fits a phone screen
+short_names = {
+    "Amazon Elastic Compute Cloud - Compute": "EC2 - Compute",
+    "Amazon EC2 Container Registry (ECR)": "ECR",
+    "Amazon Elastic Container Service": "ECS",
+    "Amazon Elastic Container Service for Kubernetes": "EKS",
+    "Amazon Elastic File System": "EFS",
+    "Amazon Elastic Load Balancing": "ELB",
+    "Amazon Relational Database Service": "RDS",
+    "Amazon Simple Email Service": "SES",
+    "Amazon Simple Notification Service": "SNS",
+    "Amazon Simple Queue Service": "SQS",
+    "Amazon Simple Storage Service": "S3",
+    "Amazon Virtual Private Cloud": "VPC",
+    "AWS Key Management Service": "KMS",
+    "AmazonCloudWatch": "CloudWatch",
+}
+
+
+def short_name(name: str):
+    """'Amazon Simple Storage Service' -> 'S3', 'AWS Config' -> 'Config'."""
+    if name in short_names:
+        return short_names[name]
+    name = name.replace("(Amazon Bedrock Edition)", "(Bedrock)")
+    for prefix in ("Amazon ", "AWS "):
+        if name.startswith(prefix):
+            return name[len(prefix):]
+    return name
+
+
+def date_window(today: datetime.date):
+    """
+    The report covers the n_days days before `today` (UTC), `today` excluded.
+
+    Returns:
+        tuple: (week_ago, yesterday, list of the n_days dates as 'YYYY-MM-DD')
+    """
+    yesterday = today - datetime.timedelta(days=1)
+    week_ago = today - datetime.timedelta(days=n_days)
+    list_of_dates = [
+        (week_ago + datetime.timedelta(days=x)).strftime('%Y-%m-%d')
+        for x in range(n_days)
+    ]
+    return week_ago, yesterday, list_of_dates
+
+
+def month_window(yesterday: datetime.date):
+    """
+    The month yesterday falls in, and the same stretch of the month before.
+    On the 1st, yesterday is the last day of the previous month, so that
+    month is reported whole.
+
+    Returns:
+        tuple: (start of last month, same day last month -- capped at that
+                month's length --, start of this month)
+    """
+    month_start = yesterday.replace(day=1)
+    last_month_end = month_start - datetime.timedelta(days=1)
+    last_month_start = last_month_end.replace(day=1)
+    same_point = last_month_start.replace(day=min(yesterday.day, last_month_end.day))
+    return last_month_start, same_point, month_start
+
+
+def month_summary(daily_totals: dict, yesterday: datetime.date):
+    """
+    Month to date against the same point last month, and the month-end pace:
+    month to date plus, for each day left, the median of the baseline_days
+    days before yesterday. The median, not the mean: a once-a-month charge
+    (a Marketplace subscription, say) inside those days would otherwise be
+    projected onto every remaining day. Every figure uses the report's own
+    metric.
+
+    Args:
+        daily_totals: {'YYYY-MM-DD': total cost} from the start of last month
+    """
+    last_month_start, same_point, month_start = month_window(yesterday)
+
+    def total(start, end):
+        return sum(cost for day, cost in daily_totals.items()
+                   if start.isoformat() <= day <= end.isoformat())
+
+    month_to_date = total(month_start, yesterday)
+    last_month_to_date = total(last_month_start, same_point)
+    recent = [daily_totals.get((yesterday - datetime.timedelta(days=d)).isoformat(), 0.0)
+              for d in range(1, baseline_days + 1)]
+    days_left = calendar.monthrange(yesterday.year, yesterday.month)[1] - yesterday.day
+    return {
+        "month": month_start,
+        "last_month": last_month_start,
+        "month_to_date": month_to_date,
+        "last_month_to_date": last_month_to_date,
+        "pct": pct_change(month_to_date, last_month_to_date),
+        "pace": month_to_date + statistics.median(recent) * days_left,
+    }
+
+
+def get_budget(budget_name: str):
+    """
+    The AWS Budget as reported by AWS Budgets, or None when it cannot be read:
+    a budget problem must never stop the day's report.
+    """
+    try:
+        account_id = boto3.client("sts", config=optional_call_config).get_caller_identity()["Account"]
+        budgets = boto3.client("budgets", config=optional_call_config)
+        return budgets.describe_budget(AccountId=account_id, BudgetName=budget_name)["Budget"]
+    except Exception as e:
+        print(f"Could not read budget {budget_name}: {e}")
+        return None
+
+
+def budget_line(budget: dict):
+    """
+    'AWS Budget (incl. tax, support; excl. credits): $874.64 of $750.00 (117%) · forecast $952.91'
+
+    The figures are AWS Budgets' own, which counts charges this report
+    excludes; the label is built from the budget's CostTypes so it says which.
+    """
+    types = budget.get("CostTypes", {})
+    included = [label for flag, label in (
+        ("IncludeTax", "tax"), ("IncludeSupport", "support"),
+        ("IncludeUpfront", "upfront"), ("IncludeOtherSubscription", "Marketplace"),
+    ) if types.get(flag)]
+    label = "incl. " + ", ".join(included) if included else "usage only"
+    label += "; " + ("incl." if types.get("IncludeCredit") else "excl.") + " credits"
+
+    limit = float(budget["BudgetLimit"]["Amount"])
+    spend = budget.get("CalculatedSpend", {})
+    actual = float(spend.get("ActualSpend", {}).get("Amount", 0))
+    line = f"AWS Budget ({label}): {money(actual)} of {money(limit)}"
+    if limit:
+        line += f" ({actual / limit:.0%})"
+    if "ForecastedSpend" in spend:
+        line += f" · forecast {money(float(spend['ForecastedSpend']['Amount']))}"
+    return line
+
+
+def budget_short_line(budget: dict):
+    """
+    'Budget: $874.64 of $750.00 (117%) :warning: · forecast $952.91' -- what
+    the budget counts is in the README; the warning flags actual spend over
+    the limit.
+    """
+    limit = float(budget["BudgetLimit"]["Amount"])
+    spend = budget.get("CalculatedSpend", {})
+    actual = float(spend.get("ActualSpend", {}).get("Amount", 0))
+    line = f"Budget: {money(actual)} of {money(limit)}"
+    if limit:
+        line += f" ({actual / limit:.0%})" + (" :warning:" if actual > limit else "")
+    if "ForecastedSpend" in spend:
+        line += f" · forecast {money(float(spend['ForecastedSpend']['Amount']))}"
+    return line
+
+
+def get_anomalies(start: datetime.date, end: datetime.date, min_impact_usd: float):
+    """
+    Cost Anomaly Detection anomalies that ended between start and end with a
+    total impact of at least min_impact_usd (filtered by the API), from every
+    monitor. None when they cannot be read: like the budget, never a reason
+    to lose the day's report.
+    """
+    try:
+        client = boto3.client("ce", config=optional_call_config)
+        request = {
+            "DateInterval": {"StartDate": start.isoformat(), "EndDate": end.isoformat()},
+            "TotalImpact": {"NumericOperator": "GREATER_THAN_OR_EQUAL", "StartValue": min_impact_usd},
+        }
+        anomalies = []
+        while True:
+            page = client.get_anomalies(**request)
+            anomalies += page.get("Anomalies", [])
+            if not page.get("NextPageToken"):
+                return anomalies
+            request["NextPageToken"] = page["NextPageToken"]
+    except Exception as e:
+        print(f"Could not read anomalies: {e}")
+        return None
+
+
+def open_anomalies(anomalies: list, group_by: str = "SERVICE"):
+    """
+    The anomalies nobody has given feedback on yet, largest impact first,
+    reduced to what the report shows.
+    """
+    found = []
+    for anomaly in anomalies:
+        if anomaly.get("Feedback"):
+            continue
+        cause = (anomaly.get("RootCauses") or [{}])[0]
+        root = [cause.get(key) for key in ("Region", "LinkedAccountName", "UsageType")]
+        if not root[1]:
+            root[1] = cause.get("LinkedAccount")
+        name = anomaly.get("DimensionValue") or cause.get("Service") or "?"
+        found.append({
+            "name": short_name(name) if group_by == "SERVICE" else name,
+            "start": anomaly["AnomalyStartDate"][:10],
+            "end": (anomaly.get("AnomalyEndDate") or "")[:10] or None,
+            "impact": float(anomaly["Impact"]["TotalImpact"]),
+            "root": " · ".join(part for part in root if part),
+        })
+    return sorted(found, key=lambda a: a["impact"], reverse=True)
+
+
+def anomaly_line(anomaly: dict):
+    """'Bedrock · 2026-10-21 · +$8.27 · `us-east-1 · USE1-Mistral-…`'"""
+    if anomaly["end"] is None:
+        when = f"since {anomaly['start']}"
+    elif anomaly["end"] == anomaly["start"]:
+        when = anomaly["start"]
     else:
-        result = 0
-    return result
+        when = f"{anomaly['start']} → {anomaly['end']}"
+    line = f"{anomaly['name']} · {when} · {money(anomaly['impact'], sign=True)}"
+    # in backticks: usage types carry underscores, which mrkdwn would read as italics
+    return line + (f" · `{anomaly['root']}`" if anomaly["root"] else "")
+
+
+def anomaly_lines(anomalies: list):
+    count = len(anomalies)
+    return ([f"Cost Anomaly Detection: {count} open, no feedback yet"]
+            + ["• " + anomaly_line(a) for a in anomalies]
+            + ["Give feedback in Cost Explorer › Anomaly detection to clear them."])
+
+
+def get_accounts(start: datetime.date, end: datetime.date, cost_aggregation: str):
+    """
+    Daily cost by linked account, start..end (end excluded), as one
+    GetCostAndUsage response with every page merged. None when it cannot be
+    read in full: the per-account reply is left out, never the report.
+    """
+    try:
+        client = boto3.client("ce", config=optional_call_config)
+        request = {
+            "TimePeriod": {"Start": start.isoformat(), "End": end.isoformat()},
+            "Granularity": "DAILY",
+            "Filter": {"Not": {"Dimensions": {"Key": "RECORD_TYPE", "Values": excluded_record_types}}},
+            "Metrics": [cost_aggregation],
+            "GroupBy": [{"Type": "DIMENSION", "Key": "LINKED_ACCOUNT"}],
+        }
+        merged = {"ResultsByTime": [], "DimensionValueAttributes": []}
+        for page_number in range(breakdown_max_pages):
+            page = client.get_cost_and_usage(**request)
+            merged["ResultsByTime"] += page["ResultsByTime"]
+            merged["DimensionValueAttributes"] += page.get("DimensionValueAttributes", [])
+            if not page.get("NextPageToken"):
+                return merged
+            request["NextPageToken"] = page["NextPageToken"]
+        print(f"Cost by account needs more than {breakdown_max_pages} pages: left out")
+        return None
+    except Exception as e:
+        print(f"Could not read the cost by account: {e}")
+        return None
+
+
+def account_rows(result: dict, cost_aggregation: str, dates: list):
+    """
+    One row per linked account, by name (its ID when Cost Explorer has no
+    name), most expensive yesterday first; accounts under half a cent every
+    day fold into "Other", and the rows add up to "Total".
+    """
+    names = {attribute["Value"]: attribute.get("Attributes", {}).get("description")
+             for attribute in result.get("DimensionValueAttributes", [])}
+    costs = defaultdict(lambda: defaultdict(float))
+    for day in result["ResultsByTime"]:
+        for group in day["Groups"]:
+            account = group["Keys"][0]
+            costs[names.get(account) or account][day["TimePeriod"]["Start"]] += float(group["Metrics"][cost_aggregation]["Amount"])
+
+    series = sorted(((name, [days.get(day, 0.0) for day in dates]) for name, days in costs.items()),
+                    key=lambda item: item[1][-1], reverse=True)
+    rows = [table_row(name, history, "item") for name, history in series if not is_negligible(history)]
+    folded = [history for _, history in series if is_negligible(history)]
+    if folded:
+        rows.append(table_row(f"Other ({len(folded)} account{'s' if len(folded) > 1 else ''})", column_sums(folded), "other"))
+    rows.append(table_row("Total", column_sums([history for _, history in series]), "total"))
+    return rows
+
+
+def get_account_name():
+    # Get account account name from env, or account id/account alias from boto3
+    account_name = os.environ.get("AWS_ACCOUNT_NAME", None)
+    if account_name is None:
+        iam = boto3.client("iam")
+        paginator = iam.get_paginator("list_account_aliases")
+        for aliases in paginator.paginate(PaginationConfig={"MaxItems": 1}):
+            if "AccountAliases" in aliases and len(aliases["AccountAliases"]) > 0:
+                account_name = aliases["AccountAliases"][0]
+
+    if account_name is None:
+        account_name = boto3.client("sts").get_caller_identity().get("Account")
+
+    if account_name is None:
+        account_name = "[NOT FOUND]"
+
+    return account_name
 
 
 def find_by_key(values: list, key: str, value: str):
@@ -72,18 +566,60 @@ def lambda_handler(event, context):
     group_by = os.environ.get("GROUP_BY", "SERVICE")
     length = int(os.environ.get("LENGTH", "5"))
     cost_aggregation = os.environ.get("COST_AGGREGATION", "UnblendedCost")
+    mover_min_usd = float(os.environ.get("MOVER_MIN_USD", "0.5"))
+    budget_name = os.environ.get("BUDGET_NAME")
+    alert_min_usd = float(os.environ.get("ALERT_MIN_USD", "1"))
+    alert_min_pct = float(os.environ.get("ALERT_MIN_PCT", "30"))
+    mention = os.environ.get("ALERT_MENTION", "")
+    anomaly_days = int(os.environ.get("ANOMALY_DAYS", "14"))
+    drilldown_max = int(os.environ.get("DRILLDOWN_MAX", "3"))
+    # The Slack app's bot posts the report and replies in its thread; without
+    # one, the webhook posts the report alone
+    bot_secret_id = os.environ.get("SLACK_BOT_TOKEN_SECRET_ID")
+    channel = os.environ.get("SLACK_CHANNEL_ID")
+    has_bot = bool(bot_secret_id and channel)
+    show_accounts = os.environ.get("SHOW_ACCOUNTS", "false") == "true"
+    if show_accounts and not has_bot:
+        print("SHOW_ACCOUNTS needs SLACK_BOT_TOKEN_SECRET_ID and SLACK_CHANNEL_ID: cost by account left out")
+    # Stop starting breakdowns once fewer than 20 s are left for the rest
+    deadline = None
+    if context is not None:
+        deadline = time.monotonic() + context.get_remaining_time_in_millis() / 1000 - 20
 
-    summary, buffer, data = report_cost(group_by=group_by, length=length, cost_aggregation=cost_aggregation)
+    report = build_report(group_by=group_by, length=length, cost_aggregation=cost_aggregation, mover_min_usd=mover_min_usd, budget_name=budget_name,
+                          alert_min_usd=alert_min_usd, alert_min_pct=alert_min_pct, anomaly_days=anomaly_days,
+                          drilldown_max=drilldown_max, deadline=deadline, show_accounts=show_accounts and has_bot)
 
-    slack_hook_url = None
-    slack_secret_id = os.environ.get('SLACK_WEBHOOK_SECRET_ID')
-    if slack_secret_id:
-        slack_hook_url = get_secret(slack_secret_id)
+    mode = report_mode(report, (event or {}).get("mode"), os.environ.get("DAILY_MODE", "full"),
+                       int(os.environ.get("FULL_REPORT_WEEKDAY", "0")))
+    print(f"mode={mode} alerts={len(report['alerts'] or [])} anomalies={len(report['anomalies'] or [])}")
+    help_url = os.environ.get("REPORT_HELP_URL") or None
+    if mode == "compact":
+        summary, buffer, blocks = compact_line(report), None, render_compact_blocks(report)
     else:
-        slack_hook_url = os.environ.get('SLACK_WEBHOOK_URL')
+        summary, buffer, blocks = report["summary"], render_text(report), render_blocks(report, mention, help_url=help_url)
 
-    if slack_hook_url:
-        publish_slack(slack_hook_url, summary, buffer)
+    ts = None
+    if has_bot:
+        try:
+            token = get_secret(bot_secret_id)
+        except Exception as e:
+            print(f"Could not read the Slack bot token: {e}")
+            token = None
+        ts = token and post_with_bot(token, channel, report, mode, mention, help_url)
+
+    # The webhook posts when there is no bot, or when the bot could not post
+    # (revoked token, removed from the channel...), so the report still goes out
+    if ts is None:
+        slack_hook_url = None
+        slack_secret_id = os.environ.get('SLACK_WEBHOOK_SECRET_ID')
+        if slack_secret_id:
+            slack_hook_url = get_secret(slack_secret_id)
+        else:
+            slack_hook_url = os.environ.get('SLACK_WEBHOOK_URL')
+
+        if slack_hook_url:
+            publish_slack(slack_hook_url, summary, buffer, blocks)
 
     teams_hook_url = os.environ.get('TEAMS_WEBHOOK_URL')
     if teams_hook_url:
@@ -93,43 +629,71 @@ def lambda_handler(event, context):
     if google_hook_url:
         publish_google(google_hook_url, summary, buffer)
 
-def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, yesterday: str = None, new_method=True):
+def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5):
+    """
+    The report as (summary line, monospace table, cost per day by item) --
+    the plain-text form, used by Teams, Google Chat and the Slack fallback.
+    """
+    report = build_report(group_by=group_by, length=length, cost_aggregation=cost_aggregation, result=result, today=today, account_name=account_name, mover_min_usd=mover_min_usd)
+    return report["summary"], render_text(report), report["data"]
 
-    if yesterday is None:
-        yesterday = today - datetime.timedelta(days=1)
+
+def build_report(group_by: str = "SERVICE", length: int = 5, cost_aggregation: str = "UnblendedCost", result: dict = None, today: str = None, account_name: str = None, mover_min_usd: float = 0.5, monthly_result: dict = None, budget_name: str = None, budget: dict = None, alert_min_usd: float = None, alert_min_pct: float = 30.0, anomaly_days: int = None, anomalies_result: list = None, drilldown_max: int = 0, deadline: float = None, show_accounts: bool = False, accounts_result: dict = None):
+    """
+    Build the report for the n_days days before `today`, as data: the
+    render_* functions turn it into a message.
+
+    Rows are the `length` most expensive items yesterday, plus any item whose
+    cost moved by at least `mover_min_usd` against its baseline -- so a service
+    that dropped to $0 is listed instead of vanishing into "Other".
+
+    Args:
+        result: a GetCostAndUsage response to report on instead of querying
+            Cost Explorer (used by the tests)
+        monthly_result: the same for the daily totals behind the month
+            summary. When `result` is given and this is not, the month
+            summary is left out rather than queried.
+        budget_name: the AWS Budget to show; budget: its DescribeBudget
+            'Budget', to skip the lookup (tests)
+        today: 'YYYY-MM-DD'; defaults to the current UTC date. Computed per
+            call, not at import time, so a warm Lambda container never
+            reports a stale window.
+        account_name: skips the account name lookup when given
+        alert_min_usd, alert_min_pct: alert thresholds (see find_alerts);
+            no alerts when alert_min_usd is None
+        anomaly_days: show open Cost Anomaly Detection anomalies that ended
+            in the last anomaly_days days (none when 0 or None), with an
+            impact of at least alert_min_usd; anomalies_result: the
+            GetAnomalies 'Anomalies' to use instead of querying (tests)
+        drilldown_max: break down the largest drilldown_max alerts by
+            account and usage type (one request each; SERVICE grouping only)
+        deadline: time.monotonic() after which no more breakdowns start,
+            so they never cost the report its slot inside the Lambda timeout
+        show_accounts: add the cost by linked account (one more request),
+            posted as a reply in the report's thread; accounts_result: the
+            GetCostAndUsage response to use instead of querying (tests)
+    """
+    if today is None:
+        today = datetime.datetime.now(datetime.timezone.utc).date()
     else:
-        yesterday = datetime.datetime.strptime(yesterday, '%Y-%m-%d')
+        today = datetime.datetime.strptime(today, '%Y-%m-%d').date()
 
-    week_ago = today - datetime.timedelta(days=n_days)
     # Generate list of dates, so that even if our data is sparse,
     # we have the correct length lists of costs (len is n_days)
-    list_of_dates = [
-        (week_ago + datetime.timedelta(days=x)).strftime('%Y-%m-%d')
-        for x in range(n_days)
-    ]
+    week_ago, yesterday, list_of_dates = date_window(today)
     print(yesterday)
     print(list_of_dates)
 
-    # Get account account name from env, or account id/account alias from boto3
-    account_name = os.environ.get("AWS_ACCOUNT_NAME", None)
     if account_name is None:
-        iam = boto3.client("iam")
-        paginator = iam.get_paginator("list_account_aliases")
-        for aliases in paginator.paginate(PaginationConfig={"MaxItems": 1}):
-            if "AccountAliases" in aliases and len(aliases["AccountAliases"]) > 0:
-                account_name = aliases["AccountAliases"][0]
+        account_name = get_account_name()
 
-    if account_name is None:
-        account_name = boto3.client("sts").get_caller_identity().get("Account")
-
-    if account_name is None:
-        account_name = "[NOT FOUND]"
-
-    client = boto3.client('ce')
+    history_start = week_ago - datetime.timedelta(days=history_days - n_days)
+    history_dates = [(history_start + datetime.timedelta(days=x)).strftime('%Y-%m-%d')
+                     for x in range(history_days)]
 
     query = {
         "TimePeriod": {
-            "Start": week_ago.strftime('%Y-%m-%d'),
+            "Start": history_start.strftime('%Y-%m-%d'),
             "End": today.strftime('%Y-%m-%d'),
         },
         "Granularity": "DAILY",
@@ -137,12 +701,7 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
             "Not": {
                 "Dimensions": {
                     "Key": "RECORD_TYPE",
-                    "Values": [
-                        "Credit",
-                        "Refund",
-                        "Upfront",
-                        "Support",
-                    ]
+                    "Values": excluded_record_types,
                 }
             }
         },
@@ -155,70 +714,105 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
         ],
     }
 
-    # Only run the query when on lambda, not when testing locally with example json
+    # Only run the query when on lambda, not when testing locally with a fixture
     if result is None:
-        result = client.get_cost_and_usage(**query)
+        result = boto3.client('ce').get_cost_and_usage(**query)
+        if monthly_result is None:
+            # Ungrouped daily totals from the start of last month: one more
+            # request, a single page (at most 62 rows).
+            monthly_query = {k: v for k, v in query.items() if k != "GroupBy"}
+            monthly_query["TimePeriod"] = {
+                "Start": month_window(yesterday)[0].strftime('%Y-%m-%d'),
+                "End": today.strftime('%Y-%m-%d'),
+            }
+            monthly_result = boto3.client('ce').get_cost_and_usage(**monthly_query)
 
     cost_per_day_by_service = defaultdict(list)
 
-    if new_method == False:
-        # Build a map of service -> array of daily costs for the time frame
-        for day in result['ResultsByTime']:
-            for group in day['Groups']:
-                key = group['Keys'][0]
-                cost = float(group['Metrics'][cost_aggregation]['Amount'])
-                cost_per_day_by_service[key].append(cost)
-    else:
-        # New method, which first creates a dict of dicts
-        # then loop over the services and loop over the list_of_dates
-        # and this means even for sparse data we get a full list of costs
-        cost_per_day_dict = defaultdict(dict)
+    # First create a dict of dicts, then loop over the services and over
+    # list_of_dates, so that even for sparse data we get a full list of costs
+    cost_per_day_dict = defaultdict(dict)
 
-        for day in result['ResultsByTime']:
-            start_date = day["TimePeriod"]["Start"]
-            for group in day['Groups']:
-                key = group['Keys'][0]
-                if group_by == "LINKED_ACCOUNT":
-                    dimension = find_by_key(result["DimensionValueAttributes"], "Value", key)
-                    if dimension:
-                        key += " ("+dimension["Attributes"]["description"]+")"
-                cost = float(group['Metrics'][cost_aggregation]['Amount'])
-                cost_per_day_dict[key][start_date] = cost
+    for day in result['ResultsByTime']:
+        start_date = day["TimePeriod"]["Start"]
+        for group in day['Groups']:
+            key = group['Keys'][0]
+            if group_by == "LINKED_ACCOUNT":
+                dimension = find_by_key(result["DimensionValueAttributes"], "Value", key)
+                if dimension:
+                    key += " ("+dimension["Attributes"]["description"]+")"
+            cost = float(group['Metrics'][cost_aggregation]['Amount'])
+            cost_per_day_dict[key][start_date] = cost
 
-        for key in cost_per_day_dict.keys():
-            for start_date in list_of_dates:
-                cost = cost_per_day_dict[key].get(start_date, 0.0)  # fallback for sparse data
-                cost_per_day_by_service[key].append(cost)
+    history = {
+        key: [cost_per_day_dict[key].get(day, 0.0) for day in history_dates]  # fallback for sparse data
+        for key in cost_per_day_dict
+    }
+    for key, costs in history.items():
+        cost_per_day_by_service[key] = costs[-n_days:]
 
     # Sort the map by yesterday's cost
     most_expensive_yesterday = sorted(cost_per_day_by_service.items(), key=lambda i: i[1][-1], reverse=True)
 
-    service_names = [k for k,_ in most_expensive_yesterday[:length]]
-    longest_name_len = len(max(service_names, key = len))
-
-    buffer = f"{'Service':{longest_name_len}} ${'Yday':8} {'∆%':>5} {'Last '}{n_days}{'d':7}\n"
-
-    for service_name, costs in most_expensive_yesterday[:length]:
-        buffer += f"{service_name:{longest_name_len}} ${costs[-1]:8,.2f} {delta(costs):4.0f}% {sparkline(costs):7}\n"
+    visible = [(name, costs) for name, costs in most_expensive_yesterday if not is_negligible(costs)]
+    rows = [
+        (name, costs) for rank, (name, costs) in enumerate(visible)
+        # the unrounded change: a $0.495 move must not pass a $0.50 threshold
+        if rank < length or abs(costs[-1] - baseline(costs)) >= mover_min_usd
+    ]
+    row_names = {name for name, _ in rows}
+    folded = [(name, costs) for name, costs in most_expensive_yesterday if name not in row_names]
 
     other_costs = [0.0] * n_days
-    for service_name, costs in most_expensive_yesterday[length:]:
+    for service_name, costs in folded:
         for i, cost in enumerate(costs):
             other_costs[i] += cost
 
-    buffer += f"{'Other':{longest_name_len}} ${other_costs[-1]:8,.2f} {delta(other_costs):4.0f}% {sparkline(other_costs):7}\n"
-
     total_costs = [0.0] * n_days
-    for day_number in range(n_days):
-        for service_name, costs in most_expensive_yesterday:
-            try:
-                total_costs[day_number] += costs[day_number]
-            except IndexError:
-                total_costs[day_number] += 0.0
+    for service_name, costs in most_expensive_yesterday:
+        for i, cost in enumerate(costs):
+            total_costs[i] += cost
 
-    buffer += f"{'Total':{longest_name_len}} ${total_costs[-1]:8,.2f} {delta(total_costs):4.0f}% {sparkline(total_costs):7}\n"
+    noun = "services" if group_by == "SERVICE" else "items"
+    other_label = f"Other ({len(folded)} {noun})"
+
+    # Shorten names only while that keeps every row distinct
+    names = {name: name for name, _ in rows}
+    if group_by == "SERVICE" and len({short_name(name) for name in names}) == len(names):
+        names = {name: short_name(name) for name in names}
+
+    table = [table_row(names[name], costs, "item") for name, costs in rows]
+
+    # None when alerts are off, so no verdict claims "no alerts"
+    alerts = None
+    if alert_min_usd is not None:
+        alerts = []
+        for name, costs in history.items():
+            label = names.get(name, short_name(name) if group_by == "SERVICE" else name)
+            for alert in find_alerts(label, costs, alert_min_usd, alert_min_pct, yesterday):
+                alerts.append(dict(alert, service=name, breakdown=None))
+        alerts.sort(key=lambda a: abs(a["usd"]), reverse=True)
+
+        if group_by == "SERVICE":
+            for alert in alerts[:drilldown_max]:
+                if deadline is not None and time.monotonic() > deadline:
+                    print("Out of time: remaining alerts go out without a breakdown")
+                    break
+                breakdown = get_breakdown(alert["service"], history_start, today, cost_aggregation, deadline)
+                if breakdown is not None:
+                    alert["breakdown"] = contributors(breakdown, history_dates, alert["direction"])
+    if folded:
+        table.append(table_row(other_label, other_costs, "other"))
+    table.append(table_row("Total", total_costs, "total"))
 
     cost_per_day_by_service["total"] = total_costs[-1]
+
+    yesterday_label = f"{yesterday:%Y-%m-%d}, partial"
+
+    # The Lambda runs in the management (payer) account, where Cost Explorer
+    # returns the consolidated bill: REPORT_SCOPE says so in the summary.
+    scope = os.environ.get("REPORT_SCOPE")
+    report_for = f"{scope} ({account_name})" if scope else f"account {account_name}"
 
     credits_expire_date = os.environ.get('CREDITS_EXPIRE_DATE')
     if credits_expire_date:
@@ -241,14 +835,356 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
         else:
             emoji = ":warning:"
 
-        summary = (f"{emoji} Yesterday's cost for {account_name} ${total_costs[-1]:,.2f} "
+        credit_line = (f"{emoji} {relative_to_budget:.2f}% of the credit budget "
+                       f"${allowed_credits_per_day:,.2f} for the day")
+        summary = (f"{emoji} Yesterday's cost ({yesterday_label}) for {report_for} ${total_costs[-1]:,.2f} "
                    f"is {relative_to_budget:.2f}% of credit budget "
                    f"${allowed_credits_per_day:,.2f} for the day."
                   )
     else:
-        summary = f"Yesterday's cost for account {account_name} was ${total_costs[-1]:,.2f}"
+        credit_line = None
+        summary = f"Yesterday's cost ({yesterday_label}) for {report_for} was ${total_costs[-1]:,.2f}"
 
-    return summary, buffer, cost_per_day_by_service
+    month = None
+    if monthly_result is not None:
+        month = month_summary({
+            day["TimePeriod"]["Start"]: float(day["Total"][cost_aggregation]["Amount"])
+            for day in monthly_result["ResultsByTime"]
+        }, yesterday)
+
+    if budget is None and budget_name:
+        budget = get_budget(budget_name)
+
+    # None when off or unreadable, so no verdict claims there are none
+    anomalies = None
+    if anomaly_days:
+        if anomalies_result is None:
+            anomalies_result = get_anomalies(today - datetime.timedelta(days=anomaly_days), today, alert_min_usd or 0)
+        if anomalies_result is not None:
+            anomalies = open_anomalies(anomalies_result, group_by)
+
+    # None when off, unreadable, or already what the main table shows
+    accounts = None
+    if show_accounts and group_by != "LINKED_ACCOUNT":
+        if accounts_result is None:
+            accounts_result = get_accounts(week_ago, today, cost_aggregation)
+        if accounts_result is not None:
+            accounts = account_rows(accounts_result, cost_aggregation, list_of_dates)
+
+    month_lines = []
+    if month:
+        month_lines.append(
+            f"{month['month']:%B} to date: {money(month['month_to_date'])} · "
+            f"same point in {month['last_month']:%B} {money(month['last_month_to_date'])} ({month['pct']}) · "
+            f"on pace for {money(month['pace'])}")
+    if budget:
+        month_lines.append(budget_line(budget))
+
+    return {
+        "summary": summary,
+        "date": yesterday,
+        "report_for": report_for,
+        "credit_line": credit_line,
+        "month": month,
+        "month_lines": month_lines,
+        "rows": table,
+        "alerts": alerts,
+        "anomalies": anomalies,
+        "accounts": accounts,
+        "budget": budget or None,
+        "group_by": group_by,
+        "footer": footer(cost_aggregation, alert_min_usd, alert_min_pct, anomaly_days if anomalies is not None else None),
+        "data": cost_per_day_by_service,
+    }
+
+
+def report_mode(report, requested: str = None, daily_mode: str = "full", full_report_weekday: int = 0):
+    """
+    'full' (header, alerts, month summary, table) or 'compact' (one line).
+
+    DAILY_MODE=full (the default) always sends the full report. With
+    DAILY_MODE=compact, a quiet day gets the one line instead; any alert, the
+    open anomaly, the weekly full-report day (Monday=0, the day the report runs) or an
+    invocation with {"mode": "full"} still sends the full report. The one
+    line goes out every quiet day, so silence always means the report broke.
+    """
+    if requested in ("full", "compact"):
+        return requested
+    run_day = report["date"] + datetime.timedelta(days=1)
+    if (report["alerts"] or report["anomalies"] or report["alerts"] is None
+            or daily_mode == "full" or run_day.weekday() == full_report_weekday):
+        return "full"
+    return "compact"
+
+
+def compact_line(report):
+    """
+    ':white_check_mark: AWS cost 2026-10-23 (partial): $10.81 (-15% vs. the 7-day average) ·
+    October to date $872.65 · on pace for $974.81 · no alerts'
+
+    One line, so no alert list -- but the verdict is the real one: a compact
+    report requested on a day with alerts says ':warning: … · 2 alerts'.
+    """
+    total = report["rows"][-1]
+    line = (f"AWS cost {report['date']:%Y-%m-%d} (partial): {money(total['yday'])} "
+            f"({total['pct']} vs. the {baseline_days}-day average)")
+    if report["month"]:
+        month = report["month"]
+        line += f" · {month['month']:%B} to date {money(month['month_to_date'])} · on pace for {money(month['pace'])}"
+    if not has_verdict(report):
+        return line
+    emoji, status = verdict(report)
+    return f"{emoji} {line} · {status}"
+
+
+def render_compact_blocks(report):
+    line = compact_line(report)
+    return {"text": line, "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": line}}]}
+
+
+def has_verdict(report):
+    """A verdict needs something that checks: the alert rule or Cost Anomaly Detection."""
+    return report["alerts"] is not None or report["anomalies"] is not None
+
+
+def verdict(report):
+    """(':warning:', '1 alert, 2 anomalies') or (':white_check_mark:', 'no alerts')."""
+    alerts, anomalies = len(report["alerts"] or []), len(report["anomalies"] or [])
+    parts = []
+    if alerts:
+        parts.append(f"{alerts} alert{'s' if alerts > 1 else ''}")
+    if anomalies:
+        parts.append(f"{anomalies} anomal{'ies' if anomalies > 1 else 'y'}")
+    if not parts:
+        # name only what was checked: with the alert rule off, say so
+        return ":white_check_mark:", "no anomalies" if report["alerts"] is None else "no alerts"
+    return ":warning:", ", ".join(parts)
+
+
+def render_text(report):
+    """The table as monospace text."""
+    rows = report["rows"]
+
+    lines = []
+    if has_verdict(report):
+        lines = [" ".join(verdict(report))]
+        for alert in report["alerts"] or []:
+            lines.append("• " + alert_line(alert, report["date"]))
+            lines += [contributor_line(c, code=False) for c in alert["breakdown"] or []]
+        if report["anomalies"]:
+            lines += [""] + anomaly_lines(report["anomalies"])
+        lines += [""]
+    buffer = "".join(line + "\n" for line in lines + report["month_lines"])
+    if buffer:
+        buffer += "\n"
+    return buffer + table_text(rows) + "\n" + report["footer"]
+
+
+def table_text(rows: list, first_column: str = "Service"):
+    """Rows as a monospace table."""
+    width = max(len(r["name"]) for r in rows + [{"name": first_column}])
+    buffer = f"{first_column:{width}} ${'Yday*':8} {'∆$':>8} {'∆%':>5} Last {spark_days}d\n"
+    for r in rows:
+        buffer += f"{r['name']:{width}} ${r['yday']:8,.2f} {r['usd']:+8,.2f} {r['pct']:>5} {r['spark']}\n"
+    return buffer
+
+
+def money(usd: float, sign: bool = False):
+    """$1,234.50, or with sign=True +$1.27 / -$0.40."""
+    if not sign:
+        return f"${usd:,.2f}"
+    return f"{'-' if usd < 0 else '+'}${abs(usd):,.2f}"
+
+
+def sections(items: list, mention: str = ""):
+    """
+    Section blocks holding `items` (each one or more lines), split between
+    items so no block passes Slack's section_max_chars; an item longer than
+    that on its own is cut. The mention goes at the top of the first block.
+    """
+    blocks, current = [], mention
+    for item in items:
+        candidate = f"{current}\n{item}" if current else item
+        if len(candidate) > section_max_chars and current and current != mention:
+            blocks.append(current)
+            candidate = item
+        current = candidate[:section_max_chars]
+    if current and current != mention:
+        blocks.append(current)
+    return [{"type": "section", "text": {"type": "mrkdwn", "text": text}} for text in blocks]
+
+
+def anomaly_items(anomalies: list):
+    """The anomalies as section items: a title, one bullet each, the hint to clear them."""
+    return ([f"*Anomalies* · {len(anomalies)} open, no feedback yet"]
+            + ["• " + anomaly_line(a) for a in anomalies]
+            + ["Give feedback in Cost Explorer › Anomaly detection to clear them."])
+
+
+def breakdown_items(report):
+    """The alerts that have a breakdown, each with its contributors, under a title."""
+    broken_down = [a for a in report["alerts"] or [] if a["breakdown"]]
+    if not broken_down:
+        return []
+    return ["*Alert breakdown*"] + [
+        "\n".join([f"• {a['name']}: {money(a['usd'], sign=True)}"] + [contributor_line(c) for c in a["breakdown"]])
+        for a in broken_down]
+
+
+def has_thread(report):
+    """Whether the report has anything for the thread reply."""
+    return bool(report["anomalies"] or breakdown_items(report) or report["accounts"])
+
+
+def render_blocks(report, mention: str = "", threaded: bool = False, help_url: str = None):
+    """
+    The report as a Slack Block Kit message, one titled section each:
+    Yesterday, the month, Alerts, Anomalies, Top services. The top-level
+    `text` is what notifications and screen readers show.
+
+    threaded: the bot posts render_thread_blocks in the message's thread, so
+        the anomalies and the alert breakdowns go there and only a pointer
+        stays here. Without a thread (the webhook) everything stays here.
+    help_url: the README section explaining the report, linked from the
+        footer instead of spelling out the method every day.
+    """
+    total = report["rows"][-1]
+
+    title = f"AWS cost · {report['date']:%Y-%m-%d} (partial)"
+    text = report["summary"]
+    if has_verdict(report):
+        emoji, status = verdict(report)
+        title = f"{emoji} {title} · {status}"
+        text = f"{emoji} {status} · {text}"
+
+    def section(body):
+        return {"type": "section", "text": {"type": "mrkdwn", "text": body}}
+
+    yesterday = (f"*Yesterday*\n*{money(total['yday'])}* · ∆ {money(total['usd'], sign=True)} ({total['pct']}) "
+                 f"vs. the {baseline_days}-day average")
+    if report["credit_line"]:
+        yesterday += "\n" + report["credit_line"]
+    blocks = [{"type": "header", "text": {"type": "plain_text", "emoji": True, "text": title}}, section(yesterday)]
+
+    month_lines = []
+    if report["month"]:
+        month = report["month"]
+        month_lines.append(f"{money(month['month_to_date'])} to date · {month['pct']} vs. {month['last_month']:%B} · "
+                           f"on pace for {money(month['pace'])}")
+    if report["budget"]:
+        month_lines.append(budget_short_line(report["budget"]))
+    if month_lines:
+        month_title = f"{report['month']['month']:%B}" if report["month"] else "This month"
+        blocks.append(section(f"*{month_title}*\n" + "\n".join(month_lines)))
+
+    # Alerts, then anomalies, each in as many sections as Slack's size limit
+    # needs; the mention only once, on top
+    if report["alerts"]:
+        blocks += sections(["*Alerts*"] + [
+            "\n".join(["• " + alert_line(a, report["date"])]
+                      + ([] if threaded else [contributor_line(c) for c in a["breakdown"] or []]))
+            for a in report["alerts"]], mention)
+        mention = ""
+    if report["anomalies"]:
+        if threaded:
+            count = len(report["anomalies"])
+            blocks += sections([f"*Anomalies* · {count} open, no feedback yet · details in the thread :thread:"], mention)
+        else:
+            blocks += sections(anomaly_items(report["anomalies"]), mention)
+
+    notes = [f"Yday* is partial: Cost Explorer may still add charges · ∆: vs. the {baseline_days}-day average"]
+    if threaded and has_thread(report):
+        notes.append("More in the thread")
+    if help_url:
+        notes.append(f"<{help_url}|How to read this report>")
+        footer = [{"type": "mrkdwn", "text": " · ".join(notes)}]
+    else:
+        footer = [{"type": "mrkdwn", "text": " · ".join(notes)}] + [
+            {"type": "plain_text", "text": line} for line in report["footer"].splitlines()[:-1]]
+
+    return {
+        "text": text,
+        "blocks": blocks + [
+            section("*Top services*" if report["group_by"] == "SERVICE" else "*Top items*"),
+            table_block(report["rows"]),
+            {"type": "context", "elements": footer},
+        ],
+    }
+
+
+def thread_title(report):
+    return f"Details · {report['date']:%Y-%m-%d} (partial)"
+
+
+def thread_summary(report):
+    """
+    'Details · 2026-10-22 (partial): 2 anomalies · alert breakdown · cost by
+    account' -- the reply's notification text: what it holds, not all of it.
+    """
+    parts = []
+    if report["anomalies"]:
+        count = len(report["anomalies"])
+        parts.append(f"{count} anomal{'ies' if count > 1 else 'y'}")
+    if breakdown_items(report):
+        parts.append("alert breakdown")
+    if report["accounts"]:
+        parts.append("cost by account")
+    return f"{thread_title(report)}: {' · '.join(parts)}"
+
+
+def render_thread_blocks(report):
+    """
+    The reply posted in the report's thread: the anomalies with their root
+    cause, the alert breakdowns and the cost by account -- whichever there are.
+    None when there is nothing to post.
+    """
+    if not has_thread(report):
+        return None
+    blocks = []
+    if report["anomalies"]:
+        blocks += sections(anomaly_items(report["anomalies"]))
+    blocks += sections(breakdown_items(report))
+    if report["accounts"]:
+        blocks += [{"type": "section", "text": {"type": "mrkdwn", "text": "*By account*"}},
+                   table_block(report["accounts"], "Account")]
+    blocks.append({"type": "context", "elements": [{"type": "plain_text", "text": partial_note}]})
+    return {"text": thread_summary(report), "blocks": blocks}
+
+
+def render_thread_text(report):
+    """The thread reply as plain text, for when Slack rejects its blocks."""
+    parts = []
+    if report["anomalies"]:
+        parts.append("\n".join(anomaly_lines(report["anomalies"])))
+    breakdown = breakdown_items(report)
+    if breakdown:
+        parts.append("\n".join(item.replace("*", "").replace("`", "") for item in breakdown))
+    if report["accounts"]:
+        parts.append(table_text(report["accounts"], "Account"))
+    return "\n\n".join(parts) + "\n\n" + partial_note + "\n"
+
+
+def table_block(rows: list, first_column: str = "Service"):
+    """Rows as a Block Kit table: header, Other and Total in bold."""
+    def cell(text, bold=False):
+        if not bold:
+            return {"type": "raw_text", "text": text}
+        return {"type": "rich_text", "elements": [{"type": "rich_text_section", "elements": [
+            {"type": "text", "text": text, "style": {"bold": True}}]}]}
+
+    header = [first_column, "Yday*", "∆$", "∆%", f"Last {spark_days}d"]
+    cells = [[cell(text, bold=True) for text in header]]
+    for r in rows:
+        cells.append([
+            cell(r["name"], bold=r["kind"] != "item"),
+            cell(money(r["yday"])),
+            cell(money(r["usd"], sign=True)),
+            cell(r["pct"]),
+            cell(r["spark"]),
+        ])
+    return {"type": "table",
+            "column_settings": [{"is_wrapped": True}] + [{"align": "right"}] * 3 + [{"align": "left"}],
+            "rows": cells}
 
 
 def post_json(url, payload, timeout=5):
@@ -272,86 +1208,98 @@ def post_json(url, payload, timeout=5):
         return e.code, e.read().decode()
 
 
-def publish_slack(hook_url, summary, buffer):
+def publish_slack(hook_url, summary, buffer, blocks_payload=None):
+    """
+    Post the Block Kit message; if Slack rejects it, post the plain-text
+    report instead, so a layout error never costs the day's report.
+    """
+    if blocks_payload:
+        status, body = post_json(hook_url, blocks_payload)
+        if status == 200:
+            return
+        print("HTTP %s: %s -- retrying as plain text" % (status, body))
 
-    status, body = post_json(
-        hook_url,
-        {
-            "text": summary + "\n\n```\n" + buffer + "\n```",
-        }
-    )
+    status, body = post_json(hook_url, {"text": as_text(summary, buffer)})
 
     if status != 200:
         print("HTTP %s: %s" % (status, body))
 
 
+def slack_api(token, method, payload, timeout=5):
+    """
+    Call a Slack Web API method. Slack answers HTTP 200 with "ok": false on
+    most errors, so the result is the decoded body, and a network error comes
+    back the same way.
+    """
+    req = urllib.request.Request(
+        f"https://slack.com/api/{method}",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json; charset=utf-8", "Authorization": f"Bearer {token}"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode())
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def post_message(token, channel, summary, buffer, blocks_payload, thread_ts=None):
+    """
+    Post with chat.postMessage, which -- unlike the webhook -- returns the
+    message's ts, so replies can go in its thread. Like publish_slack, rejected
+    blocks are retried as plain text.
+
+    Returns:
+        str: the message's ts, or None when it could not be posted
+    """
+    base = {"channel": channel}
+    if thread_ts:
+        base["thread_ts"] = thread_ts
+    for payload in (blocks_payload, {"text": as_text(summary, buffer)}):
+        response = slack_api(token, "chat.postMessage", dict(base, **payload))
+        if response.get("ok"):
+            return response["ts"]
+        print(f"chat.postMessage: {response.get('error')}")
+    return None
+
+
+def post_with_bot(token, channel, report, mode, mention="", help_url=None):
+    """
+    Post the report with the bot and, when it has any, the thread reply.
+
+    Returns:
+        str: the report's ts, or None when it could not be posted
+    """
+    if mode == "compact":
+        ts = post_message(token, channel, compact_line(report), None, render_compact_blocks(report))
+    else:
+        ts = post_message(token, channel, report["summary"], render_text(report),
+                          render_blocks(report, mention, threaded=True, help_url=help_url))
+    thread = render_thread_blocks(report)
+    if ts and thread:
+        if not post_message(token, channel, thread_title(report), render_thread_text(report), thread, thread_ts=ts):
+            # the message points to the thread: do not let the details go missing
+            print("Could not post the thread reply: posting the details to the channel")
+            post_message(token, channel, thread_title(report), render_thread_text(report), thread)
+    return ts
+
+
+def as_text(summary, buffer):
+    """The plain-text message: the summary, and the table when there is one."""
+    return summary if buffer is None else summary + "\n\n```\n" + buffer + "\n```"
+
+
 def publish_teams(hook_url, summary, buffer):
 
-    status, body = post_json(
-        hook_url,
-        {
-            "text": summary + "\n\n```\n" + buffer + "\n```",
-        }
-    )
+    status, body = post_json(hook_url, {"text": as_text(summary, buffer)})
 
     if status != 200:
         print("HTTP %s: %s" % (status, body))
 
 def publish_google(hook_url, summary, buffer):
 
-    message = {
-        "text": summary + "\n\n```\n" + buffer + "\n```"
-    }
-
-    status, body = post_json(hook_url, message)
+    status, body = post_json(hook_url, {"text": as_text(summary, buffer)})
 
     if status != 200:
         print("HTTP %s: %s" % (status, body))
-
-if __name__ == "__main__":
-    # for running locally to test
-    # IMPORTANT: you may need to update the dates in the .json files since the
-    #  report_cost will look for entries that fall within the past week.
-    import json
-    with open("example_boto3_result.json", "r") as f:
-        example_result = json.load(f)
-    with open("example_boto3_result2.json", "r") as f:
-        example_result2 = json.load(f)
-
-    # summary, buffer, data = report_cost(group_by="LINKED_ACCOUNT")
-    # print(summary)
-    # print(buffer)
-    #
-    # summary, buffer, data = report_cost(group_by="REGION")
-    # print(summary)
-    # print(buffer)
-    #
-    # summary, buffer, data = report_cost(group_by="USAGE_TYPE", length=20)
-    # print(summary)
-    # print(buffer)
-    #
-    # summary, buffer, data = report_cost(group_by="SERVICE", length=20)
-    # print(summary)
-    # print(buffer)
-    # summary, buffer, data = report_cost(group_by="SERVICE", length=5, cost_aggregation="UnblendedCost")
-    # print(summary)
-    # print(buffer)
-    # summary, buffer, data = report_cost(group_by="SERVICE", length=5, cost_aggregation="AmortizedCost")
-    # print(summary)
-    # print(buffer)
-
-    # New Method with 2 example jsons
-    summary, buffer, cost_dict = report_cost(None, None, "UnblendedCost", example_result, yesterday="2025-07-04", new_method=True)
-    print(summary)
-    print(buffer)
-    # slack_hook_url = os.environ.get('SLACK_WEBHOOK_URL')
-    # publish_slack(slack_hook_url, summary, buffer)
-    # assert "{0:.2f}".format(cost_dict.get("total", 0.0)) == "286.37", f'{cost_dict.get("total"):,.2f} != 286.37'
-    # summary, buffer, cost_dict = report_cost(None, None, "UnblendedCost", example_result2, yesterday="2025-07-04", new_method=True)
-    # assert "{0:.2f}".format(cost_dict.get("total", 0.0)) == "21.45", f'{cost_dict.get("total"):,.2f} != 21.45'
-
-    # Old Method with same jsons (will fail)
-    # summary, buffer, cost_dict = report_cost(None, None, "UnblendedCost", example_result, yesterday="2025-07-04", new_method=False)
-    # assert "{0:.2f}".format(cost_dict.get("total", 0.0)) == "286.37", f'{cost_dict.get("total"):,.2f} != 286.37'
-    # summary, buffer, cost_dict = report_cost(None, None, "UnblendedCost", example_result2, yesterday="2025-07-04", new_method=False)
-    # assert "{0:.2f}".format(cost_dict.get("total", 0.0)) == "21.45", f'{cost_dict.get("total"):,.2f} != 21.45'

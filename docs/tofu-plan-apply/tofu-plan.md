@@ -155,6 +155,9 @@ layer, about 10 seconds of it in Bedrock; the rest is waiting for the approval.
   CODEOWNERS, provider locks, `config.tf`, `config/`, `<account>/config/`, JSON configuration,
   providers, backends, module or provider sources, external data sources, provisioners, or
   `null_resource`/`terraform_data` runs validation only.
+- **Native `tofu`, not `leverage tofu`.** The job rebuilds the CLI's var-file and backend
+  arguments in `workflow.layer_config_files`, and `test_leverage_parity.py` fails if they
+  drift. Why the CLI is not used: [`leverage-cli-decision.md`](leverage-cli-decision.md).
 - **Sanitized contract.** The persisted deterministic report has resource addresses (instance keys
   replaced), action classes, changed attribute names, drift, and counts. It never has values,
   variables, state, or the binary plan; account IDs, ARNs, and credential shapes are redacted.
@@ -236,7 +239,7 @@ environment reviewer is authorizing execution of that commit; approval is not a 
 | Variable | `TOFU_PLAN_MAX_LAYERS` | `1`. Above it, no layer gets a live plan. Credential-free validation is not capped. |
 | Variable | `TOFU_PLAN_ROLES` | JSON: account directory → `{role_arn, account_id}`. A missing account fails closed. |
 | Variable | `AWS_TOFU_PLAN_BEDROCK_ROLE_ARN`, `AWS_TOFU_PLAN_BEDROCK_ACCOUNT_ID` | Bedrock role and its account. |
-| Variable | `OPENTOFU_VERSION`, `AWS_REGION` | Default `1.9.1`, `us-east-1`. |
+| Variable | `OPENTOFU_VERSION`, `AWS_REGION` | Default `1.13.2`, `us-east-1`. |
 | `tofu-plan` secret | `TOFU_PLAN_COMMON_TFVARS` | Copy of the ignored `config/common.tfvars`; written `0600` and removed after the plan. |
 | `tofu-plan` variable | `BEDROCK_MODEL_ID` | `us.anthropic.claude-haiku-5-5` or `amazon.nova-lite-v1:0`, the only two IDs the role and the code accept; both analyses use it. Without it, Haiku 5.5. Keep it on the environment: `claude.yml` reads the repository variable of the same name. |
 

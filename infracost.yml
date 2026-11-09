@@ -409,6 +409,11 @@ projects:
       - "../../../config/common.tfvars"
       - "../../config/account.tfvars"
       - "../../config/backend.tfvars"
+  - path: "management/us-east-1/cost-email-report"
+    terraform_var_files:
+      - "../../../config/common.tfvars"
+      - "../../config/account.tfvars"
+      - "../../config/backend.tfvars"
   - path: "management/us-east-1/firewall-manager"
     terraform_var_files:
       - "../../../config/common.tfvars"

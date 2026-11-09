@@ -38,6 +38,27 @@ locals {
       }
     },
 
+    # Bot token (xoxb-...) of the "AWS Cost Report" Slack app, scope chat:write.
+    # Lets the cost report post with chat.postMessage, which returns the
+    # message's ts, so the per-account breakdown can go in its thread; the
+    # incoming webhook above cannot (it returns no ts). The token is set by
+    # hand after apply and never goes through this repository.
+    "/notifications/slack/cost-reports-bot" = {
+      description             = "Slack App bot token (chat:write) for Cost Reports"
+      recovery_window_in_days = 7
+      secret_string           = "INITIAL_VALUE"
+      kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+      custom_policy_json = {
+        sid    = "CostReportsLambda"
+        effect = "Allow"
+        principal = {
+          "AWS" : "arn:aws:iam::${var.accounts.management.id}:role/bb-management-cost-report"
+        }
+        actions   = ["secretsmanager:GetSecretValue"],
+        resources = ["*"]
+      }
+    },
+
     #
     # This secret was created based on the centralized secrets approach and the naming conventions
     # defined here: https://binbash.atlassian.net/wiki/spaces/BDPS/pages/2425978910/Secrets+Management+Conventions

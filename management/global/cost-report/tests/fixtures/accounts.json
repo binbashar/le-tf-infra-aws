@@ -1,0 +1,435 @@
+{
+  "DimensionValueAttributes": [
+    {
+      "Attributes": {
+        "description": "example-shared"
+      },
+      "Value": "000000000001"
+    },
+    {
+      "Attributes": {
+        "description": "example-apps"
+      },
+      "Value": "000000000002"
+    },
+    {
+      "Attributes": {
+        "description": "example-tiny"
+      },
+      "Value": "000000000004"
+    }
+  ],
+  "GroupDefinitions": [
+    {
+      "Key": "LINKED_ACCOUNT",
+      "Type": "DIMENSION"
+    }
+  ],
+  "ResultsByTime": [
+    {
+      "Groups": [
+        {
+          "Keys": [
+            "000000000001"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "3.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000002"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "2.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000003"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.5000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000004"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "TimePeriod": {
+        "End": "2026-10-16",
+        "Start": "2026-10-15"
+      }
+    },
+    {
+      "Groups": [
+        {
+          "Keys": [
+            "000000000001"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "3.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000002"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "2.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000003"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.5000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000004"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "TimePeriod": {
+        "End": "2026-10-17",
+        "Start": "2026-10-16"
+      }
+    },
+    {
+      "Groups": [
+        {
+          "Keys": [
+            "000000000001"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "3.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000002"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "2.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000003"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.5000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000004"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "TimePeriod": {
+        "End": "2026-10-18",
+        "Start": "2026-10-17"
+      }
+    },
+    {
+      "Groups": [
+        {
+          "Keys": [
+            "000000000001"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "3.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000002"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "2.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000003"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.5000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000004"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "TimePeriod": {
+        "End": "2026-10-19",
+        "Start": "2026-10-18"
+      }
+    },
+    {
+      "Groups": [
+        {
+          "Keys": [
+            "000000000001"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "3.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000002"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "2.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000003"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.5000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000004"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "TimePeriod": {
+        "End": "2026-10-20",
+        "Start": "2026-10-19"
+      }
+    },
+    {
+      "Groups": [
+        {
+          "Keys": [
+            "000000000001"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "3.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000002"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "2.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000003"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.5000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000004"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "TimePeriod": {
+        "End": "2026-10-21",
+        "Start": "2026-10-20"
+      }
+    },
+    {
+      "Groups": [
+        {
+          "Keys": [
+            "000000000001"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "3.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000002"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "2.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000003"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.5000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000004"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "TimePeriod": {
+        "End": "2026-10-22",
+        "Start": "2026-10-21"
+      }
+    },
+    {
+      "Groups": [
+        {
+          "Keys": [
+            "000000000001"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "4.5000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000002"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "2.0000000000",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "000000000004"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "0.0010000000",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "TimePeriod": {
+        "End": "2026-10-23",
+        "Start": "2026-10-22"
+      }
+    }
+  ]
+}

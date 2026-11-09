@@ -4,6 +4,10 @@ Document processing pipeline combining AWS Bedrock Data Automation with Bedrock 
 
 ## Architecture
 
+![KYB Bedrock Agent architecture](../../../docs/diagrams/kyb-agent.png "KYB Bedrock Agent")
+
+Editable source: [`docs/diagrams/kyb-agent.drawio`](../../../docs/diagrams/kyb-agent.drawio) (open in draw.io / diagrams.net).
+
 **Pipeline Flow:**
 1. PDF → Input S3 Bucket
 2. EventBridge → BDA Invoker Lambda → BDA Project
