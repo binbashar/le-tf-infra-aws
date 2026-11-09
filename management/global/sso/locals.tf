@@ -48,6 +48,15 @@ locals {
         "marketplaceandpartnercentral",
       ]
     }
+    "cristian.silva" = {
+      first_name = "Cristian"
+      last_name  = "Silva"
+      email      = "cristian.silva@binbash.com.ar"
+      groups = [
+        "datascientists",
+        "devops",
+      ]
+    }
     "dario.villavicencio" = {
       first_name = "Dario"
       last_name  = "Villavicencio"

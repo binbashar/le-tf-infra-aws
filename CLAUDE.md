@@ -440,7 +440,7 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - **Helm Provider**: ~> 2.11 to ~> 2.13
 
 ### Project Configuration Files
-- **`build.env`** (repo root): `PROJECT=bb`. `TERRAFORM_IMAGE_TAG` is read only by the Docker-based Leverage CLI and by the `leverage-cli-test` workflow, which overwrites it. The current Leverage CLI runs the `tofu` binary on PATH, or the one named by `TF_BINARY` in a `build.env`, which a layer's own `build.env` can override
+- **`build.env`** (repo root): `PROJECT=bb`. There is no toolbox image tag: the current Leverage CLI runs the `tofu` binary on PATH, or the one named by `TF_BINARY` in a `build.env`, which a layer's own `build.env` can override
 - **Infracost config**: not committed. `@bin/scripts/infracost_ci` generates it from the layer tree (every active layer, never a `--` one), so a new or renamed layer needs no cost-config edit
 - **`renovate.json`**: Automated dependency updates
 - **`.pre-commit-config.yaml`**: Enforces `terraform_fmt`, JSON validation, trailing whitespace, private key detection
@@ -472,8 +472,12 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - **Infracost** workflow for cost impact analysis on PRs
 - Slack notifications on pipeline success/failure
 - **Dependabot and fork PRs get no Actions secrets** (the repo keeps no Dependabot secrets), so
-  Infracost, `test_leverage` and the Slack notifications skip with a `::notice::` instead of
-  failing. On such a PR a green Infracost or `test_leverage` means "did not run", not "passed".
+  Infracost and the Slack notifications skip with a `::notice::` instead of failing. On such
+  a PR a green Infracost means "did not run", not "passed".
+- **No CI here exercises the Leverage CLI itself** — `tofu-plan.yml`/`tofu-apply.yml` call
+  native `tofu`. The CLI-against-ref-arch test (`apps-devstg/global/cli-test-layer`) lives in
+  the CLI repo (`binbashar/leverage`, job `integration_tests_cli_refarch`), which clones this
+  repo's `master` — so keep that layer, even though nothing in this repo applies it.
 - PR template at `.github/PULL_REQUEST_TEMPLATE.md` uses What? / Why? / References format
 
 ### @claude on PRs
