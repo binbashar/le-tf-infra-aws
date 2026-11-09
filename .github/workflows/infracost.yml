@@ -121,6 +121,13 @@ jobs:
       # with the `infracost-comment` marker, and written by this run. A pasted lookalike
       # comment, or one left by an earlier run, is ignored. An estimate the run did not
       # change is not rewritten, so it is not re-announced either. Only increases reach Slack.
+      #
+      # The comment carries no run id, so "written by this run" is a time window opening
+      # 5 s before the diff (slack for runner/API clock skew). No earlier run can write in
+      # it: the job-level concurrency group cancels any earlier run of this PR when this
+      # job starts, and the checkouts and scope step take far longer than 5 s before the
+      # window opens. The closed-PR path never comments. Dropping that concurrency group
+      # would reopen the gap.
       - name: Read the estimate headline
         id: headline
         if: ${{ steps.diff.outcome == 'success' }}
