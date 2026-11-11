@@ -480,8 +480,8 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
   repo's `master` — so keep that layer, even though nothing in this repo applies it.
 - PR template at `.github/PULL_REQUEST_TEMPLATE.md` uses What? / Why? / Upgrade notes / References
   format. Keep **Upgrade notes** only when whoever pulls the change must act (apply order, destroy
-  first, new secret, tool version…), with the exact commands; the release's Breaking section is
-  assembled from them. Otherwise delete it
+  first, new secret, tool version…), with the exact commands. Otherwise delete it. The draft lists
+  titles only, so **whoever publishes a release copies these into its Breaking section first**
 - **Release versioning** (`.github/release-drafter.yml`): a `feature` label (autolabeled from a
   `feat:` title) makes the release a minor; only the `major` label, a human decision, makes a
   major; everything else is a patch. `breaking` only routes a PR to the 💣 section. Give a PR one
