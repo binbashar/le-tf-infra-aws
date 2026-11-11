@@ -8,9 +8,11 @@
 # statement only ever applies to AI agents. It denies every AWS API call an
 # agent makes through such a server, reads included, under every permission
 # set that can write: Administrator, FinOps and MarketplaceAIPublisher (as
-# their inline policy) and DevOps, DevOpsPrd, DataScientist, GithubAutomation,
-# MarketplaceBuyer and MarketplaceAndPartnerCentral (appended to their policy
-# documents below). ReadOnly and SecurityAuditor are read-only by policy.
+# their inline policy) and DevOps, DevOpsPrd, DataScientist, GithubAutomation
+# and MarketplaceBuyer (appended to their policy documents below).
+# MarketplaceAndPartnerCentral gets the variant after this one, which lets
+# AWS Partner Central's own agents through. ReadOnly and SecurityAuditor are
+# read-only by policy.
 # IAM cannot express "deny everything but reads" generically: a service prefix
 # cannot be wildcarded, so "*:Get*" is invalid. The repo's aws-mcp server runs
 # with --read-only and makes no API calls, so it is unaffected; narrow this
@@ -27,6 +29,45 @@ data "aws_iam_policy_document" "deny_all_via_aws_mcp" {
       test     = "Bool"
       variable = "aws:ViaAWSMCPService"
       values   = ["true"]
+    }
+  }
+}
+
+# The same guard, minus AWS Partner Central's agents, for the
+# MarketplaceAndPartnerCentral permission set. The agents in the Partner
+# Central console (opportunity insights, "Ask about this opportunity", funding
+# recommendations) are an AWS managed MCP server: the console calls
+# partnercentral-agents-mcp, and partnercentral-agents.amazonaws.com then makes
+# every AWS call on the user's behalf, so each one carries
+# aws:ViaAWSMCPService = true. Under the plain guard they all failed with
+# "not authorized to perform partnercentral:InvokeMcp".
+# aws:CalledViaAWSMCP names the MCP service that forwarded the request. Skip
+# the deny only when that is the Partner Central agents service, which can do
+# no more than its own tools. Every other MCP server, the AWS MCP Server
+# (aws-mcp.amazonaws.com) included, stays denied. So does a forwarded request
+# without the key, because StringNotEquals matches a missing key.
+# The service principal comes from CloudTrail: invokedBy on the agents'
+# forwarded calls (partnercentral-agents-mcp CallPrivilegedTool, and
+# partnercentral-selling, partnercentral-benefits, partnercentral-account and
+# marketplacecatalog reads/writes).
+# https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-calledviaawsmcp
+data "aws_iam_policy_document" "deny_all_via_aws_mcp_except_partner_central_agents" {
+  statement {
+    sid       = "DenyAllActionsViaAWSManagedMCP"
+    effect    = "Deny"
+    actions   = ["*"]
+    resources = ["*"]
+
+    condition {
+      test     = "Bool"
+      variable = "aws:ViaAWSMCPService"
+      values   = ["true"]
+    }
+
+    condition {
+      test     = "StringNotEquals"
+      variable = "aws:CalledViaAWSMCP"
+      values   = ["partnercentral-agents.amazonaws.com"]
     }
   }
 }
@@ -411,8 +452,9 @@ data "aws_iam_policy_document" "data_scientist" {
 }
 
 data "aws_iam_policy_document" "marketplaceandpartnercentral" {
-  # Appends the agent guard defined at the top of this file.
-  override_policy_documents = [data.aws_iam_policy_document.deny_all_via_aws_mcp.json]
+  # Appends the agent guard variant that lets Partner Central's agents through,
+  # defined at the top of this file.
+  override_policy_documents = [data.aws_iam_policy_document.deny_all_via_aws_mcp_except_partner_central_agents.json]
 
   statement {
     sid = "FullSupportAccess"
