@@ -3,13 +3,14 @@ import json
 import os
 import tempfile
 import unittest
+import urllib.error
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
 from tofu_plan_ci import apply_workflow
 from tofu_plan_ci.apply_gates import lock_message
-from tofu_plan_ci.github_api import GitHub
+from tofu_plan_ci.github_api import GitHub, GitHubError
 from tofu_plan_ci.plan_digest import plan_digest
 
 KEY = "digest-key-" + "x" * 32
@@ -363,6 +364,23 @@ class ReportAndReleaseTests(ApplyWorkflowTestCase):
 
 
 class GitHubClientTests(unittest.TestCase):
+    @staticmethod
+    def scripted(*answers, payload=None):
+        """A transport that gives each answer in turn (a status or an exception), then 200."""
+
+        calls = []
+
+        def transport(method, path, body):
+            calls.append((method, path, body))
+            if len(calls) > len(answers):
+                return 200, payload
+            answer = answers[len(calls) - 1]
+            if isinstance(answer, BaseException):
+                raise answer
+            return answer, None
+
+        return transport, calls
+
     def test_existing_ref_is_not_an_error_and_other_errors_raise(self):
         calls = []
 
@@ -372,10 +390,74 @@ class GitHubClientTests(unittest.TestCase):
                 return 422, None
             return 500, None
 
-        github = GitHub(REPO, transport)
+        github = GitHub(REPO, transport, sleep=lambda _: None)
         self.assertFalse(github.create_ref("refs/tofu-locks/x", "sha"))
-        with self.assertRaises(RuntimeError):
+        with redirect_stdout(io.StringIO()), self.assertRaises(RuntimeError):
             github.pull(1)
+
+    def test_a_transient_failure_is_retried_until_github_answers(self):
+        pr = {"number": 1332, "state": "open", "head": {"sha": HEAD}}
+        failures = (500, 502, 503, 504, ConnectionResetError(104, "Connection reset by peer"),
+                    TimeoutError("timed out"), urllib.error.URLError("Connection refused"))
+        for failure in failures:
+            with self.subTest(failure=failure):
+                transport, calls = self.scripted(failure, payload=pr)
+                sleeps, output = [], io.StringIO()
+                with redirect_stdout(output):
+                    self.assertEqual(GitHub(REPO, transport, sleep=sleeps.append).pull(1332), pr)
+                self.assertEqual(calls, [("GET", f"/repos/{REPO}/pulls/1332", None)] * 2)
+                self.assertEqual(len(sleeps), 1)
+                self.assertGreater(sleeps[0], 0)
+                self.assertIn("::warning::", output.getvalue())
+
+    def test_a_persistent_failure_is_raised_after_a_bounded_backoff(self):
+        for failure, error in ((503, GitHubError),
+                               (ConnectionResetError(104, "Connection reset by peer"),
+                                ConnectionResetError)):
+            with self.subTest(failure=failure):
+                transport, calls = self.scripted(*[failure] * 10)
+                sleeps = []
+                with redirect_stdout(io.StringIO()), self.assertRaises(error):
+                    GitHub(REPO, transport, sleep=sleeps.append).pull(1332)
+                self.assertEqual(len(calls), 4)
+                self.assertEqual(len(sleeps), 3)
+                self.assertTrue(all(delay > 0 for delay in sleeps))
+                # Far inside the 5-minute timeout of the jobs that call GitHub.
+                self.assertLess(sum(sleeps), 60)
+
+    def test_a_client_error_fails_at_once(self):
+        for status in (401, 403, 404, 422):
+            with self.subTest(status=status):
+                transport, calls = self.scripted(*[status] * 10)
+                sleeps = []
+                with self.assertRaises(GitHubError) as raised:
+                    GitHub(REPO, transport, sleep=sleeps.append).pull(1332)
+                self.assertEqual(raised.exception.status, status)
+                self.assertEqual((len(calls), sleeps), (1, []))
+
+    def test_a_delete_is_never_repeated(self):
+        # GitHub deletes a ref with no owner check. If a DELETE landed but its answer
+        # was lost, another PR can take the free lock during a backoff, and a retry
+        # would delete that PR's lock.
+        lock = "refs/tofu-locks/layer"
+        for failure, error in ((503, GitHubError),
+                               (ConnectionResetError(104, "Connection reset by peer"),
+                                ConnectionResetError)):
+            with self.subTest(failure=failure):
+                refs, deleted = {lock: "this PR"}, []
+
+                def transport(method, path, body, failure=failure):
+                    deleted.append(refs.pop(lock, None))  # the DELETE lands...
+                    if isinstance(failure, BaseException):
+                        raise failure  # ...but its answer is lost
+                    return failure, None
+
+                def another_pr_takes_the_lock(_):
+                    refs[lock] = "another PR"
+
+                with redirect_stdout(io.StringIO()), self.assertRaises(error):
+                    GitHub(REPO, transport, sleep=another_pr_takes_the_lock).delete_ref(lock)
+                self.assertEqual(deleted, ["this PR"])
 
     def test_pagination_stops_on_a_short_page(self):
         pages = {1: [{"id": i} for i in range(100)], 2: [{"id": 100}]}

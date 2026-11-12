@@ -159,6 +159,7 @@ onboarded layer.
 | `AccessDenied` on the Administrator permission set (sso) | By design: the management role cannot change it. Earlier changes of that apply stay applied and the lock is kept. Apply the rest manually, then `/tofu unlock` |
 | A permission set fails to provision after its policy changed (sso) | Identity Center stores the new policy but leaves the account roles on the old version. Tofu records an update as applied and taints a create, so re-applying does not re-provision the update. After fixing the cause, run `aws sso-admin provision-permission-set` for that set and check that `list-accounts-for-provisioned-permission-set --provisioning-status LATEST_PERMISSION_SET_NOT_PROVISIONED` is empty |
 | Digest mismatch (drift, a stale plan, a changed value) | Rejected. Re-run or push to plan again, review, then apply |
+| The status job fails on a GitHub API error (`returned HTTP 503`) | Server errors and dropped connections are retried for 14 s. Past that the job fails and `OpenTofu Apply` keeps its last state, which may be stale. Re-run the failed job, `gh run rerun <run-id> --failed`: it decides again from the same plan run |
 | Closed without merging after an apply | The lock is **kept** and the workflow comments. Reopen, revert, `/tofu apply`, then `/tofu unlock` |
 | Credential compromise | [`tofu-ci-incident.md`](tofu-ci-incident.md) |
 
