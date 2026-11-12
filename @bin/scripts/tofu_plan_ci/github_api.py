@@ -1,18 +1,32 @@
 """Minimal GitHub REST client for the apply workflow's trusted steps.
 
 Standard library only, so the trusted steps need no installed packages. The
-transport is injectable, which lets tests run every call without a network.
+transport and the wait between retries are injectable, which lets tests run
+every call without a network or a delay.
 """
 
 from __future__ import annotations
 
+import http.client
 import json
+import time
 import urllib.error
 import urllib.request
 from typing import Any, Callable
 
 API_URL = "https://api.github.com"
 Transport = Callable[[str, str, "dict[str, Any] | None"], "tuple[int, Any]"]
+
+# GitHub's server errors and dropped connections clear within seconds, so they
+# are retried. Repeating a write is safe here: statuses and reactions are
+# idempotent, an extra tag object is never referenced, a lock ref that the first
+# attempt did create answers the retry with 422 (`run_lock` then finds this PR
+# as its owner), and a comment is at worst posted twice.
+RETRY_STATUSES = frozenset({500, 502, 503, 504})
+RETRY_DELAYS = (2, 4, 8)  # seconds before each retry: four attempts in all
+# A refused, reset or timed-out connection: URLError, TimeoutError and
+# ConnectionError are all OSErrors.
+TRANSIENT_ERRORS = (OSError, http.client.HTTPException)
 
 
 class GitHubError(RuntimeError):
@@ -45,13 +59,28 @@ def urllib_transport(token: str, api_url: str = API_URL) -> Transport:
 
 
 class GitHub:
-    def __init__(self, repository: str, transport: Transport):
+    def __init__(self, repository: str, transport: Transport, *,
+                 sleep: Callable[[float], None] = time.sleep):
         self.repo = f"/repos/{repository}"
         self._send = transport
+        self._sleep = sleep
 
     def call(self, method: str, path: str, body: dict[str, Any] | None = None,
              *, allow: tuple[int, ...] = ()) -> tuple[int, Any]:
-        status, payload = self._send(method, path, body)
+        for delay in (*RETRY_DELAYS, None):  # None marks the last attempt
+            try:
+                status, payload = self._send(method, path, body)
+            except TRANSIENT_ERRORS as error:
+                if delay is None:
+                    raise
+                failure = f"{type(error).__name__}: {error}"
+            else:
+                if status not in RETRY_STATUSES or delay is None:
+                    break
+                failure = f"HTTP {status}"
+            print(f"::warning::GitHub API {method} {path} failed ({failure}); "
+                  f"retrying in {delay}s", flush=True)
+            self._sleep(delay)
         if status >= 400 and status not in allow:
             raise GitHubError(status, method, path)
         return status, payload
