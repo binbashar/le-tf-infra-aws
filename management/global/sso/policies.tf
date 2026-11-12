@@ -36,21 +36,23 @@ data "aws_iam_policy_document" "deny_all_via_aws_mcp" {
 # The same guard, minus AWS Partner Central's agents, for the
 # MarketplaceAndPartnerCentral permission set. The agents in the Partner
 # Central console (opportunity insights, "Ask about this opportunity", funding
-# recommendations) are an AWS managed MCP server: the console calls
-# partnercentral-agents-mcp, and partnercentral-agents.amazonaws.com then makes
-# every AWS call on the user's behalf, so each one carries
-# aws:ViaAWSMCPService = true. Under the plain guard they all failed with
-# "not authorized to perform partnercentral:InvokeMcp".
-# aws:CalledViaAWSMCP names the MCP service that forwarded the request. Skip
-# the deny only when that is the Partner Central agents service, which can do
-# no more than its own tools. Every other MCP server, the AWS MCP Server
-# (aws-mcp.amazonaws.com) included, stays denied. So does a forwarded request
-# without the key, because StringNotEquals matches a missing key.
-# The service principal comes from CloudTrail: invokedBy on the agents'
-# forwarded calls (partnercentral-agents-mcp CallPrivilegedTool, and
-# partnercentral-selling, partnercentral-benefits, partnercentral-account and
-# marketplacecatalog reads/writes).
+# recommendations) are an AWS managed MCP server: the console calls the
+# Partner Central Agent MCP Server (partnercentral-agents-mcp), and its agent
+# runtime, partnercentral-agents.amazonaws.com, then makes every AWS call on
+# the user's behalf, so each one carries aws:ViaAWSMCPService = true. Under
+# the plain guard they all failed with "not authorized to perform
+# partnercentral:InvokeMcp".
+# aws:CalledViaAWSMCP holds the service principal of the MCP server the user
+# called, partnercentral-agents-mcp.amazonaws.com: the server's SigV4 name and
+# CloudTrail eventSource, in AWS's documented <server>-mcp.amazonaws.com form
+# (aws-mcp, eks-mcp, ecs-mcp). It is not the runtime that CloudTrail shows as
+# invokedBy; exempting that one instead (#1331) left every agent call denied.
+# Skip the deny only for this MCP server, which can do no more than its own
+# tools. Every other MCP server, the AWS MCP Server (aws-mcp.amazonaws.com)
+# included, stays denied. So does a forwarded request without the key,
+# because StringNotEquals matches a missing key.
 # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-calledviaawsmcp
+# https://docs.aws.amazon.com/partner-central/latest/developer-guide/mcp-configuration-reference.html
 data "aws_iam_policy_document" "deny_all_via_aws_mcp_except_partner_central_agents" {
   statement {
     sid       = "DenyAllActionsViaAWSManagedMCP"
@@ -67,7 +69,7 @@ data "aws_iam_policy_document" "deny_all_via_aws_mcp_except_partner_central_agen
     condition {
       test     = "StringNotEquals"
       variable = "aws:CalledViaAWSMCP"
-      values   = ["partnercentral-agents.amazonaws.com"]
+      values   = ["partnercentral-agents-mcp.amazonaws.com"]
     }
   }
 }
