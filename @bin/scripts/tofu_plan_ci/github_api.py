@@ -18,10 +18,12 @@ API_URL = "https://api.github.com"
 Transport = Callable[[str, str, "dict[str, Any] | None"], "tuple[int, Any]"]
 
 # GitHub's server errors and dropped connections clear within seconds, so they
-# are retried. Repeating a write is safe here: statuses and reactions are
+# are retried. Repeating a POST is safe here: statuses and reactions are
 # idempotent, an extra tag object is never referenced, a lock ref that the first
 # attempt did create answers the retry with 422 (`run_lock` then finds this PR
-# as its owner), and a comment is at worst posted twice.
+# as its owner), and a comment is at worst posted twice. A DELETE is never
+# repeated: GitHub deletes a ref with no owner check, so if the first DELETE
+# landed, a retry could delete a lock that another PR took in the meantime.
 RETRY_STATUSES = frozenset({500, 502, 503, 504})
 RETRY_DELAYS = (2, 4, 8)  # seconds before each retry: four attempts in all
 # A refused, reset or timed-out connection: URLError, TimeoutError and
@@ -67,7 +69,8 @@ class GitHub:
 
     def call(self, method: str, path: str, body: dict[str, Any] | None = None,
              *, allow: tuple[int, ...] = ()) -> tuple[int, Any]:
-        for delay in (*RETRY_DELAYS, None):  # None marks the last attempt
+        delays = () if method == "DELETE" else RETRY_DELAYS  # see RETRY_STATUSES
+        for delay in (*delays, None):  # None marks the last attempt
             try:
                 status, payload = self._send(method, path, body)
             except TRANSIENT_ERRORS as error:

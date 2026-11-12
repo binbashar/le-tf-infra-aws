@@ -435,6 +435,30 @@ class GitHubClientTests(unittest.TestCase):
                 self.assertEqual(raised.exception.status, status)
                 self.assertEqual((len(calls), sleeps), (1, []))
 
+    def test_a_delete_is_never_repeated(self):
+        # GitHub deletes a ref with no owner check. If a DELETE landed but its answer
+        # was lost, another PR can take the free lock during a backoff, and a retry
+        # would delete that PR's lock.
+        lock = "refs/tofu-locks/layer"
+        for failure, error in ((503, GitHubError),
+                               (ConnectionResetError(104, "Connection reset by peer"),
+                                ConnectionResetError)):
+            with self.subTest(failure=failure):
+                refs, deleted = {lock: "this PR"}, []
+
+                def transport(method, path, body, failure=failure):
+                    deleted.append(refs.pop(lock, None))  # the DELETE lands...
+                    if isinstance(failure, BaseException):
+                        raise failure  # ...but its answer is lost
+                    return failure, None
+
+                def another_pr_takes_the_lock(_):
+                    refs[lock] = "another PR"
+
+                with redirect_stdout(io.StringIO()), self.assertRaises(error):
+                    GitHub(REPO, transport, sleep=another_pr_takes_the_lock).delete_ref(lock)
+                self.assertEqual(deleted, ["this PR"])
+
     def test_pagination_stops_on_a_short_page(self):
         pages = {1: [{"id": i} for i in range(100)], 2: [{"id": 100}]}
 
