@@ -96,9 +96,10 @@ autolabeler:
     title:
       - '/^chore\(deps\)/'
 
+# No heading above $CHANGES: each category brings its own `##` title, so a
+# `## Changes` heading here sat empty above 🚀 Features once every PR had a type
+# label (v3.2.0). Only a PR with no type label renders here, untitled, at the top.
 template: |
-  ## Changes
-
   $CHANGES
 
   ## Contributors
