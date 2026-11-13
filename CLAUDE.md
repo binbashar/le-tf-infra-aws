@@ -478,7 +478,15 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
   native `tofu`. The CLI-against-ref-arch test (`apps-devstg/global/cli-test-layer`) lives in
   the CLI repo (`binbashar/leverage`, job `integration_tests_cli_refarch`), which clones this
   repo's `master` — so keep that layer, even though nothing in this repo applies it.
-- PR template at `.github/PULL_REQUEST_TEMPLATE.md` uses What? / Why? / References format
+- PR template at `.github/PULL_REQUEST_TEMPLATE.md` uses What? / Why? / Upgrade notes / References
+  format. Keep **Upgrade notes** only when whoever pulls the change must act (apply order, destroy
+  first, new secret, tool version…), with the exact commands. Otherwise delete it. The draft lists
+  titles only, so **whoever publishes a release copies these into its Breaking section first**
+- **Release versioning** (`.github/release-drafter.yml`): a `feature` label (autolabeled from a
+  `feat:` title) makes the release a minor; only the `major` label, a human decision, makes a
+  major; everything else is a patch. `breaking` only routes a PR to the 💣 section. Give a PR one
+  type label (topic labels like `security` have no category), and label throwaway PRs
+  `skip-changelog`
 
 ### @claude on PRs
 

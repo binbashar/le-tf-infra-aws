@@ -1,17 +1,21 @@
 name-template: 'v$RESOLVED_VERSION 🌈'
 tag-template: 'v$RESOLVED_VERSION'
 
-# Never reaches the notes.
+# Never reaches the notes. `skip-changelog` is for PRs with no value to whoever
+# upgrades, such as the create/update/destroy PRs that exercise `/tofu apply`.
 exclude-labels:
   - 'duplicate'
   - 'invalid'
   - 'wontfix'
   - 'WIP'
+  - 'skip-changelog'
 
-# A PR lands in EVERY category whose labels it carries. That is deliberate for
-# `breaking` (called out up top, still indexed below) but accidental everywhere
-# else, so keep the rest disjoint: `security` is the access model, `fix` is a
-# defect. In v3.1.0, stacking `fix`+`security` listed the same PR twice.
+# A PR lands in EVERY category whose labels it carries, and release-drafter has
+# no "first match wins". So categories follow ONE axis, the type of change, and
+# a PR carries one type label. `breaking` is the only deliberate exception
+# (called out up top, still indexed under its type). Topic labels such as
+# `security` are for filtering only and never get a category: in v3.2.0 a
+# `security` category listed five PRs twice, on top of their type.
 categories:
   - title: '💣 Breaking Changes'
     labels:
@@ -27,9 +31,6 @@ categories:
       - 'fix'
       - 'bugfix'
       - 'bug'
-  - title: '🔒 Security & SSO'
-    labels:
-      - 'security'
   - title: '📝 Documentation'
     labels:
       - 'documentation'
@@ -48,19 +49,25 @@ categories:
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
 
-# `breaking` is descriptive and only routes a PR to the 💣 section; it deliberately
-# does NOT bump the major. Only the `major` label does that, so declaring a breaking
-# change never silently decides the next version number on its own.
+# Versioning policy. This is a reference architecture that clients copy, not a
+# dependency they pin, so:
+# - minor: any `feature` PR. The autolabeler sets it from a `feat:` title, so the
+#   version follows the PR titles without anyone picking a semver label.
+# - major: ONLY the `major` label, a deliberate human decision. `breaking` is
+#   descriptive and only routes a PR to the 💣 section. A release that needs
+#   operator action stays a minor and says so in its "Breaking Changes &
+#   Upgrade Notes" section (v3.1.0 and v3.2.0 both did).
+# - patch: everything else.
+# `minor`/`patch` labels are deliberately NOT listed. Dependabot puts them on
+# dependency bumps, and in v3.2.0 a `minor` on a test-script bump (#1209) was
+# the only thing that made the release a minor despite 29 `feat:` PRs.
 version-resolver:
   major:
     labels:
       - 'major'
   minor:
     labels:
-      - 'minor'
-  patch:
-    labels:
-      - 'patch'
+      - 'feature'
   default: patch
 
 # Safety net for PRs merged without labels — they used to vanish into the

@@ -7,14 +7,16 @@ on:
   push:
     branches:
       - master
-  # pull_request event is required only for autolabeler
+  # pull_request event is required only for autolabeler. `edited` matters most:
+  # the labels come from the title, and a retitle (e.g. to `feat:`) pushes no
+  # commit, so without it the PR merges without `feature` and drafts a patch.
   pull_request:
-    # Only following types are handled by the action, but one can default to all as well
-    types: [opened, reopened, synchronize, labeled, unlabeled]
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
 
 # The autolabeler writes labels, so the read-only default token is not enough.
-# Fork PRs still get a read-only token — autolabeling is skipped there by design,
-# rather than moving to pull_request_target, which would expose secrets to forks.
+# Fork PRs still get a read-only token, so the autolabeler step skips them (see
+# its `if`) rather than failing on the write, and rather than moving to
+# pull_request_target, which would expose secrets to forks.
 permissions:
   contents: write
   pull-requests: write
@@ -22,31 +24,51 @@ permissions:
 # Two runs that start together each fail to see the other's draft and create one,
 # leaving duplicate drafts for the same version. Observed on 2026-09-13: relabelling
 # several merged PRs produced two byte-identical `v3.1.1` drafts in the same second.
-# Serialise instead of cancelling — a cancelled run just skips a merge.
+# Serialise draft runs instead of cancelling them.
+# PR runs only autolabel, so they get a group of their own per PR and the newest
+# event wins. Sharing the draft group would let them evict a pending draft run:
+# a group keeps one pending run and cancels the one before it, which would leave
+# the draft stale again, and `edited` fires on every title or body edit.
 concurrency:
-  group: release-drafter-${{ github.repository }}
-  cancel-in-progress: false
+  group: release-drafter-${{ github.event_name == 'push' && github.repository || format('pr-{0}', github.event.pull_request.number) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   update_release_draft:
     runs-on: ubuntu-latest
     steps:
-      # Drafts your next Release notes. Each event does one job only: on a PR the
-      # draft's target_commitish would be refs/pull/N/merge, which GitHub rejects
-      # ("Validation Failed ... target_commitish"), so PRs only autolabel and pushes
-      # to master only draft.
-      - uses: release-drafter/release-drafter@v5
-        with:
-          disable-releaser: ${{ github.event_name == 'pull_request' }}
-          disable-autolabeler: ${{ github.event_name == 'push' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Each event does one job only: on a PR the draft's target_commitish would be
+      # refs/pull/N/merge, which GitHub rejects ("Validation Failed ...
+      # target_commitish"), so PRs only autolabel and pushes to master only draft.
+      # Since v7 the autolabeler is its own action, so the event picks the step.
+      - name: Draft the next release
+        if: github.event_name == 'push'
+        uses: release-drafter/release-drafter@978bb0b30c5ee8cdd332ced253758157150d43f0 # v7.10.0
 
-      - uses: act10ns/slack@v1
+      - name: Label the PR from its title
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: release-drafter/release-drafter/autolabeler@978bb0b30c5ee8cdd332ced253758157150d43f0 # v7.10.0
+
+      # Dependabot and fork runs get no secrets: skip the notification instead of
+      # failing a job whose real work succeeded.
+      - name: Check for Slack webhook
+        id: slack
         if: failure()
-        with:
-          status: ${{ job.status }}
-          channel: $SLACK_CI_CHANNEL
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_CI_CHANNEL: ${{ secrets.SLACK_CI_CHANNEL }}
+        run: |
+          if [ -z "${SLACK_WEBHOOK_URL}" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Slack webhook (Dependabot or fork run) - notification skipped."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Notify Slack of the failure
+        if: failure() && steps.slack.outputs.available == 'true'
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: ":x: *${{ github.workflow }}* failed on `${{ github.ref_name }}` (${{ github.event_name }}) in ${{ github.repository }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|view run>"
