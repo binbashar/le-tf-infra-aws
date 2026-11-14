@@ -51,3 +51,18 @@ variable "notification_threshold_100" {
   type        = string
   default     = 100
 }
+
+variable "workload_budgets" {
+  description = "Monthly budgets keyed by the workload's Purpose tag value; each emails its owners at 100% of actual and forecast spend"
+  type = map(object({
+    limit_usd = number
+    emails    = list(string)
+  }))
+  default = {
+    # Normal use is about US$2 a month (bb-ai-kb-mcp layer README, "Cost").
+    "kb-mcp" = {
+      limit_usd = 10
+      emails    = ["alex.delossantos@binbash.com.ar"]
+    }
+  }
+}
