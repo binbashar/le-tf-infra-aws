@@ -13,7 +13,7 @@ module "iam_assumable_role_leverage_test" {
     "arn:aws:iam::${var.accounts.security.id}:root"
   ]
 
-  create_role = local.provisioned
+  create_role = var.provisioned
   role_name   = "LeverageTest"
   role_path   = "/"
 

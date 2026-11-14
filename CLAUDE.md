@@ -477,7 +477,9 @@ source = "github.com/binbashar/tofu-aws-tfstate-backend.git?ref=v1.0.29"
 - **No CI here exercises the Leverage CLI itself** — `tofu-plan.yml`/`tofu-apply.yml` call
   native `tofu`. The CLI-against-ref-arch test (`apps-devstg/global/cli-test-layer`) lives in
   the CLI repo (`binbashar/leverage`, job `integration_tests_cli_refarch`), which clones this
-  repo's `master` — so keep that layer, even though nothing in this repo applies it.
+  repo's `master` — so keep that layer, even though nothing in this repo applies it. That test
+  passes `-var=provisioned=true` to create and destroy the layer's resources in one run, so keep
+  the `provisioned` variable (default `false`).
 - PR template at `.github/PULL_REQUEST_TEMPLATE.md` uses What? / Why? / Upgrade notes / References
   format. Keep **Upgrade notes** only when whoever pulls the change must act (apply order, destroy
   first, new secret, tool version…), with the exact commands. Otherwise delete it. The draft lists
