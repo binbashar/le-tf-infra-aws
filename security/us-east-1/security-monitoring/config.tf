@@ -45,6 +45,20 @@ data "terraform_remote_state" "keys" {
   }
 }
 
+#
+# KMS key that encrypts the shared account's secrets (the Slack webhook below)
+#
+data "terraform_remote_state" "shared_keys" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
+    key     = "shared/security-keys/terraform.tfstate"
+  }
+}
+
 data "aws_secretsmanager_secret_version" "monitoring_security" {
   provider  = aws.shared
   secret_id = "/devops/notifications/slack/security"

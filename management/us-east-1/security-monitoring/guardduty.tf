@@ -21,6 +21,13 @@ resource "aws_guardduty_detector_feature" "this" {
   detector_id = aws_guardduty_detector.this.id
   name        = each.value
   status      = "DISABLED"
+
+  # AWS reports per-plan sub-configurations (RDS_DATA_RISK, *_AGENT_MANAGEMENT...)
+  # that are not set here; without this every plan would replace the feature.
+  # They follow the parent, which is off.
+  lifecycle {
+    ignore_changes = [additional_configuration]
+  }
 }
 
 #
