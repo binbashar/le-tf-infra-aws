@@ -22,8 +22,7 @@ resource "aws_guardduty_detector_feature" "this" {
 # membership below, so no account is enrolled while a plan is still auto-enabled.
 #
 # NONE only governs enablement: it does not turn off a plan an account already
-# has. Every account had no detector when this was first applied; for a member
-# that later turns a plan on by hand, see the README (Verify).
+# has. Any plan left on in a member is caught by the README (Verify) checks.
 #
 resource "aws_guardduty_organization_configuration_feature" "this" {
   for_each = local.guardduty_protection_plans

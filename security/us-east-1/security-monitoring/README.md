@@ -5,9 +5,10 @@ Organization-wide GuardDuty, managed from this account as the delegated administ
 EBS malware, RDS, Lambda, Runtime Monitoring) is disabled on the management and security
 detectors, and none is auto-enabled in member accounts.
 
-Auto-enable `NONE` does not turn off a plan a member account already has enabled. No account
-had a GuardDuty detector when this was first applied, so every member starts foundational-only;
-the member check below catches any plan turned on later.
+Auto-enable `NONE` does not turn off a plan a member account already has enabled. Before the
+first apply, none of the accounts we could inspect had a GuardDuty detector (every account except
+the three `workshop-genai-*` ones, which have no profile). The member checks below are what confirm
+that every member is foundational-only, then and after any later change.
 
 | Layer | What it does |
 |---|---|
@@ -41,7 +42,7 @@ aws guardduty list-members --detector-id $DET --query 'Members[].AccountId' --ou
 # (the delegated admin) in the output. The account list needs a management-account profile.
 comm -23 \
   <(aws organizations list-accounts --profile <MANAGEMENT_PROFILE> \
-      --query 'Accounts[?Status==`ACTIVE`].Id' --output text | tr '\t' '\n' | sort) \
+      --query 'Accounts[?State==`ACTIVE`].Id' --output text | tr '\t' '\n' | sort) \
   <(aws guardduty list-members --detector-id $DET \
       --query 'Members[?RelationshipStatus==`Enabled`].AccountId' --output text | tr '\t' '\n' | sort)
 
