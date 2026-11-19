@@ -8,4 +8,8 @@ module "guardduty_monitor" {
   monitor_role_name              = "default_guardduty_monitor_role"
   event_rule_name                = "default_guardduty_monitor"
   monitor_slack_notification_url = data.aws_secretsmanager_secret_version.monitoring_security.arn
+
+  # The module defaults to nodejs24.x, which needs AWS provider >= 6.21.0; this
+  # layer is on ~> 5.0. Move to nodejs24.x when the layer moves to provider 6.x.
+  monitor_runtime = "nodejs22.x"
 }
