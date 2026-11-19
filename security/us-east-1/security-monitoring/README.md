@@ -27,7 +27,9 @@ empty result`. AWS can take up to 24 hours to enable GuardDuty in every member a
 ## Verify
 ```bash
 DET=$(aws guardduty list-detectors --query 'DetectorIds[0]' --output text)
-aws guardduty get-detector --detector-id $DET --query 'Features[?Status==`ENABLED`].Name'
+# Protection plans enabled on this detector (expect []). The foundational sources
+# CLOUD_TRAIL, DNS_LOGS and FLOW_LOGS always report ENABLED, so they are excluded.
+aws guardduty get-detector --detector-id $DET --query 'Features[?Status==`ENABLED` && !contains([`CLOUD_TRAIL`,`DNS_LOGS`,`FLOW_LOGS`], Name)].Name'
 aws guardduty describe-organization-configuration --detector-id $DET --query 'Features[?AutoEnable!=`NONE`].Name'
 aws guardduty list-members --detector-id $DET --query 'Members[].[AccountId,RelationshipStatus]' --output text
 
@@ -35,7 +37,7 @@ aws guardduty list-members --detector-id $DET --query 'Members[].[AccountId,Rela
 # Expect both lists empty, per batch of up to 50 accounts.
 aws guardduty list-members --detector-id $DET --query 'Members[].AccountId' --output text | xargs -n 50 \
   aws guardduty get-member-detectors --detector-id $DET \
-    --query '{plans_enabled: MemberDataSourceConfigurations[?Features[?Status==`ENABLED`]].AccountId, unprocessed: UnprocessedAccounts}' \
+    --query '{plans_enabled: MemberDataSourceConfigurations[?Features[?Status==`ENABLED` && !contains([`CLOUD_TRAIL`,`DNS_LOGS`,`FLOW_LOGS`], Name)]].AccountId, unprocessed: UnprocessedAccounts}' \
     --account-ids
 
 # Every active organization account is an enabled member. Expect only the security account
