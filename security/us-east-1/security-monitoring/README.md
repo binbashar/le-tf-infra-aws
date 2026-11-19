@@ -30,10 +30,20 @@ aws guardduty get-detector --detector-id $DET --query 'Features[?Status==`ENABLE
 aws guardduty describe-organization-configuration --detector-id $DET --query 'Features[?AutoEnable!=`NONE`].Name'
 aws guardduty list-members --detector-id $DET --query 'Members[].[AccountId,RelationshipStatus]' --output text
 
-# Members with any protection plan enabled (expect [] per batch of up to 50 accounts)
+# Members with any protection plan enabled, and accounts GuardDuty could not inspect.
+# Expect both lists empty, per batch of up to 50 accounts.
 aws guardduty list-members --detector-id $DET --query 'Members[].AccountId' --output text | xargs -n 50 \
   aws guardduty get-member-detectors --detector-id $DET \
-    --query 'MemberDataSourceConfigurations[?Features[?Status==`ENABLED`]].AccountId' --account-ids
+    --query '{plans_enabled: MemberDataSourceConfigurations[?Features[?Status==`ENABLED`]].AccountId, unprocessed: UnprocessedAccounts}' \
+    --account-ids
+
+# Every active organization account is an enabled member. Expect only the security account
+# (the delegated admin) in the output. The account list needs a management-account profile.
+comm -23 \
+  <(aws organizations list-accounts --profile <MANAGEMENT_PROFILE> \
+      --query 'Accounts[?Status==`ACTIVE`].Id' --output text | tr '\t' '\n' | sort) \
+  <(aws guardduty list-members --detector-id $DET \
+      --query 'Members[?RelationshipStatus==`Enabled`].AccountId' --output text | tr '\t' '\n' | sort)
 
 # Findings reach Slack: then confirm the sample finding arrives in the security channel
 aws guardduty create-sample-findings --detector-id $DET --finding-types Recon:EC2/PortProbeUnprotectedPort
