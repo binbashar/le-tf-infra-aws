@@ -18,6 +18,22 @@ resource "aws_guardduty_detector_feature" "this" {
 }
 
 #
+# Never auto-enable a protection plan in any member account. Set before the
+# membership below, so no account is enrolled while a plan is still auto-enabled.
+#
+# NONE only governs enablement: it does not turn off a plan an account already
+# has. Every account had no detector when this was first applied; for a member
+# that later turns a plan on by hand, see the README (Verify).
+#
+resource "aws_guardduty_organization_configuration_feature" "this" {
+  for_each = local.guardduty_protection_plans
+
+  detector_id = data.aws_guardduty_detector.this.id
+  name        = each.value
+  auto_enable = "NONE"
+}
+
+#
 # Auto-enable GuardDuty in every account of the organization, existing and new
 # (ALL), so no account list has to be kept in sync. AWS may take up to 24 hours
 # to roll the configuration out to every member.
@@ -25,17 +41,8 @@ resource "aws_guardduty_detector_feature" "this" {
 resource "aws_guardduty_organization_configuration" "this" {
   detector_id                      = data.aws_guardduty_detector.this.id
   auto_enable_organization_members = "ALL"
-}
 
-# ...but never auto-enable a protection plan in any of them.
-resource "aws_guardduty_organization_configuration_feature" "this" {
-  for_each = local.guardduty_protection_plans
-
-  detector_id = data.aws_guardduty_detector.this.id
-  name        = each.value
-  auto_enable = "NONE"
-
-  depends_on = [aws_guardduty_organization_configuration.this]
+  depends_on = [aws_guardduty_organization_configuration_feature.this]
 }
 
 #

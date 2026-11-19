@@ -2,7 +2,12 @@
 
 Organization-wide GuardDuty, managed from this account as the delegated administrator.
 **Foundational threat detection only**: every optional protection plan (S3, EKS audit logs,
-EBS malware, RDS, Lambda, Runtime Monitoring) is disabled, and none is auto-enabled.
+EBS malware, RDS, Lambda, Runtime Monitoring) is disabled on the management and security
+detectors, and none is auto-enabled in member accounts.
+
+Auto-enable `NONE` does not turn off a plan a member account already has enabled. No account
+had a GuardDuty detector when this was first applied, so every member starts foundational-only;
+the member check below catches any plan turned on later.
 
 | Layer | What it does |
 |---|---|
@@ -24,9 +29,29 @@ DET=$(aws guardduty list-detectors --query 'DetectorIds[0]' --output text)
 aws guardduty get-detector --detector-id $DET --query 'Features[?Status==`ENABLED`].Name'
 aws guardduty describe-organization-configuration --detector-id $DET --query 'Features[?AutoEnable!=`NONE`].Name'
 aws guardduty list-members --detector-id $DET --query 'Members[].[AccountId,RelationshipStatus]' --output text
+
+# Members with any protection plan enabled (expect [] per batch of up to 50 accounts)
+aws guardduty list-members --detector-id $DET --query 'Members[].AccountId' --output text | xargs -n 50 \
+  aws guardduty get-member-detectors --detector-id $DET \
+    --query 'MemberDataSourceConfigurations[?Features[?Status==`ENABLED`]].AccountId' --account-ids
+
+# Findings reach Slack: then confirm the sample finding arrives in the security channel
+aws guardduty create-sample-findings --detector-id $DET --finding-types Recon:EC2/PortProbeUnprotectedPort
 ```
 
-## Notes about removing GuardDuty
-Before removing it you need to disassociate all accounts via the AWS CLI or the AWS Console.
+To turn a plan back off on a member, from this account:
+```bash
+aws guardduty update-member-detectors --detector-id $DET --account-ids <MEMBER_ACCOUNT_ID> \
+  --features Name=S3_DATA_EVENTS,Status=DISABLED
+```
 
-But even after that, you won't be able to remove it from this layer, instead you'll have to remove the administrator delegation that is set up in the management account. And then you'll need to remove the remaining resources on this layer.
+## Removing GuardDuty
+Order matters; AWS rejects the steps out of sequence.
+1. Set `auto_enable_organization_members` to `NONE` here and apply: while it is `ALL`, AWS
+   does not allow member accounts to be disassociated.
+2. Disassociate and delete every member (`aws guardduty disassociate-members` then
+   `aws guardduty delete-members`, with all member account IDs), including the management account.
+3. Destroy `management/us-east-1/security-monitoring` (removes the delegated admin and the
+   management detector).
+4. Destroy this layer. The detector here is a data source, so it is left behind: delete it with
+   `aws guardduty delete-detector` if GuardDuty should be fully off in this account.
