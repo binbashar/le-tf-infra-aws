@@ -25,6 +25,12 @@ reads that detector (`data "aws_guardduty_detector"`) instead of creating it. Un
 applied, planning this layer fails with `reading this account's single GuardDuty Detector:
 empty result`. AWS can take up to 24 hours to enable GuardDuty in every member account.
 
+**Adding an account to `var.accounts`.** The layer also disables every plan on each member
+(`aws_guardduty_member_detector_feature`), which only works once the account is a member. AWS
+enrolls a new organization account within up to 24 hours. An apply in that window fails for that
+account's features (the account is not a member yet). Re-run `leverage tofu apply` once
+`aws guardduty list-members --detector-id $DET` shows the account as `Enabled`.
+
 ## Verify
 ```bash
 DET=$(aws guardduty list-detectors --query 'DetectorIds[0]' --output text)
