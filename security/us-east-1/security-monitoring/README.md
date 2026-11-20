@@ -5,15 +5,16 @@ Organization-wide GuardDuty, managed from this account as the delegated administ
 EBS malware, RDS, Lambda, Runtime Monitoring) is disabled on the management and security
 detectors, and none is auto-enabled in member accounts.
 
-Auto-enable `NONE` does not turn off a plan a member account already has enabled. Before the
-first apply, none of the accounts we could inspect had a GuardDuty detector (every account except
-the three `workshop-genai-*` ones, which have no profile). The member checks below are what confirm
-that every member is foundational-only, then and after any later change.
+Auto-enable `NONE` does not turn off a plan a member account already has enabled. On the first
+rollout, four accounts with an earlier GuardDuty history (network and the three `workshop-genai-*`)
+were enrolled with S3 Protection on. So this layer also disables every plan on every member
+account in `var.accounts` (`aws_guardduty_member_detector_feature`), and re-asserts it on each apply.
+The member checks below confirm that every member is foundational-only.
 
 | Layer | What it does |
 |---|---|
 | `management/us-east-1/security-monitoring` | Management account detector (plans off) and delegation of the admin to this account |
-| `security/us-east-1/security-monitoring` (this one) | Reads the detector AWS creates on delegation, keeps its plans off, auto-enables GuardDuty in **every** account (`ALL`, existing and new), adds the management account as a member, and posts findings to Slack |
+| `security/us-east-1/security-monitoring` (this one) | Reads the detector AWS creates on delegation, keeps its plans off, auto-enables GuardDuty in **every** account (`ALL`, existing and new), disables every plan on each member in `var.accounts`, adds the management account as a member, and posts findings to Slack |
 
 ## Apply order
 1. `management/us-east-1/security-monitoring`

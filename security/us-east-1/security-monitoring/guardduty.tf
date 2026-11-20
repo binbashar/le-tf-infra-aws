@@ -29,7 +29,8 @@ resource "aws_guardduty_detector_feature" "this" {
 # membership below, so no account is enrolled while a plan is still auto-enabled.
 #
 # NONE only governs enablement: it does not turn off a plan an account already
-# has. Any plan left on in a member is caught by the README (Verify) checks.
+# has. That happened on the first rollout (S3 came back on in four accounts with
+# an older GuardDuty history), so member plans are also disabled explicitly below.
 #
 resource "aws_guardduty_organization_configuration_feature" "this" {
   for_each = local.guardduty_protection_plans
@@ -72,6 +73,31 @@ resource "aws_guardduty_member" "management" {
   # Email and invite are only used when the membership is created.
   lifecycle {
     ignore_changes = [email, invite]
+  }
+
+  depends_on = [aws_guardduty_organization_configuration.this]
+}
+
+#
+# Disable every protection plan on every member account explicitly. ALL with
+# auto-enable NONE did not turn off plans some accounts had from an earlier
+# GuardDuty setup, so this re-asserts the foundational-only state on each apply.
+#
+# An account added to var.accounts is enrolled by ALL within up to 24 hours;
+# until then it is not a member and applying this fails for it. Accounts outside
+# var.accounts are caught by the README (Verify) coverage check.
+#
+resource "aws_guardduty_member_detector_feature" "this" {
+  for_each = local.guardduty_member_plans
+
+  detector_id = data.aws_guardduty_detector.this.id
+  account_id  = var.accounts[each.value.account].id
+  name        = each.value.plan
+  status      = "DISABLED"
+
+  # Same sub-configuration drift as the features above.
+  lifecycle {
+    ignore_changes = [additional_configuration]
   }
 
   depends_on = [aws_guardduty_organization_configuration.this]
