@@ -11,3 +11,10 @@ resource "aws_ce_cost_allocation_tag" "prm_apn_id" {
   tag_key = "aws-apn-id"
   status  = "Active"
 }
+
+# Purpose names the workload a layer serves (e.g. kb-mcp) and is set in each
+# layer's default tags; active, it lets Cost Explorer report a workload's spend.
+resource "aws_ce_cost_allocation_tag" "purpose" {
+  tag_key = "Purpose"
+  status  = "Active"
+}
