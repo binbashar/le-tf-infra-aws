@@ -38,10 +38,12 @@ shared/us-east-1/security-base
 
 # terraform-aws-guardduty-multiaccount v0.2.1 (delegated-admin, multiaccount-setup)
 # and terraform-aws-guardduty-monitor v1.2.1 have no tags variable.
-management/us-east-1/security-monitoring --
 management/us-east-2/security-monitoring --
-security/us-east-1/security-monitoring --
 security/us-east-2/security-monitoring --
+# Its GuardDuty resources (detector features, organization configuration, member)
+# take no tags -- the detector is a data source -- and terraform-aws-guardduty-monitor
+# v1.2.1 has no tags variable.
+security/us-east-1/security-monitoring
 
 #-- (b) nothing taggable: local.tags would attach to no resource ---------------
 management/us-east-1/backups                           # aws_backup_global_settings is an account-level setting and takes no tags

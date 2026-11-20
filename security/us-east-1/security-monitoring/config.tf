@@ -19,7 +19,7 @@ terraform {
   required_version = ">= 1.2.7"
 
   required_providers {
-    aws = "~> 5.0"
+    aws = "~> 6.70"
   }
 
   backend "s3" {
@@ -42,6 +42,20 @@ data "terraform_remote_state" "keys" {
     profile = var.profile
     bucket  = var.bucket
     key     = "${var.environment}/security-keys/terraform.tfstate"
+  }
+}
+
+#
+# KMS key that encrypts the shared account's secrets (the Slack webhook below)
+#
+data "terraform_remote_state" "shared_keys" {
+  backend = "s3"
+
+  config = {
+    region  = var.region
+    profile = "${var.project}-shared-devops"
+    bucket  = "${var.project}-shared-terraform-backend"
+    key     = "shared/security-keys/terraform.tfstate"
   }
 }
 

@@ -38,7 +38,9 @@ data "aws_iam_policy_document" "kms" {
       type = "AWS"
       identifiers = [
         # Cost Report lambda function
-        "arn:aws:iam::${var.accounts.management.id}:role/bb-management-cost-report"
+        "arn:aws:iam::${var.accounts.management.id}:role/bb-management-cost-report",
+        # GuardDuty findings to Slack (security/us-east-1/security-monitoring)
+        "arn:aws:iam::${var.accounts.security.id}:role/default_guardduty_monitor_role"
       ]
     }
     # Only through Secrets Manager: a principal added here cannot decrypt arbitrary ciphertext with the key

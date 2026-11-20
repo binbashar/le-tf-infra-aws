@@ -75,6 +75,18 @@ locals {
       recovery_window_in_days = 7
       secret_string           = "INITIAL_VALUE"
       kms_key_id              = data.terraform_remote_state.keys.outputs.aws_kms_key_id
+      # The GuardDuty monitor Lambda (security/us-east-1/security-monitoring) reads
+      # the webhook at runtime; the key policy in shared/us-east-1/security-keys
+      # grants it decrypt through Secrets Manager.
+      custom_policy_json = {
+        sid    = "GuardDutyMonitorLambda"
+        effect = "Allow"
+        principal = {
+          "AWS" : "arn:aws:iam::${var.accounts.security.id}:role/default_guardduty_monitor_role"
+        }
+        actions   = ["secretsmanager:GetSecretValue"],
+        resources = ["*"]
+      }
     },
 
     "/devops/notifications/phone/notifications" = {
