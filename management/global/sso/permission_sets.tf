@@ -36,6 +36,20 @@ module "permission_sets" {
       policy_attachments                  = []
       customer_managed_policy_attachments = []
     },
+    #
+    # Starts as a copy of DevOps plus batch:*, so DevOps can later be cut down
+    # while this set keeps the broader access.
+    #
+    {
+      name                                = "PowerDevOps"
+      description                         = "Provides full access to many AWS services and resources except billing, broader than DevOps."
+      relay_state                         = local.default_relay_state
+      session_duration                    = "PT2H"
+      tags                                = local.tags
+      inline_policy                       = data.aws_iam_policy_document.power_devops.json
+      policy_attachments                  = []
+      customer_managed_policy_attachments = []
+    },
     {
       name                                = "FinOps"
       description                         = "Provides access to billing and cost management."
