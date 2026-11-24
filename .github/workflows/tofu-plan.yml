@@ -64,7 +64,7 @@ jobs:
         run: python -m tofu_plan_ci.workflow discover
 
       - name: Upload discovery evidence
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: tofu-plan-discovery
           path: ${{ runner.temp }}/tofu-plan-discovery/
@@ -108,7 +108,7 @@ jobs:
 
       - name: Upload sanitized validation evidence
         if: ${{ always() && steps.run.outputs.report_dir != '' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: tofu-plan-validation-${{ steps.run.outputs.slug }}
           path: ${{ steps.run.outputs.report_dir }}/
@@ -241,7 +241,7 @@ jobs:
 
       - name: Upload LLM analyses
         if: ${{ always() && steps.run.outputs.llm_input == 'ready' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: tofu-plan-llm-${{ steps.run.outputs.slug }}
           path: ${{ runner.temp }}/tofu-plan-llm/${{ steps.run.outputs.slug }}/
@@ -250,7 +250,7 @@ jobs:
 
       - name: Upload sanitized plan evidence
         if: ${{ always() && steps.run.outputs.report_dir != '' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: tofu-plan-layer-${{ steps.run.outputs.slug }}
           path: ${{ steps.run.outputs.report_dir }}/
