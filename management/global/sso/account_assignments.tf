@@ -101,50 +101,6 @@ module "account_assignments" {
     },
 
     # -------------------------------------------------------------------------
-    # PowerDevOps Permissions
-    #
-    # Same accounts as DevOps (apps-prd excluded on purpose), own group.
-    #
-    # NOTE 2-step apply (see the IMPORTANT note at the top): the PowerDevOps
-    # group must exist before these assignments can look it up.
-    # -------------------------------------------------------------------------
-    {
-      permission_set_arn  = module.permission_sets.permission_sets["PowerDevOps"].arn
-      permission_set_name = "PowerDevOps"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["powerdevops"].name
-      account             = var.accounts.security.id
-    },
-    {
-      permission_set_arn  = module.permission_sets.permission_sets["PowerDevOps"].arn
-      permission_set_name = "PowerDevOps"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["powerdevops"].name
-      account             = var.accounts.shared.id
-    },
-    {
-      permission_set_arn  = module.permission_sets.permission_sets["PowerDevOps"].arn
-      permission_set_name = "PowerDevOps"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["powerdevops"].name
-      account             = var.accounts.apps-devstg.id
-    },
-    {
-      permission_set_arn  = module.permission_sets.permission_sets["PowerDevOps"].arn
-      permission_set_name = "PowerDevOps"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["powerdevops"].name
-      account             = var.accounts.network.id
-    },
-    {
-      permission_set_arn  = module.permission_sets.permission_sets["PowerDevOps"].arn
-      permission_set_name = "PowerDevOps"
-      principal_type      = local.principal_type_group
-      principal_name      = local.groups["powerdevops"].name
-      account             = var.accounts.data-science.id
-    },
-
-    # -------------------------------------------------------------------------
     # DevOpsPrd Permissions
     #
     # apps-prd is intentionally absent from the DevOps block above: production

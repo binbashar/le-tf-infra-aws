@@ -181,7 +181,6 @@ locals {
       email      = "juan.delacamara@binbash.com.ar"
       groups = [
         "devops",
-        "powerdevops",
       ]
     }
     "juan.delatorre" = {
@@ -353,15 +352,6 @@ locals {
     devops = {
       name        = "DevOps"
       description = "Provides full access to many AWS services and resources except billing."
-    }
-    #
-    # NOTE Same accounts as `devops` (apps-prd excluded), with the PowerDevOps
-    # permission set: a copy of DevOps plus batch:*, which keeps the broader
-    # access once DevOps is cut down.
-    #
-    powerdevops = {
-      name        = "PowerDevOps"
-      description = "Provides the PowerDevOps permission set: DevOps access plus AWS Batch."
     }
     #
     # NOTE Production access is deliberately NOT granted through the `devops`
