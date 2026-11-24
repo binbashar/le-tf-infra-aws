@@ -104,7 +104,6 @@ data "aws_iam_policy_document" "devops" {
       "aws-portal:*",
       "backup-storage:*",
       "backup:*",
-      "batch:*",
       "bedrock:*",
       "bedrock-agentcore:*",
       "billing:Get*",
