@@ -51,6 +51,10 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           use_bedrock: "true"
+          # Post with this run's scoped GITHUB_TOKEN instead of the Claude app
+          # token. The app refuses to mint its token unless this file matches
+          # master, which would leave a PR unable to test its own changes here.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           track_progress: true
           additional_permissions: |
             actions: read
