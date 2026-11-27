@@ -31,7 +31,6 @@ jobs:
       contents: read
       pull-requests: write
       issues: read
-      id-token: write
       actions: read
     steps:
       - name: Checkout repository
