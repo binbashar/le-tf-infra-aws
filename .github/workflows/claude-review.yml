@@ -1,0 +1,106 @@
+name: Claude Review
+
+# Automatic Claude review of every PR opened from a branch of this repository,
+# routed through Amazon Bedrock like the on-demand `@claude` assistant
+# (claude.yml). Mentioning `@claude` stays available for re-reviews and
+# follow-ups; this workflow only covers the first pass.
+#
+# Cost guard: runs on opened / reopened / ready_for_review, never on every push
+# (synchronize), and skips drafts, bot PRs (Renovate, Dependabot) and forks.
+# Fork PRs receive no secrets, so they could not reach Bedrock anyway.
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    # Never for forks: they get no secrets, and an outsider's PR must not drive
+    # the model at all. The guard is explicit on purpose, not left to GitHub.
+    if: |
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN_APPS_PRD_ACCOUNT }}
+          role-session-name: claude-code-review
+          # Public repo hardening. The reviewed PR is untrusted input to the model:
+          # if a prompt injection ever got these credentials into a public comment,
+          # they can only invoke Bedrock, expire in 30 minutes, and never show the
+          # account ID in the log.
+          role-duration-seconds: 1800
+          mask-aws-account-id: true
+          inline-session-policy: >-
+            {"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":[
+            "bedrock:InvokeModel","bedrock:InvokeModelWithResponseStream",
+            "bedrock:GetInferenceProfile","bedrock:ListInferenceProfiles"],
+            "Resource":"*"}]}
+
+      - name: Review the PR with Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          use_bedrock: "true"
+          # Post with this run's scoped GITHUB_TOKEN instead of the Claude app
+          # token. The app refuses to mint its token unless this file matches
+          # master, which would leave a PR unable to test its own changes here.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          track_progress: true
+          additional_permissions: |
+            actions: read
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this pull request. Read CLAUDE.md first: it is the
+            repository's rulebook, and breaking one of its rules is a finding.
+
+            Report only real problems, most severe first:
+            1. Correctness: OpenTofu that will not plan or apply, wrong
+               references, broken remote-state keys, provider or module
+               version mismatches, scripts or workflows that fail.
+            2. Security: over-broad IAM, missing encryption, public exposure,
+               secrets or credentials in code, unsafe GitHub Actions patterns
+               (untrusted input in `run:`, `pull_request_target` misuse).
+            3. Repository conventions from CLAUDE.md, for example: the
+               `aws-apn-id` tag must use `local.prm_apn_id`, AWS profiles must
+               follow `{project}-{account}-{permission-set}`, layers ending in
+               `--` are disabled, `.tfvars`/JSON formatting, no `tfplan`
+               binaries committed.
+
+            Do not comment on style that `terraform_fmt` or pre-commit already
+            enforce, and do not praise. If you find nothing, say so in one line.
+
+            How to report:
+            - One inline comment per specific issue, on the line it concerns
+              (mcp__github_inline_comment__create_inline_comment).
+            - Then one short summary comment with `gh pr comment`.
+
+            This repository is PUBLIC. Never write an AWS account ID, access
+            key, ARN with an account ID, or other identifier in a comment; use
+            placeholders such as <SECURITY_ACCOUNT_ID>.
+            Never approve, merge, push, or post `/tofu apply`.
+          claude_args: |
+            --model ${{ vars.BEDROCK_MODEL_ID || 'us.anthropic.claude-sonnet-4-6' }}
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Read,Grep,Glob"
