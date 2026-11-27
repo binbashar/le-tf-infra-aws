@@ -113,6 +113,20 @@ and look for the most recent `Claude Code` workflow run. Because
 `issue_comment` workflows always run from the default branch, edits to
 `claude.yml` in an unmerged PR won't take effect.
 
+### Automatic first-pass review
+
+[`.github/workflows/claude-review.yml`](../../.github/workflows/claude-review.yml)
+runs the same Bedrock path without a mention: one review when a PR is opened,
+reopened, or marked ready for review. It posts inline comments plus one summary
+comment, using the same secrets and `BEDROCK_MODEL_ID` as above.
+
+- **Skipped:** drafts, bot PRs (Renovate, Dependabot) and fork PRs (forks get no
+  secrets). New pushes to an open PR do not re-run it; comment `@claude review`
+  for a re-review.
+- **Runs from the PR branch** (`pull_request` event), unlike `@claude`, so a
+  change to `claude-review.yml` is exercised by the PR that makes it.
+- **Cost:** Bedrock spend lands in apps-prd and shows in the daily cost report.
+
 ## 5. Human approval, apply & merge
 
 Maintainers read the AI + CI findings on the PR, then:

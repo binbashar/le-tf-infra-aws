@@ -496,6 +496,7 @@ This repo has the [`anthropics/claude-code-action`](https://github.com/anthropic
 
 - **Authentication**: routes through **Amazon Bedrock** using repo-level secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ASSUME_ROLE_ARN_APPS_PRD_ACCOUNT`) configured at `Settings → Secrets and variables → Actions`. The account-suffixed secret name leaves room to add `AWS_ASSUME_ROLE_ARN_<OTHER>_ACCOUNT` secrets in future workflows that target a different account with the same `machine.github.actions.le-cli` credentials.
 - **Configuration**: optional repository variables `BEDROCK_MODEL_ID` (defaults to `us.anthropic.claude-sonnet-4-6`) and `AWS_REGION` (defaults to `us-east-1`). Names match the AI Use Case Lab app env vars so the same mental model applies on both sides.
+- **Automatic review**: `.github/workflows/claude-review.yml` reviews each non-draft, non-bot, non-fork PR once, on open / reopen / ready-for-review, through the same Bedrock path. Pushes don't re-run it — comment `@claude review` for that.
 - **Permissions**: only users with write access to this repo can invoke `@claude`. On this public repo, that gate is what keeps external commenters from draining the Bedrock budget.
 - **Troubleshooting**: if a `@claude` invocation never replies, check the workflow run under the **Actions** tab. `issue_comment`-triggered workflows always run from the **default branch** version of `claude.yml`, so changes to the workflow file in a PR won't take effect until the PR is merged to `master`.
 
