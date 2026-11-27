@@ -125,7 +125,11 @@ comment, using the same secrets and `BEDROCK_MODEL_ID` as above.
   for a re-review.
 - **Runs from the PR branch** (`pull_request` event), unlike `@claude`, so a
   change to `claude-review.yml` is exercised by the PR that makes it.
+- **Posts as `github-actions[bot]`**, using the run's `GITHUB_TOKEN`. The Claude
+  app only issues its token when the workflow file matches `master`, so with the
+  app token a PR could never test changes to this file.
 - **Cost:** Bedrock spend lands in apps-prd and shows in the daily cost report.
+  The first run took about 2 minutes and cost about $0.50 (Sonnet 4.6).
 
 ## 5. Human approval, apply & merge
 
