@@ -19,6 +19,8 @@ concurrency:
 
 jobs:
   review:
+    # Never for forks: they get no secrets, and an outsider's PR must not drive
+    # the model at all. The guard is explicit on purpose, not left to GitHub.
     if: |
       github.event.pull_request.draft == false &&
       github.event.pull_request.head.repo.full_name == github.repository &&
@@ -44,8 +46,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
           role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN_APPS_PRD_ACCOUNT }}
-          role-duration-seconds: 3600
           role-session-name: claude-code-review
+          # Public repo hardening. The reviewed PR is untrusted input to the model:
+          # if a prompt injection ever got these credentials into a public comment,
+          # they can only invoke Bedrock, expire in 30 minutes, and never show the
+          # account ID in the log.
+          role-duration-seconds: 1800
+          mask-aws-account-id: true
+          inline-session-policy: >-
+            {"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":[
+            "bedrock:InvokeModel","bedrock:InvokeModelWithResponseStream",
+            "bedrock:GetInferenceProfile","bedrock:ListInferenceProfiles"],
+            "Resource":"*"}]}
 
       - name: Review the PR with Claude
         uses: anthropics/claude-code-action@v1

@@ -125,6 +125,10 @@ comment, using the same secrets and `BEDROCK_MODEL_ID` as above.
   for a re-review.
 - **Runs from the PR branch** (`pull_request` event), unlike `@claude`, so a
   change to `claude-review.yml` is exercised by the PR that makes it.
+- **Public-repo hardening:** the PR is untrusted input to the model, so the AWS
+  session carries an inline policy that allows only Bedrock invocation, lasts
+  30 minutes, and masks the account ID. Claude's tool output stays hidden in
+  the public log (`show_full_output` off); never turn it on here.
 - **Posts as `github-actions[bot]`**, using the run's `GITHUB_TOKEN`. The Claude
   app only issues its token when the workflow file matches `master`, so with the
   app token a PR could never test changes to this file.
